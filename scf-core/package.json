@@ -1,0 +1,23 @@
+{
+  "name": "@minimalhumans/scf-core",
+  "version": "0.1.0",
+  "description": "SCF (Story Craft Format) core: registry types, database layer, and resolution/readiness semantics. UI-free. Structured publishable, unpublished until the format settles (design decision 6, 2026-07-15).",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts",
+    "./registry.json": "./registry/registry.json"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "conformance": "vitest run test/conformance.canonical.test.ts test/conformance.readiness.test.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0",
+    "@types/node": "^22.0.0"
+  }
+}
