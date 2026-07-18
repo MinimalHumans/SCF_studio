@@ -13,7 +13,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "conformance": "vitest run test/conformance.canonical.test.ts test/conformance.readiness.test.ts"
+    "conformance": "vitest run test/conformance.canonical.test.ts test/conformance.readiness.test.ts",
+    "bless-corpus": "node --experimental-strip-types scripts/bless_corpus.mjs"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

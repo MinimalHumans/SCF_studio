@@ -13185,7 +13185,17 @@
           "required": false,
           "tab": "Delivery",
           "autoInjected": false,
-          "helpText": "For vocal beats tied to a specific line."
+          "helpText": "For vocal beats tied to a specific line. Interim matching contract — superseded by line_ref where a screenplay is present."
+        },
+        {
+          "name": "line_ref",
+          "label": "Line Ref",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Delivery",
+          "autoInjected": false,
+          "helpText": "uuid of the anchored screenplay line (G5). Authored from the script editor; re-anchors deterministically through split/merge."
         },
         {
           "name": "emphasis_words",

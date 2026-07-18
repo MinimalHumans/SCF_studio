@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<FinalDraft DocumentType="Script" Template="No" Version="1">
+<Content>
+<Paragraph Number="1A" Type="Scene Heading">
+<Text>INT. ROOM - DAY</Text>
+</Paragraph>
+<Paragraph Type="Action" RevisionID="3">
+<Text>Plain then </Text>
+<Text Style="Bold">bold</Text>
+<Text> then </Text>
+<Text Style="Bold+Italic">both</Text>
+<Text>.</Text>
+</Paragraph>
+<DualDialogue>
+<Paragraph Type="Character">
+<Text>ELEANOR (V.O.)</Text>
+</Paragraph>
+<Paragraph Type="Dialogue">
+<Text>Left side.</Text>
+</Paragraph>
+<Paragraph Type="Character">
+<Text>MARCUS</Text>
+</Paragraph>
+<Paragraph Type="Parenthetical">
+<Text>(overlapping)</Text>
+</Paragraph>
+<Paragraph Type="Dialogue">
+<Text>Right side.</Text>
+</Paragraph>
+</DualDialogue>
+<Paragraph Type="Shot">
+<Text>CLOSE ON the locket &amp; chain.</Text>
+</Paragraph>
+<Paragraph Type="Transition">
+<Text>CUT TO:</Text>
+</Paragraph>
+</Content>
+<TitlePage>
+<Content>
+<Paragraph Type="Action">
+<Text>Title: Feature Test</Text>
+</Paragraph>
+<Paragraph Type="Action">
+<Text>Author: A. Writer</Text>
+</Paragraph>
+</Content>
+</TitlePage>
+</FinalDraft>

@@ -1,0 +1,19 @@
+Action with an inline [[remember to fix this]] note in it.
+
+[[A note-only line.]]
+
+[[A note that spans
+two lines.]]
+
+/* a boneyard-only line */
+
+Action with /* hidden words */ boneyard inside.
+
+/*
+A boneyard block
+spanning lines.
+*/
+
+INT. AFTER BONEYARD - DAY
+
+The heading above must still see the blank through the boneyard.

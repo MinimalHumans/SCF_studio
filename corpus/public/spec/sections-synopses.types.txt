@@ -1,0 +1,10 @@
+section
+blank
+section
+blank
+synopsis
+blank
+page_break
+blank
+action
+blank

@@ -57,6 +57,14 @@ registry side of that contract:
 python scf-editor/scripts/generate_registry_json.py --check
 ```
 
+## Parser (Part 2) — all three stages
+
+| Stage | Module | Nature |
+|---|---|---|
+| 1 Tokenize/classify | `src/fountain/`, `src/fdx/` | Deterministic, spec-faithful. Byte-stable round-trip by construction; golden corpus + property tests (`npm run bless-corpus`). |
+| 2 Row model | `src/screenplay/rowModel.ts` | Pure mapping onto v1's own tables (created by `initDatabase` now). Entity ids are only ever GIVEN (`applyAssignments`); byte fidelity survives the database via per-line eol metadata. |
+| 3 Entity proposal | `src/proposals/propose.ts` | Heuristic and honest about it: proposals, never rows. Cue normalization shows its work; confidence scoring is corpus-derived, with hard suspicions (prose-shaped forced cues, page furniture, number-glued headings, stopwords, digit-heavy cues, near-duplicates) forcing low. `acceptBestGuess` applies default thresholds; props are never auto-accepted. |
+
 ## Deliberately not here
 
 - **UI.** Nothing in this package imports React or touches the DOM.
@@ -66,7 +74,3 @@ python scf-editor/scripts/generate_registry_json.py --check
   needs a browser to exist; it lands with the app shell (Part 1), not
   here. `initDatabase` and the semantics are driver-agnostic and already
   proven through the Node driver.
-- **Screenplay infrastructure tables** (`screenplay_lines`, versions,
-  prop tags, …). They are Part 3's storage and will join `initDatabase`
-  when Part 3's row model lands; `registry.json` already carries their
-  names in `uuidExtraTables` so 2.3 identity extends to them on contact.

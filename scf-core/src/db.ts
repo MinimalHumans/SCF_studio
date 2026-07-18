@@ -17,6 +17,7 @@
  */
 
 import type { EntityDef, Registry } from "./registry.ts";
+import { initScreenplayTables } from "./screenplay/rowModel.ts";
 
 export type SqlValue = string | number | boolean | null | Uint8Array;
 export type Row = Record<string, SqlValue>;
@@ -140,6 +141,12 @@ export async function initDatabase(
     const e = registry.entities.get(name);
     if (e !== undefined) await createEntityTable(exec, e);
   }
+
+  // Screenplay infrastructure (Part 3 row model — lands with Stage 2 of
+  // the parser, per the decision deferred at phase 1). Same DDL as
+  // Python's screenplay_db.init_screenplay_tables; the uuid loop below
+  // extends 2.3 identity to these tables the moment they exist.
+  await initScreenplayTables(exec);
 
   // Schema 2.3: uuid identity on every user-data row. Registry tables
   // always exist by now; extra (infrastructure) tables only if present.

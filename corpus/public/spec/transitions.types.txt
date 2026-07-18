@@ -1,0 +1,14 @@
+action
+blank
+transition
+blank
+heading
+blank
+transition
+blank
+centered
+blank
+action
+blank
+action
+blank

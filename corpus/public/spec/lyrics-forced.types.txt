@@ -1,0 +1,9 @@
+lyric
+lyric
+blank
+action
+blank
+character
+lyric
+dialogue
+blank
