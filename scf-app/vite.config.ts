@@ -16,5 +16,5 @@ export default defineConfig({
     },
   },
   worker: { format: "es" },
-  optimizeDeps: { exclude: ["wa-sqlite"] },
+  optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
 });

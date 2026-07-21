@@ -1,5 +1,5 @@
 /**
- * scf-core — SCF (Story Craft Format) core library.
+ * scf-core — SCF (Story Context Framework) core library.
  *
  * Format + executable semantics + conformance target, UI-free:
  *   - registry:   entity/field types loaded from registry.json

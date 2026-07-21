@@ -41,19 +41,31 @@ export function QueryIndex(): JSX.Element {
 
 export function QueryRunner(): JSX.Element {
   const selectedQuery = useStore((s) => s.selectedQuery);
-  const revision = useStore((s) => s.revision);
   const spec = QUERIES.find((x) => x.id === selectedQuery);
+  if (spec === undefined) {
+    return (
+      <div className="empty-main">
+        <p>Pick a canonical query. Each answer comes in three forms:
+           a designed view, the raw JSON (the future MCP payload), and a
+           prompt-ready context block.</p>
+      </div>
+    );
+  }
+  // key = query id: switching queries REMOUNTS the body, so params,
+  // payload, and error can never leak across queries. (The original
+  // effect-based reset ran one render too late — Q01's markdown builder
+  // received Q00's payload for a frame and crashed on the shape
+  // mismatch. Remounting removes the stale frame entirely.)
+  return <QueryBody key={spec.id} spec={spec} />;
+}
+
+function QueryBody({ spec }: { spec: QuerySpec }): JSX.Element {
+  const revision = useStore((s) => s.revision);
   const [values, setValues] = useState<ParamValues>({});
   const [payload, setPayload] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"human" | "json" | "context">("human");
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setValues({});
-    setPayload(null);
-    setError(null);
-  }, [selectedQuery]);
 
   const ready = spec !== undefined &&
     spec.params.every((p) => p.optional === true ||
@@ -61,7 +73,7 @@ export function QueryRunner(): JSX.Element {
        values[p.key] !== ""));
 
   useEffect(() => {
-    if (spec === undefined || !ready) return;
+    if (!ready) return;
     let cancelled = false;
     spec.run({ exec, registry }, values).then((p) => {
       if (!cancelled) {
@@ -78,17 +90,7 @@ export function QueryRunner(): JSX.Element {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec, JSON.stringify(values), ready, revision]);
-
-  if (spec === undefined) {
-    return (
-      <div className="empty-main">
-        <p>Pick a canonical query. Each answer comes in three forms:
-           a designed view, the raw JSON (the future MCP payload), and a
-           prompt-ready context block.</p>
-      </div>
-    );
-  }
+  }, [JSON.stringify(values), ready, revision]);
 
   const markdown = payload !== null
     ? spec.toMarkdown(payload, values) : "";

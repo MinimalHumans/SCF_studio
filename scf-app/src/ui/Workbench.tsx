@@ -8,6 +8,44 @@ import { ReverseLinks } from "./ReverseLinks.tsx";
 import { SearchBox } from "./SearchBox.tsx";
 import { QueryIndex, QueryRunner } from "./queries/QueryRunner.tsx";
 import { ScriptView } from "./ScriptView.tsx";
+import { useStore as useStoreRaw } from "../state/store.ts";
+import { Component, type ReactNode } from "react";
+
+/**
+ * A render crash anywhere in the main pane must never white-screen the
+ * app: it renders here, with its message, and navigation stays alive.
+ */
+class MainPaneBoundary extends Component<
+  { children: ReactNode; resetKey: string },
+  { error: Error | null }
+> {
+  override state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error): { error: Error } {
+    return { error };
+  }
+  override componentDidUpdate(prev: { resetKey: string }): void {
+    if (prev.resetKey !== this.props.resetKey &&
+        this.state.error !== null) {
+      this.setState({ error: null });
+    }
+  }
+  override render(): ReactNode {
+    if (this.state.error !== null) {
+      return (
+        <div className="pane-crash" role="alert">
+          <h2>This view crashed</h2>
+          <p className="mono">{this.state.error.message}</p>
+          <pre className="crash-stack">{this.state.error.stack}</pre>
+          <p className="muted">
+            Pick another item or tab to continue — the rest of the app
+            is fine. Please report the message above.
+          </p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { SceneRail } from "./SceneRail.tsx";
 
 export function Workbench(): JSX.Element {
@@ -26,8 +64,16 @@ export function Workbench(): JSX.Element {
         ? <EntityList entity={selectedEntityType} />
         : <EmptyMain />;
 
+  const errorMessage = useStoreRaw((st) => st.errorMessage);
   return (
     <div className="workbench">
+      {errorMessage !== null && (
+        <div className="error-toast" role="alert">
+          <span>{errorMessage}</span>
+          <button onClick={() =>
+            useStoreRaw.setState({ errorMessage: null })}>×</button>
+        </div>
+      )}
       <header className="topbar">
         <span className="topbar-mark">SCF</span>
         <span className="topbar-project">{projectName}</span>

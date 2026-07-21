@@ -1,111 +1,179 @@
 /**
- * sqlWorker.ts — wa-sqlite in a Web Worker.
+ * sqlWorker.ts — the official @sqlite.org/sqlite-wasm in a Web Worker,
+ * on the opfs-sahpool VFS.
  *
- * OPFS sync access handles only exist in workers, so the database lives
- * here. The main thread talks to it through a tiny message protocol that
- * carries scf-core's SqlExec seam across the boundary:
+ * Chosen after the first real browser run: the previous wa-sqlite
+ * example VFS (OriginPrivateFileSystemVFS) failed to open databases in
+ * practice — it is the library's experimental sample, not a maintained
+ * path. opfs-sahpool is the SQLite team's recommended OPFS VFS when
+ * COOP/COEP headers are not available: persistent, worker-hosted, and
+ * with first-class byte import/export (importDb / sqlite3_js_db_export),
+ * which also retires the fragile close-then-read-the-file dance — export
+ * snapshots the LIVE database via sqlite3_serialize.
  *
- *   { id, op: "open", path }            -> { id, ok }
- *   { id, op: "exec", sql, params }     -> { id, ok, rows } | { id, error }
- *   { id, op: "close" }                 -> { id, ok }
- *
- * Import/export of raw bytes is a main-thread concern (opfs.ts): bytes are
- * written to/read from the OPFS path while the database here is closed.
+ * Protocol (all responses carry {id}; errors as {error}):
+ *   { op:"open",   path }          -> { ok }
+ *   { op:"exec",   sql, params }   -> { ok, rows }
+ *   { op:"close" }                 -> { ok }
+ *   { op:"import", path, bytes }   -> { ok }        (overwrites, opens)
+ *   { op:"export" }                -> { ok, bytes } (live snapshot)
+ *   { op:"wipe",   path }          -> { ok }        (delete + fresh open)
+ *   { op:"exists", path }          -> { ok, exists }
  */
 
-// wa-sqlite's async build is required for async VFS methods.
-import SQLiteESMFactory from "wa-sqlite/dist/wa-sqlite-async.mjs";
-import * as SQLite from "wa-sqlite";
-import { OriginPrivateFileSystemVFS }
-  from "wa-sqlite/src/examples/OriginPrivateFileSystemVFS.js";
+import sqlite3InitModule from "@sqlite.org/sqlite-wasm";
 
 type SqlValue = string | number | boolean | null | Uint8Array;
 
 interface Request {
   id: number;
-  op: "open" | "exec" | "close";
+  op: "open" | "exec" | "close" | "import" | "export" | "wipe" | "exists";
   path?: string;
   sql?: string;
   params?: SqlValue[];
+  bytes?: ArrayBuffer;
 }
 
-let sqlite3: SQLiteAPI | null = null;
-let db: number | null = null;
+// The sqlite-wasm JS API is intentionally loosely typed; this worker is
+// the one file that talks to it.
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-async function ensureApi(): Promise<SQLiteAPI> {
-  if (sqlite3 !== null) return sqlite3;
-  const module = await SQLiteESMFactory();
-  sqlite3 = SQLite.Factory(module);
-  const vfs = new OriginPrivateFileSystemVFS();
-  // The example VFS classes ship untyped; the API accepts any VFS.Base.
-  sqlite3.vfs_register(vfs as unknown as SQLiteVFS, true);
-  return sqlite3;
+let sqlite3: any = null;
+let poolUtil: any = null;
+let db: any = null;
+
+/**
+ * The SAH pool treats database names as absolute paths. importDb,
+ * OpfsSAHPoolDb, unlink, and getFileNames must all see the SAME
+ * spelling, or bytes get imported into one file while a different,
+ * freshly-created empty one gets opened — no error, no data. One
+ * canonical form, used everywhere.
+ */
+function norm(path: string): string {
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+async function ensurePool(): Promise<void> {
+  if (poolUtil !== null) return;
+  const init = sqlite3InitModule as unknown as
+    (cfg: Record<string, unknown>) => Promise<any>;
+  sqlite3 = await init({
+    print: () => undefined,
+    printErr: (msg: string) => {
+      // Surface wasm-level complaints in the console; they are the
+      // ground truth when something goes wrong at this layer.
+      console.error("[sqlite-wasm]", msg);
+    },
+  });
+  try {
+    poolUtil = await sqlite3.installOpfsSAHPoolVfs({ name: "scf-pool" });
+  } catch (e) {
+    throw new Error(
+      "could not acquire database storage — is SCF open in another " +
+      "tab or window? (" +
+      (e instanceof Error ? e.message : String(e)) + ")");
+  }
+}
+
+function closeDb(): void {
+  if (db !== null) {
+    db.close();
+    db = null;
+  }
 }
 
 async function open(path: string): Promise<void> {
-  const api = await ensureApi();
-  if (db !== null) {
-    await api.close(db);
-    db = null;
-  }
-  db = await api.open_v2(
-    path,
-    SQLite.SQLITE_OPEN_CREATE | SQLite.SQLITE_OPEN_READWRITE,
-    "opfs");
+  await ensurePool();
+  closeDb();
+  db = new poolUtil.OpfsSAHPoolDb(norm(path));
 }
 
-async function exec(
-    sql: string, params: SqlValue[]): Promise<Record<string, SqlValue>[]> {
-  const api = await ensureApi();
+function exec(sql: string,
+              params: SqlValue[]): Record<string, SqlValue>[] {
   if (db === null) throw new Error("no database open");
   const rows: Record<string, SqlValue>[] = [];
-  for await (const stmt of api.statements(db, sql)) {
-    if (params.length > 0) {
-      api.bind_collection(
-        stmt, params.map((p) => (typeof p === "boolean" ? (p ? 1 : 0) : p)));
-    }
-    const columns = api.column_names(stmt);
-    while (await api.step(stmt) === SQLite.SQLITE_ROW) {
-      const values = api.row(stmt);
-      const row: Record<string, SqlValue> = {};
-      columns.forEach((c, i) => {
-        row[c] = values[i] as SqlValue;
-      });
-      rows.push(row);
-    }
-  }
+  db.exec({
+    sql,
+    bind: params.length > 0
+      ? params.map((p) => (typeof p === "boolean" ? (p ? 1 : 0) : p))
+      : undefined,
+    rowMode: "object",
+    resultRows: rows,
+  });
   return rows;
 }
 
-async function close(): Promise<void> {
-  if (sqlite3 !== null && db !== null) {
-    await sqlite3.close(db);
-    db = null;
+async function importBytes(path: string,
+                           bytes: ArrayBuffer): Promise<void> {
+  await ensurePool();
+  closeDb();
+  await poolUtil.importDb(norm(path), new Uint8Array(bytes));
+  db = new poolUtil.OpfsSAHPoolDb(norm(path));
+}
+
+function exportBytes(): ArrayBuffer {
+  if (db === null) throw new Error("no database open");
+  const out: Uint8Array = sqlite3.capi.sqlite3_js_db_export(db);
+  // Copy into a plain ArrayBuffer for transfer.
+  return out.slice().buffer;
+}
+
+async function wipe(path: string): Promise<void> {
+  await ensurePool();
+  closeDb();
+  const names: string[] = poolUtil.getFileNames();
+  for (const name of names) {
+    if (norm(name) === norm(path)) poolUtil.unlink(name);
   }
+  db = new poolUtil.OpfsSAHPoolDb(norm(path));
+}
+
+async function exists(path: string): Promise<boolean> {
+  await ensurePool();
+  const names: string[] = poolUtil.getFileNames();
+  return names.some((name) => norm(name) === norm(path));
 }
 
 self.onmessage = (event: MessageEvent<Request>) => {
   const { id, op } = event.data;
-  const respond = (payload: Record<string, unknown>): void => {
-    self.postMessage({ id, ...payload });
-  };
   void (async () => {
     try {
       if (op === "open") {
         await open(event.data.path ?? "working.scf");
-        respond({ ok: true });
+        self.postMessage({ id, ok: true });
       } else if (op === "exec") {
-        const rows = await exec(event.data.sql ?? "",
-                                event.data.params ?? []);
-        respond({ ok: true, rows });
+        const rows = exec(event.data.sql ?? "", event.data.params ?? []);
+        self.postMessage({ id, ok: true, rows });
       } else if (op === "close") {
-        await close();
-        respond({ ok: true });
+        closeDb();
+        self.postMessage({ id, ok: true });
+      } else if (op === "import") {
+        await importBytes(event.data.path ?? "working.scf",
+                          event.data.bytes ?? new ArrayBuffer(0));
+        self.postMessage({ id, ok: true });
+      } else if (op === "export") {
+        const bytes = exportBytes();
+        self.postMessage({ id, ok: true, bytes }, { transfer: [bytes] });
+      } else if (op === "wipe") {
+        await wipe(event.data.path ?? "working.scf");
+        self.postMessage({ id, ok: true });
+      } else if (op === "exists") {
+        self.postMessage({
+          id, ok: true,
+          exists: await exists(event.data.path ?? "working.scf"),
+        });
       } else {
-        respond({ error: `unknown op ${String(op)}` });
+        self.postMessage({ id, error: `unknown op ${String(op)}` });
       }
     } catch (e) {
-      respond({ error: e instanceof Error ? e.message : String(e) });
+      console.error("[sqlWorker]", op, e);
+      self.postMessage({
+        id,
+        error: e instanceof Error
+          ? `${e.message}${e.cause !== undefined
+              ? ` (${String(e.cause)})` : ""}`
+          : String(e),
+      });
     }
   })();
 };

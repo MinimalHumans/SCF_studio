@@ -38,14 +38,23 @@ export function ImportFlow({ onClose, onDone }: {
     confidence: string;
   }>>([]);
   const [busy, setBusy] = useState(false);
+  const [busyStep, setBusyStep] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [showRepairs, setShowRepairs] = useState(false);
 
   const pick = async (file: File): Promise<void> => {
+    setError(null);
     const text = await file.text();
     const kind = file.name.toLowerCase().endsWith(".fdx")
       ? "fdx" as const : "fountain" as const;
-    const p = prepareImport(text, kind);
+    let p: PreparedImport;
+    try {
+      p = prepareImport(text, kind);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      return;
+    }
     setFileName(file.name);
     setPrepared(p);
     const defaults = defaultAcceptance(p.proposals);
@@ -72,6 +81,7 @@ export function ImportFlow({ onClose, onDone }: {
   const doImport = async (): Promise<void> => {
     if (prepared === null) return;
     setBusy(true);
+    setError(null);
     const characterNames = new Map<string, string>();
     for (const c of chars) {
       if (c.accepted && c.name.trim() !== "") {
@@ -84,11 +94,16 @@ export function ImportFlow({ onClose, onDone }: {
         propNames.set(x.key, x.name.trim());
       }
     }
-    const r = await applyImport(exec, prepared, {
-      scenes: true, characterNames, props: propNames,
-    });
-    setResult(r);
-    setBusy(false);
+    try {
+      const r = await applyImport(exec, prepared, {
+        scenes: true, characterNames, props: propNames,
+      }, setBusyStep);
+      setResult(r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const suspectCount = useMemo(() =>
@@ -106,6 +121,9 @@ export function ImportFlow({ onClose, onDone }: {
 
         {prepared === null && (
           <div className="import-pick">
+            {error !== null && (
+              <p className="import-error">Could not parse: {error}</p>
+            )}
             <p>Fountain (.fountain, .txt) or Final Draft (.fdx).
                Conversion damage gets a bounded repair pass — every
                repair is shown. Nothing is written until you accept.</p>
@@ -268,6 +286,9 @@ export function ImportFlow({ onClose, onDone }: {
               </table>
             )}
 
+            {error !== null && (
+              <p className="import-error">Import failed: {error}</p>
+            )}
             <div className="modal-actions">
               <span className="muted">
                 Everything created is marked machine-created.
@@ -276,7 +297,7 @@ export function ImportFlow({ onClose, onDone }: {
               <button onClick={onClose}>Cancel</button>
               <button className="primary" disabled={busy}
                       onClick={() => void doImport()}>
-                {busy ? "Importing…" : "Import"}
+                {busy ? `Importing… ${busyStep}` : "Import"}
               </button>
             </div>
           </div>

@@ -1,16 +1,24 @@
 /**
  * workerClient.ts — main-thread client for the SQLite worker.
  *
- * Exposes scf-core's SqlExec seam backed by postMessage, plus the OPFS
- * byte-level helpers for import/export. Contract: the database must be
- * closed while bytes are being written or read (single writer; the worker
- * VFS holds access handles while open).
+ * Exposes scf-core's SqlExec seam over postMessage, plus byte-level
+ * import/export of the working database. Export snapshots the LIVE
+ * database (sqlite3_serialize under the hood) — no close/reopen dance,
+ * no path coupling to OPFS internals.
  */
 
 import type { Row, SqlExec, SqlValue } from "@scf-core/db.ts";
 
+interface Payload {
+  ok?: boolean;
+  rows?: Row[];
+  bytes?: ArrayBuffer;
+  exists?: boolean;
+  error?: string;
+}
+
 interface Pending {
-  resolve: (rows: Row[]) => void;
+  resolve: (payload: Payload) => void;
   reject: (err: Error) => void;
 }
 
@@ -23,22 +31,28 @@ export class SqlWorkerClient {
     this.#worker = new Worker(
       new URL("./sqlWorker.ts", import.meta.url), { type: "module" });
     this.#worker.onmessage = (event: MessageEvent) => {
-      const { id, ok, rows, error } = event.data as {
-        id: number; ok?: boolean; rows?: Row[]; error?: string;
-      };
-      const pending = this.#pending.get(id);
+      const data = event.data as Payload & { id: number };
+      const pending = this.#pending.get(data.id);
       if (pending === undefined) return;
-      this.#pending.delete(id);
-      if (ok === true) pending.resolve(rows ?? []);
-      else pending.reject(new Error(error ?? "worker error"));
+      this.#pending.delete(data.id);
+      if (data.ok === true) pending.resolve(data);
+      else pending.reject(new Error(data.error ?? "worker error"));
+    };
+    this.#worker.onerror = (event) => {
+      // A worker-level crash (module failed to load, etc.) rejects
+      // everything in flight — otherwise callers hang forever.
+      const err = new Error(`sql worker failed: ${event.message}`);
+      for (const pending of this.#pending.values()) pending.reject(err);
+      this.#pending.clear();
     };
   }
 
-  #send(op: string, payload: Record<string, unknown> = {}): Promise<Row[]> {
+  #send(op: string, payload: Record<string, unknown> = {},
+        transfer: Transferable[] = []): Promise<Payload> {
     const id = this.#nextId++;
     return new Promise((resolve, reject) => {
       this.#pending.set(id, { resolve, reject });
-      this.#worker.postMessage({ id, op, ...payload });
+      this.#worker.postMessage({ id, op, ...payload }, transfer);
     });
   }
 
@@ -50,44 +64,31 @@ export class SqlWorkerClient {
     return this.#send("close").then(() => undefined);
   }
 
+  /** Overwrite the working database with these bytes and open it. */
+  importBytes(path: string, bytes: ArrayBuffer): Promise<void> {
+    return this.#send("import", { path, bytes }, [bytes])
+      .then(() => undefined);
+  }
+
+  /** Consistent snapshot of the live database. */
+  exportBytes(): Promise<ArrayBuffer> {
+    return this.#send("export").then((p) => p.bytes ?? new ArrayBuffer(0));
+  }
+
+  /** Delete the working database (if present) and open a fresh one. */
+  wipe(path: string): Promise<void> {
+    return this.#send("wipe", { path }).then(() => undefined);
+  }
+
+  exists(path: string): Promise<boolean> {
+    return this.#send("exists", { path }).then((p) => p.exists === true);
+  }
+
   /** scf-core's seam. Errors from the worker arrive as rejections. */
   exec: SqlExec = (sql: string, params: SqlValue[] = []) =>
-    this.#send("exec", { sql, params });
+    this.#send("exec", { sql, params }).then((p) => p.rows ?? []);
 
   terminate(): void {
     this.#worker.terminate();
-  }
-}
-
-// ---------------------------------------------------------------------------
-// OPFS byte-level working copy (main thread; database must be closed)
-// ---------------------------------------------------------------------------
-
-async function opfsFileHandle(
-    path: string, create: boolean): Promise<FileSystemFileHandle> {
-  const root = await navigator.storage.getDirectory();
-  return root.getFileHandle(path, { create });
-}
-
-export async function writeWorkingCopy(
-    path: string, bytes: ArrayBuffer | Uint8Array): Promise<void> {
-  const handle = await opfsFileHandle(path, true);
-  const writable = await handle.createWritable();
-  await writable.write(bytes as FileSystemWriteChunkType);
-  await writable.close();
-}
-
-export async function readWorkingCopy(path: string): Promise<ArrayBuffer> {
-  const handle = await opfsFileHandle(path, false);
-  const file = await handle.getFile();
-  return file.arrayBuffer();
-}
-
-export async function workingCopyExists(path: string): Promise<boolean> {
-  try {
-    await opfsFileHandle(path, false);
-    return true;
-  } catch {
-    return false;
   }
 }

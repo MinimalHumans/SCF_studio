@@ -1,6 +1,6 @@
 # scf-core
 
-The SCF (Story Craft Format) core library: **format + executable semantics +
+The SCF (Story Context Framework) core library: **format + executable semantics +
 conformance target**, UI-free. This is the foundation of the second
 implementation (`docs/design/20260715_SCF_Second_Implementation.md`) — the
 web app, the query page, the screenplay editor, and the future MCP server

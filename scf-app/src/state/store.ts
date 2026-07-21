@@ -13,9 +13,7 @@ import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { initDatabase, newUuid, q, type Row, type SqlValue }
   from "@scf-core/db.ts";
-import {
-  SqlWorkerClient, readWorkingCopy, writeWorkingCopy,
-} from "../db/workerClient.ts";
+import { SqlWorkerClient } from "../db/workerClient.ts";
 import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef }
   from "./registryGraph.ts";
@@ -51,7 +49,7 @@ interface FormDraft {
 }
 
 interface AppState {
-  phase: "start" | "loading" | "open" | "error";
+  phase: "start" | "loading" | "open" | "error" | "multitab";
   errorMessage: string | null;
   projectName: string | null;
   fileToken: unknown | null;
@@ -66,6 +64,8 @@ interface AppState {
   draft: FormDraft | null;
 
   openDemo: () => Promise<void>;
+  resumeLast: () => Promise<void>;
+  lastSession: string | null;
   openFromPicker: () => Promise<void>;
   newProject: () => Promise<void>;
   saveProject: () => Promise<void>;
@@ -86,19 +86,50 @@ interface AppState {
 
 async function bootDatabase(
     bytes: ArrayBuffer | null): Promise<void> {
-  await client.close();
   if (bytes !== null) {
-    await writeWorkingCopy(WORKING_PATH, bytes);
+    await client.importBytes(WORKING_PATH, bytes);
+  } else {
+    await client.open(WORKING_PATH);
   }
-  await client.open(WORKING_PATH);
   // Same init as Python: create/ALTER registry tables, uuid identity,
   // stamp schema_version. 1.x data migrations intentionally absent.
   await initDatabase(client.exec, registry,
                      { editorVersion: EDITOR_VERSION });
 }
 
+/**
+ * Single-tab guard. The SAH pool's sync access handles are EXCLUSIVE —
+ * a second tab (or a stale HMR worker) contending for them is exactly
+ * the "Access Handles cannot be created…" failure, and a half-acquired
+ * pool degrades unpredictably. One tab holds a Web Lock for the life of
+ * the page; any other tab gets a clear screen instead of a broken app.
+ */
+function guardSingleTab(): void {
+  if (!("locks" in navigator)) return;
+  void navigator.locks.request("scf-working-db", { ifAvailable: true },
+    (lock) => {
+      if (lock === null) {
+        useStore.setState({ phase: "multitab" });
+        return Promise.resolve();
+      }
+      // Hold the lock until this page goes away.
+      return new Promise<void>(() => undefined);
+    });
+}
+
+// Vite HMR: a module reload here would orphan the old worker WITH its
+// access handles still held — the same contention as a second tab. A
+// full page reload is the only clean handoff for the database layer.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    client.terminate();
+    window.location.reload();
+  });
+}
+
 export const useStore = create<AppState>((set, get) => ({
   phase: "start",
+  lastSession: localStorage.getItem("scf:last-session"),
   errorMessage: null,
   projectName: null,
   fileToken: null,
@@ -118,8 +149,37 @@ export const useStore = create<AppState>((set, get) => ({
       const res = await fetch("/hollow_creek.scf");
       if (!res.ok) throw new Error(`demo fetch failed: ${res.status}`);
       await bootDatabase(await res.arrayBuffer());
+      const check = await client.exec(
+        "SELECT (SELECT COUNT(*) FROM character) + " +
+        "(SELECT COUNT(*) FROM scene) AS n");
+      if ((check[0]?.["n"] as number ?? 0) === 0) {
+        throw new Error(
+          "demo imported but contains no data — the imported bytes and " +
+          "the opened database are not the same file (path mismatch " +
+          "in the storage layer)");
+      }
+      localStorage.setItem("scf:last-session", "Hollow Creek (demo)");
       set({ phase: "open", projectName: "Hollow Creek (demo)",
-            fileToken: null, revision: get().revision + 1 });
+            fileToken: null, lastSession: "Hollow Creek (demo)",
+            revision: get().revision + 1 });
+    } catch (e) {
+      set({ phase: "error",
+            errorMessage: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  /** Reopen the OPFS working database from the previous session — the
+   * work is still there after a refresh; this is the path back to it. */
+  resumeLast: async () => {
+    set({ phase: "loading", errorMessage: null });
+    try {
+      if (!(await client.exists(WORKING_PATH))) {
+        throw new Error("no previous session found in browser storage");
+      }
+      await bootDatabase(null);
+      const name = localStorage.getItem("scf:last-session") ?? "resumed";
+      set({ phase: "open", projectName: `${name}`, fileToken: null,
+            revision: get().revision + 1 });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -132,8 +192,10 @@ export const useStore = create<AppState>((set, get) => ({
       if (opened === null) return; // user cancelled
       set({ phase: "loading", errorMessage: null });
       await bootDatabase(opened.bytes);
+      localStorage.setItem("scf:last-session", opened.name);
       set({ phase: "open", projectName: opened.name,
-            fileToken: opened.token, revision: get().revision + 1 });
+            fileToken: opened.token, lastSession: opened.name,
+            revision: get().revision + 1 });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -143,10 +205,8 @@ export const useStore = create<AppState>((set, get) => ({
   newProject: async () => {
     set({ phase: "loading", errorMessage: null });
     try {
-      // Empty OPFS working copy; initDatabase creates the format.
-      await client.close();
-      await writeWorkingCopy(WORKING_PATH, new Uint8Array());
-      await client.open(WORKING_PATH);
+      // Fresh working database; initDatabase creates the format.
+      await client.wipe(WORKING_PATH);
       await initDatabase(client.exec, registry,
                          { editorVersion: EDITOR_VERSION });
       set({ phase: "open", projectName: "Untitled.scf", fileToken: null,
@@ -159,10 +219,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   saveProject: async () => {
     const { fileToken, projectName } = get();
-    // Single-writer contract: close while bytes are read.
-    await client.close();
     try {
-      const bytes = await readWorkingCopy(WORKING_PATH);
+      // Live snapshot — no close/reopen dance.
+      const bytes = await client.exportBytes();
       if (fileToken !== null) {
         await adapter.save(fileToken, bytes);
       } else {
@@ -172,8 +231,9 @@ export const useStore = create<AppState>((set, get) => ({
           set({ projectName: saved.name, fileToken: saved.token });
         }
       }
-    } finally {
-      await client.open(WORKING_PATH);
+    } catch (e) {
+      set({ errorMessage:
+        e instanceof Error ? e.message : String(e) });
     }
   },
 
@@ -234,6 +294,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   saveDraft: async () => {
+   try {
     const draft = get().draft;
     if (draft === null) return null;
     const edef = registry.entities.get(draft.entity);
@@ -270,10 +331,21 @@ export const useStore = create<AppState>((set, get) => ({
     set({ revision: get().revision + 1 });
     await get().openEntityRow(draft.entity, draft.id);
     return draft.id;
+   } catch (e) {
+    set({ errorMessage: `Save failed: ${
+      e instanceof Error ? e.message : String(e)}` });
+    return null;
+   }
   },
 
   deleteRow: async (entity, id) => {
-    await exec(`DELETE FROM ${q(entity)} WHERE id = ?`, [id]);
+    try {
+      await exec(`DELETE FROM ${q(entity)} WHERE id = ?`, [id]);
+    } catch (e) {
+      set({ errorMessage: `Delete failed: ${
+        e instanceof Error ? e.message : String(e)}` });
+      return;
+    }
     const { openRow } = get();
     set({
       revision: get().revision + 1,
@@ -296,3 +368,5 @@ export function isDirty(draft: FormDraft | null): boolean {
   return Object.keys(draft.values).some(
     (k) => (draft.values[k] ?? null) !== (draft.original[k] ?? null));
 }
+
+guardSingleTab();

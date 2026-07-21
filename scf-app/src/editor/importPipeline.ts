@@ -18,7 +18,7 @@
  */
 
 import type { SqlExec } from "@scf-core/db.ts";
-import { q } from "@scf-core/db.ts";
+import { q, withTransaction } from "@scf-core/db.ts";
 import { parseFountain, serialize } from "@scf-core/fountain/index.ts";
 import { repairConversionArtifacts, type RepairRecord }
   from "@scf-core/fountain/repair.ts";
@@ -102,12 +102,23 @@ async function insert(exec: SqlExec, table: string,
 
 export async function applyImport(
     exec: SqlExec, prepared: PreparedImport,
-    accepted: AcceptedImport): Promise<ImportResult> {
+    accepted: AcceptedImport,
+    onProgress: (step: string) => void = () => undefined):
+    Promise<ImportResult> {
+  return withTransaction(exec, () =>
+    applyImportInner(exec, prepared, accepted, onProgress));
+}
+
+async function applyImportInner(
+    exec: SqlExec, prepared: PreparedImport,
+    accepted: AcceptedImport,
+    onProgress: (step: string) => void): Promise<ImportResult> {
   const { doc, proposals } = prepared;
   const result: ImportResult = {
     scenes: 0, locations: 0, characters: 0, links: 0, props: 0, lines: 0,
   };
 
+  onProgress("creating locations…");
   // Locations first (scenes reference them).
   const locationIdByName = new Map<string, number>();
   if (accepted.scenes) {
@@ -118,6 +129,7 @@ export async function applyImport(
     }
   }
 
+  onProgress("creating scenes…");
   // Scenes; remember heading line index -> scene id.
   const sceneIdByLineIndex = new Map<number, number>();
   if (accepted.scenes) {
@@ -143,6 +155,7 @@ export async function applyImport(
     }
   }
 
+  onProgress("creating characters…");
   // Characters the user accepted (with any renames applied).
   const characterIdByCueKey = new Map<string, number>();
   for (const [cueKey, displayName] of accepted.characterNames) {
@@ -157,6 +170,7 @@ export async function applyImport(
     result.props += 1;
   }
 
+  onProgress("linking scenes and characters…");
   // Scene<->character links for accepted pairs.
   if (accepted.scenes) {
     for (const link of proposals.links) {
@@ -197,6 +211,7 @@ export async function applyImport(
       characterByLineOrder.set(lo, charId);
     }
   }
+  onProgress(`writing ${String(doc.lines.length)} screenplay lines…`);
   const assigned = applyAssignments(
     stream.lines, sceneByLineOrder, characterByLineOrder);
   const blocks = rowsToBlocks(assigned);

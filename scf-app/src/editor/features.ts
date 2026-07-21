@@ -22,6 +22,7 @@
  */
 
 import type { SqlExec } from "@scf-core/db.ts";
+import { withTransaction } from "@scf-core/db.ts";
 import type { Row } from "@scf-core/db.ts";
 import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
 import { readScreenplay } from "@scf-core/screenplay/rowModel.ts";
@@ -102,6 +103,12 @@ export async function beatAnchoredLineIds(
 // ---------------------------------------------------------------------------
 
 export async function publishVersion(
+    exec: SqlExec, description: string): Promise<number> {
+  return withTransaction(exec, () =>
+    publishVersionInner(exec, description));
+}
+
+async function publishVersionInner(
     exec: SqlExec, description: string): Promise<number> {
   const sp = await readScreenplay(exec);
   const counts = {

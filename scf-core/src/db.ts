@@ -35,6 +35,29 @@ export function q(identifier: string): string {
 }
 
 /** Cross-file row identity (schema 2.3). Stamp on every insert. */
+/**
+ * Run `fn` inside a single transaction. Without this, each statement
+ * auto-commits — on OPFS-backed storage every commit is an fsync, and a
+ * multi-thousand-row write (script import, version publish) stalls for
+ * minutes. One BEGIN/COMMIT turns that into one flush.
+ */
+export async function withTransaction<T>(
+    exec: SqlExec, fn: () => Promise<T>): Promise<T> {
+  await exec("BEGIN IMMEDIATE");
+  try {
+    const out = await fn();
+    await exec("COMMIT");
+    return out;
+  } catch (e) {
+    try {
+      await exec("ROLLBACK");
+    } catch {
+      // the original error is the one that matters
+    }
+    throw e;
+  }
+}
+
 export function newUuid(): string {
   return crypto.randomUUID();
 }

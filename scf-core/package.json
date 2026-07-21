@@ -1,7 +1,7 @@
 {
   "name": "@minimalhumans/scf-core",
   "version": "0.1.0",
-  "description": "SCF (Story Craft Format) core: registry types, database layer, and resolution/readiness semantics. UI-free. Structured publishable, unpublished until the format settles (design decision 6, 2026-07-15).",
+  "description": "SCF (Story Context Framework) core: registry types, database layer, and resolution/readiness semantics. UI-free. Structured publishable, unpublished until the format settles (design decision 6, 2026-07-15).",
   "private": true,
   "type": "module",
   "license": "MIT",

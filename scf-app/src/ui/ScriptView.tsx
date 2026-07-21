@@ -14,6 +14,7 @@ import { EditorState } from "@codemirror/state";
 import { exec, useStore } from "../state/store.ts";
 import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
+import { withTransaction } from "@scf-core/db.ts";
 import { loadLines } from "../editor/lineState.ts";
 import {
   blocksToDoc, blocksToFountain, commitPlan, rowsToBlocks,
@@ -143,11 +144,11 @@ export function ScriptView(): JSX.Element {
     const view = viewRef.current;
     if (view === null) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);
-    await writeScreenplay(exec, {
+    await withTransaction(exec, () => writeScreenplay(exec, {
       bom: false,
       titlePage: titlePageRef.current,
       lines: plan.rows,
-    });
+    }));
     prevBlocksRef.current = new Map(plan.rows.map((r) => [r.uuid!, {
       id: r.uuid!, type: r.lineType as Block["type"], text: r.content,
       sceneId: r.sceneId, characterId: r.characterId,

@@ -4,16 +4,16 @@
    data chrome; the scene spine is the signature element. */
 
 :root {
-  --ink-0: #16130f;
-  --ink-1: #1d1914;
-  --ink-2: #262019;
-  --line: #373026;
-  --paper: #e9e2d3;
-  --paper-dim: #9c9078;
-  --amber: #d9a441;
-  --amber-dim: #8a6a2c;
-  --blocker: #c4554d;
-  --ok: #6f9f6b;
+  --ink-0: #12151a;
+  --ink-1: #181c23;
+  --ink-2: #1f242e;
+  --line: #2c3442;
+  --paper: #dde4ee;
+  --paper-dim: #8a96a8;
+  --amber: #6aa9e9;
+  --amber-dim: #3d6b9e;
+  --blocker: #e06c75;
+  --ok: #7fbf8e;
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -628,7 +628,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .cascade-name { font-weight: 600; }
 .in-force-tag {
   font: 10px var(--mono);
-  color: #211a0d;
+  color: #0d1420;
   background: var(--amber);
   border-radius: 3px;
   padding: 0 5px;
@@ -644,7 +644,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .dossier-row .kv-out { margin-left: 12px; }
 .lineage { font: 12px var(--mono); color: var(--paper-dim); }
 .density-warning {
-  color: #211a0d;
+  color: #0d1420;
   background: var(--amber);
   border-radius: 4px;
   padding: 6px 10px;
@@ -728,7 +728,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   display: flex; align-items: center; justify-content: center; z-index: 40;
 }
 .modal.import-flow {
-  background: var(--ink-0, #16161a); border: 1px solid var(--line);
+  background: var(--ink-0, #12151a); border: 1px solid var(--line);
   border-radius: 6px; width: min(860px, 92vw); max-height: 88vh;
   overflow: auto; padding: 16px 20px;
 }
@@ -741,9 +741,9 @@ ul { list-style: none; margin: 0; padding: 0; }
 .import-chars .char-name { width: 15em; }
 .import-chars tr.unaccepted { opacity: .5; }
 .conf { padding: 1px 7px; border-radius: 8px; font-size: 10.5px; }
-.conf-high { background: #274a2c; color: #a8e0af; }
-.conf-medium { background: #4a4327; color: #e0d4a8; }
-.conf-low { background: #4a2727; color: #e0a8a8; }
+.conf-high { background: #1f3d33; color: #93d9b8; }
+.conf-medium { background: #2c3a52; color: #a9c6ec; }
+.conf-low { background: #452a33; color: #e0a8b4; }
 .suspicion {
   display: inline-block; margin-right: 6px; font-size: 10.5px;
   color: var(--paper-dim); border-bottom: 1px dotted var(--paper-dim);
@@ -784,3 +784,28 @@ ul { list-style: none; margin: 0; padding: 0; }
 .version-desc { font-size: 12.5px; }
 .version-counts, .version-diff { font-size: 11.5px; }
 .version-diff { color: var(--amber); }
+
+
+/* error surfacing */
+.error-toast {
+  position: fixed; top: 12px; right: 12px; z-index: 60;
+  display: flex; gap: 10px; align-items: center;
+  background: #2a1b20; border: 1px solid var(--blocker);
+  color: #f0c9cd; border-radius: 6px; padding: 8px 12px;
+  max-width: 46ch; font-size: 12.5px;
+}
+.error-toast button {
+  background: none; border: none; color: inherit; cursor: pointer;
+}
+.import-error { color: var(--blocker); font-weight: 600; }
+
+
+/* main-pane crash surface */
+.pane-crash { padding: 28px; max-width: 72ch; }
+.pane-crash h2 { color: var(--blocker); margin-top: 0; }
+.crash-stack {
+  font-size: 10.5px; color: var(--paper-dim); background: var(--ink-1);
+  border: 1px solid var(--line); border-radius: 4px; padding: 10px;
+  max-height: 40vh; overflow: auto; white-space: pre-wrap;
+}
+.start-warn { max-width: 44ch; color: var(--paper-dim); }
