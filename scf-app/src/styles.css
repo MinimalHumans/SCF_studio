@@ -687,8 +687,9 @@ ul { list-style: none; margin: 0; padding: 0; }
 .script-editor .cm-content { max-width: 62ch; padding: 24px 0 50vh; margin: 0 auto; }
 .script-editor .cm-line { padding: 0 2px; }
 
-/* screenplay typography — spacing is presentation (sp-gap), never text */
-.sp-gap { margin-top: 0.9em; }
+/* screenplay typography — spacing renders as measured block widgets
+   (.sp-spacer), never margins: CM6 geometry depends on it */
+.sp-spacer { height: 0.95em; }
 .sp-heading { font-weight: 700; text-transform: uppercase; letter-spacing: .01em; }
 .sp-character { margin-left: 38%; text-transform: uppercase; }
 .sp-dialogue { margin-left: 22%; max-width: 36ch; }
@@ -809,3 +810,101 @@ ul { list-style: none; margin: 0; padding: 0; }
   max-height: 40vh; overflow: auto; white-space: pre-wrap;
 }
 .start-warn { max-width: 44ch; color: var(--paper-dim); }
+
+/* ---- Script surface: light island ----
+   The editor page reads like paper: white ground, near-black ink, in an
+   otherwise dark app. The invisible cursor was CM6's default black caret
+   on our dark ground; on white it shows, and we widen it anyway. */
+.script-editor {
+  background: #fbfbf8;
+  color: #1a1d22;
+}
+.script-editor .cm-editor { color: #1a1d22; }
+.script-editor .cm-content { caret-color: #1a1d22; }
+.script-editor .cm-cursor,
+.script-editor .cm-dropCursor {
+  border-left: 2px solid #1a1d22;
+}
+.script-editor .cm-editor.cm-focused .cm-selectionBackground,
+.script-editor .cm-selectionBackground {
+  background: #cfe0f5;
+}
+.script-editor .cm-content ::selection { background: #cfe0f5; }
+.script-editor .cm-line::selection { background: #cfe0f5; }
+
+/* screenplay type colors, light variants */
+.script-editor .sp-parenthetical { color: #5b6570; }
+.script-editor .sp-synopsis { color: #5b6570; }
+.script-editor .sp-section { color: #2f6bb0; }
+.script-editor .sp-note {
+  color: #55606d;
+  background: #eef1f4;
+}
+
+/* gutters on the light ground */
+.script-editor .cm-gutters {
+  background: #f2f3ef;
+  color: #7a8494;
+  border-right: 1px solid #dcdfd8;
+}
+.script-editor .sp-gutter { border-right: 1px solid #dcdfd8; }
+.script-editor .sp-gutter-type { color: #8a94a4; opacity: .9; }
+.script-editor .sp-g-heading { color: #2f6bb0; }
+.script-editor .sp-gutter-beats { color: #2f6bb0; }
+
+/* inline chips + prop-tag underlines, light variants */
+.script-editor .sp-chip {
+  background: #eef2f8;
+  border-color: #c6d2e2;
+  color: #2f6bb0;
+}
+.script-editor .sp-chip:hover { border-color: #2f6bb0; }
+.script-editor .sp-tag-anchored { border-bottom-color: #2f6bb0; }
+.script-editor .sp-tag-reanchored { border-bottom-color: #2f6bb0; }
+
+
+/* ---- page framing: the writable page has edges; outside is not
+        writing space ---- */
+.script-editor .cm-scroller {
+  background: #e9eae5;
+}
+.script-editor .cm-content {
+  background: #fbfbf8;
+  border-left: 1px solid #d3d5cd;
+  border-right: 1px solid #d3d5cd;
+  box-shadow: 0 0 18px rgba(20, 24, 30, 0.08);
+  padding: 32px 56px 50vh;
+  max-width: 66ch;
+}
+/* gutters read as part of the surround, not the page */
+.script-editor .cm-gutters {
+  background: #e9eae5;
+  border-right: none;
+}
+.script-editor .sp-gutter { border-right: none; }
+/* gutter labels align with their lines: same line metrics as content */
+.script-editor .cm-gutterElement {
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+}
+.script-editor .cm-line { line-height: 1.4; }
+.sp-gutter-type { font-size: 9.5px; padding-top: 3px; }
+
+/* heading case reads uppercase EVERYWHERE it appears */
+.scene-jump { text-transform: uppercase; }
+.stale-notice em { text-transform: uppercase; }
+
+.commit-note { font-size: 11.5px; color: var(--ok); }
+
+/* autocomplete dropdown on the light page */
+.script-editor .cm-tooltip.cm-tooltip-autocomplete {
+  background: #ffffff;
+  border: 1px solid #c9cdc4;
+  box-shadow: 0 4px 14px rgba(20, 24, 30, 0.14);
+  color: #1a1d22;
+}
+.script-editor .cm-tooltip-autocomplete ul li[aria-selected] {
+  background: #dce8f7;
+  color: #12151a;
+}

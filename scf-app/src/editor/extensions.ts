@@ -8,13 +8,17 @@
  * all lives in lineState.
  */
 
-import { RangeSetBuilder, StateEffect, StateField, type Extension }
-  from "@codemirror/state";
+import { EditorState, RangeSetBuilder, StateEffect, StateField,
+  type Extension } from "@codemirror/state";
 import {
   Decoration, EditorView, ViewPlugin, ViewUpdate, WidgetType, keymap,
   type DecorationSet, gutter, GutterMarker,
 } from "@codemirror/view";
 import { history, historyKeymap, defaultKeymap } from "@codemirror/commands";
+import {
+  autocompletion, completionKeymap, type CompletionContext,
+  type CompletionResult,
+} from "@codemirror/autocomplete";
 import {
   TYPE_CYCLE, lineState, setLineType, type BlockType,
 } from "./lineState.ts";
@@ -77,6 +81,64 @@ class ChipWidget extends WidgetType {
   }
 }
 
+/**
+ * Spacing between blocks is a real, MEASURED block widget — never a CSS
+ * margin. CM6's pointer mapping, vertical cursor motion, and gutter
+ * alignment all assume line positions match measured block heights;
+ * margins broke all three at once (clicks landing on the wrong line,
+ * arrow keys skipping cues, gutter labels drifting).
+ */
+class SpacerWidget extends WidgetType {
+  override eq(): boolean {
+    return true;
+  }
+  override get estimatedHeight(): number {
+    return 14;
+  }
+  override toDOM(): HTMLElement {
+    const el = document.createElement("div");
+    el.className = "sp-spacer";
+    return el;
+  }
+  override ignoreEvent(): boolean {
+    return false;
+  }
+}
+const SPACER = Decoration.widget({
+  widget: new SpacerWidget(), block: true, side: -10,
+});
+
+/**
+ * Block decorations must come from a StateField (they participate in
+ * vertical layout, which ViewPlugins run too late for — CM6 enforces
+ * this at runtime). Derived from lineState over the whole document;
+ * recomputed only when the doc or the line entries change.
+ */
+function buildSpacers(state: EditorState): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const entries = state.field(lineState).entries;
+  for (let n = 2; n <= state.doc.lines; n++) {
+    const prev = entries[n - 2];
+    const entry = entries[n - 1];
+    if (prev !== undefined && entry !== undefined &&
+        blankBetween(prev.type, entry.type)) {
+      const at = state.doc.line(n).from;
+      builder.add(at, at, SPACER);
+    }
+  }
+  return builder.finish();
+}
+
+const spacerField = StateField.define<DecorationSet>({
+  create: buildSpacers,
+  update: (deco, tr) =>
+    tr.docChanged ||
+    tr.state.field(lineState) !== tr.startState.field(lineState)
+      ? buildSpacers(tr.state)
+      : deco,
+  provide: (f) => EditorView.decorations.from(f),
+});
+
 const lineDecos = new Map<string, Decoration>();
 function lineDeco(cls: string): Decoration {
   let d = lineDecos.get(cls);
@@ -98,11 +160,8 @@ function buildDecorations(view: EditorView,
     for (let n = first; n <= last; n++) {
       const entry = entries[n - 1];
       if (entry === undefined) continue;
-      const prev = entries[n - 2];
-      const gap = prev !== undefined && blankBetween(prev.type, entry.type);
       const line = view.state.doc.line(n);
-      builder.add(line.from, line.from,
-        lineDeco(`sp-${entry.type}${gap ? " sp-gap" : ""}`));
+      builder.add(line.from, line.from, lineDeco(`sp-${entry.type}`));
       const ann = annotations.get(entry.id);
       if (ann?.tags !== undefined) {
         for (const tag of ann.tags) {
@@ -215,6 +274,26 @@ const typeGutter = gutter({
     update.state.field(lineState) !== update.startState.field(lineState),
 });
 
+/** v1 parity: heading and character lines uppercase AS YOU TYPE — the
+ * enforcement lives in the data, so every surface (rail, entities,
+ * export) agrees, not just a CSS transform. */
+const uppercaseInput = EditorView.inputHandler.of(
+  (view, from, to, text) => {
+    if (!/\p{Ll}/u.test(text)) return false;
+    const line = view.state.doc.lineAt(from);
+    const entry = view.state.field(lineState).entries[line.number - 1];
+    if (entry === undefined ||
+        (entry.type !== "heading" && entry.type !== "character")) {
+      return false;
+    }
+    view.dispatch({
+      changes: { from, to, insert: text.toUpperCase() },
+      selection: { anchor: from + text.length },
+      userEvent: "input.type",
+    });
+    return true;
+  });
+
 function cycleType(view: EditorView, direction: 1 | -1): boolean {
   const line = view.state.doc.lineAt(view.state.selection.main.head);
   const entry = view.state.field(lineState).entries[line.number - 1];
@@ -232,18 +311,107 @@ function cycleType(view: EditorView, direction: 1 | -1): boolean {
 export interface ScriptCallbacks {
   onCommitRequest: () => void;
   onChipClick: (entity: string, entityId: number) => void;
+  /** Current entity names for autocomplete (refreshed after commits). */
+  getLocations: () => string[];
+  getCharacters: () => string[];
+}
+
+// v1's lists and triggers, ported: prefixes on an empty/short heading
+// line; location names after the prefix (accepting appends " - ");
+// time-of-day after " - "; character names on cue lines (>=2 chars,
+// extensions excluded from the query).
+const HEADING_PREFIXES = ["INT. ", "EXT. ", "INT./EXT. ", "EST. "];
+const TIME_OF_DAY = [
+  "DAY", "NIGHT", "MORNING", "AFTERNOON", "EVENING", "DAWN", "DUSK",
+  "SUNSET", "SUNRISE", "TWILIGHT", "MIDDAY", "CONTINUOUS", "LATER",
+  "MOMENTS LATER", "SAME TIME",
+];
+const PREFIX_RE =
+  /^(\.?(?:INT\.\/EXT\.|EXT\.\/INT\.|INT\/EXT\.|EXT\/INT\.|INT\.|EXT\.|EST\.|I\/E\.?)\s+)(.*)$/i;
+
+function screenplayCompletions(cb: ScriptCallbacks) {
+  return (context: CompletionContext): CompletionResult | null => {
+    const line = context.state.doc.lineAt(context.pos);
+    if (context.pos !== line.to) return null; // complete at line end only
+    const entry =
+      context.state.field(lineState).entries[line.number - 1];
+    if (entry === undefined) return null;
+    const text = line.text.replace(/^[ \t]+/, "");
+    const lineStart = line.to - text.length;
+
+    if (entry.type === "character") {
+      const query = text.replace(/\s*\([^)]*\)\s*$/g, "").trim();
+      if (query.length < 2) return null;
+      const options = cb.getCharacters()
+        .filter((n) => n.toUpperCase().startsWith(query.toUpperCase()) &&
+                       n.toUpperCase() !== query.toUpperCase())
+        .map((n) => ({ label: n.toUpperCase(), type: "variable" }));
+      return options.length > 0
+        ? { from: lineStart, options, filter: false } : null;
+    }
+
+    if (entry.type !== "heading") return null;
+
+    const dashAt = text.lastIndexOf(" - ");
+    if (dashAt !== -1 && PREFIX_RE.test(text)) {
+      const after = text.slice(dashAt + 3).toUpperCase();
+      const options = TIME_OF_DAY
+        .filter((t) => t.startsWith(after))
+        .map((t) => ({ label: t, type: "keyword" }));
+      return options.length > 0
+        ? { from: line.from + (line.text.length - text.length) +
+                  dashAt + 3,
+            options, filter: false }
+        : null;
+    }
+
+    const prefixed = PREFIX_RE.exec(text);
+    if (prefixed !== null && (prefixed[2] ?? "").trim().length >= 1) {
+      const q = (prefixed[2] ?? "").replace(/\s*-\s*$/, "").trim();
+      const nameFrom = line.from + (line.text.length - text.length) +
+        (prefixed[1] ?? "").length;
+      const options = cb.getLocations()
+        .filter((n) => n.toUpperCase().startsWith(q.toUpperCase()))
+        .map((n) => ({
+          label: n.toUpperCase(),
+          type: "constant",
+          apply: `${n.toUpperCase()} - `,
+        }));
+      return options.length > 0
+        ? { from: nameFrom, options, filter: false } : null;
+    }
+
+    if (text.length < 10) {
+      const upper = text.toUpperCase();
+      const options = HEADING_PREFIXES
+        .filter((prefix) => prefix.startsWith(upper) || upper === "")
+        .map((prefix) => ({ label: prefix.trim(), type: "keyword",
+                            apply: prefix }));
+      return options.length > 0
+        ? { from: lineStart, options, filter: false } : null;
+    }
+    return null;
+  };
 }
 
 export function screenplayExtensions(cb: ScriptCallbacks): Extension {
   return [
     lineState,
     annotationsField,
+    spacerField,
     screenplayDecorations(cb.onChipClick),
     typeGutter,
     beatGutter,
     history(),
+    uppercaseInput,
+    autocompletion({
+      override: [screenplayCompletions(cb)],
+      activateOnTyping: true,
+      icons: false,
+    }),
     EditorView.lineWrapping,
     keymap.of([
+      ...completionKeymap,
       { key: "Tab", run: (v) => cycleType(v, 1) },
       { key: "Shift-Tab", run: (v) => cycleType(v, -1) },
       { key: "Mod-s", run: () => { cb.onCommitRequest(); return true; },

@@ -41,6 +41,11 @@ export interface Block {
  * [[notes]]) keep their raw form — the exporter passes those through.
  */
 export function stripMarker(type: BlockType, raw: string): string {
+  // Leading whitespace is source-file layout (Celtx indents cues 16
+  // spaces and dialogue 4) — Fountain gives it no meaning anywhere
+  // except ACTION, which explicitly preserves indentation. Blocks store
+  // the logical line; the CSS layer owns layout.
+  if (type !== "action") raw = raw.replace(/^[ \t]+/, "");
   switch (type) {
     case "heading":
       return /^\.(?!\.)/.test(raw.trimStart())
@@ -64,6 +69,10 @@ export function stripMarker(type: BlockType, raw: string): string {
     case "action":
       return raw.trimStart().startsWith("!")
         ? raw.trimStart().slice(1) : raw;
+    case "dialogue":
+      // Celtx marks the first dialogue line under a cue with "!" —
+      // meaningless inside a dialogue block, stripped as an artifact.
+      return raw.startsWith("!") ? raw.slice(1) : raw;
     default:
       return raw;
   }

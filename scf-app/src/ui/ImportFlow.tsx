@@ -45,7 +45,15 @@ export function ImportFlow({ onClose, onDone }: {
 
   const pick = async (file: File): Promise<void> => {
     setError(null);
-    const text = await file.text();
+    // Strict UTF-8 first; on invalid bytes fall back to Windows-1252
+    // (the classic curly-apostrophe-becomes-\uFFFD export encoding).
+    const buffer = await file.arrayBuffer();
+    let text: string;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+    } catch {
+      text = new TextDecoder("windows-1252").decode(buffer);
+    }
     const kind = file.name.toLowerCase().endsWith(".fdx")
       ? "fdx" as const : "fountain" as const;
     let p: PreparedImport;

@@ -263,3 +263,141 @@ export async function validateTags(
   }
   return out;
 }
+
+
+// ---------------------------------------------------------------------------
+// Commit-time linking and creation (v1's save-path semantics, done right)
+// ---------------------------------------------------------------------------
+
+export interface CommitLinkResult {
+  scenesCreated: number;
+  locationsCreated: number;
+  charactersCreated: number;
+  linksCreated: number;
+}
+
+/**
+ * v1 created entities on save; the import regret was HEURISTIC creation
+ * from a parser, not this: here the author literally typed the heading
+ * or cue, so creating what they named is the feature (and what v1's
+ * editor did — its save summary reported "2 chars, 1 loc"). Everything
+ * created is marked external_id_namespace='scf:editor'.
+ *
+ * Also re-threads inheritance over the blank-free block rows: headings
+ * set the current scene for everything below; a cue sets the speaker
+ * for its dialogue/parentheticals; any other type ends the speech.
+ * Mutates `rows` in place (they are about to be written); call inside
+ * the commit transaction.
+ */
+export async function linkAndCreateAtCommit(
+    exec: SqlExec,
+    rows: ScreenplayRow[]): Promise<CommitLinkResult> {
+  const result: CommitLinkResult = {
+    scenesCreated: 0, locationsCreated: 0, charactersCreated: 0,
+    linksCreated: 0,
+  };
+  const norm = (s: string): string => s.trim().toUpperCase();
+
+  const locations = await exec("SELECT id, name FROM location");
+  const locationByName = new Map(locations.map((r) =>
+    [norm(String(r["name"])), r["id"] as number]));
+  const characters = await exec("SELECT id, name FROM character");
+  const characterByName = new Map(characters.map((r) =>
+    [norm(String(r["name"])), r["id"] as number]));
+  const links = await exec(
+    "SELECT scene_id, character_id FROM scene_character");
+  const linkSet = new Set(links.map((r) =>
+    `${String(r["scene_id"])}:${String(r["character_id"])}`));
+
+  const { parseHeading, normalizeCue } =
+    await import("@scf-core/proposals/propose.ts");
+  const smartTitle = (s: string): string =>
+    s.toLowerCase().replace(/(^|[\s\-'/(])\p{L}/gu,
+                            (c) => c.toUpperCase());
+
+  let currentScene: number | null = null;
+  let currentCharacter: number | null = null;
+  for (const row of rows) {
+    if (row.lineType === "heading") {
+      currentCharacter = null;
+      if (row.sceneId === null && row.content.trim() !== "") {
+        const parsed = parseHeading(row.content);
+        let locationId: number | null = null;
+        if (parsed.locationName !== null) {
+          const key = norm(parsed.locationName);
+          locationId = locationByName.get(key) ?? null;
+          if (locationId === null) {
+            await exec(
+              "INSERT INTO location (name, external_id_namespace) " +
+              "VALUES (?, 'scf:editor')",
+              [smartTitle(parsed.locationName)]);
+            locationId = ((await exec(
+              "SELECT last_insert_rowid() AS id"))[0]!["id"] as number);
+            locationByName.set(key, locationId);
+            result.locationsCreated += 1;
+          }
+        }
+        const timeMap: Record<string, string> = {
+          DAWN: "dawn", MORNING: "morning", AFTERNOON: "afternoon",
+          DUSK: "dusk", NIGHT: "night", CONTINUOUS: "continuous",
+        };
+        const time = parsed.timeOfDay !== null
+          ? timeMap[parsed.timeOfDay.toUpperCase()] ?? null : null;
+        const intExtMap: Record<string, string> = {
+          "INT": "interior", "EXT": "exterior", "INT/EXT": "int/ext",
+        };
+        const intExt = parsed.intExt !== null
+          ? intExtMap[parsed.intExt] ?? null : null;
+        await exec(
+          "INSERT INTO scene (name, location_id, int_ext, time_of_day, " +
+          "external_id_namespace) VALUES (?, ?, ?, ?, 'scf:editor')",
+          [row.content.trim(), locationId, intExt, time]);
+        row.sceneId = ((await exec(
+          "SELECT last_insert_rowid() AS id"))[0]!["id"] as number);
+        result.scenesCreated += 1;
+      }
+      currentScene = row.sceneId;
+      continue;
+    }
+    row.sceneId = currentScene;
+    if (row.lineType === "character") {
+      if (row.content.trim() === "") {
+        currentCharacter = null;
+        continue;
+      }
+      const cue = normalizeCue(row.content.trim()).name;
+      if (row.characterId === null && cue !== "") {
+        const existing = characterByName.get(norm(cue));
+        if (existing !== undefined) {
+          row.characterId = existing;
+        } else {
+          await exec(
+            "INSERT INTO character (name, external_id_namespace) " +
+            "VALUES (?, 'scf:editor')", [smartTitle(cue)]);
+          row.characterId = ((await exec(
+            "SELECT last_insert_rowid() AS id"))[0]!["id"] as number);
+          characterByName.set(norm(cue), row.characterId);
+          result.charactersCreated += 1;
+        }
+      }
+      currentCharacter = row.characterId;
+      if (currentScene !== null && row.characterId !== null) {
+        const key = `${String(currentScene)}:${String(row.characterId)}`;
+        if (!linkSet.has(key)) {
+          await exec(
+            "INSERT INTO scene_character (name, scene_id, character_id) " +
+            "VALUES (?, ?, ?)",
+            [cue, currentScene, row.characterId]);
+          linkSet.add(key);
+          result.linksCreated += 1;
+        }
+      }
+    } else if (row.lineType === "dialogue" ||
+               row.lineType === "parenthetical") {
+      row.characterId = currentCharacter;
+    } else {
+      currentCharacter = null;
+    }
+  }
+  return result;
+}

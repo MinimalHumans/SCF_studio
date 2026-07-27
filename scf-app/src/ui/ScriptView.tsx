@@ -26,8 +26,8 @@ import {
 import { lineEntries, lineEvents, type LineEvent }
   from "../editor/lineState.ts";
 import {
-  createBeatForLine, diffVersionAgainstCurrent, publishVersion,
-  reanchorForEvents, tagPropRange, validateTags,
+  createBeatForLine, diffVersionAgainstCurrent, linkAndCreateAtCommit,
+  publishVersion, reanchorForEvents, tagPropRange, validateTags,
 } from "../editor/features.ts";
 import { ImportFlow } from "./ImportFlow.tsx";
 import { useQuery } from "./useQuery.ts";
@@ -64,6 +64,10 @@ export function ScriptView(): JSX.Element {
   const [showVersions, setShowVersions] = useState(false);
   const [detachedTags, setDetachedTags] = useState(0);
   const pendingEvents = useRef<LineEvent[]>([]);
+  const entityNamesRef = useRef<{ locations: string[];
+                                  characters: string[] }>(
+    { locations: [], characters: [] });
+  const [commitNote, setCommitNote] = useState("");
   const { openEntityRow } = useStore();
 
   const refreshAnnotations = async (): Promise<void> => {
@@ -121,6 +125,12 @@ export function ScriptView(): JSX.Element {
       map.set(id, { ...(map.get(id) ?? {}), beats: r["n"] as number });
     }
     // Prop-tag ranges with honest validation.
+    const locationNames = await exec("SELECT name FROM location");
+    const characterNames = await exec("SELECT name FROM character");
+    entityNamesRef.current = {
+      locations: locationNames.map((r) => String(r["name"])),
+      characters: characterNames.map((r) => String(r["name"])),
+    };
     const tags = await validateTags(exec, textById);
     let detached = 0;
     for (const t of tags) {
@@ -144,11 +154,27 @@ export function ScriptView(): JSX.Element {
     const view = viewRef.current;
     if (view === null) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);
-    await withTransaction(exec, () => writeScreenplay(exec, {
-      bom: false,
-      titlePage: titlePageRef.current,
-      lines: plan.rows,
-    }));
+    const created = await withTransaction(exec, async () => {
+      const link = await linkAndCreateAtCommit(exec, plan.rows);
+      await writeScreenplay(exec, {
+        bom: false,
+        titlePage: titlePageRef.current,
+        lines: plan.rows,
+      });
+      return link;
+    });
+    const parts: string[] = [];
+    if (created.scenesCreated > 0) {
+      parts.push(`${String(created.scenesCreated)} scene(s)`);
+    }
+    if (created.locationsCreated > 0) {
+      parts.push(`${String(created.locationsCreated)} location(s)`);
+    }
+    if (created.charactersCreated > 0) {
+      parts.push(`${String(created.charactersCreated)} character(s)`);
+    }
+    setCommitNote(parts.length > 0
+      ? `created ${parts.join(", ")}` : "");
     prevBlocksRef.current = new Map(plan.rows.map((r) => [r.uuid!, {
       id: r.uuid!, type: r.lineType as Block["type"], text: r.content,
       sceneId: r.sceneId, characterId: r.characterId,
@@ -205,6 +231,8 @@ export function ScriptView(): JSX.Element {
             onCommitRequest: () => void commit(),
             onChipClick: (entity, entityId) =>
               void openEntityRow(entity, entityId),
+            getLocations: () => entityNamesRef.current.locations,
+            getCharacters: () => entityNamesRef.current.characters,
           }),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) {
@@ -317,6 +345,9 @@ export function ScriptView(): JSX.Element {
       <div className="script-toolbar">
         <span className="script-title">Script</span>
         <span className="flex-spacer" />
+        {commitNote !== "" && (
+          <span className="commit-note">{commitNote}</span>
+        )}
         <BeatControl block={cursorBlock} onCreated={() =>
           void refreshAnnotations()} />
         <TagControl selection={selection} onTagged={() =>
@@ -429,25 +460,42 @@ function TagControl({ selection, onTagged }: {
   onTagged: () => void;
 }): JSX.Element {
   const props = useQuery("SELECT id, name FROM prop ORDER BY name");
-  const enabled = selection !== null && selection.text.trim() !== "" &&
-                  props.length > 0;
+  const enabled = selection !== null && selection.text.trim() !== "";
   return (
     <select className="tag-control" value=""
             disabled={!enabled}
             title={selection === null
               ? "Select text within one line to tag it as a prop"
-              : props.length === 0
-                ? "No props exist yet — create one first"
-                : `Tag “${selection.text}” as a prop`}
+              : `Tag “${selection.text}” as a prop`}
             onChange={(e) => {
-              const propId = Number(e.target.value);
+              const value = e.target.value;
               e.target.value = "";
-              if (!Number.isFinite(propId) || selection === null) return;
+              if (selection === null) return;
+              if (value === "__new__") {
+                const name = window.prompt(
+                  "New prop name:", selection.text.trim());
+                if (name === null || name.trim() === "") return;
+                void (async () => {
+                  await exec(
+                    "INSERT INTO prop (name, external_id_namespace) " +
+                    "VALUES (?, 'scf:editor')", [name.trim()]);
+                  const id = (await exec(
+                    "SELECT last_insert_rowid() AS id"))[0]!["id"];
+                  await tagPropRange(exec, selection.lineId,
+                                     id as number, selection.text,
+                                     selection.from, selection.to);
+                  onTagged();
+                })();
+                return;
+              }
+              const propId = Number(value);
+              if (!Number.isFinite(propId)) return;
               void tagPropRange(exec, selection.lineId, propId,
                                 selection.text, selection.from,
                                 selection.to).then(onTagged);
             }}>
       <option value="" disabled>⌁ tag prop</option>
+      <option value="__new__">＋ create new prop…</option>
       {props.map((p) => (
         <option key={String(p["id"])} value={String(p["id"])}>
           {String(p["name"])}
