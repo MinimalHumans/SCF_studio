@@ -85,6 +85,34 @@ export function ScriptView(): JSX.Element {
   const [resolutions, setResolutions] =
     useState<Map<string, "create" | "rename">>(new Map());
   const [pageInfo, setPageInfo] = useState({ page: 1, total: 1 });
+  const [zoom, setZoom] = useState(() => {
+    const v = Number(localStorage.getItem("scf:editor-zoom"));
+    return Number.isFinite(v) && v >= 0.7 && v <= 2 ? v : 1;
+  });
+  const [pageMode, setPageMode] = useState<"light" | "dark">(() =>
+    localStorage.getItem("scf:editor-mode") === "dark" ? "dark" : "light");
+  const [showAnnot, setShowAnnot] = useState(() =>
+    localStorage.getItem("scf:editor-annot") !== "hidden");
+  const [dirty, setDirty] = useState(false);
+  const [menu, setMenu] =
+    useState<{ x: number; y: number } | null>(null);
+
+  const setZoomClamped = (z: number): void => {
+    const clamped = Math.min(2, Math.max(0.7, Math.round(z * 10) / 10));
+    setZoom(clamped);
+    localStorage.setItem("scf:editor-zoom", String(clamped));
+  };
+  const togglePageMode = (): void => {
+    const next = pageMode === "light" ? "dark" : "light";
+    setPageMode(next);
+    localStorage.setItem("scf:editor-mode", next);
+  };
+  const toggleAnnot = (): void => {
+    const next = !showAnnot;
+    setShowAnnot(next);
+    localStorage.setItem("scf:editor-annot",
+                         next ? "shown" : "hidden");
+  };
   const { openEntityRow } = useStore();
 
   const refreshAnnotations = async (): Promise<void> => {
@@ -258,6 +286,7 @@ export function ScriptView(): JSX.Element {
           .map((r) => ({ content: r.content, sceneId: r.sceneId })) });
     if (info.newLocations.length === 0 &&
         info.newCharacters.length === 0 && info.conflicts.length === 0) {
+      setDirty(false);
       return;
     }
     setResolutions(new Map());
@@ -313,6 +342,7 @@ export function ScriptView(): JSX.Element {
     setCommitNote(parts.length > 0
       ? `created ${parts.join(", ")}` : "");
     setReview(null);
+    setDirty(false);
     touch();
     await refreshAnnotations();
   };
@@ -353,6 +383,7 @@ export function ScriptView(): JSX.Element {
           EditorView.updateListener.of((u) => {
             if (u.docChanged) {
               pendingEvents.current.push(...lineEvents(u.state));
+              setDirty(true);
               scheduleCommit();
             }
             if (u.viewportChanged || u.docChanged || u.selectionSet) {
@@ -514,7 +545,28 @@ export function ScriptView(): JSX.Element {
     <div className="script-view">
       <div className="script-toolbar">
         <span className="script-title">Script</span>
+        <span className="page-indicator">
+          p. {pageInfo.page}/{pageInfo.total}
+        </span>
         <span className="flex-spacer" />
+        <span className="zoom-controls">
+          <button onClick={() => setZoomClamped(zoom - 0.1)}
+                  title="Zoom out" aria-label="zoom out">−</button>
+          <span className="zoom-level">{Math.round(zoom * 100)}%</span>
+          <button onClick={() => setZoomClamped(zoom + 0.1)}
+                  title="Zoom in" aria-label="zoom in">＋</button>
+        </span>
+        <button onClick={togglePageMode}
+                title={pageMode === "light"
+                  ? "Switch page to dark" : "Switch page to light"}>
+          {pageMode === "light" ? "☾" : "☀"}
+        </button>
+        <button onClick={toggleAnnot} aria-pressed={showAnnot}
+                title={showAnnot
+                  ? "Hide entity links (chips, tag underlines, beat dots)"
+                  : "Show entity links"}>
+          {showAnnot ? "◉ links" : "◎ links"}
+        </button>
         {commitNote !== "" && (
           <span className="commit-note">{commitNote}</span>
         )}
@@ -530,14 +582,8 @@ export function ScriptView(): JSX.Element {
         )}
         <button onClick={() => setShowVersions(!showVersions)}
                 aria-pressed={showVersions}>Versions</button>
-        <button onClick={() => setImporting(true)}>Import…</button>
-        <button onClick={exportFountain} disabled={empty}>
-          Export .fountain
-        </button>
-        <span className="page-indicator">
-          p. {pageInfo.page}/{pageInfo.total}
-        </span>
-        <button onClick={() => void explicitCommit()}
+        <button className={dirty ? "commit-dirty" : "commit-clean"}
+                onClick={() => void explicitCommit()}
                 title="Cmd/Ctrl-S — reviews new entities before creating">
           Commit
         </button>
@@ -586,11 +632,35 @@ export function ScriptView(): JSX.Element {
       )}
       <div className="script-body">
         <div ref={hostRef}
-             className={"script-editor" + (empty ? " hidden" : "")} />
+             style={{ fontSize: `${String(13 * zoom)}px` }}
+             onContextMenu={(e) => {
+               if (selection !== null &&
+                   selection.text.trim() !== "") {
+                 e.preventDefault();
+                 setMenu({ x: e.clientX, y: e.clientY });
+               }
+             }}
+             className={"script-editor" +
+               (empty ? " hidden" : "") +
+               (pageMode === "dark" ? " page-dark" : "") +
+               (showAnnot ? "" : " hide-annot")} />
         {showVersions && (
-          <VersionsPanel onPublished={() => touch()} />
+          <VersionsPanel onPublished={() => touch()}
+                         onImport={() => setImporting(true)}
+                         onExport={exportFountain}
+                         exportDisabled={empty} />
         )}
       </div>
+      {menu !== null && selection !== null && (
+        <PropContextMenu
+          at={menu}
+          selection={selection}
+          onClose={() => setMenu(null)}
+          onDone={() => {
+            setMenu(null);
+            void refreshAnnotations();
+          }} />
+      )}
       {review !== null && (
         <div className="modal-scrim" role="dialog" aria-modal="true">
           <div className="modal commit-review">
@@ -777,8 +847,12 @@ function TagControl({ selection, onTagged }: {
   );
 }
 
-function VersionsPanel({ onPublished }: {
+function VersionsPanel({ onPublished, onImport, onExport,
+                         exportDisabled }: {
   onPublished: () => void;
+  onImport: () => void;
+  onExport: () => void;
+  exportDisabled: boolean;
 }): JSX.Element {
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -790,6 +864,12 @@ function VersionsPanel({ onPublished }: {
   return (
     <aside className="versions-panel">
       <h3>Versions</h3>
+      <div className="version-io">
+        <button onClick={onImport}>Import…</button>
+        <button onClick={onExport} disabled={exportDisabled}>
+          Export .fountain
+        </button>
+      </div>
       <div className="version-publish">
         <input placeholder="description…" value={description}
                onChange={(e) => setDescription(e.target.value)} />
@@ -851,5 +931,65 @@ function VersionsPanel({ onPublished }: {
         )}
       </ul>
     </aside>
+  );
+}
+
+
+function PropContextMenu({ at, selection, onClose, onDone }: {
+  at: { x: number; y: number };
+  selection: { lineId: string; from: number; to: number; text: string };
+  onClose: () => void;
+  onDone: () => void;
+}): JSX.Element {
+  const props = useQuery("SELECT id, name FROM prop ORDER BY name");
+  const tag = async (propId: number): Promise<void> => {
+    await tagPropRange(exec, selection.lineId, propId, selection.text,
+                       selection.from, selection.to);
+    onDone();
+  };
+  const createAndTag = async (): Promise<void> => {
+    const name = window.prompt("New prop name:", selection.text.trim());
+    if (name === null || name.trim() === "") {
+      onClose();
+      return;
+    }
+    await exec(
+      "INSERT INTO prop (name, external_id_namespace) " +
+      "VALUES (?, 'scf:editor')", [name.trim()]);
+    const id = (await exec(
+      "SELECT last_insert_rowid() AS id"))[0]!["id"] as number;
+    await tag(id);
+  };
+  return (
+    <>
+      <div className="ctx-scrim" onClick={onClose}
+           onContextMenu={(e) => {
+             e.preventDefault();
+             onClose();
+           }} />
+      <div className="ctx-menu" role="menu"
+           style={{
+             left: Math.min(at.x, window.innerWidth - 240),
+             top: Math.min(at.y, window.innerHeight - 200),
+           }}>
+        <div className="ctx-head">
+          Tag &ldquo;{selection.text.length > 24
+            ? `${selection.text.slice(0, 24)}…`
+            : selection.text}&rdquo; as prop
+        </div>
+        <button role="menuitem" onClick={() => void createAndTag()}>
+          ＋ New prop…
+        </button>
+        {props.length > 0 && <div className="ctx-sep" />}
+        <div className="ctx-scroll">
+          {props.map((p) => (
+            <button key={String(p["id"])} role="menuitem"
+                    onClick={() => void tag(p["id"] as number)}>
+              {String(p["name"])}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
