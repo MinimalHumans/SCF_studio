@@ -469,6 +469,25 @@ const uppercaseInput = EditorView.inputHandler.of(
     return true;
   });
 
+/** Shift-Enter: new line CONTINUES the current mode (dialogue stays
+ * dialogue, action stays action) instead of context inference. */
+function sameTypeNewline(view: EditorView): boolean {
+  const sel = view.state.selection.main;
+  const line = view.state.doc.lineAt(sel.from);
+  const entry = view.state.field(lineState).entries[line.number - 1];
+  if (entry === undefined) return false;
+  view.dispatch({
+    changes: { from: sel.from, to: sel.to, insert: "\n" },
+    selection: { anchor: sel.from + 1 },
+    userEvent: "input.type",
+  });
+  const newLineNo = view.state.doc.lineAt(sel.from + 1).number;
+  view.dispatch({
+    effects: setLineType.of({ line: newLineNo, type: entry.type }),
+  });
+  return true;
+}
+
 function cycleType(view: EditorView, direction: 1 | -1): boolean {
   const line = view.state.doc.lineAt(view.state.selection.main.head);
   const entry = view.state.field(lineState).entries[line.number - 1];
@@ -588,6 +607,7 @@ export function screenplayExtensions(cb: ScriptCallbacks): Extension {
     EditorView.lineWrapping,
     keymap.of([
       ...completionKeymap,
+      { key: "Shift-Enter", run: sameTypeNewline },
       { key: "Tab", run: (v) => cycleType(v, 1) },
       { key: "Shift-Tab", run: (v) => cycleType(v, -1) },
       { key: "Mod-s", run: () => { cb.onCommitRequest(); return true; },

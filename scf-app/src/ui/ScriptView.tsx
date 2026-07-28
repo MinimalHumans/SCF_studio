@@ -286,6 +286,27 @@ export function ScriptView(): JSX.Element {
           .map((r) => ({ content: r.content, sceneId: r.sceneId })) });
     if (info.newLocations.length === 0 &&
         info.newCharacters.length === 0 && info.conflicts.length === 0) {
+      if (info.newScenes > 0) {
+        const created = await withTransaction(exec, async () => {
+          const link = await linkAndCreateAtCommit(exec, plan.rows,
+            { createNew: true });
+          await writeScreenplay(exec, {
+            bom: false, titlePage: titlePageRef.current,
+            lines: plan.rows,
+          });
+          return link;
+        });
+        prevBlocksRef.current = new Map(plan.rows.map((r) => [r.uuid!, {
+          id: r.uuid!, type: r.lineType as Block["type"],
+          text: r.content, sceneId: r.sceneId,
+          characterId: r.characterId, locationId: r.locationId,
+          metadata: r.metadata,
+        }]));
+        setCommitNote(created.scenesCreated > 0
+          ? `created ${String(created.scenesCreated)} scene(s)` : "");
+        touch();
+        await refreshAnnotations();
+      }
       setDirty(false);
       return;
     }
@@ -345,6 +366,19 @@ export function ScriptView(): JSX.Element {
     setDirty(false);
     touch();
     await refreshAnnotations();
+    await updateDirty();
+  };
+
+  /** The Commit light means "entity work is pending": new scenes,
+   * locations, characters, or cue/entity conflicts. Text itself is
+   * auto-saved continuously and never needs the button. */
+  const updateDirty = async (): Promise<void> => {
+    const view = viewRef.current;
+    if (view === null) return;
+    const plan = commitPlan(view.state, prevBlocksRef.current);
+    const info = await planCommitLinks(exec, plan.rows);
+    setDirty(info.newScenes > 0 || info.newLocations.length > 0 ||
+             info.newCharacters.length > 0 || info.conflicts.length > 0);
   };
 
   const scheduleCommit = (): void => {
@@ -383,7 +417,6 @@ export function ScriptView(): JSX.Element {
           EditorView.updateListener.of((u) => {
             if (u.docChanged) {
               pendingEvents.current.push(...lineEvents(u.state));
-              setDirty(true);
               scheduleCommit();
             }
             if (u.viewportChanged || u.docChanged || u.selectionSet) {
@@ -399,14 +432,13 @@ export function ScriptView(): JSX.Element {
               // Stabilize the scrollbar with the MEASURED height (the
               // row-model estimate overshot and left blank pages at the
               // end). Never shrinks mid-scroll, so the thumb maps 1:1.
+              if (u.docChanged) {
+                u.view.contentDOM.style.minHeight = "";
+              }
               u.view.requestMeasure({
                 read: (v) => v.contentHeight,
                 write: (h, v) => {
-                  const cur =
-                    parseFloat(v.contentDOM.style.minHeight || "0");
-                  if (u.docChanged || h > cur) {
-                    v.contentDOM.style.minHeight = `${String(h)}px`;
-                  }
+                  v.contentDOM.style.minHeight = `${String(h)}px`;
                 },
               });
             }
@@ -459,6 +491,7 @@ export function ScriptView(): JSX.Element {
       loadIntoEditor(rowsToBlocks(sp.lines));
       setLoaded(true);
       await refreshAnnotations();
+      await updateDirty();
       if (savedPosition !== null) {
         const head = Math.min(savedPosition.head,
                               view.state.doc.length);
@@ -669,6 +702,12 @@ export function ScriptView(): JSX.Element {
               <button onClick={() => setReview(null)}
                       aria-label="close">×</button>
             </div>
+            {review.newScenes > 0 && (
+              <p className="muted">
+                {review.newScenes} new scene(s) will be created from
+                unlinked headings.
+              </p>
+            )}
             {review.newLocations.length > 0 && (
               <>
                 <h3>New locations</h3>

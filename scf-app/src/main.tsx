@@ -8,6 +8,15 @@ import { useStore } from "./state/store.ts";
 // console with its stack).
 // Deferred: these can fire while React is mid-render (dev mode rethrows
 // through the DOM), and a synchronous setState there is itself an error.
+// Reload/close with work not yet written to the .scf file gets a
+// browser confirmation instead of a silent trip to the start screen.
+window.addEventListener("beforeunload", (event) => {
+  const st = useStore.getState();
+  if (st.phase === "open" && st.revision !== st.lastSavedRevision) {
+    event.preventDefault();
+  }
+});
+
 window.addEventListener("error", (event) => {
   const message = event.message;
   queueMicrotask(() => {

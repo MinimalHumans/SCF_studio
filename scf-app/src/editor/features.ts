@@ -277,6 +277,7 @@ export interface CommitLinkResult {
 }
 
 export interface CommitPlanInfo {
+  newScenes: number;
   newLocations: Array<{ name: string; similar: string[] }>;
   newCharacters: Array<{ cue: string; similar: string[] }>;
   conflicts: Array<{ uuid: string; cue: string; entityId: number;
@@ -310,13 +311,14 @@ export async function planCommitLinks(
     }).slice(0, 3);
 
   const info: CommitPlanInfo = {
-    newLocations: [], newCharacters: [], conflicts: [],
+    newScenes: 0, newLocations: [], newCharacters: [], conflicts: [],
   };
   const seenLoc = new Set<string>();
   const seenChar = new Set<string>();
   for (const row of rows) {
     if (row.lineType === "heading" && row.sceneId === null &&
         row.content.trim() !== "") {
+      info.newScenes += 1;
       const parsed = parseHeading(row.content);
       if (parsed.locationName !== null) {
         const key = norm(parsed.locationName);

@@ -118,6 +118,18 @@ export function Workbench(): JSX.Element {
         <button className="primary" onClick={() => void saveProject()}>
           Save project
         </button>
+          <button onClick={() => {
+            const st = useStoreRaw.getState();
+            const unsaved = st.revision !== st.lastSavedRevision;
+            if (!unsaved || window.confirm(
+                "You have changes not yet saved to your .scf file — " +
+                "they remain only in this browser (Resume can reopen " +
+                "them). Close the project anyway?")) {
+              void st.closeProject();
+            }
+          }}>
+            Close project
+          </button>
       </header>
       <div className="panels">
         <nav className="rail rail-nav" style={{ width: railWidth }}>

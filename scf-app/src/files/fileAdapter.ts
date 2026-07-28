@@ -62,7 +62,17 @@ export class FsAccessAdapter implements FileAdapter {
 
   async save(token: unknown, bytes: ArrayBuffer): Promise<void> {
     const handle = token as FileSystemFileHandle;
-    const writable = await handle.createWritable();
+    let writable: FileSystemWritableFileStream;
+    try {
+      writable = await handle.createWritable();
+    } catch {
+      // Chromium: "state cached in an interface object ... changed
+      // since it was read from disk" — the file was touched between
+      // saves (cloud-sync clients love doing this). A fresh getFile()
+      // re-reads the on-disk state; then retry once.
+      await handle.getFile();
+      writable = await handle.createWritable();
+    }
     await writable.write(bytes);
     await writable.close();
   }

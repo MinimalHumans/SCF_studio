@@ -66,6 +66,10 @@ interface AppState {
   openDemo: () => Promise<void>;
   resumeLast: () => Promise<void>;
   lastSession: string | null;
+  /** revision at the last successful write to the user's .scf file —
+   * anything newer lives only in browser storage. */
+  lastSavedRevision: number;
+  closeProject: () => Promise<void>;
   openFromPicker: () => Promise<void>;
   newProject: () => Promise<void>;
   saveProject: () => Promise<void>;
@@ -135,6 +139,7 @@ export const useStore = create<AppState>((set, get) => ({
   fileToken: null,
   fsAccessSupported: FsAccessAdapter.supported(),
   revision: 0,
+  lastSavedRevision: 0,
 
   navMode: "subject",
   selectedQuery: null,
@@ -217,6 +222,13 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
+  /** Back to the start screen. The OPFS working copy stays — Resume
+   * still works — but only the .scf file is durable. */
+  closeProject: async () => {
+    await client.close();
+    set({ phase: "start", fileToken: null, errorMessage: null });
+  },
+
   saveProject: async () => {
     const { fileToken, projectName } = get();
     try {
@@ -224,11 +236,13 @@ export const useStore = create<AppState>((set, get) => ({
       const bytes = await client.exportBytes();
       if (fileToken !== null) {
         await adapter.save(fileToken, bytes);
+        set({ lastSavedRevision: get().revision });
       } else {
         const saved = await adapter.saveAs(
           bytes, projectName ?? "project.scf");
         if (saved !== null) {
-          set({ projectName: saved.name, fileToken: saved.token });
+          set({ projectName: saved.name, fileToken: saved.token,
+                lastSavedRevision: get().revision });
         }
       }
     } catch (e) {
