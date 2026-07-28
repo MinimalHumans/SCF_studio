@@ -148,3 +148,150 @@ describe("repair: export-mangled apostrophes", () => {
     expect(kept.repairs).toEqual([]);
   });
 });
+
+describe("planCommitLinks lists new locations from fresh headings", () => {
+  test("a typed heading with no scene id proposes its location", async () => {
+    const { loadRegistry } = await import("@scf-core/registry.ts");
+    const { openNodeDatabase } = await import("@scf-core/node.ts");
+    const { initDatabase } = await import("@scf-core/db.ts");
+    const { planCommitLinks } = await import("../src/editor/features.ts");
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    const db2 = openNodeDatabase(":memory:");
+    await initDatabase(db2.exec, registry);
+    await db2.exec("INSERT INTO location (name) VALUES ('Fire House')");
+    const info = await planCommitLinks(db2.exec, [
+      { lineOrder: 0, lineType: "heading",
+        content: "INT. FIRE STATION - DAY", sceneId: null,
+        characterId: null, locationId: null, metadata: null, uuid: "h" },
+      { lineOrder: 1, lineType: "character", content: "JORGE",
+        sceneId: null, characterId: null, locationId: null,
+        metadata: null, uuid: "c" },
+    ]);
+    expect(info.newLocations).toHaveLength(1);
+    expect(info.newLocations[0]!.name.toUpperCase())
+      .toBe("FIRE STATION");
+    expect(info.newLocations[0]!.similar).toContain("Fire House");
+    expect(info.newCharacters.map((c) => c.cue)).toEqual(["JORGE"]);
+    db2.close();
+  });
+});
+
+describe("compound cues never become entities", () => {
+  test("'&' and 'AND' cues are skipped by plan and create", async () => {
+    const { loadRegistry } = await import("@scf-core/registry.ts");
+    const { openNodeDatabase } = await import("@scf-core/node.ts");
+    const { initDatabase } = await import("@scf-core/db.ts");
+    const { planCommitLinks, linkAndCreateAtCommit } =
+      await import("../src/editor/features.ts");
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    const db3 = openNodeDatabase(":memory:");
+    await initDatabase(db3.exec, registry);
+    const rows = [
+      { lineOrder: 0, lineType: "character", content: "ALEXIS & SIX",
+        sceneId: null, characterId: null, locationId: null,
+        metadata: null, uuid: "a" },
+      { lineOrder: 1, lineType: "character", content: "ERIC AND MARTINA",
+        sceneId: null, characterId: null, locationId: null,
+        metadata: null, uuid: "b" },
+      { lineOrder: 2, lineType: "character", content: "GEORGE",
+        sceneId: null, characterId: null, locationId: null,
+        metadata: null, uuid: "c" },
+    ];
+    const info = await planCommitLinks(db3.exec, rows);
+    expect(info.newCharacters.map((c) => c.cue)).toEqual(["GEORGE"]);
+    const result = await linkAndCreateAtCommit(db3.exec, rows,
+      { createNew: true });
+    expect(result.charactersCreated).toBe(1);
+    expect(rows[0]!.characterId).toBeNull();
+    expect(rows[2]!.characterId).not.toBeNull();
+    db3.close();
+  });
+});
+
+describe("auto-save can never create entities", () => {
+  test("createNew:false threads and matches but creates nothing",
+      async () => {
+    const { loadRegistry } = await import("@scf-core/registry.ts");
+    const { openNodeDatabase } = await import("@scf-core/node.ts");
+    const { initDatabase } = await import("@scf-core/db.ts");
+    const { linkAndCreateAtCommit } =
+      await import("../src/editor/features.ts");
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    const db4 = openNodeDatabase(":memory:");
+    await initDatabase(db4.exec, registry);
+    await db4.exec("INSERT INTO character (name) VALUES ('Alexis')");
+    const rows = [
+      { lineOrder: 0, lineType: "heading",
+        content: "INT. MOON BASE - NIGHT", sceneId: null,
+        characterId: null, locationId: null, metadata: null, uuid: "h" },
+      { lineOrder: 1, lineType: "character", content: "ALEXIS",
+        sceneId: null, characterId: null, locationId: null,
+        metadata: null, uuid: "c" },
+      { lineOrder: 2, lineType: "character", content: "GEORGE",
+        sceneId: null, characterId: null, locationId: null,
+        metadata: null, uuid: "g" },
+    ];
+    const result = await linkAndCreateAtCommit(db4.exec, rows,
+      { createNew: false });
+    // Nothing created — the auto-save invariant.
+    expect(result.scenesCreated + result.locationsCreated +
+           result.charactersCreated).toBe(0);
+    const scenes = await db4.exec("SELECT COUNT(*) AS n FROM scene");
+    expect(scenes[0]!["n"]).toBe(0);
+    // Existing entities still MATCH (Alexis links; George stays null).
+    expect(rows[1]!.characterId).not.toBeNull();
+    expect(rows[2]!.characterId).toBeNull();
+    expect(rows[0]!.sceneId).toBeNull();
+    db4.close();
+  });
+});
+
+describe("one scene entity, one heading", () => {
+  test("contaminated and duplicate scene claims are shed on any pass; " +
+       "explicit commit then creates fresh", async () => {
+    const { loadRegistry } = await import("@scf-core/registry.ts");
+    const { openNodeDatabase } = await import("@scf-core/node.ts");
+    const { initDatabase } = await import("@scf-core/db.ts");
+    const { linkAndCreateAtCommit } =
+      await import("../src/editor/features.ts");
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    const db5 = openNodeDatabase(":memory:");
+    await initDatabase(db5.exec, registry);
+    await db5.exec("INSERT INTO scene (name) VALUES ('EXT. RIVER - DAY')");
+    const mkRow = (i: number, type: string, content: string,
+                   sceneId: number | null) => ({
+      lineOrder: i, lineType: type, content, sceneId,
+      characterId: null, locationId: null, metadata: null,
+      uuid: `u${String(i)}`,
+    });
+    const rows = [
+      mkRow(0, "heading", "EXT. RIVER - DAY", 1), // legitimate owner
+      mkRow(1, "action", "Water.", 1),
+      // Contaminated: inherited the scene above (the reported bug).
+      mkRow(2, "heading", "INT. MOON BASE - NIGHT", 1),
+      mkRow(3, "action", "Moon.", null),
+      // Duplicate claim from elsewhere in the doc.
+      mkRow(4, "heading", "EXT. RIVER - DAY", 1),
+    ];
+    // Auto pass: sheds bad claims, creates nothing.
+    const auto = await linkAndCreateAtCommit(db5.exec, rows,
+      { createNew: false });
+    expect(auto.scenesCreated).toBe(0);
+    expect(rows[0]!.sceneId).toBe(1); // owner keeps
+    expect(rows[2]!.sceneId).toBeNull(); // contamination shed
+    expect(rows[4]!.sceneId).toBeNull(); // duplicate shed
+    // Explicit pass: the shed headings become fresh scenes + location.
+    const applied = await linkAndCreateAtCommit(db5.exec, rows,
+      { createNew: true });
+    expect(applied.scenesCreated).toBe(2);
+    expect(applied.locationsCreated).toBe(2); // Moon Base + River
+    expect(rows[2]!.sceneId).not.toBe(1);
+    expect(rows[4]!.sceneId).not.toBe(1);
+    expect(rows[2]!.sceneId).not.toBe(rows[4]!.sceneId);
+    db5.close();
+  });
+});

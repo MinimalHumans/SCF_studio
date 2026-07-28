@@ -349,3 +349,69 @@ describe("screenplayDoc: markers are syntax, not content", () => {
       .toEqual(once.map((b) => [b.type, b.text]));
   });
 });
+
+describe("split at line start: identity follows the content", () => {
+  test("pushing a heading down to insert above it keeps the id (and " +
+       "scene link) on the heading text", () => {
+    const s0 = stateOf(SCRIPT);
+    const heading = s0.doc.line(5); // EXT. CREEK - DAY, id L4
+    const s1 = s0.update({
+      changes: { from: heading.from, insert: "\n" },
+    }).state;
+    assertAligned(s1);
+    const entries = lineEntries(s1);
+    // New empty line above gets fresh identity, inferred from context;
+    // the pushed-down heading KEEPS L4 — its scene link travels with it.
+    expect(entries[4]!.id).toBe("new-1");
+    expect(entries[5]).toEqual({ id: "L4", type: "heading" });
+    expect(lineEvents(s1)).toEqual([
+      { kind: "split", originalId: "L4", newIds: ["new-1"] },
+    ]);
+  });
+
+  test("mid-line splits still keep the first fragment's id", () => {
+    const s0 = stateOf(SCRIPT);
+    const line2 = s0.doc.line(2);
+    const cut = line2.from + 7;
+    const s1 = s0.update({ changes: { from: cut, insert: "\n" } }).state;
+    const entries = lineEntries(s1);
+    expect(entries[1]!.id).toBe("L1");
+    expect(entries[2]!.id).toBe("new-1");
+  });
+});
+
+describe("scene identity is never inherited", () => {
+  test("a line that becomes a heading sheds its threaded sceneId " +
+       "(the mid-document new-scene bug)", () => {
+    const blocks = blocksFrom(FOUNTAIN);
+    // Simulate the auto-save having threaded scene context onto an
+    // action line (block index 1), as the write path does.
+    blocks[1]!.sceneId = 42;
+    const prev = new Map(blocks.map((b) => [b.id, b]));
+    let state = editorForBlocks(blocks);
+    // The author Tabs that action line into a heading.
+    state = state.update({
+      effects: setLineType.of({ line: 2, type: "heading" }),
+    }).state;
+    const plan = commitPlan(state, prev);
+    expect(plan.rows[1]!.lineType).toBe("heading");
+    expect(plan.rows[1]!.sceneId).toBeNull(); // inheritance shed
+    expect(plan.staleScenes).toEqual([]); // and no banner for it
+    // A heading that was ALWAYS a heading keeps its own scene.
+    expect(plan.rows[0]!.sceneId).toBe(42);
+  });
+});
+
+function blocksFrom(text: string): Block[] {
+  const rows = linesToRows(parseFountain(text)).lines;
+  rows.forEach((r, i) => { r.uuid = `u${i}`; });
+  const blocks = rowsToBlocks(rows);
+  blocks[0]!.sceneId = 42;
+  return blocks;
+}
+
+function editorForBlocks(blocks: Block[]): EditorState {
+  const { doc, entries } = blocksToDoc(blocks);
+  return EditorState.create({ doc, extensions: [lineState] })
+    .update({ effects: loadLines.of(entries) }).state;
+}

@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
+
 import { EditorState } from "@codemirror/state";
 import { exec, useStore } from "../state/store.ts";
 import { readScreenplay, writeScreenplay, type TitlePageRow }
@@ -27,8 +28,10 @@ import { lineEntries, lineEvents, type LineEvent }
   from "../editor/lineState.ts";
 import {
   createBeatForLine, diffVersionAgainstCurrent, linkAndCreateAtCommit,
-  publishVersion, reanchorForEvents, tagPropRange, validateTags,
+  planCommitLinks, publishVersion, reanchorForEvents, tagPropRange,
+  validateTags, type CommitPlanInfo,
 } from "../editor/features.ts";
+import { paginationFor } from "../editor/extensions.ts";
 import { ImportFlow } from "./ImportFlow.tsx";
 import { useQuery } from "./useQuery.ts";
 
@@ -41,10 +44,20 @@ export const scriptViewHandle: {
   scrollToLineOrder: ((order: number) => void) | null;
 } = { scrollToLineOrder: null };
 
+/** Editing position survives leaving the Script tab (opening an entity
+ * from a chip unmounts the editor; coming back should not mean "top of
+ * the screenplay"). */
+let savedPosition: { head: number; scrollTop: number } | null = null;
+
 interface StaleNotice {
   uuid: string;
   sceneId: number;
   headingText: string;
+}
+
+function smartTitleLocal(x: string): string {
+  return x.toLowerCase().replace(/(^|[\s\-'/(])\p{L}/gu,
+                                 (c) => c.toUpperCase());
 }
 
 export function ScriptView(): JSX.Element {
@@ -68,6 +81,10 @@ export function ScriptView(): JSX.Element {
                                   characters: string[] }>(
     { locations: [], characters: [] });
   const [commitNote, setCommitNote] = useState("");
+  const [review, setReview] = useState<CommitPlanInfo | null>(null);
+  const [resolutions, setResolutions] =
+    useState<Map<string, "create" | "rename">>(new Map());
+  const [pageInfo, setPageInfo] = useState({ page: 1, total: 1 });
   const { openEntityRow } = useStore();
 
   const refreshAnnotations = async (): Promise<void> => {
@@ -177,7 +194,8 @@ export function ScriptView(): JSX.Element {
     if (view === null) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);
     const created = await withTransaction(exec, async () => {
-      const link = await linkAndCreateAtCommit(exec, plan.rows);
+      const link = await linkAndCreateAtCommit(
+        exec, plan.rows, { createNew: false });
       await writeScreenplay(exec, {
         bom: false,
         titlePage: titlePageRef.current,
@@ -223,6 +241,82 @@ export function ScriptView(): JSX.Element {
     await refreshAnnotations();
   };
 
+  /** The Commit button / Cmd-S: preview creations and conflicts, and
+   * only create after the author has reviewed them. */
+  const explicitCommit = async (): Promise<void> => {
+    const view = viewRef.current;
+    if (view === null) return;
+    await commit(); // text + existing links are always safe to save
+    const plan = commitPlan(view.state, prevBlocksRef.current);
+    const info = await planCommitLinks(exec, plan.rows);
+    console.debug("[commit-plan]",
+      { newLocations: info.newLocations.map((l) => l.name),
+        newCharacters: info.newCharacters.map((c) => c.cue),
+        conflicts: info.conflicts.length,
+        headings: plan.rows
+          .filter((r) => r.lineType === "heading")
+          .map((r) => ({ content: r.content, sceneId: r.sceneId })) });
+    if (info.newLocations.length === 0 &&
+        info.newCharacters.length === 0 && info.conflicts.length === 0) {
+      return;
+    }
+    setResolutions(new Map());
+    setReview(info);
+  };
+
+  const confirmReview = async (): Promise<void> => {
+    const view = viewRef.current;
+    if (view === null || review === null) return;
+    const plan = commitPlan(view.state, prevBlocksRef.current);
+    const unlinkUuids = new Set<string>();
+    const renames = new Map<number, string>();
+    for (const c of review.conflicts) {
+      const choice = resolutions.get(c.uuid) ?? "create";
+      if (choice === "create") unlinkUuids.add(c.uuid);
+      else renames.set(c.entityId, smartTitleLocal(c.cue));
+    }
+    const created = await withTransaction(exec, async () => {
+      const link = await linkAndCreateAtCommit(exec, plan.rows,
+        { createNew: true, unlinkUuids, renames });
+      await writeScreenplay(exec, {
+        bom: false, titlePage: titlePageRef.current, lines: plan.rows,
+      });
+      return link;
+    });
+    prevBlocksRef.current = new Map(plan.rows.map((r) => [r.uuid!, {
+      id: r.uuid!, type: r.lineType as Block["type"], text: r.content,
+      sceneId: r.sceneId, characterId: r.characterId,
+      locationId: r.locationId, metadata: r.metadata,
+    }]));
+    // Renames may have rewritten cue lines — reflect them in the doc.
+    const current = commitPlan(view.state, prevBlocksRef.current);
+    for (const r of plan.rows) {
+      const live = current.rows.find((x) => x.uuid === r.uuid);
+      if (live !== undefined && live.content !== r.content) {
+        const lineIdx = plan.rows.indexOf(r);
+        const line = view.state.doc.line(
+          Math.min(lineIdx + 1, view.state.doc.lines));
+        view.dispatch({ changes: { from: line.from, to: line.to,
+                                   insert: r.content } });
+      }
+    }
+    const parts: string[] = [];
+    if (created.scenesCreated > 0) {
+      parts.push(`${String(created.scenesCreated)} scene(s)`);
+    }
+    if (created.locationsCreated > 0) {
+      parts.push(`${String(created.locationsCreated)} location(s)`);
+    }
+    if (created.charactersCreated > 0) {
+      parts.push(`${String(created.charactersCreated)} character(s)`);
+    }
+    setCommitNote(parts.length > 0
+      ? `created ${parts.join(", ")}` : "");
+    setReview(null);
+    touch();
+    await refreshAnnotations();
+  };
+
   const scheduleCommit = (): void => {
     if (commitTimer.current !== null) clearTimeout(commitTimer.current);
     commitTimer.current = setTimeout(() => {
@@ -250,7 +344,7 @@ export function ScriptView(): JSX.Element {
         doc: "",
         extensions: [
           screenplayExtensions({
-            onCommitRequest: () => void commit(),
+            onCommitRequest: () => void explicitCommit(),
             onChipClick: (entity, entityId) =>
               void openEntityRow(entity, entityId),
             getLocations: () => entityNamesRef.current.locations,
@@ -260,6 +354,30 @@ export function ScriptView(): JSX.Element {
             if (u.docChanged) {
               pendingEvents.current.push(...lineEvents(u.state));
               scheduleCommit();
+            }
+            if (u.viewportChanged || u.docChanged || u.selectionSet) {
+              // "The page you are viewing": the line at the top of the
+              // visible viewport, through the manuscript-row model.
+              const pagination = paginationFor(u.state);
+              const topLine =
+                u.state.doc.lineAt(u.view.viewport.from).number;
+              setPageInfo({
+                page: pagination.pageOfLine(topLine),
+                total: pagination.total,
+              });
+              // Stabilize the scrollbar with the MEASURED height (the
+              // row-model estimate overshot and left blank pages at the
+              // end). Never shrinks mid-scroll, so the thumb maps 1:1.
+              u.view.requestMeasure({
+                read: (v) => v.contentHeight,
+                write: (h, v) => {
+                  const cur =
+                    parseFloat(v.contentDOM.style.minHeight || "0");
+                  if (u.docChanged || h > cur) {
+                    v.contentDOM.style.minHeight = `${String(h)}px`;
+                  }
+                },
+              });
             }
             if (u.selectionSet || u.docChanged) {
               const head = u.state.selection.main.head;
@@ -310,16 +428,46 @@ export function ScriptView(): JSX.Element {
       loadIntoEditor(rowsToBlocks(sp.lines));
       setLoaded(true);
       await refreshAnnotations();
+      if (savedPosition !== null) {
+        const head = Math.min(savedPosition.head,
+                              view.state.doc.length);
+        // scrollIntoView goes through CM's measure cycle — a raw
+        // scrollTop write raced measurement and lost (clamped to top).
+        view.dispatch({
+          selection: { anchor: head },
+          effects: EditorView.scrollIntoView(head, { y: "center" }),
+        });
+      }
     })();
 
     return () => {
       if (commitTimer.current !== null) clearTimeout(commitTimer.current);
+      // StrictMode double-mounts: its interleaved cleanup runs on a
+      // still-empty view and was clobbering the real saved position
+      // with 0/top. An empty doc has no position worth saving.
+      if (view.state.doc.length > 0) {
+        savedPosition = {
+          head: view.state.selection.main.head,
+          scrollTop: view.scrollDOM.scrollTop,
+        };
+      }
       scriptViewHandle.scrollToLineOrder = null;
       view.destroy();
       viewRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const unlinkScene = async (notice: StaleNotice): Promise<void> => {
+    await exec(
+      "UPDATE screenplay_lines SET scene_id = NULL WHERE uuid = ?",
+      [notice.uuid]);
+    const block = prevBlocksRef.current.get(notice.uuid);
+    if (block !== undefined) block.sceneId = null;
+    setStale((old) => old.filter((x) => x.uuid !== notice.uuid));
+    touch();
+    await refreshAnnotations();
+  };
 
   const syncScene = async (notice: StaleNotice): Promise<void> => {
     const fields = sceneSyncFromHeading(notice.headingText);
@@ -386,7 +534,11 @@ export function ScriptView(): JSX.Element {
         <button onClick={exportFountain} disabled={empty}>
           Export .fountain
         </button>
-        <button onClick={() => void commit()} title="Cmd/Ctrl-S">
+        <span className="page-indicator">
+          p. {pageInfo.page}/{pageInfo.total}
+        </span>
+        <button onClick={() => void explicitCommit()}
+                title="Cmd/Ctrl-S — reviews new entities before creating">
           Commit
         </button>
       </div>
@@ -394,9 +546,18 @@ export function ScriptView(): JSX.Element {
         <div className="stale-bar">
           {stale.map((s) => (
             <span key={s.uuid} className="stale-notice">
-              Heading changed — linked scene may be out of date:
+              This heading's text changed but it is still linked to
+              its original scene entity — script and scene now disagree.
               <em> {s.headingText}</em>
+              <span className="muted">
+                Sync updates the scene from the heading; Open shows the
+                scene; Dismiss keeps both as they are.
+              </span>
               <button onClick={() => void syncScene(s)}>Sync scene</button>
+              <button onClick={() => void unlinkScene(s)}
+                      title="Break this line's link to the scene entity. The next Commit will propose a fresh scene (and its location) from the heading as written.">
+                Unlink
+              </button>
               <button onClick={() =>
                 void openEntityRow("scene", s.sceneId)}>Open</button>
               <button onClick={() => setStale((old) =>
@@ -430,6 +591,95 @@ export function ScriptView(): JSX.Element {
           <VersionsPanel onPublished={() => touch()} />
         )}
       </div>
+      {review !== null && (
+        <div className="modal-scrim" role="dialog" aria-modal="true">
+          <div className="modal commit-review">
+            <div className="modal-head">
+              <h2>Review before creating</h2>
+              <button onClick={() => setReview(null)}
+                      aria-label="close">×</button>
+            </div>
+            {review.newLocations.length > 0 && (
+              <>
+                <h3>New locations</h3>
+                <ul className="review-list">
+                  {review.newLocations.map((l) => (
+                    <li key={l.name}>
+                      <b>{l.name}</b>
+                      {l.similar.length > 0 && (
+                        <span className="muted">
+                          {" "}— similar existing:{" "}
+                          {l.similar.join(", ")}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {review.newCharacters.length > 0 && (
+              <>
+                <h3>New characters</h3>
+                <ul className="review-list">
+                  {review.newCharacters.map((c) => (
+                    <li key={c.cue}>
+                      <b>{c.cue}</b>
+                      {c.similar.length > 0 && (
+                        <span className="muted">
+                          {" "}— similar existing:{" "}
+                          {c.similar.join(", ")}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {review.conflicts.length > 0 && (
+              <>
+                <h3>Cue / entity mismatches</h3>
+                <ul className="review-list">
+                  {review.conflicts.map((c) => (
+                    <li key={c.uuid} className="review-conflict">
+                      Line says <b>{c.cue}</b> but is linked to{" "}
+                      <b>{c.entityName}</b>.
+                      <label>
+                        <input type="radio" name={`res-${c.uuid}`}
+                               checked={(resolutions.get(c.uuid) ??
+                                         "create") === "create"}
+                               onChange={() => setResolutions((old) =>
+                                 new Map(old).set(c.uuid, "create"))} />
+                        break link; create/match “{c.cue}”
+                      </label>
+                      <label>
+                        <input type="radio" name={`res-${c.uuid}`}
+                               checked={resolutions.get(c.uuid) ===
+                                        "rename"}
+                               onChange={() => setResolutions((old) =>
+                                 new Map(old).set(c.uuid, "rename"))} />
+                        rename entity to “{smartTitleLocal(c.cue)}” (all
+                        its cue lines update)
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <div className="modal-actions">
+              <span className="muted">
+                Nothing is created until you confirm. Cancel to fix
+                spelling in the script first.
+              </span>
+              <span className="flex-spacer" />
+              <button onClick={() => setReview(null)}>Cancel</button>
+              <button className="primary"
+                      onClick={() => void confirmReview()}>
+                Create & commit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {importing && (
         <ImportFlow
           onClose={() => setImporting(false)}

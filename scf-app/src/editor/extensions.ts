@@ -11,7 +11,8 @@
 import { EditorState, RangeSetBuilder, StateEffect, StateField,
   type Extension } from "@codemirror/state";
 import {
-  Decoration, EditorView, ViewPlugin, ViewUpdate, WidgetType, keymap,
+  Decoration, EditorView, ViewPlugin, ViewUpdate, WidgetType,
+  highlightActiveLineGutter, keymap,
   type DecorationSet, gutter, GutterMarker,
 } from "@codemirror/view";
 import { history, historyKeymap, defaultKeymap } from "@codemirror/commands";
@@ -20,7 +21,7 @@ import {
   type CompletionResult,
 } from "@codemirror/autocomplete";
 import {
-  TYPE_CYCLE, lineState, setLineType, type BlockType,
+  TYPE_CYCLE, lineEntries, lineState, setLineType, type BlockType,
 } from "./lineState.ts";
 import { blankBetween } from "./screenplayDoc.ts";
 
@@ -88,6 +89,114 @@ class ChipWidget extends WidgetType {
  * margins broke all three at once (clicks landing on the wrong line,
  * arrow keys skipping cues, gutter labels drifting).
  */
+export const LINES_PER_PAGE = 55; // manuscript rows per page
+
+/** Manuscript column width per element (chars), for wrap estimation. */
+const WRAP_WIDTH: Partial<Record<BlockType, number>> = {
+  action: 60, dialogue: 35, parenthetical: 20, lyric: 35,
+};
+
+/**
+ * Pagination in FORMATTED manuscript rows: every block is >=1 row,
+ * derived blank lines count (blankBetween), long lines wrap at their
+ * element's column. Cached against the entries identity; recomputed
+ * only when lines change.
+ */
+export interface Pagination {
+  /** editor line numbers (1-based) that START a new page */
+  breakBefore: Set<number>;
+  pageOfLine: (lineNo: number) => number;
+  total: number;
+  /** estimated total manuscript rows (for stable scroll height) */
+  totalRows: number;
+}
+const paginationCache = new WeakMap<readonly unknown[], Pagination>();
+export function paginationFor(state: EditorState): Pagination {
+  const entries = state.field(lineState).entries;
+  const cached = paginationCache.get(entries);
+  if (cached !== undefined) return cached;
+  const breakBefore = new Set<number>();
+  const pageByLine: number[] = [];
+  let rows = 0;
+  let page = 1;
+  let totalRows = 0;
+  for (let n = 1; n <= entries.length; n++) {
+    const entry = entries[n - 1]!;
+    const prev = entries[n - 2];
+    const gap = prev !== undefined &&
+      blankBetween(prev.type, entry.type) ? 1 : 0;
+    const len = n <= state.doc.lines ? state.doc.line(n).length : 0;
+    const width = WRAP_WIDTH[entry.type] ?? 60;
+    const weight = gap + Math.max(1, Math.ceil(len / width));
+    if (rows + weight > LINES_PER_PAGE && n > 1) {
+      // Widow/orphan rules: a heading, cue, or parenthetical must not
+      // sit alone at a page bottom with its content on the next page.
+      let breakAt = n;
+      let pulled = 0;
+      while (breakAt > 2 && pulled < 3) {
+        const before = entries[breakAt - 2];
+        if (before !== undefined &&
+            (before.type === "heading" || before.type === "character" ||
+             before.type === "parenthetical")) {
+          breakAt -= 1;
+          pulled += 1;
+        } else {
+          break;
+        }
+      }
+      breakBefore.add(breakAt);
+      page += 1;
+      rows = 0;
+      for (let m = breakAt; m < n; m++) {
+        const e2 = entries[m - 1]!;
+        const p2 = entries[m - 2];
+        const g2 = p2 !== undefined &&
+          blankBetween(p2.type, e2.type) ? 1 : 0;
+        const l2 = m <= state.doc.lines ? state.doc.line(m).length : 0;
+        rows += g2 + Math.max(1, Math.ceil(
+          l2 / (WRAP_WIDTH[e2.type] ?? 60)));
+        pageByLine[m - 1] = page;
+      }
+    }
+    rows += weight;
+    totalRows += weight;
+    pageByLine[n - 1] = page;
+  }
+  const result: Pagination = {
+    breakBefore,
+    pageOfLine: (lineNo: number) =>
+      pageByLine[Math.min(Math.max(lineNo, 1),
+                          pageByLine.length) - 1] ?? 1,
+    total: page,
+    totalRows,
+  };
+  paginationCache.set(entries, result);
+  return result;
+}
+
+class PageBreakWidget extends WidgetType {
+  constructor(private readonly page: number) {
+    super();
+  }
+  override eq(other: PageBreakWidget): boolean {
+    return other.page === this.page;
+  }
+  override get estimatedHeight(): number {
+    return 30;
+  }
+  override toDOM(): HTMLElement {
+    const el = document.createElement("div");
+    el.className = "sp-pagebreak";
+    const label = document.createElement("span");
+    label.textContent = `p. ${String(this.page)}`;
+    el.appendChild(label);
+    return el;
+  }
+  override ignoreEvent(): boolean {
+    return false;
+  }
+}
+
 class SpacerWidget extends WidgetType {
   override eq(): boolean {
     return true;
@@ -117,12 +226,19 @@ const SPACER = Decoration.widget({
 function buildSpacers(state: EditorState): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
   const entries = state.field(lineState).entries;
+  const pagination = paginationFor(state);
   for (let n = 2; n <= state.doc.lines; n++) {
+    const at = state.doc.line(n).from;
+    if (pagination.breakBefore.has(n)) {
+      builder.add(at, at, Decoration.widget({
+        widget: new PageBreakWidget(pagination.pageOfLine(n)),
+        block: true, side: -20,
+      }));
+    }
     const prev = entries[n - 2];
     const entry = entries[n - 1];
     if (prev !== undefined && entry !== undefined &&
         blankBetween(prev.type, entry.type)) {
-      const at = state.doc.line(n).from;
       builder.add(at, at, SPACER);
     }
   }
@@ -214,19 +330,53 @@ const TYPE_ABBREV: Record<BlockType, string> = {
 };
 
 class TypeMarker extends GutterMarker {
-  constructor(private readonly label: string,
+  constructor(private readonly lineNo: number,
+              private readonly label: string,
+              private readonly sceneNo: number | null,
               private readonly cls: string) {
     super();
   }
   override eq(other: TypeMarker): boolean {
-    return other.label === this.label;
+    return other.label === this.label && other.lineNo === this.lineNo &&
+           other.sceneNo === this.sceneNo;
   }
   override toDOM(): Node {
+    // Order per spec: line number | type | scene number.
     const el = document.createElement("span");
-    el.className = `sp-gutter-type ${this.cls}`;
-    el.textContent = this.label;
+    el.className = `sp-gutter-entry ${this.cls}`;
+    const scene = document.createElement("span");
+    scene.className = "sp-gutter-sceneno";
+    scene.textContent = this.sceneNo !== null
+      ? String(this.sceneNo) : "";
+    const type = document.createElement("span");
+    type.className = "sp-gutter-type";
+    type.textContent = this.label;
+    const no = document.createElement("span");
+    no.className = "sp-gutter-lineno";
+    no.textContent = String(this.lineNo);
+    el.append(no, type, scene);
     return el;
   }
+}
+
+const ordinalCache =
+  new WeakMap<readonly unknown[], Array<number | null>>();
+function sceneOrdinals(
+    entries: readonly { type: BlockType }[]): Array<number | null> {
+  const cached = ordinalCache.get(entries);
+  if (cached !== undefined) return cached;
+  const out: Array<number | null> = [];
+  let n = 0;
+  for (const e of entries) {
+    if (e.type === "heading") {
+      n += 1;
+      out.push(n);
+    } else {
+      out.push(null);
+    }
+  }
+  ordinalCache.set(entries, out);
+  return out;
 }
 
 class BeatDotMarker extends GutterMarker {
@@ -264,11 +414,14 @@ const beatGutter = gutter({
 const typeGutter = gutter({
   class: "sp-gutter",
   lineMarker: (view, line) => {
-    const entry =
-      view.state.field(lineState).entries[
-        view.state.doc.lineAt(line.from).number - 1];
-    return entry === undefined ? null
-      : new TypeMarker(TYPE_ABBREV[entry.type], `sp-g-${entry.type}`);
+    const lineNo = view.state.doc.lineAt(line.from).number;
+    const entries = view.state.field(lineState).entries;
+    const entry = entries[lineNo - 1];
+    if (entry === undefined) return null;
+    return new TypeMarker(
+      lineNo, TYPE_ABBREV[entry.type],
+      sceneOrdinals(entries)[lineNo - 1] ?? null,
+      `sp-g-${entry.type}`);
   },
   lineMarkerChange: (update) =>
     update.state.field(lineState) !== update.startState.field(lineState),
@@ -277,15 +430,37 @@ const typeGutter = gutter({
 /** v1 parity: heading and character lines uppercase AS YOU TYPE — the
  * enforcement lives in the data, so every surface (rail, entities,
  * export) agrees, not just a CSS transform. */
+const HEADING_START =
+  /^(?:INT|EXT|EST|I\/E)[./ ]/i;
+
 const uppercaseInput = EditorView.inputHandler.of(
   (view, from, to, text) => {
-    if (!/\p{Ll}/u.test(text)) return false;
     const line = view.state.doc.lineAt(from);
     const entry = view.state.field(lineState).entries[line.number - 1];
-    if (entry === undefined ||
-        (entry.type !== "heading" && entry.type !== "character")) {
+    if (entry === undefined) return false;
+    // v1 parity: an action line whose text starts INT./EXT./EST./I/E
+    // becomes a heading the moment the prefix appears — this is why
+    // typed scenes (and therefore new locations) exist at all when a
+    // fresh line inferred "action". One-way; Tab can always re-type.
+    if (entry.type === "action") {
+      const would = line.text.slice(0, from - line.from) + text +
+                    line.text.slice(to - line.from);
+      if (HEADING_START.test(would.trimStart())) {
+        view.dispatch({
+          changes: { from, to, insert: text.toUpperCase() },
+          selection: { anchor: from + text.length },
+          effects: setLineType.of({ line: line.number,
+                                    type: "heading" }),
+          userEvent: "input.type",
+        });
+        return true;
+      }
       return false;
     }
+    if (entry.type !== "heading" && entry.type !== "character") {
+      return false;
+    }
+    if (!/\p{Ll}/u.test(text)) return false;
     view.dispatch({
       changes: { from, to, insert: text.toUpperCase() },
       selection: { anchor: from + text.length },
@@ -402,6 +577,7 @@ export function screenplayExtensions(cb: ScriptCallbacks): Extension {
     screenplayDecorations(cb.onChipClick),
     typeGutter,
     beatGutter,
+    highlightActiveLineGutter(),
     history(),
     uppercaseInput,
     autocompletion({

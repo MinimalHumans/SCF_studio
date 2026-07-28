@@ -239,11 +239,17 @@ export function commitPlan(
     if (entry === undefined) break;
     const text = state.doc.line(i + 1).text;
     const prev = previous.get(entry.id);
+    // A line that just BECAME a heading carries inherited scene context
+    // from its action/dialogue life (threading writes sceneId onto
+    // every row so queries know context). Inheritance is not identity:
+    // as a heading, that id would claim the scene ABOVE it. Shed it.
+    const becameHeading = entry.type === "heading" &&
+      (prev === undefined || prev.type !== "heading");
     rows.push({
       lineOrder: i,
       lineType: entry.type,
       content: text,
-      sceneId: prev?.sceneId ?? null,
+      sceneId: becameHeading ? null : prev?.sceneId ?? null,
       characterId: prev?.characterId ?? null,
       locationId: prev?.locationId ?? null,
       metadata: prev?.metadata ?? null,

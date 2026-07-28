@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 /* SCF editor — dense authoring workbench.
    Ink surfaces with warm paper text (screenplay heritage); one accent:
    hearth amber, the demo fixture's own focal color. Mono carries entity/
@@ -681,7 +682,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .script-empty { padding: 48px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 .script-editor { flex: 1; min-height: 0; overflow: auto; }
 .script-editor.hidden { display: none; }
-.script-editor .cm-editor { height: 100%; font-family: "Courier Prime", "Courier New", monospace; font-size: 14px; }
+.script-editor .cm-editor { height: 100%; font-family: "Courier Prime", "Courier New", monospace; font-size: 13px; }
 .script-editor .cm-editor.cm-focused { outline: none; }
 .script-editor .cm-scroller { overflow: auto; }
 .script-editor .cm-content { max-width: 62ch; padding: 24px 0 50vh; margin: 0 auto; }
@@ -691,21 +692,32 @@ ul { list-style: none; margin: 0; padding: 0; }
    (.sp-spacer), never margins: CM6 geometry depends on it */
 .sp-spacer { height: 0.95em; }
 .sp-heading { font-weight: 700; text-transform: uppercase; letter-spacing: .01em; }
-.sp-character { margin-left: 38%; text-transform: uppercase; }
-.sp-dialogue { margin-left: 22%; max-width: 36ch; }
-.sp-parenthetical { margin-left: 30%; max-width: 26ch; color: var(--paper-dim); }
+.sp-character { margin-left: 22ch; text-transform: uppercase; }
+.sp-dialogue { margin-left: 10ch; max-width: 35ch; }
+.sp-parenthetical { margin-left: 15ch; max-width: 20ch; color: var(--paper-dim); }
 .sp-transition { text-align: right; text-transform: uppercase; }
 .sp-centered { text-align: center; }
-.sp-lyric { margin-left: 22%; font-style: italic; }
+.sp-lyric { margin-left: 10ch; font-style: italic; }
 .sp-section { color: var(--amber); font-weight: 700; }
 .sp-synopsis { color: var(--paper-dim); font-style: italic; }
 .sp-note { color: var(--paper-dim); background: var(--ink-1); border-radius: 3px; }
 
-.sp-gutter { min-width: 40px; border-right: 1px solid var(--line); }
+.sp-gutter { min-width: 108px; padding-left: 10px; }
+.sp-gutter-entry {
+  display: inline-flex; gap: 7px; align-items: baseline;
+  padding-top: 3px; font-family: var(--mono); white-space: nowrap;
+}
+.sp-gutter-sceneno {
+  min-width: 18px; text-align: right;
+  font-size: 9.5px; color: #2f6bb0; font-weight: 700;
+}
 .sp-gutter-type {
-  display: inline-block; width: 34px; text-align: right;
-  padding-right: 6px; font-size: 9.5px; letter-spacing: .04em;
-  color: var(--paper-dim); opacity: .75; font-family: var(--mono);
+  min-width: 24px; font-size: 9.5px; letter-spacing: .04em;
+  color: var(--paper-dim); opacity: .85;
+}
+.sp-gutter-lineno {
+  min-width: 28px; text-align: right;
+  font-size: 9px; color: #a8b0ba;
 }
 .sp-g-heading { color: var(--amber); opacity: 1; font-weight: 700; }
 .sp-g-character { opacity: 1; }
@@ -867,14 +879,18 @@ ul { list-style: none; margin: 0; padding: 0; }
         writing space ---- */
 .script-editor .cm-scroller {
   background: #e9eae5;
+  /* CM's base theme sets font-family on .cm-scroller — override HERE,
+     not on .cm-editor, or the page never leaves the default mono. */
+  font-family: "Courier Prime", "Courier New", monospace !important;
 }
 .script-editor .cm-content {
   background: #fbfbf8;
   border-left: 1px solid #d3d5cd;
   border-right: 1px solid #d3d5cd;
   box-shadow: 0 0 18px rgba(20, 24, 30, 0.08);
-  padding: 32px 56px 50vh;
-  max-width: 66ch;
+  padding: 40px 6ch 12em;
+  max-width: 60ch; /* manuscript: ~60 characters across */
+  box-sizing: content-box;
 }
 /* gutters read as part of the surround, not the page */
 .script-editor .cm-gutters {
@@ -889,7 +905,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   align-items: flex-start;
 }
 .script-editor .cm-line { line-height: 1.4; }
-.sp-gutter-type { font-size: 9.5px; padding-top: 3px; }
+
 
 /* heading case reads uppercase EVERYWHERE it appears */
 .scene-jump { text-transform: uppercase; }
@@ -908,3 +924,50 @@ ul { list-style: none; margin: 0; padding: 0; }
   background: #dce8f7;
   color: #12151a;
 }
+
+
+/* rail resize (v1's handle pattern, app-wide) */
+.rail-nav { position: relative; flex-shrink: 0; }
+.rail-resize-handle {
+  position: absolute; top: 0; right: -3px; width: 6px; height: 100%;
+  cursor: col-resize; z-index: 10; background: transparent;
+}
+.rail-resize-handle:hover { background: var(--amber-dim); }
+
+/* gutter: line no · type · scene no; active line darkened */
+.sp-gutter-entry {
+  display: inline-flex; gap: 6px; align-items: baseline;
+  padding: 3px 6px 0 8px; font-family: var(--mono);
+}
+.sp-gutter-lineno { font-size: 9px; color: #a8b0ba; min-width: 26px;
+                    text-align: right; }
+.sp-gutter-sceneno { font-size: 9.5px; color: #2f6bb0; font-weight: 700; }
+.script-editor .cm-activeLineGutter {
+  background: #dde3ea;
+}
+.script-editor .cm-activeLineGutter .sp-gutter-lineno { color: #4a5766; }
+
+/* page break separator (measured widget) */
+.sp-pagebreak {
+  height: 30px; display: flex; align-items: center; gap: 10px;
+  color: #9aa3ad; font: 10px var(--mono);
+  padding: 0 8px;
+}
+.sp-pagebreak::before, .sp-pagebreak::after {
+  content: ""; flex: 1; border-top: 1px dashed #c9cdc4;
+}
+.page-indicator { font: 11.5px var(--mono); color: var(--paper-dim); }
+
+/* commit review modal */
+.modal.commit-review {
+  background: var(--ink-0, #12151a); border: 1px solid var(--line);
+  border-radius: 6px; width: min(640px, 92vw); max-height: 84vh;
+  overflow: auto; padding: 16px 20px;
+}
+.review-list { list-style: none; padding: 0; margin: 6px 0 14px; }
+.review-list li { padding: 4px 0; border-top: 1px solid var(--line); }
+.review-conflict label {
+  display: block; margin: 3px 0 0 12px; font-size: 12.5px;
+  color: var(--paper-dim); cursor: pointer;
+}
+.review-conflict input { margin-right: 6px; }

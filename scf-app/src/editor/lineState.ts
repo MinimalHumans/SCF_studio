@@ -6,8 +6,12 @@
  * document line and maps it through every transaction:
  *
  *  - typing within a line preserves its ID by construction
- *  - a split assigns the original ID to the FIRST fragment and mints a
- *    new ID for the rest; recorded as an explicit split event
+ *  - a split assigns the original ID to the fragment that carries the
+ *    original CONTENT: mid-line splits keep it on the first fragment;
+ *    a split at line start (first fragment empty — the author is
+ *    pushing this line down to insert above it) moves the ID, its
+ *    type, and therefore its entity links to the pushed-down text.
+ *    Recorded as an explicit split event either way
  *  - a join keeps the EARLIER line's ID and records the merge
  *
  * Split/merge are explicit state transitions, not inferences — exactly
@@ -133,8 +137,12 @@ function mapThroughTransaction(
                       absorbedIds: absorbed });
       }
     }
-    // Then: splits. The original keeps its ID and type; each new line
-    // gets a fresh ID with a context-inferred type.
+    // Then: splits. Identity follows the ORIGINAL CONTENT: normally the
+    // first fragment keeps the id; but a split at line start leaves the
+    // first fragment empty — the author pushed the line down to type
+    // something new above it, so the id (with its entity links) must
+    // travel to the pushed-down fragment. Without this, typing a new
+    // scene above an existing heading hijacked that heading's scene.
     if (op.addedLines > 0) {
       const original = entries[idx];
       const newEntries: LineEntry[] = [];
@@ -146,6 +154,17 @@ function mapThroughTransaction(
       }
       entries.splice(idx + 1, 0, ...newEntries);
       if (original !== undefined) {
+        if (idx + 1 <= tr.newDoc.lines - 1 + 1 &&
+            idx + 1 <= tr.newDoc.lines &&
+            tr.newDoc.line(idx + 1).length === 0 &&
+            newEntries.length > 0) {
+          const minted = entries[idx + 1]!.id;
+          entries[idx + 1] = { id: original.id, type: original.type };
+          entries[idx] = {
+            id: minted,
+            type: inferredTypeAfter(entries[idx - 1]?.type ?? "action"),
+          };
+        }
         events.push({ kind: "split", originalId: original.id,
                       newIds: newEntries.map((e) => e.id) });
       }

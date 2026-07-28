@@ -276,6 +276,93 @@ export interface CommitLinkResult {
   linksCreated: number;
 }
 
+export interface CommitPlanInfo {
+  newLocations: Array<{ name: string; similar: string[] }>;
+  newCharacters: Array<{ cue: string; similar: string[] }>;
+  conflicts: Array<{ uuid: string; cue: string; entityId: number;
+                     entityName: string }>;
+}
+
+const COMPOUND_CUE = /\s(?:&|AND)\s/i;
+
+/** Read-only preview of what an explicit commit would create, plus
+ * cue/entity mismatches (the George→Jorge case: the line was edited but
+ * kept its old link — never silently acceptable). */
+export async function planCommitLinks(
+    exec: SqlExec, rows: ScreenplayRow[]): Promise<CommitPlanInfo> {
+  const norm = (x: string): string => x.trim().toUpperCase();
+  const { parseHeading, normalizeCue } =
+    await import("@scf-core/proposals/propose.ts");
+  const locations = await exec("SELECT id, name FROM location");
+  const locNames = locations.map((r) => String(r["name"]));
+  const locSet = new Set(locNames.map(norm));
+  const characters = await exec("SELECT id, name FROM character");
+  const charNames = characters.map((r) => String(r["name"]));
+  const charSet = new Set(charNames.map(norm));
+  const charNameById = new Map(characters.map((r) =>
+    [r["id"] as number, String(r["name"])]));
+  const similar = (name: string, pool: string[]): string[] =>
+    pool.filter((x) => {
+      const a = norm(x);
+      const b = norm(name);
+      return a !== b && (a.includes(b) || b.includes(a) ||
+                         a.slice(0, 4) === b.slice(0, 4));
+    }).slice(0, 3);
+
+  const info: CommitPlanInfo = {
+    newLocations: [], newCharacters: [], conflicts: [],
+  };
+  const seenLoc = new Set<string>();
+  const seenChar = new Set<string>();
+  for (const row of rows) {
+    if (row.lineType === "heading" && row.sceneId === null &&
+        row.content.trim() !== "") {
+      const parsed = parseHeading(row.content);
+      if (parsed.locationName !== null) {
+        const key = norm(parsed.locationName);
+        if (!locSet.has(key) && !seenLoc.has(key)) {
+          seenLoc.add(key);
+          info.newLocations.push({
+            name: parsed.locationName,
+            similar: similar(parsed.locationName, locNames),
+          });
+        }
+      }
+    } else if (row.lineType === "character" &&
+               row.content.trim() !== "") {
+      const cue = normalizeCue(row.content.trim()).name;
+      if (cue === "" || COMPOUND_CUE.test(cue)) continue;
+      if (row.characterId !== null) {
+        const entityName = charNameById.get(row.characterId);
+        if (entityName !== undefined && norm(entityName) !== norm(cue)) {
+          info.conflicts.push({ uuid: row.uuid ?? "", cue,
+                                entityId: row.characterId, entityName });
+        }
+      } else if (!charSet.has(norm(cue)) && !seenChar.has(norm(cue))) {
+        seenChar.add(norm(cue));
+        info.newCharacters.push({
+          cue, similar: similar(cue, charNames),
+        });
+      }
+    }
+  }
+  return info;
+}
+
+export interface CommitLinkOptions {
+  /** false: match existing entities only, create nothing (the debounced
+   * auto-save mode — text always saves, entities never appear
+   * unreviewed). */
+  createNew: boolean;
+  /** Line uuids to unlink before matching (conflict resolution:
+   * "break the link and create/match by the cue as written"). */
+  unlinkUuids?: Set<string>;
+  /** Entity renames to apply first (conflict resolution: "the entity
+   * follows the line"): character id -> new display name. Connected cue
+   * lines' text is rewritten to match. */
+  renames?: Map<number, string>;
+}
+
 /**
  * v1 created entities on save; the import regret was HEURISTIC creation
  * from a parser, not this: here the author literally typed the heading
@@ -291,12 +378,47 @@ export interface CommitLinkResult {
  */
 export async function linkAndCreateAtCommit(
     exec: SqlExec,
-    rows: ScreenplayRow[]): Promise<CommitLinkResult> {
+    rows: ScreenplayRow[],
+    options: CommitLinkOptions = { createNew: true }):
+    Promise<CommitLinkResult> {
   const result: CommitLinkResult = {
     scenesCreated: 0, locationsCreated: 0, charactersCreated: 0,
     linksCreated: 0,
   };
   const norm = (s: string): string => s.trim().toUpperCase();
+
+  // Conflict resolutions first: renames (entity follows the line) and
+  // unlinks (line breaks from the entity, re-resolves by its cue).
+  if (options.renames !== undefined) {
+    for (const [id, newName] of options.renames) {
+      await exec(
+        "UPDATE character SET name = ?, updated_at = datetime('now') " +
+        "WHERE id = ?", [newName, id]);
+      // Connected cue lines keep saying the old name otherwise —
+      // rewrite the name portion, preserving extensions like (V.O.).
+      const cueRows = await exec(
+        "SELECT uuid, content FROM screenplay_lines " +
+        "WHERE line_type = 'character' AND character_id = ?", [id]);
+      for (const cueRow of cueRows) {
+        const content = String(cueRow["content"]);
+        const ext = /\s*(\([^)]*\)\s*)+$/.exec(content);
+        const rewritten = newName.toUpperCase() +
+          (ext !== null ? ` ${ext[0].trim()}` : "");
+        await exec(
+          "UPDATE screenplay_lines SET content = ? WHERE uuid = ?",
+          [rewritten, String(cueRow["uuid"])]);
+        const inMemory = rows.find((r) => r.uuid === cueRow["uuid"]);
+        if (inMemory !== undefined) inMemory.content = rewritten;
+      }
+    }
+  }
+  if (options.unlinkUuids !== undefined) {
+    for (const row of rows) {
+      if (row.uuid !== undefined && options.unlinkUuids.has(row.uuid)) {
+        row.characterId = null;
+      }
+    }
+  }
 
   const locations = await exec("SELECT id, name FROM location");
   const locationByName = new Map(locations.map((r) =>
@@ -317,16 +439,30 @@ export async function linkAndCreateAtCommit(
 
   let currentScene: number | null = null;
   let currentCharacter: number | null = null;
+  const claimedScenes = new Set<number>();
   for (const row of rows) {
     if (row.lineType === "heading") {
       currentCharacter = null;
-      if (row.sceneId === null && row.content.trim() !== "") {
+      // Invariant: a scene entity belongs to exactly ONE heading. A
+      // heading whose sceneId equals the section above's scene, or a
+      // scene already claimed by an earlier heading, is carrying
+      // inherited/contaminated state — shed it (the next explicit
+      // commit proposes it fresh). This also self-heals rows written
+      // before the rule existed.
+      if (row.sceneId !== null &&
+          (row.sceneId === currentScene ||
+           claimedScenes.has(row.sceneId))) {
+        row.sceneId = null;
+      }
+      if (row.sceneId !== null) claimedScenes.add(row.sceneId);
+      if (row.sceneId === null && row.content.trim() !== "" &&
+          options.createNew) {
         const parsed = parseHeading(row.content);
         let locationId: number | null = null;
         if (parsed.locationName !== null) {
           const key = norm(parsed.locationName);
           locationId = locationByName.get(key) ?? null;
-          if (locationId === null) {
+          if (locationId === null && options.createNew) {
             await exec(
               "INSERT INTO location (name, external_id_namespace) " +
               "VALUES (?, 'scf:editor')",
@@ -366,11 +502,12 @@ export async function linkAndCreateAtCommit(
         continue;
       }
       const cue = normalizeCue(row.content.trim()).name;
-      if (row.characterId === null && cue !== "") {
+      if (row.characterId === null && cue !== "" &&
+          !COMPOUND_CUE.test(cue)) {
         const existing = characterByName.get(norm(cue));
         if (existing !== undefined) {
           row.characterId = existing;
-        } else {
+        } else if (options.createNew) {
           await exec(
             "INSERT INTO character (name, external_id_namespace) " +
             "VALUES (?, 'scf:editor')", [smartTitle(cue)]);

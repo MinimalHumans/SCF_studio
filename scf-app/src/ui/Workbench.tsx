@@ -9,7 +9,7 @@ import { SearchBox } from "./SearchBox.tsx";
 import { QueryIndex, QueryRunner } from "./queries/QueryRunner.tsx";
 import { ScriptView } from "./ScriptView.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
-import { Component, type ReactNode } from "react";
+import { Component, useState, type ReactNode } from "react";
 
 /**
  * A render crash anywhere in the main pane must never white-screen the
@@ -48,7 +48,41 @@ class MainPaneBoundary extends Component<
 }
 import { SceneRail } from "./SceneRail.tsx";
 
+const RAIL_KEY = "scf:rail-width";
+
+function useRailWidth(): [number, (w: number) => void] {
+  const [width, setWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(RAIL_KEY));
+    return Number.isFinite(saved) && saved >= 180 ? saved : 260;
+  });
+  const set = (w: number): void => {
+    const clamped = Math.min(500, Math.max(180, w));
+    setWidth(clamped);
+    localStorage.setItem(RAIL_KEY, String(clamped));
+  };
+  return [width, set];
+}
+
+function RailResizeHandle({ onDrag }: {
+  onDrag: (clientX: number) => void;
+}): JSX.Element {
+  return (
+    <div className="rail-resize-handle"
+         onPointerDown={(e) => {
+           e.preventDefault();
+           const move = (ev: PointerEvent): void => onDrag(ev.clientX);
+           const up = (): void => {
+             window.removeEventListener("pointermove", move);
+             window.removeEventListener("pointerup", up);
+           };
+           window.addEventListener("pointermove", move);
+           window.addEventListener("pointerup", up);
+         }} />
+  );
+}
+
 export function Workbench(): JSX.Element {
+  const [railWidth, setRailWidth] = useRailWidth();
   const { projectName, saveProject, navMode, setNavMode, openRow,
           selectedEntityType, selectedSubject } = useStore();
 
@@ -86,7 +120,10 @@ export function Workbench(): JSX.Element {
         </button>
       </header>
       <div className="panels">
-        <nav className="rail rail-nav">
+        <nav className="rail rail-nav" style={{ width: railWidth }}>
+          <RailResizeHandle onDrag={(x) =>
+            setRailWidth(x - (document.querySelector(".rail-nav")
+              ?.getBoundingClientRect().left ?? 0))} />
           <div className="nav-modes" role="tablist">
             <button role="tab" aria-selected={navMode === "subject"}
                     className={navMode === "subject" ? "active" : ""}
