@@ -41,7 +41,29 @@ export function q(identifier: string): string {
  * multi-thousand-row write (script import, version publish) stalls for
  * minutes. One BEGIN/COMMIT turns that into one flush.
  */
+const txQueues = new WeakMap<object, Promise<unknown>>();
+
 export async function withTransaction<T>(
+    exec: SqlExec, fn: () => Promise<T>): Promise<T> {
+  // One connection, one transaction at a time. Concurrent callers
+  // (e.g. a blur-triggered commit racing the Commit button's click)
+  // queue instead of colliding with "cannot start a transaction within
+  // a transaction" — worse, an interleaved ROLLBACK would tear down the
+  // OTHER caller's work.
+  const key = exec as unknown as object;
+  const prev = txQueues.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const gate = new Promise<void>((r) => { release = r; });
+  txQueues.set(key, prev.then(() => gate, () => gate));
+  await prev.catch(() => undefined);
+  try {
+    return await runTransaction(exec, fn);
+  } finally {
+    release();
+  }
+}
+
+async function runTransaction<T>(
     exec: SqlExec, fn: () => Promise<T>): Promise<T> {
   await exec("BEGIN IMMEDIATE");
   try {

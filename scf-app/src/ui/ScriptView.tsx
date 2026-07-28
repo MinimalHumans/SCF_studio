@@ -150,7 +150,29 @@ export function ScriptView(): JSX.Element {
     view.dispatch({ effects: setAnnotations.of(map) });
   };
 
+  const commitBusy = useRef(false);
+  const commitAgain = useRef(false);
+
   const commit = async (): Promise<void> => {
+    // Coalesce: blur + click (or debounce + Cmd-S) fire near-together;
+    // one runs, a trailing rerun picks up anything newer.
+    if (commitBusy.current) {
+      commitAgain.current = true;
+      return;
+    }
+    commitBusy.current = true;
+    try {
+      await commitInner();
+    } finally {
+      commitBusy.current = false;
+      if (commitAgain.current) {
+        commitAgain.current = false;
+        void commit();
+      }
+    }
+  };
+
+  const commitInner = async (): Promise<void> => {
     const view = viewRef.current;
     if (view === null) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);

@@ -36,7 +36,7 @@ export interface RepairRecord {
   line: number;
   before: string;
   after: string;
-  rule: "heading-artifact";
+  rule: "heading-artifact" | "mangled-apostrophe";
 }
 
 export interface RepairResult {
@@ -74,7 +74,21 @@ export function repairConversionArtifacts(input: string): RepairResult {
   const parts = text.split(/(\r\n|\n|\r)/);
   // parts alternates content, eol, content, eol, …
   for (let i = 0; i < parts.length; i += 2) {
-    const raw = parts[i] ?? "";
+    let raw = parts[i] ?? "";
+    // Rule: export-mangled apostrophe. Some exporters (observed: Celtx)
+    // bake U+0080 + U+FFFD — or a bare U+FFFD — into the text where a
+    // right single quote belonged ("ALEXIS\u0080\uFFFD BEDROOM"). The
+    // bytes are unrecoverable; the pattern after a letter is
+    // deterministic. Replaced with an ASCII apostrophe, reported.
+    if (/\uFFFD/.test(raw)) {
+      const fixed = raw.replace(/(\p{L})\u0080?\uFFFD/gu, "$1'");
+      if (fixed !== raw) {
+        repairs.push({ line: i / 2, before: raw, after: fixed,
+                       rule: "mangled-apostrophe" });
+        parts[i] = fixed;
+        raw = fixed;
+      }
+    }
     // Fast reject: rule needs emphasis chars or a ">"/digit prefix to
     // have anything to do.
     if (!/[*_]/.test(raw) && !/^\s*>/.test(raw) &&

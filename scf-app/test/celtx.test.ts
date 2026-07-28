@@ -125,3 +125,26 @@ describe("linkAndCreateAtCommit", () => {
            again.charactersCreated + again.linksCreated).toBe(0);
   });
 });
+
+describe("repair: export-mangled apostrophes", () => {
+  test("letter + \\u0080?\\uFFFD becomes an apostrophe, reported", async () => {
+    const { repairConversionArtifacts } =
+      await import("@scf-core/fountain/repair.ts");
+    const { text, repairs } = repairConversionArtifacts(
+      ".INT. ALEXIS\u0080\uFFFD BEDROOM - NIGHT\n\nShe\uFFFDs here.\n");
+    expect(text).toBe(".INT. ALEXIS' BEDROOM - NIGHT\n\nShe's here.\n");
+    expect(repairs).toHaveLength(2);
+    expect(repairs[0]!.rule).toBe("mangled-apostrophe");
+  });
+
+  test("inert without a preceding letter and on clean text", async () => {
+    const { repairConversionArtifacts } =
+      await import("@scf-core/fountain/repair.ts");
+    const clean = repairConversionArtifacts("INT. HOUSE - DAY\n");
+    expect(clean.repairs).toEqual([]);
+    // A replacement char NOT after a letter is not our pattern: kept.
+    const kept = repairConversionArtifacts("\uFFFD odd start\n");
+    expect(kept.text).toBe("\uFFFD odd start\n");
+    expect(kept.repairs).toEqual([]);
+  });
+});
