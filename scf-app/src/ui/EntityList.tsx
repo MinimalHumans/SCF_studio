@@ -1,14 +1,33 @@
+import { useMemo } from "react";
 import { q } from "@scf-core/db.ts";
 import { registry, rowName, useStore } from "../state/store.ts";
+import {
+  isComposedLink, linkLabel, linkQualifiers, referenceFields,
+} from "../state/displayName.ts";
 import { useQuery } from "./useQuery.ts";
+import { useRefNames } from "./useRefNames.ts";
 
 export function EntityList({ entity }: { entity: string }): JSX.Element {
   const edef = registry.entities.get(entity);
   const { openEntityRow } = useStore();
   const nameField = edef?.nameField ?? "name";
+  // Scenes list in story order — sorting headings alphabetically buries
+  // the number that identifies them.
   const rows = useQuery(
     edef === undefined ? null :
-    `SELECT * FROM ${q(entity)} ORDER BY ${q(nameField)} LIMIT 500`);
+    entity === "scene"
+      ? "SELECT * FROM scene ORDER BY (scene_number IS NULL), " +
+        "scene_number, id LIMIT 500"
+    : isComposedLink(edef)
+      ? `SELECT * FROM ${q(entity)} ORDER BY id LIMIT 500`
+      : `SELECT * FROM ${q(entity)} ORDER BY ${q(nameField)} LIMIT 500`);
+
+  // With no anchor here, a link shows both of its ends.
+  const composed = isComposedLink(edef);
+  const targets = useMemo(() => edef === undefined || !composed ? []
+    : referenceFields(edef).map((f) => f.referenceEntity as string),
+    [edef, composed]);
+  const refNames = useRefNames(targets);
 
   if (edef === undefined) return <p className="muted">Unknown entity.</p>;
 
@@ -32,8 +51,12 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
             <button className="row-link"
                     onClick={() =>
                       void openEntityRow(entity, r["id"] as number)}>
-              {rowName(entity, r)}
+              {(composed ? linkLabel(edef, r, refNames) : null)
+                ?? rowName(entity, r)}
             </button>
+            {composed && linkQualifiers(edef, r).map((qual) => (
+              <span key={qual} className="scope-tag">{qual}</span>
+            ))}
             {r["lifecycle_status"] !== null &&
              r["lifecycle_status"] !== undefined &&
              r["lifecycle_status"] !== "active" && (

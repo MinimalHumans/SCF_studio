@@ -18,6 +18,7 @@ import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef }
   from "./registryGraph.ts";
 import { suggestSaveAsName } from "./saveName.ts";
+import { rowLabel } from "./displayName.ts";
 
 export { suggestSaveAsName };
 
@@ -419,12 +420,14 @@ export const useStore = create<AppState>((set, get) => ({
   },
 }));
 
-/** Display name for a row per the entity's nameField. */
+/**
+ * Display name for a row. Scene rows lead with their number — headings
+ * repeat across an imported script, numbers do not. Link rows have no
+ * name of their own; those callers use `linkLabel` with resolved
+ * references instead (see displayName.ts).
+ */
 export function rowName(entity: string, row: Row): string {
-  const edef = registry.entities.get(entity);
-  const v = row[edef?.nameField ?? "name"];
-  if (v !== null && v !== undefined && v !== "") return String(v);
-  return `${edef?.label ?? entity} #${String(row["id"])}`;
+  return rowLabel(registry.entities.get(entity), entity, row);
 }
 
 export function isDirty(draft: FormDraft | null): boolean {

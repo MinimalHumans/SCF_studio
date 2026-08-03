@@ -4,6 +4,11 @@ import type { Row } from "@scf-core/db.ts";
 import type { EntityDef } from "@scf-core/registry.ts";
 import { referenceGraph, registry, rowName, useStore }
   from "../state/store.ts";
+import {
+  isComposedLink, linkLabel, linkQualifiers, referenceFields,
+  sceneLabel, sceneShort,
+} from "../state/displayName.ts";
+import { useRefNames } from "./useRefNames.ts";
 import { scopeRank } from "../state/registryGraph.ts";
 import { useQuery } from "./useQuery.ts";
 import { PositionPicker, ReadinessPanel } from "./ReadinessPanel.tsx";
@@ -113,25 +118,39 @@ function SubjectSection({ entity, field, subjectId, scenes,
   const rows = useQuery(
     `SELECT * FROM ${q(entity)} WHERE ${q(field)} = ?`, [subjectId]);
 
-  const positionKeyed = edef !== undefined &&
-    edef.positionPattern !== "none" &&
-    edef.fields.some((f) => f.name === "scene_id");
   const isJunction = edef?.subject === "link";
+  const composed = isComposedLink(edef);
+  // The far ends of a link — the near end is the subject we are looking
+  // from, and repeating it on every row says nothing.
+  const targets = useMemo(() => edef === undefined || !composed ? []
+    : referenceFields(edef)
+        .filter((f) => f.name !== field)
+        .map((f) => f.referenceEntity as string),
+    [edef, composed, field]);
+  const refNames = useRefNames(targets);
+
+  // Position pattern governs SPAN semantics, not sort order: a link has
+  // no pattern but still sits at a scene, and an unordered list of
+  // scene labels reads as broken.
+  const scenePlaced = edef !== undefined &&
+    edef.fields.some((f) => f.name === "scene_id");
+  const positionKeyed = edef !== undefined &&
+    edef.positionPattern !== "none" && scenePlaced;
 
   const pos = useMemo(
     () => new Map(scenes.map((s, i) => [s["id"], i])), [scenes]);
 
   const ordered = useMemo(() => {
-    if (!positionKeyed) return rows;
+    if (!scenePlaced) return rows;
     return [...rows].sort((a, b) =>
       (pos.get(a["scene_id"]) as number ?? 1e9) -
       (pos.get(b["scene_id"]) as number ?? 1e9));
-  }, [rows, pos, positionKeyed]);
+  }, [rows, pos, scenePlaced]);
 
   const spans = useMemo<Span[]>(() => {
-    if (!positionKeyed || edef === undefined) return [];
+    if (!scenePlaced || edef === undefined) return [];
     return computeSpans(edef, ordered, pos, scenes.length);
-  }, [positionKeyed, edef, ordered, pos, scenes.length]);
+  }, [scenePlaced, edef, ordered, pos, scenes.length]);
 
   if (edef === undefined) return null;
   if (rows.length === 0 && !isJunction) return null;
@@ -146,7 +165,7 @@ function SubjectSection({ entity, field, subjectId, scenes,
           <span className="pattern-tag">{edef.positionPattern}</span>
         )}
       </h3>
-      {positionKeyed && scenes.length > 0 && rows.length > 0 && (
+      {scenePlaced && scenes.length > 0 && rows.length > 0 && (
         <SceneSpine scenes={scenes} spans={spans}
                     currentSceneId={currentSceneId} />
       )}
@@ -156,11 +175,16 @@ function SubjectSection({ entity, field, subjectId, scenes,
             <button className="row-link"
                     onClick={() =>
                       void openEntityRow(entity, r["id"] as number)}>
-              {rowName(entity, r)}
+              {(composed
+                ? linkLabel(edef, r, refNames, field) : null)
+                ?? rowName(entity, r)}
             </button>
+            {isJunction && linkQualifiers(edef, r).map((qual) => (
+              <span key={qual} className="scope-tag">{qual}</span>
+            ))}
             {positionKeyed && (
               <span className="row-scene">
-                {sceneLabel(scenes, r["scene_id"])}
+                {sceneShort(scenes.find((s) => s["id"] === r["scene_id"]))}
                 {spanSuffix(edef, r, scenes)}
               </span>
             )}
@@ -222,18 +246,12 @@ function spanSuffix(edef: EntityDef, r: Row, scenes: Row[]): string {
       (r["persistence"] ?? "") === "until_resolved") {
     const resolved = scenes.find((s) => s["id"] === r["resolved_at_scene_id"]);
     return resolved !== undefined
-      ? ` → resolved ${sceneLabel(scenes, resolved["id"])}`
+      ? ` → resolved ${sceneShort(resolved)}`
       : " → open";
   }
   return "";
 }
 
-function sceneLabel(scenes: Row[], sceneId: unknown): string {
-  const s = scenes.find((x) => x["id"] === sceneId);
-  if (s === undefined) return "";
-  const n = s["scene_number"];
-  return n !== null && n !== undefined ? `sc ${String(n)}` : "unplaced";
-}
 
 /**
  * The scene spine — one cell per story position. Solid cells are keyed
@@ -251,8 +269,7 @@ function SceneSpine({ scenes, spans, currentSceneId }: {
          aria-label={`${spans.length} row(s) across ${scenes.length} scenes`}>
       {scenes.map((s, i) => (
         <span key={String(s["id"])}
-              title={`sc ${String(s["scene_number"] ?? "?")} — ` +
-                     `${String(s["name"] ?? "")}`}
+              title={sceneLabel(s)}
               className={"spine-cell" +
                 (keyed.has(i) ? " keyed" : inSpan(i) ? " reach" : "") +
                 (s["id"] === currentSceneId ? " here" : "")} />

@@ -1,7 +1,12 @@
+import { useMemo } from "react";
 import { referenceGraph, registry, rowName, useStore }
   from "../state/store.ts";
+import {
+  isComposedLink, linkLabel, linkQualifiers, referenceFields,
+} from "../state/displayName.ts";
 import { q } from "@scf-core/db.ts";
 import { useQuery } from "./useQuery.ts";
+import { useRefNames } from "./useRefNames.ts";
 
 /**
  * "What points here" — computed generically from the registry's reference
@@ -32,6 +37,15 @@ function ReverseSection({ fromEntity, field, id }: {
   const { openEntityRow } = useStore();
   const rows = useQuery(
     `SELECT * FROM ${q(fromEntity)} WHERE ${q(field)} = ? LIMIT 50`, [id]);
+  // Same rule as the subject view: name the far end, not the row we are
+  // standing on.
+  const composed = isComposedLink(edef);
+  const targets = useMemo(() => edef === undefined || !composed ? []
+    : referenceFields(edef)
+        .filter((f) => f.name !== field)
+        .map((f) => f.referenceEntity as string),
+    [edef, composed, field]);
+  const refNames = useRefNames(targets);
   if (edef === undefined || rows.length === 0) return null;
   return (
     <section className="reverse-section">
@@ -47,8 +61,12 @@ function ReverseSection({ fromEntity, field, id }: {
             <button className="row-link"
                     onClick={() =>
                       void openEntityRow(fromEntity, r["id"] as number)}>
-              {rowName(fromEntity, r)}
+              {(composed ? linkLabel(edef, r, refNames, field) : null)
+                ?? rowName(fromEntity, r)}
             </button>
+            {composed && linkQualifiers(edef, r).map((qual) => (
+              <span key={qual} className="scope-tag">{qual}</span>
+            ))}
           </li>
         ))}
       </ul>

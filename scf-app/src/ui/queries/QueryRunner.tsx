@@ -210,8 +210,6 @@ function ParamPicker({ def, value, values, onChange }: {
           <option value="">—</option>
           {rows.map((r) => (
             <option key={String(r["id"])} value={String(r["id"])}>
-              {isScene && r["scene_number"] !== null
-                ? `sc ${String(r["scene_number"])} — ` : ""}
               {rowName(table ?? "", r)}
             </option>
           ))}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { q, type Row } from "@scf-core/db.ts";
 import { exec, registry, rowName, useStore } from "../state/store.ts";
+import { isComposedLink } from "../state/displayName.ts";
 
 interface Hit {
   entity: string;
@@ -32,6 +33,10 @@ export function SearchBox(): JSX.Element {
           if (out.length >= 24) break;
           const edef = registry.entities.get(name);
           if (edef === undefined) continue;
+          // A link's name column is hidden cue text, not searchable
+          // content — matching it returned four "ALEXIS" rows that
+          // opened as link records.
+          if (isComposedLink(edef)) continue;
           try {
             const rows = await exec(
               `SELECT * FROM ${q(name)} ` +

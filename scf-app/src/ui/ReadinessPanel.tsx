@@ -3,6 +3,7 @@ import type { Row } from "@scf-core/db.ts";
 import { readinessReport, type Finding, type ReadinessReport, type Severity }
   from "@scf-core/readiness.ts";
 import { exec, registry, useStore } from "../state/store.ts";
+import { sceneLabel } from "../state/displayName.ts";
 
 /**
  * Readiness woven in, not bolted on: findings surface where the authoring
@@ -142,9 +143,7 @@ export function PositionPicker({ scenes, sceneId, onChange }: {
 }): JSX.Element {
   const options = useMemo(() => scenes.map((s) => ({
     id: s["id"] as number,
-    label: s["scene_number"] !== null && s["scene_number"] !== undefined
-      ? `sc ${String(s["scene_number"])} — ${String(s["name"] ?? "")}`
-      : String(s["name"] ?? `#${String(s["id"])}`),
+    label: sceneLabel(s),
   })), [scenes]);
   return (
     <label className="position-picker">

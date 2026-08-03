@@ -32,10 +32,14 @@ export function JunctionQuickAdd({ edef, anchorField, anchorId }: {
     ? registry.entities.get(other.referenceEntity) : undefined;
   const nameField = target?.nameField ?? "name";
 
+  // Scene candidates come in story order; every other target is
+  // alphabetical, which is what a name is for.
   const candidates = useQuery(
     open && target !== undefined
       ? `SELECT * FROM ${q(target.name)} WHERE ${q(nameField)} LIKE ? ` +
-        `ORDER BY ${q(nameField)} LIMIT 30`
+        (target.name === "scene"
+          ? "ORDER BY (scene_number IS NULL), scene_number, id"
+          : `ORDER BY ${q(nameField)}`) + " LIMIT 30"
       : null,
     [`%${filter}%`]);
 
