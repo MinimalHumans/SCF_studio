@@ -129,11 +129,15 @@ function SubjectSection({ entity, field, subjectId, scenes,
     [edef, composed, field]);
   const refNames = useRefNames(targets);
 
-  // Position pattern governs SPAN semantics, not sort order: a link has
-  // no pattern but still sits at a scene, and an unordered list of
-  // scene labels reads as broken.
-  const scenePlaced = edef !== undefined &&
-    edef.fields.some((f) => f.name === "scene_id");
+  // Which column ties a row to a story position. Position pattern
+  // governs SPAN semantics, not this: a link has no pattern but still
+  // sits at a scene. And a scene row IS a position — it keys on its own
+  // id, which is what gives a location its spine.
+  const sceneKey = edef === undefined ? null
+    : edef.name === "scene" ? "id"
+    : edef.fields.some((f) => f.name === "scene_id") ? "scene_id"
+    : null;
+  const scenePlaced = sceneKey !== null;
   const positionKeyed = edef !== undefined &&
     edef.positionPattern !== "none" && scenePlaced;
 
@@ -141,16 +145,16 @@ function SubjectSection({ entity, field, subjectId, scenes,
     () => new Map(scenes.map((s, i) => [s["id"], i])), [scenes]);
 
   const ordered = useMemo(() => {
-    if (!scenePlaced) return rows;
+    if (sceneKey === null) return rows;
     return [...rows].sort((a, b) =>
-      (pos.get(a["scene_id"]) as number ?? 1e9) -
-      (pos.get(b["scene_id"]) as number ?? 1e9));
-  }, [rows, pos, scenePlaced]);
+      (pos.get(a[sceneKey]) as number ?? 1e9) -
+      (pos.get(b[sceneKey]) as number ?? 1e9));
+  }, [rows, pos, sceneKey]);
 
   const spans = useMemo<Span[]>(() => {
-    if (!scenePlaced || edef === undefined) return [];
-    return computeSpans(edef, ordered, pos, scenes.length);
-  }, [scenePlaced, edef, ordered, pos, scenes.length]);
+    if (sceneKey === null || edef === undefined) return [];
+    return computeSpans(edef, ordered, pos, scenes.length, sceneKey);
+  }, [edef, ordered, pos, scenes.length, sceneKey]);
 
   if (edef === undefined) return null;
   if (rows.length === 0 && !isJunction) return null;
@@ -217,11 +221,11 @@ function SubjectSection({ entity, field, subjectId, scenes,
  */
 function computeSpans(edef: EntityDef, ordered: Row[],
                       pos: Map<unknown, number>,
-                      sceneCount: number): Span[] {
+                      sceneCount: number, sceneKey: string): Span[] {
   const spans: Span[] = [];
   const last = sceneCount - 1;
   ordered.forEach((r, i) => {
-    const keyed = pos.get(r["scene_id"]);
+    const keyed = pos.get(r[sceneKey]);
     if (keyed === undefined) return;
     let end = keyed;
     if (edef.positionPattern === "sparse_persistence") {
@@ -233,7 +237,7 @@ function computeSpans(edef: EntityDef, ordered: Row[],
     } else if (edef.positionPattern === "latest_wins") {
       const next = ordered[i + 1];
       const nextPos = next !== undefined
-        ? pos.get(next["scene_id"]) : undefined;
+        ? pos.get(next[sceneKey]) : undefined;
       end = nextPos !== undefined ? Math.max(keyed, nextPos - 1) : last;
     }
     spans.push({ start: keyed, end, keyed });

@@ -28,6 +28,14 @@ describe("sceneLabel", () => {
       .toBe("scene #3");
   });
 
+  it("does not call a scene unnumbered when the column was not fetched",
+     () => {
+    // The subject rail selected id and name only, so every scene in it
+    // read "unnumbered — HEADING".
+    expect(sceneLabel({ id: 3, name: "INT. KITCHEN" }))
+      .toBe("INT. KITCHEN");
+  });
+
   it("has a short form for tight spots", () => {
     expect(sceneShort({ id: 3, scene_number: 12, name: "INT. KITCHEN" }))
       .toBe("sc 12");

@@ -15,9 +15,14 @@ export function SubjectNav(): JSX.Element {
     useState<NavigableSubject>("character");
   const edef = registry.entities.get(subjectType);
   const nameField = edef?.nameField ?? "name";
+  // Scenes need their number to be identified at all, and list in story
+  // order; SELECT id, name left every one of them reading "unnumbered".
   const rows = useQuery(
-    `SELECT id, ${q(nameField)} FROM ${q(subjectType)} ` +
-    `ORDER BY ${q(nameField)}`);
+    subjectType === "scene"
+      ? "SELECT id, scene_number, name FROM scene " +
+        "ORDER BY (scene_number IS NULL), scene_number, id"
+      : `SELECT id, ${q(nameField)} FROM ${q(subjectType)} ` +
+        `ORDER BY ${q(nameField)}`);
 
   return (
     <div className="subject-nav">

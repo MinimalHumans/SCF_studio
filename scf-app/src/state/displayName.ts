@@ -39,6 +39,12 @@ export function sceneLabel(scene: Row | null | undefined): string {
   const number = scene["scene_number"];
   const heading = text(scene["name"]);
   const id = text(scene["id"]);
+  // A row fetched without the column is not an unnumbered scene — it is
+  // a row we cannot say anything about. Saying "unnumbered" there turned
+  // every scene in the subject rail into one.
+  if (!("scene_number" in scene)) {
+    return heading === "" ? `scene #${id}` : heading;
+  }
   if (number === null || number === undefined || text(number) === "") {
     return heading === "" ? `scene #${id}` : `unnumbered — ${heading}`;
   }
