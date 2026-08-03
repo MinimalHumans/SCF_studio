@@ -82,7 +82,14 @@ export interface PropProposal {
   name: string;
   occurrences: number;
   fromLines: number[];
-  confidence: Confidence; // default-unchecked below high
+  /** How many distinct scenes mention it — a real prop tends to recur. */
+  scenes: number;
+  /** Which evidence fired: "introduced", "handled", "recurring". */
+  signals: string[];
+  /** Ranking score; the staging screen sorts on this. */
+  score: number;
+  /** Never "high": this pass proposes, a human creates. */
+  confidence: Confidence;
 }
 
 export interface ProposalSet {
@@ -143,6 +150,16 @@ export function parseHeading(text: string): {
 function smartTitle(s: string): string {
   return s.toLowerCase().replace(/(^|[\s\-'/(])\p{L}/gu,
                                  (c) => c.toUpperCase());
+}
+
+/**
+ * smartTitle capitalizes after an apostrophe (O'Brien), which turns
+ * CREATURE'S into Creature'S. Props are the only place a possessive is
+ * routine, so the correction lives here rather than in smartTitle,
+ * where it would also touch cue and location names.
+ */
+function propTitle(s: string): string {
+  return smartTitle(s).replace(/(['’])S(?=\b)/g, "$1s");
 }
 
 // ---------------------------------------------------------------------------
@@ -267,8 +284,40 @@ function splitCue(name: string): string[] | null {
 }
 
 // ---------------------------------------------------------------------------
-// Props (confidence-scored, conservative)
+// Props (two signals, gated, scored)
 // ---------------------------------------------------------------------------
+
+/**
+ * Capitalization is NOT a prop signal. In a screenplay, mid-line caps
+ * mean "production, take note" — writers cap character introductions,
+ * sound cues, and camera-worthy actions just as readily as objects. The
+ * first version of this pass keyed off caps alone and produced 356
+ * candidates from one feature, led by TWO OLD HUNTERS, SUN, HOWLING and
+ * TOSSES THE MEN; scripts that don't use the convention produced almost
+ * nothing, since nothing about being a prop makes a word capitalized.
+ *
+ * So two signals, both about the phrase's SYNTAX rather than its case:
+ *
+ *   introduced — a caps phrase sitting where a noun phrase sits: after a
+ *     determiner, possessive, or preposition ("a RED BALL", "his
+ *     LIGHTNING ROD", "MOTHER'S GLOVES"). Verbs do not follow
+ *     determiners, which is what removes TOSSES and PUSHES.
+ *
+ *   handled — the object of a handling verb, at any capitalization
+ *     ("picks up the umbrella", "draws his scalpel"). Physical handling
+ *     is what makes something a prop in production terms, and this
+ *     signal works on the scripts that cap nothing.
+ *
+ * What survives is then filtered by category, not by an allow-list of
+ * known props: an allow-list would cap recall at whatever is on it and
+ * fail on period, invented, or culturally specific objects. The residual
+ * noise falls into four enumerable classes instead, below.
+ *
+ * This pass is a head start, not a census. It is tuned for precision,
+ * proposes nothing above medium, and so can never create a prop through
+ * best-guess acceptance — the editor's select-and-create is the accurate
+ * path, and the staging screen says so.
+ */
 
 const PROP_STOPLIST = new Set([
   "CONTINUED", "CONT'D", "FADE", "FADE IN", "FADE OUT", "CUT", "CUT TO",
@@ -278,6 +327,178 @@ const PROP_STOPLIST = new Set([
   "MOMENTS", "BEAT", "PAUSE", "SILENCE", "THE", "END", "MORE", "OMITTED",
   "INT", "EXT", "REVEALING", "REVEAL", "SFX", "VFX", "CGI",
 ]);
+
+/** People. A role noun is a character, not a thing to be held. */
+const PROP_REJECT_PEOPLE = new Set([
+  "man", "men", "woman", "women", "boy", "girl", "child", "children",
+  "kid", "baby", "guy", "lady", "person", "people", "crowd", "group",
+  "figure", "stranger", "guest", "servant", "butler", "maid", "cook",
+  "driver", "guard", "soldier", "officer", "cop", "police", "doctor",
+  "nurse", "priest", "hunter", "sailor", "worker", "waiter", "waitress",
+  "clerk", "bartender", "nun", "monk", "gravedigger", "mourner",
+  "villager", "passenger", "student", "teacher", "librarian", "captain",
+  "detective", "attendant", "assistant", "stablehand", "scullery",
+  "family", "mother", "father", "brother", "sister", "son", "daughter",
+  "wife", "husband", "friend", "boss", "neighbour", "neighbor",
+]);
+
+/** Sounds. A script names them constantly; none of them is an object. */
+const PROP_REJECT_SOUNDS = new Set([
+  "noise", "sound", "scream", "screams", "shout", "yell", "howl",
+  "howling", "roar", "crash", "bang", "boom", "thud", "thump", "knock",
+  "creak", "crack", "cracks", "click", "hiss", "whisper", "silence",
+  "echo", "music", "song", "laughter", "sob", "gasp", "whistle", "rustle",
+  "footsteps", "voice", "voices", "ring", "buzz", "beep", "siren",
+]);
+
+/** Weather, light, and other things nobody puts on a props table. */
+const PROP_REJECT_ELEMENTS = new Set([
+  "sun", "moon", "sky", "cloud", "clouds", "rain", "snow", "snowstorm",
+  "storm", "wind", "fog", "mist", "ice", "water", "sea", "ocean", "wave",
+  "waves", "fire", "flame", "flames", "smoke", "steam", "dust", "mud",
+  "blood", "light", "lights", "darkness", "shadow", "shadows",
+  "firelight", "sunlight", "moonlight", "daylight", "lightning",
+  "thunder", "explosion", "flash", "glow", "air", "ground", "earth",
+  "sand", "grass", "trees", "tree", "forest", "mountain", "horizon",
+]);
+
+/** Body parts. "GLOVED HANDS" is a shot, not a prop; the gloves are. */
+const PROP_REJECT_BODY = new Set([
+  "hand", "hands", "arm", "arms", "leg", "legs", "foot", "feet", "head",
+  "face", "eye", "eyes", "mouth", "lips", "nose", "ear", "ears", "hair",
+  "finger", "fingers", "thumb", "shoulder", "shoulders", "chest", "back",
+  "neck", "throat", "stomach", "belly", "skin", "bone", "bones", "teeth",
+  "tooth", "knee", "knees", "wrist", "waist", "body", "flesh", "heart",
+]);
+
+/** Abstractions a handling verb can still take as an object. */
+const PROP_REJECT_ABSTRACT = new Set([
+  "gaze", "look", "glance", "breath", "smile", "frown", "step", "steps",
+  "moment", "way", "rest", "side", "edge", "top", "bottom", "front",
+  "middle", "distance", "silence", "time", "turn", "pace", "position",
+  "place", "course", "chance", "care", "hold", "grip", "aim", "note",
+  "notice", "notices", "seat", "stand", "lead", "shape", "deck",
+]);
+
+/** Words that end a noun phrase — the object stops before them. */
+const NP_TERMINATORS = new Set([
+  "in", "on", "at", "to", "from", "of", "for", "with", "and", "or",
+  "but", "into", "onto", "toward", "towards", "up", "down", "out",
+  "over", "under", "off", "like", "as", "that", "which", "who", "then",
+  "before", "after", "while", "against", "across", "behind", "beside",
+  "through", "around", "away", "back", "forward", "even", "further",
+  "closer", "himself", "herself", "itself", "themselves", "him", "her",
+  "them", "it", "is", "are", "was", "were", "still", "again", "just",
+]);
+
+const DETERMINERS =
+  "a|an|the|his|her|its|their|our|my|your|one|two|three|four|five|six|" +
+  "another|each|every|some|several|that|this|these|those";
+
+/** Verbs whose object is, by definition, something physical. */
+const HANDLING_VERBS = [
+  "picks up", "pick up", "picking up", "puts down", "sets down",
+  "holds", "holding", "grabs", "grabbing", "grips", "clutches",
+  "clutching", "pulls", "pulling", "draws", "drawing", "lifts",
+  "lifting", "hands", "carries", "carrying", "drops", "takes", "opens",
+  "closes", "unwraps", "wraps", "loads", "reloads", "aims", "throws",
+  "tosses", "hurls", "wields", "raises", "pockets", "wears", "wearing",
+  "removes", "offers", "passes", "hoists", "brandishes", "swings",
+  "slams", "pours", "lights", "strikes", "waves", "clasps", "snatches",
+];
+
+/** Immediately before a caps phrase: what makes it a noun phrase. */
+const NP_LEAD = new RegExp(
+  `(?:\\b(?:${DETERMINERS})\\s+|['’]s\\s+|` +
+  `\\b(?:${HANDLING_VERBS.join("|")})\\s+|` +
+  `\\b(?:with|in|on|from|into|onto|under|behind|beside|through|over|` +
+  `reveals|reveal)\\s+)$`, "i");
+
+// The object stops before a terminator INSIDE the pattern, not after —
+// a greedy capture swallowed the next clause's verb ("the umbrella and
+// opens") and the regex then resumed past it, losing "the shutters".
+const NOT_TERMINATOR =
+  `(?!(?:${[...NP_TERMINATORS].join("|")})\\b)`;
+const NP_WORD = `${NOT_TERMINATOR}[\\p{L}][\\p{L}'’-]*`;
+
+const HANDLING_RE = new RegExp(
+  `\\b(?:${HANDLING_VERBS.join("|")})\\s+(?:${DETERMINERS})\\s+` +
+  `(${NP_WORD}(?:\\s+${NP_WORD}){0,2})`, "giu");
+
+const CAPS_PHRASE =
+  /((?:\p{Lu}[\p{Lu}'’-]+\s?){1,4})(?=[\s.,;:!?)-]|$)/gu;
+
+/** Trailing em-dash remnants were being kept: "NOISE-", "VEIL-". */
+function tidyPhrase(raw: string): string {
+  return raw
+    .replace(/^[^\p{L}\d]+/gu, "")
+    .replace(/[^\p{L}\d]+$/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Crude singular for head-word lookups: gloves → glove, boxes → box. */
+function singular(word: string): string {
+  const w = word.toLowerCase();
+  if (w.endsWith("ies") && w.length > 4) return `${w.slice(0, -3)}y`;
+  if (w.endsWith("es") && w.length > 3) return w.slice(0, -2);
+  if (w.endsWith("s") && !w.endsWith("ss") && w.length > 3) {
+    return w.slice(0, -1);
+  }
+  return w;
+}
+
+function inRejectLexicon(word: string): boolean {
+  const w = word.toLowerCase();
+  const s = singular(w);
+  for (const set of [PROP_REJECT_PEOPLE, PROP_REJECT_SOUNDS,
+                     PROP_REJECT_ELEMENTS, PROP_REJECT_BODY,
+                     PROP_REJECT_ABSTRACT]) {
+    if (set.has(w) || set.has(s)) return true;
+  }
+  return false;
+}
+
+/**
+ * Is this phrase worth proposing at all? Judged on its HEAD word (the
+ * last one), which is what the phrase actually denotes: "carved ebony
+ * coffin" is a coffin, "gloved hands" is hands.
+ */
+export function propCandidateRejection(phrase: string): string | null {
+  const words = phrase.split(/\s+/).filter((w) => w !== "");
+  const head = words[words.length - 1];
+  if (head === undefined || phrase.length < 3) return "too short";
+  if (words.length > 4) return "too long for a prop name";
+  if (PROP_STOPLIST.has(phrase.toUpperCase())) return "screenplay furniture";
+  if (/\d/.test(phrase)) return "contains digits";
+  if (inRejectLexicon(head)) return "person, sound, element, or body part";
+  // A capped verb ("DROPS") that also appears as a handling verb is a
+  // verb, whatever the caps suggest.
+  if (words.length === 1 &&
+      HANDLING_VERBS.includes(phrase.toLowerCase())) return "verb";
+  if (words.every((w) => inRejectLexicon(w))) {
+    return "person, sound, element, or body part";
+  }
+  return null;
+}
+
+/** The object of a handling verb, truncated where the noun phrase ends. */
+function handlingObject(captured: string): string {
+  // "hands her a towel" — the verb pattern ate "her", so a second
+  // determiner can still lead the object.
+  const lead = new RegExp(`^(?:${DETERMINERS})\\s+`, "i");
+  // An em-dash remnant ends the phrase: "the cane- but does not".
+  const cut = tidyPhrase(captured).split(/[-–—]\s|\s[-–—]/)[0] ?? "";
+  const words = tidyPhrase(cut).replace(lead, "").split(/\s+/);
+  const out: string[] = [];
+  for (const w of words) {
+    const lower = w.toLowerCase();
+    if (NP_TERMINATORS.has(lower)) break;
+    if (lower.endsWith("ly") && lower.length > 4) break; // adverb
+    out.push(w);
+  }
+  return out.join(" ");
+}
 
 // ---------------------------------------------------------------------------
 // The proposal pass
@@ -292,7 +513,23 @@ export function propose(doc: FountainDocument): ProposalSet {
     extensions: Set<string>; dialogueFollows: number;
   }>();
   const links: SceneCharacterLink[] = [];
-  const propHits = new Map<string, { lines: number[] }>();
+  const propHits = new Map<string, {
+    display: string; lines: number[];
+    scenes: Set<number>; signals: Set<string>;
+  }>();
+
+  /** Same object seen twice under different casing is one candidate. */
+  const recordProp = (phrase: string, signal: string,
+                      lineIndex: number, sceneOrdinal: number): void => {
+    const key = phrase.toUpperCase();
+    const hit = propHits.get(key) ??
+      { display: phrase, lines: [], scenes: new Set<number>(),
+        signals: new Set<string>() };
+    hit.lines.push(lineIndex);
+    hit.scenes.add(sceneOrdinal);
+    hit.signals.add(signal);
+    propHits.set(key, hit);
+  };
 
   let currentSceneLine = -1;
   let ordinal = 0;
@@ -371,17 +608,31 @@ export function propose(doc: FountainDocument): ProposalSet {
     }
 
     if (line.type === "action") {
-      // Mid-line ALL-CAPS phrases (the Fountain emphasis convention for
-      // introductions). Conservative: 1–3 words, letters only, not at
-      // line start, not stoplisted.
       const text = line.effective ?? line.raw;
-      for (const m of text.matchAll(
-          /(?<=\p{Ll}[\s,]\s?)((?:\p{Lu}[\p{Lu}'’-]+\s?){1,3})(?=[\s.,;:!?]|$)/gu)) {
-        const phrase = (m[1] ?? "").trim();
-        if (phrase.length < 3 || PROP_STOPLIST.has(phrase)) continue;
-        const hit = propHits.get(phrase) ?? { lines: [] };
-        hit.lines.push(line.index);
-        propHits.set(phrase, hit);
+
+      // Signal 1 — introduced: a caps phrase in noun-phrase position.
+      // A line with no lowercase at all carries no case contrast, so
+      // caps says nothing about any part of it. (PDF conversions
+      // produce these by the hundred.)
+      const hasContrast = /\p{Ll}/u.test(text);
+      for (const m of hasContrast ? text.matchAll(CAPS_PHRASE) : []) {
+        const before = text.slice(0, m.index ?? 0);
+        let phrase = tidyPhrase(m[1] ?? "");
+        // A determiner swept into the match ("THE RED BALL") is itself
+        // the evidence — strip it and count the gate as passed.
+        const led = new RegExp(`^(?:${DETERMINERS})\\s+`, "i");
+        const ledIn = led.test(phrase);
+        if (ledIn) phrase = phrase.replace(led, "");
+        if (!ledIn && !NP_LEAD.test(before)) continue;
+        if (propCandidateRejection(phrase) !== null) continue;
+        recordProp(phrase, "introduced", line.index, ordinal);
+      }
+
+      // Signal 2 — handled: the object of a handling verb, any case.
+      for (const m of text.matchAll(HANDLING_RE)) {
+        const phrase = handlingObject(m[1] ?? "");
+        if (propCandidateRejection(phrase) !== null) continue;
+        recordProp(phrase, "handled", line.index, ordinal);
       }
     }
   }
@@ -476,16 +727,34 @@ export function propose(doc: FountainDocument): ProposalSet {
     }
   }
 
-  // Props: recurring phrases rate medium, single mentions low; never
-  // high — props are always reviewed (default-unchecked below high).
+  // Props: scored, never above medium. Two signals agreeing, or one
+  // signal repeated across scenes, is as strong as this pass gets — a
+  // prop is only ever created by a human ticking the box.
+  const characterKeys = new Set(characters.map((c) => c.name.toUpperCase()));
   const props: PropProposal[] = [...propHits.entries()]
-    .filter(([name]) => !cueNames.has(name.toUpperCase()))
-    .map(([name, hit]) => ({
-      name: smartTitle(name),
-      occurrences: hit.lines.length,
-      fromLines: hit.lines,
-      confidence: (hit.lines.length >= 3 ? "medium" : "low") as Confidence,
-    }));
+    .filter(([key]) => !cueNames.has(key) && !characterKeys.has(key))
+    .map(([, hit]) => {
+      const signals = [...hit.signals];
+      const scenes = hit.scenes.size;
+      let score = 0;
+      if (signals.includes("introduced")) score += 2;
+      if (signals.includes("handled")) score += 3;
+      if (signals.length > 1) score += 3;
+      score += Math.min(3, hit.lines.length - 1);
+      if (scenes > 1) score += 2;
+      if (scenes > 1) signals.push("recurring");
+      return {
+        name: propTitle(hit.display),
+        occurrences: hit.lines.length,
+        fromLines: hit.lines,
+        scenes,
+        signals,
+        score,
+        confidence: (score >= 6 ? "medium" : "low") as Confidence,
+      };
+    })
+    .sort((a, b) => b.score - a.score || b.occurrences - a.occurrences ||
+                    a.name.localeCompare(b.name));
 
   return { scenes, locations, characters, links, props };
 }

@@ -35,7 +35,7 @@ export function ImportFlow({ onClose, onDone }: {
   const [chars, setChars] = useState<CharRow[]>([]);
   const [props, setProps] = useState<Array<{
     key: string; accepted: boolean; name: string; occurrences: number;
-    confidence: string;
+    confidence: string; score: number; scenes: number; signals: string[];
   }>>([]);
   const [busy, setBusy] = useState(false);
   const [busyStep, setBusyStep] = useState("");
@@ -78,11 +78,12 @@ export function ImportFlow({ onClose, onDone }: {
       })));
     setProps(p.proposals.props
       .slice()
-      .sort((a, b) => b.occurrences - a.occurrences)
+      .sort((a, b) => b.score - a.score || b.occurrences - a.occurrences)
       .map((x) => ({
         key: x.name.toUpperCase(), accepted: false,
         name: x.name, occurrences: x.occurrences,
-        confidence: x.confidence,
+        confidence: x.confidence, score: x.score, scenes: x.scenes,
+        signals: x.signals,
       })));
   };
 
@@ -262,16 +263,32 @@ export function ImportFlow({ onClose, onDone }: {
 
             <h3>
               Props
-              <span className="muted"> — heuristic; never imported by
-                default</span>
+              <span className="muted"> — a head start, not a census</span>
             </h3>
+            <p className="muted prop-note">
+              Two signals: an object introduced in caps where a noun
+              belongs, and anything a character picks up, draws, or
+              opens. Strongest candidates first — the tail is thin
+              evidence, and plenty of real props will be missing
+              entirely. Nothing here is created unless you tick it;
+              selecting text in the script and making a prop from it
+              stays the accurate path.
+              {props.length > 0 && (
+                <> {props.length} candidate
+                  {props.length === 1 ? "" : "s"},{" "}
+                  {props.filter((x) => x.confidence === "medium").length}
+                  {" "}with more than one signal.</>
+              )}
+            </p>
             {props.length === 0
               ? <p className="muted">No candidates found.</p>
               : (
               <table className="qtable">
                 <tbody>
                   {props.map((x, i) => (
-                    <tr key={x.key}>
+                    <tr key={x.key}
+                        className={x.confidence === "medium"
+                          ? "" : "prop-weak"}>
                       <td>
                         <input type="checkbox" checked={x.accepted}
                                onChange={(e) => {
@@ -282,7 +299,13 @@ export function ImportFlow({ onClose, onDone }: {
                                }} />
                       </td>
                       <td>{x.name}</td>
-                      <td>{x.occurrences}×</td>
+                      <td>{x.occurrences}× in {x.scenes} scene
+                        {x.scenes === 1 ? "" : "s"}</td>
+                      <td>
+                        {x.signals.map((sig) => (
+                          <span key={sig} className="scope-tag">{sig}</span>
+                        ))}
+                      </td>
                       <td>
                         <span className={`conf conf-${x.confidence}`}>
                           {x.confidence}

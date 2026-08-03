@@ -1122,3 +1122,7 @@ button.save-dirty:disabled, button.save-clean:disabled {
 .script-editor.page-dark .cm-tooltip-autocomplete ul li[aria-selected] {
   background: #2a3b52; color: #eef2f7;
 }
+
+/* import staging: prop candidates below the strong tier */
+.prop-note { max-width: 70ch; margin: 2px 0 8px; }
+tr.prop-weak td { opacity: .6; }
