@@ -104,3 +104,53 @@ describe("import pipeline end to end (Frankenstein, public tier)", () => {
     expect(links[0]!["n"]).toBe(result.links);
   });
 });
+
+describe("accepted props are placed, not left floating", () => {
+  test("each accepted prop gets a scene_prop row per scene it appears in",
+       async () => {
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    const fresh = openNodeDatabase(":memory:");
+    await initDatabase(fresh.exec, registry);
+    try {
+      const prepared = prepareImport(
+        await readFile(FRANKENSTEIN, "utf8"), "fountain");
+      // Take the strongest few, as a user ticking the top of the list
+      // would — best-guess still accepts none.
+      const picked = prepared.proposals.props
+        .filter((p) => p.confidence === "medium").slice(0, 5);
+      expect(picked.length).toBe(5);
+      const accepted = {
+        ...defaultAcceptance(prepared.proposals),
+        props: new Map(picked.map((p) => [p.name.toUpperCase(), p.name])),
+      };
+
+      const result = await applyImport(fresh.exec, prepared, accepted);
+      expect(result.props).toBe(5);
+      expect(result.propLinks).toBe(
+        picked.reduce((n, p) => n + p.sceneLines.length, 0));
+      expect(result.propLinks).toBeGreaterThan(5); // several recur
+
+      const rows = await fresh.exec(
+        "SELECT p.name AS prop, s.scene_number AS scene " +
+        "FROM scene_prop sp " +
+        "JOIN prop p ON p.id = sp.prop_id " +
+        "JOIN scene s ON s.id = sp.scene_id");
+      expect(rows.length).toBe(result.propLinks);
+      // No orphans: every link names a real prop and a real scene.
+      expect(rows.every((r) => r["prop"] !== null && r["scene"] !== null))
+        .toBe(true);
+      // And a prop that was read from two scenes lands in two scenes.
+      const perProp = new Map<string, number>();
+      for (const r of rows) {
+        const k = String(r["prop"]);
+        perProp.set(k, (perProp.get(k) ?? 0) + 1);
+      }
+      for (const p of picked) {
+        expect(perProp.get(p.name), p.name).toBe(p.sceneLines.length);
+      }
+    } finally {
+      fresh.close();
+    }
+  });
+});

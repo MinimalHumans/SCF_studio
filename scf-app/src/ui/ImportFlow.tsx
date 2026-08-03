@@ -340,7 +340,11 @@ export function ImportFlow({ onClose, onDone }: {
               Imported <b>{result.lines}</b> lines — {result.scenes}{" "}
               scenes, {result.locations} locations, {result.characters}{" "}
               characters, {result.links} scene links
-              {result.props > 0 ? `, ${result.props} props` : ""}.
+              {result.props > 0
+                ? `, ${result.props} props placed in ` +
+                  `${result.propLinks} scene` +
+                  `${result.propLinks === 1 ? "" : "s"}`
+                : ""}.
             </p>
             <div className="modal-actions">
               <span className="flex-spacer" />

@@ -84,6 +84,12 @@ export interface PropProposal {
   fromLines: number[];
   /** How many distinct scenes mention it — a real prop tends to recur. */
   scenes: number;
+  /**
+   * Heading line index of each scene it appears in, so an accepted prop
+   * can be placed in the script rather than created floating. Same
+   * shape as SceneCharacterLink.sceneLineIndex.
+   */
+  sceneLines: number[];
   /** Which evidence fired: "introduced", "handled", "recurring". */
   signals: string[];
   /** Ranking score; the staging screen sorts on this. */
@@ -515,18 +521,19 @@ export function propose(doc: FountainDocument): ProposalSet {
   const links: SceneCharacterLink[] = [];
   const propHits = new Map<string, {
     display: string; lines: number[];
-    scenes: Set<number>; signals: Set<string>;
+    sceneLines: Set<number>; signals: Set<string>;
   }>();
 
   /** Same object seen twice under different casing is one candidate. */
   const recordProp = (phrase: string, signal: string,
-                      lineIndex: number, sceneOrdinal: number): void => {
+                      lineIndex: number, sceneLine: number): void => {
     const key = phrase.toUpperCase();
     const hit = propHits.get(key) ??
-      { display: phrase, lines: [], scenes: new Set<number>(),
+      { display: phrase, lines: [], sceneLines: new Set<number>(),
         signals: new Set<string>() };
     hit.lines.push(lineIndex);
-    hit.scenes.add(sceneOrdinal);
+    // Action before the first heading belongs to no scene.
+    if (sceneLine >= 0) hit.sceneLines.add(sceneLine);
     hit.signals.add(signal);
     propHits.set(key, hit);
   };
@@ -625,14 +632,14 @@ export function propose(doc: FountainDocument): ProposalSet {
         if (ledIn) phrase = phrase.replace(led, "");
         if (!ledIn && !NP_LEAD.test(before)) continue;
         if (propCandidateRejection(phrase) !== null) continue;
-        recordProp(phrase, "introduced", line.index, ordinal);
+        recordProp(phrase, "introduced", line.index, currentSceneLine);
       }
 
       // Signal 2 — handled: the object of a handling verb, any case.
       for (const m of text.matchAll(HANDLING_RE)) {
         const phrase = handlingObject(m[1] ?? "");
         if (propCandidateRejection(phrase) !== null) continue;
-        recordProp(phrase, "handled", line.index, ordinal);
+        recordProp(phrase, "handled", line.index, currentSceneLine);
       }
     }
   }
@@ -735,7 +742,8 @@ export function propose(doc: FountainDocument): ProposalSet {
     .filter(([key]) => !cueNames.has(key) && !characterKeys.has(key))
     .map(([, hit]) => {
       const signals = [...hit.signals];
-      const scenes = hit.scenes.size;
+      const sceneLines = [...hit.sceneLines].sort((a, b) => a - b);
+      const scenes = sceneLines.length;
       let score = 0;
       if (signals.includes("introduced")) score += 2;
       if (signals.includes("handled")) score += 3;
@@ -748,6 +756,7 @@ export function propose(doc: FountainDocument): ProposalSet {
         occurrences: hit.lines.length,
         fromLines: hit.lines,
         scenes,
+        sceneLines,
         signals,
         score,
         confidence: (score >= 6 ? "medium" : "low") as Confidence,

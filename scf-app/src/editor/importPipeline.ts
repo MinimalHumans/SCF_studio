@@ -64,6 +64,8 @@ export interface ImportResult {
   characters: number;
   links: number;
   props: number;
+  /** scene_prop rows: where each accepted prop actually appears. */
+  propLinks: number;
   lines: number;
 }
 
@@ -115,7 +117,8 @@ async function applyImportInner(
     onProgress: (step: string) => void): Promise<ImportResult> {
   const { doc, proposals } = prepared;
   const result: ImportResult = {
-    scenes: 0, locations: 0, characters: 0, links: 0, props: 0, lines: 0,
+    scenes: 0, locations: 0, characters: 0, links: 0, props: 0,
+    propLinks: 0, lines: 0,
   };
 
   onProgress("creating locations…");
@@ -165,8 +168,10 @@ async function applyImportInner(
   }
 
   // Props the user accepted (never by default).
-  for (const [, displayName] of accepted.props) {
-    await insert(exec, "prop", { name: displayName });
+  const propIdByKey = new Map<string, number>();
+  for (const [key, displayName] of accepted.props) {
+    const id = await insert(exec, "prop", { name: displayName });
+    propIdByKey.set(key, id);
     result.props += 1;
   }
 
@@ -184,6 +189,26 @@ async function applyImportInner(
         character_id: charId,
       }, false); // junctions have no identity columns in 2.3 — see insert()
       result.links += 1;
+    }
+  }
+
+  // Place accepted props in the scenes they were read from. Without
+  // this a prop arrives with no link to anywhere in the script, and the
+  // evidence that produced it — which scene, which line — is thrown
+  // away at the moment it would become useful.
+  if (accepted.scenes) {
+    onProgress("placing props…");
+    for (const proposal of proposals.props) {
+      const propId = propIdByKey.get(proposal.name.toUpperCase());
+      if (propId === undefined) continue; // not accepted
+      for (const sceneLine of proposal.sceneLines) {
+        const sceneId = sceneIdByLineIndex.get(sceneLine);
+        if (sceneId === undefined) continue;
+        await insert(exec, "scene_prop", {
+          scene_id: sceneId, prop_id: propId,
+        }, false); // junctions have no identity columns in 2.3
+        result.propLinks += 1;
+      }
     }
   }
 
