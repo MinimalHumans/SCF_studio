@@ -17,6 +17,9 @@ import { SqlWorkerClient } from "../db/workerClient.ts";
 import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef }
   from "./registryGraph.ts";
+import { suggestSaveAsName } from "./saveName.ts";
+
+export { suggestSaveAsName };
 
 export const registry: Registry =
   loadRegistry(registryJson as unknown as RegistryJson);
@@ -69,10 +72,15 @@ interface AppState {
   /** revision at the last successful write to the user's .scf file —
    * anything newer lives only in browser storage. */
   lastSavedRevision: number;
+  /** true while a file write is in flight — the topbar reflects it and
+   * a second click can't start a concurrent export. */
+  saving: boolean;
   closeProject: () => Promise<void>;
   openFromPicker: () => Promise<void>;
   newProject: () => Promise<void>;
   saveProject: () => Promise<void>;
+  /** Always prompts for a destination: rename or version up in place. */
+  saveProjectAs: () => Promise<void>;
 
   setNavMode: (mode: NavMode) => void;
   selectQuery: (query: string | null) => void;
@@ -140,6 +148,7 @@ export const useStore = create<AppState>((set, get) => ({
   fsAccessSupported: FsAccessAdapter.supported(),
   revision: 0,
   lastSavedRevision: 0,
+  saving: false,
 
   navMode: "subject",
   selectedQuery: null,
@@ -164,9 +173,10 @@ export const useStore = create<AppState>((set, get) => ({
           "in the storage layer)");
       }
       localStorage.setItem("scf:last-session", "Hollow Creek (demo)");
+      const rev = get().revision + 1;
       set({ phase: "open", projectName: "Hollow Creek (demo)",
             fileToken: null, lastSession: "Hollow Creek (demo)",
-            revision: get().revision + 1 });
+            revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -183,8 +193,9 @@ export const useStore = create<AppState>((set, get) => ({
       }
       await bootDatabase(null);
       const name = localStorage.getItem("scf:last-session") ?? "resumed";
+      const rev = get().revision + 1;
       set({ phase: "open", projectName: `${name}`, fileToken: null,
-            revision: get().revision + 1 });
+            revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -198,9 +209,10 @@ export const useStore = create<AppState>((set, get) => ({
       set({ phase: "loading", errorMessage: null });
       await bootDatabase(opened.bytes);
       localStorage.setItem("scf:last-session", opened.name);
+      const rev = get().revision + 1;
       set({ phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
-            revision: get().revision + 1 });
+            revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -214,8 +226,9 @@ export const useStore = create<AppState>((set, get) => ({
       await client.wipe(WORKING_PATH);
       await initDatabase(client.exec, registry,
                          { editorVersion: EDITOR_VERSION });
+      const rev = get().revision + 1;
       set({ phase: "open", projectName: "Untitled.scf", fileToken: null,
-            revision: get().revision + 1 });
+            revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -230,24 +243,61 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   saveProject: async () => {
-    const { fileToken, projectName } = get();
+    const { fileToken, projectName, saving } = get();
+    if (saving) return;
+    set({ saving: true });
     try {
+      // The watermark is the revision the BYTES represent, taken before
+      // the export — not get().revision after the await, which would
+      // silently mark any edit landing mid-save as already on disk.
+      const at = get().revision;
       // Live snapshot — no close/reopen dance.
       const bytes = await client.exportBytes();
       if (fileToken !== null) {
         await adapter.save(fileToken, bytes);
-        set({ lastSavedRevision: get().revision });
+        set({ lastSavedRevision: at });
       } else {
+        // Never saved (demo / new project): first save picks the file.
         const saved = await adapter.saveAs(
-          bytes, projectName ?? "project.scf");
+          bytes, suggestSaveAsName(projectName));
         if (saved !== null) {
+          localStorage.setItem("scf:last-session", saved.name);
           set({ projectName: saved.name, fileToken: saved.token,
-                lastSavedRevision: get().revision });
+                lastSession: saved.name, lastSavedRevision: at });
         }
       }
     } catch (e) {
       set({ errorMessage:
         e instanceof Error ? e.message : String(e) });
+    } finally {
+      set({ saving: false });
+    }
+  },
+
+  /**
+   * Save As — always prompts, and the project follows the new file:
+   * subsequent Save writes there, so this is how you version up
+   * (hollow_creek_v2.scf) or rename without leaving the editor.
+   */
+  saveProjectAs: async () => {
+    const { projectName, saving } = get();
+    if (saving) return;
+    set({ saving: true });
+    try {
+      const at = get().revision;
+      const bytes = await client.exportBytes();
+      const saved = await adapter.saveAs(
+        bytes, suggestSaveAsName(projectName, true));
+      if (saved !== null) {
+        localStorage.setItem("scf:last-session", saved.name);
+        set({ projectName: saved.name, fileToken: saved.token,
+              lastSession: saved.name, lastSavedRevision: at });
+      }
+    } catch (e) {
+      set({ errorMessage:
+        e instanceof Error ? e.message : String(e) });
+    } finally {
+      set({ saving: false });
     }
   },
 

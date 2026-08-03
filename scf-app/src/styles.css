@@ -613,10 +613,41 @@ ul { list-style: none; margin: 0; padding: 0; }
   gap: 8px;
   padding: 3px 0;
 }
-.kv-out { margin: 4px 0; }
-.kv-out div { display: flex; gap: 10px; padding: 1px 0; }
-.kv-out dt { font: 11.5px var(--mono); color: var(--amber-dim); min-width: 170px; }
-.kv-out dd { margin: 0; font-size: 12.5px; }
+/* Field lists are a real two-column grid: every key starts at the same
+   x, every value starts at the same x, and the key column is as wide as
+   the widest key in THAT list — not a guessed min-width that long keys
+   blow past. `display: contents` dissolves the wrapper div so the
+   dt/dd pairs become the grid's own children. */
+.kv-out {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  gap: 2px 16px;
+  margin: 4px 0;
+  max-width: 900px;
+}
+.kv-out div { display: contents; }
+.kv-out dt {
+  font: 11.5px var(--mono);
+  color: var(--amber-dim);
+  overflow-wrap: anywhere;
+}
+.kv-out dd {
+  margin: 0;
+  font-size: 12.5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* JSON-valued fields (emotional_manifestations and friends) render as
+   nested key/value lines instead of one long serialized string. */
+.kv-json { list-style: none; margin: 0; padding: 0; }
+.kv-json li { display: flex; gap: 8px; align-items: baseline; }
+.kv-json-key {
+  font: 11px var(--mono);
+  color: var(--paper-dim);
+  flex: 0 0 auto;
+  min-width: 88px;
+}
+.kv-json-val { min-width: 0; overflow-wrap: anywhere; }
 .cascade { margin: 0; padding: 0; list-style: none; }
 .cascade li {
   border-left: 2px solid var(--line);
@@ -641,8 +672,25 @@ ul { list-style: none; margin: 0; padding: 0; }
 /* composed query views */
 .brief-layer { margin-bottom: 14px; }
 .brief-layer h3 { margin-top: 0; }
-.dossier-row { margin: 6px 0 10px; }
-.dossier-row .kv-out { margin-left: 12px; }
+/* Dossier rows were flex items, so each row's field block started
+   wherever its own widest value left it — the blocks stair-stepped
+   across the pane. A grid pins the name column and the field column to
+   the same two x positions for every row in the query.
+   (Specificity must beat `.qlist li`.) */
+.qlist li.dossier-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 24px;
+  padding: 6px 0;
+  margin: 0;
+  max-width: 1040px;
+}
+.qlist li.dossier-row + li.dossier-row {
+  border-top: 1px solid var(--line);
+}
+.dossier-row .row-link { flex: none; padding: 0; font-weight: 600; }
+.dossier-row .kv-out { margin: 0; max-width: none; }
 .lineage { font: 12px var(--mono); color: var(--paper-dim); }
 .density-warning {
   color: #0d1420;
@@ -984,6 +1032,17 @@ button.commit-dirty {
   border-color: var(--amber);
 }
 button.commit-clean { opacity: .75; }
+
+/* Save project: same light as Commit — accent = ahead of the file. */
+button.save-dirty {
+  background: var(--amber); color: #0d1420; font-weight: 650;
+  border-color: var(--amber);
+}
+button.save-clean { opacity: .75; }
+button.save-flash { color: var(--ok); border-color: var(--ok); opacity: 1; }
+button.save-dirty:disabled, button.save-clean:disabled {
+  cursor: progress;
+}
 
 /* entity-link visibility toggle */
 .script-editor.hide-annot .sp-chip { display: none; }

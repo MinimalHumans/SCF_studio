@@ -266,11 +266,66 @@ export function AuthoredFields({ row, skipRefs = true }: {
       {entries.map(([k, v]) => (
         <div key={k}>
           <dt>{k}</dt>
-          <dd>{String(v)}</dd>
+          <dd><FieldValue value={v} /></dd>
         </div>
       ))}
     </dl>
   );
+}
+
+/**
+ * Values are text as authored, with one concession: a field whose text
+ * is a JSON object or array (emotional_manifestations, verbal_tics)
+ * reads as one unbroken serialized line. Arrays collapse to a comma
+ * list; objects become nested key/value lines. Anything that does not
+ * parse is left exactly as stored.
+ */
+function FieldValue({ value }: { value: SqlValue }): JSX.Element {
+  const text = String(value);
+  const parsed = parseJsonish(text);
+  if (Array.isArray(parsed)) {
+    return <>{parsed.map((x) => scalarText(x)).join(", ")}</>;
+  }
+  if (parsed !== null) {
+    return (
+      <ul className="kv-json">
+        {Object.entries(parsed).map(([k, v]) => (
+          <li key={k}>
+            <span className="kv-json-key">{k}</span>
+            <span className="kv-json-val">{scalarText(v)}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  return <>{text}</>;
+}
+
+function parseJsonish(text: string):
+    Record<string, unknown> | unknown[] | null {
+  const t = text.trim();
+  if (!t.startsWith("{") && !t.startsWith("[")) return null;
+  try {
+    const value: unknown = JSON.parse(t);
+    if (Array.isArray(value)) return value;
+    if (typeof value === "object" && value !== null) {
+      return value as Record<string, unknown>;
+    }
+    return null;
+  } catch {
+    return null; // authored text that merely starts with a brace
+  }
+}
+
+/** One nesting level deeper is flattened; beyond that, JSON is honest. */
+function scalarText(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+  if (Array.isArray(value)) return value.map((x) => scalarText(x)).join(", ");
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([k, v]) => `${k}: ${scalarText(v)}`).join(" · ");
+  }
+  return String(value);
 }
 
 function Q03View({ p }: { p: Q03Payload }): JSX.Element {

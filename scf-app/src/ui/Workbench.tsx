@@ -9,7 +9,8 @@ import { SearchBox } from "./SearchBox.tsx";
 import { QueryIndex, QueryRunner } from "./queries/QueryRunner.tsx";
 import { ScriptView } from "./ScriptView.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
-import { Component, useState, type ReactNode } from "react";
+import { Component, useEffect, useRef, useState, type ReactNode }
+  from "react";
 
 /**
  * A render crash anywhere in the main pane must never white-screen the
@@ -83,7 +84,7 @@ function RailResizeHandle({ onDrag }: {
 
 export function Workbench(): JSX.Element {
   const [railWidth, setRailWidth] = useRailWidth();
-  const { projectName, saveProject, navMode, setNavMode, openRow,
+  const { projectName, navMode, setNavMode, openRow,
           selectedEntityType, selectedSubject } = useStore();
 
   const main = openRow !== null
@@ -115,9 +116,7 @@ export function Workbench(): JSX.Element {
           schema {registry.schemaVersion}
         </span>
         <SearchBox />
-        <button className="primary" onClick={() => void saveProject()}>
-          Save project
-        </button>
+        <SaveControls />
           <button onClick={() => {
             const st = useStoreRaw.getState();
             const unsaved = st.revision !== st.lastSavedRevision;
@@ -171,6 +170,56 @@ export function Workbench(): JSX.Element {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Save + Save As, with the Commit button's light: accent while the
+ * working database is ahead of the .scf file on disk, dim once the two
+ * agree. A project that has no file yet (demo, new project) counts as
+ * ahead — nothing of it is durable until a first save picks a
+ * destination — and the tooltip says so rather than leaving the colour
+ * to be guessed at.
+ */
+function SaveControls(): JSX.Element {
+  const { saveProject, saveProjectAs, saving, revision,
+          lastSavedRevision, fileToken, projectName } = useStore();
+  const [flash, setFlash] = useState(false);
+  const seen = useRef(lastSavedRevision);
+
+  useEffect(() => {
+    if (lastSavedRevision === seen.current) return;
+    seen.current = lastSavedRevision;
+    setFlash(true);
+    const t = window.setTimeout(() => setFlash(false), 1600);
+    return () => window.clearTimeout(t);
+  }, [lastSavedRevision]);
+
+  const noFileYet = fileToken === null;
+  const dirty = revision !== lastSavedRevision || noFileYet;
+  const label = saving ? "Saving…" : flash ? "Saved" : "Save project";
+
+  return (
+    <>
+      <button className={(dirty ? "save-dirty" : "save-clean") +
+                         (flash && !dirty ? " save-flash" : "")}
+              disabled={saving}
+              onClick={() => void saveProject()}
+              title={noFileYet
+                ? `${projectName ?? "This project"} has no file yet — ` +
+                  "Save will ask where to write it"
+                : dirty
+                  ? "Changes here are not in your .scf file yet"
+                  : "Your .scf file is up to date"}>
+        {label}
+      </button>
+      <button disabled={saving}
+              onClick={() => void saveProjectAs()}
+              title={"Write to a new .scf file (version up or rename); " +
+                     "the project then follows that file"}>
+        Save as…
+      </button>
+    </>
   );
 }
 
