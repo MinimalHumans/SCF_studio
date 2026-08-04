@@ -924,6 +924,17 @@
           "autoInjected": false
         },
         {
+          "name": "start_scene_id",
+          "label": "Starts At Scene",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "scene",
+          "helpText": "The scene this act begins at. The act runs until the next act begins, so no end is stored and acts cannot overlap or leave gaps."
+        },
+        {
           "name": "function",
           "label": "Function",
           "fieldType": "textarea",
@@ -1059,6 +1070,17 @@
           "tab": "General",
           "autoInjected": false,
           "referenceEntity": "act"
+        },
+        {
+          "name": "start_scene_id",
+          "label": "Starts At Scene",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "scene",
+          "helpText": "The scene this sequence begins at. It runs until the next sequence begins."
         },
         {
           "name": "summary",
@@ -12059,6 +12081,17 @@
           "required": false,
           "tab": "General",
           "autoInjected": false
+        },
+        {
+          "name": "story_beat_id",
+          "label": "Story Beat",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "story_beat",
+          "helpText": "Optional: the beat within the scene this shot covers. Shots without a beat sit directly under the scene."
         },
         {
           "name": "shot_size",

@@ -28,6 +28,8 @@ import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
 import { readScreenplay } from "@scf-core/screenplay/rowModel.ts";
 import { diffScreenplay, type ReimportDiff }
   from "@scf-core/screenplay/reimport.ts";
+import { commitStructure, planCommitStructure }
+  from "./structureCommit.ts";
 import type { LineEvent } from "./lineState.ts";
 import type { Block } from "./screenplayDoc.ts";
 
@@ -274,6 +276,9 @@ export interface CommitLinkResult {
   locationsCreated: number;
   charactersCreated: number;
   linksCreated: number;
+  /** Acts and sequences declared by # sections (see structureCommit). */
+  actsCreated: number;
+  sequencesCreated: number;
 }
 
 export interface CommitPlanInfo {
@@ -282,6 +287,11 @@ export interface CommitPlanInfo {
   newCharacters: Array<{ cue: string; similar: string[] }>;
   conflicts: Array<{ uuid: string; cue: string; entityId: number;
                      entityName: string }>;
+  newActs: string[];
+  newSequences: string[];
+  /** Section lines with no scene heading below them — they anchor
+   * nothing, so they are named rather than silently ignored. */
+  danglingSections: string[];
 }
 
 const COMPOUND_CUE = /\s(?:&|AND)\s/i;
@@ -312,7 +322,12 @@ export async function planCommitLinks(
 
   const info: CommitPlanInfo = {
     newScenes: 0, newLocations: [], newCharacters: [], conflicts: [],
+    newActs: [], newSequences: [], danglingSections: [],
   };
+  const structure = await planCommitStructure(exec, rows);
+  info.newActs = structure.newActs;
+  info.newSequences = structure.newSequences;
+  info.danglingSections = structure.danglingSections;
   const seenLoc = new Set<string>();
   const seenChar = new Set<string>();
   for (const row of rows) {
@@ -385,7 +400,7 @@ export async function linkAndCreateAtCommit(
     Promise<CommitLinkResult> {
   const result: CommitLinkResult = {
     scenesCreated: 0, locationsCreated: 0, charactersCreated: 0,
-    linksCreated: 0,
+    linksCreated: 0, actsCreated: 0, sequencesCreated: 0,
   };
   const norm = (s: string): string => s.trim().toUpperCase();
 
@@ -538,5 +553,11 @@ export async function linkAndCreateAtCommit(
       currentCharacter = null;
     }
   }
+
+  // Structure last: sections anchor to the scene below them, so every
+  // heading must already have its id.
+  const structure = await commitStructure(exec, rows, options.createNew);
+  result.actsCreated = structure.actsCreated;
+  result.sequencesCreated = structure.sequencesCreated;
   return result;
 }

@@ -21,6 +21,7 @@ import {
 import {
   blocksToFountain, rowsToBlocks,
 } from "../src/editor/screenplayDoc.ts";
+import { subjectStatsSql } from "../src/state/subjectStats.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REGISTRY = join(HERE, "../../scf-core/registry/registry.json");
@@ -149,6 +150,49 @@ describe("accepted props are placed, not left floating", () => {
       for (const p of picked) {
         expect(perProp.get(p.name), p.name).toBe(p.sceneLines.length);
       }
+    } finally {
+      fresh.close();
+    }
+  });
+});
+
+describe("subject rail statistics run against a real database", () => {
+  test("counts and first appearances come back for every path shape",
+       async () => {
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    const fresh = openNodeDatabase(":memory:");
+    await initDatabase(fresh.exec, registry);
+    try {
+      const prepared = prepareImport(
+        await readFile(FRANKENSTEIN, "utf8"), "fountain");
+      await applyImport(fresh.exec, prepared,
+                        defaultAcceptance(prepared.proposals));
+
+      // character: reached through a junction.
+      // location:  reached by scene pointing at it.
+      // scene:     its own position, plus 38 incoming paths.
+      for (const subject of ["character", "location", "scene"]) {
+        const sql = subjectStatsSql(registry, subject);
+        expect(sql, subject).not.toBe(null);
+        const rows = await fresh.exec(sql!);
+        expect(rows.length, subject).toBeGreaterThan(0);
+        for (const r of rows) {
+          expect(Number(r["uses"])).toBeGreaterThan(0);
+          expect(Number(r["scenes"])).toBeGreaterThan(0);
+          expect(Number(r["first_scene_id"])).toBeGreaterThan(0);
+        }
+      }
+
+      // The busiest character should be one of the leads, not a walk-on.
+      const charStats = await fresh.exec(
+        subjectStatsSql(registry, "character")! +
+        " ORDER BY uses DESC LIMIT 1");
+      const topId = Number(charStats[0]!["sid"]);
+      const top = await fresh.exec(
+        "SELECT name FROM character WHERE id = ?", [topId]);
+      expect(String(top[0]!["name"]).length).toBeGreaterThan(0);
+      expect(Number(charStats[0]!["scenes"])).toBeGreaterThan(1);
     } finally {
       fresh.close();
     }

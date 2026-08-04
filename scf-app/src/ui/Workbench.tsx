@@ -8,6 +8,7 @@ import { ReverseLinks } from "./ReverseLinks.tsx";
 import { SearchBox } from "./SearchBox.tsx";
 import { QueryIndex, QueryRunner } from "./queries/QueryRunner.tsx";
 import { ScriptView } from "./ScriptView.tsx";
+import { StructureView } from "./StructureView.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
 import { Component, useEffect, useRef, useState, type ReactNode }
   from "react";
@@ -91,6 +92,8 @@ export function Workbench(): JSX.Element {
     ? <EntityForm key={`${openRow.entity}:${String(openRow.id)}`} />
     : navMode === "script"
       ? <ScriptView />
+    : navMode === "structure"
+      ? <StructureView />
     : navMode === "queries"
       ? <QueryRunner />
       : navMode === "subject" && selectedSubject !== null
@@ -146,6 +149,11 @@ export function Workbench(): JSX.Element {
                     onClick={() => setNavMode("schema")}>
               Schema
             </button>
+            <button role="tab" aria-selected={navMode === "structure"}
+                    className={navMode === "structure" ? "active" : ""}
+                    onClick={() => setNavMode("structure")}>
+              Structure
+            </button>
             <button role="tab" aria-selected={navMode === "queries"}
                     className={navMode === "queries" ? "active" : ""}
                     onClick={() => setNavMode("queries")}>
@@ -160,6 +168,7 @@ export function Workbench(): JSX.Element {
           {navMode === "subject" ? <SubjectNav />
             : navMode === "schema" ? <CategoryTree />
             : navMode === "script" ? <SceneRail />
+            : navMode === "structure" ? null
             : <QueryIndex />}
         </nav>
         <main className="main-panel">{main}</main>

@@ -199,12 +199,29 @@ ul { list-style: none; margin: 0; padding: 0; }
 .tree-entity.active { background: var(--ink-2); color: var(--amber); }
 .tree-icon { width: 16px; text-align: center; }
 .tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tree-tier { font: 10px var(--mono); color: var(--paper-dim); }
+/* Tier stays, dimmed, because it is a property of the SCHEMA; the row
+   count sits to its right because it is a property of THIS project. */
+.tree-tier { font: 10px var(--mono); color: var(--line); }
+.tree-rows {
+  font: 10.5px var(--mono);
+  color: var(--amber-dim);
+  min-width: 30px;
+  text-align: right;
+}
+.tree-category .tree-rows { min-width: 34px; }
+.tree-entity.tree-empty .tree-label { color: var(--paper-dim); }
+.tree-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 8px 4px;
+}
 
 .subject-nav { padding: 8px; display: flex; flex-direction: column; gap: 8px; height: calc(100% - 34px); }
 .subject-list { overflow-y: auto; }
 .subject-item {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   width: 100%;
   text-align: left;
   background: none;
@@ -212,6 +229,18 @@ ul { list-style: none; margin: 0; padding: 0; }
   border-radius: 3px;
   padding: 4px 8px;
 }
+.subject-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.subject-item-stat {
+  font: 10.5px var(--mono);
+  color: var(--paper-dim);
+  flex: none;
+}
+.subject-sort { font-size: 11.5px; padding: 2px 4px; }
 .subject-item.active { background: var(--ink-2); color: var(--amber); }
 
 /* ---- lists ---- */
@@ -1126,3 +1155,49 @@ button.save-dirty:disabled, button.save-clean:disabled {
 /* import staging: prop candidates below the strong tier */
 .prop-note { max-width: 70ch; margin: 2px 0 8px; }
 tr.prop-weak td { opacity: .6; }
+
+/* structure panel */
+.structure { padding: 16px 20px; overflow: auto; max-width: 1040px; }
+.structure-head { display: flex; align-items: center; gap: 8px; }
+.structure-head h2 { margin: 0 auto 0 0; font-size: 15px; }
+.structure-act { margin: 14px 0; }
+.structure-seq { margin-left: 20px; }
+.structure-span {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--line);
+}
+.structure-span .row-link { flex: none; padding: 2px; font-weight: 600; }
+.structure-span-act .row-link { color: var(--amber); }
+.structure-kind {
+  font: 10px var(--mono);
+  color: var(--paper-dim);
+  text-transform: uppercase;
+  min-width: 62px;
+}
+.structure-extent {
+  font: 11px var(--mono);
+  color: var(--paper-dim);
+  margin-right: auto;
+}
+.structure-scenes {
+  list-style: none;
+  margin: 4px 0 10px;
+  padding-left: 82px;
+}
+.structure-scenes li {
+  font-size: 12.5px;
+  color: var(--paper-dim);
+  padding: 1px 0;
+}
+.structure-pick { font-size: 11px; padding: 1px 3px; max-width: 130px; }
+.structure-loose {
+  display: flex; align-items: baseline; gap: 8px; padding: 3px 0;
+}
+.structure-unplaced, .structure-findings { margin-top: 20px; }
+.structure-findings ul { margin: 4px 0; padding-left: 18px; }
+.structure-findings li { font-size: 12.5px; padding: 2px 0; }
+.finding-warning { color: var(--amber); }
+.finding-info { color: var(--paper-dim); }

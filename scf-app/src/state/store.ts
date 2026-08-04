@@ -36,7 +36,8 @@ const adapter: FileAdapter = new FsAccessAdapter();
 /** scf-core's seam, app-wide. */
 export const exec = client.exec;
 
-export type NavMode = "subject" | "schema" | "queries" | "script";
+export type NavMode =
+  "subject" | "schema" | "structure" | "queries" | "script";
 
 export interface OpenRow {
   entity: string;

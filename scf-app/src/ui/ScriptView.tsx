@@ -241,6 +241,12 @@ export function ScriptView(): JSX.Element {
     if (created.charactersCreated > 0) {
       parts.push(`${String(created.charactersCreated)} character(s)`);
     }
+    if (created.actsCreated > 0) {
+      parts.push(`${String(created.actsCreated)} act(s)`);
+    }
+    if (created.sequencesCreated > 0) {
+      parts.push(`${String(created.sequencesCreated)} sequence(s)`);
+    }
     setCommitNote(parts.length > 0
       ? `created ${parts.join(", ")}` : "");
     prevBlocksRef.current = new Map(plan.rows.map((r) => [r.uuid!, {
@@ -285,7 +291,8 @@ export function ScriptView(): JSX.Element {
           .filter((r) => r.lineType === "heading")
           .map((r) => ({ content: r.content, sceneId: r.sceneId })) });
     if (info.newLocations.length === 0 &&
-        info.newCharacters.length === 0 && info.conflicts.length === 0) {
+        info.newCharacters.length === 0 && info.conflicts.length === 0 &&
+        info.newActs.length === 0 && info.newSequences.length === 0) {
       if (info.newScenes > 0) {
         const created = await withTransaction(exec, async () => {
           const link = await linkAndCreateAtCommit(exec, plan.rows,
@@ -360,6 +367,12 @@ export function ScriptView(): JSX.Element {
     if (created.charactersCreated > 0) {
       parts.push(`${String(created.charactersCreated)} character(s)`);
     }
+    if (created.actsCreated > 0) {
+      parts.push(`${String(created.actsCreated)} act(s)`);
+    }
+    if (created.sequencesCreated > 0) {
+      parts.push(`${String(created.sequencesCreated)} sequence(s)`);
+    }
     setCommitNote(parts.length > 0
       ? `created ${parts.join(", ")}` : "");
     setReview(null);
@@ -378,7 +391,8 @@ export function ScriptView(): JSX.Element {
     const plan = commitPlan(view.state, prevBlocksRef.current);
     const info = await planCommitLinks(exec, plan.rows);
     setDirty(info.newScenes > 0 || info.newLocations.length > 0 ||
-             info.newCharacters.length > 0 || info.conflicts.length > 0);
+             info.newCharacters.length > 0 || info.conflicts.length > 0 ||
+             info.newActs.length > 0 || info.newSequences.length > 0);
   };
 
   const scheduleCommit = (): void => {
@@ -725,6 +739,35 @@ export function ScriptView(): JSX.Element {
                   ))}
                 </ul>
               </>
+            )}
+            {(review.newActs.length > 0 ||
+              review.newSequences.length > 0) && (
+              <>
+                <h3>New structure</h3>
+                <ul className="review-list">
+                  {review.newActs.map((a) => (
+                    <li key={`act:${a}`}>
+                      <b>{a}</b>
+                      <span className="muted"> — act, starting at the
+                        next scene below it</span>
+                    </li>
+                  ))}
+                  {review.newSequences.map((x) => (
+                    <li key={`seq:${x}`}>
+                      <b>{x}</b>
+                      <span className="muted"> — sequence, starting at
+                        the next scene below it</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {review.danglingSections.length > 0 && (
+              <p className="muted">
+                No scene follows {review.danglingSections.join(", ")},
+                so {review.danglingSections.length === 1
+                  ? "it anchors" : "they anchor"} nothing yet.
+              </p>
             )}
             {review.newCharacters.length > 0 && (
               <>

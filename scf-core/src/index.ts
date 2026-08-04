@@ -18,3 +18,4 @@ export * from "./db.ts";
 export * from "./resolution.ts";
 export * from "./queryPaths.ts";
 export * from "./readiness.ts";
+export * from "./structure.ts";

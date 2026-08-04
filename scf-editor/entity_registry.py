@@ -474,6 +474,11 @@ register(EntityDef(
     fields=[
         FieldDef("name", "Act Name", required=True),
         FieldDef("act_number", "Act Number", "integer"),
+        FieldDef("start_scene_id", "Starts At Scene", "reference",
+                 reference_entity="scene",
+                 help_text="The scene this act begins at. The act runs "
+                           "until the next act begins, so no end is "
+                           "stored and acts cannot overlap or leave gaps."),
         FieldDef("function", "Function", "textarea"),
         FieldDef("dramatic_question", "Dramatic Question", "textarea"),
         FieldDef("shift", "Shift", "textarea"),
@@ -499,6 +504,10 @@ register(EntityDef(
         FieldDef("name", "Sequence Name", required=True),
         FieldDef("sequence_number", "Sequence Number", "integer"),
         FieldDef("act_id", "Act", "reference", reference_entity="act"),
+        FieldDef("start_scene_id", "Starts At Scene", "reference",
+                 reference_entity="scene",
+                 help_text="The scene this sequence begins at. It runs "
+                           "until the next sequence begins."),
         FieldDef("summary", "Summary", "textarea"),
         FieldDef("goal", "Goal", "textarea"),
         FieldDef("conflict", "Conflict", "textarea"),
@@ -2754,6 +2763,11 @@ register(EntityDef(
                  reference_entity="scene", required=True),
         FieldDef("shot_number", "Shot Number", "text"),
         FieldDef("shot_order", "Order in Scene", "integer"),
+        FieldDef("story_beat_id", "Story Beat", "reference",
+                 reference_entity="story_beat",
+                 help_text="Optional: the beat within the scene this "
+                           "shot covers. Shots without a beat sit "
+                           "directly under the scene."),
         FieldDef("shot_size", "Shot Size", "select", options=[
             "extreme wide", "wide", "medium wide", "medium",
             "medium close-up", "close-up", "extreme close-up"
