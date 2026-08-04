@@ -15,6 +15,48 @@ import { nextShotNumber } from "@scf-core/shots.ts";
 const beatLetter = (i: number): string =>
   String.fromCharCode(65 + (i % 26));
 
+/**
+ * What a collapsed scene says about itself. Beats count as work: a
+ * scene broken into beats with no shots yet is further along than an
+ * untouched one, and the row should not read the same for both.
+ */
+export function summarize(beats: number, shots: number): string {
+  const parts: string[] = [];
+  if (beats > 0) parts.push(`${String(beats)} beat${beats === 1 ? "" : "s"}`);
+  if (shots > 0) parts.push(`${String(shots)} shot${shots === 1 ? "" : "s"}`);
+  if (parts.length === 0) return "nothing yet";
+  if (shots === 0) return `${parts.join(" · ")}, no coverage`;
+  return parts.join(" · ");
+}
+
+/**
+ * The lines of one scene, located by its HEADING rather than by every
+ * line's own scene_id.
+ *
+ * Body lines do carry a scene_id — it is threaded onto them at commit —
+ * but that threading is derived state and can be absent or stale: a
+ * line typed after the last commit has none, and a project written
+ * before the threading existed has none at all. The heading's link is
+ * the reliable one, because commit enforces one scene per heading. So:
+ * find the heading, then take everything up to the next heading, which
+ * is what "the scene" means in a screenplay anyway.
+ *
+ * Bind the scene id three times.
+ */
+export const SCENE_SCRIPT_SQL =
+  "SELECT line_type, content FROM screenplay_lines " +
+  "WHERE line_order >= COALESCE(" +
+  "    (SELECT MIN(line_order) FROM screenplay_lines " +
+  "     WHERE scene_id = ? AND line_type = 'heading'), " +
+  "    (SELECT MIN(line_order) FROM screenplay_lines WHERE scene_id = ?), " +
+  "    9e18) " +
+  "  AND line_order < COALESCE((SELECT MIN(line_order) " +
+  "     FROM screenplay_lines WHERE line_type = 'heading' " +
+  "       AND line_order > COALESCE(" +
+  "         (SELECT MIN(line_order) FROM screenplay_lines " +
+  "          WHERE scene_id = ? AND line_type = 'heading'), -1)), 9e18) " +
+  "ORDER BY line_order";
+
 export async function addBeat(exec: SqlExec,
                               sceneId: number): Promise<void> {
   const existing = await exec(
@@ -37,6 +79,42 @@ export async function addShot(exec: SqlExec, sceneId: number,
     "INSERT INTO shot (name, scene_id, story_beat_id, shot_number, " +
     "shot_order) VALUES (?, ?, ?, ?, ?)",
     ["", sceneId, beatId, number, inScene.length + 1]);
+}
+
+/**
+ * A shot that moves to another scene is renumbered.
+ *
+ * This is not a contradiction of "a shot number is never rewritten".
+ * That rule protects the number against the SCENE renumbering — 42A
+ * stays 42A when scene 42 becomes scene 43, because a crew holds paper
+ * saying 42A. But a shot dragged from scene 5 into scene 66 is not
+ * scene 5's coverage any more: "5A" sitting in scene 66 is not a stable
+ * identifier, it is a wrong one. Production practice agrees — a shot
+ * that changes scenes gets a new number.
+ *
+ * Returns the new number, or null when nothing changed.
+ */
+export async function renumberForScene(
+    exec: SqlExec, shotId: number,
+    newSceneId: number): Promise<string | null> {
+  const current = await exec(
+    "SELECT scene_id, shot_number FROM shot WHERE id = ?", [shotId]);
+  const row = current[0];
+  if (row === undefined) return null;
+  if (Number(row["scene_id"]) === newSceneId) return null;
+
+  const scene = await exec(
+    "SELECT scene_number FROM scene WHERE id = ?", [newSceneId]);
+  const siblings = await exec(
+    "SELECT shot_number FROM shot WHERE scene_id = ? AND id != ?",
+    [newSceneId, shotId]);
+  const number = nextShotNumber(
+    (scene[0]?.["scene_number"] ?? null) as number | null,
+    siblings.map((r) => (r["shot_number"] ?? null) as string | null));
+  await exec(
+    "UPDATE shot SET shot_number = ?, updated_at = datetime('now') " +
+    "WHERE id = ?", [number, shotId]);
+  return number;
 }
 
 export async function updateField(

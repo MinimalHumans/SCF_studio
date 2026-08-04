@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";
 
@@ -74,6 +75,21 @@ function MultiTabScreen(): JSX.Element {
 
 export function App(): JSX.Element {
   const phase = useStore((s) => s.phase);
+  const resumeLast = useStore((s) => s.resumeLast);
+  const lastSession = useStore((s) => s.lastSession);
+  const tried = useRef(false);
+
+  // A refresh is not a close. The working database is still in browser
+  // storage and the file handle is still in IndexedDB, so walk straight
+  // back in — unless the last thing the user did was close the project,
+  // in which case the start screen is what they asked for.
+  useEffect(() => {
+    if (tried.current || phase !== "start" || lastSession === null) return;
+    tried.current = true;
+    if (localStorage.getItem("scf:auto-resume") === "0") return;
+    void resumeLast();
+  }, [phase, lastSession, resumeLast]);
+
   if (phase === "multitab") return <MultiTabScreen />;
   return phase === "open" ? <Workbench /> : <StartScreen />;
 }

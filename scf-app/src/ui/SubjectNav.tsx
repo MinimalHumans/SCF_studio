@@ -4,6 +4,7 @@ import { registry, rowName, useStore } from "../state/store.ts";
 import {
   compareSubjects, subjectStatsSql, type SubjectSort, type SubjectStat,
 } from "../state/subjectStats.ts";
+import { useRefNames } from "./useRefNames.ts";
 import { NAVIGABLE_SUBJECTS, type NavigableSubject }
   from "../state/registryGraph.ts";
 import { q } from "@scf-core/db.ts";
@@ -14,19 +15,27 @@ import { q } from "@scf-core/db.ts";
  */
 export function SubjectNav(): JSX.Element {
   const { selectedSubject, selectSubject } = useStore();
-  const [subjectType, setSubjectType] =
-    useState<NavigableSubject>("character");
+  const { subjectType, setSubjectType } = useStore();
   const [sort, setSort] = useState<SubjectSort>("name");
   const edef = registry.entities.get(subjectType);
   const nameField = edef?.nameField ?? "name";
-  // Scenes need their number to be identified at all, and list in story
-  // order; SELECT id, name left every one of them reading "unnumbered".
+  // SELECT * rather than id+name: a row's label may live in another
+  // column entirely (a scene's number, a shot's shot_number), and
+  // fetching two columns is what made every scene read "unnumbered"
+  // and every shot "Shot #1".
   const rows = useQuery(
     subjectType === "scene"
-      ? "SELECT id, scene_number, name FROM scene " +
+      ? "SELECT * FROM scene " +
         "ORDER BY (scene_number IS NULL), scene_number, id"
-      : `SELECT id, ${q(nameField)} FROM ${q(subjectType)} ` +
-        `ORDER BY ${q(nameField)}`);
+      : subjectType === "shot"
+        ? "SELECT * FROM shot ORDER BY scene_id, shot_order, id"
+        : `SELECT * FROM ${q(subjectType)} ORDER BY ${q(nameField)}`);
+
+  // Anything that sits in a scene says which one, on the left where it
+  // reads as part of the name.
+  const scenePlaced = edef !== undefined && subjectType !== "scene" &&
+    edef.fields.some((f) => f.name === "scene_id");
+  const sceneNames = useRefNames(scenePlaced ? ["scene"] : []);
 
   // Only fetched when a mode needs it — A–Z costs nothing extra.
   const statsSql = useMemo(
@@ -48,7 +57,8 @@ export function SubjectNav(): JSX.Element {
   const items = useMemo(() => rows
     .map((r) => {
       const id = r["id"] as number;
-      return { id, name: rowName(subjectType, r), stat: stats.get(id) };
+      return { id, row: r, name: rowName(subjectType, r),
+               stat: stats.get(id) };
     })
     .sort((a, b) => compareSubjects(sort, a, b)),
     [rows, stats, sort, subjectType]);
@@ -82,7 +92,7 @@ export function SubjectNav(): JSX.Element {
         </option>
       </select>
       <div className="subject-list">
-        {items.map(({ id, name, stat }) => {
+        {items.map(({ id, row: r, name, stat }) => {
           const active = selectedSubject?.entity === subjectType &&
                          selectedSubject.id === id;
           return (
@@ -90,6 +100,11 @@ export function SubjectNav(): JSX.Element {
                     className={"subject-item" + (active ? " active" : "")}
                     onClick={() =>
                       selectSubject({ entity: subjectType, id, name })}>
+              {scenePlaced && (
+                <span className="subject-item-scene">
+                  {sceneNames("scene", r["scene_id"]) ?? "—"}
+                </span>
+              )}
               <span className="subject-item-name">{name}</span>
               {sort !== "name" && stat !== undefined && (
                 <span className="subject-item-stat">

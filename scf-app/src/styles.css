@@ -1251,3 +1251,67 @@ tr.prop-weak td { opacity: .6; }
 .shoot-shot-name { flex: 1; }
 .shoot-select { font-size: 11px; padding: 1px 3px; max-width: 120px; }
 .shoot-empty { margin: 2px 0 6px; font-size: 12px; }
+
+/* undo toast */
+.undo-toast {
+  position: sticky;
+  bottom: 12px;
+  margin: 12px auto 0;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--ink-2);
+  border: 1px solid var(--amber);
+  border-radius: 4px;
+  font-size: 12.5px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / .45);
+}
+
+/* shoot tab: the scene as written */
+.shoot-script { margin: 2px 0 6px; }
+.shoot-script-body {
+  margin: 4px 0 8px;
+  padding: 8px 12px;
+  background: var(--ink-2);
+  border-left: 2px solid var(--line);
+  max-height: 320px;
+  overflow: auto;
+  max-width: 62ch;
+}
+.shoot-script-body .sl {
+  margin: 0 0 6px;
+  font: 12.5px/1.45 var(--mono);
+  color: var(--paper-dim);
+  white-space: pre-wrap;
+}
+.shoot-script-body .sl-heading {
+  color: var(--paper); font-weight: 650; text-transform: uppercase;
+}
+.shoot-script-body .sl-character {
+  color: var(--paper); margin-left: 14ch; margin-bottom: 0;
+}
+.shoot-script-body .sl-dialogue { margin-left: 8ch; max-width: 34ch; }
+.shoot-script-body .sl-parenthetical {
+  margin-left: 11ch; margin-bottom: 0; font-style: italic;
+}
+.shoot-script-body .sl-transition { text-align: right; }
+
+/* scene context ahead of a row's name (beats, shots) */
+.row-scene-lead {
+  flex: none;
+  min-width: 15ch;
+  max-width: 26ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.subject-item-scene {
+  font: 10.5px var(--mono);
+  color: var(--paper-dim);
+  flex: none;
+  min-width: 6ch;
+}
+.subject-facts { margin: 6px 0 14px; }
+.subject-facts .kv-out { max-width: 760px; }

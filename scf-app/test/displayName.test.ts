@@ -101,6 +101,19 @@ describe("link labels", () => {
       .toBe("Scene-Character #99");
   });
 
+  it("labels a shot by its number, not a generic id", () => {
+    // Shots are created with an empty name, so the schema list read
+    // "Shot #3" for a row whose number was 1C.
+    expect(rowLabel(def("shot"), "shot",
+                    { id: 3, name: "WIDE", shot_number: "1C" }))
+      .toBe("1C — WIDE");
+    expect(rowLabel(def("shot"), "shot",
+                    { id: 3, name: "", shot_number: "1C" })).toBe("1C");
+    expect(rowLabel(def("shot"), "shot",
+                    { id: 3, name: "", shot_number: null }))
+      .toBe("shot #3");
+  });
+
   it("still uses a real name field when there is one", () => {
     expect(rowLabel(def("character"), "character",
                     { id: 4, name: "Alexis" })).toBe("Alexis");

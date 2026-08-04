@@ -3,7 +3,8 @@ import type { Row } from "@scf-core/db.ts";
 import { deriveStructure } from "@scf-core/structure.ts";
 import { shotCode } from "@scf-core/shots.ts";
 import {
-  addBeat, addShot, moveShot, removeBeat, removeShot, updateField,
+  addBeat, addShot, moveShot, removeBeat, removeShot, SCENE_SCRIPT_SQL,
+  summarize, updateField,
 } from "../editor/shootOps.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
@@ -78,7 +79,11 @@ export function ShootView(): JSX.Element {
     const scene = sceneById.get(sceneId);
     const sceneShots = shotsByScene.get(sceneId) ?? [];
     const sceneBeats = beatsByScene.get(sceneId) ?? [];
-    if (!showEmpty && sceneShots.length === 0) return null;
+    // A scene with beats and no shots is planned, not untouched — it
+    // is exactly the scene you broke down and have yet to cover, so
+    // hiding it is the opposite of useful.
+    if (!showEmpty && sceneShots.length === 0 &&
+        sceneBeats.length === 0) return null;
     const key = `scene:${String(sceneId)}`;
     const expanded = open.has(key);
     const loose = sceneShots.filter((r) => r["story_beat_id"] === null);
@@ -92,10 +97,7 @@ export function ShootView(): JSX.Element {
           </button>
           <span className="shoot-label">{sceneLabel(scene)}</span>
           <span className="shoot-count">
-            {sceneShots.length === 0
-              ? "no coverage"
-              : `${String(sceneShots.length)} shot` +
-                `${sceneShots.length === 1 ? "" : "s"}`}
+            {summarize(sceneBeats.length, sceneShots.length)}
           </span>
           <button className="ghost tiny"
                   onClick={() => void run(addBeat(exec, sceneId))}>+ beat</button>
@@ -106,6 +108,7 @@ export function ShootView(): JSX.Element {
         </div>
         {expanded && (
           <div className="shoot-scene-body">
+            <SceneText sceneId={sceneId} />
             {sceneBeats.map((beat) => {
               const beatId = Number(beat["id"]);
               const inBeat = sceneShots.filter(
@@ -129,6 +132,10 @@ export function ShootView(): JSX.Element {
                             onClick={() => void run(addShot(exec, sceneId, beatId))}>
                       + shot
                     </button>
+                    <button className="ghost tiny"
+                            title="Open the full beat record"
+                            onClick={() => void openEntityRow(
+                              "story_beat", beatId)}>⋯</button>
                     <button className="ghost tiny"
                             title="Delete the beat; its shots stay on the scene"
                             onClick={() => void run(removeBeat(exec, beatId))}>
@@ -206,7 +213,7 @@ export function ShootView(): JSX.Element {
         <label className="shoot-toggle">
           <input type="checkbox" checked={showEmpty}
                  onChange={(e) => setShowEmpty(e.target.checked)} />
-          scenes with no coverage
+          untouched scenes
         </label>
       </div>
 
@@ -246,6 +253,39 @@ export function ShootView(): JSX.Element {
           {structure.scenes.filter((s) => !placed.has(s.id))
             .map((s) => sceneNode(s.id))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The scene as written, read-only, inside the scene it belongs to.
+ * Shot descriptions are written against the action, and switching tabs
+ * to read it is how detail gets lost between the two.
+ */
+function SceneText({ sceneId }: { sceneId: number }): JSX.Element | null {
+  const [open, setOpen] = useState(false);
+  const lines = useQuery(open ? SCENE_SCRIPT_SQL : null,
+                         [sceneId, sceneId, sceneId]);
+  return (
+    <div className="shoot-script">
+      <button className="ghost tiny" onClick={() => setOpen(!open)}>
+        {open ? "hide script" : "read scene"}
+      </button>
+      {open && (
+        lines.length === 0
+          ? <p className="muted shoot-empty">
+              This scene's heading isn't linked to any script line —
+              commit the script and it will appear here.
+            </p>
+          : <div className="shoot-script-body">
+              {lines.map((l, i) => (
+                <p key={i}
+                   className={`sl sl-${String(l["line_type"])}`}>
+                  {String(l["content"] ?? "")}
+                </p>
+              ))}
+            </div>
       )}
     </div>
   );

@@ -24,9 +24,15 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
 
   // With no anchor here, a link shows both of its ends.
   const composed = isComposedLink(edef);
-  const targets = useMemo(() => edef === undefined || !composed ? []
-    : referenceFields(edef).map((f) => f.referenceEntity as string),
-    [edef, composed]);
+  // ...and anything that sits IN a scene says which one. Twelve rows
+  // called "Beat A" are indistinguishable without it.
+  const scenePlaced = edef !== undefined && !composed &&
+    edef.fields.some((f) => f.name === "scene_id");
+  const targets = useMemo(() => edef === undefined ? []
+    : composed
+      ? referenceFields(edef).map((f) => f.referenceEntity as string)
+      : scenePlaced ? ["scene"] : [],
+    [edef, composed, scenePlaced]);
   const refNames = useRefNames(targets);
 
   if (edef === undefined) return <p className="muted">Unknown entity.</p>;
@@ -48,6 +54,13 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
       <ul className="rows">
         {rows.map((r) => (
           <li key={String(r["id"])}>
+            {/* Left of the name, not floated right: it reads as part of
+                the identity, which for a beat or a shot it is. */}
+            {scenePlaced && (
+              <span className="row-scene row-scene-lead">
+                {refNames("scene", r["scene_id"]) ?? "—"}
+              </span>
+            )}
             <button className="row-link"
                     onClick={() =>
                       void openEntityRow(entity, r["id"] as number)}>

@@ -76,9 +76,23 @@ export function referenceFields(edef: EntityDef): FieldDef[] {
  * The label for a row of `edef`, without resolving references.
  * Scene-aware; everything else is its name field, then a typed fallback.
  */
+/**
+ * `1C — WIDE`, or `1C` alone. A shot's identity is its number: the
+ * name field is a description and is routinely empty, which is why
+ * shot lists read as "Shot #3" while the row itself said 1C.
+ */
+export function shotLabel(row: Row): string {
+  const number = text(row["shot_number"]);
+  const name = text(row["name"]);
+  if (number === "" && name === "") return `shot #${text(row["id"])}`;
+  if (number === "") return name;
+  return name === "" ? number : `${number} — ${name}`;
+}
+
 export function rowLabel(edef: EntityDef | undefined, entity: string,
                          row: Row): string {
   if (entity === "scene") return sceneLabel(row);
+  if (entity === "shot" && "shot_number" in row) return shotLabel(row);
   // A hidden name column is not a name. The importer parks cue text
   // there; showing it is the bug this module exists to fix, so it never
   // reaches the screen. Callers that can resolve references go through

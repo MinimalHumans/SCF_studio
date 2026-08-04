@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { q } from "@scf-core/db.ts";
 import { entitiesByCategory } from "../state/registryGraph.ts";
 import { registry, useStore } from "../state/store.ts";
@@ -6,18 +6,27 @@ import { useQuery } from "./useQuery.ts";
 
 /** Tier/category tree — v1's browser, kept for schema-oriented work. */
 export function CategoryTree(): JSX.Element {
-  const { selectedEntityType, selectEntityType } = useStore();
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const { selectedEntityType, selectEntityType, schemaCollapsed,
+          setSchemaCollapsed } = useStore();
   const groups = useMemo(() => entitiesByCategory(registry), []);
+  // A fresh project starts collapsed — ~99 entities across the
+  // categories is a wall — but the expansion then belongs to the
+  // session, so switching tabs does not undo it. The store holds a
+  // sentinel until the tree resolves it against the real names.
+  const collapsed = useMemo(
+    () => schemaCollapsed.has("\u0000all")
+      ? new Set(groups.map(([category]) => category)) : schemaCollapsed,
+    [schemaCollapsed, groups]);
+  const setCollapsed = (next: Set<string>): void => {
+    setSchemaCollapsed(next);
+  };
   const counts = useEntityCounts();
 
   const toggle = (category: string): void => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-      return next;
-    });
+    const next = new Set(collapsed);
+    if (next.has(category)) next.delete(category);
+    else next.add(category);
+    setCollapsed(next);
   };
 
   const allCollapsed = collapsed.size >= groups.length;

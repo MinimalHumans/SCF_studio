@@ -6,7 +6,7 @@ import { referenceGraph, registry, rowName, useStore }
   from "../state/store.ts";
 import {
   isComposedLink, linkLabel, linkQualifiers, referenceFields,
-  sceneLabel, sceneShort,
+  sceneLabel, sceneShort, shotLabel,
 } from "../state/displayName.ts";
 import { useRefNames } from "./useRefNames.ts";
 import { scopeRank } from "../state/registryGraph.ts";
@@ -75,7 +75,7 @@ export function SubjectView(): JSX.Element | null {
               <option value="">scene-level</option>
               {shots.map((s) => (
                 <option key={String(s["id"])} value={String(s["id"])}>
-                  {String(s["name"])}
+                  {shotLabel(s)}
                 </option>
               ))}
             </select>
@@ -87,6 +87,8 @@ export function SubjectView(): JSX.Element | null {
           Edit {registry.entities.get(subject.entity)?.label.toLowerCase()}
         </button>
       </header>
+
+      <SubjectFacts entity={subject.entity} id={subject.id} />
 
       <ReadinessPanel subjectEntity={subject.entity} subjectId={subject.id}
                       sceneId={sceneId} shotId={pickedShot} />
@@ -107,6 +109,54 @@ export function SubjectView(): JSX.Element | null {
 }
 
 interface Span { start: number; end: number; keyed: number; }
+
+/**
+ * The subject's OWN authored fields, read-only.
+ *
+ * Until now this page showed only what points AT the subject, which is
+ * right for a character (their scenes, their costumes) and useless for
+ * a shot, whose whole substance — size, angle, movement, lens — lives
+ * on the row itself. A shot page was a title and an Edit button.
+ */
+function SubjectFacts({ entity, id }: {
+  entity: string; id: number;
+}): JSX.Element | null {
+  const edef = registry.entities.get(entity);
+  const rows = useQuery(
+    `SELECT * FROM ${q(entity)} WHERE id = ?`, [id]);
+  const row = rows[0];
+  const refs = useMemo(() => edef === undefined ? []
+    : referenceFields(edef).map((f) => f.referenceEntity as string),
+    [edef]);
+  const refNames = useRefNames(refs);
+  if (edef === undefined || row === undefined) return null;
+
+  const shown = edef.fields.filter((f) => {
+    if (f.hidden === true || f.name === edef.nameField) return false;
+    if (f.autoInjected) return false;
+    const v = row[f.name];
+    return v !== null && v !== undefined && v !== "";
+  });
+  if (shown.length === 0) return null;
+
+  return (
+    <section className="subject-facts">
+      <dl className="kv-out">
+        {shown.map((f) => (
+          <div key={f.name}>
+            <dt>{f.label}</dt>
+            <dd>
+              {f.fieldType === "reference" && f.referenceEntity !== undefined
+                ? refNames(f.referenceEntity, row[f.name])
+                  ?? String(row[f.name])
+                : String(row[f.name])}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
 
 function SubjectSection({ entity, field, subjectId, scenes,
                           currentSceneId }: {

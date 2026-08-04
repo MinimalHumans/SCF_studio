@@ -9,6 +9,7 @@ import { SearchBox } from "./SearchBox.tsx";
 import { QueryIndex, QueryRunner } from "./queries/QueryRunner.tsx";
 import { ScriptView } from "./ScriptView.tsx";
 import { StructureView } from "./StructureView.tsx";
+import { undoSummary } from "../state/undoDelete.ts";
 import { ShootView } from "./ShootView.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
 import { Component, useEffect, useRef, useState, type ReactNode }
@@ -99,8 +100,14 @@ export function Workbench(): JSX.Element {
       ? <ShootView />
     : navMode === "queries"
       ? <QueryRunner />
-      : navMode === "subject" && selectedSubject !== null
-      ? <SubjectView key={`${selectedSubject.entity}:${selectedSubject.id}`} />
+      // Subjects mode never falls through to the schema list: with no
+      // subject picked it showed whichever entity the Schema tab was
+      // last on, so switching subject type landed on Story Beats.
+      : navMode === "subject"
+      ? (selectedSubject !== null
+          ? <SubjectView
+              key={`${selectedSubject.entity}:${selectedSubject.id}`} />
+          : <EmptyMain />)
       : selectedEntityType !== null
         ? <EntityList entity={selectedEntityType} />
         : <EmptyMain />;
@@ -179,7 +186,7 @@ export function Workbench(): JSX.Element {
             : navMode === "structure" || navMode === "shoot" ? null
             : <QueryIndex />}
         </nav>
-        <main className="main-panel">{main}</main>
+        <main className="main-panel">{main}<UndoToast /></main>
         {openRow !== null && openRow.id !== null && (
           <aside className="rail rail-context">
             <ReverseLinks entity={openRow.entity} id={openRow.id} />
@@ -198,6 +205,26 @@ export function Workbench(): JSX.Element {
  * destination — and the tooltip says so rather than leaving the colour
  * to be guessed at.
  */
+/**
+ * A delete is the one action with no other way back — there is no file
+ * history until you save, and no row-level version. So it gets a toast
+ * rather than a confirmation dialog: confirmations interrupt every
+ * delete to prevent the rare wrong one, an undo interrupts none.
+ */
+function UndoToast(): JSX.Element | null {
+  const { undo, undoDelete, dismissUndo } = useStore();
+  if (undo === null) return null;
+  return (
+    <div className="undo-toast" role="status">
+      <span>{undoSummary(undo)}</span>
+      <button className="ghost tiny"
+              onClick={() => void undoDelete()}>Undo</button>
+      <button className="ghost tiny" aria-label="dismiss"
+              onClick={dismissUndo}>×</button>
+    </div>
+  );
+}
+
 function SaveControls(): JSX.Element {
   const { saveProject, saveProjectAs, saving, revision,
           lastSavedRevision, fileToken, projectName } = useStore();
@@ -223,11 +250,13 @@ function SaveControls(): JSX.Element {
               disabled={saving}
               onClick={() => void saveProject()}
               title={noFileYet
-                ? `${projectName ?? "This project"} has no file yet — ` +
-                  "Save will ask where to write it"
+                ? `${projectName ?? "This project"} has no file yet. ` +
+                  "Your work is in browser storage; Save will ask where " +
+                  "to write the .scf file."
                 : dirty
-                  ? "Changes here are not in your .scf file yet"
-                  : "Your .scf file is up to date"}>
+                  ? "Write these changes out to your .scf file on disk. " +
+                    "Until you do, they are only in browser storage."
+                  : "Your .scf file on disk matches this session."}>
         {label}
       </button>
       <button disabled={saving}

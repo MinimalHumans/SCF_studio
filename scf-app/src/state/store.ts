@@ -15,10 +15,17 @@ import { initDatabase, newUuid, q, type Row, type SqlValue }
   from "@scf-core/db.ts";
 import { SqlWorkerClient } from "../db/workerClient.ts";
 import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
-import { buildReferenceGraph, type IncomingRef }
-  from "./registryGraph.ts";
+import { buildReferenceGraph, type IncomingRef,
+         type NavigableSubject } from "./registryGraph.ts";
 import { suggestSaveAsName } from "./saveName.ts";
 import { rowLabel } from "./displayName.ts";
+import {
+  captureForUndo, restoreFromUndo, type UndoEntry,
+} from "./undoDelete.ts";
+import {
+  forgetHandle, recallHandle, rememberHandle,
+} from "../files/handleStore.ts";
+import { renumberForScene } from "../editor/shootOps.ts";
 
 export { suggestSaveAsName };
 
@@ -35,6 +42,10 @@ const adapter: FileAdapter = new FsAccessAdapter();
 
 /** scf-core's seam, app-wide. */
 export const exec = client.exec;
+
+/** Sentinel: every category collapsed. Resolved by CategoryTree, which
+ * is the only place that knows the category names. */
+export const COLLAPSE_ALL = new Set<string>(["\u0000all"]);
 
 export type NavMode =
   "subject" | "schema" | "structure" | "queries" | "script" | "shoot";
@@ -89,6 +100,10 @@ interface AppState {
   selectEntityType: (entity: string | null) => void;
   selectSubject: (
     subject: { entity: string; id: number; name: string } | null) => void;
+  /** Which subject type the rail is listing. In the store because the
+   * main pane must not keep showing a subject of the previous type. */
+  subjectType: NavigableSubject;
+  setSubjectType: (subjectType: NavigableSubject) => void;
   openEntityRow: (entity: string, id: number | null) => Promise<void>;
   closeRow: () => void;
 
@@ -96,6 +111,15 @@ interface AppState {
   undoDraft: () => void;
   saveDraft: () => Promise<number | null>;
   deleteRow: (entity: string, id: number) => Promise<void>;
+  /** Collapsed schema categories. In the store, not the component:
+   * switching tabs unmounts the tree, and losing the expansion every
+   * time is worse than the wall of categories it was hiding. */
+  schemaCollapsed: Set<string>;
+  setSchemaCollapsed: (next: Set<string>) => void;
+  /** The last delete, restorable until dismissed or superseded. */
+  undo: UndoEntry | null;
+  undoDelete: () => Promise<void>;
+  dismissUndo: () => void;
 }
 
 async function bootDatabase(
@@ -143,6 +167,9 @@ if (import.meta.hot) {
 
 export const useStore = create<AppState>((set, get) => ({
   phase: "start",
+  schemaCollapsed: new Set<string>(),
+  subjectType: "character",
+  undo: null,
   lastSession: localStorage.getItem("scf:last-session"),
   errorMessage: null,
   projectName: null,
@@ -175,8 +202,10 @@ export const useStore = create<AppState>((set, get) => ({
           "in the storage layer)");
       }
       localStorage.setItem("scf:last-session", "Hollow Creek (demo)");
+      localStorage.setItem("scf:auto-resume", "1");
       const rev = get().revision + 1;
-      set({ phase: "open", projectName: "Hollow Creek (demo)",
+      set({ schemaCollapsed: COLLAPSE_ALL,
+            phase: "open", projectName: "Hollow Creek (demo)",
             fileToken: null, lastSession: "Hollow Creek (demo)",
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
@@ -193,10 +222,15 @@ export const useStore = create<AppState>((set, get) => ({
       if (!(await client.exists(WORKING_PATH))) {
         throw new Error("no previous session found in browser storage");
       }
+      localStorage.setItem("scf:auto-resume", "1");
       await bootDatabase(null);
       const name = localStorage.getItem("scf:last-session") ?? "resumed";
+      // The handle outlives the page: Save keeps targeting the same
+      // file, and Chromium re-asks for write permission once.
+      const fileToken = await recallHandle();
       const rev = get().revision + 1;
-      set({ phase: "open", projectName: `${name}`, fileToken: null,
+      set({ schemaCollapsed: COLLAPSE_ALL,
+            phase: "open", projectName: `${name}`, fileToken,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
@@ -210,9 +244,12 @@ export const useStore = create<AppState>((set, get) => ({
       if (opened === null) return; // user cancelled
       set({ phase: "loading", errorMessage: null });
       await bootDatabase(opened.bytes);
+      localStorage.setItem("scf:auto-resume", "1");
       localStorage.setItem("scf:last-session", opened.name);
+      await rememberHandle(opened.token);
       const rev = get().revision + 1;
-      set({ phase: "open", projectName: opened.name,
+      set({ schemaCollapsed: COLLAPSE_ALL,
+            phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
@@ -229,7 +266,8 @@ export const useStore = create<AppState>((set, get) => ({
       await initDatabase(client.exec, registry,
                          { editorVersion: EDITOR_VERSION });
       const rev = get().revision + 1;
-      set({ phase: "open", projectName: "Untitled.scf", fileToken: null,
+      set({ schemaCollapsed: COLLAPSE_ALL,
+            phase: "open", projectName: "Untitled.scf", fileToken: null,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
@@ -241,6 +279,10 @@ export const useStore = create<AppState>((set, get) => ({
    * still works — but only the .scf file is durable. */
   closeProject: async () => {
     await client.close();
+    // Closing is deliberate: forget the file so the next boot offers the
+    // start screen rather than silently reopening what was closed.
+    await forgetHandle();
+    localStorage.setItem("scf:auto-resume", "0");
     set({ phase: "start", fileToken: null, errorMessage: null });
   },
 
@@ -264,6 +306,7 @@ export const useStore = create<AppState>((set, get) => ({
           bytes, suggestSaveAsName(projectName));
         if (saved !== null) {
           localStorage.setItem("scf:last-session", saved.name);
+          await rememberHandle(saved.token);
           set({ projectName: saved.name, fileToken: saved.token,
                 lastSession: saved.name, lastSavedRevision: at });
         }
@@ -292,6 +335,7 @@ export const useStore = create<AppState>((set, get) => ({
         bytes, suggestSaveAsName(projectName, true));
       if (saved !== null) {
         localStorage.setItem("scf:last-session", saved.name);
+        await rememberHandle(saved.token);
         set({ projectName: saved.name, fileToken: saved.token,
               lastSession: saved.name, lastSavedRevision: at });
       }
@@ -303,11 +347,17 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  setNavMode: (navMode) => set({ navMode }),
+  // A tab is a destination: arriving at one closes whatever record was
+  // covering it, rather than showing the tab's rail beside someone
+  // else's form.
+  setNavMode: (navMode) => set({ navMode, openRow: null, draft: null }),
+  setSchemaCollapsed: (schemaCollapsed) => set({ schemaCollapsed }),
   selectQuery: (selectedQuery) =>
     set({ selectedQuery, openRow: null, draft: null }),
   selectEntityType: (selectedEntityType) =>
     set({ selectedEntityType, openRow: null, draft: null }),
+  setSubjectType: (subjectType) =>
+    set({ subjectType, selectedSubject: null, openRow: null, draft: null }),
   selectSubject: (selectedSubject) =>
     set({ selectedSubject, openRow: null, draft: null }),
 
@@ -385,6 +435,19 @@ export const useStore = create<AppState>((set, get) => ({
       return newId;
     }
 
+    // A shot moved to another scene is renumbered before the write, so
+    // the form does not save "5A" onto scene 66. The scene renumbering
+    // case is the opposite and leaves the number alone — see
+    // renumberForScene.
+    if (draft.entity === "shot") {
+      const target = draft.values["scene_id"];
+      if (target !== null && target !== undefined && target !== "") {
+        const renumbered = await renumberForScene(
+          exec, draft.id, Number(target));
+        if (renumbered !== null) draft.values["shot_number"] = renumbered;
+      }
+    }
+
     // Whole-row UPDATE, same as v1; updated_at written faithfully
     // (collaboration prep, decision 10).
     const sets = fieldNames.map((f) => `${q(f)} = ?`).join(", ");
@@ -405,7 +468,15 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   deleteRow: async (entity, id) => {
+    let undo: UndoEntry | null = null;
     try {
+      const existing = await exec(
+        `SELECT * FROM ${q(entity)} WHERE id = ?`, [id]);
+      undo = await captureForUndo(
+        exec, registry, entity, id,
+        existing[0] === undefined
+          ? entity : rowLabel(registry.entities.get(entity), entity,
+                              existing[0]));
       await exec(`DELETE FROM ${q(entity)} WHERE id = ?`, [id]);
     } catch (e) {
       set({ errorMessage: `Delete failed: ${
@@ -415,10 +486,25 @@ export const useStore = create<AppState>((set, get) => ({
     const { openRow } = get();
     set({
       revision: get().revision + 1,
+      undo,
       ...(openRow?.entity === entity && openRow.id === id
         ? { openRow: null, draft: null } : {}),
     });
   },
+
+  undoDelete: async () => {
+    const undo = get().undo;
+    if (undo === null) return;
+    try {
+      await restoreFromUndo(exec, undo);
+      set({ revision: get().revision + 1, undo: null });
+    } catch (e) {
+      set({ errorMessage: `Undo failed: ${
+        e instanceof Error ? e.message : String(e)}` });
+    }
+  },
+
+  dismissUndo: () => set({ undo: null }),
 }));
 
 /**
