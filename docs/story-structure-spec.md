@@ -1,7 +1,11 @@
 # Story structure and the shoot surface — spec
 
-Status: proposed, not built. Decisions marked **[open]** need an answer
-before the phase they sit in.
+Status: phases 1-4 built (rounds 20, 21, 22). Decisions marked
+**[open]** below were resolved as follows: section text is read before
+depth; act and sequence numbers renumber from the boundaries at every
+commit; the structure panel is a top-level tab; the shoot outline shows
+story beats only; `scene_sequence` rows no boundary explains are counted
+and reported, never deleted.
 
 ## 1. The problem
 
@@ -218,6 +222,8 @@ New readiness findings, none of them blocking:
   naming)
 
 ## 9. Phasing
+
+All four phases are implemented. Original plan:
 
 1. **Schema + derivation.** The three fields, `structure.ts` deriving
    membership, unit tests against the fixture. Nothing user-visible.

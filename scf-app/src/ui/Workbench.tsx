@@ -9,6 +9,7 @@ import { SearchBox } from "./SearchBox.tsx";
 import { QueryIndex, QueryRunner } from "./queries/QueryRunner.tsx";
 import { ScriptView } from "./ScriptView.tsx";
 import { StructureView } from "./StructureView.tsx";
+import { ShootView } from "./ShootView.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
 import { Component, useEffect, useRef, useState, type ReactNode }
   from "react";
@@ -94,6 +95,8 @@ export function Workbench(): JSX.Element {
       ? <ScriptView />
     : navMode === "structure"
       ? <StructureView />
+    : navMode === "shoot"
+      ? <ShootView />
     : navMode === "queries"
       ? <QueryRunner />
       : navMode === "subject" && selectedSubject !== null
@@ -154,6 +157,11 @@ export function Workbench(): JSX.Element {
                     onClick={() => setNavMode("structure")}>
               Structure
             </button>
+            <button role="tab" aria-selected={navMode === "shoot"}
+                    className={navMode === "shoot" ? "active" : ""}
+                    onClick={() => setNavMode("shoot")}>
+              Shoot
+            </button>
             <button role="tab" aria-selected={navMode === "queries"}
                     className={navMode === "queries" ? "active" : ""}
                     onClick={() => setNavMode("queries")}>
@@ -168,7 +176,7 @@ export function Workbench(): JSX.Element {
           {navMode === "subject" ? <SubjectNav />
             : navMode === "schema" ? <CategoryTree />
             : navMode === "script" ? <SceneRail />
-            : navMode === "structure" ? null
+            : navMode === "structure" || navMode === "shoot" ? null
             : <QueryIndex />}
         </nav>
         <main className="main-panel">{main}</main>

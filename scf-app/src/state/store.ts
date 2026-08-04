@@ -37,7 +37,7 @@ const adapter: FileAdapter = new FsAccessAdapter();
 export const exec = client.exec;
 
 export type NavMode =
-  "subject" | "schema" | "structure" | "queries" | "script";
+  "subject" | "schema" | "structure" | "queries" | "script" | "shoot";
 
 export interface OpenRow {
   entity: string;
