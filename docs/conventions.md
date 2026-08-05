@@ -130,9 +130,21 @@ cross-cut sequence interleaved with another cannot be expressed. If that
 requirement arrives, enumerated membership is the only model that
 supports it, and this one must be replaced rather than patched.
 
-Acts and sequences are **independent**. A scene can be in an act with no
-sequence — the whole point of the change, since membership used to be
-reachable only through `scene_sequence`.
+Acts and sequences are **independent spans, not a hierarchy**. A scene
+can be in an act with no sequence — the whole point of the change, since
+membership used to be reachable only through `scene_sequence` — and a
+sequence may begin in one act and end in another. That is legal and
+deliberately unrestricted: a montage or a cross-cut can bridge an act
+break, and forbidding it would buy tidiness at the cost of a real
+structure.
+
+The consequence is for renderers, not for the data. Anything drawing
+acts and sequences as nested must group an act's scenes into **runs** of
+sequence (`actOutline()`), so a crossing sequence appears in each act as
+the part of it that belongs there. Grouping instead by "sequences whose
+start falls in this act" draws the crossing sequence's later scenes
+under the wrong act and again under the right one — which is exactly
+what both outlines did until it was caught.
 
 `scene_sequence` rows are still materialized at commit so existing
 queries keep working. The boundary is the truth; those rows are its
@@ -153,8 +165,27 @@ Pinned by: `scf-core/test/structure.test.ts`.
 open. This is what survives export, re-import, and being read by another
 tool. Row ids are local to a file and mean nothing outside it.
 
-**Junction tables carry no identity of their own** — a stated gap. A
-junction's identity is its pair of references.
+**Junctions carry row identity too.** `uuid` is a framework column on
+all 99 entities, junctions included — an earlier note in this document
+claiming otherwise was wrong. What a uuid answers is the *lineage*
+question: is this the same row as before, across export, re-import and
+versioning.
+
+It does not answer the other one. A uuid is minted per file, so two
+people describing the same production mint different ones for the same
+link. Across files a junction is identified by its **natural key** — the
+rows it joins, plus the polymorphic target where it has one, plus
+`domain` where present, since a motif may legitimately appear in one
+scene both visually and sonically. `junctionKeyFields()` in
+`scf-core/src/junctions.ts` states that key for all thirteen link
+entities so that merging, de-duplicating and validating agree on it.
+
+Nothing in the schema stops two rows sharing a natural key. The commit
+path de-duplicates in code; anything added by hand is unchecked. Two
+rows for one link split its authored content — a role, a usage note — and
+a reader taking the first finds half of it. Reported by
+`duplicateJunctions()`, and reported more loudly when the duplicates
+disagree, since identical duplicates are only clutter.
 
 **Relationship pairs** are the case where that bites. `character_
 relationship` has no constraint on its two character columns and no
@@ -175,7 +206,34 @@ Duplicates are findings, not constraints. A unique index could not
 decide whether a reversed directed pair is a duplicate, and several
 relationships between the same two people are legitimate.
 
-Pinned by: `scf-core/test/relationships.test.ts`.
+Pinned by: `scf-core/test/relationships.test.ts`,
+`scf-core/test/junctions.test.ts`.
+
+### Soft-retiring: links inherit their endpoints' lifecycle
+
+Two of the thirteen link entities carry `lifecycle_status` —
+`actor_character_role` and `thematic_connection` — and that asymmetry is
+deliberate rather than an omission.
+
+A link is a statement that a connection exists. If the connection stops
+existing, the row is wrong, not retired: delete it. And when an endpoint
+goes, the link goes with it — mark a scene or a prop `cut` and every
+link to it is cut by implication, without eleven more columns saying so
+again. Adding the field everywhere would put a value on every junction
+that nothing sets and nothing reads.
+
+The two exceptions are the links where the row is itself a **claim**
+rather than a connection. An actor was really attached to a part before
+being recast, and dailies exist. A reading of a theme was really held
+before being revised. Those are worth keeping and marking, not deleting.
+
+Test for whether a future link should carry it: *would you want to know
+this used to be true?* If yes it is a claim; if the answer is only "it
+is not true now", it is a connection, and deleting it loses nothing.
+
+Note that `lifecycle_status` is **authored but unread**: no resolver in
+`scf-core` filters on it. A consumer that wants to exclude cut rows must
+do so itself. See §9.
 
 ---
 
@@ -259,14 +317,38 @@ Rebuild scripts live in `fixtures/build/`.
 
 ## 9. Open questions
 
-- **Junction identity.** Junctions have no uuid of their own. Fine while
-  a junction is a pure pair; not fine once one carries authored content
-  worth tracking across files.
-- **Sequences crossing act boundaries** are currently legal and
-  unreported. Decide whether that is a rule or a freedom.
-- **Locking.** Everything is live and recomputed. Production locks
-  scene and shot numbering at some point; the single place to gate is
-  the renumber block in `commitStructure`.
-- **A real spec.** When the format stabilizes: registry, this document,
-  the fixture, and the canonical query expectations as data rather than
-  as test code, so a third consumer costs an afternoon instead of a port.
+Each is marked **schema** (the format has to change), **editor** (only
+this application), or **both**.
+
+- **Filtering on `lifecycle_status`.** *(both)* Every non-link entity
+  carries it, nothing in `scf-core` reads it, and the fixture has no
+  non-active row — so "cut" is currently decorative. Deciding it means
+  answering whether resolvers should exclude cut rows by default, which
+  would change the answer to every canonical query, and whether a
+  consumer can still ask for history. Until then, treat a `cut` row as
+  present unless you filter it yourself.
+- **Locking.** *(editor)* Everything is live and recomputed: scene and
+  sequence numbers renumber from the boundaries at every commit. A
+  production locks its numbering at some point, after which the numbers
+  are paperwork rather than derivations. The single place to gate is the
+  renumber block in `commitStructure`. Nothing in the format needs to
+  change — a locked project is one the editor stops renumbering.
+- **Merging two files.** *(editor, later)* The live use for junction
+  natural keys (§5), and the point at which uuids stop being enough.
+  Matching links requires resolving their endpoints first, which is a
+  merge algorithm. It belongs with multi-user work, not before.
+- **A real spec.** *(both)* When the format stabilizes: registry, this
+  document, the fixture, and the canonical query expectations as data
+  rather than as test code, so a third consumer costs an afternoon
+  instead of a port.
+
+### Resolved
+
+- **Junction identity** *(schema)* — junctions already carry `uuid`;
+  what they lacked was a stated natural key, now in
+  `scf-core/src/junctions.ts`. §5.
+- **Soft-retiring a link** *(schema)* — deliberate: links inherit their
+  endpoints' lifecycle, except the two that are claims rather than
+  connections. §5.
+- **Sequences crossing act boundaries** *(editor)* — legal and
+  unrestricted. The renderers were the thing that had to change. §4.

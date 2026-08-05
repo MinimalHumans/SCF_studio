@@ -167,6 +167,59 @@ export function deriveStructure(scenes: Row[], acts: Row[],
   };
 }
 
+export interface OutlineGroup {
+  /** The sequence covering this run, or null for scenes in none. */
+  sequence: Span | null;
+  sceneIds: number[];
+  /** The sequence began before this act. */
+  continuesFrom: boolean;
+  /** It carries on past this act. */
+  continuesInto: boolean;
+}
+
+/**
+ * An act's scenes, grouped into the runs of sequence that cover them.
+ *
+ * Acts and sequences are INDEPENDENT spans, not a hierarchy: a sequence
+ * may begin in one act and end in another, which is legal and
+ * deliberately unrestricted. Rendering them as nested therefore needs
+ * care — a naive "sequences whose start falls in this act" grouping
+ * draws a crossing sequence's later scenes under the wrong act AND
+ * again under the right one, which is how the demo came to show scene
+ * 19 twice.
+ *
+ * Grouping by run instead means a crossing sequence appears in both
+ * acts, as the part of it that belongs there, flagged so a renderer can
+ * say so.
+ */
+export function actOutline(structure: Structure, act: Span): OutlineGroup[] {
+  const groups: OutlineGroup[] = [];
+  for (const sceneId of act.sceneIds) {
+    const seqId = structure.sequenceOfScene.get(sceneId);
+    const sequence = seqId === undefined
+      ? null : structure.sequences.find((s) => s.id === seqId) ?? null;
+    const last = groups[groups.length - 1];
+    if (last !== undefined && (last.sequence?.id ?? null) ===
+        (sequence?.id ?? null)) {
+      last.sceneIds.push(sceneId);
+      continue;
+    }
+    groups.push({
+      sequence, sceneIds: [sceneId],
+      continuesFrom: sequence !== null && sequence.sceneIds[0] !== sceneId,
+      continuesInto: false,
+    });
+  }
+  for (const group of groups) {
+    const seq = group.sequence;
+    if (seq === null) continue;
+    group.continuesInto =
+      seq.sceneIds[seq.sceneIds.length - 1] !==
+      group.sceneIds[group.sceneIds.length - 1];
+  }
+  return groups;
+}
+
 /** The act a scene belongs to, or null before the first boundary. */
 export function actOf(structure: Structure, sceneId: number): Span | null {
   const id = structure.actOfScene.get(sceneId);

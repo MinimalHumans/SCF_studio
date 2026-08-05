@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
-import { deriveStructure } from "@scf-core/structure.ts";
+import { actOutline, deriveStructure } from "@scf-core/structure.ts";
 import { shotCode } from "@scf-core/shots.ts";
 import {
   addBeat, addShot, moveShot, removeBeat, removeShot, SCENE_SCRIPT_SQL,
@@ -218,10 +218,6 @@ export function ShootView(): JSX.Element {
       </div>
 
       {structure.acts.map((act) => {
-        const inside = structure.sequences.filter((s) =>
-          structure.actOfScene.get(s.startSceneId) === act.id);
-        const covered = new Set(inside.flatMap((s) =>
-          s.sceneIds.filter((id) => act.sceneIds.includes(id))));
         act.sceneIds.forEach((id) => placed.add(id));
         return (
           <div key={act.id} className="shoot-act">
@@ -229,16 +225,31 @@ export function ShootView(): JSX.Element {
               <span className="shoot-kind">act</span>
               <span className="shoot-label">{act.name}</span>
             </div>
-            {inside.map((seq) => (
-              <div key={seq.id} className="shoot-seq">
-                <div className="shoot-row shoot-row-seq">
-                  <span className="shoot-kind">sequence</span>
-                  <span className="shoot-label">{seq.name}</span>
-                </div>
-                {seq.sceneIds.map(sceneNode)}
-              </div>
+            {/* Runs, not "sequences starting here": a sequence may cross
+                an act boundary, and grouping by start drew its later
+                scenes under the wrong act as well as the right one. */}
+            {actOutline(structure, act).map((group, i) => (
+              group.sequence === null
+                ? <div key={`bare:${String(i)}`}>
+                    {group.sceneIds.map(sceneNode)}
+                  </div>
+                : <div key={group.sequence.id} className="shoot-seq">
+                    <div className="shoot-row shoot-row-seq">
+                      <span className="shoot-kind">sequence</span>
+                      <span className="shoot-label">
+                        {group.sequence.name}
+                      </span>
+                      {(group.continuesFrom || group.continuesInto) && (
+                        <span className="shoot-count">
+                          {group.continuesFrom
+                            ? "continued from the previous act"
+                            : "continues into the next act"}
+                        </span>
+                      )}
+                    </div>
+                    {group.sceneIds.map(sceneNode)}
+                  </div>
             ))}
-            {act.sceneIds.filter((id) => !covered.has(id)).map(sceneNode)}
           </div>
         );
       })}

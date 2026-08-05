@@ -201,6 +201,14 @@ for entity_type, entity_id, nature, subtlety, perception in [
         ("motif", DOORS, "represents", "subtle",
          "reward for careful viewing"),
 ]:
+    # A link's natural key is the rows it joins, and the fixture already
+    # ships four of these — adding a second row for the same pair splits
+    # the connection's authored content between them. (Found by
+    # duplicateJunctions after this script had already shipped once.)
+    if db.execute("SELECT id FROM thematic_connection WHERE theme_id=? "
+                  "AND entity_type=? AND entity_id=?",
+                  (THEME, entity_type, entity_id)).fetchone() is not None:
+        continue
     ins("thematic_connection", theme_id=THEME, entity_type=entity_type,
         entity_id=entity_id, nature_of_connection=nature,
         subtlety_level=subtlety, intended_perception=perception,

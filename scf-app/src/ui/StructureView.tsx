@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { Row } from "@scf-core/db.ts";
 import {
-  deriveStructure, structureFindings, type Span, type Structure,
+  actOutline, deriveStructure, structureFindings, type Span,
+  type Structure,
 } from "@scf-core/structure.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import { exec, useStore } from "../state/store.ts";
@@ -172,53 +173,60 @@ function ActBlock({ act, structure, scenes, sceneById, onOpen, onMove }: {
   onMove: (table: "act" | "sequence", id: number,
            sceneId: number | null) => void;
 }): JSX.Element {
-  const inside = structure.sequences.filter((s) =>
-    structure.actOfScene.get(s.startSceneId) === act.id);
-  const covered = new Set(inside.flatMap((s) =>
-    s.sceneIds.filter((id) => act.sceneIds.includes(id))));
-  const bare = act.sceneIds.filter((id) => !covered.has(id));
+  // Grouped by run: a sequence may cross an act boundary, so it shows
+  // in each act as the part of it that belongs there.
+  const groups = actOutline(structure, act);
 
   return (
     <div className="structure-act">
       <SpanRow kind="act" span={act} scenes={scenes}
                onOpen={() => onOpen("act", act.id)}
                onMove={(sceneId) => onMove("act", act.id, sceneId)} />
-      {inside.map((seq) => (
-        <div key={seq.id} className="structure-seq">
-          <SpanRow kind="sequence" span={seq} scenes={scenes}
-                   onOpen={() => onOpen("sequence", seq.id)}
-                   onMove={(sceneId) =>
-                     onMove("sequence", seq.id, sceneId)} />
-          <ol className="structure-scenes">
-            {seq.sceneIds.map((id) => (
-              <li key={id}>{sceneLabel(sceneById.get(id))}</li>
-            ))}
-          </ol>
-        </div>
+      {groups.map((group, i) => (
+        group.sequence === null
+          ? <ol key={`bare:${String(i)}`} className="structure-scenes">
+              {group.sceneIds.map((id) => (
+                <li key={id}>{sceneLabel(sceneById.get(id))}</li>
+              ))}
+            </ol>
+          : <div key={group.sequence.id} className="structure-seq">
+              <SpanRow kind="sequence" span={group.sequence} scenes={scenes}
+                       partial={group.continuesFrom ? "continued"
+                         : group.continuesInto ? "continues" : null}
+                       onOpen={() => onOpen("sequence", group.sequence!.id)}
+                       onMove={(sceneId) =>
+                         onMove("sequence", group.sequence!.id, sceneId)} />
+              <ol className="structure-scenes">
+                {group.sceneIds.map((id) => (
+                  <li key={id}>{sceneLabel(sceneById.get(id))}</li>
+                ))}
+              </ol>
+            </div>
       ))}
-      {bare.length > 0 && (
-        <ol className="structure-scenes">
-          {bare.map((id) => (
-            <li key={id}>{sceneLabel(sceneById.get(id))}</li>
-          ))}
-        </ol>
-      )}
     </div>
   );
 }
 
-function SpanRow({ kind, span, scenes, onOpen, onMove }: {
+function SpanRow({ kind, span, scenes, onOpen, onMove, partial = null }: {
   kind: "act" | "sequence";
   span: Span;
   scenes: Row[];
   onOpen: () => void;
   onMove: (sceneId: number | null) => void;
+  partial?: "continued" | "continues" | null;
 }): JSX.Element {
   const count = span.sceneIds.length;
   return (
     <div className={`structure-span structure-span-${kind}`}>
       <span className="structure-kind">{kind}</span>
       <button className="row-link" onClick={onOpen}>{span.name}</button>
+      {partial !== null && (
+        <span className="structure-kind"
+              title={"Acts and sequences are independent spans; this one " +
+                     "crosses an act boundary"}>
+          {partial === "continued" ? "…cont" : "cont…"}
+        </span>
+      )}
       <span className="structure-extent">
         {count === 0
           ? "empty — another span starts on the same scene"

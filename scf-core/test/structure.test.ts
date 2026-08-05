@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import type { Row } from "../src/db.ts";
 import {
-  actOf, deriveStructure, scenePositions, sequenceOf, structureFindings,
+  actOf, actOutline, deriveStructure, scenePositions, sequenceOf,
+  structureFindings,
 } from "../src/structure.ts";
 
 /** Ten numbered scenes, ids offset from numbers to catch id/number mixups. */
@@ -165,5 +166,42 @@ describe("findings", () => {
       .filter((f) => f.code === "scenes-before-first-act");
     expect(found).toHaveLength(1);
     expect(found[0]!.level).toBe("info");
+  });
+});
+
+describe("acts and sequences are independent spans, not a hierarchy", () => {
+  // Act I is scenes 0-4, Act II is 5-9. The sequence starts inside Act I
+  // and runs into Act II — legal, and deliberately unrestricted.
+  const structure = deriveStructure(scenes,
+    [act(1, "Act I", 100), act(2, "Act II", 105)],
+    [seq(10, "Crossing", 103)]);
+  const groups = actOutline(structure, structure.acts[0]!);
+
+  test("an act's scenes are grouped into runs of sequence", () => {
+    expect(groups.map((g) => [g.sequence?.name ?? null, g.sceneIds]))
+      .toEqual([[null, [100, 101, 102]], ["Crossing", [103, 104]]]);
+  });
+
+  test("a crossing sequence appears in both acts, not once in the "
+       + "wrong one", () => {
+    // The bug this replaces drew 105-109 under Act I as well as Act II.
+    const second = actOutline(structure, structure.acts[1]!);
+    expect(second.map((g) => [g.sequence?.name ?? null, g.sceneIds]))
+      .toEqual([["Crossing", [105, 106, 107, 108, 109]]]);
+  });
+
+  test("each part says which way it runs on", () => {
+    expect(groups[1]!.continuesFrom).toBe(false);
+    expect(groups[1]!.continuesInto).toBe(true);
+    const second = actOutline(structure, structure.acts[1]!)[0]!;
+    expect(second.continuesFrom).toBe(true);
+    expect(second.continuesInto).toBe(false);
+  });
+
+  test("every scene in an act appears exactly once", () => {
+    for (const a of structure.acts) {
+      const seen = actOutline(structure, a).flatMap((g) => g.sceneIds);
+      expect(seen).toEqual(a.sceneIds);
+    }
   });
 });
