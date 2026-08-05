@@ -17,7 +17,7 @@ import type { SqlValue } from "../src/db.ts";
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 export const FIXTURE_PATH = process.env["SCF_FIXTURE"] ??
-  join(HERE, "..", "..", "scf-editor", "fixtures", "hollow_creek.scf");
+  join(HERE, "..", "..", "fixtures", "hollow_creek.scf");
 
 export const registry: Registry =
   loadRegistry(registryJson as unknown as RegistryJson);

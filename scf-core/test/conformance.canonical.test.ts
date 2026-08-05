@@ -1,11 +1,13 @@
 /**
- * conformance.canonical.test.ts — TypeScript port of
- * scf-editor/scripts/test_canonical_queries.py, assertion for assertion,
- * run against the same checked-in Hollow Creek fixture.
+ * conformance.canonical.test.ts — the executable statement of SCF's
+ * resolution semantics, run against the checked-in Hollow Creek fixture.
  *
- * This suite passing is the correctness gate for the semantics port
- * (design doc: "Conformance parity is the correctness gate"). CI runs both
- * implementations' suites; drift fails the build.
+ * Began as an assertion-for-assertion port of the v1 Python suite, which
+ * was the correctness gate while two implementations existed. With v1
+ * retired this suite IS the gate: every assertion here encodes a rule
+ * from docs/conventions.md, and the fixture is built to exercise it.
+ * Changing an assertion means changing the format — do it in the
+ * conventions document first.
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -222,7 +224,7 @@ describe("G4: location variant selection", () => {
 describe("pattern 3 (latest-wins) state tables — Phase C", () => {
   test("relationship stages at sc9/sc12/sc24", async () => {
     const relRow = await fx.ctx.exec(
-      "SELECT id FROM character_relationship");
+      "SELECT id FROM character_relationship ORDER BY id");
     const relId = relRow[0]!["id"] as number;
     const rs12 = await relationshipStateAt(fx.ctx, relId, sc[12]!, order);
     expect(rs12?.["stage_label"]).toBe("post-accident thaw");

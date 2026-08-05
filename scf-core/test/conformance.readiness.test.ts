@@ -1,6 +1,6 @@
 /**
  * conformance.readiness.test.ts — TypeScript port of
- * scf-editor/scripts/test_readiness.py against the Hollow Creek fixture.
+ * the readiness rules against the Hollow Creek fixture.
  *
  * The fixture plants gaps on purpose (Marcus's missing voice bundle and
  * thin vocal profile); these tests assert the readiness layer catches

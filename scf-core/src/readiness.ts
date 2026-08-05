@@ -1,5 +1,5 @@
 /**
- * readiness.ts — Q14: readiness reports. Port of scf-editor/readiness.py.
+ * readiness.ts — Q14: readiness reports. Q14 semantics; see docs/conventions.md.
  *
  * Given a target canonical query and a position/subject scope, walk the
  * query's path (queryPaths.ts) using resolution.ts and report what's

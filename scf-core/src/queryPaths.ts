@@ -1,6 +1,6 @@
 /**
  * queryPaths.ts — machine-readable canonical query paths (G6, part 2).
- * Port of scf-editor/query_paths.py.
+ * Canonical query paths; see docs/conventions.md.
  *
  * Each walkable query declares its parameters and the entities on its
  * resolution path with a requirement level. readiness.ts walks these to

@@ -13,7 +13,7 @@ import type { ScfContext } from "@scf-core/resolution.ts";
 import { QUERIES, type ParamValues, type Q12Payload } from "./runners.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const FIXTURE = join(HERE, "../../../../scf-editor/fixtures/hollow_creek.scf");
+const FIXTURE = join(HERE, "../../../../fixtures/hollow_creek.scf");
 const REGISTRY = join(HERE, "../../../../scf-core/registry/registry.json");
 
 let db: NodeDatabase;
@@ -178,7 +178,17 @@ describe("composed query runners against the fixture", () => {
     const p = await spec.run(ctx, extra["Q10"]!) as Q10Payload;
     expect(p.connections.length).toBeGreaterThan(0);
     expect(p.spine.some((s) => s.count > 0)).toBe(true);
-    expect(p.spine.some((s) => s.count === 0)).toBe(true);
+
+    // The gap is the point of Q10, but a theme carried by both leads is
+    // lit in every scene — true of the demo's spine theme, and it
+    // demonstrates nothing. A narrowly carried theme is where the
+    // accounting earns its keep.
+    const narrow = (await ctx.exec(
+      "SELECT id FROM theme WHERE name LIKE '%water%' ORDER BY id"
+    ))[0]!["id"] as number;
+    const q = await spec.run(ctx, { theme_id: narrow }) as Q10Payload;
+    expect(q.spine.some((s) => s.count > 0)).toBe(true);
+    expect(q.spine.some((s) => s.count === 0)).toBe(true);
   });
 
   test("Q11 audience state matches the conformance answers", async () => {

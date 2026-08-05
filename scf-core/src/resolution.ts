@@ -1,8 +1,10 @@
 /**
- * resolution.ts — SCF resolution semantics, executable. Mechanical port of
- * scf-editor/resolution.py; the Python module remains the reference until
- * conformance parity, then this implementation carries the contract forward
- * (the conformance fixture and suites outlive both implementations).
+ * resolution.ts — SCF resolution semantics, executable.
+ *
+ * Originally a mechanical port of the retired v1 Python editor, held to
+ * conformance parity. That implementation is gone; these rules are now
+ * stated in docs/conventions.md and pinned by the conformance suites
+ * against the Hollow Creek fixture, which outlive any one consumer.
  *
  * Implements the walks the canonical queries are built from:
  *   - the DESCRIPTION cascade: profile -> states-in-force -> beats, per

@@ -5,7 +5,7 @@
  * "The `.scf` format is sacred and survives unchanged — same files, same
  * SQL, same tables." A fresh database created by scf-core must have, for
  * every registry entity, exactly the column set the fixture has, plus the
- * uuid unique index and the 2.3 schema_version stamp.
+ * uuid unique index and the schema_version stamp.
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -50,7 +50,7 @@ describe("initDatabase parity with the fixture", () => {
   test("schema_version stamped identically", async () => {
     const ourMeta = await readMeta(fresh.exec);
     const theirMeta = await readMeta(fixture.exec);
-    expect(ourMeta["schema_version"]).toBe("2.3");
+    expect(ourMeta["schema_version"]).toBe("2.4");
     expect(ourMeta["schema_version"]).toBe(theirMeta["schema_version"]);
   });
 

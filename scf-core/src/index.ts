@@ -3,7 +3,7 @@
  *
  * Format + executable semantics + conformance target, UI-free:
  *   - registry:   entity/field types loaded from registry.json
- *                 (source of truth: scf-editor/entity_registry.py)
+ *                 (source of truth: schema/entity_registry.py)
  *   - db:         the SqlExec seam, initDatabase, uuid identity (2.3)
  *   - resolution: description / direction / media cascades, pattern-3
  *                 latest-wins, G4 variant selection
@@ -20,3 +20,4 @@ export * from "./queryPaths.ts";
 export * from "./readiness.ts";
 export * from "./structure.ts";
 export * from "./shots.ts";
+export * from "./relationships.ts";

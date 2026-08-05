@@ -1,7 +1,7 @@
 /**
  * registry.ts — the SCF entity registry, as consumed by scf-core.
  *
- * The registry's source of truth is Python (scf-editor/entity_registry.py);
+ * The registry's source of truth is Python (schema/entity_registry.py);
  * registry.json is a checked-in build artifact emitted by
  * scripts/generate_registry_json.py. This module defines the types and the
  * lookup helpers the semantics layer needs. Nothing here hand-defines an

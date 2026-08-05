@@ -13,7 +13,7 @@ settles** (design decision 6).
 
 | Module | Contents |
 |---|---|
-| `registry/registry.json` | **Generated artifact — never hand-edit.** Emitted from `scf-editor/entity_registry.py` (the source of truth) by `scf-editor/scripts/generate_registry_json.py`. All 99 entities, every field, the full Phase A ontology. |
+| `registry/registry.json` | **Generated artifact — never hand-edit.** Emitted from `schema/entity_registry.py` (the source of truth) by `schema/generate_registry_json.py`. All 99 entities, every field, the full Phase A ontology. |
 | `src/registry.ts` | Types + loader + `cascadeChain` (the `refines` walk). |
 | `src/db.ts` | The `SqlExec` seam, `initDatabase()` (CREATE + ALTER-add-columns + uuid identity + `_scf_meta` stamping, same as Python), `newUuid()`. |
 | `src/resolution.ts` | Description / direction / media cascades, pattern-3 latest-wins, G4 variant selection. Port of `resolution.py`. |
@@ -49,12 +49,12 @@ npm run conformance   # the two parity suites only
   matches the fixture's column sets, uuid indexes, and 2.3 stamp
 
 All run against the shared checked-in fixture
-`scf-editor/fixtures/hollow_creek.scf` (override with `SCF_FIXTURE=`).
+`fixtures/hollow_creek.scf` (override with `SCF_FIXTURE=`).
 **CI must run both implementations' suites; drift fails the build.** The
 registry side of that contract:
 
 ```
-python scf-editor/scripts/generate_registry_json.py --check
+python schema/generate_registry_json.py --check
 ```
 
 ## Parser (Part 2) — all three stages

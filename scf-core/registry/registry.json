@@ -1,6 +1,6 @@
 {
-  "$comment": "GENERATED FILE — do not hand-edit. Source of truth: scf-editor/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.3",
+  "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
+  "schemaVersion": "2.4",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -3632,6 +3632,21 @@
             "authority",
             "other"
           ]
+        },
+        {
+          "name": "directionality",
+          "label": "Directionality",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": "mutual",
+          "options": [
+            "mutual",
+            "a_to_b"
+          ],
+          "helpText": "Whether the order of the two characters carries meaning. 'mutual' — siblings, colleagues — reads the same either way, so the same pair entered twice is a duplicate. 'a_to_b' is directed and reads A -> B (A is B's mentor), so the reverse pair is a different fact, not a duplicate. Tooling cannot tell these apart without being told."
         },
         {
           "name": "specific_relationship",
