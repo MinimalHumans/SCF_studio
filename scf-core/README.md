@@ -28,9 +28,9 @@ type SqlExec = (sql: string, params?: SqlValue[]) => Promise<Row[]>;
 ```
 
 Everything in scf-core speaks SQLite through this async seam. The browser
-app supplies a **wa-sqlite/OPFS** implementation; Node (conformance CI,
+app supplies a **sqlite-wasm/OPFS** implementation; Node (conformance CI,
 scripts, the MCP server) supplies `node:sqlite` via `scf-core/node`. Async
-was chosen because wa-sqlite's OPFS VFS is async-facing — sync drivers wrap
+was chosen because the browser's OPFS VFS is async-facing — sync drivers wrap
 for free, the reverse refactor would not. Driver errors must surface as
 rejections, never synchronous throws.
 
@@ -42,11 +42,10 @@ npm run conformance   # the two parity suites only
 ```
 
 - `test/conformance.canonical.test.ts` — every assertion from
-  `scripts/test_canonical_queries.py`
-- `test/conformance.readiness.test.ts` — every assertion from
-  `scripts/test_readiness.py`
+  the canonical query semantics (§ docs/conventions.md)
+- `test/conformance.readiness.test.ts` — the readiness rules
 - `test/initDatabase.test.ts` — schema parity: a fresh TS-created database
-  matches the fixture's column sets, uuid indexes, and 2.3 stamp
+  matches the fixture's column sets, uuid indexes, and schema stamp
 
 All run against the shared checked-in fixture
 `fixtures/hollow_creek.scf` (override with `SCF_FIXTURE=`).
@@ -70,7 +69,7 @@ python schema/generate_registry_json.py --check
 - **UI.** Nothing in this package imports React or touches the DOM.
 - **1.x migrations.** They stay in the Python editor; working files are
   disposable, the fixture is 2.x-native.
-- **The wa-sqlite adapter.** It is an implementation of `SqlExec` that
+- **The browser SQLite adapter.** It is an implementation of `SqlExec` that
   needs a browser to exist; it lands with the app shell (Part 1), not
   here. `initDatabase` and the semantics are driver-agnostic and already
   proven through the Node driver.

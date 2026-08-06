@@ -1,92 +1,91 @@
 # scf-app
 
-The SCF editor, second implementation — **Part 1: entity browser/editor**.
-React + Vite + TypeScript + Zustand, local-first, no server, Chromium-first
-(static hosting, Scriptyard model). All format knowledge comes from
-`scf-core`; the app never hand-defines an entity.
+The SCF editor: React + Vite + TypeScript + Zustand, local-first, no
+server, Chromium-first. All format knowledge comes from `scf-core`; the
+app never hand-defines an entity.
 
-```
+```sh
 npm install
 npm run dev        # http://localhost:5173 — Chromium
 npm run typecheck
+npm test
 npm run build      # static bundle in dist/
 ```
 
 `scf-core` is consumed as TypeScript source via a Vite alias
-(`@scf-core -> ../scf-core/src`) — no build step for the core package
-until it publishes. Keep the two directories siblings.
+(`@scf-core -> ../scf-core/src`), so keep the directories siblings.
+
+## Where the work happens
+
+Six tabs, in the order the work is usually done:
+
+| Tab | Surface | Owns |
+|---|---|---|
+| **Script** | `ScriptView`, `SceneRail` | The screenplay. CodeMirror 6 over a line-identity model; headings become scenes and `#` sections become acts and sequences, at commit. |
+| **Structure** | `StructureView` | Act and sequence boundaries. Three verbs only — start a span at a scene, move it, unanchor it — because membership is derived, not edited. |
+| **Shoot** | `ShootView` | Coverage: beats and shots against a read-only scene spine. The script owns structure; this owns what gets shot. |
+| **Schema** | `CategoryTree`, `EntityList` | Every entity type, with row counts. |
+| **Subjects** | `SubjectNav`, `SubjectView` | One thing and everything addressed to it. |
+| **Queries** | `ui/queries/` | The 16 canonical queries, each with view / JSON / copy-as-context. |
 
 ## Architecture
 
 ```
-main thread                          worker
-───────────                          ──────
-FsAccessAdapter (FileAdapter)        wa-sqlite (async build)
-  open/save/saveAs/sibling-dir       OriginPrivateFileSystemVFS (OPFS)
-        │  bytes                          │
-        ▼                                 ▼
-OPFS working copy (working.scf)  ◄──  SQLite database
-        ▲                                 ▲
-        │ postMessage {sql, params} → rows │
-Zustand store ── exec (scf-core SqlExec seam)
+main thread                              worker
+───────────                              ──────
+FsAccessAdapter (files/fileAdapter.ts)   @sqlite.org/sqlite-wasm
+  open / save / saveAs                     opfs-sahpool VFS
+        │  bytes                                │
+        ▼                                       ▼
+OPFS working copy  ◄────────────────────   SQLite database
+        │  postMessage {sql, params} → rows
+        ▼
+Zustand store (state/store.ts) ── exec: scf-core's SqlExec seam
         │
 React UI (registry-driven)
 ```
 
-- **Open**: picked file's bytes → OPFS working copy → worker opens it →
-  `initDatabase` (same CREATE/ALTER/uuid/stamp as Python; no 1.x
-  migrations by design). **Save**: worker closes → bytes read from OPFS →
-  written back through the `FileAdapter` → reopen. Single-writer contract.
-- **`FileAdapter`** is the desktop-wrapper insurance (decision 9): the
-  Tauri implementation later is a packaging job, not a refactor.
-- The demo project is the bundled conformance fixture
-  (`public/hollow_creek.scf`) — Hollow Creek ships as the demo throughout.
+- **Edits stream continuously into the OPFS working copy**, which is why
+  a crash or a refresh loses nothing. **Save** exports a live snapshot
+  and writes it through the `FileAdapter` to the user's `.scf`. The
+  distinction matters in the UI: the Save button carries an accent light
+  while the working database is ahead of the file.
+- **Reload resumes.** The OPFS copy always survived; the file handle now
+  survives too, in IndexedDB (`files/handleStore.ts`). Chromium re-asks
+  for write permission once after a reload — unavoidable, and correct.
+  An explicit Close sets `scf:auto-resume=0` so closed stays closed.
+- **`FileAdapter`** is the desktop-wrapper seam: a Tauri build later is
+  packaging, not a refactor.
 
-## What Part 1 delivers here
+## Patterns worth knowing before changing anything
 
-- **Form generator** — one component tree from `registry.json`: text /
-  auto-growing textarea / select (combobox for long option lists) /
-  multiselect / integer / float / boolean / reference (search +
-  create-inline) / JSON with typed sub-editors (string-list chips,
-  key-value grid, raw escape hatch, shape-detected). Tabs from
-  `FieldDef.tab`, required markers, **help text inline** (v1 buried it in
-  tooltips). Dirty-state + undo at the form level (Zustand). Whole-row
-  UPDATEs; inserts stamp `uuid`; updates write `updated_at` faithfully
-  (decision 10).
-- **Both navigation modes** — subject-oriented (default: pick Eleanor /
-  the kitchen / the locket → everything addressed to it, grouped
-  global → moment from Phase A scope metadata) and the tier/category
-  tree for schema-oriented work.
-- **Scene spine** — position-keyed sections in the subject view render
-  the story-position strip with keyed scenes marked: the first UI
-  expression of the position patterns.
-- **Cross-links everywhere** — reference fields navigate; reverse links
-  ("what points here") computed generically from the registry's
-  reference graph.
-- **Client-side search** over every entity's name field (v1's
-  server-rendered search does not port).
+- **Display labels are derived, never stored.** `state/displayName.ts`
+  is the single place: scenes lead with their number, shots with their
+  shot number, and a link entity whose `nameField` is hidden gets a
+  label composed from the rows it points at. Adding a column to a list
+  query is usually the fix when a row reads as `Thing #12`.
+- **References resolve one query per table, not per row** — `useRefNames`.
+- **Structure is derived from boundaries** (`@scf-core/structure.ts`).
+  Anything drawing acts and sequences as nested must group by
+  `actOutline()`, because a sequence may cross an act boundary.
+- **`useQuery(sql, params)` re-runs on the store's `revision`.** Any
+  write must bump it or the UI will not notice.
+- **Findings, never enforcement.** Duplicates, dangling boundaries and
+  contradictions are reported; nothing is rejected on write.
 
-## Deferred within Part 1 (next passes)
+## Testing
 
-- **Position-aware timeline editing** — the spine currently *shows*
-  in-force spans' keyed positions; visualizing the span itself
-  (until_resolved reach, latest-wins runs) and editing from the strip is
-  the follow-up.
-- **Readiness woven in** — the Q14 panel and in-context blockers
-  (character page / scene page) hook straight into
-  `scf-core/readiness.ts`; UI not yet built. Part 4 hosts the full page.
-- **Junction lightweight editors** — scene cast/props inline,
-  `motif_appearance` from either end.
-- **Shared panel/density primitives** — extraction into the internal
-  package (decision 8) once Scriptyard/Arboretum alignment is looked at
-  together; styles are plain CSS here until then.
+`npm test` runs Vitest against the checked-in fixture
+(`../fixtures/hollow_creek.scf`) using the Node SQLite driver.
 
-## Test status — read this
+**A test must not import a view.** Importing anything that reaches
+`state/store.ts` constructs the SQLite worker, which fails outside a
+browser. Logic that deserves a test lives in a module the view imports —
+`editor/shootOps.ts`, `state/displayName.ts`, `state/subjectStats.ts`,
+`state/undoDelete.ts` — not in the component.
 
-- The **worker's exec loop, `initDatabase`, insert/update paths, and a
-  resolution call are smoke-tested against the real wa-sqlite WASM build**
-  (Node, MemoryAsyncVFS) — the SQLite API usage is verified.
-- **Not yet exercised**: OPFS in an actual browser, File System Access
-  open/save round-trip, worker messaging under React StrictMode, and all
-  rendering. First manual run should walk: open demo → browse Eleanor →
-  edit a field → save project → reopen. Chromium only.
+## Conventions
+
+The format's rules, and the reasoning behind them, are in
+`../docs/conventions.md`. Read §2 (derived versus stored) and §4
+(structure) before touching labels or the outline views.

@@ -1,6 +1,11 @@
 # Story structure and the shoot surface — spec
 
-Status: phases 1-4 built (rounds 20, 21, 22). Decisions marked
+Status: phases 1-4 built and shipped. This document is kept as the
+design record — how the model was arrived at and what was rejected. The
+rules as they now stand are in `docs/conventions.md` §4, which is the
+one to read for current behaviour.
+
+Original status note: phases 1-4 built (rounds 20, 21, 22). Decisions marked
 **[open]** below were resolved as follows: section text is read before
 depth; act and sequence numbers renumber from the boundaries at every
 commit; the structure panel is a top-level tab; the shoot outline shows
@@ -104,9 +109,9 @@ migration of existing rows, no query breakage.
 `shot.scene_id` stays required, so a shot is valid with or without a
 beat, and existing shots are untouched.
 
-Route, as with G5's `line_ref`: edit Python `entity_registry.py`,
-regenerate `registry.json`, migrate the fixture with Python's own
-ensure-columns. The TS side consumes the regenerated registry.
+Route: edit `schema/entity_registry.py`, regenerate, lint, bump the
+version — `docs/conventions.md` §8. (This spec was written while the
+schema still lived in the v1 editor's directory.)
 
 Note on beats: 2.3 has four beat entities. This spec means `story_beat`
 throughout. `performance_beat` is the editor's ＋beat button (a dialogue
