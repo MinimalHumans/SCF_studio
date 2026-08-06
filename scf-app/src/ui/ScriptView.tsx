@@ -11,7 +11,7 @@
 import { useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
 
-import { EditorState } from "@codemirror/state";
+import { EditorState, Transaction } from "@codemirror/state";
 import { exec, useStore } from "../state/store.ts";
 import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
@@ -91,6 +91,13 @@ export function ScriptView(): JSX.Element {
   });
   const [pageMode, setPageMode] = useState<"light" | "dark">(() =>
     localStorage.getItem("scf:editor-mode") === "dark" ? "dark" : "light");
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<number | null>(null);
+  const say = (message: string): void => {
+    setToast(message);
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 2200);
+  };
   const [showAnnot, setShowAnnot] = useState(() =>
     localStorage.getItem("scf:editor-annot") !== "hidden");
   const [dirty, setDirty] = useState(false);
@@ -409,6 +416,12 @@ export function ScriptView(): JSX.Element {
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: doc },
       effects: loadLines.of(entries),
+      // Loading a document is not an edit. Without this the import
+      // itself sat on the undo stack, so one Ctrl-Z after importing
+      // reverted the whole script to the empty document it replaced —
+      // and redo brought it back as undifferentiated action lines,
+      // because the line identities went with it.
+      annotations: Transaction.addToHistory.of(false),
     });
     prevBlocksRef.current = new Map(blocks.map((b) => [b.id, b]));
     setEmpty(blocks.length === 0);
@@ -617,10 +630,15 @@ export function ScriptView(): JSX.Element {
         {commitNote !== "" && (
           <span className="commit-note">{commitNote}</span>
         )}
-        <BeatControl block={cursorBlock} onCreated={() =>
-          void refreshAnnotations()} />
-        <TagControl selection={selection} onTagged={() =>
-          void refreshAnnotations()} />
+        <BeatControl block={cursorBlock}
+                     onCreated={(modality) => {
+                       say(`${modality} beat added`);
+                       void refreshAnnotations();
+                     }} />
+        <TagControl selection={selection} onTagged={(name) => {
+          say(`tagged as ${name}`);
+          void refreshAnnotations();
+        }} />
         {detachedTags > 0 && (
           <span className="detached-note"
                 title="Prop tags whose text no longer exists on their line. Rows are kept, not deleted.">
@@ -691,6 +709,9 @@ export function ScriptView(): JSX.Element {
                (empty ? " hidden" : "") +
                (pageMode === "dark" ? " page-dark" : "") +
                (showAnnot ? "" : " hide-annot")} />
+      {toast !== null && (
+        <div className="script-toast" role="status">{toast}</div>
+      )}
         {showVersions && (
           <VersionsPanel onPublished={() => touch()}
                          onImport={() => setImporting(true)}
@@ -851,7 +872,7 @@ export function ScriptView(): JSX.Element {
 
 function BeatControl({ block, onCreated }: {
   block: Block | null;
-  onCreated: () => void;
+  onCreated: (modality: string) => void;
 }): JSX.Element {
   const enabled = block !== null && block.sceneId !== null &&
                   block.characterId !== null;
@@ -868,7 +889,7 @@ function BeatControl({ block, onCreated }: {
               e.target.value = "";
               if (modality === "" || block === null) return;
               void createBeatForLine(exec, block, modality, block.text)
-                .then(onCreated);
+                .then(() => onCreated(modality));
             }}>
       <option value="" disabled>＋ beat</option>
       <option value="vocal">vocal</option>
@@ -881,7 +902,7 @@ function BeatControl({ block, onCreated }: {
 function TagControl({ selection, onTagged }: {
   selection: { lineId: string; from: number; to: number;
                text: string } | null;
-  onTagged: () => void;
+  onTagged: (propName: string) => void;
 }): JSX.Element {
   const props = useQuery("SELECT id, name FROM prop ORDER BY name");
   const enabled = selection !== null && selection.text.trim() !== "";
@@ -908,15 +929,18 @@ function TagControl({ selection, onTagged }: {
                   await tagPropRange(exec, selection.lineId,
                                      id as number, selection.text,
                                      selection.from, selection.to);
-                  onTagged();
+                  onTagged(name.trim());
                 })();
                 return;
               }
               const propId = Number(value);
               if (!Number.isFinite(propId)) return;
+              const propName = String(
+                props.find((r) => Number(r["id"]) === propId)?.["name"] ??
+                "prop");
               void tagPropRange(exec, selection.lineId, propId,
                                 selection.text, selection.from,
-                                selection.to).then(onTagged);
+                                selection.to).then(() => onTagged(propName));
             }}>
       <option value="" disabled>⌁ tag prop</option>
       <option value="__new__">＋ create new prop…</option>

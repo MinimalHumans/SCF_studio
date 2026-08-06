@@ -149,15 +149,10 @@ export function Workbench(): JSX.Element {
             setRailWidth(x - (document.querySelector(".rail-nav")
               ?.getBoundingClientRect().left ?? 0))} />
           <div className="nav-modes" role="tablist">
-            <button role="tab" aria-selected={navMode === "subject"}
-                    className={navMode === "subject" ? "active" : ""}
-                    onClick={() => setNavMode("subject")}>
-              Subjects
-            </button>
-            <button role="tab" aria-selected={navMode === "schema"}
-                    className={navMode === "schema" ? "active" : ""}
-                    onClick={() => setNavMode("schema")}>
-              Schema
+            <button role="tab" aria-selected={navMode === "script"}
+                    className={navMode === "script" ? "active" : ""}
+                    onClick={() => setNavMode("script")}>
+              Script
             </button>
             <button role="tab" aria-selected={navMode === "structure"}
                     className={navMode === "structure" ? "active" : ""}
@@ -169,15 +164,20 @@ export function Workbench(): JSX.Element {
                     onClick={() => setNavMode("shoot")}>
               Shoot
             </button>
+            <button role="tab" aria-selected={navMode === "schema"}
+                    className={navMode === "schema" ? "active" : ""}
+                    onClick={() => setNavMode("schema")}>
+              Schema
+            </button>
+            <button role="tab" aria-selected={navMode === "subject"}
+                    className={navMode === "subject" ? "active" : ""}
+                    onClick={() => setNavMode("subject")}>
+              Subjects
+            </button>
             <button role="tab" aria-selected={navMode === "queries"}
                     className={navMode === "queries" ? "active" : ""}
                     onClick={() => setNavMode("queries")}>
               Queries
-            </button>
-            <button role="tab" aria-selected={navMode === "script"}
-                    className={navMode === "script" ? "active" : ""}
-                    onClick={() => setNavMode("script")}>
-              Script
             </button>
           </div>
           {navMode === "subject" ? <SubjectNav />

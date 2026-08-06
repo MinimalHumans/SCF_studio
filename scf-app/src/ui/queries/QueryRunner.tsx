@@ -176,13 +176,32 @@ function ParamPicker({ def, value, values, onChange }: {
     : null;
   const edef = table !== null ? registry.entities.get(table) : undefined;
   const isScene = table === "scene";
+  // A shot belongs to a scene, so once a scene is chosen the shot list
+  // is the coverage of that scene. Offering every shot in the film here
+  // invites a pairing the query cannot answer — a shot from sc 3 asked
+  // about in sc 12.
+  const isShot = def.kind === "shot";
+  const sceneFilter = isShot ? values["scene_id"] ?? null : null;
   const rows = useQuery(
     edef === undefined ? null :
     isScene
       ? "SELECT * FROM scene ORDER BY (scene_number IS NULL), " +
         "scene_number, id"
+    : isShot
+      ? (sceneFilter === null
+          ? "SELECT * FROM shot ORDER BY scene_id, shot_order, id LIMIT 500"
+          : "SELECT * FROM shot WHERE scene_id = ? " +
+            "ORDER BY shot_order, id")
       : `SELECT * FROM ${q(edef.name)} ` +
-        `ORDER BY ${q(edef.nameField)} LIMIT 500`);
+        `ORDER BY ${q(edef.nameField)} LIMIT 500`,
+    sceneFilter === null ? [] : [sceneFilter]);
+
+  // Changing the scene can strand a shot from the previous one.
+  useEffect(() => {
+    if (!isShot || value === null || sceneFilter === null) return;
+    if (rows.length === 0) return;
+    if (!rows.some((r) => Number(r["id"]) === Number(value))) onChange(null);
+  }, [isShot, value, sceneFilter, rows]);
 
   const options = useMemo(() => {
     if (def.kind === "intent") return [...INTENT_OPTIONS];
@@ -194,7 +213,13 @@ function ParamPicker({ def, value, values, onChange }: {
 
   return (
     <label className="param">
-      <span>{def.label}{def.optional === true ? "" : " *"}</span>
+      <span>
+        {def.label}{def.optional === true ? "" : " *"}
+        {def.kind === "shot" && values["scene_id"] !== null &&
+         values["scene_id"] !== undefined && (
+          <span className="param-scope"> in scene</span>
+        )}
+      </span>
       {options !== null ? (
         <select value={String(value ?? "")}
                 onChange={(e) =>

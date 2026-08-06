@@ -801,7 +801,12 @@ ul { list-style: none; margin: 0; padding: 0; }
 
 /* scene rail */
 .scene-rail ul { list-style: none; margin: 0; padding: 0; }
-.scene-rail li { display: flex; align-items: center; gap: 4px; }
+/* A tree item stacks: its own row, then its children BELOW it. The flat
+   rail this replaced made every li a flex row, which laid each act
+   beside its sequences and each sequence beside its scenes — three
+   columns instead of an outline. Only the leaf rows are flex, and they
+   say so themselves. */
+.scene-rail li { display: block; }
 .scene-jump {
   flex: 1; text-align: left; background: none; border: none;
   padding: 3px 8px; font: 11.5px var(--mono); color: var(--paper);
@@ -1315,3 +1320,77 @@ tr.prop-weak td { opacity: .6; }
 }
 .subject-facts { margin: 6px 0 14px; }
 .subject-facts .kv-out { max-width: 760px; }
+
+/* script editor toast */
+.script-toast {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 20;
+  padding: 6px 12px;
+  background: var(--ink-2);
+  border: 1px solid var(--amber);
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: var(--paper);
+  box-shadow: 0 4px 14px rgb(0 0 0 / .45);
+  pointer-events: none;
+}
+
+/* scene rail: structure tree + filters */
+.rail-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px;
+}
+.rail-filter { display: flex; gap: 4px; padding: 4px 8px 2px; }
+.rail-filter select { font-size: 11px; padding: 1px 3px; min-width: 0; flex: 1; }
+.rail-filter-note {
+  padding: 0 8px 4px; font: 10.5px var(--mono); color: var(--amber-dim);
+}
+/* Nesting is a small indent and a rule, not a column of boxes: three
+   levels of horizontal indent plus a caret, a number and a gear left
+   almost nothing for the heading itself in a 180px rail. Names now wrap
+   instead of being cut off, so the tree grows downward rather than
+   sideways. */
+.rail-tree, .rail-tree ul { list-style: none; margin: 0; padding: 0; }
+.rail-tree ul {
+  margin-left: 7px;
+  padding-left: 5px;
+  border-left: 1px solid var(--line);
+}
+.rail-span {
+  display: flex; align-items: baseline; gap: 3px; padding: 2px 2px;
+}
+.rail-act .rail-span-name { color: var(--amber); font-weight: 650; }
+.rail-seq .rail-span-name { font-weight: 600; }
+.rail-loose .rail-span-name { color: var(--paper-dim); font-style: italic; }
+.rail-span-name {
+  flex: 1; min-width: 0; font-size: 12px;
+  overflow-wrap: anywhere; line-height: 1.3;
+}
+.rail-caret {
+  background: none; border: 0; color: var(--paper-dim);
+  padding: 0; width: 11px; flex: none; font-size: 9px;
+}
+.rail-number {
+  font: 10.5px var(--mono); color: var(--paper-dim);
+  min-width: 2.2ch; text-align: right; flex: none;
+}
+/* Specificity has to beat `.scene-rail li` above, or the leaf rows
+   stack their number, name and gear vertically too. */
+.scene-rail li.rail-scene {
+  display: flex; align-items: baseline; gap: 3px; padding-left: 11px;
+}
+.rail-scene .scene-jump {
+  flex: 1; min-width: 0; padding: 2px 0;
+  white-space: normal; overflow-wrap: anywhere; line-height: 1.3;
+}
+.rail-scene .scene-jump:disabled { opacity: .5; }
+.rail-span .scene-chip, .rail-scene .scene-chip {
+  flex: none; align-self: flex-start; padding: 0 2px;
+}
+
+.scene-rail li.rail-flat { display: block; }
+
+/* query params: a picker narrowed by another param says so */
+.param-scope { font: 10px var(--mono); color: var(--amber-dim); }

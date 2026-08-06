@@ -210,6 +210,19 @@ export function ShootView(): JSX.Element {
           {shots.length} shot{shots.length === 1 ? "" : "s"} across{" "}
           {shotsByScene.size} scene{shotsByScene.size === 1 ? "" : "s"}
         </span>
+        <button className="ghost tiny"
+                onClick={() => {
+                  // Expanding all is the useful direction — collapse is
+                  // just "clear", since a scene is closed by default.
+                  const keys = structure.scenes.map(
+                    (sc) => `scene:${String(sc.id)}`);
+                  setOpen(open.size >= keys.length
+                    ? new Set() : new Set(keys));
+                }}>
+          {structure.scenes.length > 0 &&
+           open.size >= structure.scenes.length
+            ? "collapse all" : "expand all"}
+        </button>
         <label className="shoot-toggle">
           <input type="checkbox" checked={showEmpty}
                  onChange={(e) => setShowEmpty(e.target.checked)} />
