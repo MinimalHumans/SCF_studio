@@ -77,3 +77,30 @@ export function nextShotNumber(sceneNumber: number | string | null,
   }
   return shotCode(sceneNumber, taken.length);
 }
+
+/**
+ * Restamp a shot code onto a new scene number, keeping its letter.
+ *
+ * `42A` in a scene that becomes scene 43 returns `43A`. Returns null
+ * when nothing should change — the code is unparseable, the scene has no
+ * number, or the result matches what is already there.
+ *
+ * This is NOT a contradiction of the stored-number rule above, but it
+ * does narrow it. That rule protects a code a crew already holds on
+ * paper, and nobody holds paper on an unlocked script: before locking,
+ * a shot list that says 42A for a scene now numbered 43 is not a stable
+ * identifier, it is a stale one. So the same `project.scene_numbering`
+ * flag governs both — `derived` keeps shot codes tracking their scene,
+ * `fixed` freezes them along with the scene numbers, which is the state
+ * a distributed shot list needs.
+ */
+export function restampShotNumber(
+    code: string | null, sceneNumber: number | string | null):
+    string | null {
+  if (code === null || code === "") return null;
+  if (sceneNumber === null || sceneNumber === "") return null;
+  const letters = /[A-Z]+$/.exec(code.trim().toUpperCase());
+  if (letters === null) return null;
+  const next = shotCode(sceneNumber, letterIndex(letters[0]));
+  return next === code.trim() ? null : next;
+}

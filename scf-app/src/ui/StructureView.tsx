@@ -1,11 +1,12 @@
 import { useMemo } from "react";
 import type { Row } from "@scf-core/db.ts";
 import {
-  actOutline, deriveStructure, structureFindings, type Span,
-  type Structure,
+  actOutline, deriveStructure, sceneOrderHint, structureFindings,
+  type Span, type Structure,
 } from "@scf-core/structure.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import { exec, useStore } from "../state/store.ts";
+import { renumberSpans } from "../editor/structureCommit.ts";
 import { useQuery } from "./useQuery.ts";
 
 /**
@@ -23,18 +24,23 @@ export function StructureView(): JSX.Element {
   const { openEntityRow } = useStore();
   const scenes = useQuery(
     "SELECT id, scene_number, name FROM scene");
+  const headings = useQuery(
+    "SELECT scene_id, line_order FROM screenplay_lines " +
+    "WHERE line_type = 'heading' ORDER BY line_order");
   const acts = useQuery(
     "SELECT id, name, act_number, start_scene_id FROM act ORDER BY id");
   const sequences = useQuery(
     "SELECT id, name, sequence_number, act_id, start_scene_id " +
     "FROM sequence ORDER BY id");
 
+  // Same rule as the rail: when a screenplay exists it owns scene order.
+  const orderHint = useMemo(() => sceneOrderHint(headings), [headings]);
   const structure = useMemo(
-    () => deriveStructure(scenes, acts, sequences),
-    [scenes, acts, sequences]);
+    () => deriveStructure(scenes, acts, sequences, orderHint),
+    [scenes, acts, sequences, orderHint]);
   const findings = useMemo(
-    () => structureFindings(structure, acts, sequences),
-    [structure, acts, sequences]);
+    () => structureFindings(structure, acts, sequences, orderHint),
+    [structure, acts, sequences, orderHint]);
 
   const sceneById = useMemo(
     () => new Map(scenes.map((s) => [Number(s["id"]), s])), [scenes]);
@@ -48,17 +54,25 @@ export function StructureView(): JSX.Element {
     await exec(
       `UPDATE ${table} SET start_scene_id = ?, ` +
       "updated_at = datetime('now') WHERE id = ?", [sceneId, id]);
+    // Moving a boundary changes the derived order, so the numbers change
+    // with it. This used to wait for the next SCRIPT commit, which meant
+    // the tab you moved the boundary in showed stale numbers until you
+    // went and typed something.
+    await renumberSpans(exec);
     useStore.setState((s) => ({ revision: s.revision + 1 }));
   };
 
   const create = async (table: "act" | "sequence",
                         sceneId: number): Promise<void> => {
-    const label = table === "act"
-      ? `Act ${String(structure.acts.length + 1)}`
-      : `Sequence ${String(structure.sequences.length + 1)}`;
+    // NOT "Act 3". A stored name built from a count is a label that
+    // starts true and becomes a lie the moment a boundary moves — the
+    // exact denormalization the number is there to avoid. The number is
+    // derived and displayed beside the name; the name is a title.
+    const label = table === "act" ? "Untitled act" : "Untitled sequence";
     await exec(
       `INSERT INTO ${table} (name, start_scene_id) VALUES (?, ?)`,
       [label, sceneId]);
+    await renumberSpans(exec);
     useStore.setState((s) => ({ revision: s.revision + 1 }));
   };
 
@@ -219,6 +233,11 @@ function SpanRow({ kind, span, scenes, onOpen, onMove, partial = null }: {
   return (
     <div className={`structure-span structure-span-${kind}`}>
       <span className="structure-kind">{kind}</span>
+      {/* The derived number was computed all along and never rendered,
+          so a blank-written project read "unnumbered" everywhere. */}
+      {span.number !== null && (
+        <span className="structure-number">{span.number}</span>
+      )}
       <button className="row-link" onClick={onOpen}>{span.name}</button>
       {partial !== null && (
         <span className="structure-kind"

@@ -18,6 +18,7 @@
  */
 
 import type { SqlExec } from "@scf-core/db.ts";
+import { setNumberingMode } from "./structureCommit.ts";
 import { q, withTransaction } from "@scf-core/db.ts";
 import { parseFountain, serialize } from "@scf-core/fountain/index.ts";
 import { repairConversionArtifacts, type RepairRecord }
@@ -133,6 +134,19 @@ async function applyImportInner(
   }
 
   onProgress("creating scenes…");
+  /*
+   * An imported script's scene numbers are the PRODUCTION's, not ours.
+   * They may be gapped, out of sequence, or carry a meaning the app has
+   * no way to reconstruct — so the project switches to fixed numbering
+   * and the editor never renumbers them. A blank screenplay stays
+   * derived. Chris can flip this in the project record.
+   */
+  const numbered = proposals.scenes.some((sc) =>
+    Number.isFinite(parseInt(sc.sceneNumber, 10)));
+  if (accepted.scenes && numbered) {
+    await setNumberingMode(exec, "fixed");
+  }
+
   // Scenes; remember heading line index -> scene id.
   const sceneIdByLineIndex = new Map<number, number>();
   if (accepted.scenes) {

@@ -17,6 +17,8 @@ import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
 import { withTransaction } from "@scf-core/db.ts";
 import { loadLines } from "../editor/lineState.ts";
+import { planSceneMove } from "../editor/sceneMove.ts";
+import { reanchorSpansForMove } from "../editor/structureCommit.ts";
 import {
   blocksToDoc, blocksToFountain, commitPlan, rowsToBlocks,
   sceneSyncFromHeading, type Block,
@@ -33,16 +35,32 @@ import {
 } from "../editor/features.ts";
 import { paginationFor } from "../editor/extensions.ts";
 import { ImportFlow } from "./ImportFlow.tsx";
+import { IntegrityPanel } from "./IntegrityPanel.tsx";
 import { useQuery } from "./useQuery.ts";
+import { scanIntegrity } from "../editor/integrity.ts";
 
 const touch = (): void => {
   useStore.setState((s) => ({ revision: s.revision + 1 }));
 };
 
+/**
+ * Every async path here must check this before touching the database.
+ * The editor's debounced commit, blur commit and annotation refresh all
+ * outlive the view by a tick, so closing a project or opening another
+ * one landed them on a closed connection ("no database open"). A closed
+ * project has nothing to save that was not already saved.
+ */
+const projectOpen = (): boolean => useStore.getState().phase === "open";
+
 /** Cross-component handle for the scene rail's jump-to-line. */
 export const scriptViewHandle: {
   scrollToLineOrder: ((order: number) => void) | null;
-} = { scrollToLineOrder: null };
+  /** Move a scene block so it sits before `beforeSceneId` (null = last).
+   * The Scene Rail's drag calls this; the scene ENTITY is never touched,
+   * so its beats, shots and links follow by construction. */
+  moveScene: ((sceneId: number,
+               beforeSceneId: number | null) => void) | null;
+} = { scrollToLineOrder: null, moveScene: null };
 
 /** Editing position survives leaving the Script tab (opening an entity
  * from a chip unmounts the editor; coming back should not mean "top of
@@ -53,6 +71,10 @@ interface StaleNotice {
   uuid: string;
   sceneId: number;
   headingText: string;
+  /** What the scene entity currently stores, so the notice can show the
+   * actual disagreement rather than describing one. */
+  sceneName: string;
+  sceneNumber: number | null;
 }
 
 function smartTitleLocal(x: string): string {
@@ -75,7 +97,10 @@ export function ScriptView(): JSX.Element {
     useState<{ lineId: string; from: number; to: number;
                text: string } | null>(null);
   const [showVersions, setShowVersions] = useState(false);
-  const [detachedTags, setDetachedTags] = useState(0);
+  const [showIntegrity, setShowIntegrity] = useState(false);
+  const [integrityCount, setIntegrityCount] = useState(0);
+  const [liveLineIds, setLiveLineIds] =
+    useState<ReadonlySet<string>>(() => new Set());
   const pendingEvents = useRef<LineEvent[]>([]);
   const entityNamesRef = useRef<{ locations: string[];
                                   characters: string[] }>(
@@ -124,7 +149,7 @@ export function ScriptView(): JSX.Element {
 
   const refreshAnnotations = async (): Promise<void> => {
     const view = viewRef.current;
-    if (view === null) return;
+    if (view === null || !projectOpen()) return;
     const map = new Map<string, LineAnnotation>();
     const entries = lineEntries(view.state);
     const textById = new Map<string, string>();
@@ -184,12 +209,8 @@ export function ScriptView(): JSX.Element {
       characters: characterNames.map((r) => String(r["name"])),
     };
     const tags = await validateTags(exec, textById);
-    let detached = 0;
     for (const t of tags) {
-      if (t.status === "detached") {
-        detached += 1;
-        continue;
-      }
+      if (t.status === "detached") continue;
       const ann = map.get(t.lineId) ?? {};
       map.set(t.lineId, {
         ...ann,
@@ -198,35 +219,51 @@ export function ScriptView(): JSX.Element {
                  status: t.status, propName: t.propName }],
       });
     }
-    setDetachedTags(detached);
+    // The integrity scan needs the ids the DOCUMENT holds, not the ones
+    // that last reached disk — the author is looking at the document.
+    const live = new Set(entries.map((e) => e.id));
+    setLiveLineIds(live);
+    setIntegrityCount((await scanIntegrity(exec, live)).total);
     view.dispatch({ effects: setAnnotations.of(map) });
   };
 
   const commitBusy = useRef(false);
   const commitAgain = useRef(false);
+  const commitAgainStale = useRef(false);
 
-  const commit = async (): Promise<void> => {
+  /**
+   * `reportStale` gates the heading/scene disagreement notice. The
+   * debounced auto-save must NOT raise it: it fires 1.2s after the first
+   * keystroke into a heading, so the author was told the script and the
+   * scene disagreed before they had finished typing the new slug. Blur
+   * and an explicit Commit mean the thought is finished.
+   */
+  const commit = async (reportStale = false): Promise<void> => {
+    if (!projectOpen()) return;
     // Coalesce: blur + click (or debounce + Cmd-S) fire near-together;
     // one runs, a trailing rerun picks up anything newer.
     if (commitBusy.current) {
       commitAgain.current = true;
+      if (reportStale) commitAgainStale.current = true;
       return;
     }
     commitBusy.current = true;
     try {
-      await commitInner();
+      await commitInner(reportStale);
     } finally {
       commitBusy.current = false;
       if (commitAgain.current) {
         commitAgain.current = false;
-        void commit();
+        const again = commitAgainStale.current;
+        commitAgainStale.current = false;
+        void commit(again);
       }
     }
   };
 
-  const commitInner = async (): Promise<void> => {
+  const commitInner = async (reportStale: boolean): Promise<void> => {
     const view = viewRef.current;
-    if (view === null) return;
+    if (view === null || !projectOpen()) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);
     const created = await withTransaction(exec, async () => {
       const link = await linkAndCreateAtCommit(
@@ -266,28 +303,46 @@ export function ScriptView(): JSX.Element {
     if (events.length > 0) {
       await reanchorForEvents(exec, events);
     }
-    if (plan.staleScenes.length > 0) {
+    if (reportStale && plan.staleScenes.length > 0) {
+      const ids = plan.staleScenes
+        .map((s) => s.sceneId)
+        .filter((id): id is number => id !== null);
+      const named = ids.length === 0 ? [] : await exec(
+        `SELECT id, name, scene_number FROM scene WHERE id IN ` +
+        `(${ids.map(() => "?").join(",")})`, ids);
+      const nameById = new Map(named.map((r) =>
+        [r["id"] as number, r]));
       setStale((old) => {
         const merged = new Map(old.map((s) => [s.uuid, s]));
         for (const s of plan.staleScenes) {
-          if (s.sceneId !== null) {
-            merged.set(s.uuid, { uuid: s.uuid, sceneId: s.sceneId,
-                                 headingText: s.headingText });
-          }
+          if (s.sceneId === null) continue;
+          const row = nameById.get(s.sceneId);
+          merged.set(s.uuid, {
+            uuid: s.uuid, sceneId: s.sceneId,
+            headingText: s.headingText,
+            sceneName: String(row?.["name"] ?? ""),
+            sceneNumber: typeof row?.["scene_number"] === "number"
+              ? row["scene_number"] : null,
+          });
         }
         return [...merged.values()];
       });
     }
     touch();
     await refreshAnnotations();
+    // The Commit light was only ever recomputed at mount and after an
+    // EXPLICIT commit, so typing a new character cue left it dark until
+    // something unrelated refreshed it. The auto-save is the moment the
+    // answer can have changed.
+    await updateDirty();
   };
 
   /** The Commit button / Cmd-S: preview creations and conflicts, and
    * only create after the author has reviewed them. */
   const explicitCommit = async (): Promise<void> => {
     const view = viewRef.current;
-    if (view === null) return;
-    await commit(); // text + existing links are always safe to save
+    if (view === null || !projectOpen()) return;
+    await commit(true); // text + existing links are always safe to save
     const plan = commitPlan(view.state, prevBlocksRef.current);
     const info = await planCommitLinks(exec, plan.rows);
     console.debug("[commit-plan]",
@@ -394,7 +449,7 @@ export function ScriptView(): JSX.Element {
    * auto-saved continuously and never needs the button. */
   const updateDirty = async (): Promise<void> => {
     const view = viewRef.current;
-    if (view === null) return;
+    if (view === null || !projectOpen()) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);
     const info = await planCommitLinks(exec, plan.rows);
     setDirty(info.newScenes > 0 || info.newLocations.length > 0 ||
@@ -440,6 +495,26 @@ export function ScriptView(): JSX.Element {
               void openEntityRow(entity, entityId),
             getLocations: () => entityNamesRef.current.locations,
             getCharacters: () => entityNamesRef.current.characters,
+            clipboard: {
+              // uuids are minted per file, so identity may only be
+              // reused within the project that issued it.
+              getProjectKey: () =>
+                useStore.getState().projectName ?? "untitled",
+              getLinks: (lineId) => {
+                const block = prevBlocksRef.current.get(lineId);
+                return block === undefined ? null : {
+                  sceneId: block.sceneId,
+                  characterId: block.characterId,
+                  locationId: block.locationId,
+                };
+              },
+              onPaste: (mode, lines) => {
+                say(mode === "move"
+                  ? `${String(lines)} line(s) moved — links kept`
+                  : `${String(lines)} line(s) pasted`);
+                scheduleCommit();
+              },
+            },
           }),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) {
@@ -495,13 +570,81 @@ export function ScriptView(): JSX.Element {
             }
           }),
           EditorView.domEventHandlers({
-            blur: () => { void commit(); },
+            blur: () => { void commit(true); },
           }),
         ],
       }),
       parent: host,
     });
     viewRef.current = view;
+    /**
+     * Reorder a scene from the Scene Rail's drag.
+     *
+     * The scene ENTITY is untouched — same id, same uuid, same beats,
+     * shots and junction rows. Only the line order changes, so nothing
+     * is orphaned and nothing is recreated. Scene numbers follow the new
+     * order once numbering lands (Round B).
+     */
+    scriptViewHandle.moveScene = (sceneId, beforeSceneId) => {
+      const entries = lineEntries(view.state);
+      const headingIndexes: number[] = [];
+      entries.forEach((entry, i) => {
+        if (entry.type === "heading") headingIndexes.push(i);
+      });
+      const blockOfScene = (target: number): number =>
+        headingIndexes.findIndex((lineIdx) => {
+          const entry = entries[lineIdx];
+          return entry !== undefined &&
+            prevBlocksRef.current.get(entry.id)?.sceneId === target;
+        });
+
+      const from = blockOfScene(sceneId);
+      if (from === -1) return;
+      const before = beforeSceneId === null
+        ? headingIndexes.length : blockOfScene(beforeSceneId);
+      if (before === -1) return;
+
+      const lines: string[] = [];
+      for (let n = 1; n <= view.state.doc.lines; n++) {
+        lines.push(view.state.doc.line(n).text);
+      }
+      const plan = planSceneMove(lines, entries, from, before);
+      if (plan === null) return;
+
+      // The scene order BEFORE the move, so a span anchored to the
+      // scene that is leaving can re-anchor to whatever now sits where
+      // it did. Captured here because after the dispatch it is gone.
+      const orderBefore = headingIndexes
+        .map((lineIdx) => {
+          const entry = entries[lineIdx];
+          return entry === undefined
+            ? null : prevBlocksRef.current.get(entry.id)?.sceneId ?? null;
+        })
+        .filter((id): id is number => id !== null);
+
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: plan.doc },
+        effects: loadLines.of(plan.entries),
+      });
+      const landed = view.state.doc.line(
+        Math.min(plan.headingAt + 1, view.state.doc.lines));
+      view.dispatch({
+        selection: { anchor: landed.from },
+        effects: EditorView.scrollIntoView(landed.from, { y: "center" }),
+      });
+      void (async () => {
+        const rehomed = await reanchorSpansForMove(
+          exec, sceneId, orderBefore);
+        // Immediate, not debounced: a move changes scene numbers and
+        // every label built from them, and leaving the script and the
+        // records disagreeing for a second is how the rail and the
+        // Structure tab end up showing different films.
+        await commit(true);
+        say(rehomed > 0
+          ? "scene moved — act/sequence boundary stayed put"
+          : "scene moved");
+      })();
+    };
     scriptViewHandle.scrollToLineOrder = (order: number) => {
       const line = view.state.doc.line(
         Math.min(order + 1, view.state.doc.lines));
@@ -543,6 +686,7 @@ export function ScriptView(): JSX.Element {
         };
       }
       scriptViewHandle.scrollToLineOrder = null;
+      scriptViewHandle.moveScene = null;
       view.destroy();
       viewRef.current = null;
     };
@@ -560,12 +704,30 @@ export function ScriptView(): JSX.Element {
     await refreshAnnotations();
   };
 
+  /**
+   * Rename the scene from the heading as typed.
+   *
+   * The location moves with it. Without that, INT. KITCHEN -> INT. GARAGE
+   * renamed the scene and left it pointing at the Kitchen location — a
+   * sync that visibly did not sync. A location that does NOT exist yet is
+   * left alone rather than created: Sync is a repair, and entity creation
+   * belongs to the Commit review where it can be seen first. The notice
+   * says so.
+   */
   const syncScene = async (notice: StaleNotice): Promise<void> => {
     const fields = sceneSyncFromHeading(notice.headingText);
+    let locationId: number | null = null;
+    if (fields.location !== null) {
+      const hit = await exec(
+        "SELECT id FROM location WHERE upper(name) = upper(?)",
+        [fields.location.trim()]);
+      locationId = (hit[0]?.["id"] as number | undefined) ?? null;
+    }
     await exec(
       "UPDATE scene SET name = ?, " +
       "int_ext = COALESCE(?, int_ext), " +
       "time_of_day = COALESCE(?, time_of_day), " +
+      "location_id = COALESCE(?, location_id), " +
       "updated_at = datetime('now') WHERE id = ?",
       [fields.name,
        fields.int_ext !== null
@@ -573,9 +735,14 @@ export function ScriptView(): JSX.Element {
              "INT/EXT": "int/ext" }[fields.int_ext] ?? null : null,
        fields.time_of_day !== null
          ? fields.time_of_day.toLowerCase() : null,
+       locationId,
        notice.sceneId]);
     setStale((old) => old.filter((s) => s.uuid !== notice.uuid));
+    say(fields.location !== null && locationId === null
+      ? `renamed — "${fields.location}" is not a location yet, so Commit will offer to create it`
+      : "scene updated from the heading");
     touch();
+    await updateDirty();
   };
 
   const exportFountain = (): void => {
@@ -639,11 +806,13 @@ export function ScriptView(): JSX.Element {
           say(`tagged as ${name}`);
           void refreshAnnotations();
         }} />
-        {detachedTags > 0 && (
-          <span className="detached-note"
-                title="Prop tags whose text no longer exists on their line. Rows are kept, not deleted.">
-            {detachedTags} detached tag{detachedTags > 1 ? "s" : ""}
-          </span>
+        {integrityCount > 0 && (
+          <button className="integrity-flag"
+                  aria-pressed={showIntegrity}
+                  title="Prop tags, beats and cast links whose script text is gone. Nothing is removed without your say-so."
+                  onClick={() => setShowIntegrity(!showIntegrity)}>
+            ⚑ {integrityCount} dangling
+          </button>
         )}
         <button onClick={() => setShowVersions(!showVersions)}
                 aria-pressed={showVersions}>Versions</button>
@@ -655,26 +824,50 @@ export function ScriptView(): JSX.Element {
       </div>
       {stale.length > 0 && (
         <div className="stale-bar">
-          {stale.map((s) => (
-            <span key={s.uuid} className="stale-notice">
-              This heading's text changed but it is still linked to
-              its original scene entity — script and scene now disagree.
-              <em> {s.headingText}</em>
-              <span className="muted">
-                Sync updates the scene from the heading; Open shows the
-                scene; Dismiss keeps both as they are.
+          {stale.map((s) => {
+            const label = s.sceneNumber === null
+              ? "This scene" : `Scene ${String(s.sceneNumber)}`;
+            const emptied = s.headingText.trim() === "";
+            return (
+              <span key={s.uuid} className="stale-notice">
+                {emptied ? (
+                  <>
+                    You cleared the heading for{" "}
+                    <em>{s.sceneName}</em>, but this line is still linked
+                    to it.
+                  </>
+                ) : (
+                  <>
+                    {label} is stored as <em>{s.sceneName}</em>, but this
+                    line now reads <em>{s.headingText}</em>.
+                  </>
+                )}
+                {!emptied && (
+                  <button onClick={() => void syncScene(s)}
+                          title="Update the scene record — its name, int/ext, time of day and location — to match the line as written. Use this when it is the same scene, renamed.">
+                    Rename {s.sceneNumber === null
+                      ? "the scene" : `scene ${String(s.sceneNumber)}`}
+                  </button>
+                )}
+                <button onClick={() => void unlinkScene(s)}
+                        title="Break this line's link. The scene record stays exactly as it is, unused by the script; the next Commit offers to create a fresh scene from this line.">
+                  {emptied
+                    ? "Take the scene out of the script"
+                    : "Make this a new scene"}
+                </button>
+                <button onClick={() =>
+                  void openEntityRow("scene", s.sceneId)}
+                        title="Look at the scene record before deciding.">
+                  Open {s.sceneName === "" ? "the scene" : s.sceneName}
+                </button>
+                <button onClick={() => setStale((old) =>
+                  old.filter((x) => x.uuid !== s.uuid))}
+                        title="Hide this. Nothing changes — the line and the scene stay as they are.">
+                  Leave both
+                </button>
               </span>
-              <button onClick={() => void syncScene(s)}>Sync scene</button>
-              <button onClick={() => void unlinkScene(s)}
-                      title="Break this line's link to the scene entity. The next Commit will propose a fresh scene (and its location) from the heading as written.">
-                Unlink
-              </button>
-              <button onClick={() =>
-                void openEntityRow("scene", s.sceneId)}>Open</button>
-              <button onClick={() => setStale((old) =>
-                old.filter((x) => x.uuid !== s.uuid))}>Dismiss</button>
-            </span>
-          ))}
+            );
+          })}
         </div>
       )}
       {loaded && empty && !importing && (
@@ -712,6 +905,14 @@ export function ScriptView(): JSX.Element {
       {toast !== null && (
         <div className="script-toast" role="status">{toast}</div>
       )}
+        {showIntegrity && (
+          <IntegrityPanel liveLineIds={liveLineIds}
+                          onClose={() => setShowIntegrity(false)}
+                          onChanged={() => {
+                            touch();
+                            void refreshAnnotations();
+                          }} />
+        )}
         {showVersions && (
           <VersionsPanel onPublished={() => touch()}
                          onImport={() => setImporting(true)}

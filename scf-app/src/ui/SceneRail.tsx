@@ -16,8 +16,10 @@
  * that matter rather than going blank.
  */
 
-import { useMemo, useState } from "react";
-import { actOutline, deriveStructure } from "@scf-core/structure.ts";
+import { Fragment, useMemo, useState } from "react";
+import {
+  actOutline, deriveStructure, orphanedScenes, sceneOrderHint,
+} from "@scf-core/structure.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import { useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
@@ -48,6 +50,8 @@ export function SceneRail(): JSX.Element {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [kind, setKind] = useState<FilterKind>("character");
   const [subjectId, setSubjectId] = useState<string>("");
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [dropBefore, setDropBefore] = useState<number | "end" | null>(null);
 
   const headings = useQuery(
     "SELECT sl.line_order, sl.content, sl.scene_id " +
@@ -67,9 +71,18 @@ export function SceneRail(): JSX.Element {
       ? null : new Set(matching.map((r) => Number(r["scene_id"]))),
     [subjectId, matching]);
 
+  // The script owns the order. Without this the rail kept rendering the
+  // pre-move order after a drag, because scene_number had not changed.
+  const orderHint = useMemo(() => sceneOrderHint(headings), [headings]);
   const structure = useMemo(
-    () => deriveStructure(scenes, acts, sequences),
-    [scenes, acts, sequences]);
+    () => deriveStructure(scenes, acts, sequences, orderHint),
+    [scenes, acts, sequences, orderHint]);
+  // Derived, never written. A scene cut from the script keeps its record
+  // and everything linked to it; what it loses is a POSITION, and that
+  // is what the badge says.
+  const orphans = useMemo(
+    () => new Set(orphanedScenes(scenes, orderHint)),
+    [scenes, orderHint]);
   const sceneById = useMemo(
     () => new Map(scenes.map((s) => [Number(s["id"]), s])), [scenes]);
   const headingFor = useMemo(() => {
@@ -108,13 +121,63 @@ export function SceneRail(): JSX.Element {
   }, [structure]);
   const allCollapsed = collapsed.size >= allKeys.length && allKeys.length > 0;
 
+  /**
+   * Drag a scene to reorder it.
+   *
+   * The drop moves the scene's whole block in the SCRIPT — heading plus
+   * everything down to the next heading — and the scene entity is never
+   * touched, so beats, shots and links follow with no work. Dragging is
+   * disabled while a filter is on: "before this scene" is not a position
+   * you can trust when scenes between them are hidden. It is also
+   * disabled for a scene with no heading yet, since there is no block to
+   * move.
+   */
+  const draggable = allowed === null;
+  const dropOn = (target: number | "end"): void => {
+    const source = dragging;
+    setDragging(null);
+    setDropBefore(null);
+    if (source === null || source === target) return;
+    scriptViewHandle.moveScene?.(
+      source, target === "end" ? null : target);
+  };
+
   const sceneRow = (sceneId: number): JSX.Element | null => {
     if (!keep(sceneId)) return null;
     const scene = sceneById.get(sceneId);
     const lineOrder = headingFor.get(sceneId);
     const number = scene?.["scene_number"];
+    const canDrag = draggable && lineOrder !== undefined;
+    const orphaned = orphans.has(sceneId);
     return (
-      <li key={sceneId} className="rail-scene">
+      <li key={sceneId}
+          className={"rail-scene" +
+            (dragging === sceneId ? " rail-dragging" : "") +
+            (dropBefore === sceneId ? " rail-drop-before" : "")}
+          draggable={canDrag}
+          onDragStart={(e) => {
+            if (!canDrag) return;
+            setDragging(sceneId);
+            e.dataTransfer.effectAllowed = "move";
+            // Firefox needs some payload for a drag to start at all.
+            e.dataTransfer.setData("text/plain", String(sceneId));
+          }}
+          onDragEnd={() => {
+            setDragging(null);
+            setDropBefore(null);
+          }}
+          onDragOver={(e) => {
+            if (dragging === null || dragging === sceneId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            setDropBefore(sceneId);
+          }}
+          onDragLeave={() =>
+            setDropBefore((x) => (x === sceneId ? null : x))}
+          onDrop={(e) => {
+            e.preventDefault();
+            dropOn(sceneId);
+          }}>
         <span className="rail-number">
           {number === null || number === undefined ? "—" : String(number)}
         </span>
@@ -129,6 +192,16 @@ export function SceneRail(): JSX.Element {
                 }}>
           {String(scene?.["name"] ?? sceneLabel(scene))}
         </button>
+        {orphaned && (
+          <span className="rail-orphan"
+                title={"Not in the screenplay. The scene record and " +
+                       "everything linked to it are untouched — it has no " +
+                       "number and belongs to no act until it is back in " +
+                       "the script. Mark it 'cut' yourself if that is what " +
+                       "you mean."}>
+            not in script
+          </span>
+        )}
         <button className="scene-chip" title="Open the scene record"
                 onClick={() => void openEntityRow("scene", sceneId)}>
           ⛭
@@ -213,10 +286,14 @@ export function SceneRail(): JSX.Element {
                       // No sequence over these scenes: list them at the
                       // act's level rather than indenting for an empty
                       // grouping.
+                      // A run with no sequence lists its scenes at the
+                      // act's level. They are already <li>s, so wrapping
+                      // them in another one nested li inside li — invalid,
+                      // and React says so on every render.
                       return (
-                        <li key={`bare:${String(i)}`} className="rail-flat">
+                        <Fragment key={`bare:${String(i)}`}>
                           {group.sceneIds.map(sceneRow)}
-                        </li>
+                        </Fragment>
                       );
                     }
                     const seq = group.sequence;
@@ -277,10 +354,34 @@ export function SceneRail(): JSX.Element {
           </li>
         ))}
 
+        {dragging !== null && (
+          <li className={"rail-drop-end" +
+                (dropBefore === "end" ? " rail-drop-before" : "")}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDropBefore("end");
+              }}
+              onDragLeave={() =>
+                setDropBefore((x) => (x === "end" ? null : x))}
+              onDrop={(e) => {
+                e.preventDefault();
+                dropOn("end");
+              }}>
+            drop here to move to the end
+          </li>
+        )}
+
         {headings.length === 0 && (
           <li className="muted rail-empty">no screenplay yet</li>
         )}
       </ul>
+
+      {allowed !== null && headings.length > 0 && (
+        <div className="rail-filter-note muted">
+          Clear the filter to drag scenes into a new order.
+        </div>
+      )}
     </nav>
   );
 }

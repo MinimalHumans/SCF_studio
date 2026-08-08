@@ -15,7 +15,10 @@
 
 import type { Row, SqlExec } from "@scf-core/db.ts";
 import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
-import { deriveStructure, scenePositions } from "@scf-core/structure.ts";
+import {
+  deriveStructure, sceneOrderHint, scenePositions, type Structure,
+} from "@scf-core/structure.ts";
+import { restampShotNumber } from "@scf-core/shots.ts";
 
 export type StructureKind = "act" | "sequence";
 
@@ -69,9 +72,127 @@ function writeRef(row: ScreenplayRow, ref: StructureRef): void {
   row.metadata = { ...(row.metadata ?? {}), structureRef: ref };
 }
 
+/**
+ * Act and sequence numbers follow their boundaries.
+ *
+ * Exported because the Structure tab moves boundaries too, and used to
+ * write `start_scene_id` and stop — so dragging a boundary there left
+ * every number stale until the next SCRIPT commit, which is a strange
+ * thing to have to know. Both callers run the same pass now.
+ *
+ * Unlike scene numbers these are not gated on the numbering mode: an act
+ * number is a structural label the app has always owned, and no crew
+ * holds paper on one. Pass a structure you have already derived, or
+ * leave it out to derive from the database.
+ */
+export async function renumberSpans(
+    exec: SqlExec, structure?: Structure): Promise<void> {
+  let derived = structure;
+  if (derived === undefined) {
+    const scenes = await exec("SELECT id, scene_number, name FROM scene");
+    const acts = await exec(
+      "SELECT id, name, act_number, start_scene_id FROM act");
+    const sequences = await exec(
+      "SELECT id, name, sequence_number, start_scene_id, act_id " +
+      "FROM sequence");
+    const headings = await exec(
+      "SELECT scene_id, line_order FROM screenplay_lines " +
+      "WHERE line_type = 'heading' ORDER BY line_order");
+    derived = deriveStructure(scenes, acts, sequences,
+                              sceneOrderHint(headings));
+  }
+  for (const [i, span] of derived.acts.entries()) {
+    await exec("UPDATE act SET act_number = ? WHERE id = ? AND " +
+               "(act_number IS NULL OR act_number != ?)",
+               [i + 1, span.id, i + 1]);
+  }
+  for (const [i, span] of derived.sequences.entries()) {
+    await exec("UPDATE sequence SET sequence_number = ? WHERE id = ? AND " +
+               "(sequence_number IS NULL OR sequence_number != ?)",
+               [i + 1, span.id, i + 1]);
+  }
+}
+
+/**
+ * Move an act or sequence boundary off a scene that is leaving.
+ *
+ * Acts and sequences are anchored to a START SCENE, so moving the scene
+ * that anchors one drags the whole span with it: dropping the first
+ * scene of act one into act two made act one start there too, put act
+ * two ahead of it, and left every scene in between belonging to no act.
+ * The model was behaving correctly and the result was nonsense, because
+ * moving a scene BETWEEN acts should change the scene's act, not the
+ * act's position.
+ *
+ * So a span whose anchor moves re-anchors to the scene that now sits
+ * where the old one did — the scene that follows it in the order BEFORE
+ * the move. The boundary stays put and the scene travels, which is what
+ * dragging it meant.
+ *
+ * When the moved scene was the last in the script there is no successor,
+ * and the span follows it: that is the only remaining reading, and
+ * structureFindings reports the shape either way.
+ */
+export async function reanchorSpansForMove(
+    exec: SqlExec, movedSceneId: number,
+    orderBefore: readonly number[]): Promise<number> {
+  const at = orderBefore.indexOf(movedSceneId);
+  const successor = at === -1 ? undefined : orderBefore[at + 1];
+  if (successor === undefined) return 0;
+  let moved = 0;
+  for (const table of ["act", "sequence"] as const) {
+    const rows = await exec(
+      `SELECT id FROM ${table} WHERE start_scene_id = ?`, [movedSceneId]);
+    for (const row of rows) {
+      await exec(
+        `UPDATE ${table} SET start_scene_id = ?, ` +
+        "updated_at = datetime('now') WHERE id = ?",
+        [successor, row["id"] as number]);
+      moved += 1;
+    }
+  }
+  return moved;
+}
+
+export type NumberingMode = "derived" | "fixed";
+
+/**
+ * How scene numbers are maintained, stored on the project row.
+ *
+ * `derived` — recomputed from the script's order at every commit.
+ * `fixed`   — never touched. What an imported script needs, and the
+ *             first real step toward production locking.
+ *
+ * Absent means `derived`: a project with no stored preference is one the
+ * app has always been free to renumber.
+ */
+export async function numberingMode(exec: SqlExec): Promise<NumberingMode> {
+  try {
+    const rows = await exec(
+      "SELECT scene_numbering FROM project ORDER BY id LIMIT 1");
+    return String(rows[0]?.["scene_numbering"] ?? "") === "fixed"
+      ? "fixed" : "derived";
+  } catch {
+    // Older projects predate the column; initDatabase ALTER-adds it on
+    // open, but a commit racing that must not throw.
+    return "derived";
+  }
+}
+
+export async function setNumberingMode(
+    exec: SqlExec, mode: NumberingMode): Promise<void> {
+  await exec(
+    "UPDATE project SET scene_numbering = ? WHERE id = " +
+    "(SELECT id FROM project ORDER BY id LIMIT 1)", [mode]);
+}
+
 export interface StructureCommitResult {
   actsCreated: number;
   sequencesCreated: number;
+  /** Scenes whose number was recomputed from the script's order. */
+  scenesRenumbered: number;
+  /** Shot codes restamped to follow their scene's new number. */
+  shotsRestamped: number;
   /** Sections whose entity was renamed to follow the line. */
   renamed: number;
   boundariesSet: number;
@@ -160,7 +281,7 @@ export async function commitStructure(
     exec: SqlExec, rows: ScreenplayRow[],
     createNew: boolean): Promise<StructureCommitResult> {
   const result: StructureCommitResult = {
-    actsCreated: 0, sequencesCreated: 0, renamed: 0, boundariesSet: 0,
+    actsCreated: 0, sequencesCreated: 0, scenesRenumbered: 0, shotsRestamped: 0, renamed: 0, boundariesSet: 0,
     membershipRows: 0, unexplainedMembership: 0, danglingSections: 0,
   };
 
@@ -230,26 +351,83 @@ export async function commitStructure(
   existing = await load();
   const scenes = await exec(
     "SELECT id, scene_number, name FROM scene");
-  const structure = deriveStructure(scenes, existing.act, existing.sequence);
+  // The script owns scene order, so the derivation must read it rather
+  // than the stored numbers it is about to recompute.
+  const headings = await exec(
+    "SELECT scene_id, line_order FROM screenplay_lines " +
+    "WHERE line_type = 'heading' ORDER BY line_order");
+  const orderHint = sceneOrderHint(headings);
+  const structure = deriveStructure(
+    scenes, existing.act, existing.sequence, orderHint);
 
-  // Numbers follow the boundaries. They are labels, not order, so the
-  // app keeps them true while the script is live; a production that
-  // locks its numbering will want this switched off at that point.
-  for (const [i, span] of structure.acts.entries()) {
-    await exec("UPDATE act SET act_number = ? WHERE id = ? AND " +
-               "(act_number IS NULL OR act_number != ?)",
-               [i + 1, span.id, i + 1]);
+  /*
+   * SCENE numbers follow the script's order.
+   *
+   * They are labels for a position, not the position itself — which is
+   * why they can be recomputed at all. Before this, a scene moved in the
+   * script kept its old number, so the rail, the outlines and every
+   * "sc 12 — …" label disagreed with the page.
+   *
+   * NUMBERING MODE is the gate. `derived` keeps them true while the
+   * script is live; `fixed` never touches them, which is what an
+   * imported script needs — a production's own numbering is data, may be
+   * gapped or out of sequence, and renumbering it on the first commit
+   * would destroy it silently. Imports set `fixed`; a blank screenplay
+   * gets `derived`. This is the smallest piece of production LOCKING and
+   * it could not be deferred, because scene renumbering is meaningless
+   * without it.
+   *
+   * A scene with no heading in the script has no position, so its number
+   * is cleared rather than left pointing at a place it no longer holds.
+   */
+  if (await numberingMode(exec) === "derived") {
+    const positioned = structure.scenes.filter((s) =>
+      orderHint.has(s.id));
+    for (const [i, scene] of positioned.entries()) {
+      await exec(
+        "UPDATE scene SET scene_number = ?, updated_at = datetime('now') " +
+        "WHERE id = ? AND (scene_number IS NULL OR scene_number != ?)",
+        [i + 1, scene.id, i + 1]);
+    }
+    for (const scene of structure.scenes) {
+      if (orderHint.has(scene.id)) continue;
+      await exec(
+        "UPDATE scene SET scene_number = NULL WHERE id = ? AND " +
+        "scene_number IS NOT NULL", [scene.id]);
+    }
+    result.scenesRenumbered = positioned.length;
+
+    /*
+     * Shot codes track their scene's number while numbering is derived.
+     *
+     * shots.ts protects a stored code because `42A` is an identifier a
+     * crew holds on paper — but nobody holds paper on an unlocked
+     * script, and `42A` sitting in a scene now numbered 43 is not a
+     * stable identifier, it is a stale one. The same flag governs both:
+     * `fixed` freezes scene numbers and shot codes together, which is
+     * exactly the state a distributed shot list needs.
+     */
+    for (const [i, scene] of positioned.entries()) {
+      const shots = await exec(
+        "SELECT id, shot_number FROM shot WHERE scene_id = ?", [scene.id]);
+      for (const shot of shots) {
+        const next = restampShotNumber(
+          (shot["shot_number"] ?? null) as string | null, i + 1);
+        if (next === null) continue;
+        await exec(
+          "UPDATE shot SET shot_number = ?, updated_at = datetime('now') " +
+          "WHERE id = ?", [next, shot["id"] as number]);
+        result.shotsRestamped += 1;
+      }
+    }
   }
-  for (const [i, span] of structure.sequences.entries()) {
-    await exec("UPDATE sequence SET sequence_number = ? WHERE id = ? AND " +
-               "(sequence_number IS NULL OR sequence_number != ?)",
-               [i + 1, span.id, i + 1]);
-  }
+
+  await renumberSpans(exec, structure);
 
   // Materialize scene_sequence so existing queries keep working. The
   // boundary is the truth; these rows are its shadow.
   const positions = new Map(
-    scenePositions(scenes).map((s) => [s.id, s.index]));
+    scenePositions(scenes, orderHint).map((s) => [s.id, s.index]));
   const links = await exec(
     "SELECT id, scene_id, sequence_id FROM scene_sequence");
   const have = new Set(links.map((r) =>

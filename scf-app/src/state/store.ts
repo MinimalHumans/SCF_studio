@@ -179,7 +179,10 @@ export const useStore = create<AppState>((set, get) => ({
   lastSavedRevision: 0,
   saving: false,
 
-  navMode: "subject",
+  // The script is what a project is FOR: opening anywhere else means a
+  // click before you can write. Every open path sets this too, so
+  // closing one project and opening another lands on the script again.
+  navMode: "script",
   selectedQuery: null,
   selectedEntityType: null,
   selectedSubject: null,
@@ -204,7 +207,7 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:last-session", "Hollow Creek (demo)");
       localStorage.setItem("scf:auto-resume", "1");
       const rev = get().revision + 1;
-      set({ schemaCollapsed: COLLAPSE_ALL,
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: "Hollow Creek (demo)",
             fileToken: null, lastSession: "Hollow Creek (demo)",
             revision: rev, lastSavedRevision: rev });
@@ -229,7 +232,7 @@ export const useStore = create<AppState>((set, get) => ({
       // file, and Chromium re-asks for write permission once.
       const fileToken = await recallHandle();
       const rev = get().revision + 1;
-      set({ schemaCollapsed: COLLAPSE_ALL,
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: `${name}`, fileToken,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
@@ -248,7 +251,7 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:last-session", opened.name);
       await rememberHandle(opened.token);
       const rev = get().revision + 1;
-      set({ schemaCollapsed: COLLAPSE_ALL,
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
             revision: rev, lastSavedRevision: rev });
@@ -266,7 +269,7 @@ export const useStore = create<AppState>((set, get) => ({
       await initDatabase(client.exec, registry,
                          { editorVersion: EDITOR_VERSION });
       const rev = get().revision + 1;
-      set({ schemaCollapsed: COLLAPSE_ALL,
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: "Untitled.scf", fileToken: null,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
@@ -278,12 +281,18 @@ export const useStore = create<AppState>((set, get) => ({
   /** Back to the start screen. The OPFS working copy stays — Resume
    * still works — but only the .scf file is durable. */
   closeProject: async () => {
+    // Leave the workbench FIRST. Closing the database out from under
+    // mounted views left their in-flight queries — and the script
+    // editor's blur-triggered commit — resolving against no database,
+    // which is where the "no database open" rejections came from.
+    set({ phase: "start", fileToken: null, errorMessage: null,
+          navMode: "script", openRow: null, draft: null,
+          selectedSubject: null });
     await client.close();
     // Closing is deliberate: forget the file so the next boot offers the
     // start screen rather than silently reopening what was closed.
     await forgetHandle();
     localStorage.setItem("scf:auto-resume", "0");
-    set({ phase: "start", fileToken: null, errorMessage: null });
   },
 
   saveProject: async () => {

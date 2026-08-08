@@ -8,6 +8,9 @@ import { useRefNames } from "./useRefNames.ts";
 import { NAVIGABLE_SUBJECTS, type NavigableSubject }
   from "../state/registryGraph.ts";
 import { q } from "@scf-core/db.ts";
+import {
+  SCENE_ORDER_BY, SCENE_ORDER_JOIN,
+} from "@scf-core/structure.ts";
 
 /**
  * Subject-oriented navigation — the default mode. Pick a subject type,
@@ -25,8 +28,7 @@ export function SubjectNav(): JSX.Element {
   // and every shot "Shot #1".
   const rows = useQuery(
     subjectType === "scene"
-      ? "SELECT * FROM scene " +
-        "ORDER BY (scene_number IS NULL), scene_number, id"
+      ? `SELECT s.* FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`
       : subjectType === "shot"
         ? "SELECT * FROM shot ORDER BY scene_id, shot_order, id"
         : `SELECT * FROM ${q(subjectType)} ORDER BY ${q(nameField)}`);

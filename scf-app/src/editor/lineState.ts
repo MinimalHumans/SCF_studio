@@ -62,7 +62,15 @@ export const setLineType = StateEffect.define<{
   line: number; type: BlockType;
 }>();
 
-/** Replace the whole entry array (document load). */
+/**
+ * Replace the whole entry array (document load, paste, scene move).
+ *
+ * Paste and scene moves both go through this rather than letting
+ * mapThroughTransaction guess. Its inference is right for typed input
+ * and wrong for a paste, which knows exactly what its lines are — and
+ * its split rule would hand the pasted text the identity of the line it
+ * pushed down, the same hijack that caused the scene-linking saga.
+ */
 export const loadLines = StateEffect.define<LineEntry[]>();
 
 export const TYPE_CYCLE: BlockType[] = [
@@ -93,6 +101,12 @@ let minter: IdMinter = () => crypto.randomUUID();
 /** Tests inject a deterministic minter. */
 export function setIdMinter(m: IdMinter): void {
   minter = m;
+}
+
+/** Mint a line id through the same source, so paste and scene moves are
+ * deterministic under an injected minter too. */
+export function mintLineId(): string {
+  return minter();
 }
 
 function mapThroughTransaction(

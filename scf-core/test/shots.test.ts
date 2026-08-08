@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { nextShotNumber, shotCode, shotLetter } from "../src/shots.ts";
+import { nextShotNumber, shotCode, shotLetter, restampShotNumber } from "../src/shots.ts";
 
 describe("shot letters run like spreadsheet columns", () => {
   test("A through Z, then AA", () => {
@@ -54,5 +54,30 @@ describe("nextShotNumber", () => {
     // "42X-INSERT" is not a code this function would generate, so it
     // simply never collides.
     expect(nextShotNumber(42, ["42X-INSERT"])).toBe("42A");
+  });
+});
+
+describe("restampShotNumber", () => {
+  test("swaps the scene prefix and keeps the letter", () => {
+    expect(restampShotNumber("42A", 43)).toBe("43A");
+    expect(restampShotNumber("7C", 1)).toBe("1C");
+    expect(restampShotNumber("12AB", 3)).toBe("3AB");
+  });
+
+  test("returns null when nothing should change", () => {
+    expect(restampShotNumber("42A", 42)).toBeNull();
+    expect(restampShotNumber(null, 3)).toBeNull();
+    expect(restampShotNumber("", 3)).toBeNull();
+    // No scene number to build on.
+    expect(restampShotNumber("42A", null)).toBeNull();
+    // Not a code this scheme issued — an authored one stays authored.
+    expect(restampShotNumber("pickup-3", 5)).toBeNull();
+    expect(restampShotNumber("42", 5)).toBeNull();
+  });
+
+  test("round-trips against shotCode", () => {
+    for (let i = 0; i < 30; i++) {
+      expect(restampShotNumber(shotCode(9, i), 4)).toBe(shotCode(4, i));
+    }
   });
 });

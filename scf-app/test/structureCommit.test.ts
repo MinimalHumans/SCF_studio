@@ -1,17 +1,34 @@
-import { beforeAll, afterAll, describe, expect, test } from "vitest";
+import {
+  beforeAll, beforeEach, afterAll, describe, expect, test,
+} from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { openNodeDatabase } from "@scf-core/node.ts";
 import { initDatabase } from "@scf-core/db.ts";
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
-import { deriveStructure } from "@scf-core/structure.ts";
+import {
+  SCENE_ORDER_BY, SCENE_ORDER_JOIN, deriveStructure, sceneOrderHint,
+  scenePositions,
+} from "@scf-core/structure.ts";
 import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
 import {
   classifySection, commitStructure, planCommitStructure,
+  reanchorSpansForMove, setNumberingMode,
 } from "../src/editor/structureCommit.ts";
+import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../../scf-core/registry/registry.json", import.meta.url));
+
+async function freshDb(): Promise<ReturnType<typeof openNodeDatabase>> {
+  const registry = loadRegistry(JSON.parse(
+    await readFile(REGISTRY, "utf8")) as RegistryJson);
+  const db = openNodeDatabase(":memory:");
+  await initDatabase(db.exec, registry);
+  await initScreenplayTables(db.exec);
+  await db.exec("INSERT INTO project (name) VALUES ('Test')");
+  return db;
+}
 
 describe("classifySection reads the text before the depth", () => {
   test("an ACT is an act at any depth", () => {
@@ -185,5 +202,296 @@ describe("commitStructure", () => {
     const kept = await db.exec(
       "SELECT COUNT(*) AS n FROM scene_sequence WHERE scene_id = 1");
     expect(kept[0]!["n"]).toBe(1);
+  });
+});
+
+/**
+ * Scene numbers follow the script's order — but only when the project
+ * says they may. An imported script's numbering is the production's own
+ * data, and renumbering it on the first commit would destroy it.
+ */
+describe("scene renumbering", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  const script = async (order: number[]): Promise<void> => {
+    await db.exec("DELETE FROM screenplay_lines");
+    for (const [i, sceneId] of order.entries()) {
+      await db.exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+        "scene_id, uuid) VALUES (?, 'heading', ?, ?, ?)",
+        [i * 10, `SCENE ${String(sceneId)}`, sceneId, `H${String(sceneId)}`]);
+    }
+  };
+  const numbers = async (): Promise<Array<number | null>> => {
+    const rows = await db.exec(
+      "SELECT id, scene_number FROM scene ORDER BY id");
+    return rows.map((r) => (r["scene_number"] ?? null) as number | null);
+  };
+
+  beforeEach(async () => {
+    db = await freshDb();
+    for (const name of ["KITCHEN", "MOON BASE", "RIDGE"]) {
+      await db.exec("INSERT INTO scene (name) VALUES (?)", [name]);
+    }
+  });
+
+  test("derived: numbers come from the script's order", async () => {
+    await script([1, 2, 3]);
+    await commitStructure(db.exec, [], true);
+    expect(await numbers()).toEqual([1, 2, 3]);
+  });
+
+  test("derived: moving a scene renumbers from its new position",
+       async () => {
+    await script([1, 2, 3]);
+    await commitStructure(db.exec, [], true);
+    // Scene 2 dragged to the end.
+    await script([1, 3, 2]);
+    await commitStructure(db.exec, [], true);
+    expect(await numbers()).toEqual([1, 3, 2]);
+  });
+
+  test("derived: a scene not in the script loses its number", async () => {
+    await script([1, 2, 3]);
+    await commitStructure(db.exec, [], true);
+    await script([1, 3]);
+    await commitStructure(db.exec, [], true);
+    // Scene 2 is orphaned: it has no position, so no number.
+    expect(await numbers()).toEqual([1, null, 2]);
+  });
+
+  test("fixed: an imported production's numbering is never touched",
+       async () => {
+    await db.exec(
+      "UPDATE scene SET scene_number = 12 WHERE id = 1");
+    await db.exec(
+      "UPDATE scene SET scene_number = 12 WHERE id = 2");
+    await db.exec(
+      "UPDATE scene SET scene_number = 47 WHERE id = 3");
+    await setNumberingMode(db.exec, "fixed");
+    await script([1, 2, 3]);
+    await commitStructure(db.exec, [], true);
+    // Gaps and duplicates survive: they are the production's data.
+    expect(await numbers()).toEqual([12, 12, 47]);
+  });
+
+  test("a project with no stored preference renumbers", async () => {
+    // Absent means derived — a project the app has always been free to
+    // renumber must not silently freeze.
+    await db.exec("DELETE FROM project");
+    await script([1, 2, 3]);
+    await commitStructure(db.exec, [], true);
+    expect(await numbers()).toEqual([1, 2, 3]);
+  });
+});
+
+/**
+ * Moving a scene must move the SCENE, not the act it happens to anchor.
+ *
+ * Acts and sequences are anchored to a start scene, so dragging the
+ * first scene of act one into act two dragged act one's boundary with
+ * it: act one started at position 9, act two sat ahead of it, and every
+ * scene between belonged to no act at all.
+ */
+describe("boundaries stay put when their anchor scene moves", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  beforeEach(async () => {
+    db = await freshDb();
+    for (const name of ["A", "B", "C", "D"]) {
+      await db.exec("INSERT INTO scene (name) VALUES (?)", [name]);
+    }
+    // Act 1 anchored on scene 1, act 2 on scene 3.
+    await db.exec(
+      "INSERT INTO act (name, start_scene_id) VALUES ('One', 1)");
+    await db.exec(
+      "INSERT INTO act (name, start_scene_id) VALUES ('Two', 3)");
+  });
+
+  const anchors = async (): Promise<number[]> => {
+    const rows = await db.exec(
+      "SELECT start_scene_id FROM act ORDER BY id");
+    return rows.map((r) => r["start_scene_id"] as number);
+  };
+
+  test("the act re-anchors to the scene that now starts it", async () => {
+    // Scene 1 dragged into act two. Act one should still begin where it
+    // began — with scene 2, which is now its first scene.
+    expect(await reanchorSpansForMove(db.exec, 1, [1, 2, 3, 4])).toBe(1);
+    expect(await anchors()).toEqual([2, 3]);
+  });
+
+  test("a scene that anchors nothing changes nothing", async () => {
+    expect(await reanchorSpansForMove(db.exec, 2, [1, 2, 3, 4])).toBe(0);
+    expect(await anchors()).toEqual([1, 3]);
+  });
+
+  test("the last scene has no successor, so the span follows it",
+       async () => {
+    await db.exec("UPDATE act SET start_scene_id = 4 WHERE id = 2");
+    expect(await reanchorSpansForMove(db.exec, 4, [1, 2, 3, 4])).toBe(0);
+    expect(await anchors()).toEqual([1, 4]);
+  });
+
+  test("sequences re-anchor on the same terms", async () => {
+    await db.exec(
+      "INSERT INTO sequence (name, start_scene_id) VALUES ('S1', 1)");
+    expect(await reanchorSpansForMove(db.exec, 1, [1, 2, 3, 4])).toBe(2);
+    const rows = await db.exec("SELECT start_scene_id FROM sequence");
+    expect(rows[0]!["start_scene_id"]).toBe(2);
+  });
+
+  test("act membership after the move is what dragging meant", async () => {
+    // Scene 1 moves to the end: script order becomes 2, 3, 4, 1.
+    await reanchorSpansForMove(db.exec, 1, [1, 2, 3, 4]);
+    for (const [i, sceneId] of [2, 3, 4, 1].entries()) {
+      await db.exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+        "scene_id, uuid) VALUES (?, 'heading', 'H', ?, ?)",
+        [i * 10, sceneId, `H${String(sceneId)}`]);
+    }
+    await commitStructure(db.exec, [], true);
+    const scenes = await db.exec("SELECT id, scene_number FROM scene");
+    const acts = await db.exec("SELECT id, start_scene_id FROM act");
+    const structure = deriveStructure(
+      scenes, acts, [],
+      new Map([[2, 0], [3, 1], [4, 2], [1, 3]]));
+    // Act one begins with scene 2; act two still begins at scene 3; the
+    // moved scene lands in act two rather than stranding anything.
+    expect(structure.actOfScene.get(2)).toBe(1);
+    expect(structure.actOfScene.get(3)).toBe(2);
+    expect(structure.actOfScene.get(1)).toBe(2);
+  });
+});
+
+/** Shot codes track their scene's number while numbering is derived. */
+describe("shot codes follow the scene", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  beforeEach(async () => {
+    db = await freshDb();
+    await db.exec("INSERT INTO scene (name) VALUES ('A')");
+    await db.exec("INSERT INTO scene (name) VALUES ('B')");
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "scene_id, uuid) VALUES (0, 'heading', 'H', 1, 'H1')");
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "scene_id, uuid) VALUES (10, 'heading', 'H', 2, 'H2')");
+  });
+
+  const codes = async (): Promise<string[]> => {
+    const rows = await db.exec(
+      "SELECT shot_number FROM shot ORDER BY id");
+    return rows.map((r) => String(r["shot_number"]));
+  };
+
+  test("derived: 2A becomes 1A when its scene becomes scene 1",
+       async () => {
+    await db.exec(
+      "INSERT INTO shot (name, scene_id, shot_number) " +
+      "VALUES ('', 2, '2A')");
+    await db.exec(
+      "INSERT INTO shot (name, scene_id, shot_number) " +
+      "VALUES ('', 2, '2B')");
+    // Scene 2 is second in the script, so it numbers 2 — no change yet.
+    await commitStructure(db.exec, [], true);
+    expect(await codes()).toEqual(["2A", "2B"]);
+
+    // Now it moves to the front.
+    await db.exec(
+      "UPDATE screenplay_lines SET line_order = -10 WHERE uuid = 'H2'");
+    await commitStructure(db.exec, [], true);
+    expect(await codes()).toEqual(["1A", "1B"]);
+  });
+
+  test("fixed: a code a crew may hold on paper is never rewritten",
+       async () => {
+    await db.exec(
+      "INSERT INTO shot (name, scene_id, shot_number) " +
+      "VALUES ('', 2, '2A')");
+    await setNumberingMode(db.exec, "fixed");
+    await db.exec(
+      "UPDATE screenplay_lines SET line_order = -10 WHERE uuid = 'H2'");
+    await commitStructure(db.exec, [], true);
+    expect(await codes()).toEqual(["2A"]);
+  });
+
+  test("an unparseable code is left alone", async () => {
+    await db.exec(
+      "INSERT INTO shot (name, scene_id, shot_number) " +
+      "VALUES ('', 1, 'pickup-3')");
+    await commitStructure(db.exec, [], true);
+    expect(await codes()).toEqual(["pickup-3"]);
+  });
+});
+
+/**
+ * The SQL twin of scenePositions must agree with it, or a picker and the
+ * editor show a different film.
+ */
+describe("SCENE_ORDER_BY matches scenePositions", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  beforeEach(async () => {
+    db = await freshDb();
+    for (const name of ["A", "B", "C", "D"]) {
+      await db.exec("INSERT INTO scene (name) VALUES (?)", [name]);
+    }
+  });
+
+  const sqlOrder = async (): Promise<number[]> => {
+    const rows = await db.exec(
+      `SELECT s.id FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`);
+    return rows.map((r) => r["id"] as number);
+  };
+  const tsOrder = async (): Promise<number[]> => {
+    const scenes = await db.exec("SELECT id, scene_number, name FROM scene");
+    const headings = await db.exec(
+      "SELECT scene_id, line_order FROM screenplay_lines " +
+      "WHERE line_type = 'heading' ORDER BY line_order");
+    return scenePositions(scenes, sceneOrderHint(headings))
+      .map((s) => s.id);
+  };
+  const script = async (order: number[]): Promise<void> => {
+    await db.exec("DELETE FROM screenplay_lines");
+    for (const [i, id] of order.entries()) {
+      await db.exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+        "scene_id, uuid) VALUES (?, 'heading', 'H', ?, ?)",
+        [i * 10, id, `H${String(id)}`]);
+    }
+  };
+
+  test("no screenplay: both fall back to numbers then id", async () => {
+    await db.exec("UPDATE scene SET scene_number = 9 WHERE id = 1");
+    expect(await sqlOrder()).toEqual(await tsOrder());
+    // A numbered scene sorts ahead of unnumbered ones even when its
+    // number is high — the number is evidence of a position, and having
+    // none is what puts a scene last.
+    expect(await sqlOrder()).toEqual([1, 2, 3, 4]);
+  });
+
+  test("with a screenplay, both follow the script", async () => {
+    await script([3, 1, 4, 2]);
+    expect(await sqlOrder()).toEqual([3, 1, 4, 2]);
+    expect(await sqlOrder()).toEqual(await tsOrder());
+  });
+
+  test("scenes not in the script sort last, in both", async () => {
+    await script([4, 2]);
+    expect(await sqlOrder()).toEqual([4, 2, 1, 3]);
+    expect(await sqlOrder()).toEqual(await tsOrder());
+  });
+
+  test("fixed numbering: the list still follows the page", async () => {
+    // The numbers are frozen on purpose; the ORDER must not be, or a
+    // picker shows the pre-move film.
+    await db.exec("UPDATE scene SET scene_number = id");
+    await setNumberingMode(db.exec, "fixed");
+    await script([4, 3, 2, 1]);
+    await commitStructure(db.exec, [], true);
+    expect(await sqlOrder()).toEqual([4, 3, 2, 1]);
+    expect(await sqlOrder()).toEqual(await tsOrder());
   });
 });

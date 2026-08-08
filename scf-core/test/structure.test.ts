@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import type { Row } from "../src/db.ts";
 import {
-  actOf, actOutline, deriveStructure, scenePositions, sequenceOf,
-  structureFindings,
+  actOf, actOutline, deriveStructure, orphanedScenes, sceneOrderHint,
+  scenePositions, sequenceOf, structureFindings,
 } from "../src/structure.ts";
 
 /** Ten numbered scenes, ids offset from numbers to catch id/number mixups. */
@@ -203,5 +203,130 @@ describe("acts and sequences are independent spans, not a hierarchy", () => {
       const seen = actOutline(structure, a).flatMap((g) => g.sceneIds);
       expect(seen).toEqual(a.sceneIds);
     }
+  });
+});
+
+/**
+ * Story order comes from the SCRIPT when one exists.
+ *
+ * Relying on scene_number-then-id alone was actively wrong twice over:
+ * a blank-written project numbers nothing, so order collapsed to
+ * INSERTION order and a scene added mid-act sorted to the end of the
+ * film; and moving a scene changed the script while every derived view
+ * kept the old order, because nothing it read had moved.
+ */
+describe("scene order from the screenplay", () => {
+  const scenes = [
+    { id: 1, name: "KITCHEN", scene_number: null },
+    { id: 2, name: "MOON BASE", scene_number: null },
+    { id: 3, name: "RIDGE", scene_number: null },
+  ];
+
+  test("with no hint, unnumbered scenes fall back to insertion order", () => {
+    expect(scenePositions(scenes).map((s) => s.id)).toEqual([1, 2, 3]);
+  });
+
+  test("the script's order wins over ids", () => {
+    // Scene 2 dragged to the end: only the headings moved.
+    const hint = sceneOrderHint([
+      { scene_id: 1, line_order: 0 },
+      { scene_id: 3, line_order: 20 },
+      { scene_id: 2, line_order: 40 },
+    ]);
+    expect(scenePositions(scenes, hint).map((s) => s.id))
+      .toEqual([1, 3, 2]);
+  });
+
+  test("the script's order wins over stale stored numbers too", () => {
+    const numbered = [
+      { id: 1, name: "KITCHEN", scene_number: 1 },
+      { id: 2, name: "MOON BASE", scene_number: 2 },
+      { id: 3, name: "RIDGE", scene_number: 3 },
+    ];
+    const hint = sceneOrderHint([
+      { scene_id: 3, line_order: 0 },
+      { scene_id: 1, line_order: 10 },
+      { scene_id: 2, line_order: 20 },
+    ]);
+    expect(scenePositions(numbered, hint).map((s) => s.id))
+      .toEqual([3, 1, 2]);
+  });
+
+  test("an unwritten scene sorts after everything the script places", () => {
+    const hint = sceneOrderHint([{ scene_id: 3, line_order: 0 }]);
+    const order = scenePositions(scenes, hint);
+    expect(order[0]!.id).toBe(3);
+    expect(order.slice(1).map((s) => s.id)).toEqual([1, 2]);
+  });
+
+  test("acts follow the script order, so a moved scene changes act", () => {
+    const hint = sceneOrderHint([
+      { scene_id: 3, line_order: 0 },
+      { scene_id: 1, line_order: 10 },
+      { scene_id: 2, line_order: 20 },
+    ]);
+    const acts = [{ id: 10, name: "One", act_number: 1, start_scene_id: 3 },
+                  { id: 11, name: "Two", act_number: 2, start_scene_id: 1 }];
+    const structure = deriveStructure(scenes, acts, [], hint);
+    expect(structure.actOfScene.get(3)).toBe(10);
+    expect(structure.actOfScene.get(1)).toBe(11);
+    expect(structure.actOfScene.get(2)).toBe(11);
+  });
+
+  test("sceneOrderHint takes the first heading per scene", () => {
+    // Commit enforces one scene per heading, but a half-committed
+    // document can briefly show two.
+    const hint = sceneOrderHint([
+      { scene_id: 1, line_order: 0 },
+      { scene_id: 1, line_order: 30 },
+      { scene_id: 2, line_order: 10 },
+    ]);
+    expect(hint.get(1)).toBe(0);
+    expect(hint.get(2)).toBe(1);
+  });
+
+  test("headings with no scene link are skipped, not counted", () => {
+    const hint = sceneOrderHint([
+      { scene_id: null, line_order: 0 },
+      { scene_id: 2, line_order: 10 },
+    ]);
+    expect(hint.get(2)).toBe(0);
+  });
+});
+
+describe("orphanedScenes", () => {
+  const scenes = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+  test("names the scenes the script does not contain", () => {
+    const hint = sceneOrderHint([
+      { scene_id: 1, line_order: 0 },
+      { scene_id: 3, line_order: 10 },
+    ]);
+    expect(orphanedScenes(scenes, hint)).toEqual([2]);
+  });
+
+  test("a project with no screenplay reports nothing", () => {
+    // Every scene would be 'not in the script', which is noise, not a
+    // finding — an outline is not a broken screenplay.
+    expect(orphanedScenes(scenes, new Map())).toEqual([]);
+  });
+
+  test("the finding is info, and says the record survives", () => {
+    const hint = sceneOrderHint([{ scene_id: 1, line_order: 0 }]);
+    const structure = deriveStructure(
+      [{ id: 1, name: "KITCHEN" }, { id: 2, name: "RIDGE" }], [], [], hint);
+    const findings = structureFindings(structure, [], [], hint);
+    const orphan = findings.filter((f) => f.code === "not-in-script");
+    expect(orphan).toHaveLength(1);
+    expect(orphan[0]!.level).toBe("info");
+    expect(orphan[0]!.rowId).toBe(2);
+    expect(orphan[0]!.message).toContain("untouched");
+  });
+
+  test("no hint means no orphan findings at all", () => {
+    const structure = deriveStructure(
+      [{ id: 1, name: "KITCHEN" }, { id: 2, name: "RIDGE" }], [], []);
+    expect(structureFindings(structure, [], [])
+      .filter((f) => f.code === "not-in-script")).toHaveLength(0);
   });
 });

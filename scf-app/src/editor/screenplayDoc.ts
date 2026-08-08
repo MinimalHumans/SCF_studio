@@ -264,15 +264,24 @@ export function commitPlan(
   return { rows, staleScenes };
 }
 
-/** The sync a stale notice offers: derived scene fields from the edited
- * heading — applied only when the author accepts. */
+/**
+ * The sync a stale notice offers: derived scene fields from the edited
+ * heading — applied only when the author accepts.
+ *
+ * `location` is part of the answer. Without it, renaming a heading from
+ * INT. KITCHEN to INT. GARAGE renamed the scene and left it pointing at
+ * the Kitchen location — a sync that visibly did not sync, which is why
+ * the notice read as unfixable.
+ */
 export function sceneSyncFromHeading(headingText: string): {
   name: string; int_ext: string | null; time_of_day: string | null;
+  location: string | null;
 } {
   const parsed = parseHeading(headingText);
   return {
     name: headingText.trim().replace(/^\./, ""),
     int_ext: parsed.intExt,
     time_of_day: parsed.timeOfDay,
+    location: parsed.locationName,
   };
 }

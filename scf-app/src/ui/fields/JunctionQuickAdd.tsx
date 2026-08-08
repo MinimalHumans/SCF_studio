@@ -3,6 +3,9 @@ import type { EntityDef } from "@scf-core/registry.ts";
 import { newUuid, q } from "@scf-core/db.ts";
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
+import {
+  SCENE_ORDER_BY, SCENE_ORDER_JOIN,
+} from "@scf-core/structure.ts";
 
 /**
  * Junction quick-add — v1's link panel pattern, generalized. Any
@@ -36,10 +39,12 @@ export function JunctionQuickAdd({ edef, anchorField, anchorId }: {
   // alphabetical, which is what a name is for.
   const candidates = useQuery(
     open && target !== undefined
-      ? `SELECT * FROM ${q(target.name)} WHERE ${q(nameField)} LIKE ? ` +
-        (target.name === "scene"
-          ? "ORDER BY (scene_number IS NULL), scene_number, id"
-          : `ORDER BY ${q(nameField)}`) + " LIMIT 30"
+      ? (target.name === "scene"
+          ? `SELECT s.* FROM scene s ${SCENE_ORDER_JOIN} ` +
+            `WHERE s.${q(nameField)} LIKE ? ${SCENE_ORDER_BY}`
+          : `SELECT * FROM ${q(target.name)} ` +
+            `WHERE ${q(nameField)} LIKE ? ORDER BY ${q(nameField)}`) +
+        " LIMIT 30"
       : null,
     [`%${filter}%`]);
 

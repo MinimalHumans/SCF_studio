@@ -5,6 +5,35 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.5
+
+**`project.scene_numbering`** (select `derived` | `fixed`, default
+`derived`).
+
+States whether the editor may recompute `scene.scene_number` from the
+script's order. `derived` keeps the numbers true while the script is
+live; `fixed` means never touch them.
+
+Why it had to exist before scene renumbering could: a screenplay
+imported from a production carries that production's own numbering,
+which may be gapped, out of sequence, or (in the wider world)
+alphanumeric. Renumbering it on the first commit would destroy real data
+silently. Imports set `fixed`; a blank screenplay gets `derived`.
+
+This is the smallest piece of production LOCKING (conventions §9), and
+the gate is the renumber block in `structureCommit`, exactly where §9
+said it would be.
+
+**Consumer note.** `scene_number` is a LABEL for a position, not the
+position itself. Story order comes from the screenplay when one exists —
+the `line_order` of the heading carrying each scene — and falls back to
+`scene_number` then `id` only for scenes with no heading. See
+`scenePositions`/`sceneOrderHint` in `scf-core/src/structure.ts`. A
+consumer that sorts scenes by `scene_number` alone will be wrong about
+any project written blank, and about any scene moved since its last
+commit.
+
+
 ## 2.4
 
 Three additive optional fields. No table changes, no data migration: a

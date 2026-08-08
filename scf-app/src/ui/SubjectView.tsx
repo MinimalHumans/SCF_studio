@@ -13,6 +13,9 @@ import { scopeRank } from "../state/registryGraph.ts";
 import { useQuery } from "./useQuery.ts";
 import { PositionPicker, ReadinessPanel } from "./ReadinessPanel.tsx";
 import { JunctionQuickAdd } from "./fields/JunctionQuickAdd.tsx";
+import {
+  SCENE_ORDER_BY, SCENE_ORDER_JOIN,
+} from "@scf-core/structure.ts";
 
 /**
  * SubjectView — "all things Eleanor": every row addressed to the selected
@@ -29,8 +32,8 @@ export function SubjectView(): JSX.Element | null {
   const { selectedSubject, openEntityRow } = useStore();
   const subject = selectedSubject;
   const scenes = useQuery(
-    "SELECT id, scene_number, name FROM scene " +
-    "ORDER BY (scene_number IS NULL), scene_number, id");
+    `SELECT s.id, s.scene_number, s.name FROM scene s ` +
+    `${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`);
   const [pickedScene, setPickedScene] = useState<number | null>(null);
   const [pickedShot, setPickedShot] = useState<number | null>(null);
   const shots = useQuery(

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
-import { actOutline, deriveStructure } from "@scf-core/structure.ts";
+import {
+  actOutline, deriveStructure, sceneOrderHint,
+} from "@scf-core/structure.ts";
 import { shotCode } from "@scf-core/shots.ts";
 import {
   addBeat, addShot, moveShot, removeBeat, removeShot, SCENE_SCRIPT_SQL,
@@ -28,6 +30,9 @@ export function ShootView(): JSX.Element {
   const [showEmpty, setShowEmpty] = useState(true);
 
   const scenes = useQuery("SELECT id, scene_number, name FROM scene");
+  const headings = useQuery(
+    "SELECT scene_id, line_order FROM screenplay_lines " +
+    "WHERE line_type = 'heading' ORDER BY line_order");
   const acts = useQuery(
     "SELECT id, name, act_number, start_scene_id FROM act");
   const sequences = useQuery(
@@ -40,8 +45,9 @@ export function ShootView(): JSX.Element {
     "shot_size, camera_angle FROM shot ORDER BY shot_order, id");
 
   const structure = useMemo(
-    () => deriveStructure(scenes, acts, sequences),
-    [scenes, acts, sequences]);
+    () => deriveStructure(scenes, acts, sequences,
+                          sceneOrderHint(headings)),
+    [scenes, acts, sequences, headings]);
   const sceneById = useMemo(
     () => new Map(scenes.map((s) => [Number(s["id"]), s])), [scenes]);
   const beatsByScene = useMemo(() => groupBy(beats, "scene_id"), [beats]);

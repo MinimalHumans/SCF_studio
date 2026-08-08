@@ -866,6 +866,53 @@ ul { list-style: none; margin: 0; padding: 0; }
 .sp-gutter-beats { color: var(--amber); font-size: 8px; padding-left: 3px; }
 .beat-control, .tag-control { max-width: 9em; }
 .detached-note { font-size: 11.5px; color: var(--amber); }
+
+/* --- Script integrity ---------------------------------------------- */
+.integrity-flag {
+  font-size: 11.5px;
+  color: var(--amber);
+  border-color: var(--amber);
+}
+.integrity-panel {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 380px;
+  overflow-y: auto; padding: 12px 14px;
+  background: var(--ink-1); border-left: 1px solid var(--line);
+  z-index: 5;
+}
+.integrity-head { display: flex; align-items: center; gap: 8px; }
+.integrity-head h3 { margin: 0; flex: 1; }
+.integrity-panel section { margin-top: 16px; }
+.integrity-panel h4 { margin: 0 0 4px; font-size: 12.5px; }
+.integrity-panel p.muted { margin: 0 0 8px; font-size: 11.5px; }
+.integrity-list { list-style: none; margin: 0; padding: 0; }
+.integrity-list li {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 5px 0; border-top: 1px solid var(--line); font-size: 12px;
+}
+
+.rail-orphan, .structure-number {
+  font-size: 10px; padding: 1px 5px; border-radius: 3px;
+  border: 1px solid var(--line); color: var(--paper-dim);
+  white-space: nowrap;
+}
+.rail-orphan { border-color: var(--amber-dim); color: var(--amber); }
+.structure-number {
+  font-family: var(--mono); color: var(--paper);
+  border-color: var(--amber-dim);
+}
+
+/* --- Scene rail drag ------------------------------------------------ */
+.scene-rail li.rail-scene[draggable="true"] { cursor: grab; }
+.scene-rail li.rail-dragging { opacity: 0.45; cursor: grabbing; }
+.scene-rail li.rail-drop-before { box-shadow: inset 0 2px 0 var(--amber); }
+.rail-drop-end {
+  margin-top: 4px; padding: 8px 6px; text-align: center;
+  font-size: 11px; color: var(--paper-dim);
+  border: 1px dashed var(--line); border-radius: 4px;
+}
+.rail-drop-end.rail-drop-before {
+  border-color: var(--amber); color: var(--amber);
+}
 .versions-panel {
   width: 260px; border-left: 1px solid var(--line);
   padding: 10px 12px; overflow: auto;

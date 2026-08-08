@@ -6,6 +6,9 @@ import {
 } from "../state/displayName.ts";
 import { useQuery } from "./useQuery.ts";
 import { useRefNames } from "./useRefNames.ts";
+import {
+  SCENE_ORDER_BY, SCENE_ORDER_JOIN,
+} from "@scf-core/structure.ts";
 
 export function EntityList({ entity }: { entity: string }): JSX.Element {
   const edef = registry.entities.get(entity);
@@ -16,8 +19,8 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
   const rows = useQuery(
     edef === undefined ? null :
     entity === "scene"
-      ? "SELECT * FROM scene ORDER BY (scene_number IS NULL), " +
-        "scene_number, id LIMIT 500"
+      ? `SELECT s.* FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY} ` +
+        "LIMIT 500"
     : isComposedLink(edef)
       ? `SELECT * FROM ${q(entity)} ORDER BY id LIMIT 500`
       : `SELECT * FROM ${q(entity)} ORDER BY ${q(nameField)} LIMIT 500`);

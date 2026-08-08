@@ -19,6 +19,9 @@ import {
   BriefView, DossierView, ContextStackView, PackageView, ManifestView,
   AccountingView, AudienceView, ProvenanceView,
 } from "./composedViews.tsx";
+import {
+  SCENE_ORDER_BY, SCENE_ORDER_JOIN,
+} from "@scf-core/structure.ts";
 
 /** Rail: the sixteen canonical queries; supported ones run, the rest are
  * listed as planned so the page states its own scope honestly. */
@@ -185,8 +188,7 @@ function ParamPicker({ def, value, values, onChange }: {
   const rows = useQuery(
     edef === undefined ? null :
     isScene
-      ? "SELECT * FROM scene ORDER BY (scene_number IS NULL), " +
-        "scene_number, id"
+      ? `SELECT s.* FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`
     : isShot
       ? (sceneFilter === null
           ? "SELECT * FROM shot ORDER BY scene_id, shot_order, id LIMIT 500"

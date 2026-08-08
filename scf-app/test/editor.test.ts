@@ -316,6 +316,7 @@ describe("screenplayDoc: commit projection", () => {
   test("sceneSyncFromHeading derives fields for the offered sync", () => {
     expect(sceneSyncFromHeading("INT. KITCHEN - DAWN")).toEqual({
       name: "INT. KITCHEN - DAWN", int_ext: "INT", time_of_day: "DAWN",
+      location: "KITCHEN",
     });
   });
 });
@@ -415,3 +416,23 @@ function editorForBlocks(blocks: Block[]): EditorState {
   return EditorState.create({ doc, extensions: [lineState] })
     .update({ effects: loadLines.of(entries) }).state;
 }
+
+/** Sync must repoint the location too: without it, renaming a heading
+ * from KITCHEN to GARAGE left the scene on the Kitchen location — a sync
+ * that visibly did not sync. */
+describe("sceneSyncFromHeading carries the location", () => {
+  test("names the location the heading now says", () => {
+    const synced = sceneSyncFromHeading("INT. GARAGE - NIGHT");
+    expect(synced.location).toBe("GARAGE");
+    expect(synced.int_ext).toBe("INT");
+    expect(synced.name).toBe("INT. GARAGE - NIGHT");
+  });
+
+  test("stays total on a heading with no prefix", () => {
+    // parseHeading treats a bare line as the location itself, which is
+    // what commit-time location creation does too — the sync must not
+    // disagree with it.
+    expect(sceneSyncFromHeading("SOMEWHERE ELSE").location)
+      .toBe("SOMEWHERE ELSE");
+  });
+});

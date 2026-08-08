@@ -327,12 +327,14 @@ this application), or **both**.
   would change the answer to every canonical query, and whether a
   consumer can still ask for history. Until then, treat a `cut` row as
   present unless you filter it yourself.
-- **Locking.** *(editor)* Everything is live and recomputed: scene and
-  sequence numbers renumber from the boundaries at every commit. A
-  production locks its numbering at some point, after which the numbers
-  are paperwork rather than derivations. The single place to gate is the
-  renumber block in `commitStructure`. Nothing in the format needs to
-  change — a locked project is one the editor stops renumbering.
+- **Locking, beyond numbering.** *(editor)* The numbering half is built
+  — see Resolved. What is not: revision colours, A-pages, locked page
+  breaks, and a stored record of codes that once existed so a reissued
+  shot list cannot reuse a retired one. `nextShotNumber` continues from
+  the highest code rather than backfilling, but the database keeps no
+  memory of deleted codes, so deleting the last shot in a scene frees its
+  code again. A production that needs the stronger promise wants a stored
+  counter.
 - **Merging two files.** *(editor, later)* The live use for junction
   natural keys (§5), and the point at which uuids stop being enough.
   Matching links requires resolving their endpoints first, which is a
@@ -352,3 +354,47 @@ this application), or **both**.
   connections. §5.
 - **Sequences crossing act boundaries** *(editor)* — legal and
   unrestricted. The renderers were the thing that had to change. §4.
+- **Scene order, and the numbering half of locking** *(both, schema 2.5)*
+  — two answers that turned out to be one.
+
+  Story order comes from the SCREENPLAY when one exists: the `line_order`
+  of the heading carrying each scene. `scene_number` is a LABEL for that
+  position, not the position itself. Ordering by it alone was wrong in
+  both directions — a blank-written project has no numbers at all, so
+  order collapsed to insertion order and a scene added mid-act sorted to
+  the end of the film; and a scene moved since the last commit carries a
+  number that no longer matches the page. `scenePositions` and
+  `sceneOrderHint` in `scf-core/src/structure.ts` are the derivation;
+  `SCENE_ORDER_JOIN` / `SCENE_ORDER_BY` are its SQL twin, for callers
+  that list scenes straight from a query. **A consumer that sorts scenes
+  by `scene_number` alone will be wrong about both cases.**
+
+  `project.scene_numbering` (`derived` | `fixed`, default `derived`) is
+  the gate, and it sits exactly where this section predicted: the
+  renumber block in `commitStructure`. `derived` recomputes scene numbers
+  from the script's order at every commit and clears them for scenes with
+  no heading. `fixed` never touches them — which an import needs, because
+  a production's own numbering may be gapped or out of sequence and is
+  data, not a derivation. Imports of numbered scripts set it.
+
+  Shot codes are under the same flag. `shots.ts` says a shot number is
+  never rewritten because `42A` is issued to a crew — but that was
+  written as though the script were always locked, and nobody holds paper
+  on an unlocked one. `42A` in a scene now numbered 43 is stale, not
+  stable. So `derived` restamps the prefix and keeps the letter, and
+  `fixed` freezes scene numbers and shot codes together, which is the
+  state a distributed shot list needs.
+
+  Act and sequence numbers are NOT gated: they are structural labels the
+  app has always owned, and no crew holds paper on one. `renumberSpans`
+  is shared by the script commit and the Structure tab, which both move
+  boundaries.
+- **A scene cut from the screenplay** *(editor)* — derived and badged,
+  never written. The entity survives by design; what it loses is a
+  position, so it has no number and belongs to no act. `orphanedScenes`
+  reports it and the rail badges it. Nothing stamps `status = 'cut'`,
+  because `status` is authored (outline / draft / revised / locked / cut)
+  and overwriting it on a commit would destroy what the author put there
+  with nowhere to remember it for the trip back. Marking a scene cut
+  stays the author's own act. This is deliberately NOT an answer to the
+  `lifecycle_status` question above, which is still open.

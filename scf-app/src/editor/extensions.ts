@@ -15,15 +15,22 @@ import {
   highlightActiveLineGutter, keymap,
   type DecorationSet, gutter, GutterMarker,
 } from "@codemirror/view";
-import { history, historyKeymap, defaultKeymap } from "@codemirror/commands";
+import {
+  history, historyKeymap, defaultKeymap, invertedEffects,
+} from "@codemirror/commands";
 import {
   autocompletion, completionKeymap, type CompletionContext,
   type CompletionResult,
 } from "@codemirror/autocomplete";
 import {
-  TYPE_CYCLE, lineEntries, lineState, setLineType, type BlockType,
+  TYPE_CYCLE, lineEntries, lineState, loadLines, mintLineId,
+  setLineType, type BlockType, type LineEntry,
 } from "./lineState.ts";
 import { blankBetween } from "./screenplayDoc.ts";
+import {
+  SCF_CLIP_MIME, decodeClip, encodeClip, planPasteEntries, resolvePaste,
+  type ClipLine,
+} from "./clipboard.ts";
 
 /**
  * Per-line annotations — entity chips, beat counts, prop-tag ranges —
@@ -255,12 +262,26 @@ const spacerField = StateField.define<DecorationSet>({
   provide: (f) => EditorView.decorations.from(f),
 });
 
+/**
+ * Spellcheck is on for prose and off for the lines that are not prose.
+ * Slug lines, cues, transitions and section markers are made of proper
+ * nouns and screenplay keywords; left checked, they underline almost
+ * every character and location name in the script, which is exactly the
+ * noise that makes people switch spellcheck off entirely.
+ */
+const NO_SPELLCHECK = new Set<BlockType>([
+  "heading", "character", "transition", "section", "synopsis", "note",
+]);
+
 const lineDecos = new Map<string, Decoration>();
-function lineDeco(cls: string): Decoration {
-  let d = lineDecos.get(cls);
+function lineDeco(cls: string, spellcheck: boolean): Decoration {
+  const key = spellcheck ? cls : `${cls}\u0000nospell`;
+  let d = lineDecos.get(key);
   if (d === undefined) {
-    d = Decoration.line({ class: cls });
-    lineDecos.set(cls, d);
+    d = Decoration.line(spellcheck
+      ? { class: cls }
+      : { class: cls, attributes: { spellcheck: "false" } });
+    lineDecos.set(key, d);
   }
   return d;
 }
@@ -277,7 +298,8 @@ function buildDecorations(view: EditorView,
       const entry = entries[n - 1];
       if (entry === undefined) continue;
       const line = view.state.doc.line(n);
-      builder.add(line.from, line.from, lineDeco(`sp-${entry.type}`));
+      builder.add(line.from, line.from, lineDeco(
+        `sp-${entry.type}`, !NO_SPELLCHECK.has(entry.type)));
       const ann = annotations.get(entry.id);
       if (ann?.tags !== undefined) {
         for (const tag of ann.tags) {
@@ -488,6 +510,191 @@ function sameTypeNewline(view: EditorView): boolean {
   return true;
 }
 
+/**
+ * Line TYPE and line IDENTITY live in state effects, not in the text, so
+ * the history has no idea they changed. Undo reverted the DOCUMENT and
+ * left the entry array where it was — which for a scene move meant the
+ * pre-move text carrying the post-move entries, i.e. every line rendering
+ * as the wrong type. That is the "whole screenplay loses its formatting"
+ * failure, and the same trap as the R33 import-undo bug: an effect the
+ * history cannot see.
+ *
+ * invertedEffects registers the UNDO of each effect against the history
+ * event, so text and state travel together in both directions. This
+ * covers scene moves and pastes (loadLines) and Tab type cycling
+ * (setLineType), which was never undoable either.
+ */
+const undoableLineState = invertedEffects.of((tr) => {
+  const out = [];
+  for (const effect of tr.effects) {
+    if (effect.is(loadLines)) {
+      out.push(loadLines.of([...tr.startState.field(lineState).entries]));
+    } else if (effect.is(setLineType)) {
+      const before =
+        tr.startState.field(lineState).entries[effect.value.line - 1];
+      if (before !== undefined) {
+        out.push(setLineType.of({
+          line: effect.value.line, type: before.type,
+        }));
+      }
+    }
+  }
+  return out;
+});
+
+/**
+ * Enter on an already-empty line makes it a scene heading instead of
+ * inserting another line.
+ *
+ * The blank-free document model means there is no blank line to press
+ * Enter on twice in the Final Draft sense — blanks are derived spacing,
+ * never text (screenplayDoc.ts). What the author's hands actually do is
+ * Enter (new empty line), Enter (make it a slug), and that is what this
+ * binds. Applies from any line type, per Chris.
+ *
+ * A THIRD Enter falls through to the normal insert, so an empty heading
+ * is never a trap: you can always keep going, and Tab re-types it.
+ */
+function headingOnEmptyLine(view: EditorView): boolean {
+  const sel = view.state.selection.main;
+  if (!sel.empty) return false;
+  const line = view.state.doc.lineAt(sel.from);
+  if (line.text.trim() !== "") return false;
+  const entry = view.state.field(lineState).entries[line.number - 1];
+  if (entry === undefined || entry.type === "heading") return false;
+  view.dispatch({
+    effects: setLineType.of({ line: line.number, type: "heading" }),
+  });
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Clipboard
+// ---------------------------------------------------------------------------
+
+/** Collect the selected lines as a clipboard payload. */
+function clipLinesFor(view: EditorView): ClipLine[] {
+  const sel = view.state.selection.main;
+  const entries = view.state.field(lineState).entries;
+  const first = view.state.doc.lineAt(sel.from);
+  let last = view.state.doc.lineAt(sel.to);
+  // Selecting whole lines (shift-Down from a line start) leaves the head
+  // resting on the START of the line AFTER the selection. That line is
+  // not part of the copy: counting it added an empty fragment marked
+  // not-whole, which forced the entire payload into copy semantics and
+  // made a cut-and-paste move impossible.
+  if (last.number > first.number && sel.to === last.from) {
+    last = view.state.doc.line(last.number - 1);
+  }
+  const out: ClipLine[] = [];
+  for (let n = first.number; n <= last.number; n++) {
+    const entry = entries[n - 1];
+    if (entry === undefined) continue;
+    const line = view.state.doc.line(n);
+    const from = Math.max(sel.from, line.from);
+    const to = Math.min(sel.to, line.to);
+    out.push({
+      uuid: entry.id,
+      type: entry.type,
+      text: view.state.doc.sliceString(from, to),
+      // Only a line taken end to end can carry its identity to a new
+      // home: a partial line leaves the original in place, and two lines
+      // cannot hold one uuid.
+      whole: from === line.from && to === line.to,
+      sceneId: null,
+      characterId: null,
+      locationId: null,
+    });
+  }
+  return out;
+}
+
+export interface ClipboardContext {
+  /** Identifies the working database (uuids are per-file). */
+  getProjectKey: () => string;
+  /** Committed links by line id, for carrying them across a paste. */
+  getLinks: (lineId: string) => {
+    sceneId: number | null;
+    characterId: number | null;
+    locationId: number | null;
+  } | null;
+  /** Told what a paste did, so the UI can say so. */
+  onPaste?: (mode: "move" | "copy", lines: number) => void;
+}
+
+function clipboardHandlers(ctx: ClipboardContext): Extension {
+  const write = (event: ClipboardEvent, view: EditorView): boolean => {
+    const sel = view.state.selection.main;
+    if (sel.empty) return false;
+    const lines = clipLinesFor(view).map((line) => {
+      const links = ctx.getLinks(line.uuid);
+      return links === null ? line : { ...line, ...links };
+    });
+    if (lines.length === 0) return false;
+    // Deliberately NOT handled: returning false lets CodeMirror's own
+    // handler run, which writes text/plain and calls preventDefault.
+    // Setting an extra flavour first survives that, and the plain text
+    // still pastes into Final Draft or a mail client.
+    event.clipboardData?.setData(SCF_CLIP_MIME, encodeClip({
+      v: 1, project: ctx.getProjectKey(), lines,
+    }));
+    return false;
+  };
+
+  return EditorView.domEventHandlers({
+    copy: write,
+    cut: write,
+    paste: (event, view) => {
+      const payload = decodeClip(
+        event.clipboardData?.getData(SCF_CLIP_MIME));
+      // No payload means the text came from outside the editor. Chris's
+      // call: leave it as-is rather than re-classifying — the Stage-1
+      // classifier runs at import, and the editor does not re-derive
+      // type from text after a line exists.
+      if (payload === null || payload.lines.length === 0) return false;
+
+      const entries = view.state.field(lineState).entries;
+      const resolution = resolvePaste(payload, {
+        project: ctx.getProjectKey(),
+        liveIds: new Set(entries.map((e) => e.id)),
+        mint: mintLineId,
+      });
+
+      const sel = view.state.selection.main;
+      const firstLine = view.state.doc.lineAt(sel.from);
+      const lastLine = view.state.doc.lineAt(sel.to);
+      const atLineStart = sel.from === firstLine.from;
+      const blockInsert =
+        sel.from === sel.to && atLineStart && resolution.wholeLines;
+      // A block insert carries its own line terminator, so the line it
+      // lands on is pushed down whole rather than splicing onto the last
+      // pasted line.
+      const insert = blockInsert
+        ? `${resolution.text}\n` : resolution.text;
+
+      const next = planPasteEntries(
+        entries,
+        resolution.lines.map((l) => ({ id: l.id, type: l.type })),
+        {
+          firstLine: firstLine.number,
+          lastLine: lastLine.number,
+          atLineStart, blockInsert,
+        });
+
+      view.dispatch({
+        changes: { from: sel.from, to: sel.to, insert },
+        selection: { anchor: sel.from + insert.length },
+        // State the whole array: the mapping's split rule would give the
+        // pasted text the identity of the line it pushed down.
+        effects: loadLines.of(next as LineEntry[]),
+        userEvent: "input.paste",
+      });
+      ctx.onPaste?.(resolution.mode, resolution.lines.length);
+      return true;
+    },
+  });
+}
+
 function cycleType(view: EditorView, direction: 1 | -1): boolean {
   const line = view.state.doc.lineAt(view.state.selection.main.head);
   const entry = view.state.field(lineState).entries[line.number - 1];
@@ -508,6 +715,7 @@ export interface ScriptCallbacks {
   /** Current entity names for autocomplete (refreshed after commits). */
   getLocations: () => string[];
   getCharacters: () => string[];
+  clipboard: ClipboardContext;
 }
 
 // v1's lists and triggers, ported: prefixes on an empty/short heading
@@ -598,6 +806,7 @@ export function screenplayExtensions(cb: ScriptCallbacks): Extension {
     beatGutter,
     highlightActiveLineGutter(),
     history(),
+    undoableLineState,
     uppercaseInput,
     autocompletion({
       override: [screenplayCompletions(cb)],
@@ -605,8 +814,16 @@ export function screenplayExtensions(cb: ScriptCallbacks): Extension {
       icons: false,
     }),
     EditorView.lineWrapping,
+    clipboardHandlers(cb.clipboard),
+    // Native spellcheck. autocorrect/autocapitalize stay off: the
+    // uppercase-as-you-type rule owns capitalization on heading and cue
+    // lines, and a second opinion would fight it.
+    EditorView.contentAttributes.of({
+      spellcheck: "true", autocorrect: "off", autocapitalize: "off",
+    }),
     keymap.of([
       ...completionKeymap,
+      { key: "Enter", run: headingOnEmptyLine },
       { key: "Shift-Enter", run: sameTypeNewline },
       { key: "Tab", run: (v) => cycleType(v, 1) },
       { key: "Shift-Tab", run: (v) => cycleType(v, -1) },

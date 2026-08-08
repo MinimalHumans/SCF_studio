@@ -313,6 +313,15 @@ register(EntityDef(
             "performance_first", "generation_first", "hybrid"
         ], default="generation_first",
                  help_text="Dominant production workflow stance."),
+        FieldDef("scene_numbering", "Scene Numbering", "select", options=[
+            "derived", "fixed"
+        ], default="derived",
+                 help_text="derived: scene numbers are recomputed from the "
+                           "script's order at every commit. fixed: never "
+                           "touched — what an imported script needs, since a "
+                           "production's own numbering may be gapped or out "
+                           "of sequence and is data, not a derivation. The "
+                           "first step toward production locking."),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
         FieldDef("vision_statement", "Vision Statement", "textarea", tab="Vision"),
         FieldDef("creative_philosophy", "Creative Philosophy", "textarea", tab="Vision"),

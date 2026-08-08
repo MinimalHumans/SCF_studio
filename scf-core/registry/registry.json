@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.4",
+  "schemaVersion": "2.5",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -176,6 +176,21 @@
             "hybrid"
           ],
           "helpText": "Dominant production workflow stance."
+        },
+        {
+          "name": "scene_numbering",
+          "label": "Scene Numbering",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": "derived",
+          "options": [
+            "derived",
+            "fixed"
+          ],
+          "helpText": "derived: scene numbers are recomputed from the script's order at every commit. fixed: never touched — what an imported script needs, since a production's own numbering may be gapped or out of sequence and is data, not a derivation. The first step toward production locking."
         },
         {
           "name": "notes",

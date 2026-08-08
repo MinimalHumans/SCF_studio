@@ -75,10 +75,26 @@ const num = (v: unknown): number | null =>
   v === null || v === undefined || v === "" ? null : Number(v);
 
 /**
- * Story order, matching the ordering used everywhere else in the app:
- * numbered scenes first by number, then unnumbered ones by id.
+ * Story order.
+ *
+ * When a screenplay exists, the SCRIPT is the order — `orderHint` maps a
+ * scene id to the position of the heading that carries it. Falling back
+ * to scene_number-then-id is only right for a project that has not been
+ * written yet, and relying on it alone was actively wrong: a blank-written
+ * project numbers nothing, so order became INSERTION order, and a scene
+ * added in the middle of act one sorted to the end of the film. Moving a
+ * scene had the same effect in reverse — the script changed and every
+ * derived view kept the old order, because nothing it read had moved.
+ *
+ * Scenes with no heading (outlined, not yet written) keep the fallback
+ * and sort after everything the script places, which is where an
+ * unwritten scene belongs in a story order.
  */
-export function scenePositions(scenes: Row[]): ScenePosition[] {
+export function scenePositions(
+    scenes: Row[],
+    orderHint?: ReadonlyMap<number, number>): ScenePosition[] {
+  const placed = (id: number): number | null =>
+    orderHint?.get(id) ?? null;
   return [...scenes]
     .map((s) => ({
       id: Number(s["id"]),
@@ -86,6 +102,10 @@ export function scenePositions(scenes: Row[]): ScenePosition[] {
       name: String(s["name"] ?? ""),
     }))
     .sort((a, b) => {
+      const pa = placed(a.id);
+      const pb = placed(b.id);
+      if ((pa === null) !== (pb === null)) return pa === null ? 1 : -1;
+      if (pa !== null && pb !== null && pa !== pb) return pa - pb;
       if ((a.number === null) !== (b.number === null)) {
         return a.number === null ? 1 : -1;
       }
@@ -95,6 +115,47 @@ export function scenePositions(scenes: Row[]): ScenePosition[] {
       return a.id - b.id;
     })
     .map((s, index) => ({ ...s, index }));
+}
+
+/**
+ * The SQL twin of `scenePositions`, for the places that list scenes
+ * straight from a query rather than through the derivation.
+ *
+ * Same precedence, deliberately: script position first, then stored
+ * number, then id. Ordering by `scene_number` alone was wrong in both
+ * directions — a blank-written project has no numbers and fell back to
+ * insertion order, and a project with `scene_numbering = 'fixed'` keeps
+ * numbers that no longer track the page, so a picker sorted by them
+ * showed a different film from the one in the editor.
+ *
+ * Use as: `SELECT s.* FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`.
+ */
+export const SCENE_ORDER_JOIN =
+  "LEFT JOIN (SELECT scene_id, MIN(line_order) AS story_pos " +
+  "FROM screenplay_lines WHERE line_type = 'heading' " +
+  "GROUP BY scene_id) sp ON sp.scene_id = s.id";
+
+export const SCENE_ORDER_BY =
+  "ORDER BY (sp.story_pos IS NULL), sp.story_pos, " +
+  "(s.scene_number IS NULL), s.scene_number, s.id";
+
+/**
+ * Build the hint from screenplay heading rows (`scene_id`, `line_order`).
+ * First heading wins: commit enforces one scene per heading, but a
+ * half-committed document can briefly show two.
+ */
+export function sceneOrderHint(headings: Row[]): Map<number, number> {
+  const byScene = new Map<number, number>();
+  const ordered = [...headings].sort((a, b) =>
+    Number(a["line_order"] ?? 0) - Number(b["line_order"] ?? 0));
+  let position = 0;
+  for (const row of ordered) {
+    const sceneId = num(row["scene_id"]);
+    if (sceneId === null || byScene.has(sceneId)) continue;
+    byScene.set(sceneId, position);
+    position += 1;
+  }
+  return byScene;
 }
 
 /**
@@ -139,9 +200,10 @@ function spansFrom(rows: Row[], numberField: string,
   });
 }
 
-export function deriveStructure(scenes: Row[], acts: Row[],
-                                sequences: Row[]): Structure {
-  const positions = scenePositions(scenes);
+export function deriveStructure(
+    scenes: Row[], acts: Row[], sequences: Row[],
+    orderHint?: ReadonlyMap<number, number>): Structure {
+  const positions = scenePositions(scenes, orderHint);
   const actSpans = spansFrom(acts, "act_number", positions);
   const sequenceSpans = spansFrom(sequences, "sequence_number", positions);
 
@@ -236,10 +298,47 @@ export function sequenceOf(structure: Structure,
  * What is worth telling the writer. None of it blocks: a half-placed
  * structure is a normal state during an outline pass, not an error.
  */
+/**
+ * Scenes the screenplay does not contain.
+ *
+ * The entity survives being cut from the script by design, but it then
+ * holds no position — no number, no act, no place in any outline. That
+ * is a state worth SEEING rather than a state worth writing: `status` is
+ * authored (outline / draft / revised / locked / cut), and stamping
+ * "cut" over it on a commit would destroy what the author put there,
+ * with nowhere to remember it for the trip back. So orphanhood is
+ * derived here and badged, and marking a scene `cut` stays the author's
+ * own act.
+ *
+ * Only meaningful once a screenplay exists: in a project being outlined,
+ * every scene is "not in the script" and saying so is noise. An empty
+ * hint means no screenplay, and nothing is reported.
+ */
+export function orphanedScenes(
+    scenes: Row[], orderHint: ReadonlyMap<number, number>): number[] {
+  if (orderHint.size === 0) return [];
+  return scenes
+    .map((s) => Number(s["id"]))
+    .filter((id) => !orderHint.has(id));
+}
+
 export function structureFindings(
-    structure: Structure, acts: Row[], sequences: Row[]): StructureFinding[] {
+    structure: Structure, acts: Row[], sequences: Row[],
+    orderHint?: ReadonlyMap<number, number>): StructureFinding[] {
   const out: StructureFinding[] = [];
   const positioned = new Set(structure.scenes.map((s) => s.id));
+
+  if (orderHint !== undefined && orderHint.size > 0) {
+    const nameById = new Map(structure.scenes.map((s) => [s.id, s.name]));
+    for (const id of structure.scenes.map((s) => s.id)) {
+      if (orderHint.has(id)) continue;
+      out.push({ level: "info", code: "not-in-script", entity: "scene",
+        rowId: id,
+        message: `${nameById.get(id) ?? "scene"} is not in the ` +
+                 "screenplay, so it has no number and belongs to no act. " +
+                 "Its record and everything linked to it are untouched." });
+    }
+  }
 
   const unanchored = (rows: Row[], entity: "act" | "sequence"): void => {
     for (const r of rows) {
