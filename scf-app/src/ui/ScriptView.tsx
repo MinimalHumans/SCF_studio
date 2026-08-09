@@ -16,7 +16,7 @@ import { exec, registry, useStore } from "../state/store.ts";
 import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
 import { withTransaction } from "@scf-core/db.ts";
-import { loadLines, mintLineId } from "../editor/lineState.ts";
+import { lineState, loadLines, mintLineId } from "../editor/lineState.ts";
 import { planSceneMove, sceneBlocks } from "../editor/sceneMove.ts";
 import {
   duplicateSceneRow, removeSceneCascade,
@@ -33,7 +33,8 @@ import { lineEntries, lineEvents, type LineEvent }
   from "../editor/lineState.ts";
 import {
   createBeatForLine, diffVersionAgainstCurrent, linkAndCreateAtCommit,
-  planCommitLinks, publishVersion, reanchorForEvents, tagPropRange,
+  planCommitLinks, publishVersion, reanchorForEvents, syncPropSceneLinks,
+  tagPropRange,
   validateTags, type CommitPlanInfo,
 } from "../editor/features.ts";
 import { paginationFor } from "../editor/extensions.ts";
@@ -317,6 +318,10 @@ export function ScriptView(): JSX.Element {
     if (events.length > 0) {
       await reanchorForEvents(exec, events);
     }
+    // Derived rather than trusted to the moment of tagging: a prop
+    // tagged on a line that had not been committed yet could not know
+    // its scene at the time.
+    await syncPropSceneLinks(exec);
     if (reportStale && plan.staleScenes.length > 0) {
       const ids = plan.staleScenes
         .map((s) => s.sceneId)
@@ -522,6 +527,16 @@ export function ScriptView(): JSX.Element {
           EditorView.updateListener.of((u) => {
             if (u.docChanged) {
               pendingEvents.current.push(...lineEvents(u.state));
+            }
+            // A Tab retype changes no TEXT — it changes a line's type,
+            // which lives in state. So nothing was scheduled, nothing
+            // committed, and updateDirty never ran: retyping a run of
+            // action lines into character and dialogue created the
+            // characters at the next commit while the Commit light sat
+            // dark. Comparing the field catches every change to the
+            // entry array, whichever effect caused it.
+            if (u.docChanged ||
+                u.startState.field(lineState) !== u.state.field(lineState)) {
               scheduleCommit();
             }
             if (u.viewportChanged || u.docChanged || u.selectionSet) {

@@ -9,7 +9,8 @@ import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
 import {
   deleteSceneCharacter, scanIntegrity, unanchorBeat,
 } from "../src/editor/integrity.ts";
-import { tagPropRange } from "../src/editor/features.ts";
+import { syncPropSceneLinks, tagPropRange }
+  from "../src/editor/features.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../../scf-core/registry/registry.json", import.meta.url));
@@ -177,5 +178,88 @@ describe("prop tagging links the scene", () => {
     // The tag still stands; only the scene claim is withheld.
     expect(await db.exec("SELECT id FROM screenplay_prop_tags"))
       .toHaveLength(1);
+  });
+});
+
+/**
+ * The junction is also DERIVED at commit, because tagging is exactly the
+ * moment someone writes a line and tags it in the same breath — the line
+ * may not be in screenplay_lines yet, and its heading may not have a
+ * scene record yet either. Deriving makes the link independent of when
+ * the tag was made.
+ */
+describe("prop scene links derived at commit", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  beforeEach(async () => {
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    db = openNodeDatabase(":memory:");
+    await initDatabase(db.exec, registry);
+    await initScreenplayTables(db.exec);
+    await db.exec("INSERT INTO scene (name) VALUES ('KITCHEN')");
+    await db.exec("INSERT INTO scene (name) VALUES ('RIDGE')");
+    await db.exec("INSERT INTO prop (name) VALUES ('Kettle')");
+    for (const [order, type, uuid, sceneId] of [
+      [0, "heading", "H1", 1], [1, "action", "L1", null],
+      [2, "heading", "H2", 2], [3, "action", "L2", null],
+    ] as Array<[number, string, string, number | null]>) {
+      await db.exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+        "scene_id, uuid) VALUES (?, ?, 'x', ?, ?)",
+        [order, type, sceneId, uuid]);
+    }
+  });
+
+  const tag = async (lineUuid: string): Promise<void> => {
+    await db.exec(
+      "INSERT INTO screenplay_prop_tags (tagged_text, prop_id, " +
+      "line_uuid, start_offset, end_offset) VALUES ('kettle', 1, ?, 0, 6)",
+      [lineUuid]);
+  };
+  const links = async (): Promise<number[]> => {
+    const rows = await db.exec(
+      "SELECT scene_id FROM scene_prop ORDER BY scene_id");
+    return rows.map((r) => r["scene_id"] as number);
+  };
+
+  test("a tag made before the line existed is picked up later",
+       async () => {
+    await tag("L2");
+    expect(await links()).toEqual([]);
+    expect(await syncPropSceneLinks(db.exec)).toBe(1);
+    // The GOVERNING heading, not the first one in the script.
+    expect(await links()).toEqual([2]);
+  });
+
+  test("it is idempotent", async () => {
+    await tag("L1");
+    expect(await syncPropSceneLinks(db.exec)).toBe(1);
+    expect(await syncPropSceneLinks(db.exec)).toBe(0);
+    expect(await links()).toEqual([1]);
+  });
+
+  test("tags in two scenes give two links", async () => {
+    await tag("L1");
+    await tag("L2");
+    await syncPropSceneLinks(db.exec);
+    expect(await links()).toEqual([1, 2]);
+  });
+
+  test("a tag whose line is gone links nothing", async () => {
+    await tag("L-dead");
+    expect(await syncPropSceneLinks(db.exec)).toBe(0);
+    expect(await links()).toEqual([]);
+  });
+
+  test("it only ever adds", async () => {
+    // A hand-authored link for a prop present but never named is a fact
+    // the script cannot see, and this is not the place to second-guess.
+    await db.exec(
+      "INSERT INTO scene_prop (name, scene_id, prop_id) " +
+      "VALUES ('Kettle', 2, 1)");
+    await tag("L1");
+    await syncPropSceneLinks(db.exec);
+    expect(await links()).toEqual([1, 2]);
   });
 });

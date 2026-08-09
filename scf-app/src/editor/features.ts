@@ -232,6 +232,52 @@ export async function tagPropRange(
   await linkPropToLineScene(exec, lineId, propId);
 }
 
+/**
+ * Make sure every prop tagged in the script is recorded as being in that
+ * scene.
+ *
+ * `tagPropRange` writes the junction when the tag is made, but it can
+ * only do that if the line is already in `screenplay_lines` and its
+ * heading already carries a scene — neither of which is true for text
+ * typed since the last commit, or for a scene whose heading has not been
+ * committed into a scene record yet. Tagging is exactly the moment
+ * someone does both at once.
+ *
+ * So the link is also DERIVED at every commit, from the tags that
+ * survived, which makes it independent of when the tag was made. The
+ * derivation only ever adds: a hand-authored `scene_prop` row for a prop
+ * that is present but never named in the dialogue is a legitimate fact
+ * the script cannot see, and this is not the place to second-guess it.
+ */
+export async function syncPropSceneLinks(exec: SqlExec): Promise<number> {
+  const implied = await exec(
+    "SELECT DISTINCT h.scene_id AS scene_id, t.prop_id AS prop_id, " +
+    "  p.name AS prop_name " +
+    "FROM screenplay_prop_tags t " +
+    "JOIN screenplay_lines l ON l.uuid = t.line_uuid " +
+    "JOIN prop p ON p.id = t.prop_id " +
+    "JOIN screenplay_lines h ON h.line_type = 'heading' " +
+    "  AND h.scene_id IS NOT NULL AND h.line_order <= l.line_order " +
+    "LEFT JOIN screenplay_lines h2 ON h2.line_type = 'heading' " +
+    "  AND h2.scene_id IS NOT NULL AND h2.line_order <= l.line_order " +
+    "  AND h2.line_order > h.line_order " +
+    "WHERE h2.id IS NULL");
+  let added = 0;
+  for (const row of implied) {
+    const sceneId = row["scene_id"] as number;
+    const propId = row["prop_id"] as number;
+    const existing = await exec(
+      "SELECT id FROM scene_prop WHERE scene_id = ? AND prop_id = ?",
+      [sceneId, propId]);
+    if (existing.length > 0) continue;
+    await exec(
+      "INSERT INTO scene_prop (name, scene_id, prop_id) VALUES (?, ?, ?)",
+      [String(row["prop_name"] ?? ""), sceneId, propId]);
+    added += 1;
+  }
+  return added;
+}
+
 export async function linkPropToLineScene(
     exec: SqlExec, lineId: string, propId: number): Promise<void> {
   const scene = await exec(

@@ -30,20 +30,28 @@ import { scriptViewHandle } from "./ScriptView.tsx";
 
 type FilterKind = "character" | "prop" | "location";
 
+/*
+ * The list is every subject of that kind, not only the ones already
+ * placed in a scene.
+ *
+ * It used to INNER JOIN the junction, which meant a prop you had just
+ * created — in the Schema tab, or from the script's right-click menu —
+ * was missing from the filter it was created for, with no way to tell
+ * whether it had been made at all. A subject with no scenes is a real
+ * subject and a useful thing to notice; the rail says so rather than
+ * pretending it does not exist.
+ */
 const FILTER_SQL: Record<FilterKind, { list: string; scenes: string }> = {
   character: {
-    list: "SELECT DISTINCT c.id, c.name FROM character c " +
-          "JOIN scene_character sc ON sc.character_id = c.id ORDER BY c.name",
+    list: "SELECT id, name FROM character ORDER BY name",
     scenes: "SELECT scene_id FROM scene_character WHERE character_id = ?",
   },
   prop: {
-    list: "SELECT DISTINCT p.id, p.name FROM prop p " +
-          "JOIN scene_prop sp ON sp.prop_id = p.id ORDER BY p.name",
+    list: "SELECT id, name FROM prop ORDER BY name",
     scenes: "SELECT scene_id FROM scene_prop WHERE prop_id = ?",
   },
   location: {
-    list: "SELECT DISTINCT l.id, l.name FROM location l " +
-          "JOIN scene s ON s.location_id = l.id ORDER BY l.name",
+    list: "SELECT id, name FROM location ORDER BY name",
     scenes: "SELECT id AS scene_id FROM scene WHERE location_id = ?",
   },
 };
@@ -387,6 +395,12 @@ export function SceneRail(): JSX.Element {
 
         {headings.length === 0 && (
           <li className="muted rail-empty">no screenplay yet</li>
+        )}
+        {headings.length > 0 && allowed !== null && allowed.size === 0 && (
+          <li className="muted rail-empty">
+            Not in any scene yet. Tag it in the script, or link it from
+            the record.
+          </li>
         )}
       </ul>
 
