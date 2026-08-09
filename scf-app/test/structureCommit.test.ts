@@ -542,3 +542,66 @@ describe("deleting a boundary scene", () => {
     expect(acts[0]!["start_scene_id"]).toBe(3);
   });
 });
+
+/**
+ * sequence.act_id was READ at commit and never written, so it sat null on
+ * every sequence the app has made — a stored field consumers would
+ * reasonably trust, empty all along.
+ */
+describe("sequence act membership is written down", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  beforeEach(async () => {
+    db = await freshDb();
+    for (const name of ["A", "B", "C", "D"]) {
+      await db.exec("INSERT INTO scene (name) VALUES (?)", [name]);
+    }
+    for (const [i, id] of [1, 2, 3, 4].entries()) {
+      await db.exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+        "scene_id, uuid) VALUES (?, 'heading', 'H', ?, ?)",
+        [i * 10, id, `H${String(id)}`]);
+    }
+    await db.exec(
+      "INSERT INTO act (name, start_scene_id) VALUES ('One', 1)");
+    await db.exec(
+      "INSERT INTO act (name, start_scene_id) VALUES ('Two', 3)");
+  });
+
+  const actIds = async (): Promise<Array<number | null>> => {
+    const rows = await db.exec(
+      "SELECT act_id FROM sequence ORDER BY id");
+    return rows.map((r) => (r["act_id"] ?? null) as number | null);
+  };
+
+  test("a sequence belongs to the act its start scene falls in",
+       async () => {
+    await db.exec(
+      "INSERT INTO sequence (name, start_scene_id) VALUES ('S1', 1)");
+    await db.exec(
+      "INSERT INTO sequence (name, start_scene_id) VALUES ('S2', 4)");
+    await commitStructure(db.exec, [], true);
+    expect(await actIds()).toEqual([1, 2]);
+  });
+
+  test("a sequence crossing a boundary is attributed to where it starts",
+       async () => {
+    // S1 spans scenes 2-3, crossing into act two. It belongs to act one,
+    // which is how a crossing sequence is attributed everywhere else.
+    await db.exec(
+      "INSERT INTO sequence (name, start_scene_id) VALUES ('S1', 2)");
+    await commitStructure(db.exec, [], true);
+    expect(await actIds()).toEqual([1]);
+  });
+
+  test("it follows the acts when a boundary moves", async () => {
+    await db.exec(
+      "INSERT INTO sequence (name, start_scene_id) VALUES ('S1', 2)");
+    await commitStructure(db.exec, [], true);
+    expect(await actIds()).toEqual([1]);
+    // Act two now starts earlier, so the sequence changes act.
+    await db.exec("UPDATE act SET start_scene_id = 2 WHERE id = 2");
+    await commitStructure(db.exec, [], true);
+    expect(await actIds()).toEqual([2]);
+  });
+});

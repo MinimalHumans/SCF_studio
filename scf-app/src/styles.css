@@ -875,6 +875,12 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 .version-caveat b { color: var(--amber); }
 
+.sort-toggle {
+  font-size: 11px; padding: 3px 8px; white-space: nowrap;
+  color: var(--paper-dim);
+}
+.sort-toggle:hover { color: var(--paper); }
+
 /* --- Rail context menu ---------------------------------------------- */
 .menu-scrim { position: fixed; inset: 0; z-index: 40; }
 .rail-menu {
@@ -1403,6 +1409,16 @@ tr.prop-weak td { opacity: .6; }
   max-width: 26ch;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* the row's own NUMBER ahead of its name (scenes, acts, sequences).
+   Narrower than the scene-context lead, which is sized for a slug. */
+.row-number-lead {
+  flex: none;
+  min-width: 4ch;
+  text-align: right;
+  font-family: var(--mono);
+  color: var(--amber);
   white-space: nowrap;
 }
 .subject-item-scene {

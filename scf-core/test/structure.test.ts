@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { Row } from "../src/db.ts";
 import {
-  actOf, actOutline, deriveStructure, orphanedScenes, sceneOrderHint,
-  scenePositions, sequenceOf, structureFindings,
+  SCENE_ORDER_BY, SCENE_ORDER_JOIN, actOf, actOutline, deriveStructure,
+  orphanedScenes, sceneOrderHint, scenePositions, sequenceOf,
+  storyOrder, structureFindings,
 } from "../src/structure.ts";
 
 /** Ten numbered scenes, ids offset from numbers to catch id/number mixups. */
@@ -328,5 +329,41 @@ describe("orphanedScenes", () => {
       [{ id: 1, name: "KITCHEN" }, { id: 2, name: "RIDGE" }], [], []);
     expect(structureFindings(structure, [], [])
       .filter((f) => f.code === "not-in-script")).toHaveLength(0);
+  });
+});
+
+/**
+ * storyOrder is the general form of SCENE_ORDER_*: anything holding a
+ * scene reference — an act's start scene, a beat's scene — goes in story
+ * order the same way, so no view invents its own.
+ */
+describe("storyOrder", () => {
+  test("script position first, then the given fallbacks, then id", () => {
+    const { orderBy } = storyOrder({
+      alias: "t", sceneRef: "start_scene_id",
+      fallbacks: ["t.act_number"],
+    });
+    expect(orderBy).toBe(
+      "ORDER BY (sp.story_pos IS NULL), sp.story_pos, " +
+      "(t.act_number IS NULL), t.act_number, t.id");
+  });
+
+  test("joins through the alias's scene reference", () => {
+    const { join } = storyOrder({ alias: "t", sceneRef: "scene_id" });
+    expect(join).toContain("sp.scene_id = t.scene_id");
+    expect(join).toContain("line_type = 'heading'");
+  });
+
+  test("with no fallbacks it still breaks ties on id", () => {
+    expect(storyOrder({ alias: "x", sceneRef: "id" }).orderBy)
+      .toBe("ORDER BY (sp.story_pos IS NULL), sp.story_pos, x.id");
+  });
+
+  test("agrees with the scene constants it generalizes", () => {
+    const { join, orderBy } = storyOrder({
+      alias: "s", sceneRef: "id", fallbacks: ["s.scene_number"],
+    });
+    expect(join).toBe(SCENE_ORDER_JOIN);
+    expect(orderBy).toBe(SCENE_ORDER_BY);
   });
 });

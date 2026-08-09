@@ -74,6 +74,10 @@ interface AppState {
   revision: number;
 
   navMode: NavMode;
+  /** How schema lists order rows where a story order exists. Global and
+   * sticky, because a tab switch unmounts the list and losing the choice
+   * every time is the same annoyance as the collapsing schema tree. */
+  listSort: "story" | "name";
   selectedQuery: string | null;
   selectedEntityType: string | null;
   selectedSubject: { entity: string; id: number; name: string } | null;
@@ -111,6 +115,7 @@ interface AppState {
   setDraftValue: (field: string, value: SqlValue) => void;
   undoDraft: () => void;
   saveDraft: () => Promise<number | null>;
+  setListSort: (listSort: "story" | "name") => void;
   deleteRow: (entity: string, id: number) => Promise<void>;
   /** Collapsed schema categories. In the store, not the component:
    * switching tabs unmounts the tree, and losing the expansion every
@@ -184,6 +189,7 @@ export const useStore = create<AppState>((set, get) => ({
   // click before you can write. Every open path sets this too, so
   // closing one project and opening another lands on the script again.
   navMode: "script",
+  listSort: "story",
   selectedQuery: null,
   selectedEntityType: null,
   selectedSubject: null,
@@ -367,6 +373,7 @@ export const useStore = create<AppState>((set, get) => ({
   // A tab is a destination: arriving at one closes whatever record was
   // covering it, rather than showing the tab's rail beside someone
   // else's form.
+  setListSort: (listSort) => set({ listSort }),
   setNavMode: (navMode) => set({ navMode, openRow: null, draft: null }),
   setSchemaCollapsed: (schemaCollapsed) => set({ schemaCollapsed }),
   selectQuery: (selectedQuery) =>

@@ -129,7 +129,33 @@ export function scenePositions(
  * showed a different film from the one in the editor.
  *
  * Use as: `SELECT s.* FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`.
+ * `storyOrder` below is the general form: anything holding a scene
+ * reference — an act's start scene, a beat's scene — can be put in story
+ * order the same way, so no view has to invent its own ordering.
  */
+export function storyOrder(opts: {
+  /** Alias of the table being ordered, e.g. "a" for `FROM act a`. */
+  alias: string;
+  /** Column on that alias holding a scene id ("id" for scene itself). */
+  sceneRef: string;
+  /** Tie-breakers after script position, in order, already qualified. */
+  fallbacks?: readonly string[];
+}): { join: string; orderBy: string } {
+  const nulls = (expr: string): string => `(${expr} IS NULL), ${expr}`;
+  const terms = [
+    nulls("sp.story_pos"),
+    ...(opts.fallbacks ?? []).map(nulls),
+    `${opts.alias}.id`,
+  ];
+  return {
+    join:
+      "LEFT JOIN (SELECT scene_id, MIN(line_order) AS story_pos " +
+      "FROM screenplay_lines WHERE line_type = 'heading' " +
+      `GROUP BY scene_id) sp ON sp.scene_id = ${opts.alias}.${opts.sceneRef}`,
+    orderBy: `ORDER BY ${terms.join(", ")}`,
+  };
+}
+
 export const SCENE_ORDER_JOIN =
   "LEFT JOIN (SELECT scene_id, MIN(line_order) AS story_pos " +
   "FROM screenplay_lines WHERE line_type = 'heading' " +
