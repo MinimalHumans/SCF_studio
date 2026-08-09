@@ -495,3 +495,50 @@ describe("SCENE_ORDER_BY matches scenePositions", () => {
     expect(await sqlOrder()).toEqual(await tsOrder());
   });
 });
+
+/**
+ * Deleting the scene an act starts at must not take the act with it.
+ *
+ * The act row was never deleted — it pointed at a scene that no longer
+ * existed, so it stopped appearing in the derived structure entirely and
+ * every scene it held fell out of any act, taking the Shoot tab's
+ * grouping with it. Indistinguishable from deletion, from the outside.
+ */
+describe("deleting a boundary scene", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  beforeEach(async () => {
+    db = await freshDb();
+    for (const name of ["A", "B", "C"]) {
+      await db.exec("INSERT INTO scene (name) VALUES (?)", [name]);
+    }
+    await db.exec(
+      "INSERT INTO act (name, start_scene_id) VALUES ('One', 1)");
+  });
+
+  test("the act survives, anchored to the next scene", async () => {
+    await reanchorSpansForMove(db.exec, 1, [1, 2, 3]);
+    await db.exec("DELETE FROM scene WHERE id = 1");
+
+    const acts = await db.exec("SELECT id, start_scene_id FROM act");
+    expect(acts).toHaveLength(1);
+    expect(acts[0]!["start_scene_id"]).toBe(2);
+
+    // And it still holds the remaining scenes.
+    const scenes = await db.exec("SELECT id, scene_number, name FROM scene");
+    const structure = deriveStructure(
+      scenes, acts, [], new Map([[2, 0], [3, 1]]));
+    expect(structure.actOfScene.get(2)).toBe(1);
+    expect(structure.actOfScene.get(3)).toBe(1);
+  });
+
+  test("deleting the last scene leaves the act anchored to it",
+       async () => {
+    // No successor to hand the boundary to. structureFindings reports
+    // the dangling boundary rather than the app guessing.
+    await db.exec("UPDATE act SET start_scene_id = 3");
+    await reanchorSpansForMove(db.exec, 3, [1, 2, 3]);
+    const acts = await db.exec("SELECT start_scene_id FROM act");
+    expect(acts[0]!["start_scene_id"]).toBe(3);
+  });
+});

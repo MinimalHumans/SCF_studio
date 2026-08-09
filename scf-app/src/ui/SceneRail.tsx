@@ -21,8 +21,11 @@ import {
   actOutline, deriveStructure, orphanedScenes, sceneOrderHint,
 } from "@scf-core/structure.ts";
 import { sceneLabel } from "../state/displayName.ts";
-import { useStore } from "../state/store.ts";
+import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
+import {
+  describeChildren, planSceneRemoval, type RemovalImpact,
+} from "../editor/sceneOps.ts";
 import { scriptViewHandle } from "./ScriptView.tsx";
 
 type FilterKind = "character" | "prop" | "location";
@@ -52,6 +55,11 @@ export function SceneRail(): JSX.Element {
   const [subjectId, setSubjectId] = useState<string>("");
   const [dragging, setDragging] = useState<number | null>(null);
   const [dropBefore, setDropBefore] = useState<number | "end" | null>(null);
+  const [menu, setMenu] = useState<
+    { sceneId: number; x: number; y: number } | null>(null);
+  const [confirm, setConfirm] = useState<RemovalImpact & {
+    sceneId: number } | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const headings = useQuery(
     "SELECT sl.line_order, sl.content, sl.scene_id " +
@@ -177,6 +185,11 @@ export function SceneRail(): JSX.Element {
           onDrop={(e) => {
             e.preventDefault();
             dropOn(sceneId);
+          }}
+          onContextMenu={(e) => {
+            if (lineOrder === undefined) return;
+            e.preventDefault();
+            setMenu({ sceneId, x: e.clientX, y: e.clientY });
           }}>
         <span className="rail-number">
           {number === null || number === undefined ? "—" : String(number)}
@@ -380,6 +393,97 @@ export function SceneRail(): JSX.Element {
       {allowed !== null && headings.length > 0 && (
         <div className="rail-filter-note muted">
           Clear the filter to drag scenes into a new order.
+        </div>
+      )}
+
+      {menu !== null && (
+        <>
+          <div className="menu-scrim" onClick={() => setMenu(null)}
+               onContextMenu={(e) => {
+                 e.preventDefault();
+                 setMenu(null);
+               }} />
+          <ul className="rail-menu"
+              style={{ left: menu.x, top: menu.y }}>
+            <li>
+              <button onClick={() => {
+                const sceneId = menu.sceneId;
+                setMenu(null);
+                setBusy(true);
+                // Additive and immediately visible, so no confirmation
+                // — a modal here would only dilute the one on Remove.
+                void scriptViewHandle.duplicateScene?.(sceneId)
+                  .finally(() => setBusy(false));
+              }} disabled={busy}>
+                Duplicate scene
+              </button>
+            </li>
+            <li>
+              <button className="danger" disabled={busy}
+                      onClick={() => {
+                        const sceneId = menu.sceneId;
+                        setMenu(null);
+                        setBusy(true);
+                        const lineIds =
+                          scriptViewHandle.sceneLineIds?.(sceneId) ?? [];
+                        void planSceneRemoval(
+                          exec, registry, sceneId, lineIds)
+                          .then((impact) => {
+                            setConfirm({ ...impact, sceneId });
+                            setBusy(false);
+                          });
+                      }}>
+                Remove scene…
+              </button>
+            </li>
+          </ul>
+        </>
+      )}
+
+      {confirm !== null && (
+        <div className="modal-scrim" role="dialog" aria-modal="true">
+          <div className="modal rail-confirm">
+            <h3>Remove {confirm.sceneName || "this scene"}?</h3>
+            <p>
+              This deletes the scene record, its{" "}
+              {confirm.lines} script line(s), and everything belonging to
+              it. <b>It cannot be undone.</b>
+            </p>
+            {confirm.children.length > 0 && (
+              <p className="revert-warn">
+                Also deleted: {describeChildren(confirm.children)}.
+              </p>
+            )}
+            {confirm.propTags > 0 && (
+              <p className="revert-warn">
+                {confirm.propTags} prop tag(s) on these lines go with
+                them. The props themselves are untouched.
+              </p>
+            )}
+            {confirm.references > 0 && (
+              <p className="muted">
+                {confirm.references} record(s) elsewhere point at this
+                scene. They are kept — only the reference is cleared.
+              </p>
+            )}
+            <div className="revert-actions">
+              <button onClick={() => setConfirm(null)} disabled={busy}>
+                Cancel
+              </button>
+              <button className="danger" disabled={busy}
+                      onClick={() => {
+                        const sceneId = confirm.sceneId;
+                        setBusy(true);
+                        void scriptViewHandle.removeScene?.(sceneId)
+                          .finally(() => {
+                            setConfirm(null);
+                            setBusy(false);
+                          });
+                      }}>
+                Remove
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </nav>

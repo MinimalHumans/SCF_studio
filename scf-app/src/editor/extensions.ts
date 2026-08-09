@@ -27,10 +27,7 @@ import {
   setLineType, type BlockType, type LineEntry,
 } from "./lineState.ts";
 import { blankBetween } from "./screenplayDoc.ts";
-import {
-  SCF_CLIP_MIME, decodeClip, encodeClip, planPasteEntries, resolvePaste,
-  type ClipLine,
-} from "./clipboard.ts";
+import { planPasteEntries } from "./pasteLines.ts";
 
 /**
  * Per-line annotations — entity chips, beat counts, prop-tag ranges —
@@ -569,127 +566,57 @@ function headingOnEmptyLine(view: EditorView): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Clipboard
+// Paste
 // ---------------------------------------------------------------------------
 
-/** Collect the selected lines as a clipboard payload. */
-function clipLinesFor(view: EditorView): ClipLine[] {
-  const sel = view.state.selection.main;
-  const entries = view.state.field(lineState).entries;
-  const first = view.state.doc.lineAt(sel.from);
-  let last = view.state.doc.lineAt(sel.to);
-  // Selecting whole lines (shift-Down from a line start) leaves the head
-  // resting on the START of the line AFTER the selection. That line is
-  // not part of the copy: counting it added an empty fragment marked
-  // not-whole, which forced the entire payload into copy semantics and
-  // made a cut-and-paste move impossible.
-  if (last.number > first.number && sel.to === last.from) {
-    last = view.state.doc.line(last.number - 1);
-  }
-  const out: ClipLine[] = [];
-  for (let n = first.number; n <= last.number; n++) {
-    const entry = entries[n - 1];
-    if (entry === undefined) continue;
-    const line = view.state.doc.line(n);
-    const from = Math.max(sel.from, line.from);
-    const to = Math.min(sel.to, line.to);
-    out.push({
-      uuid: entry.id,
-      type: entry.type,
-      text: view.state.doc.sliceString(from, to),
-      // Only a line taken end to end can carry its identity to a new
-      // home: a partial line leaves the original in place, and two lines
-      // cannot hold one uuid.
-      whole: from === line.from && to === line.to,
-      sceneId: null,
-      characterId: null,
-      locationId: null,
-    });
-  }
-  return out;
-}
-
-export interface ClipboardContext {
-  /** Identifies the working database (uuids are per-file). */
-  getProjectKey: () => string;
-  /** Committed links by line id, for carrying them across a paste. */
-  getLinks: (lineId: string) => {
-    sceneId: number | null;
-    characterId: number | null;
-    locationId: number | null;
-  } | null;
-  /** Told what a paste did, so the UI can say so. */
-  onPaste?: (mode: "move" | "copy", lines: number) => void;
-}
-
-function clipboardHandlers(ctx: ClipboardContext): Extension {
-  const write = (event: ClipboardEvent, view: EditorView): boolean => {
-    const sel = view.state.selection.main;
-    if (sel.empty) return false;
-    const lines = clipLinesFor(view).map((line) => {
-      const links = ctx.getLinks(line.uuid);
-      return links === null ? line : { ...line, ...links };
-    });
-    if (lines.length === 0) return false;
-    // Deliberately NOT handled: returning false lets CodeMirror's own
-    // handler run, which writes text/plain and calls preventDefault.
-    // Setting an extra flavour first survives that, and the plain text
-    // still pastes into Final Draft or a mail client.
-    event.clipboardData?.setData(SCF_CLIP_MIME, encodeClip({
-      v: 1, project: ctx.getProjectKey(), lines,
-    }));
-    return false;
-  };
-
+/**
+ * Paste is plain text. All it needs from us is honest identity.
+ *
+ * Nothing is written to the clipboard beyond what CodeMirror writes
+ * itself, so copy and cut need no handler at all — a scene is moved or
+ * duplicated from the rail, where it is a database operation rather than
+ * a text one.
+ *
+ * The handler exists only because the mapping's split rule would give
+ * the pasted text the id of the line it pushed DOWN, handing it that
+ * line's scene. Fresh lines get fresh identity; the line that was
+ * already there keeps its own.
+ */
+function pasteIdentity(): Extension {
   return EditorView.domEventHandlers({
-    copy: write,
-    cut: write,
     paste: (event, view) => {
-      const payload = decodeClip(
-        event.clipboardData?.getData(SCF_CLIP_MIME));
-      // No payload means the text came from outside the editor. Chris's
-      // call: leave it as-is rather than re-classifying — the Stage-1
-      // classifier runs at import, and the editor does not re-derive
-      // type from text after a line exists.
-      if (payload === null || payload.lines.length === 0) return false;
+      const text = event.clipboardData?.getData("text/plain") ?? "";
+      if (text === "") return false;
 
       const entries = view.state.field(lineState).entries;
-      const resolution = resolvePaste(payload, {
-        project: ctx.getProjectKey(),
-        liveIds: new Set(entries.map((e) => e.id)),
-        mint: mintLineId,
-      });
-
       const sel = view.state.selection.main;
       const firstLine = view.state.doc.lineAt(sel.from);
       const lastLine = view.state.doc.lineAt(sel.to);
       const atLineStart = sel.from === firstLine.from;
+      const pieces = text.replace(/\r\n?/g, "\n").split("\n");
+      // A multi-line paste resting at a line start lands as its own
+      // block, so the line it landed on is pushed down whole instead of
+      // being spliced onto the last pasted piece.
       const blockInsert =
-        sel.from === sel.to && atLineStart && resolution.wholeLines;
-      // A block insert carries its own line terminator, so the line it
-      // lands on is pushed down whole rather than splicing onto the last
-      // pasted line.
-      const insert = blockInsert
-        ? `${resolution.text}\n` : resolution.text;
+        sel.from === sel.to && atLineStart && pieces.length > 1;
+      const insert = blockInsert ? `${text}\n` : text;
 
-      const next = planPasteEntries(
-        entries,
-        resolution.lines.map((l) => ({ id: l.id, type: l.type })),
-        {
-          firstLine: firstLine.number,
-          lastLine: lastLine.number,
-          atLineStart, blockInsert,
-        });
+      // Type is not derived from the pasted text: the editor classifies
+      // at import, never afterwards. Fresh lines start as action and Tab
+      // retypes them, which is what typing them would have done.
+      const pasted = pieces.map(() =>
+        ({ id: mintLineId(), type: "action" as BlockType }));
 
       view.dispatch({
         changes: { from: sel.from, to: sel.to, insert },
         selection: { anchor: sel.from + insert.length },
-        // State the whole array: the mapping's split rule would give the
-        // pasted text the identity of the line it pushed down.
-        effects: loadLines.of(next as LineEntry[]),
+        effects: loadLines.of(planPasteEntries(entries, pasted, {
+          firstLine: firstLine.number,
+          lastLine: lastLine.number,
+          atLineStart, blockInsert,
+        }) as LineEntry[]),
         userEvent: "input.paste",
       });
-      ctx.onPaste?.(resolution.mode, resolution.lines.length);
       return true;
     },
   });
@@ -715,7 +642,6 @@ export interface ScriptCallbacks {
   /** Current entity names for autocomplete (refreshed after commits). */
   getLocations: () => string[];
   getCharacters: () => string[];
-  clipboard: ClipboardContext;
 }
 
 // v1's lists and triggers, ported: prefixes on an empty/short heading
@@ -814,7 +740,7 @@ export function screenplayExtensions(cb: ScriptCallbacks): Extension {
       icons: false,
     }),
     EditorView.lineWrapping,
-    clipboardHandlers(cb.clipboard),
+    pasteIdentity(),
     // Native spellcheck. autocorrect/autocapitalize stay off: the
     // uppercase-as-you-type rule owns capitalization on heading and cue
     // lines, and a second opinion would fight it.

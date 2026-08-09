@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.5",
+  "schemaVersion": "2.6",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {

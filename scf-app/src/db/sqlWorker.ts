@@ -166,7 +166,16 @@ self.onmessage = (event: MessageEvent<Request>) => {
         self.postMessage({ id, error: `unknown op ${String(op)}` });
       }
     } catch (e) {
-      console.error("[sqlWorker]", op, e);
+      // "no database open" is a teardown race, not a fault: a view fired
+      // a query a tick after the project closed. The caller still gets
+      // the rejection; it just does not get reported as an error, so a
+      // real one is not buried among them.
+      const message = e instanceof Error ? e.message : String(e);
+      if (message.includes("no database open")) {
+        console.debug("[sqlWorker]", op, "after close — ignored");
+      } else {
+        console.error("[sqlWorker]", op, e);
+      }
       self.postMessage({
         id,
         error: e instanceof Error

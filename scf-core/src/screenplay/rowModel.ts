@@ -234,10 +234,23 @@ export async function initScreenplayTables(exec: SqlExec): Promise<void> {
     scene_id INTEGER,
     character_id INTEGER,
     location_id INTEGER,
-    metadata JSON
+    metadata JSON,
+    source_uuid TEXT
   )`);
   await exec(`CREATE INDEX IF NOT EXISTS idx_version_lines_version
     ON screenplay_version_lines(version_id)`);
+  // Added in 2.6. A snapshot row has its own uuid (v1's contract, and
+  // the unique index on version-line uuids depends on it), so it needed
+  // a SECOND column to record which LIVE line it was taken from.
+  // Without it a revert has no way to give a restored line back its
+  // original identity, and every beat and prop tag anchored to it would
+  // be orphaned by the act of reverting.
+  const versionCols = await exec(
+    `PRAGMA table_info("screenplay_version_lines")`);
+  if (!versionCols.some((c) => String(c["name"]) === "source_uuid")) {
+    await exec(
+      "ALTER TABLE screenplay_version_lines ADD COLUMN source_uuid TEXT");
+  }
   await exec(`CREATE TABLE IF NOT EXISTS screenplay_version_title_page (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     version_id INTEGER NOT NULL

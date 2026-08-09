@@ -9,6 +9,7 @@ import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
 import {
   deleteSceneCharacter, scanIntegrity, unanchorBeat,
 } from "../src/editor/integrity.ts";
+import { tagPropRange } from "../src/editor/features.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../../scf-core/registry/registry.json", import.meta.url));
@@ -118,5 +119,63 @@ describe("script integrity", () => {
   test("a clean script reports nothing", async () => {
     expect((await scanIntegrity(db.exec, live("L-head", "L-cue"))).total)
       .toBe(0);
+  });
+});
+
+/**
+ * Tagging a prop must also record that the prop is in the scene.
+ *
+ * Every query that asks "which props are in this scene" reads
+ * scene_prop, including the Scene Rail's prop filter — so a prop created
+ * by tagging appeared nowhere in that filter while imported props did,
+ * because the importer writes the junction and tagging did not.
+ */
+describe("prop tagging links the scene", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+
+  beforeEach(async () => {
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    db = openNodeDatabase(":memory:");
+    await initDatabase(db.exec, registry);
+    await initScreenplayTables(db.exec);
+    await db.exec("INSERT INTO scene (name) VALUES ('KITCHEN')");
+    await db.exec("INSERT INTO prop (name) VALUES ('Kettle')");
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "scene_id, uuid) VALUES (0, 'heading', 'INT. KITCHEN - DAY', 1, 'H1')");
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "uuid) VALUES (1, 'action', 'She fills the kettle.', 'L1')");
+  });
+
+  const links = async (): Promise<number> =>
+    (await db.exec("SELECT id FROM scene_prop")).length;
+
+  test("the junction is written from the governing heading", async () => {
+    await tagPropRange(db.exec, "L1", 1, "kettle", 9, 15);
+    const rows = await db.exec("SELECT scene_id, prop_id FROM scene_prop");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!["scene_id"]).toBe(1);
+    expect(rows[0]!["prop_id"]).toBe(1);
+  });
+
+  test("tagging the same prop twice in one scene links it once",
+       async () => {
+    await tagPropRange(db.exec, "L1", 1, "kettle", 9, 15);
+    await tagPropRange(db.exec, "H1", 1, "KITCHEN", 5, 12);
+    expect(await links()).toBe(1);
+    // Both tags are kept — only the junction is deduplicated.
+    expect(await db.exec("SELECT id FROM screenplay_prop_tags"))
+      .toHaveLength(2);
+  });
+
+  test("a line with no heading above it links nothing", async () => {
+    await db.exec("DELETE FROM screenplay_lines WHERE uuid = 'H1'");
+    await tagPropRange(db.exec, "L1", 1, "kettle", 9, 15);
+    expect(await links()).toBe(0);
+    // The tag still stands; only the scene claim is withheld.
+    expect(await db.exec("SELECT id FROM screenplay_prop_tags"))
+      .toHaveLength(1);
   });
 });

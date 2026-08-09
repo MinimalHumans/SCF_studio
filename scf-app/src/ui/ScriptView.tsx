@@ -12,12 +12,15 @@ import { useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
 
 import { EditorState, Transaction } from "@codemirror/state";
-import { exec, useStore } from "../state/store.ts";
+import { exec, registry, useStore } from "../state/store.ts";
 import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
 import { withTransaction } from "@scf-core/db.ts";
-import { loadLines } from "../editor/lineState.ts";
-import { planSceneMove } from "../editor/sceneMove.ts";
+import { loadLines, mintLineId } from "../editor/lineState.ts";
+import { planSceneMove, sceneBlocks } from "../editor/sceneMove.ts";
+import {
+  duplicateSceneRow, removeSceneCascade,
+} from "../editor/sceneOps.ts";
 import { reanchorSpansForMove } from "../editor/structureCommit.ts";
 import {
   blocksToDoc, blocksToFountain, commitPlan, rowsToBlocks,
@@ -60,7 +63,16 @@ export const scriptViewHandle: {
    * so its beats, shots and links follow by construction. */
   moveScene: ((sceneId: number,
                beforeSceneId: number | null) => void) | null;
-} = { scrollToLineOrder: null, moveScene: null };
+  /** Line uuids of a scene's block, for counting what a removal takes. */
+  sceneLineIds: ((sceneId: number) => string[]) | null;
+  /** Hard remove: the scene, its block, and everything it owns. */
+  removeScene: ((sceneId: number) => Promise<void>) | null;
+  /** Newly minted copy of the scene and its block, inserted after it. */
+  duplicateScene: ((sceneId: number) => Promise<void>) | null;
+} = {
+  scrollToLineOrder: null, moveScene: null, sceneLineIds: null,
+  removeScene: null, duplicateScene: null,
+};
 
 /** Editing position survives leaving the Script tab (opening an entity
  * from a chip unmounts the editor; coming back should not mean "top of
@@ -227,9 +239,29 @@ export function ScriptView(): JSX.Element {
     view.dispatch({ effects: setAnnotations.of(map) });
   };
 
-  const commitBusy = useRef(false);
-  const commitAgain = useRef(false);
-  const commitAgainStale = useRef(false);
+  const commitQueue = useRef<Promise<void>>(Promise.resolve());
+
+  /**
+   * Every commit runs alone.
+   *
+   * The old scheme coalesced the DEBOUNCED commit against itself, but
+   * `explicitCommit` bypassed it — it called `commit()`, which returned
+   * immediately when one was already in flight, and then carried on
+   * writing. Two `writeScreenplay` passes and two `withTransaction`
+   * blocks overlapped, which is where "cannot rollback — no transaction
+   * is active" came from, and why a Commit press could be swallowed: one
+   * pass created the scene and the other overwrote the rows that pointed
+   * at it, leaving the record behind with nothing linked to it. That is
+   * the ghost scene.
+   *
+   * A queue instead of a flag. Redundant passes are cheap; overlapping
+   * ones corrupt.
+   */
+  const serialize = <T,>(work: () => Promise<T>): Promise<T> => {
+    const run = commitQueue.current.then(work, work);
+    commitQueue.current = run.then(() => undefined, () => undefined);
+    return run;
+  };
 
   /**
    * `reportStale` gates the heading/scene disagreement notice. The
@@ -240,25 +272,7 @@ export function ScriptView(): JSX.Element {
    */
   const commit = async (reportStale = false): Promise<void> => {
     if (!projectOpen()) return;
-    // Coalesce: blur + click (or debounce + Cmd-S) fire near-together;
-    // one runs, a trailing rerun picks up anything newer.
-    if (commitBusy.current) {
-      commitAgain.current = true;
-      if (reportStale) commitAgainStale.current = true;
-      return;
-    }
-    commitBusy.current = true;
-    try {
-      await commitInner(reportStale);
-    } finally {
-      commitBusy.current = false;
-      if (commitAgain.current) {
-        commitAgain.current = false;
-        const again = commitAgainStale.current;
-        commitAgainStale.current = false;
-        void commit(again);
-      }
-    }
+    return serialize(() => commitInner(reportStale));
   };
 
   const commitInner = async (reportStale: boolean): Promise<void> => {
@@ -342,7 +356,12 @@ export function ScriptView(): JSX.Element {
   const explicitCommit = async (): Promise<void> => {
     const view = viewRef.current;
     if (view === null || !projectOpen()) return;
-    await commit(true); // text + existing links are always safe to save
+    return serialize(() => explicitCommitInner(view));
+  };
+
+  const explicitCommitInner = async (view: EditorView): Promise<void> => {
+    // commitInner, not commit(): we already hold the queue.
+    await commitInner(true); // text + existing links are always safe
     const plan = commitPlan(view.state, prevBlocksRef.current);
     const info = await planCommitLinks(exec, plan.rows);
     console.debug("[commit-plan]",
@@ -383,7 +402,11 @@ export function ScriptView(): JSX.Element {
     setReview(info);
   };
 
-  const confirmReview = async (): Promise<void> => {
+  /** Applying the review writes too, so it queues like everything else. */
+  const confirmReview = async (): Promise<void> =>
+    serialize(() => confirmReviewInner());
+
+  const confirmReviewInner = async (): Promise<void> => {
     const view = viewRef.current;
     if (view === null || review === null) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);
@@ -495,26 +518,6 @@ export function ScriptView(): JSX.Element {
               void openEntityRow(entity, entityId),
             getLocations: () => entityNamesRef.current.locations,
             getCharacters: () => entityNamesRef.current.characters,
-            clipboard: {
-              // uuids are minted per file, so identity may only be
-              // reused within the project that issued it.
-              getProjectKey: () =>
-                useStore.getState().projectName ?? "untitled",
-              getLinks: (lineId) => {
-                const block = prevBlocksRef.current.get(lineId);
-                return block === undefined ? null : {
-                  sceneId: block.sceneId,
-                  characterId: block.characterId,
-                  locationId: block.locationId,
-                };
-              },
-              onPaste: (mode, lines) => {
-                say(mode === "move"
-                  ? `${String(lines)} line(s) moved — links kept`
-                  : `${String(lines)} line(s) pasted`);
-                scheduleCommit();
-              },
-            },
           }),
           EditorView.updateListener.of((u) => {
             if (u.docChanged) {
@@ -645,6 +648,109 @@ export function ScriptView(): JSX.Element {
           : "scene moved");
       })();
     };
+    /** Blocks are heading-to-heading, the same span used everywhere. */
+    const blockRange = (sceneId: number): [number, number] | null => {
+      const entries = lineEntries(view.state);
+      const blocks = sceneBlocks(entries);
+      const index = blocks.findIndex((b) => {
+        const entry = entries[b.start];
+        return entry !== undefined &&
+          prevBlocksRef.current.get(entry.id)?.sceneId === sceneId;
+      });
+      const block = blocks[index];
+      return block === undefined ? null : [block.start, block.end];
+    };
+
+    scriptViewHandle.sceneLineIds = (sceneId: number) => {
+      const range = blockRange(sceneId);
+      if (range === null) return [];
+      return lineEntries(view.state)
+        .slice(range[0], range[1] + 1).map((e) => e.id);
+    };
+
+    /**
+     * Hard remove. Not undoable, and the confirmation carries the counts
+     * so that is a fair trade rather than a trap.
+     */
+    scriptViewHandle.removeScene = async (sceneId: number) => {
+      const range = blockRange(sceneId);
+      const lineIds = scriptViewHandle.sceneLineIds?.(sceneId) ?? [];
+      // Re-anchor first: an act anchored to this scene would otherwise
+      // vanish from the derived structure and take its scenes with it.
+      const entries = lineEntries(view.state);
+      const order: number[] = [];
+      for (const block of sceneBlocks(entries)) {
+        const entry = entries[block.start];
+        const id = entry === undefined
+          ? undefined : prevBlocksRef.current.get(entry.id)?.sceneId;
+        if (id !== undefined && id !== null) order.push(id);
+      }
+      await reanchorSpansForMove(exec, sceneId, order);
+      await removeSceneCascade(exec, registry, sceneId, lineIds);
+
+      if (range !== null) {
+        const [start, end] = range;
+        const lines: string[] = [];
+        for (let n = 1; n <= view.state.doc.lines; n++) {
+          lines.push(view.state.doc.line(n).text);
+        }
+        const kept = [...lines.slice(0, start), ...lines.slice(end + 1)];
+        const keptEntries = [...entries.slice(0, start),
+                             ...entries.slice(end + 1)];
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length,
+                     insert: kept.join("\n") },
+          effects: loadLines.of(keptEntries),
+        });
+      }
+      // The removal is deliberate and complete, so nothing should be
+      // left for undo to half-restore.
+      useStore.setState({ undo: null });
+      say("scene removed");
+      await commit(true);
+    };
+
+    /** Newly minted: new record, new lines, new uuids. */
+    scriptViewHandle.duplicateScene = async (sceneId: number) => {
+      const range = blockRange(sceneId);
+      if (range === null) return;
+      const [start, end] = range;
+      const newId = await duplicateSceneRow(exec, sceneId);
+
+      const entries = lineEntries(view.state);
+      const lines: string[] = [];
+      for (let n = 1; n <= view.state.doc.lines; n++) {
+        lines.push(view.state.doc.line(n).text);
+      }
+      const copiedText = lines.slice(start, end + 1);
+      // Fresh identity throughout — a duplicate is new text, so prop
+      // tags and beats anchored to the original stay with the original.
+      const copiedEntries = entries.slice(start, end + 1)
+        .map((e) => ({ id: mintLineId(), type: e.type }));
+
+      const nextLines = [...lines.slice(0, end + 1), ...copiedText,
+                         ...lines.slice(end + 1)];
+      const nextEntries = [...entries.slice(0, end + 1), ...copiedEntries,
+                           ...entries.slice(end + 1)];
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length,
+                   insert: nextLines.join("\n") },
+        effects: loadLines.of(nextEntries),
+      });
+      // Link the copied heading to the new record before committing, or
+      // the commit would propose creating a third scene from it.
+      const headingId = copiedEntries[0]?.id;
+      if (headingId !== undefined) {
+        prevBlocksRef.current.set(headingId, {
+          uuid: headingId, lineType: "heading",
+          content: copiedText[0] ?? "", sceneId: newId,
+          characterId: null, locationId: null,
+        } as never);
+      }
+      say("scene duplicated");
+      await commit(true);
+    };
+
     scriptViewHandle.scrollToLineOrder = (order: number) => {
       const line = view.state.doc.line(
         Math.min(order + 1, view.state.doc.lines));
@@ -687,6 +793,9 @@ export function ScriptView(): JSX.Element {
       }
       scriptViewHandle.scrollToLineOrder = null;
       scriptViewHandle.moveScene = null;
+      scriptViewHandle.sceneLineIds = null;
+      scriptViewHandle.removeScene = null;
+      scriptViewHandle.duplicateScene = null;
       view.destroy();
       viewRef.current = null;
     };
@@ -1171,6 +1280,15 @@ function VersionsPanel({ onPublished, onImport, onExport,
   return (
     <aside className="versions-panel">
       <h3>Versions</h3>
+      <p className="version-caveat">
+        <b>Scheduled for replacement.</b> Publishing and diffing work and
+        are non-destructive. Reverting has been retired: a version
+        snapshots the SCRIPT, not the records it points at, so it could
+        never restore a scene, character or location deleted since — an
+        SCF describes what is in the film, not everything that has been
+        tried. Keep your own versions of the file, and export a
+        .fountain when you need a snapshot to read.
+      </p>
       <div className="version-io">
         <button onClick={onImport}>Import…</button>
         <button onClick={onExport} disabled={exportDisabled}>
@@ -1237,9 +1355,11 @@ function VersionsPanel({ onPublished, onImport, onExport,
           <li className="muted">No versions published yet.</li>
         )}
       </ul>
+
     </aside>
   );
 }
+
 
 
 function PropContextMenu({ at, selection, onClose, onDone }: {

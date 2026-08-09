@@ -5,6 +5,31 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.6
+
+**`screenplay_version_lines.source_uuid`** (TEXT, nullable).
+
+Records which LIVE line each snapshot row was taken from.
+
+A snapshot row already has a `uuid`, but it is the snapshot row's own —
+`publishVersion` deliberately does not copy the live line's, because the
+unique index on version-line uuids depends on them being distinct. That
+left no way to say "this saved line is that line", so reverting to a
+version would have handed every restored line a brand-new identity and
+orphaned every performance beat and prop tag anchored to one. Reverting
+the script would silently have broken everything attached to it.
+
+Additive and self-migrating (ALTER on open). Versions published before
+2.6 have NULL here and are not lost: `resolveRevertRows` falls back to
+`diffScreenplay`'s text-and-type anchoring against the current script,
+and the pre-flight report says how many lines it could not place.
+
+**Consumer note.** `uuid` and `source_uuid` on a version line mean
+different things and are never interchangeable. `uuid` identifies the
+snapshot row; `source_uuid` points into `screenplay_lines`, and may
+point at a line that no longer exists.
+
+
 ## 2.5
 
 **`project.scene_numbering`** (select `derived` | `fixed`, default

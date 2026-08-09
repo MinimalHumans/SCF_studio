@@ -335,6 +335,32 @@ this application), or **both**.
   memory of deleted codes, so deleting the last shot in a scene frees its
   code again. A production that needs the stronger promise wants a stored
   counter.
+- **The clipboard carries text, nothing else** *(editor)* — copy, cut and
+  paste move plain text with no links, no types and no identity. Editing
+  text is never how a record is created or destroyed. A scene is moved,
+  duplicated or removed from the Scene Rail, where the operation is a
+  database operation and says so. Paste still assigns identity
+  explicitly, because CodeMirror's split rule would otherwise hand pasted
+  text the id — and therefore the scene — of the line it pushed down.
+- **What belongs to a scene** *(editor, derived from the registry)* — a
+  field named `scene_id` means the row BELONGS to the scene and is
+  deleted with it; any other reference to `scene` means the row POINTS AT
+  the scene and only loses the pointer. So shots, beats and cues die with
+  the scene while a motif's `first_appearance_scene_id` survives with a
+  cleared reference. Act and sequence `start_scene_id` are excluded from
+  both and re-anchored first. The rule is derived, so adding an entity
+  needs no edit.
+- **Version identity** *(schema 2.6)* — `screenplay_version_lines`
+  carries both `uuid` (the snapshot row's own) and `source_uuid` (the
+  live line it was taken from). They are never interchangeable, and
+  `source_uuid` may point at a line that no longer exists. Revert
+  restores identity from it. **Revert is retired** and the version system
+  is scheduled for replacement: a version snapshots the SCRIPT, not the
+  records it points at, so it could never restore a scene, character or
+  location deleted since. An SCF describes what is in the film, not
+  everything that has been tried — external file versioning is the right
+  tool for that, and reintegrating pieces from another .scf is the
+  eventual answer. Publish and diff remain; they are read-only.
 - **Merging two files.** *(editor, later)* The live use for junction
   natural keys (§5), and the point at which uuids stop being enough.
   Matching links requires resolving their endpoints first, which is a

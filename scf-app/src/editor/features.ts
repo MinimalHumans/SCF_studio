@@ -139,19 +139,27 @@ async function publishVersionInner(
      counts.character_count, counts.location_count, counts.word_count]);
   const idRow = await exec("SELECT last_insert_rowid() AS id");
   const versionId = idRow[0]!["id"] as number;
-  // v1-faithful: snapshot rows do NOT copy the live line's uuid — they
-  // are their own rows and receive fresh identity from the open-time
-  // uuid backfill (v1's publish omits uuid for exactly this reason; the
-  // unique index on version-line uuids depends on it).
+  // v1-faithful: snapshot rows do NOT copy the live line's uuid into
+  // `uuid` — they are their own rows and receive fresh identity from the
+  // open-time backfill (v1's publish omits uuid for exactly this reason;
+  // the unique index on version-line uuids depends on it).
+  //
+  // `source_uuid` (2.6) is the SECOND column that records which live
+  // line the row was taken from. It is what lets a revert give a
+  // restored line back its original identity — and therefore lets the
+  // performance beats and prop tags anchored to it survive the trip.
+  // Without it, reverting the script silently orphaned everything
+  // attached to it.
   for (const line of sp.lines) {
     await exec(
       `INSERT INTO screenplay_version_lines
          (version_id, line_order, line_type, content, scene_id,
-          character_id, location_id, metadata)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          character_id, location_id, metadata, source_uuid)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [versionId, line.lineOrder, line.lineType, line.content,
        line.sceneId, line.characterId, line.locationId,
-       line.metadata === null ? null : JSON.stringify(line.metadata)]);
+       line.metadata === null ? null : JSON.stringify(line.metadata),
+       line.uuid ?? null]);
   }
   for (const tp of sp.titlePage) {
     await exec(
@@ -197,6 +205,22 @@ export async function diffVersionAgainstCurrent(
 // Prop tags
 // ---------------------------------------------------------------------------
 
+/**
+ * Tag a prop on a line — and record that the prop is in that SCENE.
+ *
+ * The tag alone was not enough. Every query that asks "which props are
+ * in this scene" reads `scene_prop`, including the Scene Rail's prop
+ * filter — so a prop created by tagging appeared nowhere in it while
+ * imported props did, because the importer writes the junction and
+ * tagging did not. The tag is the evidence; the junction is what the
+ * evidence means, and one without the other is a fact the app knows and
+ * cannot answer with.
+ *
+ * The line's scene comes from the heading that governs it, matching how
+ * a scene's extent is defined everywhere else. Nothing is written when
+ * the line is not under a heading yet, and the row is not duplicated
+ * when the prop is already linked.
+ */
 export async function tagPropRange(
     exec: SqlExec, lineId: string, propId: number, taggedText: string,
     startOffset: number, endOffset: number): Promise<void> {
@@ -205,6 +229,26 @@ export async function tagPropRange(
        (tagged_text, prop_id, line_uuid, start_offset, end_offset)
      VALUES (?, ?, ?, ?, ?)`,
     [taggedText, propId, lineId, startOffset, endOffset]);
+  await linkPropToLineScene(exec, lineId, propId);
+}
+
+export async function linkPropToLineScene(
+    exec: SqlExec, lineId: string, propId: number): Promise<void> {
+  const scene = await exec(
+    "SELECT scene_id FROM screenplay_lines WHERE line_type = 'heading' " +
+    "AND line_order <= (SELECT line_order FROM screenplay_lines " +
+    "                   WHERE uuid = ?) AND scene_id IS NOT NULL " +
+    "ORDER BY line_order DESC LIMIT 1", [lineId]);
+  const sceneId = scene[0]?.["scene_id"] as number | null | undefined;
+  if (sceneId === null || sceneId === undefined) return;
+  const existing = await exec(
+    "SELECT id FROM scene_prop WHERE scene_id = ? AND prop_id = ?",
+    [sceneId, propId]);
+  if (existing.length > 0) return;
+  const name = await exec("SELECT name FROM prop WHERE id = ?", [propId]);
+  await exec(
+    "INSERT INTO scene_prop (name, scene_id, prop_id) VALUES (?, ?, ?)",
+    [String(name[0]?.["name"] ?? ""), sceneId, propId]);
 }
 
 export interface ValidatedTag {

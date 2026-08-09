@@ -18,6 +18,7 @@ import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef,
          type NavigableSubject } from "./registryGraph.ts";
 import { suggestSaveAsName } from "./saveName.ts";
+import { reanchorSpansForMove } from "../editor/structureCommit.ts";
 import { rowLabel } from "./displayName.ts";
 import {
   captureForUndo, restoreFromUndo, type UndoEntry,
@@ -262,7 +263,14 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   newProject: async () => {
-    set({ phase: "loading", errorMessage: null });
+    // "loading" first, and awaited into the next task, so mounted views
+    // unmount before the file is wiped. Wiping under a live workbench
+    // left its queries hitting a half-built database — that is where
+    // "no such table: screenplay_version_lines" came from, not from the
+    // version code itself.
+    set({ phase: "loading", errorMessage: null, openRow: null,
+          draft: null, selectedSubject: null });
+    await new Promise((r) => setTimeout(r, 0));
     try {
       // Fresh working database; initDatabase creates the format.
       await client.wipe(WORKING_PATH);
@@ -486,6 +494,25 @@ export const useStore = create<AppState>((set, get) => ({
         existing[0] === undefined
           ? entity : rowLabel(registry.entities.get(entity), entity,
                               existing[0]));
+      // An act or sequence is anchored to a START SCENE, so deleting
+      // that scene leaves the span pointing at nothing — it stops
+      // appearing in the structure entirely, and every scene it held
+      // falls out of any act, taking the Shoot tab's grouping with it.
+      // The row was never actually deleted; it just became invisible.
+      // Same answer as moving the anchor scene: hand the boundary to
+      // whatever now sits where the old one did.
+      if (entity === "scene") {
+        const headings = await exec(
+          "SELECT scene_id FROM screenplay_lines " +
+          "WHERE line_type = 'heading' AND scene_id IS NOT NULL " +
+          "ORDER BY line_order");
+        const order: number[] = [];
+        for (const row of headings) {
+          const sceneId = Number(row["scene_id"]);
+          if (!order.includes(sceneId)) order.push(sceneId);
+        }
+        await reanchorSpansForMove(exec, id, order);
+      }
       await exec(`DELETE FROM ${q(entity)} WHERE id = ?`, [id]);
     } catch (e) {
       set({ errorMessage: `Delete failed: ${
