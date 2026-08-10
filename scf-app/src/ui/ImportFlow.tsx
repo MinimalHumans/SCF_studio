@@ -136,6 +136,10 @@ export function ImportFlow({ onClose, onDone }: {
             <p>Fountain (.fountain, .txt) or Final Draft (.fdx).
                Conversion damage gets a bounded repair pass — every
                repair is shown. Nothing is written until you accept.</p>
+            <p className="muted import-readonly">
+               Your file is read once and never written to. Everything
+               you do afterwards is saved in the .scf; exporting produces
+               a new .fountain, it does not update this one.</p>
             <input type="file" accept=".fountain,.txt,.fdx"
                    onChange={(e) => {
                      const f = e.target.files?.[0];

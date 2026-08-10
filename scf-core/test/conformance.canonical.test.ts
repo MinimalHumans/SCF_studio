@@ -299,3 +299,64 @@ describe("Q03 smoke: subjects present", () => {
       .toEqual(new Set([eleanor, marcus]));
   });
 });
+
+/**
+ * Fixture invariants the query suites depend on but never state.
+ *
+ * The canonical tests address scenes BY NUMBER — "sc 12", "sc 9 -> sc
+ * 12" — so the fixture's production numbering is load-bearing test data,
+ * not decoration. It is gapped (1, 3, 7, 9, 12, 16 …) exactly as a real
+ * shooting script is, and renumbering it to 1..11 would silently rewrite
+ * every one of those assertions' subject.
+ */
+describe("fixture invariants", () => {
+  test("numbering is fixed, so no commit can renumber it", async () => {
+    const rows = await fx.ctx.exec("SELECT scene_numbering FROM project");
+    // 'derived' would let the first commit in the app renumber the
+    // scenes from script order and destroy the production numbering.
+    expect(String(rows[0]?.["scene_numbering"])).toBe("fixed");
+  });
+
+  test("the gaps are still there", async () => {
+    const rows = await fx.ctx.exec(
+      "SELECT scene_number FROM scene ORDER BY scene_number");
+    const numbers = rows.map((r) => r["scene_number"]);
+    expect(numbers).toEqual([1, 3, 7, 9, 10, 11, 12, 16, 19, 21, 24]);
+  });
+
+  test("every scene in the script has a number and a heading", async () => {
+    const orphans = await fx.ctx.exec(
+      "SELECT id FROM scene WHERE scene_number IS NULL");
+    expect(orphans).toHaveLength(0);
+    const headings = await fx.ctx.exec(
+      "SELECT COUNT(*) AS n FROM screenplay_lines " +
+      "WHERE line_type = 'heading' AND scene_id IS NOT NULL");
+    const scenes = await fx.ctx.exec("SELECT COUNT(*) AS n FROM scene");
+    expect(headings[0]!["n"]).toBe(scenes[0]!["n"]);
+  });
+
+  test("every row that carries identity has it", async () => {
+    for (const table of ["scene", "character", "location", "prop",
+                         "act", "sequence", "screenplay_lines"]) {
+      const rows = await fx.ctx.exec(
+        `SELECT COUNT(*) AS n FROM "${table}" WHERE uuid IS NULL`);
+      expect({ table, missing: rows[0]!["n"] })
+        .toEqual({ table, missing: 0 });
+    }
+  });
+
+  test("stored act and sequence labels match what commit would derive",
+       async () => {
+    // If these disagreed, opening the fixture and committing would
+    // rewrite them — a demo file that edits itself on first use.
+    const acts = await fx.ctx.exec(
+      "SELECT act_number FROM act ORDER BY act_number");
+    expect(acts.map((r) => r["act_number"])).toEqual([1, 2, 3]);
+    const seqs = await fx.ctx.exec(
+      "SELECT sequence_number, act_id FROM sequence " +
+      "ORDER BY sequence_number");
+    expect(seqs.map((r) => r["sequence_number"])).toEqual([1, 2, 3, 4, 5]);
+    // act_id is maintained at commit now; the fixture already agrees.
+    expect(seqs.map((r) => r["act_id"])).toEqual([1, 2, 2, 3, 3]);
+  });
+});

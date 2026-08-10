@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { suggestSaveAsName } from "../src/state/saveName.ts";
+import {
+  suggestExportName, suggestSaveAsName,
+} from "../src/state/saveName.ts";
 
 describe("suggestSaveAsName", () => {
   it("bumps an unversioned file to v2", () => {
@@ -41,5 +43,37 @@ describe("suggestSaveAsName", () => {
   it("does not mistake a year or scene number for a version", () => {
     expect(suggestSaveAsName("hollow creek.scf", true))
       .toBe("hollow creek_v2.scf");
+  });
+});
+
+/**
+ * Every export used to land as the constant "screenplay.fountain",
+ * regardless of project — which is how an export can end up beside, or
+ * on top of, the file it was imported from. (The import itself cannot
+ * write: it reads through a plain file input, which hands the page a
+ * read-only snapshot and no handle back to the disk.)
+ */
+describe("suggestExportName", () => {
+  it("names the export after the project", () => {
+    expect(suggestExportName("hollow_creek.scf"))
+      .toBe("hollow_creek.fountain");
+    expect(suggestExportName("hollow_creek_v3.scf"))
+      .toBe("hollow_creek_v3.fountain");
+  });
+
+  it("tolerates a name with no extension", () => {
+    expect(suggestExportName("Untitled")).toBe("Untitled.fountain");
+  });
+
+  it("falls back when there is no project name yet", () => {
+    expect(suggestExportName(null)).toBe("screenplay.fountain");
+    expect(suggestExportName("")).toBe("screenplay.fountain");
+    expect(suggestExportName("   ")).toBe("screenplay.fountain");
+    expect(suggestExportName(".scf")).toBe("screenplay.fountain");
+  });
+
+  it("two projects cannot collide on one export name", () => {
+    expect(suggestExportName("act_one.scf"))
+      .not.toBe(suggestExportName("act_two.scf"));
   });
 });

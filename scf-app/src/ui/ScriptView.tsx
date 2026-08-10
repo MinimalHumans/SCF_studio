@@ -13,6 +13,7 @@ import { EditorView } from "@codemirror/view";
 
 import { EditorState, Transaction } from "@codemirror/state";
 import { exec, registry, useStore } from "../state/store.ts";
+import { suggestExportName } from "../state/saveName.ts";
 import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
 import { withTransaction } from "@scf-core/db.ts";
@@ -887,7 +888,10 @@ export function ScriptView(): JSX.Element {
     const blob = new Blob([text], { type: "text/plain" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "screenplay.fountain";
+    // Named for the project, not a constant. Every export used to land
+    // as "screenplay.fountain", which is how one can end up beside — or
+    // over — the file it was imported from.
+    a.download = suggestExportName(useStore.getState().projectName);
     a.click();
     URL.revokeObjectURL(a.href);
   };

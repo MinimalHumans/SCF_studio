@@ -72,10 +72,21 @@ a cross-cut sequence interleaved with another cannot be expressed, and
 if that changes, enumerated membership is the only model that supports
 it and this decision has to be revisited rather than patched.
 
-**Story position** is the ordering used everywhere else in the app:
-`(scene_number IS NULL), scene_number, id`. A boundary anchored to an
-unnumbered scene therefore sits after every numbered one. Deterministic,
-but worth surfacing in validation (§8).
+**Story position** comes from the SCREENPLAY when one exists: the
+`line_order` of the heading carrying each scene. `scene_number` is a
+LABEL for that position, not the position itself, and is only the
+fallback — with `id` behind it — for a scene the script does not contain.
+A boundary anchored to such a scene therefore sits after every placed
+one, which is worth surfacing in validation (§8).
+
+*Superseded.* This section previously specified the ordering as
+`(scene_number IS NULL), scene_number, id` alone. That was wrong in two
+directions: a blank-written project numbers nothing, so order collapsed
+to insertion order and a scene added mid-act sorted to the end of the
+film; and a scene moved since its last commit carries a number that no
+longer matches the page. `scenePositions` / `sceneOrderHint` in
+`scf-core/src/structure.ts` are the derivation, `SCENE_ORDER_JOIN` /
+`SCENE_ORDER_BY` and the general `storyOrder()` its SQL twins.
 
 ### Derived vs stored, and what the file carries
 
@@ -92,10 +103,24 @@ labels and prop names.
 ### Numbering
 
 `act_number` and `sequence_number` become **labels**, not order. Order
-is derived from the boundary. **[open]** Should the app renumber them to
-match on commit, or leave them authored and flag disagreement? Renumber
-is tidier; leaving them authored respects a writer who calls something
-"Act 2A".
+is derived from the boundary.
+
+**Resolved: the app renumbers at commit.** `renumberSpans` writes act and
+sequence numbers from boundary order, and is shared by the script commit
+and the Structure tab, which both move boundaries. They are not gated:
+an act number is a structural label the app has always owned, and no
+crew holds paper on one.
+
+`scene_number` IS gated, by `project.scene_numbering` (`derived` |
+`fixed`, schema 2.5). `derived` recomputes it from script order at every
+commit and clears it for scenes the script does not contain; `fixed`
+never touches it, which is what an imported script needs — a
+production's numbering may be gapped or out of sequence and is data, not
+a derivation. Imports of numbered scripts set it, and so does the Hollow
+Creek fixture, whose gaps the canonical suite addresses scenes by.
+
+A writer who calls something "Act 2A" is served by the NAME, which is
+never touched. The number is the position.
 
 ## 4. Schema delta
 
@@ -194,9 +219,15 @@ is an identifier issued to a crew. Once a shot list goes out, 42A stays
 42A even if the scene renumbers. Deriving it would silently rewrite
 paperwork that exists on paper.
 
-Consequence: renumbering a scene leaves shot numbers stale by design.
-The outline shows the derived code beside an authored one when they
-disagree, so a shot list can be reissued deliberately.
+*Narrowed.* The paragraph above assumed a script that is always locked,
+and nobody holds paper on an unlocked one: `42A` sitting in a scene now
+numbered 43 is not a stable identifier, it is a stale one. Shot codes are
+therefore under the same `project.scene_numbering` flag as scene numbers.
+`derived` restamps the numeric prefix and keeps the letter (`2A` -> `1A`,
+`restampShotNumber` in `scf-core/src/shots.ts`); `fixed` freezes scene
+numbers and shot codes together, which is exactly the state a distributed
+shot list needs. A code that is not in this scheme (`pickup-3`) is left
+alone — an authored code stays authored.
 
 ## 7. Materializing `scene_sequence`
 
@@ -217,8 +248,17 @@ explains. Safer default: surface them once, delete on confirmation.
 
 New readiness findings, none of them blocking:
 
-- `sequence.act_id` disagrees with the act derived from its boundary
-  (two truths; the authored field wins, the finding reports it)
+- ~~`sequence.act_id` disagrees with the act derived from its boundary~~
+  — no longer possible. `act_id` was READ at commit and never written,
+  so it sat null on every sequence the app created: a stored field
+  consumers would reasonably trust, empty all along. `renumberSpans` now
+  maintains it from the act the sequence's START scene falls in, which is
+  how a crossing sequence is attributed everywhere else. This is a second
+  copy of a derivable truth, admitted on the same grounds as
+  `scene_sequence` above: the field already exists in the format and
+  readers already reach for it, so leaving it permanently null serves
+  nobody. The alternative — removing it — is a schema deletion and is
+  noted as open
 - a sequence's start scene precedes its act's start scene
 - two acts anchored to the same scene
 - an act or sequence with no boundary at all (invisible in the outline)

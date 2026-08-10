@@ -51,7 +51,10 @@ Applied:
   The importer parks cue text there; showing it made a character's whole
   scene list read as that character's own name.
 - **Act and sequence membership** is derived from a boundary (§4).
-- **Story order** is derived from `scene_number`, never from row id.
+- **Story order** is derived from the SCREENPLAY — the position of the
+  heading carrying each scene — falling back to `scene_number`, then row
+  id, only for a scene the script does not contain. `scene_number` is a
+  label for that position, not the position itself (§3).
 
 **The one deliberate exception is `shot.shot_number`**, which IS stored
 and IS authored. A shot number is not a display label: it is an
@@ -83,8 +86,18 @@ Pinned by: `scf-app/test/sceneScript.test.ts` (nulls every body line's
 ## 3. Position and persistence
 
 Everything positional is keyed to a **scene**, and scenes are ordered by
-`scene_number` with unnumbered scenes last, then by id. That ordering is
-the spine every other rule stands on.
+their position in the SCREENPLAY: the `line_order` of the heading that
+carries each one. A scene the script does not contain has no position,
+and falls back to `scene_number` — unnumbered last — then row id. That
+ordering is the spine every other rule stands on.
+
+`scenePositions` / `sceneOrderHint` in `scf-core/src/structure.ts` are
+the derivation; `SCENE_ORDER_JOIN` / `SCENE_ORDER_BY` and the general
+`storyOrder()` are its SQL twins, so no view invents its own.
+**A consumer that sorts scenes by `scene_number` alone will be wrong**
+about any blank-written project and about any scene moved since its last
+commit. See §9 Resolved for the numbering flag that governs when the
+label is recomputed.
 
 Three patterns, distinguished by `positionPattern` on the entity:
 
@@ -335,6 +348,14 @@ this application), or **both**.
   memory of deleted codes, so deleting the last shot in a scene frees its
   code again. A production that needs the stronger promise wants a stored
   counter.
+- **Import never writes to the imported file** *(editor)* — a
+  .fountain/.fdx import reads through a plain `<input type="file">`,
+  which hands the page a read-only snapshot and no handle back to the
+  disk. Only two paths can write: `adapter.save`, whose token comes
+  solely from an .scf the user opened or a Save-As destination they
+  picked, and `.fountain` EXPORT, which always creates a new download
+  named after the project. There is no path by which editing a project
+  can modify the file it was imported from.
 - **The clipboard carries text, nothing else** *(editor)* — copy, cut and
   paste move plain text with no links, no types and no identity. Editing
   text is never how a record is created or destroyed. A scene is moved,
