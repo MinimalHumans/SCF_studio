@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { q } from "@scf-core/db.ts";
+import type { Row } from "@scf-core/db.ts";
 import { registry, rowName, useStore } from "../state/store.ts";
 import {
   isComposedLink, linkLabel, linkQualifiers, referenceFields,
@@ -7,6 +8,9 @@ import {
 import { useQuery } from "./useQuery.ts";
 import { useRefNames } from "./useRefNames.ts";
 import { storyOrder } from "@scf-core/structure.ts";
+import {
+  ORDER_FALLBACKS, STORY_ORDERED, sceneRefFor,
+} from "../state/listOrder.ts";
 
 /**
  * Which entities have a STORY order, and how to reach it.
@@ -19,14 +23,7 @@ import { storyOrder } from "@scf-core/structure.ts";
  * number, which is a label for that position rather than the position
  * itself.
  */
-const STORY_ORDERED: Record<string,
-    { sceneRef: string; fallbacks: string[] }> = {
-  scene: { sceneRef: "id", fallbacks: ["t.scene_number"] },
-  act: { sceneRef: "start_scene_id", fallbacks: ["t.act_number"] },
-  sequence: {
-    sceneRef: "start_scene_id", fallbacks: ["t.sequence_number"],
-  },
-};
+
 
 export function EntityList({ entity }: { entity: string }): JSX.Element {
   const edef = registry.entities.get(entity);
@@ -35,11 +32,17 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
   const composedEntity = edef !== undefined && isComposedLink(edef);
   const scenePlacedEntity = edef !== undefined && !composedEntity &&
     edef.fields.some((f) => f.name === "scene_id");
+  // A link entity has a place in the film too — a costume in a scene, a
+  // motif appearance — so it gets the same control. Six of the twelve
+  // hold a scene reference; the rest (an actor's role, a bundle's
+  // contents) have no position in the film and are simply A-Z.
+  const sceneRef = edef === undefined ? undefined : sceneRefFor(edef);
   const orderSpec = STORY_ORDERED[entity] ??
-    (scenePlacedEntity
-      ? { sceneRef: "scene_id",
-          fallbacks: edef!.fields.some((f) => f.name === "beat_order")
-            ? ["t.beat_order"] : [] }
+    (sceneRef !== undefined && (scenePlacedEntity || composedEntity)
+      ? { sceneRef,
+          fallbacks: ORDER_FALLBACKS
+            .filter((f) => edef!.fields.some((x) => x.name === f))
+            .map((f) => `t.${f}`) }
       : undefined);
   const canSortByStory = orderSpec !== undefined;
   const byStory = canSortByStory && listSort === "story";
@@ -96,6 +99,27 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
     [edef, composed, scenePlaced]);
   const refNames = useRefNames(targets);
 
+  /**
+   * A link's A-Z is sorted here, not in SQL.
+   *
+   * Its visible label is composed from the names of the rows it joins,
+   * which live in other tables — `ORDER BY` on this one cannot reach
+   * them, which is why link lists used to come back in insertion order
+   * with no way to change it. Sorting on the same string that renders
+   * guarantees the order matches what is on screen, and the row id
+   * breaks ties so the result is stable rather than reshuffling as
+   * names load.
+   */
+  const shown = useMemo(() => {
+    if (edef === undefined || !composed || byStory) return rows;
+    const label = (r: Row): string =>
+      (linkLabel(edef, r, refNames) ?? rowName(entity, r)).toLowerCase();
+    return [...rows].sort((a, b) => {
+      const cmp = label(a).localeCompare(label(b));
+      return cmp !== 0 ? cmp : Number(a["id"]) - Number(b["id"]);
+    });
+  }, [rows, edef, entity, composed, byStory, refNames]);
+
   if (edef === undefined) return <p className="muted">Unknown entity.</p>;
 
   return (
@@ -103,7 +127,7 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
       <header className="list-header">
         <span className="tree-icon">{edef.icon}</span>
         <h2>{edef.labelPlural}</h2>
-        <span className="tree-count">{rows.length}</span>
+        <span className="tree-count">{shown.length}</span>
         {canSortByStory && (
           <button className="sort-toggle"
                   title={byStory
@@ -123,7 +147,7 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
         <p className="entity-description">{edef.description}</p>
       )}
       <ul className="rows">
-        {rows.map((r) => (
+        {shown.map((r) => (
           <li key={String(r["id"])}>
             {/* Left of the name, not floated right: it reads as part of
                 the identity, which for a beat or a shot it is. */}
@@ -161,7 +185,7 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
             )}
           </li>
         ))}
-        {rows.length === 0 && (
+        {shown.length === 0 && (
           <p className="muted">
             No {edef.labelPlural.toLowerCase()} yet — create the first one.
           </p>
