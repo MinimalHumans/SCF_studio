@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.6",
+  "schemaVersion": "2.7",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -14683,7 +14683,7 @@
       "icon": "📎",
       "nameField": "name",
       "category": "Metadata",
-      "description": "Reference asset (image, audio, video, document). The atomic unit that bundles compose. Versionable — supports asset version chains.",
+      "description": "A REFERENCE to something outside the file — image, audio, 3D model, model weight, document. The atomic unit that bundles compose. Versionable — supports asset version chains.",
       "sortOrder": 702,
       "tier": 0,
       "parentEntity": null,
@@ -14710,33 +14710,45 @@
           "autoInjected": false
         },
         {
-          "name": "asset_type",
-          "label": "Asset Type",
-          "fieldType": "select",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "General",
-          "autoInjected": false,
-          "options": [
-            "image",
-            "audio",
-            "video",
-            "document",
-            "3d model",
-            "lookbook",
-            "reference photo",
-            "concept art",
-            "other"
-          ]
-        },
-        {
-          "name": "file_path",
-          "label": "File Path / URL",
+          "name": "identifier",
+          "label": "Identifier",
           "fieldType": "text",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
-          "autoInjected": false
+          "autoInjected": false,
+          "placeholder": "@project/characters/eleanor/face_ref.png",
+          "helpText": "Rooted, portable address of the bytes. @project is the project folder. Resolution is derived and never stored. See conventions.md §9."
+        },
+        {
+          "name": "size_bytes",
+          "label": "Size (bytes)",
+          "fieldType": "integer",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "Resolution",
+          "autoInjected": false,
+          "helpText": "Cached hint for staleness detection. Not authoritative — the file may have changed."
+        },
+        {
+          "name": "source_mtime",
+          "label": "Source Modified",
+          "fieldType": "timestamp",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Resolution",
+          "autoInjected": false,
+          "helpText": "Cached hint for staleness detection."
+        },
+        {
+          "name": "content_hash",
+          "label": "Content Hash",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Resolution",
+          "autoInjected": false,
+          "helpText": "Optional and opportunistic. Never computed on open — hashing a project's assets would stall on unmaterialised cloud files."
         },
         {
           "name": "description",
@@ -14754,7 +14766,8 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
-          "autoInjected": false
+          "autoInjected": false,
+          "helpText": "Freeform and user-controlled. There is deliberately no intrinsic-purpose field: what an asset is FOR is a property of the link that reaches it, not of the row."
         },
         {
           "name": "source",
@@ -14773,6 +14786,37 @@
           "required": false,
           "tab": "Notes",
           "autoInjected": false
+        },
+        {
+          "name": "asset_type",
+          "label": "Asset Type (deprecated)",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Deprecated",
+          "autoInjected": false,
+          "options": [
+            "image",
+            "audio",
+            "video",
+            "document",
+            "3d model",
+            "lookbook",
+            "reference photo",
+            "concept art",
+            "other"
+          ],
+          "helpText": "Deprecated in 2.7: it mixed container format with editorial intent, and the fixture had already outgrown the enum. Format is derived from the identifier; purpose lives on the link."
+        },
+        {
+          "name": "file_path",
+          "label": "File Path / URL (deprecated)",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Deprecated",
+          "autoInjected": false,
+          "helpText": "Deprecated in 2.7, superseded by identifier. Migrated on open; kept so nothing is lost."
         },
         {
           "name": "lifecycle_status",

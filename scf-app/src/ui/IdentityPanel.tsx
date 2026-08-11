@@ -13,6 +13,7 @@
  *   Lookup   — paste a uuid, find the row, open it.
  *   This row — identity, lineage, external binding for what is open.
  *   Coverage — per-table uuid counts and the structural defects.
+ *   Assets   — where every asset identifier resolves to (P3).
  *
  * All of the work happens in scf-core/identity.ts, which is where the
  * tests are. This file renders and navigates; it decides nothing, and
@@ -25,6 +26,8 @@ import {
   type IdentityAudit, type RowIdentity, type UuidHit, type UuidRow,
 } from "@scf-core/identity.ts";
 import { exec, registry, useStore } from "../state/store.ts";
+import type { ResolutionReport, ResolutionState }
+  from "@scf-core/assets.ts";
 
 function Finding({ detail }: { detail: string }): JSX.Element {
   return <li className="identity-finding">{detail}</li>;
@@ -359,6 +362,98 @@ function Coverage({ audit }: { audit: IdentityAudit }): JSX.Element {
   );
 }
 
+const STATE_LABEL: Record<ResolutionState, string> = {
+  resolved: "resolved",
+  missing: "missing",
+  unmaterialised: "not downloaded",
+  "out-of-root": "outside the project",
+  unaddressed: "no identifier",
+};
+
+/**
+ * Where the assets point, and whether anything is there.
+ *
+ * `missing` and `not downloaded` are deliberately separate rows: a
+ * synced project full of placeholders is healthy, and collapsing the
+ * two would report it as broken (conventions §9).
+ */
+function Assets(): JSX.Element {
+  const { resolveAssets, projectRoot, openEntityRow } = useStore();
+  const [report, setReport] = useState<ResolutionReport | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const run = (): void => {
+    void (async () => {
+      setBusy(true);
+      setReport(await resolveAssets());
+      setBusy(false);
+    })();
+  };
+
+  useEffect(run, []);
+
+  const problems = (report?.assets ?? []).filter(
+    (a) => a.state !== "resolved");
+
+  return (
+    <section>
+      <h4>Assets</h4>
+      {projectRoot === null && (
+        <p className="muted">
+          This session has no project folder, so nothing can resolve.
+          Everything below is listed, not broken.
+        </p>
+      )}
+      {busy && <p className="muted">Resolving…</p>}
+
+      {report !== null && report.total === 0 && (
+        <p className="muted">No assets in this file.</p>
+      )}
+
+      {report !== null && report.total > 0 && (
+        <>
+          <table className="identity-table-list">
+            <tbody>
+              {(Object.keys(STATE_LABEL) as ResolutionState[])
+                .filter((k) => report.counts[k] > 0)
+                .map((k) => (
+                  <tr key={k} className={k === "resolved" ? "" : "flagged"}>
+                    <td>{STATE_LABEL[k]}</td>
+                    <td>{report.counts[k]}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+
+          {problems.length > 0 && (
+            <ul className="integrity-list">
+              {problems.slice(0, 40).map((a) => (
+                <li key={a.id}>
+                  <span className="identity-name">
+                    {a.name ?? <em className="muted">unnamed</em>}
+                  </span>
+                  <span className="identity-table mono">
+                    {STATE_LABEL[a.state]}
+                  </span>
+                  <button className="ghost tiny"
+                          onClick={() => { void openEntityRow("asset", a.id); }}>
+                    Open
+                  </button>
+                  {a.detail !== null && (
+                    <span className="identity-finding">{a.detail}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button className="ghost tiny" onClick={run}>Re-resolve</button>
+        </>
+      )}
+    </section>
+  );
+}
+
 export function IdentityPanel({ onClose }: {
   onClose: () => void;
 }): JSX.Element {
@@ -379,6 +474,7 @@ export function IdentityPanel({ onClose }: {
       </div>
 
       <ThisRow />
+      <Assets />
       <Browse />
       <Lookup />
       {audit === null

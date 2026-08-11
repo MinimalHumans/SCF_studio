@@ -343,11 +343,11 @@ Rebuild scripts live in `fixtures/build/`.
 
 ## 9. Assets and addressing
 
-**Status: agreed direction, not yet implemented.** Nothing in this section
-describes current behaviour. It is recorded here because the decisions are
-settled and the migration depends on them; the phased plan lives alongside
-this document. Every other section of this file states what the code does
-today — this one does not, and says so.
+**Status: implemented as of schema 2.7**, except for preview, the asset
+browser, query integration and layers. Addressing, resolution states,
+the folder-is-a-project rule and per-prefix relink are live in
+`scf-core/src/project.ts` and `scf-core/src/assets.ts`. Pinned by
+`scf-core/test/project.test.ts` and `scf-core/test/assets.test.ts`.
 
 An asset is a **reference**, not a container. It is how SCF stops holding
 things and starts pointing at them: an image, an audio file, a 3D model, a

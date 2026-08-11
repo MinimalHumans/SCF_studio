@@ -3315,21 +3315,51 @@ register(EntityDef(
     category="Metadata",
     sort_order=702,
     tier=0,
-    description="Reference asset (image, audio, video, document). The atomic unit "
-                "that bundles compose. Versionable — supports asset version chains.",
+    description="A REFERENCE to something outside the file — image, audio, "
+                "3D model, model weight, document. The atomic unit that "
+                "bundles compose. Versionable — supports asset version chains.",
     versionable=True,
     has_external_id=True,
     fields=[
         FieldDef("name", "Asset Name", required=True),
-        FieldDef("asset_type", "Asset Type", "select", options=[
-            "image", "audio", "video", "document", "3d model",
-            "lookbook", "reference photo", "concept art", "other"
-        ]),
-        FieldDef("file_path", "File Path / URL", "text"),
+        FieldDef("identifier", "Identifier", "text",
+                 placeholder="@project/characters/eleanor/face_ref.png",
+                 help_text="Rooted, portable address of the bytes. "
+                           "@project is the project folder. Resolution is "
+                           "derived and never stored. See conventions.md §9."),
+        FieldDef("size_bytes", "Size (bytes)", "integer",
+                 tab="Resolution",
+                 help_text="Cached hint for staleness detection. Not "
+                           "authoritative — the file may have changed."),
+        FieldDef("source_mtime", "Source Modified", "timestamp",
+                 tab="Resolution",
+                 help_text="Cached hint for staleness detection."),
+        FieldDef("content_hash", "Content Hash", "text",
+                 tab="Resolution",
+                 help_text="Optional and opportunistic. Never computed on "
+                           "open — hashing a project's assets would stall "
+                           "on unmaterialised cloud files."),
         FieldDef("description", "Description", "textarea"),
-        FieldDef("tags", "Tags", "json"),
+        FieldDef("tags", "Tags", "json",
+                 help_text="Freeform and user-controlled. There is "
+                           "deliberately no intrinsic-purpose field: what an "
+                           "asset is FOR is a property of the link that "
+                           "reaches it, not of the row."),
         FieldDef("source", "Source / Credit", "text"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
+        # --- deprecated 2.7, retained so no file loses data on open ---
+        FieldDef("asset_type", "Asset Type (deprecated)", "select", options=[
+            "image", "audio", "video", "document", "3d model",
+            "lookbook", "reference photo", "concept art", "other"
+        ], tab="Deprecated",
+            help_text="Deprecated in 2.7: it mixed container format with "
+                      "editorial intent, and the fixture had already "
+                      "outgrown the enum. Format is derived from the "
+                      "identifier; purpose lives on the link."),
+        FieldDef("file_path", "File Path / URL (deprecated)", "text",
+                 tab="Deprecated",
+                 help_text="Deprecated in 2.7, superseded by identifier. "
+                           "Migrated on open; kept so nothing is lost."),
     ],
 ))
 

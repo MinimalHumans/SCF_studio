@@ -28,6 +28,10 @@ import {
   rememberRoot,
 } from "../files/handleStore.ts";
 import type { ProjectFinding } from "@scf-core/project.ts";
+import {
+  migrateFilePaths, resolveAllAssets, type ResolutionReport,
+} from "@scf-core/assets.ts";
+import { makeLocator } from "../files/assetLocator.ts";
 import type { RootPermission } from "../files/fileAdapter.ts";
 import { renumberForScene } from "../editor/shootOps.ts";
 
@@ -121,6 +125,8 @@ interface AppState {
   dismissFolderChoice: () => void;
   /** Escape hatch when the root scan misses an .scf that is there. */
   pickScfInRoot: () => Promise<void>;
+  /** Resolve every asset against the current root. Never throws. */
+  resolveAssets: () => Promise<ResolutionReport>;
   /** Re-ask for a remembered root. Must run inside a click. */
   regrantRoot: () => Promise<void>;
   newProject: () => Promise<void>;
@@ -167,6 +173,10 @@ async function bootDatabase(
   // stamp schema_version. 1.x data migrations intentionally absent.
   await initDatabase(client.exec, registry,
                      { editorVersion: EDITOR_VERSION });
+  // 2.7: root any pre-existing file_path into @project. Idempotent, and
+  // it leaves file_path in place — the column is deprecated, not
+  // deleted, so a file opened here and taken back to 2.6 loses nothing.
+  await migrateFilePaths(client.exec);
 }
 
 /**
@@ -418,6 +428,11 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   dismissFolderChoice: () => set({ folderChoice: null }),
+
+  resolveAssets: async () => {
+    const root = get().projectRoot as FileSystemDirectoryHandle | null;
+    return resolveAllAssets(exec, makeLocator(root));
+  },
 
   regrantRoot: async () => {
     const root = get().projectRoot;

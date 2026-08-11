@@ -5,6 +5,41 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.7
+
+**`asset.identifier`** (TEXT, nullable), plus **`size_bytes`**,
+**`source_mtime`** and **`content_hash`** on a new Resolution tab.
+**`asset.asset_type`** and **`asset.file_path`** are deprecated.
+
+An asset is a reference, not a container, and `file_path` was doing four
+jobs at once: relative path, absolute path, URL, and — once a `.scf` can
+point at another — a composition arc. `identifier` does one: a rooted,
+portable address (`@project/characters/eleanor/face_ref.png`) that gets
+committed and diffed. Where the bytes actually are is derived at load
+time and never stored, so relocating a project is a change to one root
+rather than an update across thousands of rows. See conventions §9.
+
+`asset_type` is deprecated rather than repaired. It mixed container
+format (`image`, `audio`) with editorial intent (`concept art`,
+`lookbook`), and the Hollow Creek fixture had already outgrown the enum
+by storing `archive`. Format is derived from the identifier; what an
+asset is FOR is a property of the link that reaches it —
+`bundle_asset.role_in_bundle` and `asset_relationship.relationship_type`
+already carry it. There is deliberately no replacement column.
+
+Additive and self-migrating. `migrateFilePaths()` runs on open and roots
+any bare `file_path` into `@project/...`; anything already absolute or
+already rooted is copied unchanged, because rewriting it would assert a
+portability it does not have. It is idempotent, and it does NOT clear
+`file_path`: both deprecated columns stay, so a file opened by 2.7 and
+taken back to 2.6 loses nothing.
+
+**Consumer note.** Resolution is a state, not a boolean. `missing` and
+`unmaterialised` are different facts — a cloud placeholder will appear
+when touched — and collapsing them reports every synced project as
+broken on open.
+
+
 ## 2.6
 
 **`screenplay_version_lines.source_uuid`** (TEXT, nullable).
