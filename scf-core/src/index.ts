@@ -8,6 +8,7 @@
  *   - resolution: description / direction / media cascades, pattern-3
  *                 latest-wins, G4 variant selection
  *   - readiness:  Q14 reports over queryPaths
+ *   - identity:   uuid coverage, lookup, and version-chain reporting
  *
  * Node driver lives in "./node" (separate export; never imported here so
  * browser bundles stay clean).
@@ -20,5 +21,5 @@ export * from "./queryPaths.ts";
 export * from "./readiness.ts";
 export * from "./structure.ts";
 export * from "./shots.ts";
-export * from "./relationships.ts";
 export * from "./junctions.ts";
+export * from "./identity.ts";

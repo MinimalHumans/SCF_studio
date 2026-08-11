@@ -51,6 +51,7 @@ class MainPaneBoundary extends Component<
   }
 }
 import { SceneRail } from "./SceneRail.tsx";
+import { IdentityPanel } from "./IdentityPanel.tsx";
 
 const RAIL_KEY = "scf:rail-width";
 
@@ -87,6 +88,10 @@ function RailResizeHandle({ onDrag }: {
 
 export function Workbench(): JSX.Element {
   const [railWidth, setRailWidth] = useRailWidth();
+  // A diagnostic, not a workspace: an overlay reachable from anywhere
+  // rather than a seventh nav tab, because it reads whatever row is
+  // already open.
+  const [identityOpen, setIdentityOpen] = useState(false);
   const { projectName, navMode, setNavMode, openRow,
           selectedEntityType, selectedSubject } = useStore();
 
@@ -128,6 +133,12 @@ export function Workbench(): JSX.Element {
         <span className="topbar-schema">
           schema {registry.schemaVersion}
         </span>
+        <button className="ghost tiny"
+                aria-pressed={identityOpen}
+                title="Row identity: uuid coverage, lookup, version chains"
+                onClick={() => setIdentityOpen((v) => !v)}>
+          Identity
+        </button>
         <SearchBox />
         <SaveControls />
           <button onClick={() => {
@@ -191,6 +202,9 @@ export function Workbench(): JSX.Element {
           <aside className="rail rail-context">
             <ReverseLinks entity={openRow.entity} id={openRow.id} />
           </aside>
+        )}
+        {identityOpen && (
+          <IdentityPanel onClose={() => setIdentityOpen(false)} />
         )}
       </div>
     </div>

@@ -96,7 +96,7 @@ the derivation; `SCENE_ORDER_JOIN` / `SCENE_ORDER_BY` and the general
 `storyOrder()` are its SQL twins, so no view invents its own.
 **A consumer that sorts scenes by `scene_number` alone will be wrong**
 about any blank-written project and about any scene moved since its last
-commit. See §9 Resolved for the numbering flag that governs when the
+commit. See §10 Resolved for the numbering flag that governs when the
 label is recomputed.
 
 Three patterns, distinguished by `positionPattern` on the entity:
@@ -211,16 +211,19 @@ missing fact is **symmetry**: without it nothing can distinguish one
 relationship entered twice from two legitimate directed facts. A mutual
 pair is unordered; a directed pair reads A → B.
 
-Consumers must read relationships from **both** columns —
-`relationshipsFor()` in `scf-core/src/relationships.ts` — and must not
-assume a character sits in `character_a_id`.
+Consumers must read relationships from **both** columns, and must not
+assume a character sits in `character_a_id`. There is no helper for this
+yet: `relationshipsFor()` was specified here and never written, so the
+rule is currently guidance a consumer has to follow by hand. Until it
+exists, nothing enforces or even reports a reader that gets it wrong.
 
 Duplicates are findings, not constraints. A unique index could not
 decide whether a reversed directed pair is a duplicate, and several
 relationships between the same two people are legitimate.
 
-Pinned by: `scf-core/test/relationships.test.ts`,
-`scf-core/test/junctions.test.ts`.
+Pinned by: `scf-core/test/junctions.test.ts`. The natural-key and
+duplicate rules above are covered there; the both-columns reading rule
+is not covered by anything.
 
 ### Soft-retiring: links inherit their endpoints' lifecycle
 
@@ -246,7 +249,7 @@ is not true now", it is a connection, and deleting it loses nothing.
 
 Note that `lifecycle_status` is **authored but unread**: no resolver in
 `scf-core` filters on it. A consumer that wants to exclude cut rows must
-do so itself. See §9.
+do so itself. See §10.
 
 ---
 
@@ -328,7 +331,162 @@ Rebuild scripts live in `fixtures/build/`.
 
 ---
 
-## 9. Open questions
+## 9. Assets and addressing
+
+**Status: agreed direction, not yet implemented.** Nothing in this section
+describes current behaviour. It is recorded here because the decisions are
+settled and the migration depends on them; the phased plan lives alongside
+this document. Every other section of this file states what the code does
+today — this one does not, and says so.
+
+An asset is a **reference**, not a container. It is how SCF stops holding
+things and starts pointing at them: an image, an audio file, a 3D model, a
+model weight, a document. The `asset` entity is the lowest level at which
+that happens, and at working scale a project holds thousands of them.
+
+### Identity is not location
+
+An asset row stores an **identifier** — portable, root-relative, and the
+thing that gets committed and diffed:
+
+```
+@project/characters/eleanor/face_ref.png
+```
+
+A **resolver** maps that identifier to bytes at load time. What comes back
+is derived and never stored, for the same reason §2 gives everywhere else:
+a stored location is a second copy of a truth that changes without asking.
+Relocating a project is then a change to one root, not an update across
+thousands of rows.
+
+A **root** is a name standing in for a folder. `@project` is the folder the
+user opened, and in the common case it is the only root that appears. The
+grammar reserves other names — `@plates`, `@nas` — for a project that
+points into storage it does not control, where the identifier stays stable
+while each machine maps the root somewhere different. That mapping is
+machine-local and therefore cannot live in the `.scf` without destroying
+the portability it exists to serve, and each additional root costs its own
+filesystem permission grant. The prefix is reserved now; the configuration
+is deferred until someone needs it.
+
+Absolute paths remain representable and are flagged non-portable. Some
+projects need them, and pretending otherwise only puts lies inside the
+`@project` namespace.
+
+### A project is a folder
+
+The File System Access API cannot return a parent directory from a file
+handle — there is no `getParent()`, by design. A `.scf` opened on its own
+therefore cannot see what sits beside it, which is why an asset next to the
+file is unreachable through the file. One directory-picker gesture yields
+the project root, the `.scf` within it, and the whole asset tree under a
+single grant.
+
+Discovery scans the root only, non-recursive, for `*.scf`. Exactly one is a
+valid project; zero or several is malformed, and is reported as a finding
+for the user to resolve rather than guessed at. A `.scf` in a subfolder is
+never a project candidate — those are layers (below).
+
+Opening a lone `.scf` still works. Every asset resolves to `missing`, the
+tally is reported, and the file behaves normally in every other respect.
+The single-file path degrades; it does not disappear.
+
+### Resolution states
+
+Every asset resolves to exactly one of:
+
+| state | meaning |
+|---|---|
+| `resolved` | bytes reachable now |
+| `missing` | does not resolve under its root |
+| `unmaterialized` | cloud placeholder; appears on access |
+| `out-of-root` | absolute or foreign root; resolvable but non-portable |
+
+`unmaterialized` is not a kind of `missing`. A synced project full of
+placeholders is healthy, and reporting it as broken on open would be a
+false statement about the user's data.
+
+Resolution stays total on half-placed data, per §2: a project where nothing
+resolves opens, lists everything, and reports findings. It does not throw.
+
+### Read-only toward the filesystem
+
+SCF never ingests, copies, or generates files. It reads what it is pointed
+at, and it exports artifacts — a shooting script, a query result as
+markdown — through an explicit save gesture, for tools that do not read SCF
+directly.
+
+This says nothing about the database. Relinking, correcting an identifier,
+and caching size or mtime are writes to SCF's own rows and are entirely
+normal. The read-only rule is about other people's files.
+
+Content hashing is opportunistic for the same reason. Hashing thousands of
+assets at load would stall on unmaterialized files or fail outright, so
+`size_bytes` and `source_mtime` serve as cheap staleness hints and a hash
+is a deliberate per-asset act.
+
+### Where meaning lives
+
+**Format** is derived from the identifier's extension. It dispatches
+preview and supports coarse filtering. It is a hint, and it is never a
+claim about purpose — the same text file serves twenty purposes across a
+production.
+
+**Use** is a property of the link, not the asset.
+`bundle_asset.role_in_bundle` and `asset_relationship.relationship_type`
+already carry it. A file used twenty ways is twenty edges and one row.
+
+There is deliberately no intrinsic-purpose column. `asset_type` was one,
+mixing container format with editorial intent, and the fixture had already
+outgrown its enum. It is deprecated rather than replaced: a purpose stored
+on the row is a second place for meaning to live and a second place for it
+to go stale. `tags` remains as the user-controlled escape hatch, freeform
+by intent rather than pretending to be a taxonomy.
+
+### Organisation is derived
+
+The **bundle graph** is the authored structure. `intent` lives on `bundle`,
+and the cascade in `resolution.ts` already walks it. It does not get copied
+onto the asset so that a list can group by it.
+
+The **path tree** is a navigational view computed from the identifier's
+root and segments. It costs nothing, since the identifier is stored anyway,
+and it matches the folder layout a production already maintains.
+
+Everything else is a **facet**, not a folder: format, resolution state,
+lifecycle, tags, unreferenced. Facets compose; a single imposed hierarchy
+is wrong for half of its users and has to be maintained by hand.
+
+The failure mode to design against is not search but **orphans** — assets
+nobody linked. At scale those are what rot, so "referenced by nothing" is a
+first-class query rather than something a user has to notice.
+
+### Queries carry references, never bytes
+
+Asset-bearing query output carries identifier, format, role, intent,
+provenance, and resolution state. The consumer fetches what it needs. The
+resolver stays the only thing that touches disk, and a context pack stays
+proportionate at scale.
+
+Every export carries a **resolution report** — referenced, resolved, and
+missing, with the missing ones named. Silently omitting three unresolvable
+references would be the reporting failure §2 already forbids elsewhere.
+
+### Another `.scf` is not an asset
+
+A `.scf` that points at another `.scf` is doing **composition**, not
+reference: it raises whether the entities arrive, whether they can be
+overridden, and which opinion wins. That is the same territory as the
+cross-file merge deferred in §10, and it is not settled by anything above.
+
+The word for it is **layer**, and layers live in a subfolder, never at the
+root. Nothing else about them is specified. Admitting one as "just another
+file type" under `asset` would make `asset` the composition mechanism by
+accident, which is how a format acquires a permanent wart.
+
+---
+
+## 10. Open questions
 
 Each is marked **schema** (the format has to change), **editor** (only
 this application), or **both**.
