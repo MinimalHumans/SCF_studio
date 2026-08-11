@@ -211,19 +211,29 @@ missing fact is **symmetry**: without it nothing can distinguish one
 relationship entered twice from two legitimate directed facts. A mutual
 pair is unordered; a directed pair reads A → B.
 
-Consumers must read relationships from **both** columns, and must not
-assume a character sits in `character_a_id`. There is no helper for this
-yet: `relationshipsFor()` was specified here and never written, so the
-rule is currently guidance a consumer has to follow by hand. Until it
-exists, nothing enforces or even reports a reader that gets it wrong.
+Consumers must read relationships from **both** columns —
+`relationshipsFor()` in `scf-core/src/relationships.ts` — and must not
+assume a character sits in `character_a_id`. It returns each row from
+the requested character's side: `other`, and a `direction` of `mutual`,
+`outgoing`, `incoming`, or `unspecified` where `directionality` is
+empty.
+
+Note that `character_relationship` is not one of the thirteen link
+entities — its `subject` is `character` — so `junctionEntities()` skips
+it and `duplicateJunctions()` never sees it. `relationshipFindings()`
+covers it separately: one pair entered twice as `mutual` is a duplicate,
+two `a_to_b` rows in opposite directions are two legitimate facts, the
+same direction twice is a duplicate again, and a pair described as
+mutual on one row and directed on another contradicts itself. Rows with
+no `directionality`, rows naming one character twice, and rows pointing
+at a character that is not in the file are each reported on their own.
 
 Duplicates are findings, not constraints. A unique index could not
 decide whether a reversed directed pair is a duplicate, and several
 relationships between the same two people are legitimate.
 
-Pinned by: `scf-core/test/junctions.test.ts`. The natural-key and
-duplicate rules above are covered there; the both-columns reading rule
-is not covered by anything.
+Pinned by: `scf-core/test/relationships.test.ts`,
+`scf-core/test/junctions.test.ts`.
 
 ### Soft-retiring: links inherit their endpoints' lifecycle
 

@@ -21,5 +21,6 @@ export * from "./queryPaths.ts";
 export * from "./readiness.ts";
 export * from "./structure.ts";
 export * from "./shots.ts";
+export * from "./relationships.ts";
 export * from "./junctions.ts";
 export * from "./identity.ts";
