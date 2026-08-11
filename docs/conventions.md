@@ -395,7 +395,34 @@ single grant.
 Discovery scans the root only, non-recursive, for `*.scf`. Exactly one is a
 valid project; zero or several is malformed, and is reported as a finding
 for the user to resolve rather than guessed at. A `.scf` in a subfolder is
-never a project candidate — those are layers (below).
+never a project candidate — those are layers (below). SQLite's `-wal`,
+`-shm` and `-journal` sidecars are not projects either, and their
+presence is reported on its own, since it usually means the project is
+open somewhere else.
+
+**Discovery is an optimisation, not the mechanism.** Directory listing
+is not reliably available: a locked-down Windows machine returned zero
+entries for an ordinary Desktop folder, through three separate
+iterators, with permission granted and nothing thrown — and did the same
+in a bare DevTools console, so no application code was involved.
+Enterprise policy is the likely cause and there is nothing to work
+around. What a project needs is the root handle plus the `.scf`; when
+listing cannot supply the second, the user names it in a second gesture,
+and the resulting session is identical — same root, same grant, same
+asset reachability. A folder that lists is one gesture; a folder that
+does not is two.
+
+`chooseProjectFile()` in `scf-core/src/project.ts` states the rule, and
+takes a list of names rather than a directory handle so that it holds
+without a browser. It carries `seen` — every root file the scan found —
+so that "no .scf here" can show its evidence rather than being an
+unarguable assertion. Pinned by `scf-core/test/project.test.ts`.
+
+The folder is granted **readwrite**, not read. SCF writes exactly one
+file, the `.scf` itself, and that file handle comes out of the root, so
+a read-only grant produces a project that cannot be saved. The platform
+offers no unit narrower than the folder, so the read-only rule below
+stays a discipline in the code rather than a sandbox around it.
 
 Opening a lone `.scf` still works. Every asset resolves to `missing`, the
 tally is reported, and the file behaves normally in every other respect.

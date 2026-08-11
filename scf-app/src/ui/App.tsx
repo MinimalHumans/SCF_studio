@@ -3,8 +3,10 @@ import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";
 
 function StartScreen(): JSX.Element {
-  const { openDemo, openFromPicker, newProject, resumeLast,
-          lastSession, fsAccessSupported, phase,
+  const { openDemo, openFromPicker, openProjectFolder, newProject,
+          resumeLast, lastSession, fsAccessSupported, folderSupported,
+          folderChoice, openFromFolderChoice, dismissFolderChoice,
+          pickScfInRoot, phase,
           errorMessage } = useStore();
   return (
     <div className="start">
@@ -25,15 +27,81 @@ function StartScreen(): JSX.Element {
             </button>
           )}
           <button className={lastSession === null ? "primary" : ""}
+                  onClick={() => void openProjectFolder()}
+                  disabled={!folderSupported}>
+            Open project folder…
+          </button>
+          <button className="ghost"
                   onClick={() => void openFromPicker()}
-                  disabled={!fsAccessSupported}>
-            Open project…
+                  disabled={!fsAccessSupported}
+                  title="Opens the .scf alone. Its assets cannot be
+resolved, because the browser gives no route from a file to its folder.">
+            Open a single .scf…
           </button>
           <button onClick={() => void newProject()}>New project</button>
           <button onClick={() => void openDemo()}>
             Open Hollow Creek demo
           </button>
         </div>
+        {folderChoice !== null && (
+          <div className="start-choice">
+            {folderChoice.candidates.length > 0 &&
+              folderChoice.findings.map((f, i) => (
+                <p key={i} className="start-warn">{f.message}</p>
+              ))}
+            {folderChoice.candidates.length > 0 && (
+              <>
+                <p className="start-status">Which one is the project?</p>
+                {folderChoice.candidates.map((name) => (
+                  <button key={name}
+                          onClick={() => void openFromFolderChoice(name)}>
+                    {name}
+                  </button>
+                ))}
+              </>
+            )}
+            {folderChoice.candidates.length === 0 && (
+              <>
+                <p className="start-status">
+                  {folderChoice.seen.length === 0
+                    ? "Folder connected. Which .scf is the project?"
+                    : "No .scf found at the root — name it directly?"}
+                </p>
+                <button className="primary"
+                        onClick={() => void pickScfInRoot()}>
+                  Choose the .scf inside this folder…
+                </button>
+                <p className="start-foot">
+                  The folder and its permission are already in hand. This
+                  only asks which file; the project opens as a full
+                  folder session either way, with its assets reachable.
+                </p>
+                {folderChoice.seen.length > 0 && (
+                  <p className="start-foot">
+                    Files seen at the root: {folderChoice.seen.join(", ")}
+                  </p>
+                )}
+                <details className="start-report">
+                  <summary>Why it could not find it itself</summary>
+                  <p>
+                    Directory listing is not available on every machine —
+                    enterprise policy is the usual reason, and it is not
+                    something this app can work around or detect in
+                    advance.
+                  </p>
+                  <ul>
+                    {folderChoice.report.map((line, i) => (
+                      <li key={i} className="mono">{line}</li>
+                    ))}
+                  </ul>
+                </details>
+              </>
+            )}
+            <button className="ghost" onClick={dismissFolderChoice}>
+              Pick another folder
+            </button>
+          </div>
+        )}
         {phase === "loading" && <p className="start-status">Opening…</p>}
         {phase === "error" && (
           <>
@@ -46,7 +114,9 @@ function StartScreen(): JSX.Element {
         <p className="start-foot">
           Local-first. Your project stays on this machine — the file you
           open is copied into browser storage while you work, and written
-          back when you save.
+          back when you save. A project is a folder holding one .scf and
+          the assets it points at; opening the folder is what lets those
+          assets resolve.
         </p>
       </div>
     </div>

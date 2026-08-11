@@ -30,3 +30,30 @@ interface Window {
   showSaveFilePicker(
     options?: SaveFilePickerOptions): Promise<FileSystemFileHandle>;
 }
+
+/* P2: the folder half of the API. `entries()` is the async iterator the
+ * root scan walks; the permission pair is what makes a remembered
+ * directory handle usable after a reload. Neither is in lib.dom yet. */
+interface DirectoryPickerOptions {
+  id?: string;
+  mode?: "read" | "readwrite";
+  startIn?: FileSystemHandle | string;
+}
+
+interface FileSystemHandlePermissionDescriptor {
+  mode?: "read" | "readwrite";
+}
+
+interface FileSystemDirectoryHandle {
+  entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+  keys(): AsyncIterableIterator<string>;
+  queryPermission(
+    descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+  requestPermission(
+    descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
+}
+
+interface Window {
+  showDirectoryPicker(
+    options?: DirectoryPickerOptions): Promise<FileSystemDirectoryHandle>;
+}

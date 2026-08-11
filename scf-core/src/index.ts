@@ -9,12 +9,14 @@
  *                 latest-wins, G4 variant selection
  *   - readiness:  Q14 reports over queryPaths
  *   - identity:   uuid coverage, lookup, and version-chain reporting
+ *   - project:    what makes a folder a project (assets plan P2)
  *
  * Node driver lives in "./node" (separate export; never imported here so
  * browser bundles stay clean).
  */
 
 export * from "./registry.ts";
+export * from "./project.ts";
 export * from "./db.ts";
 export * from "./resolution.ts";
 export * from "./queryPaths.ts";

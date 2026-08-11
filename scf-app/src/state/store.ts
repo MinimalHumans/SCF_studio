@@ -24,8 +24,11 @@ import {
   captureForUndo, restoreFromUndo, type UndoEntry,
 } from "./undoDelete.ts";
 import {
-  forgetHandle, recallHandle, rememberHandle,
+  forgetHandle, forgetRoot, recallHandle, recallRoot, rememberHandle,
+  rememberRoot,
 } from "../files/handleStore.ts";
+import type { ProjectFinding } from "@scf-core/project.ts";
+import type { RootPermission } from "../files/fileAdapter.ts";
 import { renumberForScene } from "../editor/shootOps.ts";
 
 export { suggestSaveAsName };
@@ -71,6 +74,22 @@ interface AppState {
   projectName: string | null;
   fileToken: unknown | null;
   fsAccessSupported: boolean;
+  folderSupported: boolean;
+  /** The project folder handle (P2), or null for a degraded
+   *  single-file session. Assets can only resolve when this is set. */
+  projectRoot: unknown | null;
+  rootPermission: RootPermission;
+  /** Whether files can be reached THROUGH the root handle. Separate
+   *  from listing: a machine can block enumeration and still traverse,
+   *  or block both. P3's resolver depends on traversal and not at all
+   *  on listing, so this is the capability that matters. */
+  rootTraversal: "ok" | "blocked" | "unknown";
+  rootTraversalError: string | null;
+  /** Set when a picked folder held zero or several .scf files: the user
+   *  chooses, the app never guesses (conventions §9). */
+  folderChoice: { root: unknown; candidates: string[]; seen: string[];
+                  report: string[];
+                  findings: ProjectFinding[] } | null;
   revision: number;
 
   navMode: NavMode;
@@ -95,6 +114,15 @@ interface AppState {
   saving: boolean;
   closeProject: () => Promise<void>;
   openFromPicker: () => Promise<void>;
+  /** Folder-first open: one directory gesture for project and assets. */
+  openProjectFolder: () => Promise<void>;
+  /** Open a named .scf from a folder the user already picked. */
+  openFromFolderChoice: (name: string) => Promise<void>;
+  dismissFolderChoice: () => void;
+  /** Escape hatch when the root scan misses an .scf that is there. */
+  pickScfInRoot: () => Promise<void>;
+  /** Re-ask for a remembered root. Must run inside a click. */
+  regrantRoot: () => Promise<void>;
   newProject: () => Promise<void>;
   saveProject: () => Promise<void>;
   /** Always prompts for a destination: rename or version up in place. */
@@ -171,6 +199,52 @@ if (import.meta.hot) {
   });
 }
 
+/**
+ * The tail every folder open shares: boot the database, remember both
+ * handles, land on the script.
+ *
+ * The root is remembered separately from the file handle, because a
+ * reload keeps the handle and drops the PERMISSION. Recovering that is
+ * one click inside a user gesture, which is why `regrantRoot` exists
+ * rather than a silent retry: a page that could re-grant itself access
+ * to a folder would make the original prompt meaningless.
+ */
+async function finishFolderOpen(
+  set: (partial: Partial<AppState>) => void,
+  get: () => AppState,
+  root: FileSystemDirectoryHandle,
+  opened: { name: string; bytes: ArrayBuffer; token: unknown },
+): Promise<void> {
+  set({ phase: "loading", errorMessage: null });
+  await bootDatabase(opened.bytes);
+  localStorage.setItem("scf:auto-resume", "1");
+  localStorage.setItem("scf:last-session", opened.name);
+  await rememberHandle(opened.token);
+  await rememberRoot(root);
+  const rev = get().revision + 1;
+  // Probe traversal with the name the picker gave us, which is the
+  // exact string P3's resolver would use — no typing, no paste
+  // artefacts, and the answer arrives without anyone opening a console.
+  let rootTraversal: "ok" | "blocked" = "blocked";
+  let rootTraversalError: string | null = null;
+  try {
+    await root.getFileHandle(opened.name);
+    rootTraversal = "ok";
+  } catch (e) {
+    rootTraversalError = e instanceof DOMException
+      ? `${e.name}: ${e.message}`
+      : e instanceof Error ? e.message : String(e);
+  }
+  set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        phase: "open", projectName: opened.name,
+        fileToken: opened.token, lastSession: opened.name,
+        projectRoot: root,
+        rootPermission: await adapter.rootPermission(root),
+        rootTraversal, rootTraversalError,
+        folderChoice: null,
+        revision: rev, lastSavedRevision: rev });
+}
+
 export const useStore = create<AppState>((set, get) => ({
   phase: "start",
   schemaCollapsed: new Set<string>(),
@@ -181,6 +255,12 @@ export const useStore = create<AppState>((set, get) => ({
   projectName: null,
   fileToken: null,
   fsAccessSupported: FsAccessAdapter.supported(),
+  folderSupported: FsAccessAdapter.folderSupported(),
+  projectRoot: null,
+  rootPermission: "none",
+  rootTraversal: "unknown",
+  rootTraversalError: null,
+  folderChoice: null,
   revision: 0,
   lastSavedRevision: 0,
   saving: false,
@@ -238,9 +318,17 @@ export const useStore = create<AppState>((set, get) => ({
       // The handle outlives the page: Save keeps targeting the same
       // file, and Chromium re-asks for write permission once.
       const fileToken = await recallHandle();
+      // The root survives a reload; its permission does not. Report the
+      // state rather than prompting — a prompt outside a click is
+      // rejected by the browser anyway, and the topbar offers the
+      // re-grant.
+      const projectRoot = await recallRoot();
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: `${name}`, fileToken,
+            projectRoot,
+            rootPermission: projectRoot === null
+              ? "none" : await adapter.rootPermission(projectRoot),
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
@@ -266,6 +354,75 @@ export const useStore = create<AppState>((set, get) => ({
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
     }
+  },
+
+  openProjectFolder: async () => {
+    try {
+      const picked = await adapter.openProject();
+      if (picked === null) return; // user cancelled
+      if (picked.file === null) {
+        // Zero or several .scf at the root. Hand the findings back and
+        // let the user decide; guessing here would silently open the
+        // wrong film.
+        set({ folderChoice: { root: picked.root,
+                              candidates: picked.candidates,
+                              seen: picked.seen,
+                              report: picked.report,
+                              findings: picked.findings } });
+        return;
+      }
+      await finishFolderOpen(set, get, picked.root, picked.file);
+    } catch (e) {
+      set({ phase: "error",
+            errorMessage: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  openFromFolderChoice: async (name) => {
+    const choice = get().folderChoice;
+    if (choice === null) return;
+    try {
+      const root = choice.root as FileSystemDirectoryHandle;
+      const opened = await adapter.readFromRoot(root, name);
+      if (opened === null) {
+        set({ errorMessage: `Could not read ${name}` });
+        return;
+      }
+      set({ folderChoice: null });
+      await finishFolderOpen(set, get, root, opened);
+    } catch (e) {
+      set({ phase: "error",
+            errorMessage: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  /**
+   * The way in when the scan cannot find the .scf that is plainly
+   * there. The root is already granted; this only asks which file, and
+   * the project opens as a FOLDER session with assets resolvable — the
+   * scan being wrong should not cost the user the folder.
+   */
+  pickScfInRoot: async () => {
+    const choice = get().folderChoice;
+    if (choice === null) return;
+    try {
+      const opened = await adapter.openScf();
+      if (opened === null) return; // user cancelled
+      set({ folderChoice: null });
+      await finishFolderOpen(
+        set, get, choice.root as FileSystemDirectoryHandle, opened);
+    } catch (e) {
+      set({ phase: "error",
+            errorMessage: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  dismissFolderChoice: () => set({ folderChoice: null }),
+
+  regrantRoot: async () => {
+    const root = get().projectRoot;
+    if (root === null) return;
+    set({ rootPermission: await adapter.requestRootPermission(root) });
   },
 
   newProject: async () => {
@@ -295,18 +452,28 @@ export const useStore = create<AppState>((set, get) => ({
   /** Back to the start screen. The OPFS working copy stays — Resume
    * still works — but only the .scf file is durable. */
   closeProject: async () => {
+    // Disarm auto-resume BEFORE the phase change, not after the awaits
+    // below. App's resume effect fires the moment phase becomes
+    // "start", reads this flag synchronously, and finds whatever is
+    // there — so writing "0" four awaits later meant the first close of
+    // a session always bounced straight back into the project it had
+    // just left, and the reopen bumped the revision, so the SECOND
+    // close warned about unsaved changes that were never made.
+    localStorage.setItem("scf:auto-resume", "0");
     // Leave the workbench FIRST. Closing the database out from under
     // mounted views left their in-flight queries — and the script
     // editor's blur-triggered commit — resolving against no database,
     // which is where the "no database open" rejections came from.
     set({ phase: "start", fileToken: null, errorMessage: null,
           navMode: "script", openRow: null, draft: null,
-          selectedSubject: null });
+          selectedSubject: null, projectRoot: null,
+          rootPermission: "none", rootTraversal: "unknown",
+          rootTraversalError: null, folderChoice: null });
     await client.close();
     // Closing is deliberate: forget the file so the next boot offers the
     // start screen rather than silently reopening what was closed.
     await forgetHandle();
-    localStorage.setItem("scf:auto-resume", "0");
+    await forgetRoot();
   },
 
   saveProject: async () => {

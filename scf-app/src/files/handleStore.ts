@@ -1,6 +1,6 @@
 /**
  * handleStore.ts — remember which .scf file a session was writing to,
- * across a reload.
+ * and which folder it lives in, across a reload.
  *
  * The working database already survives a refresh: it lives in OPFS.
  * What did not survive was the FileSystemFileHandle, so a reload left
@@ -16,6 +16,10 @@
 const DB_NAME = "scf-session";
 const STORE = "handles";
 const KEY = "current";
+/** The project FOLDER (P2). Kept under its own key so a degraded
+ *  single-file session does not clear a remembered root, and a folder
+ *  session does not resurrect a stale file handle. */
+const ROOT_KEY = "root";
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -59,6 +63,26 @@ export async function recallHandle(): Promise<unknown | null> {
   } catch {
     return null;
   }
+}
+
+export async function rememberRoot(handle: unknown): Promise<void> {
+  try {
+    await withStore("readwrite", (s) => s.put(handle, ROOT_KEY));
+  } catch { /* best effort, as above */ }
+}
+
+export async function recallRoot(): Promise<unknown | null> {
+  try {
+    return await withStore("readonly", (s) => s.get(ROOT_KEY)) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function forgetRoot(): Promise<void> {
+  try {
+    await withStore("readwrite", (s) => s.delete(ROOT_KEY));
+  } catch { /* nothing to clean up */ }
 }
 
 export async function forgetHandle(): Promise<void> {

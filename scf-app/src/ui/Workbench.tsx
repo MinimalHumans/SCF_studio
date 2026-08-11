@@ -133,6 +133,7 @@ export function Workbench(): JSX.Element {
         <span className="topbar-schema">
           schema {registry.schemaVersion}
         </span>
+        <RootStatus />
         <button className="ghost tiny"
                 aria-pressed={identityOpen}
                 title="Row identity: uuid coverage, lookup, version chains"
@@ -208,6 +209,52 @@ export function Workbench(): JSX.Element {
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Whether this session can see the project folder.
+ *
+ * Silent when the root is granted — nothing to say. A reload keeps the
+ * handle and drops the grant, so the re-grant lives here as one click
+ * inside a user gesture; the browser rejects the request anywhere else,
+ * and that restriction is the point of the prompt.
+ *
+ * A single-file session says so plainly rather than pretending: its
+ * assets cannot resolve, and the reason is the platform, not the file.
+ */
+function RootStatus(): JSX.Element | null {
+  const { projectRoot, rootPermission, rootTraversal, rootTraversalError,
+          regrantRoot } = useStore();
+
+  if (projectRoot === null) {
+    return (
+      <span className="topbar-root muted"
+            title="Opened as a single .scf. Assets cannot resolve — the
+browser gives no route from a file to the folder around it. Reopen as a
+folder to resolve them.">
+        no folder
+      </span>
+    );
+  }
+  if (rootPermission === "granted" && rootTraversal === "blocked") {
+    return (
+      <span className="topbar-root topbar-root-blocked"
+            title={`The folder is connected, but files cannot be reached
+through it on this machine, so assets will not resolve. ` +
+              (rootTraversalError ?? "")}>
+        folder unreadable
+      </span>
+    );
+  }
+  if (rootPermission === "granted") return null;
+  return (
+    <button className="ghost tiny topbar-root-regrant"
+            onClick={() => void regrantRoot()}
+            title="This session remembers the project folder but lost
+permission to read it on reload.">
+      Reconnect folder
+    </button>
   );
 }
 
