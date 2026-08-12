@@ -189,8 +189,6 @@ export async function resolveIdentifier(
 export interface AssetResolution extends Resolution {
   id: number;
   name: string | null;
-  /** True when the row still carries only the pre-2.7 file_path. */
-  unmigrated: boolean;
 }
 
 export interface ResolutionReport {
@@ -215,13 +213,12 @@ export async function resolveAllAssets(
   exec: SqlExec, locate: FileLocator,
 ): Promise<ResolutionReport> {
   const rows = await exec(
-    `SELECT id, name, identifier, file_path FROM ${q("asset")} ORDER BY id`);
+    `SELECT id, name, identifier FROM ${q("asset")} ORDER BY id`);
   const assets: AssetResolution[] = [];
   const counts = EMPTY_COUNTS();
 
   for (const row of rows) {
     const stored = row["identifier"];
-    const legacy = row["file_path"];
     const raw = stored === null || stored === undefined || stored === ""
       ? null : String(stored);
     const resolution = await resolveIdentifier(raw, locate);
@@ -231,44 +228,10 @@ export async function resolveAllAssets(
       id: Number(row["id"]),
       name: row["name"] === null || row["name"] === undefined
         ? null : String(row["name"]),
-      unmigrated: raw === null && legacy !== null && legacy !== undefined &&
-        legacy !== "",
     });
   }
 
   return { assets, counts, total: rows.length };
-}
-
-/**
- * Migrate pre-2.7 `file_path` values into rooted identifiers.
- *
- * A bare relative path becomes `@project/...`; anything already
- * absolute or already rooted is copied unchanged, because rewriting it
- * would be asserting a portability the value does not have. Idempotent:
- * rows that already carry an identifier are left alone, so running it
- * twice costs nothing. `file_path` is not cleared — the column is
- * deprecated, not deleted, and keeping it means a downgrade loses
- * nothing.
- */
-export async function migrateFilePaths(exec: SqlExec): Promise<number> {
-  const rows = await exec(
-    `SELECT id, file_path FROM ${q("asset")} ` +
-    `WHERE (identifier IS NULL OR identifier = '') ` +
-    `AND file_path IS NOT NULL AND file_path <> ''`);
-
-  let migrated = 0;
-  for (const row of rows) {
-    const legacy = String(row["file_path"]);
-    const parsed = parseIdentifier(legacy);
-    if (parsed === null) continue;
-    const identifier = parsed.root !== null || parsed.absolute
-      ? legacy.trim()
-      : projectIdentifier(parsed.path);
-    await exec(`UPDATE ${q("asset")} SET identifier = ? WHERE id = ?`,
-               [identifier, Number(row["id"])]);
-    migrated += 1;
-  }
-  return migrated;
 }
 
 /**

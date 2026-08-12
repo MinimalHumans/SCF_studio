@@ -46,6 +46,10 @@ interface FileSystemHandlePermissionDescriptor {
 
 interface FileSystemDirectoryHandle {
   entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+  /** Path segments from this directory down to a descendant, or null if
+   *  the handle is not below it. Traversal, not enumeration — it works
+   *  on machines where entries() returns nothing. */
+  resolve(possibleDescendant: FileSystemHandle): Promise<string[] | null>;
   keys(): AsyncIterableIterator<string>;
   queryPermission(
     descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
@@ -56,4 +60,12 @@ interface FileSystemDirectoryHandle {
 interface Window {
   showDirectoryPicker(
     options?: DirectoryPickerOptions): Promise<FileSystemDirectoryHandle>;
+}
+
+
+/* Directory upload: pre-dates the File System Access API and walks the
+ * folder inside the picker process, so it works where entries() does
+ * not. Still not in lib.dom as a standard property. */
+interface HTMLInputElement {
+  webkitdirectory: boolean;
 }

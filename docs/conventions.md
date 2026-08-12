@@ -343,8 +343,8 @@ Rebuild scripts live in `fixtures/build/`.
 
 ## 9. Assets and addressing
 
-**Status: implemented as of schema 2.7**, except for preview, the asset
-browser, query integration and layers. Addressing, resolution states,
+**Status: implemented as of schema 2.8**, except for query
+integration and layers. Addressing, resolution states,
 the folder-is-a-project rule and per-prefix relink are live in
 `scf-core/src/project.ts` and `scf-core/src/assets.ts`. Pinned by
 `scf-core/test/project.test.ts` and `scf-core/test/assets.test.ts`.
@@ -475,9 +475,9 @@ already carry it. A file used twenty ways is twenty edges and one row.
 
 There is deliberately no intrinsic-purpose column. `asset_type` was one,
 mixing container format with editorial intent, and the fixture had already
-outgrown its enum. It is deprecated rather than replaced: a purpose stored
-on the row is a second place for meaning to live and a second place for it
-to go stale. `tags` remains as the user-controlled escape hatch, freeform
+outgrown its enum. It was deprecated in 2.7 and removed in 2.8, not
+replaced: a purpose stored on the row is a second place for meaning to
+live and a second place for it to go stale. `tags` remains as the user-controlled escape hatch, freeform
 by intent rather than pretending to be a taxonomy.
 
 ### Organisation is derived
@@ -494,9 +494,84 @@ Everything else is a **facet**, not a folder: format, resolution state,
 lifecycle, tags, unreferenced. Facets compose; a single imposed hierarchy
 is wrong for half of its users and has to be maintained by hand.
 
+`scf-core/src/assetIndex.ts` derives all of this — `pathTree()`,
+`facetsOf()`, `orphanIds()`. Orphans are computed from the registry
+rather than a hand-kept list: every field anywhere in the schema whose
+`referenceEntity` is `asset` counts as usage, so a junction added later
+is covered without an edit. The asset table's own version columns are
+excluded, because a row whose only inbound reference is its own
+successor is still an orphan and counting supersession as usage would
+hide exactly the rows worth finding. Pinned by
+`scf-core/test/assetIndex.test.ts`, which also measures 2,000 assets
+through the whole index.
+
 The failure mode to design against is not search but **orphans** — assets
 nobody linked. At scale those are what rot, so "referenced by nothing" is a
 first-class query rather than something a user has to notice.
+
+### Preview has three tiers, and the third is a real one
+
+**native** — the browser decodes it: png, jpg, webp, gif, svg, mp4,
+webm, wav, mp3, pdf, and plain text. An object URL and an element.
+
+**decoded** — real content behind a decoder SCF does not ship: exr, dpx,
+tiff, psd, glb, usd, mov, mxf. Named separately so the editor can say
+"not yet" rather than "no", and so the work is scoped if anyone wants
+it.
+
+**named** — nothing to depict. Archives, caches, model weights, DCC
+scene files. A LoRA is not media: it is invoked rather than looked at,
+and there is no image of it failing to render. Roughly a third of the
+Hollow Creek fixture sits in tiers 2 and 3, which is an honest ratio to
+design against — an editor that treated "cannot preview" as an error
+would be wrong about half a real project.
+
+Sidecar thumbnails are ruled out by the read-only rule: something would
+have to write them, and it will not be SCF. Tier 2 therefore means an
+in-memory decoder or nothing, and today it means nothing.
+
+`previewCapability()` in `scf-core/src/preview.ts` classifies a format.
+An unknown extension lands in tier 3, never tier 1: handing an
+unrecognised format to an image element yields a broken-image icon,
+which reads as "this asset is broken" when the truth is "this editor
+does not know that format". Pinned by `scf-core/test/preview.test.ts`.
+
+### Import reads, and writes only rows
+
+Authoring assets one form at a time does not survive a real project, so
+files can be imported in bulk. This does not weaken the read-only rule:
+import READS a set of files the user picked and writes rows into the
+`.scf`. Nothing is copied, moved, or created on disk, and what lands in
+the database is an address rather than a payload.
+
+Import never uses `entries()`, because enumeration is not available
+everywhere (above). Two routes avoid it:
+
+**A folder**, via `<input type="file" webkitdirectory>`. It pre-dates
+the File System Access API and walks the directory inside the browser's
+own picker process, returning a flat FileList with `webkitRelativePath`
+on each entry — a different code path that works on machines where
+`entries()` returns nothing. Its catch is the anchor: paths start at the
+folder the user picked, and a `File` carries no handle, so `resolve()`
+cannot be asked where that folder sits. `candidatePaths()` produces the
+readings worth trying and each is settled by TRAVERSAL, walking the root
+to see which is actually there. A file matching no reading is reported
+rather than imported under a guessed address.
+
+**Selected files**, via a multi-select picker plus
+`FileSystemDirectoryHandle.resolve()`, which traverses rather than
+enumerating and gives the path segments from the root down to a handle
+directly.
+
+Identity for this purpose is the **identifier**, not the filename: two
+files called `plate.exr` in different folders are two assets, the same
+file offered twice is one, and re-importing a folder after adding three
+files creates three rows and touches nothing else. A file picked from
+outside the project folder is reported and skipped rather than imported
+as an absolute path, since silently producing non-portable addresses
+would undo the point of this section. `planAssetImport()` and
+`applyAssetImport()` in `scf-core/src/assetImport.ts`, pinned by
+`scf-core/test/assetImport.test.ts`.
 
 ### Queries carry references, never bytes
 

@@ -5,6 +5,37 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.8
+
+**`asset.asset_type` and `asset.file_path` removed.** Both were
+deprecated in 2.7 and retained so that a file could move between
+versions without losing data. That caution is withdrawn: the format has
+no installed base to protect, and carrying two dead columns plus a
+Deprecated tab in the editor cost more in confusion than the
+compatibility was worth.
+
+`migrateFilePaths()` goes with them — there is nothing left to migrate
+from. A pre-2.7 file opened by this version keeps its `file_path` values
+in the table (SQLite does not drop unknown columns) but nothing reads
+them, and the assets will read as unaddressed until their identifiers
+are authored or re-imported.
+
+
+## 2.8
+
+**`asset.asset_type` and `asset.file_path` removed.** Both were
+deprecated in 2.7 and retained so a 2.7 file could be taken back to 2.6
+without loss. That protection is no longer wanted: there are no files in
+the wild to protect, and a Deprecated tab in the editor costs every
+future reader a moment working out why two dead fields are on screen.
+
+Not additive, and deliberately so. A 2.6 or 2.7 file opened by 2.8 keeps
+whatever was in those columns — `initDatabase` never drops columns — but
+the editor stops showing them and `resolveAllAssets` stops reading them.
+The `file_path` → `identifier` migration is gone with them; anything
+still holding only a `file_path` should be reimported.
+
+
 ## 2.7
 
 **`asset.identifier`** (TEXT, nullable), plus **`size_bytes`**,
@@ -27,12 +58,8 @@ asset is FOR is a property of the link that reaches it —
 `bundle_asset.role_in_bundle` and `asset_relationship.relationship_type`
 already carry it. There is deliberately no replacement column.
 
-Additive and self-migrating. `migrateFilePaths()` runs on open and roots
-any bare `file_path` into `@project/...`; anything already absolute or
-already rooted is copied unchanged, because rewriting it would assert a
-portability it does not have. It is idempotent, and it does NOT clear
-`file_path`: both deprecated columns stay, so a file opened by 2.7 and
-taken back to 2.6 loses nothing.
+Additive and self-migrating at the time; both deprecated columns were
+removed in 2.8, along with the migration.
 
 **Consumer note.** Resolution is a state, not a boolean. `missing` and
 `unmaterialised` are different facts — a cloud placeholder will appear

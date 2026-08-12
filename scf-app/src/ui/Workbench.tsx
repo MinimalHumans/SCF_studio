@@ -52,20 +52,52 @@ class MainPaneBoundary extends Component<
 }
 import { SceneRail } from "./SceneRail.tsx";
 import { IdentityPanel } from "./IdentityPanel.tsx";
+import { AssetBrowser, AssetPathRail } from "./AssetBrowser.tsx";
 
 const RAIL_KEY = "scf:rail-width";
+const RAIL_MIN = 180;
+/** Wide enough for a deep asset path or a long scene heading. The old
+ *  ceiling was 500, which the tab bar alone outgrew once Assets became
+ *  the seventh tab — the drag stopped short of the content every time. */
+const RAIL_MAX = 900;
 
-function useRailWidth(): [number, (w: number) => void] {
+/**
+ * The rail defaults to the width its own tab bar needs.
+ *
+ * Seven tabs squeezed into 260px truncate, so the first thing anyone
+ * did on opening a project was drag the rail wider. Measuring beats
+ * guessing here: the tabs are laid out with `flex: 1`, so their
+ * natural width is whatever their labels require, and reading it after
+ * mount adapts to a renamed or added tab without another magic number.
+ */
+function useRailWidth(): [number, (w: number) => void, (el: HTMLElement
+  | null) => void] {
   const [width, setWidth] = useState(() => {
     const saved = Number(localStorage.getItem(RAIL_KEY));
-    return Number.isFinite(saved) && saved >= 180 ? saved : 260;
+    return Number.isFinite(saved) && saved >= RAIL_MIN ? saved : 0;
   });
+
   const set = (w: number): void => {
-    const clamped = Math.min(500, Math.max(180, w));
+    const clamped = Math.min(RAIL_MAX, Math.max(RAIL_MIN, w));
     setWidth(clamped);
     localStorage.setItem(RAIL_KEY, String(clamped));
   };
-  return [width, set];
+
+  // Only measures when there is no stored preference: someone who has
+  // sized the rail themselves keeps that size.
+  const measure = (el: HTMLElement | null): void => {
+    if (el === null || width !== 0) return;
+    // The container's own scrollWidth already accounts for padding and
+    // borders; summing children missed both. The margin covers the
+    // vertical scrollbar, which otherwise steals the last few pixels
+    // and pushes the tabs into a second row.
+    const fitted = Math.min(RAIL_MAX,
+                            Math.max(RAIL_MIN, el.scrollWidth + 20));
+    setWidth(fitted);
+    localStorage.setItem(RAIL_KEY, String(fitted));
+  };
+
+  return [width === 0 ? RAIL_MIN : width, set, measure];
 }
 
 function RailResizeHandle({ onDrag }: {
@@ -87,7 +119,7 @@ function RailResizeHandle({ onDrag }: {
 }
 
 export function Workbench(): JSX.Element {
-  const [railWidth, setRailWidth] = useRailWidth();
+  const [railWidth, setRailWidth, measureRail] = useRailWidth();
   // A diagnostic, not a workspace: an overlay reachable from anywhere
   // rather than a seventh nav tab, because it reads whatever row is
   // already open.
@@ -105,6 +137,8 @@ export function Workbench(): JSX.Element {
       ? <ShootView />
     : navMode === "queries"
       ? <QueryRunner />
+    : navMode === "assets"
+      ? <AssetBrowser />
       // Subjects mode never falls through to the schema list: with no
       // subject picked it showed whichever entity the Schema tab was
       // last on, so switching subject type landed on Story Beats.
@@ -160,7 +194,7 @@ export function Workbench(): JSX.Element {
           <RailResizeHandle onDrag={(x) =>
             setRailWidth(x - (document.querySelector(".rail-nav")
               ?.getBoundingClientRect().left ?? 0))} />
-          <div className="nav-modes" role="tablist">
+          <div className="nav-modes" role="tablist" ref={measureRail}>
             <button role="tab" aria-selected={navMode === "script"}
                     className={navMode === "script" ? "active" : ""}
                     onClick={() => setNavMode("script")}>
@@ -191,10 +225,16 @@ export function Workbench(): JSX.Element {
                     onClick={() => setNavMode("queries")}>
               Queries
             </button>
+            <button role="tab" aria-selected={navMode === "assets"}
+                    className={navMode === "assets" ? "active" : ""}
+                    onClick={() => setNavMode("assets")}>
+              Assets
+            </button>
           </div>
           {navMode === "subject" ? <SubjectNav />
             : navMode === "schema" ? <CategoryTree />
             : navMode === "script" ? <SceneRail />
+            : navMode === "assets" ? <AssetPathRail />
             : navMode === "structure" || navMode === "shoot" ? null
             : <QueryIndex />}
         </nav>

@@ -527,25 +527,20 @@ for name, decision_type, description, rationale, alternatives in [
         lifecycle_status="active")
 
 # --- media ------------------------------------------------------------
-# Assets carry a rooted IDENTIFIER since 2.7 (conventions §9). file_path
-# is kept alongside on these three rows so the fixture also exercises the
-# deprecated column surviving a migration rather than being cleared.
+# Assets carry a rooted IDENTIFIER (conventions §9).
 kitchen_plate = ins("asset", name="kitchen_night_plate_v2.exr",
                     identifier="@project/assets/locations/"
                                "kitchen_night_plate_v2.exr",
-                    file_path="assets/locations/kitchen_night_plate_v2.exr",
                     description="Night interior plate, storm outside.",
                     tags="location,kitchen,night", source="Plate unit",
                     lifecycle_status="active")
 locket_scan = ins("asset", name="locket_scan_v1.glb",
                   identifier="@project/assets/props/locket_scan_v1.glb",
-                  file_path="assets/props/locket_scan_v1.glb",
                   description="Photogrammetry of the hero locket.",
                   tags="prop,locket", source="Art department",
                   lifecycle_status="active")
 chime_rec = ins("asset", name="chime_hero_takes.wav",
                 identifier="@project/assets/sound/chime_hero_takes.wav",
-                file_path="assets/sound/chime_hero_takes.wav",
                 description="Twelve takes of the practical chime.",
                 tags="sound,chime", source="Sound design",
                 lifecycle_status="active")

@@ -1,6 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isDirty, registry, useStore } from "../state/store.ts";
 import type { SqlValue } from "@scf-core/db.ts";
+import {
+  resolveIdentifier, type Resolution, type ResolutionState,
+} from "@scf-core/assets.ts";
+import { makeLocator } from "../files/assetLocator.ts";
+import { AssetPreview } from "./AssetPreview.tsx";
 import { Field } from "./fields/Field.tsx";
 
 /**
@@ -101,8 +106,79 @@ export function EntityForm(): JSX.Element | null {
           ))}
       </div>
 
+      {!creating && openRow.entity === "asset" && (
+        <>
+          <AssetPreview identifier={
+            draft.values["identifier"] === null ||
+            draft.values["identifier"] === undefined
+              ? null : String(draft.values["identifier"])} />
+          <AssetResolution identifier={draft.values["identifier"]} />
+        </>
+      )}
       {!creating && <IdentityFooter values={draft.values} id={openRow.id} />}
     </div>
+  );
+}
+
+const STATE_LABEL: Record<ResolutionState, string> = {
+  resolved: "resolved",
+  missing: "missing",
+  unmaterialised: "not downloaded",
+  "out-of-root": "outside the project",
+  unaddressed: "no identifier",
+};
+
+/**
+ * Where this asset's identifier actually points, shown on the row that
+ * owns it.
+ *
+ * It lived only in the diagnostics panel at first, which was the wrong
+ * place: resolution is a property of the row, and someone editing an
+ * identifier wants to know whether it lands without going to look
+ * somewhere else. Derived on every render of the field — never stored
+ * (conventions §2, §9).
+ */
+function AssetResolution({ identifier }: {
+  identifier: SqlValue | undefined;
+}): JSX.Element | null {
+  const { projectRoot } = useStore();
+  const [state, setState] = useState<Resolution | null>(null);
+  const raw = identifier === null || identifier === undefined
+    ? null : String(identifier);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const root = projectRoot as FileSystemDirectoryHandle | null;
+      const r = await resolveIdentifier(raw, makeLocator(root));
+      if (!cancelled) setState(r);
+    })();
+    return () => { cancelled = true; };
+  }, [raw, projectRoot]);
+
+  if (state === null) return null;
+
+  const size = state.sizeBytes === null
+    ? null : `${Math.round(state.sizeBytes / 1024).toLocaleString()} KB`;
+
+  return (
+    <footer className={`form-resolution form-resolution-${state.state}`}>
+      <span className="muted">resolves</span>
+      <span>{STATE_LABEL[state.state]}</span>
+      {size !== null && <span className="muted">{size}</span>}
+      {state.format !== null && (
+        <span className="muted mono">{state.format}</span>
+      )}
+      {state.detail !== null && (
+        <span className="form-resolution-detail">{state.detail}</span>
+      )}
+      {projectRoot === null && state.state === "missing" && (
+        <span className="form-resolution-detail">
+          — this session has no project folder attached, so nothing can
+          resolve
+        </span>
+      )}
+    </footer>
   );
 }
 

@@ -10,7 +10,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { initDatabase, newUuid } from "../src/db.ts";
 import {
-  applyRelink, escapesRoot, formatOf, migrateFilePaths, parseIdentifier,
+  applyRelink, escapesRoot, formatOf, parseIdentifier,
   planRelink, projectIdentifier, resolveAllAssets, resolveIdentifier,
   type FileLocator,
 } from "../src/assets.ts";
@@ -165,18 +165,17 @@ describe("the file-level report", () => {
   beforeAll(async () => {
     db = openNodeDatabase(":memory:");
     await initDatabase(db.exec, registry, { editorVersion: "assets-test" });
-    const add = async (name: string, identifier: string | null,
-                      filePath: string | null): Promise<void> => {
+    const add = async (name: string,
+                      identifier: string | null): Promise<void> => {
       await db.exec(
-        "INSERT INTO asset (name, uuid, identifier, file_path) " +
-        "VALUES (?, ?, ?, ?)", [name, newUuid(), identifier, filePath]);
+        "INSERT INTO asset (name, uuid, identifier) VALUES (?, ?, ?)",
+        [name, newUuid(), identifier]);
     };
-    await add("Here", "@project/a/here.png", null);
-    await add("Gone", "@project/a/gone.png", null);
-    await add("Cloud", "@project/a/cloud.exr", null);
-    await add("Elsewhere", "/Volumes/x/abs.png", null);
-    await add("Legacy", null, "assets/props/lamp.png");
-    await add("Nameless", null, null);
+    await add("Here", "@project/a/here.png");
+    await add("Gone", "@project/a/gone.png");
+    await add("Cloud", "@project/a/cloud.exr");
+    await add("Elsewhere", "/Volumes/x/abs.png");
+    await add("Nameless", null);
   });
 
   afterAll(() => db.close());
@@ -187,43 +186,21 @@ describe("the file-level report", () => {
       "project/a/cloud.exr": { placeholder: true },
     });
     const report = await resolveAllAssets(db.exec, locate);
-    expect(report.total).toBe(6);
+    expect(report.total).toBe(5);
     expect(report.counts.resolved).toBe(1);
     expect(report.counts.missing).toBe(1);
     expect(report.counts.unmaterialised).toBe(1);
     expect(report.counts["out-of-root"]).toBe(1);
-    expect(report.counts.unaddressed).toBe(2);
+    expect(report.counts.unaddressed).toBe(1);
   });
 
   test("a session with no folder reports, rather than failing",
     async () => {
       const report = await resolveAllAssets(db.exec, async () => undefined);
-      expect(report.total).toBe(6);
+      expect(report.total).toBe(5);
       expect(report.counts.resolved).toBe(0);
     });
 
-  test("a row still on file_path is flagged unmigrated", async () => {
-    const report = await resolveAllAssets(db.exec, NOTHING);
-    const legacy = report.assets.find((a) => a.name === "Legacy");
-    expect(legacy?.unmigrated).toBe(true);
-    const nameless = report.assets.find((a) => a.name === "Nameless");
-    expect(nameless?.unmigrated).toBe(false);
-  });
-
-  test("migration roots a bare path and leaves an absolute one alone",
-    async () => {
-      const moved = await migrateFilePaths(db.exec);
-      expect(moved).toBe(1);
-      const [row] = await db.exec(
-        "SELECT identifier, file_path FROM asset WHERE name = 'Legacy'");
-      expect(row?.["identifier"]).toBe("@project/assets/props/lamp.png");
-      // file_path is deprecated, not deleted: a downgrade loses nothing.
-      expect(row?.["file_path"]).toBe("assets/props/lamp.png");
-    });
-
-  test("migration is idempotent", async () => {
-    expect(await migrateFilePaths(db.exec)).toBe(0);
-  });
 });
 
 describe("relink", () => {

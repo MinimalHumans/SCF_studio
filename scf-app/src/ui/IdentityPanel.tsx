@@ -378,7 +378,8 @@ const STATE_LABEL: Record<ResolutionState, string> = {
  * two would report it as broken (conventions §9).
  */
 function Assets(): JSX.Element {
-  const { resolveAssets, projectRoot, openEntityRow } = useStore();
+  const { resolveAssets, projectRoot, rootTraversalError,
+          openEntityRow } = useStore();
   const [report, setReport] = useState<ResolutionReport | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -403,6 +404,9 @@ function Assets(): JSX.Element {
           This session has no project folder, so nothing can resolve.
           Everything below is listed, not broken.
         </p>
+      )}
+      {rootTraversalError !== null && (
+        <p className="identity-finding">{rootTraversalError}</p>
       )}
       {busy && <p className="muted">Resolving…</p>}
 

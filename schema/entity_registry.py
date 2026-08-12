@@ -3347,19 +3347,6 @@ register(EntityDef(
                            "reaches it, not of the row."),
         FieldDef("source", "Source / Credit", "text"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
-        # --- deprecated 2.7, retained so no file loses data on open ---
-        FieldDef("asset_type", "Asset Type (deprecated)", "select", options=[
-            "image", "audio", "video", "document", "3d model",
-            "lookbook", "reference photo", "concept art", "other"
-        ], tab="Deprecated",
-            help_text="Deprecated in 2.7: it mixed container format with "
-                      "editorial intent, and the fixture had already "
-                      "outgrown the enum. Format is derived from the "
-                      "identifier; purpose lives on the link."),
-        FieldDef("file_path", "File Path / URL (deprecated)", "text",
-                 tab="Deprecated",
-                 help_text="Deprecated in 2.7, superseded by identifier. "
-                           "Migrated on open; kept so nothing is lost."),
     ],
 ))
 

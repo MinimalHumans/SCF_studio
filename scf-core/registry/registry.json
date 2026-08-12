@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.7",
+  "schemaVersion": "2.8",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -14786,37 +14786,6 @@
           "required": false,
           "tab": "Notes",
           "autoInjected": false
-        },
-        {
-          "name": "asset_type",
-          "label": "Asset Type (deprecated)",
-          "fieldType": "select",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Deprecated",
-          "autoInjected": false,
-          "options": [
-            "image",
-            "audio",
-            "video",
-            "document",
-            "3d model",
-            "lookbook",
-            "reference photo",
-            "concept art",
-            "other"
-          ],
-          "helpText": "Deprecated in 2.7: it mixed container format with editorial intent, and the fixture had already outgrown the enum. Format is derived from the identifier; purpose lives on the link."
-        },
-        {
-          "name": "file_path",
-          "label": "File Path / URL (deprecated)",
-          "fieldType": "text",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Deprecated",
-          "autoInjected": false,
-          "helpText": "Deprecated in 2.7, superseded by identifier. Migrated on open; kept so nothing is lost."
         },
         {
           "name": "lifecycle_status",
