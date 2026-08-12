@@ -34,6 +34,10 @@ import {
 } from "@scf-core/assetImport.ts";
 import { pickAssetFiles, pickAssetFolder }
   from "../files/assetLocator.ts";
+import {
+  applyBundleAdd, createBundle, listBundles, planBundleAdd,
+  type BundleSummary,
+} from "@scf-core/bundling.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 
 function Folder({ node, depth, selected, onSelect }: {
@@ -279,6 +283,86 @@ function ImportAssets({ onDone }: { onDone: () => void }): JSX.Element {
   );
 }
 
+/**
+ * Put the current selection into a bundle.
+ *
+ * The batch case is the real one: after importing a folder, the act is
+ * "these twenty into her visual identity", not twenty separate visits
+ * to twenty forms. Assets already in the target are skipped rather than
+ * duplicated, so an overlapping selection is safe to re-apply.
+ */
+function AddToBundle({ ids, onDone }: {
+  ids: number[]; onDone: () => void;
+}): JSX.Element {
+  const { noteWrite } = useStore();
+  const [bundles, setBundles] = useState<BundleSummary[]>([]);
+  const [target, setTarget] = useState<string>("");
+  const [role, setRole] = useState("");
+  const [newName, setNewName] = useState("");
+  const [intent, setIntent] = useState("visual_identity");
+  const [result, setResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => setBundles(await listBundles(exec)))();
+  }, []);
+
+  const run = (): void => {
+    void (async () => {
+      let bundleId: number;
+      if (target === "new") {
+        if (newName.trim() === "") return;
+        bundleId = await createBundle(exec, newName.trim(), intent);
+      } else {
+        bundleId = Number(target);
+      }
+      const plan = await planBundleAdd(exec, bundleId, ids);
+      await applyBundleAdd(exec, bundleId, plan.add,
+                           role.trim() === "" ? null : role.trim());
+      setResult(
+        `${plan.add.length} added` +
+        (plan.already.length > 0
+          ? `, ${plan.already.length} already there` : ""));
+      setBundles(await listBundles(exec));
+      noteWrite();
+      onDone();
+    })();
+  };
+
+  return (
+    <div className="asset-bundle-add">
+      <select value={target} onChange={(e) => setTarget(e.target.value)}>
+        <option value="">add {ids.length} to bundle…</option>
+        {bundles.map((b) => (
+          <option key={b.id} value={String(b.id)}>
+            {b.name ?? `#${b.id}`} ({b.intent ?? "no intent"}, {
+              b.assetCount})
+          </option>
+        ))}
+        <option value="new">new bundle…</option>
+      </select>
+
+      {target === "new" && (
+        <>
+          <input placeholder="bundle name" value={newName}
+                 onChange={(e) => setNewName(e.target.value)} />
+          <input placeholder="intent" value={intent}
+                 title="What the media cascade filters on. A bundle with
+no intent resolves for nothing."
+                 onChange={(e) => setIntent(e.target.value)} />
+        </>
+      )}
+      {target !== "" && (
+        <>
+          <input placeholder="role (optional)" value={role}
+                 onChange={(e) => setRole(e.target.value)} />
+          <button className="tiny primary" onClick={run}>Add</button>
+        </>
+      )}
+      {result !== null && <span className="muted">{result}</span>}
+    </div>
+  );
+}
+
 const PAGE = 300;
 
 export function AssetBrowser(): JSX.Element {
@@ -286,6 +370,7 @@ export function AssetBrowser(): JSX.Element {
   const { assets, orphans, loading, reload } = useAssetIndex();
   const [filter, setFilter] = useState<AssetFilter>({});
   const [shownCount, setShownCount] = useState(PAGE);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
 
   const facets = useMemo(() => facetsOf(assets, orphans),
                          [assets, orphans]);
@@ -360,30 +445,54 @@ no relationship. These are what rot at scale.">
         <div className="asset-count">
           <span className="muted">{shown.length} of {facets.total}</span>
           <ImportAssets onDone={reload} />
+          {selected.size > 0 && (
+            <>
+              <AddToBundle ids={[...selected]}
+                           onDone={() => setSelected(new Set())} />
+              <button className="ghost tiny"
+                      onClick={() => setSelected(new Set())}>
+                clear selection
+              </button>
+            </>
+          )}
+          {shown.length > 0 && selected.size === 0 && (
+            <button className="ghost tiny"
+                    onClick={() => setSelected(
+                      new Set(shown.map((a) => a.id)))}>
+              select all {shown.length}
+            </button>
+          )}
         </div>
 
         <ul className="asset-list">
           {shown.slice(0, shownCount).map((a) => (
-            <li key={a.id}>
-              <button className="ghost asset-row"
+            <li key={a.id} className="asset-row">
+              <input type="checkbox" className="asset-row-check"
+                     aria-label={`select ${a.name ?? a.id}`}
+                     checked={selected.has(a.id)}
+                     onChange={() => setSelected((prev) => {
+                       const next = new Set(prev);
+                       if (next.has(a.id)) next.delete(a.id);
+                       else next.add(a.id);
+                       return next;
+                     })} />
+              <button className="ghost tiny asset-row-name"
                       onClick={() => { void openEntityRow("asset", a.id); }}>
-                <span className="asset-row-name">
-                  {a.name ?? <em className="muted">unnamed</em>}
-                </span>
-                <span className="mono muted asset-row-id">
-                  {a.identifier ?? "no identifier"}
-                </span>
-                {previewCapability(a.format).tier !== "native" && (
-                  <span className="muted asset-row-tier"
-                        title={previewCapability(a.format).detail ?? ""}>
-                    {previewCapability(a.format).tier === "decoded"
-                      ? "no decoder" : "not viewable"}
-                  </span>
-                )}
-                {orphans.has(a.id) && (
-                  <span className="asset-row-orphan">unreferenced</span>
-                )}
+                {a.name ?? "unnamed"}
               </button>
+              <span className="mono asset-row-id">
+                {a.identifier ?? "no identifier"}
+              </span>
+              {previewCapability(a.format).tier !== "native" && (
+                <span className="asset-row-tier"
+                      title={previewCapability(a.format).detail ?? ""}>
+                  {previewCapability(a.format).tier === "decoded"
+                    ? "no decoder" : "not viewable"}
+                </span>
+              )}
+              {orphans.has(a.id) && (
+                <span className="asset-row-orphan">unreferenced</span>
+              )}
             </li>
           ))}
           {shown.length > shownCount && (

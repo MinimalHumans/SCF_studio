@@ -20,7 +20,7 @@
  * it repairs nothing (conventions §2 — SCF reports).
  */
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   auditIdentity, browseUuids, findByUuid, rowIdentity,
   type IdentityAudit, type RowIdentity, type UuidHit, type UuidRow,
@@ -252,12 +252,12 @@ function ThisRow(): JSX.Element | null {
           </p>
           <dl className="identity-facts">
             {ident.naturalKey.map((p) => (
-              <>
-                <dt key={`k${p.field}`} className="mono">{p.field}</dt>
-                <dd key={`v${p.field}`} className="mono">
+              <Fragment key={p.field}>
+                <dt className="mono">{p.field}</dt>
+                <dd className="mono">
                   {p.value === null ? "—" : String(p.value)}
                 </dd>
-              </>
+              </Fragment>
             ))}
           </dl>
         </>

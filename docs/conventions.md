@@ -535,6 +535,63 @@ unrecognised format to an image element yields a broken-image icon,
 which reads as "this asset is broken" when the truth is "this editor
 does not know that format". Pinned by `scf-core/test/preview.test.ts`.
 
+### Metadata is read, never stored
+
+`size_bytes` and `source_mtime` are stored because they are hints about
+the REFERENCE going stale. Dimensions, channels, compression, duration
+and generator are facts about the CONTENT, and they are read from the
+file each time they are shown. There is no width column and there should
+never be one — a stored dimension is a second copy of a truth that
+changes without asking, which is the fragility §2 already names.
+
+The accepted consequence is that **metadata cannot be queried**. A
+filter over thousands of assets would mean reading thousands of files,
+so if something needs storing to be queried, it does not get queried.
+
+`readHeaderMetadata()` in `scf-core/src/fileMetadata.ts` parses headers
+only — the first 96KB — so nothing is decoded and nothing large is read.
+For PNG that includes the text chunks, which is where generated images
+keep their provenance: Midjourney writes `Description` (prompt, flags
+and job id), ComfyUI writes `prompt` and `workflow` as JSON, A1111
+writes `parameters`. A workflow can exceed the slice, and a chunk
+running past what was read says so rather than reporting no metadata.
+Compressed text is named but not expanded — inflating needs an async
+API and this parser is synchronous and pure.
+That makes the metadata tier deliberately unlike the preview tier: an
+EXR cannot be displayed but its attribute table parses cleanly, and a
+`.glb` carries a JSON chunk describing the scene. The formats that
+preview worst are often the ones where this helps most, because it is
+the only way to learn anything about them without opening a DCC. Pinned
+by `scf-core/test/fileMetadata.test.ts`.
+
+### Getting an asset into a bundle
+
+Three entities stand between a character and an asset:
+
+```
+character → character_asset_binding → bundle → bundle_asset → asset
+```
+
+The indirection earns its place — one bundle can serve several
+characters, carry `precedence` and `is_baseline`, and be scoped to a
+scene range or a variant — but the workflow should not mirror the
+schema. `scf-core/src/bundling.ts` makes each step one action, and
+`bundle_asset` membership is editable from the bundle row, which the
+generic entity form could not show because it is a link entity.
+
+Batching is the normal case, not an optimisation: after importing a
+folder the real act is "these twenty into her visual identity". An asset
+already in the target bundle is skipped rather than duplicated —
+`bundle_asset`'s natural key is the pair (§5) — so an overlapping
+selection is safe to re-apply. `order` continues from the highest
+already present rather than restarting, so an appended batch lands after
+what was there. Pinned by `scf-core/test/bundling.test.ts`.
+
+A bundle with no `intent` resolves for nothing, and a bundle bound to
+nobody reaches nobody. Both are easy to create by accident and neither
+is visible in the bundle row itself, so binding is a distinct step
+rather than an implied one.
+
 ### Import reads, and writes only rows
 
 Authoring assets one form at a time does not survive a real project, so

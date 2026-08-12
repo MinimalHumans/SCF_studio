@@ -6,6 +6,8 @@ import {
 } from "@scf-core/assets.ts";
 import { makeLocator } from "../files/assetLocator.ts";
 import { AssetPreview } from "./AssetPreview.tsx";
+import { AssetFileFacts } from "./AssetFileFacts.tsx";
+import { AssetBundles, BundleAssets } from "./BundleAssets.tsx";
 import { Field } from "./fields/Field.tsx";
 
 /**
@@ -106,14 +108,22 @@ export function EntityForm(): JSX.Element | null {
           ))}
       </div>
 
-      {!creating && openRow.entity === "asset" && (
+      {!creating && openRow.entity === "asset" && openRow.id !== null && (
         <>
           <AssetPreview identifier={
             draft.values["identifier"] === null ||
             draft.values["identifier"] === undefined
               ? null : String(draft.values["identifier"])} />
           <AssetResolution identifier={draft.values["identifier"]} />
+          <AssetFileFacts identifier={
+            draft.values["identifier"] === null ||
+            draft.values["identifier"] === undefined
+              ? null : String(draft.values["identifier"])} />
+          <AssetBundles assetId={openRow.id} />
         </>
+      )}
+      {!creating && openRow.entity === "bundle" && openRow.id !== null && (
+        <BundleAssets bundleId={openRow.id} />
       )}
       {!creating && <IdentityFooter values={draft.values} id={openRow.id} />}
     </div>

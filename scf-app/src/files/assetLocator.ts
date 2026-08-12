@@ -99,6 +99,26 @@ export async function readAssetText(
     : slice;
 }
 
+/**
+ * The leading bytes of an asset, with the file's own size and mtime.
+ *
+ * Sliced rather than read whole: header parsing needs the first tens of
+ * KB, and a 400MB plate has no business being pulled into memory to
+ * report its dimensions.
+ */
+export async function readAssetBytes(
+  root: FileSystemDirectoryHandle | null, path: string, limit: number,
+): Promise<{ bytes: ArrayBuffer; size: number;
+             lastModified: number } | null> {
+  const file = await fileAt(root, path);
+  if (file === null) return null;
+  return {
+    bytes: await file.slice(0, limit).arrayBuffer(),
+    size: file.size,
+    lastModified: file.lastModified,
+  };
+}
+
 /** An object URL for a resolved asset, or null. Caller revokes it. */
 export async function assetObjectUrl(
   root: FileSystemDirectoryHandle | null, path: string,
