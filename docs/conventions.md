@@ -343,8 +343,8 @@ Rebuild scripts live in `fixtures/build/`.
 
 ## 9. Assets and addressing
 
-**Status: implemented as of schema 2.7**, except for preview, the asset
-browser, query integration and layers. Addressing, resolution states,
+**Status: implemented as of schema 2.7**, except for preview, query
+integration and layers. Addressing, resolution states,
 the folder-is-a-project rule and per-prefix relink are live in
 `scf-core/src/project.ts` and `scf-core/src/assets.ts`. Pinned by
 `scf-core/test/project.test.ts` and `scf-core/test/assets.test.ts`.
@@ -493,6 +493,17 @@ and it matches the folder layout a production already maintains.
 Everything else is a **facet**, not a folder: format, resolution state,
 lifecycle, tags, unreferenced. Facets compose; a single imposed hierarchy
 is wrong for half of its users and has to be maintained by hand.
+
+`scf-core/src/assetIndex.ts` derives all of this — `pathTree()`,
+`facetsOf()`, `orphanIds()`. Orphans are computed from the registry
+rather than a hand-kept list: every field anywhere in the schema whose
+`referenceEntity` is `asset` counts as usage, so a junction added later
+is covered without an edit. The asset table's own version columns are
+excluded, because a row whose only inbound reference is its own
+successor is still an orphan and counting supersession as usage would
+hide exactly the rows worth finding. Pinned by
+`scf-core/test/assetIndex.test.ts`, which also measures 2,000 assets
+through the whole index.
 
 The failure mode to design against is not search but **orphans** — assets
 nobody linked. At scale those are what rot, so "referenced by nothing" is a

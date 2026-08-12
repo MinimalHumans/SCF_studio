@@ -52,6 +52,7 @@ class MainPaneBoundary extends Component<
 }
 import { SceneRail } from "./SceneRail.tsx";
 import { IdentityPanel } from "./IdentityPanel.tsx";
+import { AssetBrowser, AssetPathRail } from "./AssetBrowser.tsx";
 
 const RAIL_KEY = "scf:rail-width";
 
@@ -105,6 +106,8 @@ export function Workbench(): JSX.Element {
       ? <ShootView />
     : navMode === "queries"
       ? <QueryRunner />
+    : navMode === "assets"
+      ? <AssetBrowser />
       // Subjects mode never falls through to the schema list: with no
       // subject picked it showed whichever entity the Schema tab was
       // last on, so switching subject type landed on Story Beats.
@@ -191,10 +194,16 @@ export function Workbench(): JSX.Element {
                     onClick={() => setNavMode("queries")}>
               Queries
             </button>
+            <button role="tab" aria-selected={navMode === "assets"}
+                    className={navMode === "assets" ? "active" : ""}
+                    onClick={() => setNavMode("assets")}>
+              Assets
+            </button>
           </div>
           {navMode === "subject" ? <SubjectNav />
             : navMode === "schema" ? <CategoryTree />
             : navMode === "script" ? <SceneRail />
+            : navMode === "assets" ? <AssetPathRail />
             : navMode === "structure" || navMode === "shoot" ? null
             : <QueryIndex />}
         </nav>

@@ -56,7 +56,8 @@ export const exec = client.exec;
 export const COLLAPSE_ALL = new Set<string>(["\u0000all"]);
 
 export type NavMode =
-  "subject" | "schema" | "structure" | "queries" | "script" | "shoot";
+  "subject" | "schema" | "structure" | "queries" | "script" | "shoot" |
+  "assets";
 
 export interface OpenRow {
   entity: string;
@@ -97,6 +98,10 @@ interface AppState {
   revision: number;
 
   navMode: NavMode;
+  /** Path-prefix filter for the Assets tab. Lives in the store because
+   *  the tree (nav rail) and the list (main panel) are now separate
+   *  components sharing one selection. */
+  assetPrefix: string;
   /** How schema lists order rows where a story order exists. Global and
    * sticky, because a tab switch unmounts the list and losing the choice
    * every time is the same annoyance as the collapsing schema tree. */
@@ -117,6 +122,7 @@ interface AppState {
    * a second click can't start a concurrent export. */
   saving: boolean;
   closeProject: () => Promise<void>;
+  setAssetPrefix: (prefix: string) => void;
   openFromPicker: () => Promise<void>;
   /** Folder-first open: one directory gesture for project and assets. */
   openProjectFolder: () => Promise<void>;
@@ -235,15 +241,38 @@ async function finishFolderOpen(
   // Probe traversal with the name the picker gave us, which is the
   // exact string P3's resolver would use — no typing, no paste
   // artefacts, and the answer arrives without anyone opening a console.
+  const describe = (e: unknown): string => e instanceof DOMException
+    ? `${e.name}: ${e.message}`
+    : e instanceof Error ? e.message : String(e);
+
   let rootTraversal: "ok" | "blocked" = "blocked";
   let rootTraversalError: string | null = null;
   try {
     await root.getFileHandle(opened.name);
     rootTraversal = "ok";
   } catch (e) {
-    rootTraversalError = e instanceof DOMException
-      ? `${e.name}: ${e.message}`
-      : e instanceof Error ? e.message : String(e);
+    const first = describe(e);
+    // Second probe, with a name that cannot exist. The two failures
+    // look nothing alike and mean opposite things: NotFoundError proves
+    // traversal WORKS and the first failure was about that particular
+    // name, while a repeat of the first error means the capability
+    // itself is unavailable. Guessing between them from one sample is
+    // what went wrong the last three times.
+    try {
+      await root.getFileHandle("__scf_traversal_probe__.tmp");
+      rootTraversal = "ok";
+    } catch (e2) {
+      if (e2 instanceof DOMException && e2.name === "NotFoundError") {
+        rootTraversal = "ok";
+        rootTraversalError =
+          `traversal works — but this project's own filename was ` +
+          `rejected by the browser (${first}), so its assets resolve ` +
+          `and it alone does not`;
+      } else {
+        rootTraversalError =
+          `${first} (probe with a synthetic name: ${describe(e2)})`;
+      }
+    }
   }
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         phase: "open", projectName: opened.name,
@@ -279,6 +308,7 @@ export const useStore = create<AppState>((set, get) => ({
   // click before you can write. Every open path sets this too, so
   // closing one project and opening another lands on the script again.
   navMode: "script",
+  assetPrefix: "",
   listSort: "story",
   selectedQuery: null,
   selectedEntityType: null,
@@ -427,6 +457,8 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
+  setAssetPrefix: (assetPrefix) => set({ assetPrefix }),
+
   dismissFolderChoice: () => set({ folderChoice: null }),
 
   resolveAssets: async () => {
@@ -480,7 +512,8 @@ export const useStore = create<AppState>((set, get) => ({
     // editor's blur-triggered commit — resolving against no database,
     // which is where the "no database open" rejections came from.
     set({ phase: "start", fileToken: null, errorMessage: null,
-          navMode: "script", openRow: null, draft: null,
+          navMode: "script",
+  assetPrefix: "", openRow: null, draft: null,
           selectedSubject: null, projectRoot: null,
           rootPermission: "none", rootTraversal: "unknown",
           rootTraversalError: null, folderChoice: null });
