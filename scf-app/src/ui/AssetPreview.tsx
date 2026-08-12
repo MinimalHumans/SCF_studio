@@ -45,6 +45,17 @@ export function AssetPreview({ identifier }: {
   const [url, setUrl] = useState<string | null>(null);
   const [text, setText] = useState<string | null>(null);
   const [asked, setAsked] = useState(false);
+  // Sticky across assets: someone checking a cycle or a loop-point is
+  // usually checking several in a row, and re-ticking it every time
+  // would be its own small annoyance. Applies to audio too — a footstep
+  // or a room tone is exactly the kind of thing you listen to round.
+  const [loop, setLoop] = useState(() =>
+    localStorage.getItem("scf:preview-loop") === "1");
+
+  const setLooping = (on: boolean): void => {
+    setLoop(on);
+    localStorage.setItem("scf:preview-loop", on ? "1" : "0");
+  };
 
   const root = projectRoot as FileSystemDirectoryHandle | null;
 
@@ -141,9 +152,17 @@ export function AssetPreview({ identifier }: {
         <img src={url} alt="" className="asset-preview-image" />
       )}
       {cap.kind === "video" && (
-        <video src={url} controls className="asset-preview-image" />
+        <video src={url} controls loop={loop}
+               className="asset-preview-image" />
       )}
-      {cap.kind === "audio" && <audio src={url} controls />}
+      {cap.kind === "audio" && <audio src={url} controls loop={loop} />}
+      {(cap.kind === "video" || cap.kind === "audio") && (
+        <label className="asset-preview-loop">
+          <input type="checkbox" checked={loop}
+                 onChange={(e) => setLooping(e.target.checked)} />
+          loop
+        </label>
+      )}
       {cap.kind === "pdf" && (
         <iframe src={url} className="asset-preview-pdf" title="preview" />
       )}

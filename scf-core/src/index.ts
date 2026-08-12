@@ -13,6 +13,7 @@
  *   - assets:     identifier grammar and resolution states (P3)
  *   - assetIndex: facets, orphans and the derived path tree (P4)
  *   - preview:    what can be displayed, in three tiers (P5)
+ *   - mediaRefs:  query-side asset references and resolution reports (P6)
  *
  * Node driver lives in "./node" (separate export; never imported here so
  * browser bundles stay clean).
@@ -24,6 +25,7 @@ export * from "./assets.ts";
 export * from "./assetIndex.ts";
 export * from "./preview.ts";
 export * from "./assetImport.ts";
+export * from "./mediaReferences.ts";
 export * from "./db.ts";
 export * from "./resolution.ts";
 export * from "./queryPaths.ts";

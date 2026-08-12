@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { Row, SqlValue } from "@scf-core/db.ts";
 import { q } from "@scf-core/db.ts";
 import type { ReadinessReport } from "@scf-core/readiness.ts";
-import type { ResolvedDescription, ResolvedMedia }
+import { summaryLine } from "@scf-core/mediaReferences.ts";
+import type { MediaPayload } from "./runners.ts";
+import type { ResolvedDescription }
   from "@scf-core/resolution.ts";
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
@@ -269,7 +271,7 @@ function HumanView({ spec, payload }: {
     case "Q08": return <CascadeView p={payload as {
       leaf: string; layers: Array<[string, Row]>; }} />;
     case "Q12": return <Q12View p={payload as Q12Payload} />;
-    case "Q13": return <MediaView p={payload as ResolvedMedia} />;
+    case "Q13": return <MediaView p={payload as MediaPayload} />;
     case "Q14": return <ReadinessView p={payload as ReadinessReport} />;
     default: return <pre>{JSON.stringify(payload, null, 2)}</pre>;
   }
@@ -529,9 +531,27 @@ function Q12View({ p }: { p: Q12Payload }): JSX.Element {
   );
 }
 
-function MediaView({ p }: { p: ResolvedMedia }): JSX.Element {
+function MediaView({ p }: { p: MediaPayload }): JSX.Element {
   return (
     <div className="qview">
+      <h3>References</h3>
+      <p className="muted">{summaryLine(p.summary, p.has_root)}</p>
+      <ul className="qref-list">
+        {p.references.map((r) => (
+          <li key={r.id}>
+            <span>{r.name ?? `#${r.id}`}</span>
+            <span className="mono muted">
+              {r.identifier ?? "no identifier"}
+            </span>
+            <span className="muted">{r.provenance}</span>
+            {r.state !== "resolved" && (
+              <span className="qref-bad" title={r.detail ?? ""}>
+                {r.state}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
       <h3>Resolution trail</h3>
       <ol className="trail">
         {p.trail.map((t, i) => <li key={i}>{t}</li>)}

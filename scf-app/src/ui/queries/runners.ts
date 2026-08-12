@@ -21,6 +21,37 @@ import {
   type ScfContext,
 } from "@scf-core/resolution.ts";
 import { readinessReport } from "@scf-core/readiness.ts";
+import {
+  mediaReferences, referencesMarkdown, type MediaReferences,
+} from "@scf-core/mediaReferences.ts";
+import type { ResolvedMedia } from "@scf-core/resolution.ts";
+import type { FileLocator } from "@scf-core/assets.ts";
+
+/** Q13's payload: the cascade, plus what it references and whether it
+ *  resolves. `has_root` travels with it so the report can say "no
+ *  project folder attached" instead of implying the assets are gone. */
+export type MediaPayload = ResolvedMedia & MediaReferences & {
+  has_root: boolean;
+};
+
+/**
+ * How a runner reaches the filesystem.
+ *
+ * Injected rather than imported: resolution needs the project root,
+ * which lives in the app store, and importing that here would drag the
+ * SQL worker into a module whose whole point is being runnable without
+ * one. The default resolves nothing, which is also the correct
+ * behaviour for a session with no folder attached.
+ */
+let assetLocator: FileLocator = async () => undefined;
+let hasRoot = false;
+
+export function setAssetLocator(
+  locate: FileLocator | null,
+): void {
+  assetLocator = locate ?? (async () => undefined);
+  hasRoot = locate !== null;
+}
 
 export type ParamKind =
   | "character" | "scene" | "sceneB" | "shot" | "subjectType"
@@ -345,12 +376,18 @@ const q13: QuerySpec = {
     const subjectId = num(values["subject_id"]);
     const intent = String(values["intent"] ?? "visual_identity");
     if (subjectId === null) throw new Error("pick a subject");
-    return resolveMedia(ctx, subject, subjectId, intent,
-                        num(values["scene_id"] ?? null),
-                        num(values["shot_id"] ?? null));
+    const media = await resolveMedia(ctx, subject, subjectId, intent,
+                                     num(values["scene_id"] ?? null),
+                                     num(values["shot_id"] ?? null));
+    // A query carries references, never bytes (conventions §9): the
+    // addresses plus whether anything is there, for the consumer to
+    // fetch. Resolution needs the project root, which the query layer
+    // does not own, so the locator is handed in by the caller.
+    const refs = await mediaReferences(media, assetLocator);
+    return { ...media, ...refs, has_root: hasRoot };
   },
   toMarkdown: (payload): string => {
-    const p = payload as Awaited<ReturnType<typeof resolveMedia>>;
+    const p = payload as MediaPayload;
     return `# Media resolution — ${p.subject} #${p.subject_id}, ` +
       `${p.intent}\n` +
       section("Resolution trail", p.trail.map((t) => `- ${t}`)) +
@@ -361,7 +398,10 @@ const q13: QuerySpec = {
             ? ` (${String(a["role_in_bundle"])})` : ""))) +
       section("Anchors", p.anchors.map((a) =>
         `- ${String(a["name"] ?? `#${String(a["id"])}`)} ` +
-        `[${String(a["canonical_status"] ?? "unverified")}]`));
+        `[${String(a["canonical_status"] ?? "unverified")}]`)) +
+      referencesMarkdown(
+        { references: p.references, summary: p.summary },
+        p.has_root);
   },
 };
 

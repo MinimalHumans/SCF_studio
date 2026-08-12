@@ -31,6 +31,7 @@ import type { ProjectFinding } from "@scf-core/project.ts";
 import { resolveAllAssets, type ResolutionReport }
   from "@scf-core/assets.ts";
 import { makeLocator } from "../files/assetLocator.ts";
+import { setAssetLocator } from "../ui/queries/runners.ts";
 import type { RootPermission } from "../files/fileAdapter.ts";
 import { renumberForScene } from "../editor/shootOps.ts";
 
@@ -278,6 +279,7 @@ async function finishFolderOpen(
       }
     }
   }
+  setAssetLocator(makeLocator(root));
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         phase: "open", projectName: opened.name,
         fileToken: opened.token, lastSession: opened.name,
@@ -471,6 +473,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   resolveAssets: async () => {
     const root = get().projectRoot as FileSystemDirectoryHandle | null;
+    // Keep the query layer's locator in step with the session: Q13
+    // reports what resolves, and a stale root would make it lie.
+    setAssetLocator(root === null ? null : makeLocator(root));
     return resolveAllAssets(exec, makeLocator(root));
   },
 

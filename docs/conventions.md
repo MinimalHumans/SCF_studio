@@ -343,8 +343,7 @@ Rebuild scripts live in `fixtures/build/`.
 
 ## 9. Assets and addressing
 
-**Status: implemented as of schema 2.8**, except for query
-integration and layers. Addressing, resolution states,
+**Status: implemented as of schema 2.8**, except for layers. Addressing, resolution states,
 the folder-is-a-project rule and per-prefix relink are live in
 `scf-core/src/project.ts` and `scf-core/src/assets.ts`. Pinned by
 `scf-core/test/project.test.ts` and `scf-core/test/assets.test.ts`.
@@ -583,6 +582,20 @@ proportionate at scale.
 Every export carries a **resolution report** — referenced, resolved, and
 missing, with the missing ones named. Silently omitting three unresolvable
 references would be the reporting failure §2 already forbids elsewhere.
+
+`mediaReferences()` in `scf-core/src/mediaReferences.ts` turns a Q13
+cascade into references and their states. An asset reached through more
+than one layer is reported once, at the layer that won — the cascade
+returns most-specific-first, so an override beats the base bundle it
+shadows. The report also distinguishes "no folder attached" from "the
+files are gone": a session opened without a project folder resolves
+nothing, and saying so is different from claiming a hundred assets are
+missing.
+
+The locator is injected into the query layer rather than imported, so
+`runners.ts` stays runnable without the app store or its SQL worker.
+Pinned by `scf-core/test/mediaReferences.test.ts`, including an
+assertion that no export ever contains `base64`, `blob:` or `data:`.
 
 ### Another `.scf` is not an asset
 
