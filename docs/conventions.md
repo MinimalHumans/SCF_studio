@@ -1,293 +1,299 @@
-# SCF conventions
+# SCF design record
 
-What the format means, and why. The registry says which fields exist;
-this says how to read them. Where a rule is machine-checkable it is
-pinned by a conformance test, and the test is named here so the two
-cannot drift apart silently.
+**Why the format is the way it is.**
 
-This is not the spec. A spec is a commitment to outside consumers and
-the format is still moving. This is the document that stops the reasons
-being lost — every rule below was a decision with a rejected
-alternative, and several were learned by breaking something.
+The rules live in [`spec/scf-spec.md`](../spec/scf-spec.md). This
+document explains them: what each decision cost, what was rejected, and
+which ones were learned by breaking something. Every rule below was a
+decision with a live alternative.
+
+**This document states no rules.** Where a rule is needed, it is cited
+as `spec §N` and not restated. That constraint is deliberate: two
+documents stating the same rule in different words is worse than one
+document mixing rule and reason, because only one of them gets updated.
+If you find a rule stated here and nowhere else, that is a defect —
+move it to the specification and cite it from here.
+
+Section numbers match the specification's where they can. Sections 10
+and 11 have no counterpart there and are the working record.
 
 ---
 
-## 1. What SCF is
+## 1. What SCF is — the describing/enforcing choice
 
-A description of a film's intent, dense enough that a human or a machine
-can answer a specific question about a specific moment: what does this
-character sound like in this scene, what is in force here, what is this
-shot for.
+`spec §9.1` says SCF describes and does not enforce. The alternative was
+a schema with real constraints: unique indexes on natural keys, check
+constraints on enums, foreign keys that refuse.
 
-**SCF describes; it does not enforce.** There are almost no constraints
-in the schema beyond required fields and foreign key columns. Everything
-else — duplicates, contradictions, gaps — is reported by the readiness
-layer as a *finding*, never rejected on write. A half-entered project is
-a normal state of work, not an error, and a format that refuses
-incomplete data is a format nobody finishes filling in.
+It was rejected because **a half-entered project is the normal state of
+work.** A format that refuses incomplete data is a format nobody
+finishes filling in — the first hour of use is exactly when the data is
+at its least complete, and a tool that argues during that hour does not
+get a second one.
 
-Consequence for consumers: never assume a row is well-formed because it
-exists. Every resolver in `scf-core` stays total — it returns a sane
-answer for missing, dangling, and contradictory data, and reports the
-problem separately.
+The cost is real and lands on consumers: nothing may be assumed
+well-formed because it exists. That cost is paid once, in the resolver
+layer, rather than every time a user tries to save. `spec §9.2` is the
+discipline that makes it survivable — a resolver that throws on
+half-placed data pushes the cost straight back out to the user.
+
+A secondary reason: several of the constraints one would want cannot be
+expressed correctly anyway. `spec §6.4` explains why a unique index
+could not decide whether a reversed directed relationship pair is a
+duplicate.
 
 ---
 
 ## 2. Derived versus stored
 
-**The rule: if a value can be computed from another, compute it.**
+`spec §3` is the oldest rule in the format and has been the source of
+more bugs in this project than anything else — every one of them the
+same bug, which is a stored copy of a derivable fact quietly becoming a
+lie.
 
-A stored copy of a derivable fact is a second truth, and the moment the
-original changes the copy is a lie that nothing detects. This has been
-the source of more bugs in this project than anything else.
+The scene label case is the clearest: store `sc 12 — The Kitchen` and a
+rename strands every copy, with nothing to detect it.
 
-Applied:
+The link-label case cost real user-visible damage before it was
+understood. Twelve of thirteen link entities declare their `nameField`
+`hidden`, because the importer parks cue text in that column. Displaying
+it made a character's entire scene list read as that character's own
+name. The fix was not to stop parking text there — the column is useful
+— but to derive the label from the rows the link points at, which is
+what it always meant.
 
-- A **scene's label** is `sc {scene_number} — {name}`, built at render
-  time. Not stored: renaming a scene would strand every copy.
-- A **link row's label** is composed from the rows it points at. Where a
-  link entity declares its `nameField` `hidden: true` — twelve of
-  thirteen do — that column is not a name and must never be displayed.
-  The importer parks cue text there; showing it made a character's whole
-  scene list read as that character's own name.
-- **Act and sequence membership** is derived from a boundary (§4).
-- **Story order** is derived from the SCREENPLAY — the position of the
-  heading carrying each scene — falling back to `scene_number`, then row
-  id, only for a scene the script does not contain. `scene_number` is a
-  label for that position, not the position itself (§3).
+### Why `shot_number` is the exception
 
-**The one deliberate exception is `shot.shot_number`**, which IS stored
-and IS authored. A shot number is not a display label: it is an
-identifier issued to a crew. Once a shot list goes out, 42A stays 42A
-even if the scene renumbers, because paperwork exists on paper.
-Consumers must not rewrite it. The app shows the derived code beside an
-authored one when they disagree, so a list can be reissued deliberately.
+`spec §3.3`. A shot number is not a display label; it is an identifier
+issued to a crew. Once a shot list goes out, 42A stays 42A even when the
+scene renumbers, because paperwork exists on paper and people are
+holding it.
 
-The distinction that resolves the apparent contradiction: **a shot moved
-to a different scene IS renumbered.** The rule protects the number
-against the scene renumbering; it does not protect a number that names
-the wrong scene.
+The apparent contradiction — an authored value that duplicates a
+derivable one — resolves on a distinction: a shot moved to a different
+scene *is* renumbered. The rule protects a number against its scene
+renumbering. It does not protect a number that names the wrong scene.
 
-### Derived-but-stored: a known fragility
+The app shows the derived code beside a disagreeing authored one, so a
+list can be reissued deliberately rather than drifting.
 
-`screenplay_lines.scene_id` is threaded onto body lines at commit — it
-is derived state that happens to be stored. It is absent for lines typed
-since the last commit and for projects written before the threading
-existed. **Do not key anything important off it.** To read a scene's
-text, find the heading line linked to that scene and take everything up
-to the next heading; commit enforces one scene per heading, and
-"slugline to slugline" is what a scene means anyway.
+### `screenplay_lines.scene_id` — a known fragility
 
-Pinned by: `scf-app/test/sceneScript.test.ts` (nulls every body line's
-`scene_id` and asserts identical output).
+`spec §3.4` prohibits relying on it, which is an unusual thing for a
+specification to say about a column that exists.
+
+It is derived state that happens to be stored: threaded onto body lines
+at commit, absent for lines typed since, and absent entirely for files
+written before the threading existed. It was kept because it makes some
+queries much cheaper, and prohibited because the cheapness is a trap.
+
+The alternative reading — heading line to next heading — is not a
+workaround. Commit enforces one scene per heading, and "slugline to
+slugline" is what a scene means anyway. `scf-app/test/sceneScript.test.ts`
+nulls every body line's `scene_id` and asserts identical output, which is
+the test that keeps the prohibition honest.
 
 ---
 
 ## 3. Position and persistence
 
-Everything positional is keyed to a **scene**, and scenes are ordered by
-their position in the SCREENPLAY: the `line_order` of the heading that
-carries each one. A scene the script does not contain has no position,
-and falls back to `scene_number` — unnumbered last — then row id. That
-ordering is the spine every other rule stands on.
+`spec §4`. Story order comes from the screenplay because the screenplay
+is the only place the order actually lives. This was learned the hard
+way: ordering by `scene_number` alone was wrong in both directions at
+once. A blank-written project has no numbers at all, so order collapsed
+to insertion order and a scene added mid-act sorted to the end of the
+film. And a scene moved since the last commit carries a number that no
+longer matches the page.
 
-`scenePositions` / `sceneOrderHint` in `scf-core/src/structure.ts` are
-the derivation; `SCENE_ORDER_JOIN` / `SCENE_ORDER_BY` and the general
-`storyOrder()` are its SQL twins, so no view invents its own.
-**A consumer that sorts scenes by `scene_number` alone will be wrong**
-about any blank-written project and about any scene moved since its last
-commit. See §10 Resolved for the numbering flag that governs when the
-label is recomputed.
+The three position patterns exist because three genuinely different
+things are being modelled, and collapsing them would make two of them
+wrong:
 
-Three patterns, distinguished by `positionPattern` on the entity:
+- **Explicit rows** for things that are simply true at a scene — a
+  costume, a prop present. No inference is wanted; what is in force is
+  what someone wrote.
+- **Persistence** for states with a duration. An injury taken at sc 9 is
+  still in force at sc 12. Hoarseness from the same scene is not. The
+  difference is not derivable from the state itself, so it is authored:
+  `scene_only` or `until_resolved`.
+- **Latest wins** for things that change rather than persist. A
+  relationship's temperature at sc 20 is whatever the last row at or
+  before sc 20 says. There is no "until" — the next row supersedes, and
+  an author who had to close each state before opening the next would
+  spend their time on bookkeeping.
 
-**Pattern 1 — explicit rows.** A row per scene, no inference.
-`costume_scene`, `scene_prop`. What is in force is what is written.
-
-**Pattern 2 — persistence.** A state row is keyed at a scene and carries
-`persistence`:
-- `scene_only` — in force at its own scene and nowhere else.
-- `until_resolved` — in force from its scene forward, until
-  `resolved_at_scene_id` (exclusive), or to the end.
-
-An injury taken at sc 9 is still in force at sc 12; hoarseness from the
-same scene is not. Modulations from multiple states merge oldest-first,
-so a later state overrides an earlier one field by field.
-
-Pinned by: `conformance.canonical.test.ts` → "persistence rule".
-
-**Pattern 3 — latest wins.** A state row per scene where the value
-changed; the answer at any position is the most recent row at or before
-it. `relationship_state`, `prop_state`, `motif_state`. There is no
-"until" — the next row supersedes.
-
-Pinned by: `conformance.canonical.test.ts` → "pattern 3 (latest-wins)".
+Oldest-first merging for overlapping persistent states is the reading
+that lets a later state override an earlier one field by field, which is
+how a stacked injury and exhaustion actually compose.
 
 ---
 
-## 4. Structure: spans anchored at their start
+## 4. Structure: why spans, and what it costs
 
-An act **begins** at a scene and runs until the next act begins. A
-sequence likewise. `act.start_scene_id` and `sequence.start_scene_id`
-are the only stored facts; membership is derived.
+`spec §5`. An act begins at a scene; membership is derived. The
+alternatives were a start/end pair, or a row per scene.
 
-Why the start alone, rather than a start/end pair or a row per scene:
+Start-only wins on four counts:
 
-- Overlaps and gaps become impossible to express. Nothing to validate.
-- A scene inserted mid-act joins it with no write at all.
-- No end anchor to drift out of sync when scenes move.
-- "Scenes 32–54 are Act II" is two placements, not 23 rows.
+- overlaps and gaps become inexpressible, so there is nothing to
+  validate;
+- a scene inserted mid-act joins it with no write at all;
+- there is no end anchor to drift out of sync when scenes move;
+- "scenes 32–54 are Act II" is two placements, not 23 rows.
 
-The cost, accepted deliberately: **spans must be contiguous.** A
+**The cost, accepted deliberately: spans must be contiguous.** A
 cross-cut sequence interleaved with another cannot be expressed. If that
-requirement arrives, enumerated membership is the only model that
-supports it, and this one must be replaced rather than patched.
+requirement ever arrives, enumerated membership is the only model that
+supports it, and this one must be *replaced* rather than patched —
+adding an exception to a model whose whole value is inexpressibility
+would give up the four benefits above and keep the complexity.
 
-Acts and sequences are **independent spans, not a hierarchy**. A scene
-can be in an act with no sequence — the whole point of the change, since
-membership used to be reachable only through `scene_sequence` — and a
-sequence may begin in one act and end in another. That is legal and
-deliberately unrestricted: a montage or a cross-cut can bridge an act
-break, and forbidding it would buy tidiness at the cost of a real
-structure.
+### Independence, not hierarchy
 
-The consequence is for renderers, not for the data. Anything drawing
-acts and sequences as nested must group an act's scenes into **runs** of
-sequence (`actOutline()`), so a crossing sequence appears in each act as
-the part of it that belongs there. Grouping instead by "sequences whose
-start falls in this act" draws the crossing sequence's later scenes
-under the wrong act and again under the right one — which is exactly
-what both outlines did until it was caught.
+Acts and sequences do not nest (`spec §5.3`). Membership used to be
+reachable only through `scene_sequence`, which meant a scene could not
+be in an act without also being in a sequence — the change was made
+precisely to break that.
 
-`scene_sequence` rows are still materialized at commit so existing
-queries keep working. The boundary is the truth; those rows are its
-shadow, and may be stale between commits. Rows that no boundary explains
-are counted and reported, never deleted.
+Allowing a sequence to cross an act boundary is deliberate. A montage or
+a cross-cut can bridge an act break, and forbidding it would buy
+tidiness at the cost of a real structure.
 
-Half-placed structure is normal: an act with no boundary, a boundary on
-a deleted scene, two acts on one scene, scenes before the first act.
-Each produces a sane structure and a finding.
+The consequence lands on renderers, not on data, and it caught both
+outlines before it was understood: grouping by "sequences whose start
+falls in this act" draws a crossing sequence's later scenes under the
+wrong act, and again under the right one. Run-grouping (`actOutline()`)
+is the correct shape — a crossing sequence appears in each act as the
+part of it that belongs there.
 
-Pinned by: `scf-core/test/structure.test.ts`.
+### Shadow rows
+
+`scene_sequence` rows are materialised at commit so queries written
+before spans keep working. The boundary is the truth; those rows are its
+shadow.
+
+This is an acknowledged violation of §2 — derived state that is stored —
+kept for compatibility rather than because it is right. `spec/stability.md`
+marks it Unstable for that reason, and 1.0 is the moment to decide
+whether it survives. Rows no boundary explains are counted and reported
+rather than deleted, since deleting data to satisfy a derivation is how
+you lose someone's work.
 
 ---
 
 ## 5. Identity
 
-**Rows** carry a `uuid` (schema 2.3), unique per table, backfilled on
-open. This is what survives export, re-import, and being read by another
-tool. Row ids are local to a file and mean nothing outside it.
+`spec §6`. Two different questions get confused constantly, and the
+format answers them with two different mechanisms.
 
-**Junctions carry row identity too.** `uuid` is a framework column on
-all 99 entities, junctions included — an earlier note in this document
-claiming otherwise was wrong. What a uuid answers is the *lineage*
-question: is this the same row as before, across export, re-import and
-versioning.
+**Lineage** — is this the same row as before, across export, re-import
+and versioning? Answered by `uuid`. An earlier version of this document
+claimed junctions did not carry one; that was wrong, and the note is
+kept here so the error is not rediscovered.
 
-It does not answer the other one. A uuid is minted per file, so two
-people describing the same production mint different ones for the same
-link. Across files a junction is identified by its **natural key** — the
-rows it joins, plus the polymorphic target where it has one, plus
-`domain` where present, since a motif may legitimately appear in one
-scene both visually and sonically. `junctionKeyFields()` in
-`scf-core/src/junctions.ts` states that key for all thirteen link
-entities so that merging, de-duplicating and validating agree on it.
+**Cross-file sameness** — is this row the same *thing* as that row in
+another file? Uuids cannot answer it, because a uuid is minted per file:
+two people describing the same production mint different ones for the
+same link. That question needs a **natural key** — the rows joined, plus
+the polymorphic target, plus `domain` where present, since a motif may
+legitimately appear in one scene both visually and sonically.
 
-Nothing in the schema stops two rows sharing a natural key. The commit
-path de-duplicates in code; anything added by hand is unchecked. Two
-rows for one link split its authored content — a role, a usage note — and
-a reader taking the first finds half of it. Reported by
-`duplicateJunctions()`, and reported more loudly when the duplicates
-disagree, since identical duplicates are only clutter.
+`junctionKeyFields()` states the key for all thirteen link entities in
+one place, so that merging, de-duplicating and validating cannot
+disagree about it. Merge does not exist yet; when it does, this is the
+thing it will stand on.
 
-**Relationship pairs** are the case where that bites. `character_
-relationship` has no constraint on its two character columns and no
-convention about which character goes first, so the same pair can be
+### Why duplicates are findings
+
+Two rows sharing a natural key split the link's authored content — a
+role, a usage note — and a reader taking the first finds half of it.
+That is worth reporting loudly, and reporting *more* loudly when the
+duplicates disagree, since identical duplicates are only clutter.
+
+It is not worth a constraint, for the reason `spec §6.4` implies and
+this document can state plainly: a unique index could not decide the
+hard cases. Several relationships between the same two people are
+legitimate. A reversed directed pair may be one fact or two.
+
+### Relationships, and why `directionality` exists
+
+`character_relationship` has no constraint on its two character columns
+and no convention about which character goes first. The same pair can be
 entered twice, or once from each end, splitting its `relationship_state`
 history across two rows that a latest-wins lookup cannot reconcile.
 
-Schema 2.4 adds `directionality` (`mutual` | `a_to_b`) because the
-missing fact is **symmetry**: without it nothing can distinguish one
-relationship entered twice from two legitimate directed facts. A mutual
-pair is unordered; a directed pair reads A → B.
+The missing fact was **symmetry**. Without it, nothing can distinguish
+one relationship entered twice from two legitimate directed facts.
+Schema 2.4 added `directionality` for exactly that, and the seven
+reported cases in `spec §6.5` are the complete enumeration of what the
+two columns plus that flag can mean.
 
-Consumers must read relationships from **both** columns —
-`relationshipsFor()` in `scf-core/src/relationships.ts` — and must not
-assume a character sits in `character_a_id`. It returns each row from
-the requested character's side: `other`, and a `direction` of `mutual`,
-`outgoing`, `incoming`, or `unspecified` where `directionality` is
-empty.
+`character_relationship` is not one of the thirteen link entities — its
+`subject` is `character` — so junction tooling skips it entirely and
+`relationshipFindings()` covers it separately. That asymmetry surprises
+people, including its author, twice.
 
-Note that `character_relationship` is not one of the thirteen link
-entities — its `subject` is `character` — so `junctionEntities()` skips
-it and `duplicateJunctions()` never sees it. `relationshipFindings()`
-covers it separately: one pair entered twice as `mutual` is a duplicate,
-two `a_to_b` rows in opposite directions are two legitimate facts, the
-same direction twice is a duplicate again, and a pair described as
-mutual on one row and directed on another contradicts itself. Rows with
-no `directionality`, rows naming one character twice, and rows pointing
-at a character that is not in the file are each reported on their own.
-
-Duplicates are findings, not constraints. A unique index could not
-decide whether a reversed directed pair is a duplicate, and several
-relationships between the same two people are legitimate.
-
-Pinned by: `scf-core/test/relationships.test.ts`,
-`scf-core/test/junctions.test.ts`.
-
-### Soft-retiring: links inherit their endpoints' lifecycle
-
-Two of the thirteen link entities carry `lifecycle_status` —
-`actor_character_role` and `thematic_connection` — and that asymmetry is
-deliberate rather than an omission.
+### Soft-retiring: why only two links carry `lifecycle_status`
 
 A link is a statement that a connection exists. If the connection stops
-existing, the row is wrong, not retired: delete it. And when an endpoint
-goes, the link goes with it — mark a scene or a prop `cut` and every
-link to it is cut by implication, without eleven more columns saying so
-again. Adding the field everywhere would put a value on every junction
-that nothing sets and nothing reads.
+existing, the row is *wrong*, not retired — delete it. And when an
+endpoint goes, the link goes with it: mark a scene or a prop `cut` and
+every link to it is cut by implication, without eleven more columns
+saying so again.
 
-The two exceptions are the links where the row is itself a **claim**
-rather than a connection. An actor was really attached to a part before
-being recast, and dailies exist. A reading of a theme was really held
-before being revised. Those are worth keeping and marking, not deleting.
+The two exceptions are the links where the row is a **claim** rather
+than a connection. An actor really was attached to a part before being
+recast, and dailies exist. A reading of a theme really was held before
+being revised. Those are worth keeping and marking.
 
-Test for whether a future link should carry it: *would you want to know
-this used to be true?* If yes it is a claim; if the answer is only "it
-is not true now", it is a connection, and deleting it loses nothing.
+The test for a future link: *would you want to know this used to be
+true?* If yes it is a claim. If the answer is only "it is not true now",
+it is a connection, and deleting it loses nothing.
 
-Note that `lifecycle_status` is **authored but unread**: no resolver in
-`scf-core` filters on it. A consumer that wants to exclude cut rows must
-do so itself. See §10.
+Note that `lifecycle_status` is currently **authored but unread** — no
+resolver filters on it, and the fixture has no non-active row, so "cut"
+is decorative today. `spec §6.6` marks this as the open normative gap it
+is; §10 below is where the decision gets made.
 
 ---
 
 ## 6. The direction cascade
 
-Look and sound resolve **root-first, most specific last**: project →
-sequence → scene → shot. The last layer wins, and every layer is
-returned so a consumer can see where a value came from rather than only
-what it resolved to.
+`spec §7`. Root-first, most specific last, and every layer returned.
 
-Pinned by: `conformance.canonical.test.ts` → Q07, Q08, Q11.
+The second half matters more than it looks. Returning only the resolved
+value makes the answer unarguable and unexplainable at the same time — a
+supervisor asking "why is she lit this way here" gets a value and no
+provenance. Returning the chain costs nothing and turns the cascade into
+something a person can reason about.
 
 ---
 
 ## 7. Proposals from a screenplay
 
-Anything extracted from a script is a **proposal**, not a fact. The
-import flow stages proposals for review; only `high` confidence is
-accepted by best-guess, and **props never reach `high`** — a prop is
-only ever created by a human ticking a box.
+`spec §9.3`. Extraction produces proposals, never facts, and props never
+reach automatic acceptance.
 
 The lesson worth keeping from the prop extractor: **capitalization is
 not a signal.** Mid-line caps in a screenplay mean "production, take
-note" — writers cap character introductions, sound cues, and
-camera-worthy actions as readily as objects. Extraction keys on syntax
-instead (a noun phrase after a determiner; the object of a handling
-verb), filters by the head word against category lexicons, and scores.
-Precision over recall, and the UI says so.
+note" — writers cap character introductions, sound cues and
+camera-worthy actions as readily as objects. The first version keyed off
+caps alone and produced 356 candidates from one feature, led by TWO OLD
+HUNTERS, SUN, HOWLING and TOSSES THE MEN. Worse, scripts that do not use
+the convention produced almost nothing, since nothing about being a prop
+makes a word capitalized.
+
+Extraction keys on syntax instead — a noun phrase after a determiner,
+the object of a handling verb — filters by head word against category
+lexicons, and scores. Precision over recall, and the UI says so.
+
+That scorer remains tuned to the corpus it was built against. On a
+script that does not cap objects mid-line, the "introduced" signal never
+fires at all and the whole ranking collapses onto one signal; set
+dressing then scores like a plot-bearing prop, because recurrence and
+handling are all that is left to read. `scf-core/test/props.test.ts`
+carries a named regression test recording that gap rather than hiding
+it.
 
 Fountain **sections** (`# ACT II`) become acts and sequences at commit
 on the same terms as headings becoming scenes: the author typed it, so
@@ -295,7 +301,7 @@ creating what they named is the feature. The section's line metadata
 carries `structureRef {kind, id}` so renaming a section renames its
 entity instead of creating a second one.
 
-Section **text is read before depth**: a line saying ACT is an act at
+Section **text is read before depth** — a line saying ACT is an act at
 any depth. `#` = act / `##` = sequence is only the fallback, because
 plenty of writers use a single `#` for sequences and never write an act
 line.
@@ -304,6 +310,8 @@ line.
 
 ## 8. Changing the format
 
+The procedure:
+
 1. Edit `schema/entity_registry.py`. It is the source of truth.
 2. Regenerate: `python schema/generate_registry_json.py`.
 3. Lint: `python schema/lint_registry.py`.
@@ -311,93 +319,97 @@ line.
    `schema/schema_meta.py` and record it in `docs/schema-changelog.md`
    **in the same commit**.
 5. Migrate `fixtures/hollow_creek.scf` if a conformance test compares
-   its column set. User files need no migration: `initDatabase`
+   its column set. User files need no migration — `initDatabase`
    ALTER-adds any registry column a file lacks, on open.
 
-Prefer **additive optional fields**. Every schema change so far has been
-one, which is why no file has ever needed converting.
+Since the specification exists, two more steps apply when the change
+touches anything normative:
+
+6. Update `spec/scf-spec.md`, and its version, per `spec §11.5`.
+7. Update the affected row in `spec/stability.md`.
+
+**Prefer additive optional fields.** Every schema change so far has been
+one, which is why no file has ever needed converting. `spec §11.1` now
+makes that a requirement rather than a habit.
+
+### The rule that keeps this document honest
+
+This document may not state a rule. When a change adds one, it goes in
+the specification and is cited here with its reason. When a change
+removes one, the reason stays here as history — a rejected alternative
+is worth keeping even after the thing it was rejected in favour of has
+also gone.
 
 ### The fixture is part of the contract
 
-`fixtures/hollow_creek.scf` is not sample data. Its content is asserted
-by the conformance suites, and several of its properties are load-bearing:
+`fixtures/hollow_creek.scf` is not sample data; `spec/conformance.md` §5.1
+enumerates the properties that are load-bearing.
 
-- **Scene numbers have gaps** (1, 3, 7, 9, …). Suites address scenes by
-  number; renumbering breaks every lookup.
-- **Scene 12 is the pinned scene** — its motif manifest, its single
-  sound cue, its costume set and its direction chains are asserted
-  exactly. Add nothing to it.
-- **Marcus's vocal profile is deliberately thin** and his voice bundle
-  deliberately absent: the readiness suite asserts Q05 warns about
-  exactly those gaps. An authored absence is part of what the fixture
-  demonstrates.
-- **Shot 12-04 keeps a production numbering scheme** that the app's
-  derived code disagrees with, demonstrating that an authored number
-  survives.
-- A theme carried by both leads lights every scene, so **a second,
-  narrowly carried theme** exists to demonstrate Q10's gap reporting.
+Why a fixture rather than generated data: several of the properties
+being asserted are *absences*. Marcus's vocal profile is deliberately
+thin and his voice bundle deliberately missing, so that the readiness
+suite has something real to warn about. A generator producing complete
+data would have nothing to say about incompleteness, which is half of
+what this format has to handle well.
 
-Rebuild scripts live in `fixtures/build/`.
+The gapped scene numbers exist for the same reason — real productions
+have them, and a fixture numbered 1..n would let a whole class of
+ordering bug through. That one nearly escaped: a migration set
+`project.scene_numbering` to `derived`, which would have renumbered
+Hollow Creek on first commit and silently changed the subject of every
+"sc 12" assertion in the suite.
 
 ---
 
 ## 9. Assets and addressing
 
-**Status: implemented as of schema 2.8**, except for layers. Addressing, resolution states,
-the folder-is-a-project rule and per-prefix relink are live in
-`scf-core/src/project.ts` and `scf-core/src/assets.ts`. Pinned by
-`scf-core/test/project.test.ts` and `scf-core/test/assets.test.ts`.
+`spec §8`. Implemented as of schema 2.8, except layers.
 
-An asset is a **reference**, not a container. It is how SCF stops holding
-things and starts pointing at them: an image, an audio file, a 3D model, a
-model weight, a document. The `asset` entity is the lowest level at which
-that happens, and at working scale a project holds thousands of them.
+An asset is where SCF stops holding things and starts pointing at them.
+At working scale a project holds thousands, and the failure mode to
+design against is not search but **orphans** — assets nobody linked.
+Those are what rot, so "referenced by nothing" is a first-class query
+rather than something a user has to notice.
 
 ### Identity is not location
 
-An asset row stores an **identifier** — portable, root-relative, and the
-thing that gets committed and diffed:
+A stored location is a second copy of a truth that changes without
+asking, which is §2's fragility in a new place. Storing a portable
+identifier and deriving bytes through a resolver makes relocating a
+project a change to one root rather than an update across thousands of
+rows.
 
-```
-@project/characters/eleanor/face_ref.png
-```
+Roots beyond `@project` are reserved but unconfigured. A project
+pointing into storage it does not control needs the identifier to stay
+stable while each machine maps the root somewhere different — which
+means the mapping is machine-local and therefore cannot live in the
+`.scf` without destroying the portability it exists to serve. Each
+additional root also costs its own filesystem permission grant. The
+prefix is reserved now; the configuration is deferred until someone
+needs it.
 
-A **resolver** maps that identifier to bytes at load time. What comes back
-is derived and never stored, for the same reason §2 gives everywhere else:
-a stored location is a second copy of a truth that changes without asking.
-Relocating a project is then a change to one root, not an update across
-thousands of rows.
+Absolute paths stay representable because some projects need them.
+Pretending otherwise would only put lies inside the `@project`
+namespace.
 
-A **root** is a name standing in for a folder. `@project` is the folder the
-user opened, and in the common case it is the only root that appears. The
-grammar reserves other names — `@plates`, `@nas` — for a project that
-points into storage it does not control, where the identifier stays stable
-while each machine maps the root somewhere different. That mapping is
-machine-local and therefore cannot live in the `.scf` without destroying
-the portability it exists to serve, and each additional root costs its own
-filesystem permission grant. The prefix is reserved now; the configuration
-is deferred until someone needs it.
+### The project folder is a workflow, not the format
 
-Absolute paths remain representable and are flagged non-portable. Some
-projects need them, and pretending otherwise only puts lies inside the
-`@project` namespace.
-
-### A project is a folder
+`spec §0.3` is explicit that the unit of interchange is the `.scf`.
+This subsection is about why the *editor* asks for a folder anyway.
 
 The File System Access API cannot return a parent directory from a file
-handle — there is no `getParent()`, by design. A `.scf` opened on its own
-therefore cannot see what sits beside it, which is why an asset next to the
-file is unreachable through the file. One directory-picker gesture yields
-the project root, the `.scf` within it, and the whole asset tree under a
-single grant.
+handle — there is no `getParent()`, by design. A `.scf` opened on its
+own therefore cannot see what sits beside it, which is why an asset next
+to the file is unreachable through the file. One directory-picker
+gesture yields the root, the `.scf` within it, and the whole asset tree
+under a single grant.
 
-Discovery scans the root only, non-recursive, for `*.scf`. Exactly one is a
-valid project; zero or several is malformed, and is reported as a finding
-for the user to resolve rather than guessed at. A `.scf` in a subfolder is
-never a project candidate — those are layers (below). SQLite's `-wal`,
-`-shm` and `-journal` sidecars are not projects either, and their
-presence is reported on its own, since it usually means the project is
-open somewhere else.
+Discovery scans the root only, non-recursive, for `*.scf`. Exactly one
+is a valid project; zero or several is reported for the user to resolve
+rather than guessed at. A `.scf` in a subfolder is never a candidate —
+those are layers. SQLite's `-wal`, `-shm` and `-journal` sidecars are
+not projects either, and their presence is reported on its own, since it
+usually means the project is open somewhere else.
 
 **Discovery is an optimisation, not the mechanism.** Directory listing
 is not reliably available: a locked-down Windows machine returned zero
@@ -407,162 +419,137 @@ in a bare DevTools console, so no application code was involved.
 Enterprise policy is the likely cause and there is nothing to work
 around. What a project needs is the root handle plus the `.scf`; when
 listing cannot supply the second, the user names it in a second gesture,
-and the resulting session is identical — same root, same grant, same
-asset reachability. A folder that lists is one gesture; a folder that
-does not is two.
+and the resulting session is identical. A folder that lists is one
+gesture; a folder that does not is two.
 
-`chooseProjectFile()` in `scf-core/src/project.ts` states the rule, and
-takes a list of names rather than a directory handle so that it holds
-without a browser. It carries `seen` — every root file the scan found —
-so that "no .scf here" can show its evidence rather than being an
-unarguable assertion. Pinned by `scf-core/test/project.test.ts`.
+`chooseProjectFile()` takes a list of names rather than a directory
+handle, so the rule holds without a browser. It carries `seen` — every
+root file the scan found — so "no .scf here" can show its evidence
+rather than being an unarguable assertion.
 
 The folder is granted **readwrite**, not read. SCF writes exactly one
-file, the `.scf` itself, and that file handle comes out of the root, so
-a read-only grant produces a project that cannot be saved. The platform
-offers no unit narrower than the folder, so the read-only rule below
-stays a discipline in the code rather than a sandbox around it.
+file, the `.scf` itself, and that handle comes out of the root, so a
+read-only grant produces a project that cannot be saved. The platform
+offers no unit narrower than the folder, which is why the read-only rule
+below is a discipline in the code rather than a sandbox around it.
 
-Opening a lone `.scf` still works. Every asset resolves to `missing`, the
-tally is reported, and the file behaves normally in every other respect.
-The single-file path degrades; it does not disappear.
+Opening a lone `.scf` still works, and `spec §0.3` makes that the
+normative case rather than a degraded one.
 
 ### Resolution states
 
-Every asset resolves to exactly one of:
-
-| state | meaning |
-|---|---|
-| `resolved` | bytes reachable now |
-| `missing` | does not resolve under its root |
-| `unmaterialized` | cloud placeholder; appears on access |
-| `out-of-root` | absolute or foreign root; resolvable but non-portable |
-
-`unmaterialized` is not a kind of `missing`. A synced project full of
-placeholders is healthy, and reporting it as broken on open would be a
-false statement about the user's data.
-
-Resolution stays total on half-placed data, per §2: a project where nothing
-resolves opens, lists everything, and reports findings. It does not throw.
+`spec §8.3`. `unmaterialised` is not a kind of `missing`: a synced
+project full of placeholders is healthy, and reporting it as broken on
+open would be a false statement about the user's data. `unaddressed` is
+likewise not `missing` — a session opened with no root supplied resolves
+nothing, and saying so is different from claiming a hundred assets are
+gone.
 
 ### Read-only toward the filesystem
 
-SCF never ingests, copies, or generates files. It reads what it is pointed
-at, and it exports artifacts — a shooting script, a query result as
-markdown — through an explicit save gesture, for tools that do not read SCF
-directly.
+SCF never ingests, copies or generates files. It reads what it is
+pointed at, and exports artifacts — a shooting script, a query result as
+markdown — through an explicit save gesture, for tools that do not read
+SCF directly.
 
-This says nothing about the database. Relinking, correcting an identifier,
-and caching size or mtime are writes to SCF's own rows and are entirely
-normal. The read-only rule is about other people's files.
+This says nothing about the database. Relinking, correcting an
+identifier and caching size or mtime are writes to SCF's own rows and
+are entirely normal. The read-only rule is about other people's files.
 
-Content hashing is opportunistic for the same reason. Hashing thousands of
-assets at load would stall on unmaterialized files or fail outright, so
-`size_bytes` and `source_mtime` serve as cheap staleness hints and a hash
-is a deliberate per-asset act.
+Content hashing is opportunistic for the same reason: hashing thousands
+of assets at load would stall on unmaterialised files or fail outright,
+so `size_bytes` and `source_mtime` serve as cheap staleness hints and a
+hash is a deliberate per-asset act.
+
+Sidecar thumbnails are ruled out by this rule too — something would have
+to write them, and it will not be SCF.
 
 ### Where meaning lives
 
-**Format** is derived from the identifier's extension. It dispatches
-preview and supports coarse filtering. It is a hint, and it is never a
-claim about purpose — the same text file serves twenty purposes across a
-production.
+**Format** is a hint and never a claim about purpose; the same text file
+serves twenty purposes across a production.
 
-**Use** is a property of the link, not the asset.
-`bundle_asset.role_in_bundle` and `asset_relationship.relationship_type`
-already carry it. A file used twenty ways is twenty edges and one row.
+**Use** is a property of the link. A file used twenty ways is twenty
+edges and one row.
 
-There is deliberately no intrinsic-purpose column. `asset_type` was one,
-mixing container format with editorial intent, and the fixture had already
-outgrown its enum. It was deprecated in 2.7 and removed in 2.8, not
+There was an intrinsic-purpose column. `asset_type` mixed container
+format with editorial intent, and the fixture had already outgrown its
+enum. It was deprecated in 2.7 and removed in 2.8, and deliberately not
 replaced: a purpose stored on the row is a second place for meaning to
-live and a second place for it to go stale. `tags` remains as the user-controlled escape hatch, freeform
-by intent rather than pretending to be a taxonomy.
+live and a second place for it to go stale. `tags` remains as the
+user-controlled escape hatch, freeform by intent rather than pretending
+to be a taxonomy.
 
 ### Organisation is derived
 
-The **bundle graph** is the authored structure. `intent` lives on `bundle`,
-and the cascade in `resolution.ts` already walks it. It does not get copied
-onto the asset so that a list can group by it.
+The **bundle graph** is the authored structure, and the cascade already
+walks it. It does not get copied onto the asset so that a list can group
+by it.
 
 The **path tree** is a navigational view computed from the identifier's
-root and segments. It costs nothing, since the identifier is stored anyway,
-and it matches the folder layout a production already maintains.
+segments. It costs nothing, since the identifier is stored anyway, and
+it matches the folder layout a production already maintains.
 
 Everything else is a **facet**, not a folder: format, resolution state,
-lifecycle, tags, unreferenced. Facets compose; a single imposed hierarchy
-is wrong for half of its users and has to be maintained by hand.
+lifecycle, tags, unreferenced. Facets compose. A single imposed
+hierarchy is wrong for half of its users and has to be maintained by
+hand.
 
-`scf-core/src/assetIndex.ts` derives all of this — `pathTree()`,
-`facetsOf()`, `orphanIds()`. Orphans are computed from the registry
-rather than a hand-kept list: every field anywhere in the schema whose
-`referenceEntity` is `asset` counts as usage, so a junction added later
-is covered without an edit. The asset table's own version columns are
-excluded, because a row whose only inbound reference is its own
-successor is still an orphan and counting supersession as usage would
-hide exactly the rows worth finding. Pinned by
-`scf-core/test/assetIndex.test.ts`, which also measures 2,000 assets
-through the whole index.
-
-The failure mode to design against is not search but **orphans** — assets
-nobody linked. At scale those are what rot, so "referenced by nothing" is a
-first-class query rather than something a user has to notice.
+Orphan counting excludes the asset table's own version columns, because
+a row whose only inbound reference is its own successor is still an
+orphan — counting supersession as usage would hide exactly the rows
+worth finding.
 
 ### Preview has three tiers, and the third is a real one
 
 **native** — the browser decodes it: png, jpg, webp, gif, svg, mp4,
-webm, wav, mp3, pdf, and plain text. An object URL and an element.
+webm, wav, mp3, pdf, plain text. An object URL and an element.
 
 **decoded** — real content behind a decoder SCF does not ship: exr, dpx,
 tiff, psd, glb, usd, mov, mxf. Named separately so the editor can say
 "not yet" rather than "no", and so the work is scoped if anyone wants
-it.
+it. Today it means nothing, since sidecar thumbnails are ruled out and
+an in-memory decoder is the only remaining option.
 
 **named** — nothing to depict. Archives, caches, model weights, DCC
 scene files. A LoRA is not media: it is invoked rather than looked at,
-and there is no image of it failing to render. Roughly a third of the
-Hollow Creek fixture sits in tiers 2 and 3, which is an honest ratio to
-design against — an editor that treated "cannot preview" as an error
-would be wrong about half a real project.
+and there is no image of it failing to render.
 
-Sidecar thumbnails are ruled out by the read-only rule: something would
-have to write them, and it will not be SCF. Tier 2 therefore means an
-in-memory decoder or nothing, and today it means nothing.
+Roughly a third of the Hollow Creek fixture sits in tiers 2 and 3, which
+is an honest ratio to design against — an editor treating "cannot
+preview" as an error would be wrong about half a real project.
 
-`previewCapability()` in `scf-core/src/preview.ts` classifies a format.
 An unknown extension lands in tier 3, never tier 1: handing an
 unrecognised format to an image element yields a broken-image icon,
 which reads as "this asset is broken" when the truth is "this editor
-does not know that format". Pinned by `scf-core/test/preview.test.ts`.
+does not know that format".
 
 ### Metadata is read, never stored
 
 `size_bytes` and `source_mtime` are stored because they are hints about
-the REFERENCE going stale. Dimensions, channels, compression, duration
-and generator are facts about the CONTENT, and they are read from the
-file each time they are shown. There is no width column and there should
-never be one — a stored dimension is a second copy of a truth that
-changes without asking, which is the fragility §2 already names.
+the *reference* going stale. Dimensions, channels, compression, duration
+and generator are facts about the *content*, and a stored dimension is
+the §2 fragility again.
 
 The accepted consequence is that **metadata cannot be queried**. A
 filter over thousands of assets would mean reading thousands of files,
 so if something needs storing to be queried, it does not get queried.
 
-`readHeaderMetadata()` in `scf-core/src/fileMetadata.ts` parses headers
-only — the first 96KB — so nothing is decoded and nothing large is read.
-For PNG that includes the text chunks, which is where generated images
-keep their provenance: Midjourney writes `Description` (prompt, flags
-and job id), ComfyUI writes `prompt` and `workflow` as JSON, A1111
-writes `parameters`. A workflow can exceed the slice, and a chunk
-running past what was read says so rather than reporting no metadata.
-Compressed text is named but not expanded — inflating needs an async
-API and this parser is synchronous and pure.
+`readHeaderMetadata()` parses headers only — the first 96KB — so nothing
+is decoded and nothing large is read. For PNG that includes the text
+chunks, which is where generated images keep their provenance:
+Midjourney writes `Description` (prompt, flags and job id), ComfyUI
+writes `prompt` and `workflow` as JSON, A1111 writes `parameters`. A
+workflow can exceed the slice, and a chunk running past what was read
+says so rather than reporting no metadata. Compressed text is named but
+not expanded — inflating needs an async API and this parser is
+synchronous and pure.
+
 That makes the metadata tier deliberately unlike the preview tier: an
 EXR cannot be displayed but its attribute table parses cleanly, and a
 `.glb` carries a JSON chunk describing the scene. The formats that
 preview worst are often the ones where this helps most, because it is
-the only way to learn anything about them without opening a DCC. Pinned
-by `scf-core/test/fileMetadata.test.ts`.
+the only way to learn anything about them without opening a DCC.
 
 ### Getting an asset into a bundle
 
@@ -575,17 +562,16 @@ character → character_asset_binding → bundle → bundle_asset → asset
 The indirection earns its place — one bundle can serve several
 characters, carry `precedence` and `is_baseline`, and be scoped to a
 scene range or a variant — but the workflow should not mirror the
-schema. `scf-core/src/bundling.ts` makes each step one action, and
-`bundle_asset` membership is editable from the bundle row, which the
-generic entity form could not show because it is a link entity.
+schema. `bundling.ts` makes each step one action, and `bundle_asset`
+membership is editable from the bundle row, which the generic entity
+form could not show because it is a link entity.
 
 Batching is the normal case, not an optimisation: after importing a
 folder the real act is "these twenty into her visual identity". An asset
 already in the target bundle is skipped rather than duplicated —
-`bundle_asset`'s natural key is the pair (§5) — so an overlapping
-selection is safe to re-apply. `order` continues from the highest
-already present rather than restarting, so an appended batch lands after
-what was there. Pinned by `scf-core/test/bundling.test.ts`.
+`bundle_asset`'s natural key is the pair — so an overlapping selection
+is safe to re-apply. `order` continues from the highest already present,
+so an appended batch lands after what was there.
 
 A bundle with no `intent` resolves for nothing, and a bundle bound to
 nobody reaches nobody. Both are easy to create by accident and neither
@@ -597,11 +583,11 @@ rather than an implied one.
 Authoring assets one form at a time does not survive a real project, so
 files can be imported in bulk. This does not weaken the read-only rule:
 import READS a set of files the user picked and writes rows into the
-`.scf`. Nothing is copied, moved, or created on disk, and what lands in
+`.scf`. Nothing is copied, moved or created on disk, and what lands in
 the database is an address rather than a payload.
 
 Import never uses `entries()`, because enumeration is not available
-everywhere (above). Two routes avoid it:
+everywhere. Two routes avoid it:
 
 **A folder**, via `<input type="file" webkitdirectory>`. It pre-dates
 the File System Access API and walks the directory inside the browser's
@@ -625,49 +611,40 @@ file offered twice is one, and re-importing a folder after adding three
 files creates three rows and touches nothing else. A file picked from
 outside the project folder is reported and skipped rather than imported
 as an absolute path, since silently producing non-portable addresses
-would undo the point of this section. `planAssetImport()` and
-`applyAssetImport()` in `scf-core/src/assetImport.ts`, pinned by
-`scf-core/test/assetImport.test.ts`.
+would undo the point of this section.
 
 ### Queries carry references, never bytes
 
-Asset-bearing query output carries identifier, format, role, intent,
-provenance, and resolution state. The consumer fetches what it needs. The
-resolver stays the only thing that touches disk, and a context pack stays
-proportionate at scale.
+The consumer fetches what it needs. The resolver stays the only thing
+that touches disk, and a context pack stays proportionate at scale.
 
-Every export carries a **resolution report** — referenced, resolved, and
-missing, with the missing ones named. Silently omitting three unresolvable
-references would be the reporting failure §2 already forbids elsewhere.
+Every export carries a resolution report because silently omitting three
+unresolvable references would be the reporting failure §1 already
+forbids elsewhere.
 
-`mediaReferences()` in `scf-core/src/mediaReferences.ts` turns a Q13
-cascade into references and their states. An asset reached through more
-than one layer is reported once, at the layer that won — the cascade
-returns most-specific-first, so an override beats the base bundle it
-shadows. The report also distinguishes "no folder attached" from "the
-files are gone": a session opened without a project folder resolves
-nothing, and saying so is different from claiming a hundred assets are
-missing.
+`mediaReferences()` turns a Q13 cascade into references and their
+states. An asset reached through more than one layer is reported once,
+at the layer that won — the cascade returns most-specific-first, so an
+override beats the base bundle it shadows.
 
 The locator is injected into the query layer rather than imported, so
 `runners.ts` stays runnable without the app store or its SQL worker.
-Pinned by `scf-core/test/mediaReferences.test.ts`, including an
-assertion that no export ever contains `base64`, `blob:` or `data:`.
+`scf-core/test/mediaReferences.test.ts` includes an assertion that no
+export ever contains `base64`, `blob:` or `data:`.
 
 ### Another `.scf` is not an asset
 
-A `.scf` that points at another `.scf` is doing **composition**, not
+A `.scf` pointing at another `.scf` is doing **composition**, not
 reference: it raises whether the entities arrive, whether they can be
 overridden, and which opinion wins. That is the same territory as the
-cross-file merge deferred in §10, and it is not settled by anything above.
+cross-file merge deferred below, and nothing above settles it.
 
-The word for it is **layer**, and layers live in a subfolder, never at the
-root. Nothing else about them is specified. Admitting one as "just another
-file type" under `asset` would make `asset` the composition mechanism by
-accident, which is how a format acquires a permanent wart.
+The word for it is **layer**. Admitting one as "just another file type"
+under `asset` would make `asset` the composition mechanism by accident,
+which is how a format acquires a permanent wart. `spec §8.8` reserves
+the term and specifies nothing else, deliberately.
 
 ---
-
 ## 10. Open questions
 
 Each is marked **schema** (the format has to change), **editor** (only
@@ -678,8 +655,13 @@ this application), or **both**.
   non-active row — so "cut" is currently decorative. Deciding it means
   answering whether resolvers should exclude cut rows by default, which
   would change the answer to every canonical query, and whether a
-  consumer can still ask for history. Until then, treat a `cut` row as
-  present unless you filter it yourself.
+  consumer can still ask for history. **This is now a 1.0 blocker**, not
+  merely an open question: `spec §6.6` carries a normative gap that
+  cannot ship unfilled, since a specification saying "do what you like"
+  means every consumer answers the canonical queries differently and all
+  of them conform. Deciding it also needs a fixture containing cut rows.
+  Until then, treat a `cut` row as present unless you filter it
+  yourself.
 - **Locking, beyond numbering.** *(editor)* The numbering half is built
   — see Resolved. What is not: revision colours, A-pages, locked page
   breaks, and a stored record of codes that once existed so a reissued
@@ -726,10 +708,12 @@ this application), or **both**.
   natural keys (§5), and the point at which uuids stop being enough.
   Matching links requires resolving their endpoints first, which is a
   merge algorithm. It belongs with multi-user work, not before.
-- **A real spec.** *(both)* When the format stabilizes: registry, this
-  document, the fixture, and the canonical query expectations as data
-  rather than as test code, so a third consumer costs an afternoon
-  instead of a port.
+- **A real spec.** *(both)* **In progress.** `spec/scf-spec.md` 0.9 is
+  the normative document, `spec/stability.md` tracks what is safe to
+  build against, and `spec/conformance.md` states the roles. What
+  remains from the original form of this question: the canonical query
+  expectations as DATA rather than as test code, so a third consumer
+  costs an afternoon instead of a port. See `spec/conformance.md` §5.4.
 
 ### Resolved
 

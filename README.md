@@ -15,7 +15,8 @@ declaration; every consumer reads the generated registry.
 | `scf-app/` | The editor — a browser application over the same core, SQLite in OPFS, CodeMirror screenplay editor, canonical query pages. |
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
-| `docs/` | `conventions.md` (what the format means and why), `schema-changelog.md`. |
+| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means). |
+| `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`. |
 
 ## Getting started
 
@@ -41,7 +42,13 @@ automatically.
 ## Changing the format
 
 `docs/conventions.md` §8. Short version: edit `schema/entity_registry.py`,
-regenerate, lint, bump the version and record it in the changelog.
+regenerate, lint, bump the version and record it in the changelog. If the
+change touches anything normative, update `spec/scf-spec.md` and the
+affected row in `spec/stability.md` in the same commit.
+
+The two documents have distinct jobs and must not overlap: the spec
+states rules and nothing else, the design record explains them and
+states no rules. A rule found only in `docs/conventions.md` is a defect.
 
 ## History
 
