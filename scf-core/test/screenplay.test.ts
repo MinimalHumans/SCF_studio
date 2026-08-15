@@ -5,7 +5,7 @@
  * through the database (v1's tables, now created by initDatabase);
  * applyAssignments threads context deterministically and creates nothing.
  *
- * Stage 3: proposals against the corpus. Frankenstein (public) pins the
+ * Stage 3: proposals against the corpus. Alexis Nexus (public) pins the
  * clean-input behavior; Aliens (private, when present) pins the payoff —
  * converter garbage arriving as low-confidence, suspicion-annotated
  * proposals instead of entities. acceptBestGuess must exclude every
@@ -29,8 +29,8 @@ import { openFixture, registry, type Fixture } from "./setup.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CORPUS = join(HERE, "..", "..", "corpus");
-const FRANKENSTEIN =
-  join(CORPUS, "public", "scripts", "frankenstein-2025.fountain");
+const ALEXIS_NEXUS =
+  join(CORPUS, "public", "scripts", "alexis-nexus.fountain");
 const ALIENS =
   join(CORPUS, "private", "fountain", "aliens-1986.fountain.txt");
 
@@ -63,7 +63,7 @@ describe("stage 2: row model", () => {
   });
 
   test("full corpus scripts are byte-stable through rows", () => {
-    const text = readFileSync(FRANKENSTEIN, "utf8");
+    const text = readFileSync(ALEXIS_NEXUS, "utf8");
     const doc = parseFountain(text);
     const hasTitle = doc.lines.some((l) => l.type === "title_page");
     if (!hasTitle) {
@@ -216,9 +216,17 @@ describe("stage 3: heading parsing and cue normalization", () => {
   });
 });
 
-describe("stage 3: proposals on Frankenstein (public tier)", () => {
-  const doc = parseFountain(readFileSync(FRANKENSTEIN, "utf8"));
-  const p = propose(doc);
+describe("stage 3: proposals on Alexis Nexus (public tier)", () => {
+  // Read in beforeAll, not in the describe body: a missing or unreadable
+  // fixture must fail this block with a named error, not abort collection
+  // of the whole file.
+  let doc: ReturnType<typeof parseFountain>;
+  let p: ReturnType<typeof propose>;
+
+  beforeAll(() => {
+    doc = parseFountain(readFileSync(ALEXIS_NEXUS, "utf8"));
+    p = propose(doc);
+  });
 
   test("scene proposals are one per heading, high confidence", () => {
     const headings = doc.lines.filter((l) => l.type === "heading");
@@ -256,9 +264,15 @@ describe("stage 3: proposals on Frankenstein (public tier)", () => {
 
 describe.skipIf(!existsSync(ALIENS))(
   "stage 3: the corpus payoff (Aliens, private tier)", () => {
-  const doc = parseFountain(readFileSync(ALIENS, "utf8"));
-  const p = propose(doc);
-  const accepted = acceptBestGuess(p);
+  let doc: ReturnType<typeof parseFountain>;
+  let p: ReturnType<typeof propose>;
+  let accepted: ReturnType<typeof acceptBestGuess>;
+
+  beforeAll(() => {
+    doc = parseFountain(readFileSync(ALIENS, "utf8"));
+    p = propose(doc);
+    accepted = acceptBestGuess(p);
+  });
 
   test("converter garbage arrives as suspicions, not entities", () => {
     const bad = p.characters.filter((c) => c.suspicions.length > 0);

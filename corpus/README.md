@@ -10,7 +10,10 @@ breaks another script is visible before merge.
   covering each Fountain construct (forced elements, dual dialogue,
   notes, boneyard, sections/synopses, title-page grammar, whitespace
   edges) plus `features.fdx` for FDX-specific features. `scripts/` holds
-  redistributable full scripts (Frankenstein).
+  redistributable full scripts — currently `alexis-nexus.fountain`, a
+  first-party feature-length screenplay (127 headings, 45 locations, 27
+  speaking characters). Nothing in this tier may be third-party material:
+  the public corpus ships with the repo, under the repo's licence.
 - **private/** — **gitignored, local-only.** Real scripts that cannot be
   redistributed: PDF→Fountain conversions and FDX files. Their blessed
   expectations live beside them and are equally private (expected files

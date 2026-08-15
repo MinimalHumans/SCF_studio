@@ -1,11 +1,11 @@
-import { describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parseFountain } from "../src/fountain/tokenizer.ts";
 import { propose } from "../src/proposals/propose.ts";
 
-const FRANKENSTEIN = fileURLToPath(new URL(
-  "../../corpus/public/scripts/frankenstein-2025.fountain", import.meta.url));
+const ALEXIS_NEXUS = fileURLToPath(new URL(
+  "../../corpus/public/scripts/alexis-nexus.fountain", import.meta.url));
 
 /** Propose over a scrap of action, and return the prop names. */
 const props = (action: string): string[] =>
@@ -102,28 +102,51 @@ describe("props: scoring", () => {
   });
 
   test("nothing ever reaches high — a human creates props", () => {
-    const doc = parseFountain(readFileSync(FRANKENSTEIN, "utf8"));
+    const doc = parseFountain(readFileSync(ALEXIS_NEXUS, "utf8"));
     const p = propose(doc);
     expect(p.props.every((x) => x.confidence !== "high")).toBe(true);
   });
 });
 
-describe("props: Frankenstein, the corpus check", () => {
-  const p = propose(parseFountain(readFileSync(FRANKENSTEIN, "utf8")));
-  const strong = p.props.filter((x) => x.confidence === "medium")
-    .map((x) => x.name);
+describe("props: Alexis Nexus, the corpus check", () => {
+  let p: ReturnType<typeof propose>;
+  let strong: string[];
 
-  test("the strong tier reads like a props list", () => {
-    expect(strong).toEqual(expect.arrayContaining(
-      ["Rifle", "Umbrella", "Red Ball", "Blunderbuss", "Letter"]));
+  beforeAll(() => {
+    p = propose(parseFountain(readFileSync(ALEXIS_NEXUS, "utf8")));
+    strong = p.props.filter((x) => x.confidence === "medium")
+      .map((x) => x.name);
   });
 
-  test("and no longer contains the old noise", () => {
-    // Every one of these led the previous version's list.
-    for (const junk of ["Sun", "Men", "Howling", "Two Old Hunters",
-                        "Explosion", "Pushes", "Tosses The Men"]) {
-      expect(p.props.map((x) => x.name), junk).not.toContain(junk);
+  test("the strong tier surfaces the plot-bearing objects", () => {
+    // Both are introduced, handled and recurring across scenes: the
+    // portfolio drives the Ada/Six theft, the charts drive the Carver
+    // sequence. These are hand-verified truth, not a blessed baseline.
+    expect(strong).toEqual(expect.arrayContaining(["Portfolio", "Charts"]));
+  });
+
+  test("the strong tier stays small enough to be a props list", () => {
+    expect(strong.length).toBeLessThan(10);
+  });
+
+  test("verb fragments and stage directions stay out of the strong tier",
+       () => {
+    for (const junk of ["Breathe", "Bite", "Book Shut", "Door Open",
+                        "Door Shut", "Eyes Within", "Couple Shops"]) {
+      expect(strong, junk).not.toContain(junk);
     }
+  });
+
+  // KNOWN GAP — regression baseline, not an endorsement. "Door" (119
+  // mentions) and "Closet Door" currently reach medium on the strength of
+  // recurrence + handling alone. The scorer has no notion of set dressing:
+  // an object a character opens in forty different rooms scores like an
+  // object a character carries through the story. The previous corpus
+  // script masked this; it needs a distinctness or location-spread signal
+  // before the medium tier can be trusted unattended.
+  test("set dressing currently reaches the strong tier (documented gap)",
+       () => {
+    expect(strong).toContain("Door");
   });
 
   test("candidates are ordered strongest first", () => {

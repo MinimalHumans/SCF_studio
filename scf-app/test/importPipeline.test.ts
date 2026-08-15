@@ -25,8 +25,8 @@ import { subjectStatsSql } from "../src/state/subjectStats.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REGISTRY = join(HERE, "../../scf-core/registry/registry.json");
-const FRANKENSTEIN = join(
-  HERE, "../../corpus/public/scripts/frankenstein-2025.fountain");
+const ALEXIS_NEXUS = join(
+  HERE, "../../corpus/public/scripts/alexis-nexus.fountain");
 
 let db: NodeDatabase;
 
@@ -38,9 +38,9 @@ beforeAll(async () => {
 });
 afterAll(() => db.close());
 
-describe("import pipeline end to end (Frankenstein, public tier)", () => {
+describe("import pipeline end to end (Alexis Nexus, public tier)", () => {
   test("prepare -> accept best guess -> apply -> editable rows", async () => {
-    const text = await readFile(FRANKENSTEIN, "utf8");
+    const text = await readFile(ALEXIS_NEXUS, "utf8");
     const prepared = prepareImport(text, "fountain");
     expect(prepared.repairs).toEqual([]); // clean input: repair inert
 
@@ -115,22 +115,27 @@ describe("accepted props are placed, not left floating", () => {
     await initDatabase(fresh.exec, registry);
     try {
       const prepared = prepareImport(
-        await readFile(FRANKENSTEIN, "utf8"), "fountain");
+        await readFile(ALEXIS_NEXUS, "utf8"), "fountain");
       // Take the strongest few, as a user ticking the top of the list
       // would — best-guess still accepts none.
+      // The size of the medium tier is a property of the script, not of
+      // the pipeline: assert that there is a tier to tick, then carry the
+      // actual count through, rather than pinning a corpus-specific number.
       const picked = prepared.proposals.props
         .filter((p) => p.confidence === "medium").slice(0, 5);
-      expect(picked.length).toBe(5);
+      expect(picked.length).toBeGreaterThanOrEqual(3);
       const accepted = {
         ...defaultAcceptance(prepared.proposals),
         props: new Map(picked.map((p) => [p.name.toUpperCase(), p.name])),
       };
 
       const result = await applyImport(fresh.exec, prepared, accepted);
-      expect(result.props).toBe(5);
+      expect(result.props).toBe(picked.length);
       expect(result.propLinks).toBe(
         picked.reduce((n, p) => n + p.sceneLines.length, 0));
-      expect(result.propLinks).toBeGreaterThan(5); // several recur
+      // More links than props means at least one prop appears in more than
+      // one scene — the point of the placement pass.
+      expect(result.propLinks).toBeGreaterThan(picked.length);
 
       const rows = await fresh.exec(
         "SELECT p.name AS prop, s.scene_number AS scene " +
@@ -165,7 +170,7 @@ describe("subject rail statistics run against a real database", () => {
     await initDatabase(fresh.exec, registry);
     try {
       const prepared = prepareImport(
-        await readFile(FRANKENSTEIN, "utf8"), "fountain");
+        await readFile(ALEXIS_NEXUS, "utf8"), "fountain");
       await applyImport(fresh.exec, prepared,
                         defaultAcceptance(prepared.proposals));
 

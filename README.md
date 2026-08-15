@@ -32,8 +32,11 @@ cd scf-core && npm test    # semantics + conformance against the fixture
 cd scf-app  && npm test    # editor, import pipeline, query runners
 ```
 
-`scf-core/test/screenplay.test.ts` needs `corpus/private`, which is not
-checked in; it fails to collect without it.
+Both suites run green on a clean checkout. `corpus/private` is not checked
+in, and the blocks that need it (`screenplay.test.ts` stage 3 payoff,
+`fountain.test.ts` private tier) skip themselves when it is absent — a
+machine that has the private tier picks up the extra coverage
+automatically.
 
 ## Changing the format
 

@@ -10,8 +10,8 @@ import { SCENE_SCRIPT_SQL } from "../src/editor/shootOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../../scf-core/registry/registry.json", import.meta.url));
-const FRANKENSTEIN = fileURLToPath(new URL(
-  "../../corpus/public/scripts/frankenstein-2025.fountain",
+const ALEXIS_NEXUS = fileURLToPath(new URL(
+  "../../corpus/public/scripts/alexis-nexus.fountain",
   import.meta.url));
 
 describe("reading a scene in the shoot outline", () => {
@@ -24,7 +24,7 @@ describe("reading a scene in the shoot outline", () => {
     db = openNodeDatabase(":memory:");
     await initDatabase(db.exec, registry);
     const prepared = prepareImport(
-      await readFile(FRANKENSTEIN, "utf8"), "fountain");
+      await readFile(ALEXIS_NEXUS, "utf8"), "fountain");
     await applyImport(db.exec, prepared,
                       defaultAcceptance(prepared.proposals));
     sceneId = Number((await db.exec(
