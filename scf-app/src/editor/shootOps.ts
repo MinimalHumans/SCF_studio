@@ -73,7 +73,7 @@ export async function addShot(exec: SqlExec, sceneId: number,
   const inScene = await exec(
     "SELECT shot_number FROM shot WHERE scene_id = ?", [sceneId]);
   const number = nextShotNumber(
-    (scene[0]?.["scene_number"] ?? null) as number | null,
+    (scene[0]?.["scene_number"] ?? null) as string | number | null,
     inScene.map((r) => (r["shot_number"] ?? null) as string | null));
   await exec(
     "INSERT INTO shot (name, scene_id, story_beat_id, shot_number, " +
@@ -109,7 +109,7 @@ export async function renumberForScene(
     "SELECT shot_number FROM shot WHERE scene_id = ? AND id != ?",
     [newSceneId, shotId]);
   const number = nextShotNumber(
-    (scene[0]?.["scene_number"] ?? null) as number | null,
+    (scene[0]?.["scene_number"] ?? null) as string | number | null,
     siblings.map((r) => (r["shot_number"] ?? null) as string | null));
   await exec(
     "UPDATE shot SET shot_number = ?, updated_at = datetime('now') " +

@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.8",
+  "schemaVersion": "2.9",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -1235,11 +1235,12 @@
         {
           "name": "scene_number",
           "label": "Scene Number",
-          "fieldType": "integer",
-          "sqlType": "INTEGER",
+          "fieldType": "text",
+          "sqlType": "TEXT",
           "required": false,
           "tab": "General",
-          "autoInjected": false
+          "autoInjected": false,
+          "helpText": "A label, not the position: 12, 12A (inserted after 12), A12 (inserted before it). Ordering comes from the script. See spec/scf-spec.md §4.2."
         },
         {
           "name": "int_ext",

@@ -149,7 +149,7 @@ export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
                 <b>{l.characterName}</b>
                 <span className="muted">
                   {" "}in {l.sceneNumber === null
-                    ? l.sceneName : `sc ${String(l.sceneNumber)} — ${l.sceneName}`}
+                    ? l.sceneName : `sc ${l.sceneNumber} — ${l.sceneName}`}
                 </span>
                 <span className="flex-spacer" />
                 <button className="row-link"

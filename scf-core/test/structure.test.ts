@@ -57,8 +57,11 @@ describe("spans are contiguous and closed by the next boundary", () => {
   });
 
   test("a scene inserted mid-act joins it without touching the act", () => {
+    // "5A", not 5.5 — spec §4.2.1. A decimal is not how a script
+    // numbers an inserted scene, and since 0.10 it parses as opaque and
+    // sorts last rather than landing between 5 and 6.
     const withInsert = [...scenes,
-      { id: 200, scene_number: 5.5, name: "INT. NEW" } as Row];
+      { id: 200, scene_number: "5A", name: "INT. NEW" } as Row];
     const after = deriveStructure(withInsert,
       [act(1, "Act I", 100), act(2, "Act II", 103), act(3, "Act III", 108)],
       []);
@@ -361,7 +364,7 @@ describe("storyOrder", () => {
 
   test("agrees with the scene constants it generalizes", () => {
     const { join, orderBy } = storyOrder({
-      alias: "s", sceneRef: "id", fallbacks: ["s.scene_number"],
+      alias: "s", sceneRef: "id", bySceneNumber: true,
     });
     expect(join).toBe(SCENE_ORDER_JOIN);
     expect(orderBy).toBe(SCENE_ORDER_BY);

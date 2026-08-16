@@ -24,6 +24,8 @@
  */
 
 import type { Row, SqlExec } from "@scf-core/db.ts";
+import { sceneNumberOrderJoin, sceneNumberOrderTerms }
+  from "@scf-core/sceneNumbers.ts";
 
 export interface DetachedTag {
   id: number;
@@ -44,7 +46,8 @@ export interface OrphanBeat {
 export interface UnjustifiedLink {
   id: number;
   sceneId: number;
-  sceneNumber: number | null;
+  /** The scene's label, as written (spec §4.2) — "12", "12A". */
+  sceneNumber: string | null;
   sceneName: string;
   characterId: number;
   characterName: string;
@@ -63,6 +66,11 @@ export const EMPTY_REPORT: IntegrityReport = {
 
 const str = (v: unknown): string =>
   v === null || v === undefined ? "" : String(v);
+/** A scene number is a label, not a number — see spec §4.2. */
+const labelOrNull = (v: unknown): string | null =>
+  v === null || v === undefined || String(v).trim() === ""
+    ? null : String(v).trim();
+
 const numOrNull = (v: unknown): number | null =>
   typeof v === "number" ? v : null;
 
@@ -116,6 +124,7 @@ export async function scanIntegrity(
     "FROM scene_character sc " +
     "JOIN scene s ON s.id = sc.scene_id " +
     "LEFT JOIN character c ON c.id = sc.character_id " +
+    `${sceneNumberOrderJoin("s.id", "sn")} ` +
     "WHERE sc.character_id IS NOT NULL AND EXISTS (" +
     "  SELECT 1 FROM screenplay_lines h " +
     "  WHERE h.line_type = 'heading' AND h.scene_id = sc.scene_id) " +
@@ -123,11 +132,11 @@ export async function scanIntegrity(
     "  SELECT 1 FROM screenplay_lines l " +
     "  WHERE l.line_type = 'character' AND l.scene_id = sc.scene_id " +
     "    AND l.character_id = sc.character_id) " +
-    "ORDER BY s.scene_number, s.id, c.name");
+    `ORDER BY ${sceneNumberOrderTerms("sn")}, s.id, c.name`);
   const unjustifiedLinks: UnjustifiedLink[] = linkRows.map((r: Row) => ({
     id: r["id"] as number,
     sceneId: r["scene_id"] as number,
-    sceneNumber: numOrNull(r["scene_number"]),
+    sceneNumber: labelOrNull(r["scene_number"]),
     sceneName: str(r["scene_name"]),
     characterId: r["character_id"] as number,
     characterName: str(r["character_name"]) === ""

@@ -59,17 +59,13 @@ export function letterIndex(letters: string): number {
  */
 export function nextShotNumber(sceneNumber: number | string | null,
                                taken: Array<string | null>): string {
-  const prefix = sceneNumber === null || sceneNumber === ""
-    ? "" : String(sceneNumber);
   const used = new Set<string>();
   let highest = -1;
   for (const raw of taken) {
     if (raw === null || raw === "") continue;
-    const code = raw.trim().toUpperCase();
-    used.add(code);
-    if (!code.startsWith(prefix.toUpperCase())) continue;
-    const index = letterIndex(code.slice(prefix.length));
-    if (index > highest) highest = index;
+    used.add(raw.trim().toUpperCase());
+    const parsed = parseShotCode(raw, sceneNumber);
+    if (parsed !== null && parsed.index > highest) highest = parsed.index;
   }
   for (let i = highest + 1; i < highest + 1000; i += 1) {
     const code = shotCode(sceneNumber, i);
@@ -79,11 +75,43 @@ export function nextShotNumber(sceneNumber: number | string | null,
 }
 
 /**
- * Restamp a shot code onto a new scene number, keeping its letter.
+ * Split a shot code into its scene prefix and its ordinal, per §4.4.2.
  *
- * `42A` in a scene that becomes scene 43 returns `43A`. Returns null
- * when nothing should change — the code is unparseable, the scene has no
- * number, or the result matches what is already there.
+ * THE PARSE IS RELATIVE TO THE SCENE. A code is read by removing the
+ * scene's own number from the front, never by taking the trailing
+ * letter run in isolation — those two readings diverge the moment a
+ * scene number ends in a letter, which §4.2.1 permits:
+ *
+ *   shot "12AB" in scene "12A"  →  prefix "12A", letters "B",  index 1
+ *   trailing-run reading        →  prefix "12",  letters "AB", index 27
+ *
+ * The second is wrong, and was what this module did until spec 0.10.
+ * Returns null when the code does not belong to this scheme for that
+ * scene — an authored code, a prefix that does not match, letters that
+ * are not a letter run. Null is never an error (§9.1): it means leave
+ * the code alone.
+ */
+export function parseShotCode(
+    code: string | null,
+    sceneNumber: number | string | null): { index: number } | null {
+  if (code === null || code === "") return null;
+  const text = code.trim().toUpperCase();
+  const prefix = sceneNumber === null || sceneNumber === ""
+    ? "" : String(sceneNumber).trim().toUpperCase();
+  if (!text.startsWith(prefix)) return null;
+  const index = letterIndex(text.slice(prefix.length));
+  return index < 0 ? null : { index };
+}
+
+/**
+ * Restamp a shot code from one scene number onto another, keeping its
+ * ordinal. `42A` in a scene renumbered 42 → 43 returns `43A`.
+ *
+ * Takes the scene's OLD number because §4.4.2's parse needs it: the
+ * code was minted under that number and can only be split by it.
+ * Returns null when nothing should change — the code does not parse
+ * against the old number, the new scene has no number, or the result
+ * matches what is already there.
  *
  * This is NOT a contradiction of the stored-number rule above, but it
  * does narrow it. That rule protects a code a crew already holds on
@@ -95,12 +123,12 @@ export function nextShotNumber(sceneNumber: number | string | null,
  * a distributed shot list needs.
  */
 export function restampShotNumber(
-    code: string | null, sceneNumber: number | string | null):
-    string | null {
-  if (code === null || code === "") return null;
-  if (sceneNumber === null || sceneNumber === "") return null;
-  const letters = /[A-Z]+$/.exec(code.trim().toUpperCase());
-  if (letters === null) return null;
-  const next = shotCode(sceneNumber, letterIndex(letters[0]));
-  return next === code.trim() ? null : next;
+    code: string | null,
+    fromSceneNumber: number | string | null,
+    toSceneNumber: number | string | null): string | null {
+  if (toSceneNumber === null || toSceneNumber === "") return null;
+  const parsed = parseShotCode(code, fromSceneNumber);
+  if (parsed === null) return null;
+  const next = shotCode(toSceneNumber, parsed.index);
+  return next === (code ?? "").trim() ? null : next;
 }

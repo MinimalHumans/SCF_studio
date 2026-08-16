@@ -20,12 +20,19 @@
  */
 
 import type { Row } from "./db.ts";
+import {
+  compareSceneNumbers, sceneNumberOrderJoin, sceneNumberOrderTerms,
+} from "./sceneNumbers.ts";
 
 export interface ScenePosition {
   id: number;
   /** 0-based index in story order. */
   index: number;
-  number: number | null;
+  /**
+   * The authored scene number, as written. A LABEL (spec §4.2), so
+   * `12A` and `A12` arrive intact rather than as NaN.
+   */
+  number: string | null;
   name: string;
 }
 
@@ -75,6 +82,15 @@ const num = (v: unknown): number | null =>
   v === null || v === undefined || v === "" ? null : Number(v);
 
 /**
+ * A scene number is a LABEL (spec §4.2), so it is carried as written.
+ * Coercing it with Number() was correct only while the grammar was bare
+ * integers; `12A` came through as NaN.
+ */
+const label = (v: unknown): string | null =>
+  v === null || v === undefined || String(v).trim() === ""
+    ? null : String(v).trim();
+
+/**
  * Story order.
  *
  * When a screenplay exists, the SCRIPT is the order — `orderHint` maps a
@@ -98,7 +114,7 @@ export function scenePositions(
   return [...scenes]
     .map((s) => ({
       id: Number(s["id"]),
-      number: num(s["scene_number"]),
+      number: label(s["scene_number"]),
       name: String(s["name"] ?? ""),
     }))
     .sort((a, b) => {
@@ -106,12 +122,8 @@ export function scenePositions(
       const pb = placed(b.id);
       if ((pa === null) !== (pb === null)) return pa === null ? 1 : -1;
       if (pa !== null && pb !== null && pa !== pb) return pa - pb;
-      if ((a.number === null) !== (b.number === null)) {
-        return a.number === null ? 1 : -1;
-      }
-      if (a.number !== null && b.number !== null && a.number !== b.number) {
-        return a.number - b.number;
-      }
+      const byNumber = compareSceneNumbers(a.number, b.number);
+      if (byNumber !== 0) return byNumber;
       return a.id - b.id;
     })
     .map((s, index) => ({ ...s, index }));
@@ -138,32 +150,40 @@ export function storyOrder(opts: {
   alias: string;
   /** Column on that alias holding a scene id ("id" for scene itself). */
   sceneRef: string;
-  /** Tie-breakers after script position, in order, already qualified. */
+  /**
+   * Order by the scene's number (spec §4.2.2) after script position.
+   * Adds a second join, because the label has to be parsed before it
+   * can be ordered — see sceneNumbers.ts.
+   */
+  bySceneNumber?: boolean;
+  /** Further tie-breakers, in order, already qualified. */
   fallbacks?: readonly string[];
 }): { join: string; orderBy: string } {
   const nulls = (expr: string): string => `(${expr} IS NULL), ${expr}`;
+  const ref = `${opts.alias}.${opts.sceneRef}`;
   const terms = [
     nulls("sp.story_pos"),
+    ...(opts.bySceneNumber === true ? [sceneNumberOrderTerms("sn")] : []),
     ...(opts.fallbacks ?? []).map(nulls),
     `${opts.alias}.id`,
   ];
-  return {
-    join:
-      "LEFT JOIN (SELECT scene_id, MIN(line_order) AS story_pos " +
-      "FROM screenplay_lines WHERE line_type = 'heading' " +
-      `GROUP BY scene_id) sp ON sp.scene_id = ${opts.alias}.${opts.sceneRef}`,
-    orderBy: `ORDER BY ${terms.join(", ")}`,
-  };
+  const joins = [
+    "LEFT JOIN (SELECT scene_id, MIN(line_order) AS story_pos " +
+    "FROM screenplay_lines WHERE line_type = 'heading' " +
+    `GROUP BY scene_id) sp ON sp.scene_id = ${ref}`,
+    ...(opts.bySceneNumber === true
+      ? [sceneNumberOrderJoin(ref, "sn")] : []),
+  ];
+  return { join: joins.join(" "), orderBy: `ORDER BY ${terms.join(", ")}` };
 }
 
-export const SCENE_ORDER_JOIN =
-  "LEFT JOIN (SELECT scene_id, MIN(line_order) AS story_pos " +
-  "FROM screenplay_lines WHERE line_type = 'heading' " +
-  "GROUP BY scene_id) sp ON sp.scene_id = s.id";
+const SCENE_ORDER = storyOrder({
+  alias: "s", sceneRef: "id", bySceneNumber: true,
+});
 
-export const SCENE_ORDER_BY =
-  "ORDER BY (sp.story_pos IS NULL), sp.story_pos, " +
-  "(s.scene_number IS NULL), s.scene_number, s.id";
+export const SCENE_ORDER_JOIN = SCENE_ORDER.join;
+
+export const SCENE_ORDER_BY = SCENE_ORDER.orderBy;
 
 /**
  * Build the hint from screenplay heading rows (`scene_id`, `line_order`).

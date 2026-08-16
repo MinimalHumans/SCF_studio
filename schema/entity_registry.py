@@ -542,7 +542,11 @@ register(EntityDef(
     has_external_id=True,
     fields=[
         FieldDef("name", "Scene Name / Slug", required=True),
-        FieldDef("scene_number", "Scene Number", "integer"),
+        FieldDef("scene_number", "Scene Number", "text",
+                 help_text="A label, not the position: 12, 12A (inserted "
+                           "after 12), A12 (inserted before it). "
+                           "Ordering comes from the script. See "
+                           "spec/scf-spec.md \u00a74.2."),
         FieldDef("int_ext", "Int/Ext", "select", options=[
             "interior", "exterior", "int/ext"
         ]),

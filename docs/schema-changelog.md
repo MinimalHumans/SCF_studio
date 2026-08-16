@@ -5,6 +5,33 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.9
+
+**`scene.scene_number` widened from integer to text.** A scene number is
+a LABEL for a position, not the position itself, and production practice
+labels inserted scenes `12A` and `A12`. As an integer column it could
+not hold one: the importer's `parseInt` truncated `12A` to `12`, which
+destroyed exactly the numbering an imported locked script most needs
+preserved.
+
+Grammar and ordering are specified in `spec/scf-spec.md` §4.2 — the
+grammar is a parse, not a constraint, so a label that does not match it
+is opaque rather than invalid.
+
+**This is the first non-additive change since the removals in 2.8**, and
+it is deliberately taken now: SQLite cannot alter a column's affinity in
+place, and spec §11.1 forbids non-additive changes after 1.0. No
+conversion is required for existing files — affinity is a hint, so an
+integer-affinity column stores a label unchanged, and `initDatabase`
+does not rewrite columns it finds.
+
+Callers that assumed a number were updated with it: `structureCommit`
+now writes the label as text (the driver binds JS numbers as doubles, so
+`1` was landing as `"1.0"`), `importPipeline` keeps the script's own
+label instead of `parseInt`-ing it, and `ScriptView`'s
+`typeof === "number"` guard would otherwise have made every scene read
+as unnumbered.
+
 ## 2.8
 
 **`asset.asset_type` and `asset.file_path` removed.** Both were

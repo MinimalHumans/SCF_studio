@@ -1,13 +1,14 @@
 # The SCF Format Specification
 
-**Version 0.9 (draft) — not a release.**
-Describes schema version **2.8**.
+**Version 0.12 (draft) — not a release.**
+Describes schema version **2.9**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
 |---|---|
 | Status | Draft. Section stability is stated in [stability.md](stability.md). |
 | Conformance | Roles and requirements in [conformance.md](conformance.md). |
+| Changelog | [CHANGELOG.md](CHANGELOG.md). |
 | Rationale | Design record: [../docs/conventions.md](../docs/conventions.md). |
 | Registry | `scf-core/registry/registry.json`, generated from `schema/entity_registry.py`. |
 
@@ -40,7 +41,8 @@ Normative:
 - the physical encoding of a `.scf` file (§1);
 - the entity model and the registry that defines it (§2);
 - which facts are stored and which MUST be derived (§3);
-- story position and ordering (§4);
+- story position, ordering, and the scene-number and shot-code
+  grammars (§4);
 - narrative structure as spans (§5);
 - row and cross-file identity (§6);
 - the direction cascade (§7);
@@ -97,15 +99,15 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.9` (draft).
+- **Specification version** — this document. Currently `0.12` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.8`. Increments on any
+  `schema/schema_meta.py`. Currently `2.9`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
 
-This specification describes schema **2.8 and later**. A conforming
+This specification describes schema **2.9 and later**. A conforming
 reader MUST accept any file whose schema version is greater than or
 equal to the minimum it declares support for, subject to §11.
 
@@ -158,18 +160,37 @@ The conventional file extension is `.scf`.
 
 ### 1.2 File identification
 
-> **Not yet implemented.** See [stability.md](stability.md) — this is a
-> 1.0 requirement with no code behind it today.
+SQLite reserves two 32-bit header slots for exactly this purpose:
+`application_id` at byte offset 68, `user_version` at offset 60. Both
+lie in the first 100 bytes, so a `.scf` can be identified from its first
+page without a SQL engine — and, more usefully, told apart from the
+thousands of unrelated SQLite databases on a machine.
 
 A conforming writer MUST set:
 
-- `PRAGMA application_id` to the registered SCF value;
-- `PRAGMA user_version` to the schema version encoded as
-  `major * 1000 + minor` (schema 2.8 → `2008`).
+| Slot | Value |
+|---|---|
+| `application_id` | `0x53434631` (`1396917809`) — `SCF1` as big-endian ASCII |
+| `user_version` | the schema version as `major * 1000 + minor` (schema 2.9 → `2009`) |
 
-A conforming reader MUST NOT reject a file that lacks these, since files
-written before this requirement do not carry them. A reader MAY use them
-to identify a file without opening a table.
+The trailing `1` in `SCF1` is the **container generation**, not the
+schema version. It changes only if the physical encoding ever breaks
+compatibility. The schema version lives in `user_version`, where it
+moves freely. This follows the convention of SQLite's own `magic.txt`
+registry, in which GeoPackage registered both `GPKG` and `GP10`.
+
+**A conforming reader MUST NOT reject a file that lacks either stamp.**
+Every file written before this requirement carries neither. The stamps
+are an identification aid, never a gate.
+
+Where the header's `user_version` and `_scf_meta.schema_version`
+disagree, `_scf_meta` is the authority and the disagreement is a finding
+(§9).
+
+The registered `magic(5)` stanza ships as [`scf.magic`](scf.magic).
+
+The media type is `application/vnd.minimalhumans.scf`. It is a vendor-tree
+type and requires no registration; the conventional extension is `.scf`.
 
 ### 1.3 Tables
 
@@ -200,7 +221,7 @@ The registry is a normative part of this specification; where this
 document and the registry disagree about a field, the registry is
 correct and this document is in error.
 
-Version 2.8 defines **99 entities** across tiers 0–6.
+Version 2.9 defines **99 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -296,10 +317,52 @@ last — and then to row id.
 so is wrong for any file written without a screenplay, and for any scene
 moved since the last commit.
 
-### 4.2 Scene numbers are labels
+### 4.2 Scene numbers
 
-`scene_number` is a label for a position, not the position itself.
-Numbers MAY have gaps and MAY be non-numeric.
+`scene_number` is a label for a position, not the position itself
+(§4.1). Two scenes MAY carry the same label, and a scene MAY carry none.
+
+#### 4.2.1 Canonical form
+
+```abnf
+scene-number  = [prefix] digits [suffix]
+prefix        = 1*3ALPHA
+digits        = 1*DIGIT
+suffix        = 1*3ALPHA
+```
+
+Examples: `1`, `12`, `101`, `12A`, `A12`, `12AB`.
+
+A prefix marks a scene inserted before the numbered one; a suffix marks
+a scene inserted after it. Both letter runs are **bijective base-26**
+(`A`=1, `Z`=26, `AA`=27) and are compared case-insensitively; the
+canonical form is uppercase.
+
+#### 4.2.2 Ordering
+
+Where §4.1's fallback reaches `scene_number`, implementations MUST order
+by the tuple:
+
+```
+(digits, prefix-present ? 0 : 1, prefix-index, suffix-index)
+```
+
+with `prefix-index` and `suffix-index` the bijective base-26 values, and
+`0` where the run is absent. This yields `A12 < B12 < 12 < 12A < 12B`,
+which is the convention the notation exists to express.
+
+#### 4.2.3 Non-conforming values
+
+A `scene_number` that does not match §4.2.1 is **opaque**. It is valid
+data and MUST NOT be rejected (§9.1). Implementations MUST NOT order it
+by §4.2.2 and MUST fall through to the next term in §4.1's chain.
+
+> **Registry note.** Schema 2.9 declares `scene_number` as text, so the
+> declared type and this grammar agree. Files written before 2.9 carry an
+> integer-affinity column; no conversion is needed, since affinity is a
+> hint and §4.2.3 defines the behaviour for any value either way.
+
+### 4.3 Numbering policy
 
 `project.scene_numbering` governs recomputation:
 
@@ -310,7 +373,74 @@ Numbers MAY have gaps and MAY be non-numeric.
 An implementation that recomputes numbering on a `fixed` file is
 non-conforming.
 
-### 4.3 Position patterns
+### 4.4 Shot codes
+
+`shot.shot_number` is authored and stored (§3.3). This section defines
+the form a conforming implementation generates and how any
+implementation MUST read one.
+
+#### 4.4.1 Canonical form
+
+```abnf
+shot-code  = [scene-prefix] letter-run
+letter-run = 1*ALPHA
+```
+
+`scene-prefix` is the `scene_number` of the shot's scene, reproduced
+verbatim. `letter-run` encodes a **zero-based** ordinal in bijective
+base-26: `A`=0, `Z`=25, `AA`=26, `AB`=27.
+
+A shot in a scene with no `scene_number` has no prefix, and its code is
+the letter run alone.
+
+Codes are compared case-insensitively; the canonical form is uppercase.
+
+#### 4.4.2 Parsing is relative to the scene
+
+**A shot code MUST be parsed by removing its scene's `scene_number` from
+the front and reading the remainder as the letter run. An implementation
+MUST NOT parse a shot code by taking its trailing letter run in
+isolation.**
+
+The two readings differ whenever a scene number ends in a letter, which
+§4.2.1 permits. For a shot `12AB` in scene `12A`:
+
+| Reading | Prefix | Letters | Ordinal |
+|---|---|---|---|
+| Correct — strip the scene number | `12A` | `B` | 1 |
+| Incorrect — trailing run | `12` | `AB` | 27 |
+
+A shot code whose prefix does not match its scene's number is
+**unparseable**, not an error: it is valid data, MUST NOT be rejected,
+and MUST be left unchanged by any operation that would otherwise
+renumber it.
+
+#### 4.4.3 Allocation
+
+A newly created shot SHOULD take the code one past the **highest**
+ordinal already used in its scene, not the first unused one. A shot
+number may already be held by a crew, so a cut `42B` MUST NOT be reissued
+to a different setup while any sibling above it exists.
+
+This is a guard, not a guarantee. Nothing records codes that once
+existed, so deleting the highest-numbered shot in a scene frees its code
+again. An implementation requiring the stronger promise needs a stored
+counter, which this version does not define.
+
+#### 4.4.4 Restamping
+
+When a scene's number changes and `project.scene_numbering` is
+`derived`, an implementation MUST restamp each of that scene's shot
+codes onto the new number, preserving the ordinal (§4.4.2).
+
+When `scene_numbering` is `fixed`, shot codes MUST be left unchanged
+along with the scene numbers. That is the state a distributed shot list
+requires.
+
+An implementation MAY display a derived code alongside an authored one
+that disagrees, so that a list can be reissued deliberately (§3.3).
+
+### 4.5 Position patterns
 
 Each entity declares a `positionPattern`. Three exist, and a resolver
 MUST apply the one the registry declares.
@@ -675,9 +805,11 @@ A field MAY be removed only after being marked deprecated in a released
 schema version, and MUST remain readable for at least one subsequent
 version.
 
-> **Note.** Schema 2.8 removed `asset.asset_type` and `asset.file_path`
-> one version after deprecating them in 2.7. That was permissible before
-> 1.0 and would not be after.
+> **Note.** Two changes so far would not be permissible after 1.0, and
+> were taken deliberately before it: schema 2.8 removed
+> `asset.asset_type` and `asset.file_path` one version after deprecating
+> them in 2.7, and schema 2.9 widened `scene_number` from integer to
+> text, which SQLite cannot do to a column in place.
 
 ### 11.5 The specification version
 
@@ -696,6 +828,9 @@ change to one without the other is a defect.
 | Section | Pinned by |
 |---|---|
 | §3.4 derived-but-stored | `scf-app/test/sceneScript.test.ts` |
+| §1.2 file identification | `scf-core/test/fileIdentity.test.ts` |
+| §4.2 scene-number grammar and ordering | `scf-core/test/sceneNumbers.test.ts` — including a case asserting the TypeScript comparison and its SQL twin order the same list identically |
+| §4.4 shot codes | `scf-core/test/shots.test.ts` |
 | §4.3 pattern 2 | `scf-core/test/conformance.canonical.test.ts` → "persistence rule" |
 | §4.3 pattern 3 | `scf-core/test/conformance.canonical.test.ts` → "pattern 3 (latest-wins)" |
 | §5 spans | `scf-core/test/structure.test.ts` |

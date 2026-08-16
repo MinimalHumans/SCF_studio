@@ -88,7 +88,8 @@ interface StaleNotice {
   /** What the scene entity currently stores, so the notice can show the
    * actual disagreement rather than describing one. */
   sceneName: string;
-  sceneNumber: number | null;
+  /** The scene's label, as written (spec §4.2). */
+  sceneNumber: string | null;
 }
 
 function smartTitleLocal(x: string): string {
@@ -341,8 +342,13 @@ export function ScriptView(): JSX.Element {
             uuid: s.uuid, sceneId: s.sceneId,
             headingText: s.headingText,
             sceneName: String(row?.["name"] ?? ""),
-            sceneNumber: typeof row?.["scene_number"] === "number"
-              ? row["scene_number"] : null,
+            // A label, not a number, since schema 2.9 — the old
+            // `typeof === "number"` guard silently made every scene
+            // read as unnumbered.
+            sceneNumber: row?.["scene_number"] === null ||
+              row?.["scene_number"] === undefined ||
+              String(row["scene_number"]).trim() === ""
+              ? null : String(row["scene_number"]).trim(),
           });
         }
         return [...merged.values()];
@@ -954,7 +960,7 @@ export function ScriptView(): JSX.Element {
         <div className="stale-bar">
           {stale.map((s) => {
             const label = s.sceneNumber === null
-              ? "This scene" : `Scene ${String(s.sceneNumber)}`;
+              ? "This scene" : `Scene ${s.sceneNumber}`;
             const emptied = s.headingText.trim() === "";
             return (
               <span key={s.uuid} className="stale-notice">
@@ -974,7 +980,7 @@ export function ScriptView(): JSX.Element {
                   <button onClick={() => void syncScene(s)}
                           title="Update the scene record — its name, int/ext, time of day and location — to match the line as written. Use this when it is the same scene, renamed.">
                     Rename {s.sceneNumber === null
-                      ? "the scene" : `scene ${String(s.sceneNumber)}`}
+                      ? "the scene" : `scene ${s.sceneNumber}`}
                   </button>
                 )}
                 <button onClick={() => void unlinkScene(s)}

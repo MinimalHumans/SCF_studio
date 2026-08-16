@@ -18,6 +18,7 @@
 
 import type { EntityDef, Registry } from "./registry.ts";
 import { initScreenplayTables } from "./screenplay/rowModel.ts";
+import { stampFileIdentity } from "./fileIdentity.ts";
 
 export type SqlValue = string | number | boolean | null | Uint8Array;
 export type Row = Record<string, SqlValue>;
@@ -211,6 +212,11 @@ export async function initDatabase(
   await exec(
     "INSERT OR REPLACE INTO _scf_meta (key, value) VALUES (?, ?)",
     ["schema_version", registry.schemaVersion]);
+
+  // Spec §1.2 — header stamps, so the file is identifiable without a
+  // SQL engine. Last, because everything above must have succeeded for
+  // the claim "this is an SCF document" to be true.
+  await stampFileIdentity(exec, registry.schemaVersion);
 }
 
 /** Read _scf_meta as a plain object. */

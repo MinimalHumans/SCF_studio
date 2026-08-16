@@ -222,10 +222,15 @@ describe("scene renumbering", () => {
         [i * 10, `SCENE ${String(sceneId)}`, sceneId, `H${String(sceneId)}`]);
     }
   };
-  const numbers = async (): Promise<Array<number | null>> => {
+  // Labels, not numbers (spec §4.2) — `scene_number` is text since
+  // schema 2.9 so that "12A" survives.
+  const numbers = async (): Promise<Array<string | null>> => {
     const rows = await db.exec(
       "SELECT id, scene_number FROM scene ORDER BY id");
-    return rows.map((r) => (r["scene_number"] ?? null) as number | null);
+    return rows.map((r) => {
+      const v = r["scene_number"];
+      return v === null || v === undefined ? null : String(v);
+    });
   };
 
   beforeEach(async () => {
@@ -238,7 +243,7 @@ describe("scene renumbering", () => {
   test("derived: numbers come from the script's order", async () => {
     await script([1, 2, 3]);
     await commitStructure(db.exec, [], true);
-    expect(await numbers()).toEqual([1, 2, 3]);
+    expect(await numbers()).toEqual(["1", "2", "3"]);
   });
 
   test("derived: moving a scene renumbers from its new position",
@@ -248,7 +253,7 @@ describe("scene renumbering", () => {
     // Scene 2 dragged to the end.
     await script([1, 3, 2]);
     await commitStructure(db.exec, [], true);
-    expect(await numbers()).toEqual([1, 3, 2]);
+    expect(await numbers()).toEqual(["1", "3", "2"]);
   });
 
   test("derived: a scene not in the script loses its number", async () => {
@@ -257,22 +262,24 @@ describe("scene renumbering", () => {
     await script([1, 3]);
     await commitStructure(db.exec, [], true);
     // Scene 2 is orphaned: it has no position, so no number.
-    expect(await numbers()).toEqual([1, null, 2]);
+    expect(await numbers()).toEqual(["1", null, "2"]);
   });
 
   test("fixed: an imported production's numbering is never touched",
        async () => {
+    // "12A" is the case the widening exists for: an A-page in an
+    // imported locked script, which parseInt used to truncate to 12.
     await db.exec(
-      "UPDATE scene SET scene_number = 12 WHERE id = 1");
+      "UPDATE scene SET scene_number = '12' WHERE id = 1");
     await db.exec(
-      "UPDATE scene SET scene_number = 12 WHERE id = 2");
+      "UPDATE scene SET scene_number = '12A' WHERE id = 2");
     await db.exec(
-      "UPDATE scene SET scene_number = 47 WHERE id = 3");
+      "UPDATE scene SET scene_number = '47' WHERE id = 3");
     await setNumberingMode(db.exec, "fixed");
     await script([1, 2, 3]);
     await commitStructure(db.exec, [], true);
     // Gaps and duplicates survive: they are the production's data.
-    expect(await numbers()).toEqual([12, 12, 47]);
+    expect(await numbers()).toEqual(["12", "12A", "47"]);
   });
 
   test("a project with no stored preference renumbers", async () => {
@@ -281,7 +288,7 @@ describe("scene renumbering", () => {
     await db.exec("DELETE FROM project");
     await script([1, 2, 3]);
     await commitStructure(db.exec, [], true);
-    expect(await numbers()).toEqual([1, 2, 3]);
+    expect(await numbers()).toEqual(["1", "2", "3"]);
   });
 });
 

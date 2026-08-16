@@ -99,7 +99,7 @@ describe("script integrity", () => {
     const report = await scanIntegrity(db.exec, live("L-head"));
     expect(report.unjustifiedLinks).toHaveLength(1);
     expect(report.unjustifiedLinks[0]!.characterName).toBe("Alexis");
-    expect(report.unjustifiedLinks[0]!.sceneNumber).toBe(1);
+    expect(report.unjustifiedLinks[0]!.sceneNumber).toBe("1");
 
     await deleteSceneCharacter(db.exec, report.unjustifiedLinks[0]!.id);
     expect((await scanIntegrity(db.exec, live("L-head"))).total).toBe(0);

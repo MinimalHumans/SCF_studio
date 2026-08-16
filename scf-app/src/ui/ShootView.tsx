@@ -170,7 +170,7 @@ export function ShootView(): JSX.Element {
     const id = Number(shot["id"]);
     const authored = String(shot["shot_number"] ?? "");
     const derived = shotCode(
-      (scene?.["scene_number"] ?? null) as number | null,
+      (scene?.["scene_number"] ?? null) as string | number | null,
       sceneShots.findIndex((r) => Number(r["id"]) === id));
     return (
       <div key={id} className="shoot-row shoot-row-shot">

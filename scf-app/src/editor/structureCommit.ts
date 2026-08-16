@@ -400,10 +400,14 @@ export async function commitStructure(
     const positioned = structure.scenes.filter((s) =>
       orderHint.has(s.id));
     for (const [i, scene] of positioned.entries()) {
+      // Written as TEXT, not as a number: scene_number is a LABEL
+      // (spec §4.2), the column is text since 2.9, and the driver binds
+      // JS numbers as doubles — so `i + 1` stored "1.0" rather than "1".
+      const label = String(i + 1);
       await exec(
         "UPDATE scene SET scene_number = ?, updated_at = datetime('now') " +
         "WHERE id = ? AND (scene_number IS NULL OR scene_number != ?)",
-        [i + 1, scene.id, i + 1]);
+        [label, scene.id, label]);
     }
     for (const scene of structure.scenes) {
       if (orderHint.has(scene.id)) continue;
@@ -427,8 +431,12 @@ export async function commitStructure(
       const shots = await exec(
         "SELECT id, shot_number FROM shot WHERE scene_id = ?", [scene.id]);
       for (const shot of shots) {
+        // §4.4.2: the parse needs the number the code was minted
+        // under. `scene.number` is the pre-renumber value, read before
+        // the UPDATE above.
         const next = restampShotNumber(
-          (shot["shot_number"] ?? null) as string | null, i + 1);
+          (shot["shot_number"] ?? null) as string | null,
+          scene.number, i + 1);
         if (next === null) continue;
         await exec(
           "UPDATE shot SET shot_number = ?, updated_at = datetime('now') " +

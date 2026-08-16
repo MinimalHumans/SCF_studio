@@ -1,0 +1,20 @@
+# magic(5) pattern for SCF documents.
+#
+# An .scf is a SQLite 3 database (spec §1.1), so file(1) reports it as
+# one by default. The application_id at header offset 68 is what makes
+# it identifiable as SCF specifically — see spec §1.2 and
+# scf-core/src/fileIdentity.ts.
+#
+# Install locally:
+#     mkdir -p ~/.magic.d && cp spec/scf.magic ~/.magic.d/scf
+#     file --magic-file ~/.magic.d/scf yourfile.scf
+#
+# The stanza below follows the form used by sqlite/magic.txt, which is
+# where it should eventually be upstreamed so that a stock file(1)
+# recognises SCF without configuration.
+
+0	string	=SQLite\ format\ 3
+>68	belong	=0x53434631	Story Context Framework document
+>>60	belong	>0		\b, schema
+>>>60	belong/1000	x	\b %d
+>>>60	belong%1000	x	\b.%d

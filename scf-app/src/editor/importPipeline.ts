@@ -154,8 +154,12 @@ async function applyImportInner(
       const values: Record<string, unknown> = {
         name: scene.headingText.replace(/^\./, ""),
       };
-      const n = parseInt(scene.sceneNumber, 10);
-      if (Number.isFinite(n)) values["scene_number"] = n;
+      // A scene number is a LABEL (spec §4.2), kept as the script
+      // wrote it. parseInt truncated "12A" to 12 and silently lost the
+      // A-page, which is exactly the numbering an imported locked
+      // script most needs preserved.
+      const label = scene.sceneNumber.trim();
+      if (label !== "") values["scene_number"] = label;
       const intExt = scene.intExt !== null
         ? INT_EXT_MAP[scene.intExt] : undefined;
       if (intExt !== undefined) values["int_ext"] = intExt;

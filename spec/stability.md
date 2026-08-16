@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.9 / schema 2.8. This document is expected
+Current as of specification 0.12 / schema 2.9. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -33,7 +33,7 @@ about it is ceremonial.
 | Area | Spec | Tier | Implemented | Notes |
 |---|---|---|---|---|
 | SQLite container, `.scf` extension | §1.1 | Stable | Yes | Unchanged since 1.0 of the schema. |
-| `application_id` / `user_version` | §1.2 | **Unstable** | **No** | Specified, no code. Application id value not yet chosen or registered with SQLite's `magic.txt`. 1.0 requirement. |
+| `application_id` / `user_version` | §1.2 | Provisional | Yes | `fileIdentity.ts`, stamped by `initDatabase`. Value chosen (`0x53434631`) and checked against SQLite's registry; `spec/scf.magic` ships the `magic(5)` stanza. Provisional until the stanza is upstreamed into `sqlite/magic.txt`, which is the only step that makes a stock `file(1)` recognise it. |
 | Table set from the registry | §1.3 | Stable | Yes | |
 | Additive column tolerance on open | §1.4 | Stable | Yes | `initDatabase` ALTER-adds missing registry columns. |
 
@@ -63,6 +63,12 @@ about it is ceremonial.
 | Story order from screenplay position | §4.1 | Stable | Yes | `scenePositions` / `sceneOrderHint` / `storyOrder()`, with SQL twins. |
 | Fallback chain (`scene_number`, then row id) | §4.1 | Stable | Yes | |
 | `scene_number` is a label | §4.2 | Stable | Yes | |
+| Scene-number grammar and ordering | §4.2.1–4.2.3 | Provisional | Yes | `sceneNumbers.ts`. Implemented in both engines and pinned, including a test asserting the two agree. Provisional rather than Stable only because no second implementation has exercised it. |
+| `scene_number` declared type | §4.2.3 | Provisional | Yes | Widened to text in schema 2.9. |
+| Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
+| Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
+| Shot-code allocation | §4.4.3 | Provisional | Yes | Continue-past-highest, with the stated no-retired-codes limitation. |
+| Restamping under `scene_numbering` | §4.4.4 | Provisional | Yes | |
 | `project.scene_numbering` | §4.2 | Provisional | Yes | Schema 2.5. Two values today; a third (per-act, per-reel) is conceivable. |
 | Pattern 1 — explicit rows | §4.3 | Stable | Yes | |
 | Pattern 2 — persistence | §4.3 | Stable | Yes | Pinned. |
@@ -160,7 +166,7 @@ about it is ceremonial.
 
 ## Summary — what stands between here and 1.0
 
-Seven Unstable rows, in rough dependency order:
+Six Unstable rows, in rough dependency order:
 
 1. **Resolution state names** (§8.3) — a wire-value disagreement between
    spec, docs and code. Cheapest to fix, and it blocks any external
@@ -172,7 +178,11 @@ Seven Unstable rows, in rough dependency order:
 4. **Unknown-content preservation** (§10.1) — believed true, untested. A
    round-trip test would settle it in an afternoon.
 5. **`x_` prefix** (§10.3) — specified, unenforced.
-6. **`application_id` / `user_version`** (§1.2) — four lines of code plus
-   registering a value.
-7. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
+6. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
    1.0 or go.
+
+*Closed in 0.12:* `application_id` / `user_version` (§1.2).
+
+*Closed in 0.11:* the `scene_number` declared type (widened in schema
+2.9) and shot-code parsing (`parseShotCode()`), which were one decision
+with two commits.

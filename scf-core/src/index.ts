@@ -29,6 +29,8 @@ export * from "./assetImport.ts";
 export * from "./mediaReferences.ts";
 export * from "./bundling.ts";
 export * from "./db.ts";
+export * from "./fileIdentity.ts";
+export * from "./sceneNumbers.ts";
 export * from "./resolution.ts";
 export * from "./queryPaths.ts";
 export * from "./readiness.ts";
