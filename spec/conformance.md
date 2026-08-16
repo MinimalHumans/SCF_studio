@@ -79,7 +79,7 @@ Everything required of a Reader, plus:
 - report duplicate natural keys rather than rejecting them (§6.4);
 - never create a prop by automatic acceptance (§9.3);
 - carry a resolution report on any export containing asset references
-  (§9.4);
+  (§9.5);
 - never embed asset bytes (§8.1).
 
 **The defining test for this role is round-trip integrity:** open, save,
@@ -162,10 +162,17 @@ Most of this exists already as library code — `identity.ts`,
 `structure.ts`, `assetIndex.ts`. What is missing is a CLI over it and a
 stable output format.
 
-**Blocked on:** the finding vocabulary. Findings today are produced by
-several modules with no shared codes, no severities and no serialised
-form. A validator whose output cannot be diffed between runs is a
-demonstration, not a tool. See [stability.md](stability.md).
+**No longer blocked.** The finding vocabulary landed in spec 0.14:
+`findings.ts` defines a closed catalog of codes with catalog-owned
+severities, and `collectFindings(exec, registry)` is the engine — one
+implementation of "what is wrong with this file", shared by the CLI when
+it exists, the editor's panels, and the tests.
+
+What remains for `scf-check` is a CLI around it, a stable serialised
+output format, and an exit-code convention. Items 1, 2, 3, 4, 5, 6, 8
+and 9 of the list above are already covered by `collectFindings`; item 7
+(asset resolution tally) needs a root mapping the CLI does not yet have a
+way to supply.
 
 ---
 

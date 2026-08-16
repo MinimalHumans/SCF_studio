@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
-import { readinessReport, type Finding, type ReadinessReport, type Severity }
+import { readinessReport, type ReadinessFinding, type ReadinessReport,
+         type Severity }
   from "@scf-core/readiness.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { sceneLabel } from "../state/displayName.ts";
@@ -125,7 +126,7 @@ function ReportRow({ report, open, onToggle }: {
   );
 }
 
-function FindingRow({ finding }: { finding: Finding }): JSX.Element {
+function FindingRow({ finding }: { finding: ReadinessFinding }): JSX.Element {
   return (
     <li className={`finding sev-${finding.severity}`}>
       <span className={`sev-dot sev-${finding.severity}`} />

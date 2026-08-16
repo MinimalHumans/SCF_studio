@@ -16,6 +16,63 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.14 — 2026-08-16
+
+*Describes schema 2.9.*
+
+**§9.4 is new: findings are enumerated.** This was the largest normative
+gap left in the document. Findings were produced by six modules with no
+shared codes, no severity scale and no serialised form, which made a
+validator unspecifiable — `conformance.md` §4 has said so since it was
+written.
+
+- Codes are `area.condition`, lowercase and dotted, drawn from a closed
+  catalog. Adding one is a change to this specification.
+- Severity comes from the catalog, not from the point the finding is
+  raised, so two producers cannot disagree about how bad the same
+  condition is.
+- The scale is `error` / `warning` / `info`, and it describes the DATA.
+  `error` means two conforming readers would disagree about what the
+  file says. It is explicitly not a reason to refuse the file.
+- Reports MUST be deterministic over an unchanged file, ordered by
+  severity, code, table, then lowest row id. A report that reorders
+  itself cannot be diffed.
+- The vocabulary is scoped to well-formedness and MUST NOT be conflated
+  with readiness, which answers a different question.
+
+The old §9.4 (reports accompany exports) is renumbered §9.5.
+
+Appendix A gains a row for §9.4.
+
+---
+
+## 0.13 — 2026-08-16
+
+*Describes schema 2.9.*
+
+**§10.1 gains a MUST that was previously only implied**, and the whole
+of §10 stops being an untested promise.
+
+- §10.3 now states explicitly that a writer MUST preserve `x_` content
+  across a write cycle on the same terms as any other unrecognised
+  content, and notes that the distinction is intent rather than
+  protection: unknown content is preserved because it is unknown,
+  whether or not its author followed the convention.
+- §10.3 also records that the reference implementation's linter rejects
+  any registry name claiming the prefix.
+- §1.3 points at `scf-schema.sql`, the published physical DDL.
+- §2.1 points at `registry.schema.json` and `ARTIFACTS.md`.
+
+`spec/ARTIFACTS.md` is new: an addressing scheme (`schema-X.Y` tag plus
+raw URL) and SHA-256 for every published artifact. It states that `main`
+MUST NOT be used to pin a version.
+
+Appendix A gains rows for §2.1, §10.1 and §10.2–10.3. §10.1's
+preservation requirement had never been verified; it now is, including
+across five repeated write cycles.
+
+---
+
 ## 0.12 — 2026-08-15
 
 *Describes schema 2.9.*

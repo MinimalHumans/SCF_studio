@@ -3638,6 +3638,25 @@ def lint_ontology() -> list[str]:
             problems.append(f"stale position pattern: {name}")
         if pattern not in POSITION_PATTERN_VALUES:
             problems.append(f"{name}: bad position_pattern {pattern!r}")
+
+    # Reserved namespaces, spec/scf-spec.md §10.2 and §10.3. `x_` belongs
+    # to third parties and SCF promises never to claim it; `scf_` is
+    # reserved for SCF's own future tables. Caught here rather than only
+    # in the TypeScript tests because this is the moment a name is
+    # chosen — by the time registry.json is regenerated the mistake is
+    # already a schema version.
+    for name, entity in ENTITY_REGISTRY.items():
+        for prefix in ("x_", "scf_"):
+            if name.startswith(prefix):
+                problems.append(
+                    f"{name}: entity name claims the reserved "
+                    f"{prefix!r} prefix (spec §10.2, §10.3)")
+        for field in entity.fields:
+            if field.name.startswith("x_"):
+                problems.append(
+                    f"{name}.{field.name}: column name claims the "
+                    f"third-party 'x_' prefix (spec §10.3)")
+
     return problems
 
 

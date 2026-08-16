@@ -321,12 +321,25 @@ The procedure:
 5. Migrate `fixtures/hollow_creek.scf` if a conformance test compares
    its column set. User files need no migration — `initDatabase`
    ALTER-adds any registry column a file lacks, on open.
+6. Re-emit the published artifacts and their checksums:
+
+   ```sh
+   cd scf-core && npm run emit-schema-sql && cd ..
+   python3 schema/artifact_manifest.py
+   ```
+
+7. Tag it, which is what makes the published URLs resolve:
+
+   ```sh
+   git tag -s schema-X.Y -m 'schema X.Y'
+   git push origin schema-X.Y
+   ```
 
 Since the specification exists, two more steps apply when the change
 touches anything normative:
 
-6. Update `spec/scf-spec.md`, and its version, per `spec §11.5`.
-7. Update the affected row in `spec/stability.md`.
+8. Update `spec/scf-spec.md`, and its version, per `spec §11.5`.
+9. Update the affected row in `spec/stability.md`.
 
 **Prefer additive optional fields.** Every schema change so far has been
 one, which is why no file has ever needed converting. `spec §11.1` now

@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.12 (draft) — not a release.**
+**Version 0.14 (draft) — not a release.**
 Describes schema version **2.9**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -99,7 +99,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.12` (draft).
+- **Specification version** — this document. Currently `0.14` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.9`. Increments on any
@@ -202,6 +202,13 @@ A file MAY contain further tables. A conforming reader MUST ignore any
 table it does not recognise, and MUST NOT treat its presence as an
 error (§10).
 
+The physical DDL for the current schema version is published as
+[`scf-schema.sql`](scf-schema.sql). It is dumped from a database created
+by the reference implementation rather than written by hand, so it
+cannot drift from what that implementation produces. It is the physical
+schema only: a database created from it alone is structurally conforming
+and semantically empty.
+
 ### 1.4 Missing columns
 
 A reader that intends to write MUST tolerate a file lacking columns the
@@ -220,6 +227,15 @@ defined by `registry.json`, generated from `schema/entity_registry.py`.
 The registry is a normative part of this specification; where this
 document and the registry disagree about a field, the registry is
 correct and this document is in error.
+
+The registry's own STRUCTURE is described by
+[`registry.schema.json`](registry.schema.json), a JSON Schema, so that a
+consumer can read the field set without running the reference
+implementation. That document constrains shape only — which entities
+exist is the registry, and what they mean is this specification.
+
+Each schema version's artifacts are addressable and checksummed; see
+[ARTIFACTS.md](ARTIFACTS.md).
 
 Version 2.9 defines **99 entities** across tiers 0–6.
 
@@ -739,7 +755,37 @@ certain.
 Props are the standing exception: **a prop MUST NOT be created by
 automatic acceptance.** A prop is created only by explicit user action.
 
-### 9.4 Reports accompany exports
+### 9.4 Findings are enumerated
+
+Every finding a conforming implementation reports MUST carry a **code**
+drawn from the enumeration published as `FINDING_CATALOG`, and MUST take
+its **severity** from that catalog rather than assigning one at the point
+the finding is raised.
+
+Codes are `area.condition`, lowercase, dotted. They are a closed set:
+adding one is a change to this specification, with a catalog entry naming
+the section it derives from.
+
+Severity describes the DATA, never acceptance of the file:
+
+| | Meaning |
+|---|---|
+| `error` | The data contradicts itself or this specification, and two conforming readers would resolve it differently. **Not** a reason to refuse the file (§9.1) — a reason to fix it before anyone relies on the answer. |
+| `warning` | Resolvable, and probably not what the author meant. |
+| `info` | Worth reporting; nothing is wrong. |
+
+A report over one unchanged file MUST be deterministic: the same
+findings, in the same order, on every run. Ordering is by severity, then
+code, then table, then lowest row id. Without this a report cannot be
+diffed, which is most of what reporting is for.
+
+This vocabulary covers **whether a file is well-formed**. It does not
+cover whether a given query can be answered well from it — that is
+readiness, a different question with a different audience, and the two
+scales MUST NOT be conflated. A flawless file may still have too little
+authored for a query to say anything useful.
+
+### 9.5 Reports accompany exports
 
 Every export whose content includes asset references MUST carry a
 resolution report naming what was referenced, what resolved, and what
@@ -771,7 +817,14 @@ extensions:
 ### 10.3 Extension namespace
 
 Third-party tables and columns MUST be prefixed `x_`. A name so prefixed
-will never be claimed by this specification.
+will never be claimed by this specification, and the reference
+implementation's linter rejects any registry name that claims it.
+
+A conforming writer MUST preserve `x_` tables, columns and rows across a
+write cycle, on the same terms as any other unrecognised content
+(§10.1). The distinction is one of intent, not of protection: unknown
+content is preserved because it is unknown, whether or not whoever wrote
+it followed the convention.
 
 Third-party root names MUST NOT be introduced without registration,
 since a root name that later becomes reserved would silently change
@@ -829,6 +882,10 @@ change to one without the other is a defect.
 |---|---|
 | §3.4 derived-but-stored | `scf-app/test/sceneScript.test.ts` |
 | §1.2 file identification | `scf-core/test/fileIdentity.test.ts` |
+| §2.1 registry structure | `scf-core/test/registrySchema.test.ts` |
+| §9.4 finding vocabulary | `scf-core/test/findings.test.ts` |
+| §10.1 unknown-content preservation | `scf-core/test/extensibility.test.ts` |
+| §10.2–10.3 reserved namespaces | `scf-core/test/registrySchema.test.ts`, `schema/lint_registry.py` |
 | §4.2 scene-number grammar and ordering | `scf-core/test/sceneNumbers.test.ts` — including a case asserting the TypeScript comparison and its SQL twin order the same list identically |
 | §4.4 shot codes | `scf-core/test/shots.test.ts` |
 | §4.3 pattern 2 | `scf-core/test/conformance.canonical.test.ts` → "persistence rule" |

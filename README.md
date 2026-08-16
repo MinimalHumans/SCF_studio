@@ -15,7 +15,7 @@ declaration; every consumer reads the generated registry.
 | `scf-app/` | The editor — a browser application over the same core, SQLite in OPFS, CodeMirror screenplay editor, canonical query pages. |
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
-| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`, and `scf.magic` (a `file(1)` pattern for `.scf`). |
+| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. |
 | `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`. |
 
 ## Getting started

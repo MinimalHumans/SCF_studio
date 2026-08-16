@@ -10,7 +10,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { openFixture, type Fixture } from "./setup.ts";
 import {
-  readinessReport, type Finding, type ReadinessReport, type Severity,
+  readinessReport, type ReadinessFinding, type ReadinessReport, type Severity,
 } from "../src/readiness.ts";
 
 let fx: Fixture;
@@ -21,7 +21,7 @@ let sc16: number;
 let sc21: number;
 let shot1204: number;
 
-const sev = (report: ReadinessReport, severity: Severity): Finding[] =>
+const sev = (report: ReadinessReport, severity: Severity): ReadinessFinding[] =>
   report.findings.filter((f) => f.severity === severity);
 
 beforeAll(async () => {

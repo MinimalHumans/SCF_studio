@@ -30,13 +30,20 @@ import {
 } from "./resolution.ts";
 import { QUERY_PATHS, type QueryPath } from "./queryPaths.ts";
 
+/**
+ * Readiness severity is NOT the finding-vocabulary severity of
+ * findings.ts, and the two must not be conflated. That vocabulary
+ * answers "is this file well-formed"; readiness answers "can this query
+ * be answered well from it". A file can be flawless and still not have
+ * enough authored for Q05 to say anything useful.
+ */
 export type Severity = "blocker" | "warning" | "suggestion" | "ok";
 
 export const SEVERITY_ORDER: Record<Severity, number> = {
   blocker: 0, warning: 1, suggestion: 2, ok: 3,
 };
 
-export interface Finding {
+export interface ReadinessFinding {
   severity: Severity;
   entity: string;
   message: string;
@@ -46,11 +53,12 @@ export interface ReadinessReport {
   query: string;
   meta: QueryPath;
   params: Record<string, unknown>;
-  findings: Finding[];
+  findings: ReadinessFinding[];
   counts: Record<Severity, number>;
 }
 
-const f = (severity: Severity, entity: string, message: string): Finding =>
+const f = (severity: Severity, entity: string,
+           message: string): ReadinessFinding =>
   ({ severity, entity, message });
 
 async function name(
@@ -85,8 +93,8 @@ function thinness(row: Row): number {
 
 async function readinessQ05(
     ctx: ScfContext, characterId: number, sceneId: number,
-    order: SceneOrder): Promise<Finding[]> {
-  const out: Finding[] = [];
+    order: SceneOrder): Promise<ReadinessFinding[]> {
+  const out: ReadinessFinding[] = [];
   const who = await name(ctx, "character", characterId);
   const profiles = await rows(ctx.exec, "vocal_profile", "character_id=?",
                               [characterId]);
@@ -170,8 +178,8 @@ async function readinessQ05(
 
 async function readinessQ06(
     ctx: ScfContext, characterId: number, sceneId: number,
-    order: SceneOrder): Promise<Finding[]> {
-  const out: Finding[] = [];
+    order: SceneOrder): Promise<ReadinessFinding[]> {
+  const out: ReadinessFinding[] = [];
   const who = await name(ctx, "character", characterId);
   const profiles = await rows(ctx.exec, "physical_character_profile",
                               "character_id=?", [characterId]);
@@ -221,8 +229,8 @@ async function readinessQ06(
 
 async function readinessQ07(
     ctx: ScfContext, sceneId: number, shotId: number | null,
-    _order: SceneOrder): Promise<Finding[]> {
-  const out: Finding[] = [];
+    _order: SceneOrder): Promise<ReadinessFinding[]> {
+  const out: ReadinessFinding[] = [];
   const leaf = shotId !== null ? "shot_design" : "scene_color_palette";
   const layers = new Map(await resolveDirection(ctx, leaf, sceneId, shotId));
   const requirement: Record<string, [Severity, string]> = {
@@ -283,8 +291,8 @@ async function readinessQ07(
 
 async function readinessQ08(
     ctx: ScfContext, sceneId: number,
-    _order: SceneOrder): Promise<Finding[]> {
-  const out: Finding[] = [];
+    _order: SceneOrder): Promise<ReadinessFinding[]> {
+  const out: ReadinessFinding[] = [];
   const sonic = await rows(ctx.exec, "sonic_identity");
   if (sonic.length > 0) {
     out.push(f("ok", "sonic_identity", "Sound world root present."));
@@ -328,8 +336,8 @@ async function readinessQ08(
 async function readinessQ13(
     ctx: ScfContext, subject: string, subjectId: number, intent: string,
     sceneId: number | null, shotId: number | null,
-    _order: SceneOrder): Promise<Finding[]> {
-  const out: Finding[] = [];
+    _order: SceneOrder): Promise<ReadinessFinding[]> {
+  const out: ReadinessFinding[] = [];
   const who = await name(ctx, subject, subjectId);
   const media = await resolveMedia(ctx, subject, subjectId, intent, sceneId,
                                    shotId);
@@ -355,8 +363,8 @@ async function readinessQ13(
 
 async function readinessQ02(
     ctx: ScfContext, characterId: number, sceneId: number,
-    order: SceneOrder): Promise<Finding[]> {
-  const out: Finding[] = [];
+    order: SceneOrder): Promise<ReadinessFinding[]> {
+  const out: ReadinessFinding[] = [];
   const who = await name(ctx, "character", characterId);
   const baselines: Array<[string, Severity, string]> = [
     ["character_appearance_profile", "warning", "appearance baseline"],
@@ -421,7 +429,7 @@ export async function readinessReport(
   const order = await sceneOrder(ctx);
   const sceneId = params.scene_id ?? null;
   const characterId = params.character_id ?? null;
-  let findings: Finding[];
+  let findings: ReadinessFinding[];
   if (queryId === "Q05") {
     findings = await readinessQ05(ctx, characterId as number,
                                   sceneId as number, order);

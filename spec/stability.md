@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.12 / schema 2.9. This document is expected
+Current as of specification 0.14 / schema 2.9. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -42,6 +42,9 @@ about it is ceremonial.
 | Area | Spec | Tier | Implemented | Notes |
 |---|---|---|---|---|
 | Registry as normative source | §2.1 | Stable | Yes | Generated from `entity_registry.py`; linted. |
+| Registry structure published | §2.1 | Provisional | Yes | `spec/registry.schema.json`, validated against `registry.json` by `registrySchema.test.ts`. Provisional until a third party has consumed it. |
+| Physical DDL published | §1.3 | Provisional | Yes | `spec/scf-schema.sql`, dumped from `initDatabase()` rather than generated a second time, with a `--check` mode. |
+| Artifact addressing and checksums | §2.1 | **Unstable** | Partly | `spec/ARTIFACTS.md` and `SHA256SUMS` exist and verify. The addressing scheme depends on `schema-X.Y` tags, and **no tag exists yet**, so every URL in the manifest currently 404s. |
 | Framework columns | §2.2 | Stable | Yes | |
 | Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `sceneOps.ts`. Derived, so new entities are covered without an edit. |
 | Hidden `nameField` rule | §2.3 | Stable | Yes | |
@@ -132,16 +135,17 @@ about it is ceremonial.
 | Extraction is a proposal | §9.3 | Stable | Yes | |
 | Props never auto-accepted | §9.3 | Stable | Yes | |
 | Export carries a resolution report | §9.4 | Provisional | Yes | |
-| **Enumerated finding types** | — | **Unstable** | **No** | Findings are produced by several modules with no shared vocabulary, no codes, and no defined severity. A validator (conformance.md §4) cannot be specified without this. 1.0 requirement. |
+| Enumerated finding types | §9.4 | Provisional | Yes | `findings.ts` — a closed catalog of 35 codes, severity owned by the catalog, deterministic ordering, and `collectFindings()` as the single engine a CLI, the panels and the tests all share. Provisional until `scf-check` exists and a report has been read by someone who did not write it. |
+| **The known-table set** | §1.3 | **Unstable** | Partly | §1.3 defines the file's tables as the registry plus `UUID_EXTRA_TABLES`, which conflates two questions. `initScreenplayTables` creates six screenplay tables; that list names four. **Decided:** `screenplay_title_page` and `screenplay_version_title_page` are properties of the screenplay rather than rows in their own right, so they do NOT gain uuids. The fix is therefore a second declared set — SCF-owned tables that carry no identity — not an addition to `UUID_EXTRA_TABLES`. Found by `collectFindings` on its first run over the fixture. |
 
 ### Extensibility
 
 | Area | Spec | Tier | Implemented | Notes |
 |---|---|---|---|---|
-| Ignore unknown content | §10.1 | Provisional | Partly | The permissive behaviour exists; it has never been tested. There is no round-trip test asserting that unknown tables survive a read-modify-write. |
-| Preserve unknown content on write | §10.1 | **Unstable** | **Unknown** | Believed true, never verified. This is the single most likely place a conforming-writer claim would fail. |
-| Reserved names | §10.2 | Provisional | n/a | Reserving `@plates` and `@nas` costs nothing and prevents a future collision. |
-| `x_` extension prefix | §10.3 | Provisional | No | Specified; nothing enforces or tests it. |
+| Ignore unknown content | §10.1 | Provisional | Yes | Pinned by `extensibility.test.ts`. |
+| Preserve unknown content on write | §10.1 | Provisional | **Yes — verified** | Was Unstable on the grounds of being believed true and never tested. It is true: an `x_` table, an `x_` column with its values, and an unprefixed unknown table all survive `initDatabase`, including across five repeated cycles. Provisional rather than Stable because only `initDatabase` has been exercised — a full open→edit→save round trip through the app is still untested. |
+| Reserved names | §10.2 | Provisional | Yes | `@plates` and `@nas` reserved; entity and column names checked by `lint_registry.py` and `registrySchema.test.ts`. |
+| `x_` extension prefix | §10.3 | Provisional | Yes | Enforced at the moment a name is chosen (the linter) and again at the generated artifact (the schema test). Preservation covered by the row above. |
 
 ### Versioning
 
@@ -166,20 +170,29 @@ about it is ceremonial.
 
 ## Summary — what stands between here and 1.0
 
-Six Unstable rows, in rough dependency order:
+Five Unstable rows, in rough dependency order:
 
 1. **Resolution state names** (§8.3) — a wire-value disagreement between
    spec, docs and code. Cheapest to fix, and it blocks any external
    consumer that reads a state.
-2. **Enumerated finding types** (§9) — nothing else in the conformance
-   story can be built without a finding vocabulary.
+2. **The known-table set** (§1.3) — two live screenplay tables are in
+   neither declared list, so SCF reports its own tables as third-party
+   content. The identity question is settled (title-page rows carry no
+   uuids), so what remains is splitting the one list into two: tables
+   that carry identity, and tables that are simply SCF's.
 3. **`lifecycle_status` filtering** (§6.6) — changes the answer to every
    canonical query. Needs a fixture with cut rows.
-4. **Unknown-content preservation** (§10.1) — believed true, untested. A
-   round-trip test would settle it in an afternoon.
-5. **`x_` prefix** (§10.3) — specified, unenforced.
-6. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
+4. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
    1.0 or go.
+5. **Artifact addressing** (§2.1) — the manifest is written and verifies,
+   but no `schema-X.Y` tag exists, so the URLs it publishes do not
+   resolve. One `git tag` closes it.
+
+*Closed in 0.14:* enumerated finding types (§9.4).
+
+*Closed in 0.13:* unknown-content preservation (§10.1) — tested, and it
+holds — and the `x_` prefix (§10.3), now enforced at both the linter and
+the generated artifact.
 
 *Closed in 0.12:* `application_id` / `user_version` (§1.2).
 
