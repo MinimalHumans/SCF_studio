@@ -157,6 +157,7 @@ export async function resolveIdentifier(
                      "which is never resolved" };
   }
 
+
   if (identifier.absolute) {
     return { ...base, state: "out-of-root",
              detail: "an absolute path resolves on this machine and " +
@@ -166,7 +167,12 @@ export async function resolveIdentifier(
   const found = await locate(identifier.root, identifier.path);
 
   if (found === undefined) {
-    return { ...base, state: "out-of-root",
+    // `unaddressed`, not `out-of-root` — spec §8.3. The identifier is
+    // fine and may well be portable; this session simply has nowhere to
+    // resolve it against. Reporting it as out-of-root told a user their
+    // paths were wrong when the truth was that no project folder was
+    // attached, and it made every asset in a lone .scf look broken.
+    return { ...base, state: "unaddressed",
              detail: `no root named @${identifier.root ?? "?"} is ` +
                      `configured in this session` };
   }

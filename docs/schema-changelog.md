@@ -5,6 +5,25 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.12
+
+**`project.scene_numbering` removed.** It was deprecated in 2.11 when the
+field was renamed `numbering_policy`, with writers mirroring into it for
+one version so that a reader knowing only the old name could not see a
+stale policy.
+
+Spec §11.0 now states that before 1.0 files written by earlier schema
+versions are disposable. The window protected only files written before
+2.11, so it protected nothing, and carrying it left the format storing
+one fact in two columns. The column, the mirroring in
+`setNumberingPolicy`, and the fallback in `numberingPolicyOf` all go
+together.
+
+A file that still carries a `scene_numbering` column is unknown content
+under §10.1: preserved on write, ignored on read, and unable to override
+the real column. There is a test asserting exactly that, so removing the
+column cannot be quietly undone by a stale file.
+
 ## 2.11
 
 **`project.scene_numbering` renamed to `project.numbering_policy`.** The

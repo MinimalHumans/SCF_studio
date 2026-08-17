@@ -1,8 +1,8 @@
 {
   "about": "An act anchored to a scene that is not present. Structure must still derive (§5.5) and say so.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.11",
-  "fileSchemaVersion": "2.11",
+  "toolSchemaVersion": "2.12",
+  "fileSchemaVersion": "2.12",
   "source": "fixtures/negative/build/span-boundary-dangling.scf",
   "counts": {
     "error": 0,

@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.18 / schema 2.11. This document is expected
+Current as of specification 0.19 / schema 2.12. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -70,8 +70,9 @@ about it is ceremonial.
 | `scene_number` declared type | §4.2.3 | Provisional | Yes | Widened to text in schema 2.9. The FIXTURE's column was rebuilt to match in 0.17 — until then the registry, the published DDL and the fixture disagreed, and §4.2's grammar was unexercised by the artifact meant to demonstrate it. |
 | The fixture exercises §4.1's ordering rule | §4.1 | Provisional | Yes | Fixed in 0.17: `12A` sits mid-script with the highest row id, and `16` follows `19` keeping its number. The three orders now differ, and three invariant tests pin that. |
 | Numbering policy covers all four numbers | §4.3 | Provisional | Partly | 0.17 states that act, sequence, scene and shot numbers are all authored and all governed by `project.scene_numbering`. The implementation recomputes scene numbers and shot codes; whether it recomputes act and sequence numbers under `derived` is untested. |
-| `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in schema 2.11, additively, through §11.4's window. `numbering.ts` owns the precedence and the mirroring. |
-| **Removing `scene_numbering`** | §4.3.1 | **Unstable** | **No** | Scheduled for schema 2.12. Until then two columns describe one fact and writers must mirror — the one place the format deliberately stores a value twice. `numbering.test.ts` fails when the column goes, and points at the mirroring that goes with it. |
+| `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in 2.11; the old column removed in 2.12 under §11.0. `numbering.ts` owns resolution, and a test asserts a stale `scene_numbering` cannot override it. |
+| Pre-1.0 change licence | §11.0 | Provisional | n/a | States that §11's rules take effect at 1.0 and that earlier files are disposable, with the fixture excepted. Provisional because it is the kind of clause that is easy to write and easy to overrun — it needs the 1.0 release to prove it was honoured. |
+| **The query layer** | §12 | **Unstable** | **No** | §0.2 now names §12 and says it is unwritten. The sixteen queries are part of the format; the normative answer is the result structure, not a rendering. Until the section exists, a query's only definition is one blessed example of its output. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
 | Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
 | Shot-code allocation | §4.4.3 | Provisional | Yes | Continue-past-highest, with the stated no-retired-codes limitation. |
@@ -124,7 +125,7 @@ about it is ceremonial.
 | `@project` root | §8.2 | Stable | Yes | |
 | Root mapping not stored in the file | §8.2 | Stable | Yes | Follows from portability. |
 | Absolute paths representable, flagged | §8.2 | Provisional | Yes | |
-| Resolution states | §8.3 | **Unstable** | Partly | **The specification and the implementation disagree.** `docs/conventions.md` listed four states spelled `unmaterialized`; `scf-core/src/assets.ts` defines five spelled `unmaterialised`, the fifth being `unaddressed`. The spec now states five with the code's spelling. This needs settling in code, docs and any serialised output before 1.0 — a state name is a wire value. |
+| Resolution states | §8.3 | Provisional | Yes | Settled in 0.19. Five states, the code's spelling, and the spec/code disagreement about an unmapped root resolved in the spec's favour: it is `unaddressed`, not `out-of-root`. `out-of-root` now depends only on the identifier, never on the session. |
 | Purpose lives on the link | §8.4 | Stable | Yes | `asset_type` was removed in 2.8, deliberately not replaced. |
 | Format is a hint | §8.5 | Stable | Yes | |
 | Unknown extension is not an error | §8.5 | Stable | Yes | `previewCapability()` lands unknowns in tier 3, never tier 1. |
@@ -185,28 +186,26 @@ about it is ceremonial.
 
 ## Summary — what stands between here and 1.0
 
-Seven Unstable rows, in rough dependency order:
+Five Unstable rows, in rough dependency order:
 
 1. **The query layer** — sixteen normative queries, none defined. Decided
    in principle; a multi-session job, and everything in `conformance.md`
    §5.4 is provisional on it.
-2. **Remove `scene_numbering`** in schema 2.12, and the mirroring with
-   it. Until then the format stores one fact twice, on purpose and on a
-   timer.
-3. **Resolution state names** (§8.3) — a wire-value disagreement between
-   spec, docs and code. Cheapest to fix, and it blocks any external
-   consumer that reads a state.
-4. **The asset resolution tally in `scf-check`** (§8.3) — the one check
+2. **The asset resolution tally in `scf-check`** (§8.3) — the one check
    the validator cannot do, because §0.3 makes the root mapping a
    property of the consuming environment and no flag exists to supply
    one.
-5. **`lifecycle_status` filtering** (§6.6) — changes the answer to every
+3. **`lifecycle_status` filtering** (§6.6) — changes the answer to every
    canonical query. Needs a fixture with cut rows.
-6. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
+4. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
    1.0 or go.
-7. **Artifact addressing** (§2.1) — the manifest is written and verifies,
+5. **Artifact addressing** (§2.1) — the manifest is written and verifies,
    but no `schema-X.Y` tag exists, so the URLs it publishes do not
    resolve. One `git tag` closes it.
+
+*Closed in 0.19:* `scene_numbering` is gone, and with it the one place
+the format deliberately stored a fact twice; and §8.3's resolution
+states now agree between spec and implementation.
 
 *Closed in 0.17:* the finding catalog is published (§9.4); the negative
 fixtures are reproducible without this repository; §7 was rewritten,

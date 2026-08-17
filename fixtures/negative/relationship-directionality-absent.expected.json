@@ -1,8 +1,8 @@
 {
   "about": "A relationship with no symmetry fact. Readable, but nothing can tell a duplicate from a second direction. Note the explicit NULL: the column defaults to 'mutual', so this state is only reachable by clearing it — which is exactly what an import from a tool that has no such concept would do.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.11",
-  "fileSchemaVersion": "2.11",
+  "toolSchemaVersion": "2.12",
+  "fileSchemaVersion": "2.12",
   "source": "fixtures/negative/build/relationship-directionality-absent.scf",
   "counts": {
     "error": 0,

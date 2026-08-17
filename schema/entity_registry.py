@@ -325,14 +325,6 @@ register(EntityDef(
                            "schedules and call sheets and become "
                            "identifiers, and a scene numbered 12 that plays "
                            "after scene 45 is correct. See spec §4.3."),
-        FieldDef("scene_numbering", "Scene Numbering (deprecated)", "select",
-                 options=["derived", "fixed"],
-                 help_text="DEPRECATED in schema 2.11, removed in 2.12. "
-                           "Renamed to numbering_policy, which says what it "
-                           "actually governs. Readers must prefer "
-                           "numbering_policy and fall back to this; writers "
-                           "must mirror into it while it exists. See spec "
-                           "§4.3."),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
         FieldDef("vision_statement", "Vision Statement", "textarea", tab="Vision"),
         FieldDef("creative_philosophy", "Creative Philosophy", "textarea", tab="Vision"),

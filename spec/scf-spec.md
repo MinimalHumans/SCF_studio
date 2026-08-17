@@ -1,7 +1,7 @@
 # The SCF Format Specification
 
-**Version 0.18 (draft) — not a release.**
-Describes schema version **2.11**.
+**Version 0.19 (draft) — not a release.**
+Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -50,7 +50,18 @@ Normative:
 - the findings model — how a conforming implementation reports problems
   rather than refusing data (§9);
 - extension and reserved names (§10);
-- versioning and compatibility (§11).
+- versioning and compatibility (§11);
+- **the canonical queries (§12)** — the sixteen questions SCF exists to
+  answer, and what a conforming implementation returns for each.
+
+§12 is **not yet written**. The queries were decided to be part of the
+format on 2026-08-17, and the normative answer is the RESULT STRUCTURE,
+not any rendering of it. Until §12 exists, the only definition of a
+canonical query is the blessed expectation in `fixtures/expectations/`,
+which is a demonstration rather than a specification — an implementer
+has to infer the query from one example of its output. That is the
+largest known gap in this document and it is tracked in
+[stability.md](stability.md).
 
 ### 0.3 The unit of interchange
 
@@ -99,15 +110,15 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.18` (draft).
+- **Specification version** — this document. Currently `0.19` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.11`. Increments on any
+  `schema/schema_meta.py`. Currently `2.12`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
 
-This specification describes schema **2.11 and later**. A conforming
+This specification describes schema **2.12 and later**. A conforming
 reader MUST accept any file whose schema version is greater than or
 equal to the minimum it declares support for, subject to §11.
 
@@ -181,7 +192,7 @@ A conforming writer MUST set:
 | Slot | Value |
 |---|---|
 | `application_id` | `0x53434631` (`1396917809`) — `SCF1` as big-endian ASCII |
-| `user_version` | the schema version as `major * 1000 + minor` (schema 2.11 → `2011`) |
+| `user_version` | the schema version as `major * 1000 + minor` (schema 2.12 → `2012`) |
 
 The trailing `1` in `SCF1` is the **container generation**, not the
 schema version. It changes only if the physical encoding ever breaks
@@ -265,7 +276,7 @@ exist is the registry, and what they mean is this specification.
 Each schema version's artifacts are addressable and checksummed; see
 [ARTIFACTS.md](ARTIFACTS.md).
 
-Version 2.11 defines **99 entities** across tiers 0–6.
+Version 2.12 defines **99 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -438,29 +449,6 @@ and every document in the production office says so.
 §4.1's warning is the same fact from the reader's side. Under `fixed`, a
 scene's number stops predicting its position, which is why story order
 is derived from the screenplay and never from the number.
-
-#### 4.3.1 The deprecated column
-
-The field was called `scene_numbering` until schema 2.11 — a name that
-described one of the four things it governs. It is renamed through
-§11.4's deprecation window rather than as a break:
-
-| Schema | State |
-|---|---|
-| ≤ 2.10 | `scene_numbering` only |
-| 2.11 | Both columns. `numbering_policy` is authoritative. |
-| 2.12 | `scene_numbering` removed |
-
-A conforming reader MUST prefer `numbering_policy` and MUST fall back to
-`scene_numbering` when it is absent or empty. A file with neither, or
-with a value that is neither `derived` nor `fixed`, is `derived`.
-
-While `scene_numbering` exists, a conforming writer MUST **mirror** the
-policy into it on every change. That is a deliberate, time-boxed
-exception to §3.1's rule against storing a derivable value twice, and it
-is made for one reason: a reader that knows only the old column would
-otherwise see a stale `derived` on a locked project and renumber a shot
-list that is already on paper.
 
 ### 4.4 Shot codes
 
@@ -796,14 +784,32 @@ Every asset resolves to exactly one state:
 | `missing` | does not resolve under its root |
 | `unmaterialised` | cloud placeholder; appears on access |
 | `out-of-root` | absolute or foreign root; resolvable but non-portable |
-| `unaddressed` | no root mapping supplied for this identifier's root |
+| `unaddressed` | nothing to resolve against: the row carries no identifier, or this session supplies no mapping for its root |
 
 `unmaterialised` MUST NOT be reported as a kind of `missing`. A synced
 project full of placeholders is healthy.
 
 `unaddressed` is the state of every asset in a document opened with no
-root mapping. An implementation MUST distinguish it from `missing`:
-"no root supplied" and "the files are gone" are different facts.
+root mapping (§0.3). An implementation MUST distinguish it from
+`missing`, and MUST NOT report it as `out-of-root`. The three are
+different facts and lead to different actions:
+
+| state | what it means | what a user does |
+|---|---|---|
+| `unaddressed` | nothing to resolve against | attach a project folder, or give the row an identifier |
+| `missing` | resolved, and the bytes are not there | find the file |
+| `out-of-root` | the identifier points outside the project **by construction** — absolute, or containing `..` | fix the identifier, or accept it will not travel |
+
+`out-of-root` is a property of the identifier and does not depend on the
+session. `unaddressed` is a property of the session and says nothing
+about the identifier. Reporting an unmapped root as `out-of-root` tells
+a user their paths are wrong when the truth is that no folder is
+attached, and makes every asset in a lone `.scf` look broken.
+
+The two ways to be `unaddressed` are distinguished by findings, not by
+state: a row with no identifier raises `asset.identifier_absent`
+(§9.4). A resolver reporting the state alone need not tell them apart;
+one that wants to MUST use the finding.
 
 Resolution MUST stay total. A document in which nothing resolves MUST
 open, list everything, and report findings.
@@ -998,6 +1004,28 @@ meaning.
 
 ## 11. Versioning and compatibility
 
+### 11.0 When these rules take effect
+
+**This section becomes binding at 1.0.** Before then, files written by
+earlier schema versions are disposable: a change may remove a column,
+alter a type, or rename a field outright, and no migration path is owed
+to anything already written.
+
+The one exception is `fixtures/hollow_creek.scf`, which is a normative
+artifact (`conformance.md` §5.1) and is migrated with every change that
+would otherwise invalidate it.
+
+This is not a licence to be careless — it is a statement about *when*
+the cost of compatibility is worth paying. Before 1.0 nobody has built
+on the format, so a deprecation window protects nothing and leaves the
+format carrying two descriptions of one fact. After 1.0 someone has, and
+every rule below is expensive to violate.
+
+Two changes taken under this clause: schema 2.9 widened
+`scene.scene_number` from integer to text, and schema 2.12 removed
+`project.scene_numbering` one version after renaming it, without the
+window §11.4 would otherwise require.
+
 ### 11.1 Schema changes are additive
 
 A schema change MUST be an additive optional field wherever that is
@@ -1022,11 +1050,13 @@ A field MAY be removed only after being marked deprecated in a released
 schema version, and MUST remain readable for at least one subsequent
 version.
 
-> **Note.** Two changes so far would not be permissible after 1.0, and
-> were taken deliberately before it: schema 2.8 removed
+> **Note.** Several changes so far would not be permissible after 1.0
+> and were taken deliberately before it, under §11.0: schema 2.8 removed
 > `asset.asset_type` and `asset.file_path` one version after deprecating
-> them in 2.7, and schema 2.9 widened `scene_number` from integer to
-> text, which SQLite cannot do to a column in place.
+> them in 2.7; 2.9 widened `scene_number` from integer to text, which
+> SQLite cannot do to a column in place; and 2.12 removed
+> `project.scene_numbering` immediately rather than carrying the window
+> this section describes.
 
 ### 11.5 The specification version
 

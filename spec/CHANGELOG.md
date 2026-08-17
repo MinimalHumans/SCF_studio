@@ -16,6 +16,68 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.19 — 2026-08-17
+
+*Describes schema 2.12.*
+
+**New §11.0: these rules take effect at 1.0.** §11.1 read as binding
+today while §11.4 carried a note saying pre-1.0 removals were
+permissible — the document contradicted how the format is actually being
+built. It now says plainly that before 1.0 files written by earlier
+schema versions are disposable, with `fixtures/hollow_creek.scf` the one
+exception because it is a normative artifact.
+
+The clause also says *why*, since "we may break things" reads worse than
+it is: before 1.0 nobody has built on the format, so a deprecation
+window protects nothing and leaves the format carrying two descriptions
+of one fact. After 1.0 someone has.
+
+**§4.3.1 is deleted, and schema 2.12 removes
+`project.scene_numbering`.** The rename to `numbering_policy` shipped in
+2.11 through §11.4's window: both columns present, writers mirroring into
+the old one, removal scheduled. Under §11.0 that window protected only
+pre-2.11 files, which are disposable — so it bought nothing and cost the
+one place the format deliberately stored a fact twice. The window is
+gone along with the column and the mirroring.
+
+The deprecation machinery stays specified in §11.4. It becomes live at
+1.0, when it earns its cost.
+
+**§8.3's resolution states are corrected, and the implementation with
+them.** The spec and the code had disagreed since the states were
+written, and the audit flagged it as a wire-value conflict blocking any
+external consumer.
+
+The code reported an **unmapped root** as `out-of-root`. It is
+`unaddressed` — §8.3 and §0.3 both said so, and §0.3 states outright
+that a `.scf` opened with no root mapping is valid and resolves
+everything to `unaddressed`.
+
+`out-of-root` now means only what its name says: the identifier points
+outside the project **by construction** — absolute, or containing `..`.
+It is a property of the identifier and does not depend on the session.
+`unaddressed` is a property of the session and says nothing about the
+identifier. §8.3 gains a table of what each state means and what a user
+does about it, because reporting an unmapped root as out-of-root told
+people their paths were wrong when the truth was that no folder was
+attached — and made every asset in a lone `.scf` look broken.
+
+The two ways to be `unaddressed` — no identifier at all, or no mapping
+for its root — are distinguished by findings rather than by state:
+`asset.identifier_absent` covers the first.
+
+The blessed Q13 moves with it, and one of its summary lines was wrong in
+a way worth naming: it read `3 with no identifier` for three assets of
+which two had identifiers. It now reads `3 unresolvable`.
+
+**§0.2 now lists the query layer as §12**, and states that §12 is not
+yet written: the queries are part of the format, the normative answer is
+the result structure rather than any rendering, and until the section
+exists the only definition of a canonical query is one blessed example
+of its output. That is named as the largest known gap in the document.
+
+---
+
 ## 0.18 — 2026-08-17
 
 *Describes schema 2.11.*

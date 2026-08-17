@@ -2,12 +2,15 @@
  * Spec §4.3 — the numbering policy, across schema 2.11's rename.
  *
  * `scene_numbering` governed act, sequence and scene numbers and shot
- * codes while being named after one of the four. 2.11 renames it to
- * `numbering_policy` through §11.4's deprecation window rather than as a
- * break, which means for one version two columns describe one fact — and
- * every rule about which one wins has to be tested, because the failure
- * mode is silent and expensive: a reader that saw a stale `derived` on a
- * locked project would renumber a shot list that is already on paper.
+ * codes while being named after one of the four. 2.11 renamed it to
+ * `numbering_policy`; 2.12 removed the old column.
+ *
+ * What is worth testing here is the resolution of ABSENCE. The policy
+ * decides whether a shot list already on paper gets renumbered, so a
+ * resolver that threw on a missing column, or that guessed `fixed`,
+ * would be expensive in opposite directions. It stays total (§9.2) and
+ * fails toward `derived`, which never silently freezes numbering that
+ * should be tracking.
  */
 import { afterEach, describe, expect, test } from "vitest";
 import { initDatabase } from "../src/db.ts";
@@ -27,28 +30,17 @@ const fresh = async (): Promise<NodeDatabase> => {
   return d;
 };
 
-describe("precedence between the two columns", () => {
-  test("the current column wins", () => {
-    expect(numberingPolicyOf({
-      numbering_policy: "fixed", scene_numbering: "derived",
-    })).toBe("fixed");
+describe("resolving the policy", () => {
+  test("reads the column", () => {
+    expect(numberingPolicyOf({ numbering_policy: "fixed" })).toBe("fixed");
+    expect(numberingPolicyOf({ numbering_policy: "derived" }))
+      .toBe("derived");
   });
 
-  test("the deprecated column is read when the current one is absent",
-       () => {
-    // Every file written before 2.11 looks like this, and there are
-    // more of them than there are files written after it.
-    expect(numberingPolicyOf({ scene_numbering: "fixed" })).toBe("fixed");
-    expect(numberingPolicyOf({
-      numbering_policy: null, scene_numbering: "fixed",
-    })).toBe("fixed");
-    expect(numberingPolicyOf({
-      numbering_policy: "", scene_numbering: "fixed",
-    })).toBe("fixed");
-  });
-
-  test("neither present means derived", () => {
+  test("absent, empty or missing means derived", () => {
     expect(numberingPolicyOf({})).toBe(DEFAULT_NUMBERING_POLICY);
+    expect(numberingPolicyOf({ numbering_policy: null })).toBe("derived");
+    expect(numberingPolicyOf({ numbering_policy: "" })).toBe("derived");
     expect(numberingPolicyOf(undefined)).toBe("derived");
     expect(numberingPolicyOf(null)).toBe("derived");
   });
@@ -58,6 +50,18 @@ describe("precedence between the two columns", () => {
     // to fail in — it never silently freezes numbering that should
     // track, and a project that wanted `fixed` will say so again.
     expect(numberingPolicyOf({ numbering_policy: "locked" }))
+      .toBe("derived");
+  });
+
+  test("the removed column is ignored, not consulted", () => {
+    // schema 2.12 dropped `scene_numbering`. A file that still carries
+    // one is unknown content under §10.1: preserved, and ignored. It
+    // must not be able to override the real column, or removing it
+    // would have achieved nothing.
+    expect(numberingPolicyOf({
+      numbering_policy: "fixed", scene_numbering: "derived",
+    })).toBe("fixed");
+    expect(numberingPolicyOf({ scene_numbering: "fixed" }))
       .toBe("derived");
   });
 });
@@ -81,44 +85,25 @@ describe("reading from a database", () => {
   });
 });
 
-describe("writing mirrors into the deprecated column", () => {
-  test("both columns are set, so an older reader is not misled",
-       async () => {
-    // The mirroring is a deliberate, time-boxed exception to §3.1. A
-    // reader that only knows `scene_numbering` must not see `derived`
-    // on a project someone just locked.
+describe("writing", () => {
+  test("sets the policy", async () => {
     db = await fresh();
     await db.exec("INSERT INTO project (name, uuid) VALUES ('P', 'p1')");
     await setNumberingPolicy(db.exec, "fixed");
+    expect(await numberingPolicy(db.exec)).toBe("fixed");
 
-    const rows = await db.exec(
-      "SELECT numbering_policy, scene_numbering FROM project");
-    expect(rows[0]?.["numbering_policy"]).toBe("fixed");
-    expect(rows[0]?.["scene_numbering"]).toBe("fixed");
-  });
-
-  test("and back again", async () => {
-    db = await fresh();
-    await db.exec("INSERT INTO project (name, uuid) VALUES ('P', 'p1')");
-    await setNumberingPolicy(db.exec, "fixed");
     await setNumberingPolicy(db.exec, "derived");
-
-    const rows = await db.exec(
-      "SELECT numbering_policy, scene_numbering FROM project");
-    expect(rows[0]?.["numbering_policy"]).toBe("derived");
-    expect(rows[0]?.["scene_numbering"]).toBe("derived");
     expect(await numberingPolicy(db.exec)).toBe("derived");
   });
-});
 
-describe("the deprecation window is real", () => {
-  test("both columns exist in schema 2.11", async () => {
-    // When 2.12 removes `scene_numbering`, this test fails and points
-    // at the mirroring in setNumberingPolicy, which goes with it.
+  test("writes one column, not two", async () => {
+    // 2.11 mirrored into the deprecated column. 2.12 removed both the
+    // column and the mirroring, so the format no longer stores this
+    // fact twice anywhere.
     db = await fresh();
     const cols = (await db.exec("PRAGMA table_info(project)"))
       .map((r) => String(r["name"]));
     expect(cols).toContain("numbering_policy");
-    expect(cols).toContain("scene_numbering");
+    expect(cols).not.toContain("scene_numbering");
   });
 });

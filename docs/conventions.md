@@ -475,6 +475,17 @@ likewise not `missing` — a session opened with no root supplied resolves
 nothing, and saying so is different from claiming a hundred assets are
 gone.
 
+Nor is it `out-of-root`, and that one took an outside reader to catch.
+The implementation reported an unmapped root as `out-of-root` for as
+long as the states existed, while the specification said `unaddressed`
+in two separate places. The distinction is worth the words: `out-of-root`
+is a property of the IDENTIFIER — absolute, or climbing out with `..` —
+and holds against any session. `unaddressed` is a property of the
+SESSION and says nothing about the identifier. Conflating them told a
+user their paths were broken when the truth was that they had not
+attached a folder yet, which is the first thing that happens to
+everyone.
+
 ### Read-only toward the filesystem
 
 SCF never ingests, copies or generates files. It reads what it is

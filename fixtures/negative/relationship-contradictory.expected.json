@@ -1,8 +1,8 @@
 {
   "about": "One pair described as both mutual and directed. No tool can pick the winner — the case §6.5's directionality flag exists for.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.11",
-  "fileSchemaVersion": "2.11",
+  "toolSchemaVersion": "2.12",
+  "fileSchemaVersion": "2.12",
   "source": "fixtures/negative/build/relationship-contradictory.scf",
   "counts": {
     "error": 1,

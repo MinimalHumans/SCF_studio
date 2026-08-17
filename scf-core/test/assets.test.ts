@@ -123,11 +123,28 @@ describe("resolution states", () => {
     expect(r.detail).toContain("not missing");
   });
 
-  test("an unknown root is out-of-root, not missing", async () => {
+  test("an unmapped root is unaddressed, not missing or out-of-root",
+       async () => {
+    // Spec §8.3. The identifier is fine and may be perfectly portable;
+    // this session just has nowhere to resolve it. Calling it
+    // out-of-root told a user their paths were wrong when the truth was
+    // that no folder was attached.
     const r = await resolveIdentifier("@plates/sh010/bg.exr",
                                       locatorOver({}, ["project"]));
-    expect(r.state).toBe("out-of-root");
+    expect(r.state).toBe("unaddressed");
     expect(r.detail).toContain("@plates");
+  });
+
+  test("out-of-root is a property of the identifier, not the session",
+       async () => {
+    // The distinction that makes the two states worth having: these
+    // resolve out-of-root against ANY locator, including a fully
+    // configured one.
+    const full = locatorOver({}, ["project", "plates"]);
+    expect((await resolveIdentifier("/Volumes/show/bg.exr", full)).state)
+      .toBe("out-of-root");
+    expect((await resolveIdentifier("@project/../etc/passwd", full)).state)
+      .toBe("out-of-root");
   });
 
   test("an absolute path is out-of-root and says it will not travel",

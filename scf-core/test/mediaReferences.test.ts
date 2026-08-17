@@ -92,7 +92,12 @@ describe("mediaReferences", () => {
       media([{ id: 1, name: "a", identifier: "@project/a.png" }]),
       async () => undefined);
     expect(out.references).toHaveLength(1);
-    expect(out.summary.counts["out-of-root"]).toBe(1);
+    // `unaddressed` since 0.19 — the test's own name was already the
+    // argument: no folder attached is a fact about the session, and
+    // reporting it as out-of-root made every asset in a lone .scf look
+    // like a broken path.
+    expect(out.summary.counts["unaddressed"]).toBe(1);
+    expect(out.summary.counts["out-of-root"]).toBe(0);
   });
 
   test("an empty resolution reports nothing referenced", async () => {

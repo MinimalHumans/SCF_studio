@@ -1,8 +1,8 @@
 {
   "about": "An identifier containing '..'. It cannot be resolved, and a resolver that followed it would leave the project.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.11",
-  "fileSchemaVersion": "2.11",
+  "toolSchemaVersion": "2.12",
+  "fileSchemaVersion": "2.12",
   "source": "fixtures/negative/build/asset-escapes-root.scf",
   "counts": {
     "error": 1,

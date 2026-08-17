@@ -146,7 +146,12 @@ export function summaryLine(
     parts.push(`${summary.counts["out-of-root"]} outside the project`);
   }
   if (summary.counts.unaddressed > 0) {
-    parts.push(`${summary.counts.unaddressed} with no identifier`);
+    // "unresolvable", not "with no identifier". Since 0.19 an unmapped
+    // root is unaddressed too (spec §8.3), and most of these do have an
+    // identifier — the session just has nowhere to resolve it. The
+    // trailing "no project folder attached" already says which case it
+    // is when that is the reason.
+    parts.push(`${summary.counts.unaddressed} unresolvable`);
   }
   const line = parts.join(" · ");
   return hasRoot ? line : `${line} — no project folder attached`;

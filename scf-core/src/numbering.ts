@@ -3,20 +3,19 @@
  *
  * `project.numbering_policy` governs whether act, sequence and scene
  * numbers and shot codes are recomputed at commit. It was called
- * `scene_numbering` until schema 2.11, a name that described one of the
- * four things it governs.
+ * `scene_numbering` until schema 2.11 — a name that described one of the
+ * four things it governs — and 2.12 removed the old column outright.
  *
- * The rename is running through §11.4's deprecation window rather than
- * as a break: 2.11 adds the new column and keeps the old one readable,
- * 2.12 removes the old one. So this module exists to make sure no caller
- * ever has to know that, and to keep the precedence rule in one place
+ * 2.11 had carried both columns with the writer mirroring into the old
+ * one, which is what §11.4's deprecation window prescribes. That window
+ * existed solely to protect files written before 2.11, and pre-1.0 there
+ * are no such files worth protecting: the deprecation machinery is
+ * specified and becomes binding at 1.0, when it earns its cost. Carrying
+ * it early bought nothing and left the format storing one fact twice.
+ *
+ * So this module is now small. It exists to keep the resolution rule —
+ * including what an absent or unrecognised value means — in one place
  * rather than in every reader that happens to need it.
- *
- * The mirroring §4.3 requires of writers is a deliberate, time-boxed
- * exception to §3.1's rule against storing a value twice. Without it a
- * reader that only knows the old column would see a stale policy and
- * could renumber a locked project — which is the one failure this field
- * exists to prevent.
  */
 
 import type { Row, SqlExec } from "./db.ts";
@@ -42,9 +41,7 @@ export function numberingPolicyOf(project: Row | undefined | null):
   if (project === undefined || project === null) {
     return DEFAULT_NUMBERING_POLICY;
   }
-  const current = clean(project["numbering_policy"]);
-  const legacy = clean(project["scene_numbering"]);
-  const value = current ?? legacy;
+  const value = clean(project["numbering_policy"]);
   return value === "fixed" || value === "derived"
     ? value : DEFAULT_NUMBERING_POLICY;
 }
@@ -61,21 +58,11 @@ export async function numberingPolicy(exec: SqlExec):
   }
 }
 
-/**
- * Set the policy, writing both columns while the deprecated one exists.
- *
- * Returns the statements issued, so a caller can log or test them
- * without re-deriving what the deprecation window requires.
- */
+/** Set the policy on the first project row. */
 export async function setNumberingPolicy(
     exec: SqlExec, policy: NumberingPolicy): Promise<void> {
   await exec(
     "UPDATE project SET numbering_policy = ? " +
-    "WHERE id = (SELECT id FROM project ORDER BY id LIMIT 1)",
-    [policy]);
-  // The mirror. Remove with the column in schema 2.12.
-  await exec(
-    "UPDATE project SET scene_numbering = ? " +
     "WHERE id = (SELECT id FROM project ORDER BY id LIMIT 1)",
     [policy]);
 }
