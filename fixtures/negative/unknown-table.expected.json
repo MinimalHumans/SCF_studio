@@ -1,0 +1,25 @@
+{
+  "about": "A table SCF does not define. Preserved and ignored (§10.1) — reported at info, because unknown usually means historical.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/unknown-table.scf",
+  "counts": {
+    "error": 0,
+    "warning": 0,
+    "info": 1
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "extension.unknown_table",
+      "severity": "info",
+      "table": "legacy_pipeline",
+      "rowIds": [],
+      "message": "Table \"legacy_pipeline\" is not defined by the registry; it is preserved and otherwise ignored.",
+      "count": 1,
+      "spec": "§10.1",
+      "title": "Table not defined by the registry"
+    }
+  ]
+}

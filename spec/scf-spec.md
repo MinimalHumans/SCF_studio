@@ -1,7 +1,7 @@
 # The SCF Format Specification
 
-**Version 0.14 (draft) — not a release.**
-Describes schema version **2.9**.
+**Version 0.16 (draft) — not a release.**
+Describes schema version **2.10**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -99,15 +99,15 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.14` (draft).
+- **Specification version** — this document. Currently `0.16` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.9`. Increments on any
+  `schema/schema_meta.py`. Currently `2.10`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
 
-This specification describes schema **2.9 and later**. A conforming
+This specification describes schema **2.10 and later**. A conforming
 reader MUST accept any file whose schema version is greater than or
 equal to the minimum it declares support for, subject to §11.
 
@@ -171,7 +171,7 @@ A conforming writer MUST set:
 | Slot | Value |
 |---|---|
 | `application_id` | `0x53434631` (`1396917809`) — `SCF1` as big-endian ASCII |
-| `user_version` | the schema version as `major * 1000 + minor` (schema 2.9 → `2009`) |
+| `user_version` | the schema version as `major * 1000 + minor` (schema 2.10 → `2010`) |
 
 The trailing `1` in `SCF1` is the **container generation**, not the
 schema version. It changes only if the physical encoding ever breaks
@@ -195,8 +195,20 @@ type and requires no registration; the conventional extension is `.scf`.
 ### 1.3 Tables
 
 A conforming file contains one table per registry entity, named for the
-entity, plus the screenplay infrastructure tables enumerated in
-`UUID_EXTRA_TABLES`. Column sets are defined by the registry (§2).
+entity, plus the screenplay infrastructure tables. Column sets are
+defined by the registry (§2).
+
+The registry declares those infrastructure tables in two lists, because
+being SCF's and carrying row identity are different properties:
+
+| List | Meaning |
+|---|---|
+| `uuidExtraTables` | Not registry entities, but they carry uuid row identity on the same terms (§6.1). |
+| `ownedTables` | SCF's, and carrying no identity. A title page is a property of the screenplay rather than a row in its own right. |
+
+**The known table set is the registry entity names, both lists, and
+`_scf_meta`.** Anything else is unknown content under §10.1. A reader
+MUST test against the union rather than assembling its own list.
 
 A file MAY contain further tables. A conforming reader MUST ignore any
 table it does not recognise, and MUST NOT treat its presence as an
@@ -237,7 +249,7 @@ exist is the registry, and what they mean is this specification.
 Each schema version's artifacts are addressable and checksummed; see
 [ARTIFACTS.md](ARTIFACTS.md).
 
-Version 2.9 defines **99 entities** across tiers 0–6.
+Version 2.10 defines **99 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -785,7 +797,31 @@ readiness, a different question with a different audience, and the two
 scales MUST NOT be conflated. A flawless file may still have too little
 authored for a query to say anything useful.
 
-### 9.5 Reports accompany exports
+### 9.5 The serialised report
+
+A validation report MUST carry:
+
+- `reportFormat` — the version of the report shape itself, on its own
+  track. A consumer parsing a report needs to know how to read the
+  REPORT, which changes for reasons unrelated to the format reported on.
+- `toolSchemaVersion` and `fileSchemaVersion` — what the tool knows, and
+  what the file claims. They differ routinely and both matter.
+- `source`, `counts`, `clean`, and `findings`.
+
+Each finding carries its code, severity, table, row ids, message, count,
+and the specification section it derives from.
+
+A report MUST be byte-identical across two runs over an unchanged file.
+Any volatile field — a timestamp above all — MUST be omitted by default,
+because a report that differs on every run cannot serve as a baseline,
+which is most of what reports are for.
+
+A tool reporting on a file it could not open MUST distinguish that from
+a file it read and found errors in. Unreadable is not a finding: a
+finding is something the implementation has an opinion about, and it
+never got to look.
+
+### 9.6 Reports accompany exports
 
 Every export whose content includes asset references MUST carry a
 resolution report naming what was referenced, what resolved, and what
@@ -871,6 +907,28 @@ increment the patch component only. Any change to a MUST or MUST NOT is
 a minor version at minimum, and MUST be recorded in the specification
 changelog.
 
+### 11.6 Document equality
+
+Two SCF documents are **equal** when their canonical dumps are equal.
+Equality is never a byte comparison: SQLite reorders pages, reuses
+freelist space and changes file size without any row changing, so
+byte-different files routinely say the same thing.
+
+A canonical dump is produced by:
+
+- taking every table, sorted by name, **including tables this
+  specification does not define** — a dump that skipped unknown content
+  could not detect the loss §10.1 forbids;
+- sorting each table's rows by `uuid` where the table has one, and by
+  their full sorted content where it does not;
+- sorting each row's columns by name;
+- excluding row ids, which are file-local and are not identity (§6.2);
+- excluding `_scf_meta`, whose `updated_at` changes on every save
+  without the document changing.
+
+A conforming Writer MUST produce an equal document when it opens a file
+and writes it back without editing anything.
+
 ---
 
 ## Appendix A — Conformance test map
@@ -884,6 +942,14 @@ change to one without the other is a defect.
 | §1.2 file identification | `scf-core/test/fileIdentity.test.ts` |
 | §2.1 registry structure | `scf-core/test/registrySchema.test.ts` |
 | §9.4 finding vocabulary | `scf-core/test/findings.test.ts` |
+| §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (11 cases) |
+| §9.5 serialised report | `scf-core/test/report.test.ts` |
+| §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |
+| §11.2–11.3 forward and backward compatibility | `scf-core/test/extensibility.test.ts`, `scf-app/test/roundTrip.test.ts` |
+| §11.4 deprecation window | *unpinned — a policy, checked by review* |
+| §11.6 document equality | `scf-core/src/canonical.ts`, exercised by `scf-app/test/roundTrip.test.ts` |
+| Round-trip integrity (`conformance.md` §3) | `scf-app/test/roundTrip.test.ts` |
+| Canonical query expectations (`conformance.md` §5.4) | `scf-app/test/queryExpectations.test.ts`, `fixtures/expectations/` |
 | §10.1 unknown-content preservation | `scf-core/test/extensibility.test.ts` |
 | §10.2–10.3 reserved namespaces | `scf-core/test/registrySchema.test.ts`, `schema/lint_registry.py` |
 | §4.2 scene-number grammar and ordering | `scf-core/test/sceneNumbers.test.ts` — including a case asserting the TypeScript comparison and its SQL twin order the same list identically |
@@ -901,5 +967,11 @@ change to one without the other is a defect.
 | §8.7 metadata | `scf-core/test/fileMetadata.test.ts` |
 | §9.4 resolution report | `scf-core/test/mediaReferences.test.ts` |
 
-Sections with no entry are not yet pinned. See
-[conformance.md](conformance.md) §5.
+Sections with no entry are not yet pinned, and two entries above say
+*unpinned* on purpose: §11.1 and §11.4 are policies about how the format
+is allowed to change, not properties of a file. No test can check that a
+future change will be additive; only review can.
+
+The remaining gap is §2 — the registry's own content, as opposed to its
+structure (§2.1) and the behaviour derived from it (§2.3, pinned
+throughout). See [conformance.md](conformance.md) §5.

@@ -68,6 +68,7 @@ export interface RegistryJson {
   generatorVersion: string;
   frameworkColumns: FrameworkColumn[];
   uuidExtraTables: string[];
+  ownedTables?: string[];
   entityCount: number;
   entities: EntityDef[];
 }
@@ -75,7 +76,17 @@ export interface RegistryJson {
 /** The registry as scf-core uses it: json payload + name index. */
 export interface Registry {
   schemaVersion: string;
+  /** Non-entity tables that carry uuid row identity (spec §6.1). */
   uuidExtraTables: string[];
+  /**
+   * SCF's own tables that carry NO identity — a title page is a
+   * property of the screenplay, not a row. Optional in the type because
+   * a registry written before schema 2.10 has no such key; absent reads
+   * as empty, which is what it meant.
+   */
+  ownedTables: string[];
+  /** Every table this format defines. What §10.1 means by "known". */
+  knownTables: Set<string>;
   entities: Map<string, EntityDef>;
   /** Registration order preserved (matters for UI grouping and diffs). */
   order: string[];
@@ -89,9 +100,17 @@ export function loadRegistry(json: RegistryJson): Registry {
       `registry.json inconsistent: entityCount=${json.entityCount} ` +
       `but ${entities.size} unique entities`);
   }
+  const ownedTables = json.ownedTables ?? [];
   return {
     schemaVersion: json.schemaVersion,
     uuidExtraTables: json.uuidExtraTables,
+    ownedTables,
+    knownTables: new Set([
+      ...json.entities.map((e) => e.name),
+      ...json.uuidExtraTables,
+      ...ownedTables,
+      "_scf_meta",
+    ]),
     entities,
     order: json.entities.map((e) => e.name),
   };

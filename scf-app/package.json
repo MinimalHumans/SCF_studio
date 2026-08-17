@@ -1,7 +1,7 @@
 {
   "name": "@minimalhumans/scf-app",
   "version": "0.1.0",
-  "description": "SCF editor, second implementation — Part 1: entity browser/editor. Local-first, Chromium-first, no server.",
+  "description": "SCF editor, second implementation \u2014 Part 1: entity browser/editor. Local-first, Chromium-first, no server.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "bless-queries": "vitest run test/queryExpectations.test.ts --mode bless"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

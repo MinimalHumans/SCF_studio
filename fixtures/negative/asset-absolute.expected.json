@@ -1,0 +1,39 @@
+{
+  "about": "An absolute identifier. Representable on purpose (§8.2), non-portable, and a warning rather than an error.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/asset-absolute.scf",
+  "counts": {
+    "error": 0,
+    "warning": 1,
+    "info": 1
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "asset.identifier_absolute",
+      "severity": "warning",
+      "table": "asset",
+      "rowIds": [
+        1
+      ],
+      "message": "Asset identifier \"/Volumes/plates/sh010.exr\" is absolute; it will not travel with the file.",
+      "count": 1,
+      "spec": "§8.2",
+      "title": "Asset identifier is absolute and therefore non-portable"
+    },
+    {
+      "code": "asset.orphan",
+      "severity": "info",
+      "table": "asset",
+      "rowIds": [
+        1
+      ],
+      "message": "Asset 1 is referenced by nothing.",
+      "count": 1,
+      "spec": "§8.6",
+      "title": "Asset referenced by nothing"
+    }
+  ]
+}

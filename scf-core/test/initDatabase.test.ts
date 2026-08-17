@@ -50,7 +50,7 @@ describe("initDatabase parity with the fixture", () => {
   test("schema_version stamped identically", async () => {
     const ourMeta = await readMeta(fresh.exec);
     const theirMeta = await readMeta(fixture.exec);
-    expect(ourMeta["schema_version"]).toBe("2.9");
+    expect(ourMeta["schema_version"]).toBe("2.10");
     expect(ourMeta["schema_version"]).toBe(theirMeta["schema_version"]);
   });
 

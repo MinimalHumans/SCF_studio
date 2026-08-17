@@ -11,7 +11,7 @@ Changing SCHEMA_VERSION is a deliberate act: record what changed in
 docs/schema-changelog.md in the same commit.
 """
 
-SCHEMA_VERSION = "2.9"
+SCHEMA_VERSION = "2.10"
 
 # Screenplay infrastructure tables. They are not registry entities, but
 # they carry uuid row identity on the same terms (schema 2.3), so the
@@ -22,6 +22,24 @@ UUID_EXTRA_TABLES = [
     "screenplay_version_lines",
     "screenplay_prop_tags",
 ]
+
+# SCF's own tables that carry NO row identity. Spec §1.3 used to define
+# the known table set as the registry plus UUID_EXTRA_TABLES, which
+# conflated two questions: is this table ours, and does it carry row
+# identity. They are not the same question, and the gap showed the first
+# time a validator enumerated a real file — SCF reported two of its own
+# tables as third-party content.
+#
+# A title page is a PROPERTY of the screenplay rather than a row in its
+# own right, so these do not gain uuids. They are simply ours.
+OWNED_TABLES = [
+    "screenplay_title_page",
+    "screenplay_version_title_page",
+]
+
+# Every table this format defines, whatever it carries. What a reader
+# means by "unknown content" (spec §10.1) is: not in here.
+KNOWN_EXTRA_TABLES = UUID_EXTRA_TABLES + OWNED_TABLES
 
 # Backwards-compatible alias for the name the v1 migrations used.
 _UUID_EXTRA_TABLES = UUID_EXTRA_TABLES

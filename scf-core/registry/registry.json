@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.9",
+  "schemaVersion": "2.10",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -28,6 +28,10 @@
     "screenplay_versions",
     "screenplay_version_lines",
     "screenplay_prop_tags"
+  ],
+  "ownedTables": [
+    "screenplay_title_page",
+    "screenplay_version_title_page"
   ],
   "entityCount": 99,
   "entities": [

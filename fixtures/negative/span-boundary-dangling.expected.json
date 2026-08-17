@@ -1,0 +1,27 @@
+{
+  "about": "An act anchored to a scene that is not present. Structure must still derive (§5.5) and say so.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/span-boundary-dangling.scf",
+  "counts": {
+    "error": 0,
+    "warning": 1,
+    "info": 0
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "structure.boundary_dangling",
+      "severity": "warning",
+      "table": "act",
+      "rowIds": [
+        1
+      ],
+      "message": "Act I starts at a scene that no longer exists.",
+      "count": 1,
+      "spec": "§5.5",
+      "title": "Span starts at a scene that is not present"
+    }
+  ]
+}

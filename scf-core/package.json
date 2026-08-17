@@ -16,12 +16,18 @@
     "conformance": "vitest run test/conformance.canonical.test.ts test/conformance.readiness.test.ts",
     "bless-corpus": "node --experimental-strip-types scripts/bless_corpus.mjs",
     "emit-schema-sql": "node --experimental-strip-types scripts/emit_schema_sql.mjs",
-    "check-schema-sql": "node --experimental-strip-types scripts/emit_schema_sql.mjs --check"
+    "check-schema-sql": "node --experimental-strip-types scripts/emit_schema_sql.mjs --check",
+    "scf-check": "node --experimental-strip-types scripts/scf_check.mjs",
+    "bless-negative": "node --experimental-strip-types scripts/build_negative.mjs",
+    "check-negative": "node --experimental-strip-types scripts/build_negative.mjs --check"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "ajv": "^8.20.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
+  },
+  "bin": {
+    "scf-check": "./scripts/scf_check.mjs"
   }
 }

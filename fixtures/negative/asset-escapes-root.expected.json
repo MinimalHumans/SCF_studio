@@ -1,0 +1,39 @@
+{
+  "about": "An identifier containing '..'. It cannot be resolved, and a resolver that followed it would leave the project.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/asset-escapes-root.scf",
+  "counts": {
+    "error": 1,
+    "warning": 0,
+    "info": 1
+  },
+  "clean": false,
+  "findings": [
+    {
+      "code": "asset.identifier_escapes_root",
+      "severity": "error",
+      "table": "asset",
+      "rowIds": [
+        1
+      ],
+      "message": "Asset identifier \"@project/../../etc/passwd\" contains a '..' segment and cannot be resolved.",
+      "count": 1,
+      "spec": "§8.2",
+      "title": "Asset identifier escapes its root"
+    },
+    {
+      "code": "asset.orphan",
+      "severity": "info",
+      "table": "asset",
+      "rowIds": [
+        1
+      ],
+      "message": "Asset 1 is referenced by nothing.",
+      "count": 1,
+      "spec": "§8.6",
+      "title": "Asset referenced by nothing"
+    }
+  ]
+}

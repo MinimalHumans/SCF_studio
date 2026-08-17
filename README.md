@@ -33,7 +33,25 @@ cd scf-core && npm test    # semantics + conformance against the fixture
 cd scf-app  && npm test    # editor, import pipeline, query runners
 ```
 
-Both suites run green on a clean checkout. `corpus/private` is not checked
+Validate a file:
+
+```sh
+cd scf-core && npm run scf-check -- ../fixtures/hollow_creek.scf
+```
+
+Exit 0 means no errors; 1 means errors; 2 means the file could not be
+read. `--json` emits the serialised report, `--quiet` the exit code
+alone.
+
+Both suites run green on a clean checkout.
+
+Conformance artifacts, all checked on every test run:
+
+| | |
+|---|---|
+| `fixtures/hollow_creek.scf` | The reference fixture. |
+| `fixtures/negative/` | Eleven deliberately-broken cases with blessed reports. |
+| `fixtures/expectations/` | Canonical query expectations — rendered markdown plus payload shapes. | `corpus/private` is not checked
 in, and the blocks that need it (`screenplay.test.ts` stage 3 payoff,
 `fountain.test.ts` private tier) skip themselves when it is absent — a
 machine that has the private tier picks up the extra coverage

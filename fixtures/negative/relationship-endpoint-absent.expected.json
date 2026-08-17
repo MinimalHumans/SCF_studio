@@ -1,0 +1,27 @@
+{
+  "about": "A relationship pointing at a character that is not here.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/relationship-endpoint-absent.scf",
+  "counts": {
+    "error": 1,
+    "warning": 0,
+    "info": 0
+  },
+  "clean": false,
+  "findings": [
+    {
+      "code": "relationship.endpoint_absent",
+      "severity": "error",
+      "table": "character_relationship",
+      "rowIds": [
+        1
+      ],
+      "message": "relationship #1 points at a character that is not in this file",
+      "count": 1,
+      "spec": "§6.5",
+      "title": "Relationship points at a character not in this file"
+    }
+  ]
+}

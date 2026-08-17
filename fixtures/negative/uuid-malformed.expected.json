@@ -1,0 +1,25 @@
+{
+  "about": "A uuid that is not uuid-shaped.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/uuid-malformed.scf",
+  "counts": {
+    "error": 1,
+    "warning": 0,
+    "info": 0
+  },
+  "clean": false,
+  "findings": [
+    {
+      "code": "identity.uuid_malformed",
+      "severity": "error",
+      "table": "scene",
+      "rowIds": [],
+      "message": "1 row(s) in scene hold a uuid that is not in canonical 8-4-4-4-12 form",
+      "count": 1,
+      "spec": "§6.1",
+      "title": "Rows whose uuid is not uuid-shaped"
+    }
+  ]
+}

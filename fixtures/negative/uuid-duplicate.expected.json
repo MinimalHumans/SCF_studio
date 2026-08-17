@@ -1,0 +1,35 @@
+{
+  "about": "Two rows sharing a uuid. Lineage becomes ambiguous.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/uuid-duplicate.scf",
+  "counts": {
+    "error": 1,
+    "warning": 1,
+    "info": 0
+  },
+  "clean": false,
+  "findings": [
+    {
+      "code": "identity.uuid_duplicate",
+      "severity": "error",
+      "table": "scene",
+      "rowIds": [],
+      "message": "1 uuid(s) in scene appear on more than one row",
+      "count": 1,
+      "spec": "§6.1",
+      "title": "Rows sharing a uuid within one table"
+    },
+    {
+      "code": "identity.unique_index_absent",
+      "severity": "warning",
+      "table": "scene",
+      "rowIds": [],
+      "message": "scene.uuid has no unique index; nothing prevents two rows claiming one identity",
+      "count": 1,
+      "spec": "§6.1",
+      "title": "Table has no unique index on uuid"
+    }
+  ]
+}

@@ -5,6 +5,26 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.10
+
+**`ownedTables` added to the registry.** Spec §1.3 defined the file's
+known table set as the registry entities plus `UUID_EXTRA_TABLES`, which
+conflated two different questions: is this table SCF's, and does it
+carry row identity.
+
+They are not the same question, and the gap was invisible until
+`collectFindings` enumerated a real file for the first time — SCF
+reported two of its own tables, `screenplay_title_page` and
+`screenplay_version_title_page`, as third-party content.
+
+A title page is a **property of the screenplay** rather than a row in
+its own right, so these do not gain uuids. They are simply ours. The
+registry now declares them separately, and `Registry.knownTables` is the
+union a reader should test unknown content against.
+
+No file changes. Nothing is created, altered or dropped — this adds a
+declaration about tables that already existed.
+
 ## 2.9
 
 **`scene.scene_number` widened from integer to text.** A scene number is

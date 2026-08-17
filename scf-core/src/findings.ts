@@ -520,9 +520,11 @@ export async function collectFindings(
   }
 
   // --- unknown tables (§10.1) ---
-  const known = new Set<string>([
-    ...registry.order, ...registry.uuidExtraTables, "_scf_meta",
-  ]);
+  // registry.knownTables, not a set assembled here: "what SCF owns" is
+  // a fact about the format and belongs where the format is declared.
+  // Assembling it at the call site is how the two title-page tables
+  // came to be reported as third-party content in the first place.
+  const known = registry.knownTables;
   const tables = await exec(
     "SELECT name FROM sqlite_master WHERE type = 'table' " +
     "AND name NOT LIKE 'sqlite_%'");

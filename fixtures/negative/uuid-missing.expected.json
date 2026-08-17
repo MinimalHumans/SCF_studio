@@ -1,0 +1,25 @@
+{
+  "about": "A row with no uuid. Nothing can track it across a file.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/uuid-missing.scf",
+  "counts": {
+    "error": 1,
+    "warning": 0,
+    "info": 0
+  },
+  "clean": false,
+  "findings": [
+    {
+      "code": "identity.uuid_missing",
+      "severity": "error",
+      "table": "scene",
+      "rowIds": [],
+      "message": "1 row(s) in scene have no uuid; the open-time backfill did not reach them",
+      "count": 1,
+      "spec": "§6.1",
+      "title": "Rows without a uuid"
+    }
+  ]
+}

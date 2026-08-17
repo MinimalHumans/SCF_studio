@@ -42,7 +42,12 @@
       }
     },
     "uuidExtraTables": {
-      "description": "Non-entity tables that nonetheless carry uuid identity (spec §6.1). These are the screenplay infrastructure tables named in §1.3.",
+      "description": "Non-entity tables that carry uuid row identity (spec §6.1).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "ownedTables": {
+      "description": "SCF's own tables that carry NO row identity — a title page is a property of the screenplay rather than a row. Together with uuidExtraTables and the entity names, this is the known table set of spec §1.3; anything else is unknown content under §10.1. Absent in registries written before schema 2.10, where it reads as empty.",
       "type": "array",
       "items": { "$ref": "#/$defs/identifier" }
     },

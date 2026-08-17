@@ -16,6 +16,61 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.16 — 2026-08-16
+
+*Describes schema 2.10.*
+
+**§11.6 is new: document equality.** `conformance.md` §3 had named this
+as an open question — the Writer role rests on "open, save, lose
+nothing" and nothing said what the comparison is performed on. It is a
+canonical dump, never bytes: SQLite reorders pages and reuses freelist
+space without any row changing, so byte-different files routinely say
+the same thing.
+
+The dump includes tables this specification does not define, which is
+the point rather than an oversight: one that skipped unknown content
+could not detect the loss §10.1 forbids.
+
+A conforming Writer MUST produce an equal document when it opens a file
+and writes it back unedited.
+
+**Appendix A is complete**, with two entries marked *unpinned on
+purpose*: §11.1 and §11.4 are policies about how the format may change,
+not properties of a file, and no test can check that a future change
+will be additive.
+
+---
+
+## 0.15 — 2026-08-16
+
+*Describes schema 2.10.*
+
+**§1.3's known table set is now two lists.** It defined the file's tables
+as the registry plus `UUID_EXTRA_TABLES`, which conflated "is this table
+SCF's" with "does this table carry row identity". The registry declares
+`ownedTables` alongside `uuidExtraTables` as of schema 2.10, and a
+reader MUST test unknown content (§10.1) against the union rather than
+assembling its own list.
+
+`screenplay_title_page` and `screenplay_version_title_page` are the
+first members: a title page is a property of the screenplay rather than
+a row in its own right, so they carry no uuids.
+
+**§9.5 is new: the serialised report.** Required fields, both schema
+versions, per-finding spec references, and — the load-bearing
+requirement — byte-identical output across two runs over an unchanged
+file, with volatile fields omitted by default. A report that differs on
+every run cannot serve as a baseline.
+
+§9.5 also requires a tool to distinguish a file it could not open from a
+file it read and found errors in. Unreadable is not a finding.
+
+The old §9.5 (reports accompany exports) is renumbered §9.6.
+
+Appendix A gains rows for the negative fixtures and the report format.
+
+---
+
 ## 0.14 — 2026-08-16
 
 *Describes schema 2.9.*

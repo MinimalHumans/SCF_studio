@@ -79,7 +79,7 @@ Everything required of a Reader, plus:
 - report duplicate natural keys rather than rejecting them (§6.4);
 - never create a prop by automatic acceptance (§9.3);
 - carry a resolution report on any export containing asset references
-  (§9.5);
+  (§9.6);
 - never embed asset bytes (§8.1).
 
 **The defining test for this role is round-trip integrity:** open, save,
@@ -112,23 +112,49 @@ this role.
 The Writer claim rests on one property: **a read-modify-write cycle
 loses nothing.**
 
-*Not yet specifiable in full.* What is settled:
+Settled, and tested:
 
 - unknown tables, unknown columns and rows the writer did not originate
   MUST survive (§10.1);
 - uuids MUST be stable across the cycle for every row that was not
   edited (§6.1);
 - authored `shot_number` values MUST survive (§3.3);
-- scene numbering MUST survive on a `fixed` file (§4.2).
+- scene numbering MUST survive on a `fixed` file (§4.3);
+- the header stamps MUST survive (§1.2).
 
-What is not settled: whether byte-level equality of the SQLite file is
-ever expected (it is not — page layout is not normative), and therefore
-what the comparison is performed *on*. The likely answer is a canonical
-row dump per table, ordered by uuid, but no such dump format exists yet.
+### 3.1 What the comparison is performed on
 
-**There is currently no round-trip test.** This is the largest hole in
-the conformance story, and it is the one place a Writer claim would most
-plausibly fail today.
+Not the bytes. SQLite reorders pages, reuses freelist space and changes
+file size without any row changing, so two byte-different files
+routinely say exactly the same thing: a byte comparison would fail
+constantly and mean nothing when it passed.
+
+The comparison is a **canonical dump**, specified in `scf-spec.md` §11.6
+and implemented as `canonicalDump()`. Every table sorted by name —
+including unknown ones, since skipping those would miss the one failure
+this role is most likely to have. Rows sorted by uuid where the table
+has one, by full content where it does not. Columns sorted by name. Row
+ids excluded by default, because they are not identity (§6.2).
+
+Two files with the same canonical dump are the same SCF document,
+whatever their bytes.
+
+### 3.2 Status
+
+`scf-app/test/roundTrip.test.ts` exercises the app's own open→edit→save
+cycle: ten cycles with no edits change nothing; three cycles preserve an
+`x_` table, an `x_` column with its values and an unprefixed unknown
+table; an edit shows up in exactly one table and nowhere else; authored
+shot numbers, `fixed` scene numbering and the header stamps all survive.
+
+One test guards the guard — it drops a table and asserts the dump
+notices, because a dump that silently skipped unknown content would
+report success while the very thing §10.1 protects went missing.
+
+What is still untested: a cycle driven through the browser's own
+`sqlite3_js_db_export` and the File System Access adapter. The Node
+driver exercises the same serialise-and-write guarantee, but not that
+code path.
 
 ---
 
@@ -162,17 +188,29 @@ Most of this exists already as library code — `identity.ts`,
 `structure.ts`, `assetIndex.ts`. What is missing is a CLI over it and a
 stable output format.
 
-**No longer blocked.** The finding vocabulary landed in spec 0.14:
+**Built.** `scf-core/scripts/scf_check.mjs`, registered as the
+`scf-check` bin. The finding vocabulary landed in spec 0.14:
 `findings.ts` defines a closed catalog of codes with catalog-owned
 severities, and `collectFindings(exec, registry)` is the engine — one
 implementation of "what is wrong with this file", shared by the CLI when
 it exists, the editor's panels, and the tests.
 
-What remains for `scf-check` is a CLI around it, a stable serialised
-output format, and an exit-code convention. Items 1, 2, 3, 4, 5, 6, 8
-and 9 of the list above are already covered by `collectFindings`; item 7
-(asset resolution tally) needs a root mapping the CLI does not yet have a
-way to supply.
+    scf-check FILE...          human-readable report
+    scf-check --json FILE...   the serialised report (§9.5)
+    scf-check --quiet FILE...  exit code only
+
+Exit codes: **0** no errors, **1** at least one error finding, **2** the
+file could not be read at all. The 1/2 split is deliberate — a file with
+errors is one SCF read and understood; a file it could not open is a
+different kind of problem, and a CI job should be able to tell them
+apart. Warnings and info never fail, per §9.1.
+
+Items 1, 2, 3, 4, 5, 6, 8 and 9 of the list above are covered. **Item 7,
+the asset resolution tally, is not**: it needs a mapping from a root
+name to a location, and the CLI has no way to supply one. That is not an
+oversight in the tool — §0.3 makes the root mapping a property of the
+consuming environment, so a validator has to be told, and the flag to
+tell it has not been designed.
 
 ---
 
@@ -212,38 +250,101 @@ test an arbitrary file, which is what §4 is for.
 
 ### 5.3 Negative fixtures
 
-*Do not exist.* The fixture contains authored **absences**; it contains
-no authored **errors**. Nothing currently pins what a conforming
-implementation should report when a file is wrong.
+Eleven cases in `fixtures/negative/`, each a minimal database plus
+exactly the damage its name describes, with a blessed report beside it.
 
-Needed, at minimum: dangling references, duplicate natural keys that
-disagree, a relationship pair entered both ways, a span boundary on a
-deleted scene, an asset identifier containing `..`, and a file carrying
-an unknown table.
+Minimal on purpose: a case that trips three findings tells you nothing
+about which code belongs to which condition. The first draft used
+readable strings like `ch-1` for uuids and every case reported
+`identity.uuid_malformed` alongside the thing it was meant to
+demonstrate.
+
+The `.scf` files are **built, not checked in** —
+`npm run bless-negative` regenerates them, `npm run check-negative`
+verifies the blessed reports in CI. Eleven fresh databases is several
+megabytes of binary in a repo whose point is a text-first format, and
+they are exactly reproducible. The reports are the artifact, and unlike
+the databases they diff.
+
+Covered: missing, malformed and duplicate uuids; a relationship endpoint
+that is absent, a contradictory pair, and one with no directionality; a
+span boundary on a scene that is not present; an asset identifier that
+escapes its root and one that is absolute; an unknown table; and an
+unstamped header.
 
 ### 5.4 The canonical query expectations
 
-*Not yet data.* Query expectations live inside test code, which means a
-second implementation must port TypeScript rather than read a file. §10
-of the design record has named this since before there was a spec.
+`fixtures/expectations/`, blessed and checked on every test run.
 
-Making them data — expected results per query per fixture position — is
-the single change that would most reduce the cost of a second
-implementation.
+Two artifacts per the reasoning below, neither containing anything
+file-local:
+
+- `<Q>.expected.md` — the rendered context markdown, which is what a
+  consumer of these queries actually receives. Names, not ids.
+- `shapes.json` — the payload's structure: key names, array lengths,
+  tuple positions, with `id`, `created_at` and `updated_at` dropped and
+  foreign keys recorded as `<row-ref>` rather than as values.
+
+**Payloads themselves are not blessed.** They carry row ids, and row ids
+are file-local (§6.2), so a second implementation reading the same
+fixture would legitimately produce different ones. Expectations that
+failed for that reason would teach a reader to stop believing them.
+
+Parameters resolve from **selectors** — scene number 12, the character
+named Eleanor — recorded alongside the expectations, so another
+implementation can resolve them for itself.
+
+Eight of the sixteen queries are covered: those taking a position or a
+subject as a parameter. The other eight either take no parameters or
+enumerate the whole project, so their output is a function of the
+fixture rather than of a position in it. Worth adding; not yet done.
 
 ---
 
 ## 6. Claiming conformance
 
-*Not yet specifiable.* There is no self-certification form, no
-registry of implementations, and no test binary to run.
+Self-certification. There is no certifying body, no registry of
+implementations, and no fee — the artifacts are public and the checks
+are runnable, which is the whole mechanism.
 
-When there is, the shape is expected to be: run `scf-check` against the
-fixture and against your own output, publish the report, state the role
-claimed and the specification version.
+### 6.1 The procedure
 
-Until then, no third party can claim conformance in a way that means
-anything, and this section is the honest statement of that.
+**Reader.** Against `fixtures/hollow_creek.scf`:
+
+1. `scf-check` the fixture. It MUST exit 0.
+2. Reproduce the canonical query expectations in
+   `fixtures/expectations/` for the queries you implement, resolving the
+   parameters from the recorded selectors.
+3. Run the eleven negative fixtures in `fixtures/negative/`. For each,
+   report the codes in its blessed report at the severities the catalog
+   gives them. Extra findings are permitted and MUST be disclosed;
+   missing ones are a failure.
+
+**Writer.** Everything above, plus:
+
+4. Open the fixture, write it back unchanged, and show that the
+   canonical dump (§3.1) is identical.
+5. Do the same with a file carrying an `x_` table, an `x_` column and an
+   unprefixed unknown table. All three MUST survive.
+
+**Editor.** Everything above, plus a statement of which derived state
+you maintain across edits (§2.3). There is no mechanical test for this
+role; it is a description, and it should read as one.
+
+### 6.2 The claim
+
+A claim states: the **role**, the **specification version**, the
+**schema version range** accepted, and any **disclosed divergences**.
+Publish it where your users will find it, and link the reports.
+
+A claim without the reports is a claim about your intentions.
+
+### 6.3 What a claim is not
+
+It is not a guarantee, an endorsement, or a licence to use the name for
+anything else (§8's trademark statement, when it exists, governs that).
+It is a statement that on a stated date, against stated artifacts,
+your implementation behaved as described — and a reader can check.
 
 ---
 
@@ -251,10 +352,11 @@ anything, and this section is the honest statement of that.
 
 | Implementation | Role claimed | Basis |
 |---|---|---|
-| `scf-core` | Reader | The canonical and readiness suites pass against the fixture. Round-trip untested. |
-| `scf-app` | Editor | The app suite passes. Round-trip untested; unknown-content preservation untested. |
+| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all eleven negative fixtures report as blessed. |
+| `scf-app` | Editor | The app suite passes, including the open→edit→save round trip and third-party content preservation across repeated cycles. |
 | — | Writer | No independent implementation exists. |
 
 There is no second implementation. Until there is, every rule in the
 specification is guaranteed only to be implementable in the way it was
-already implemented, which is the weakest form of that guarantee.
+already implemented, which is the weakest form of that guarantee — and
+the reason §6 exists in a form a stranger could actually follow.

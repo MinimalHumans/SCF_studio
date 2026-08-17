@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.14 / schema 2.9. This document is expected
+Current as of specification 0.16 / schema 2.10. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -135,15 +135,21 @@ about it is ceremonial.
 | Extraction is a proposal | §9.3 | Stable | Yes | |
 | Props never auto-accepted | §9.3 | Stable | Yes | |
 | Export carries a resolution report | §9.4 | Provisional | Yes | |
-| Enumerated finding types | §9.4 | Provisional | Yes | `findings.ts` — a closed catalog of 35 codes, severity owned by the catalog, deterministic ordering, and `collectFindings()` as the single engine a CLI, the panels and the tests all share. Provisional until `scf-check` exists and a report has been read by someone who did not write it. |
-| **The known-table set** | §1.3 | **Unstable** | Partly | §1.3 defines the file's tables as the registry plus `UUID_EXTRA_TABLES`, which conflates two questions. `initScreenplayTables` creates six screenplay tables; that list names four. **Decided:** `screenplay_title_page` and `screenplay_version_title_page` are properties of the screenplay rather than rows in their own right, so they do NOT gain uuids. The fix is therefore a second declared set — SCF-owned tables that carry no identity — not an addition to `UUID_EXTRA_TABLES`. Found by `collectFindings` on its first run over the fixture. |
+| Enumerated finding types | §9.4 | Provisional | Yes | `findings.ts` — a closed catalog of 35 codes, severity owned by the catalog, deterministic ordering, and `collectFindings()` as the single engine a CLI, the panels and the tests all share. Provisional until a report has been read by someone who did not write it. |
+| The known-table set | §1.3 | Provisional | Yes | §1.3 defines the file's tables as the registry plus `UUID_EXTRA_TABLES`, which conflated two questions. Schema 2.10 splits them: `ownedTables` for SCF's tables that carry no identity, `uuidExtraTables` for those that do, and `Registry.knownTables` as the union. Title-page rows are properties of the screenplay, so they carry no uuids. Found by `collectFindings` on its first run over the fixture. |
+| Enumerated finding behaviour on broken files | §9.4 | Provisional | Yes | Eleven negative fixtures in `fixtures/negative/`, each pinning one code, with blessed reports and a `--check` mode. |
+| The serialised report | §9.5 | Provisional | Yes | `report.ts`, own format version, determinism pinned. Provisional until a second implementation has parsed one. |
+| `scf-check` | §9.4–9.5 | Provisional | Yes | CLI over `collectFindings`. Covers eight of `conformance.md` §4's nine checks; the asset resolution tally needs a root-mapping flag that has not been designed. |
 
 ### Extensibility
 
 | Area | Spec | Tier | Implemented | Notes |
 |---|---|---|---|---|
 | Ignore unknown content | §10.1 | Provisional | Yes | Pinned by `extensibility.test.ts`. |
-| Preserve unknown content on write | §10.1 | Provisional | **Yes — verified** | Was Unstable on the grounds of being believed true and never tested. It is true: an `x_` table, an `x_` column with its values, and an unprefixed unknown table all survive `initDatabase`, including across five repeated cycles. Provisional rather than Stable because only `initDatabase` has been exercised — a full open→edit→save round trip through the app is still untested. |
+| Preserve unknown content on write | §10.1 | Provisional | **Yes — verified** | An `x_` table, an `x_` column with its values, and an unprefixed unknown table survive `initDatabase` across five cycles, and survive the app's own open→edit→save cycle across three. Provisional rather than Stable because the browser's `sqlite3_js_db_export` path is still exercised only by hand. |
+| Document equality / canonical dump | §11.6 | Provisional | Yes | `canonical.ts`. Answers `conformance.md` §3's open question about what a round trip is compared on. Provisional until a second implementation has produced a dump. |
+| Canonical query expectations as data | — | Provisional | Partly | `fixtures/expectations/` — blessed markdown plus payload shapes, both free of row ids and timestamps. Eight of sixteen queries; the other eight take no position parameter. |
+| Conformance claim process | — | Provisional | n/a | `conformance.md` §6: self-certification, per role, with the reports published. Untested in the only way that matters — nobody has made a claim. |
 | Reserved names | §10.2 | Provisional | Yes | `@plates` and `@nas` reserved; entity and column names checked by `lint_registry.py` and `registrySchema.test.ts`. |
 | `x_` extension prefix | §10.3 | Provisional | Yes | Enforced at the moment a name is chosen (the linter) and again at the generated artifact (the schema test). Preservation covered by the row above. |
 
@@ -175,11 +181,10 @@ Five Unstable rows, in rough dependency order:
 1. **Resolution state names** (§8.3) — a wire-value disagreement between
    spec, docs and code. Cheapest to fix, and it blocks any external
    consumer that reads a state.
-2. **The known-table set** (§1.3) — two live screenplay tables are in
-   neither declared list, so SCF reports its own tables as third-party
-   content. The identity question is settled (title-page rows carry no
-   uuids), so what remains is splitting the one list into two: tables
-   that carry identity, and tables that are simply SCF's.
+2. **The asset resolution tally in `scf-check`** (§8.3) — the one check
+   the validator cannot do, because §0.3 makes the root mapping a
+   property of the consuming environment and no flag exists to supply
+   one.
 3. **`lifecycle_status` filtering** (§6.6) — changes the answer to every
    canonical query. Needs a fixture with cut rows.
 4. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
@@ -187,6 +192,9 @@ Five Unstable rows, in rough dependency order:
 5. **Artifact addressing** (§2.1) — the manifest is written and verifies,
    but no `schema-X.Y` tag exists, so the URLs it publishes do not
    resolve. One `git tag` closes it.
+
+*Closed in 0.15:* the known-table set (§1.3), and `scf-check`, which
+was the item most of §5 was waiting on.
 
 *Closed in 0.14:* enumerated finding types (§9.4).
 

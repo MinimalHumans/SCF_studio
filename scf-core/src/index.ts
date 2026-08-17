@@ -31,6 +31,8 @@ export * from "./bundling.ts";
 export * from "./db.ts";
 export * from "./fileIdentity.ts";
 export * from "./findings.ts";
+export * from "./report.ts";
+export * from "./canonical.ts";
 export * from "./sceneNumbers.ts";
 export * from "./resolution.ts";
 export * from "./queryPaths.ts";

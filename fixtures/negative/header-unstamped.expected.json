@@ -1,0 +1,25 @@
+{
+  "about": "No application id. Every file written before schema 2.10 looks like this, and a reader MUST NOT refuse it (§1.2).",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.10",
+  "fileSchemaVersion": "2.10",
+  "source": "fixtures/negative/build/header-unstamped.scf",
+  "counts": {
+    "error": 0,
+    "warning": 0,
+    "info": 1
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "header.application_id_absent",
+      "severity": "info",
+      "table": null,
+      "rowIds": [],
+      "message": "No SCF application id in the file header; identification by content only.",
+      "count": 1,
+      "spec": "§1.2",
+      "title": "File header carries no SCF application id"
+    }
+  ]
+}

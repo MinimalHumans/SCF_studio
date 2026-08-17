@@ -321,12 +321,18 @@ The procedure:
 5. Migrate `fixtures/hollow_creek.scf` if a conformance test compares
    its column set. User files need no migration — `initDatabase`
    ALTER-adds any registry column a file lacks, on open.
-6. Re-emit the published artifacts and their checksums:
+6. Re-emit the published artifacts, the negative fixtures' blessed
+   reports, and the checksums:
 
    ```sh
-   cd scf-core && npm run emit-schema-sql && cd ..
+   cd scf-core && npm run emit-schema-sql && npm run bless-negative && cd ..
+   cd scf-app && npm run bless-queries && cd ..
    python3 schema/artifact_manifest.py
    ```
+
+   The query expectations are blessed here because a schema change can
+   alter what a runner returns without any test failing on its own
+   terms.
 
 7. Tag it, which is what makes the published URLs resolve:
 

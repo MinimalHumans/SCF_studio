@@ -35,7 +35,9 @@ REPO_ROOT = SCHEMA_DIR.parent
 sys.path.insert(0, str(SCHEMA_DIR))
 
 from entity_registry import ENTITY_REGISTRY, FieldDef  # noqa: E402
-from schema_meta import SCHEMA_VERSION, UUID_EXTRA_TABLES  # noqa: E402
+from schema_meta import (  # noqa: E402
+    OWNED_TABLES, SCHEMA_VERSION, UUID_EXTRA_TABLES,
+)
 
 GENERATOR_VERSION = "1.0.0"
 
@@ -112,6 +114,7 @@ def build() -> dict:
              "default": "(datetime('now'))"},
         ],
         "uuidExtraTables": list(UUID_EXTRA_TABLES),
+        "ownedTables": list(OWNED_TABLES),
         "entityCount": len(ENTITY_REGISTRY),
         "entities": [entity_to_json(e) for e in ENTITY_REGISTRY.values()],
     }
