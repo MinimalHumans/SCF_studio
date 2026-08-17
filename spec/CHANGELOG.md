@@ -16,6 +16,30 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.18 — 2026-08-17
+
+*Describes schema 2.11.*
+
+**§4.3's field is renamed: `scene_numbering` → `numbering_policy`.** It
+governs act, sequence and scene numbers and shot codes, and was named
+after one of the four.
+
+New **§4.3.1** states the deprecation window. A reader MUST prefer
+`numbering_policy` and MUST fall back to `scene_numbering`; a writer MUST
+mirror into the old column while it exists. The mirroring is an explicit,
+time-boxed exception to §3.1, and the section says why: a reader knowing
+only the old column would otherwise see a stale `derived` on a locked
+project and renumber a shot list already on paper.
+
+The rename is **additive** — schema 2.11 adds the new column, 2.12
+removes the old — so no file needs converting. An earlier note in this
+document called the rename non-additive and "before 1.0 or never"; that
+was wrong, and §11.4's window is exactly the mechanism for it.
+
+Appendix A gains a row for §4.3.
+
+---
+
 ## 0.17 — 2026-08-17
 
 *Describes schema 2.10.*

@@ -1,8 +1,8 @@
 {
   "about": "No application id. Every file written before schema 2.10 looks like this, and a reader MUST NOT refuse it (§1.2).",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.10",
-  "fileSchemaVersion": "2.10",
+  "toolSchemaVersion": "2.11",
+  "fileSchemaVersion": "2.11",
   "source": "fixtures/negative/build/header-unstamped.scf",
   "counts": {
     "error": 0,

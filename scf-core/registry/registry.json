@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.10",
+  "schemaVersion": "2.11",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -182,8 +182,8 @@
           "helpText": "Dominant production workflow stance."
         },
         {
-          "name": "scene_numbering",
-          "label": "Scene Numbering",
+          "name": "numbering_policy",
+          "label": "Numbering Policy",
           "fieldType": "select",
           "sqlType": "TEXT",
           "required": false,
@@ -194,7 +194,21 @@
             "derived",
             "fixed"
           ],
-          "helpText": "derived: scene numbers are recomputed from the script's order at every commit. fixed: never touched — what an imported script needs, since a production's own numbering may be gapped or out of sequence and is data, not a derivation. The first step toward production locking."
+          "helpText": "Governs ALL FOUR authored numbers — act, sequence, scene and shot. derived: recomputed from the script's order at every commit, which is what a writer still moving the story wants. fixed: never touched. Once a production is greenlit the numbers leave the building on schedules and call sheets and become identifiers, and a scene numbered 12 that plays after scene 45 is correct. See spec §4.3."
+        },
+        {
+          "name": "scene_numbering",
+          "label": "Scene Numbering (deprecated)",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "options": [
+            "derived",
+            "fixed"
+          ],
+          "helpText": "DEPRECATED in schema 2.11, removed in 2.12. Renamed to numbering_policy, which says what it actually governs. Readers must prefer numbering_policy and fall back to this; writers must mirror into it while it exists. See spec §4.3."
         },
         {
           "name": "notes",

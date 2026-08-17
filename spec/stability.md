@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.17 / schema 2.10. This document is expected
+Current as of specification 0.18 / schema 2.11. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -70,7 +70,8 @@ about it is ceremonial.
 | `scene_number` declared type | §4.2.3 | Provisional | Yes | Widened to text in schema 2.9. The FIXTURE's column was rebuilt to match in 0.17 — until then the registry, the published DDL and the fixture disagreed, and §4.2's grammar was unexercised by the artifact meant to demonstrate it. |
 | The fixture exercises §4.1's ordering rule | §4.1 | Provisional | Yes | Fixed in 0.17: `12A` sits mid-script with the highest row id, and `16` follows `19` keeping its number. The three orders now differ, and three invariant tests pin that. |
 | Numbering policy covers all four numbers | §4.3 | Provisional | Partly | 0.17 states that act, sequence, scene and shot numbers are all authored and all governed by `project.scene_numbering`. The implementation recomputes scene numbers and shot codes; whether it recomputes act and sequence numbers under `derived` is untested. |
-| **`project.scene_numbering` is misnamed** | §4.3 | **Unstable** | n/a | It governs four kinds of number. A rename is non-additive and must happen before 1.0 or not at all. |
+| `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in schema 2.11, additively, through §11.4's window. `numbering.ts` owns the precedence and the mirroring. |
+| **Removing `scene_numbering`** | §4.3.1 | **Unstable** | **No** | Scheduled for schema 2.12. Until then two columns describe one fact and writers must mirror — the one place the format deliberately stores a value twice. `numbering.test.ts` fails when the column goes, and points at the mirroring that goes with it. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
 | Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
 | Shot-code allocation | §4.4.3 | Provisional | Yes | Continue-past-highest, with the stated no-retired-codes limitation. |
@@ -189,9 +190,9 @@ Seven Unstable rows, in rough dependency order:
 1. **The query layer** — sixteen normative queries, none defined. Decided
    in principle; a multi-session job, and everything in `conformance.md`
    §5.4 is provisional on it.
-2. **`project.scene_numbering` is misnamed** — it governs act, sequence,
-   scene and shot numbers. Rename before 1.0 or accept the name
-   permanently.
+2. **Remove `scene_numbering`** in schema 2.12, and the mirroring with
+   it. Until then the format stores one fact twice, on purpose and on a
+   timer.
 3. **Resolution state names** (§8.3) — a wire-value disagreement between
    spec, docs and code. Cheapest to fix, and it blocks any external
    consumer that reads a state.

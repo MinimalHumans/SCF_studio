@@ -5,6 +5,29 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.11
+
+**`project.scene_numbering` renamed to `project.numbering_policy`.** The
+old name described one of the four things the field governs: spec §4.3
+now states that act, sequence and scene numbers and shot codes are all
+authored and all governed by it.
+
+**The rename is additive**, through §11.4's deprecation window rather
+than as a break. 2.11 adds `numbering_policy` and keeps `scene_numbering`
+readable; **2.12 removes it**. No file needs converting: a reader prefers
+the new column and falls back to the old one, so every file written
+before 2.11 keeps working untouched.
+
+Writers MUST mirror the policy into `scene_numbering` while it exists.
+That is a deliberate exception to the derive-don't-store rule, made
+because a reader that knew only the old column would otherwise see a
+stale `derived` on a locked project and renumber a shot list that is
+already on paper. The mirroring goes away with the column.
+
+`scf-core/src/numbering.ts` owns the precedence so no caller has to know
+about any of this; `structureCommit`'s `numberingMode` / `setNumberingMode`
+delegate to it.
+
 ## 2.10
 
 **`ownedTables` added to the registry.** Spec §1.3 defined the file's

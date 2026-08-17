@@ -313,15 +313,26 @@ register(EntityDef(
             "performance_first", "generation_first", "hybrid"
         ], default="generation_first",
                  help_text="Dominant production workflow stance."),
-        FieldDef("scene_numbering", "Scene Numbering", "select", options=[
+        FieldDef("numbering_policy", "Numbering Policy", "select", options=[
             "derived", "fixed"
         ], default="derived",
-                 help_text="derived: scene numbers are recomputed from the "
-                           "script's order at every commit. fixed: never "
-                           "touched — what an imported script needs, since a "
-                           "production's own numbering may be gapped or out "
-                           "of sequence and is data, not a derivation. The "
-                           "first step toward production locking."),
+                 help_text="Governs ALL FOUR authored numbers — act, "
+                           "sequence, scene and shot. derived: recomputed "
+                           "from the script's order at every commit, which "
+                           "is what a writer still moving the story wants. "
+                           "fixed: never touched. Once a production is "
+                           "greenlit the numbers leave the building on "
+                           "schedules and call sheets and become "
+                           "identifiers, and a scene numbered 12 that plays "
+                           "after scene 45 is correct. See spec §4.3."),
+        FieldDef("scene_numbering", "Scene Numbering (deprecated)", "select",
+                 options=["derived", "fixed"],
+                 help_text="DEPRECATED in schema 2.11, removed in 2.12. "
+                           "Renamed to numbering_policy, which says what it "
+                           "actually governs. Readers must prefer "
+                           "numbering_policy and fall back to this; writers "
+                           "must mirror into it while it exists. See spec "
+                           "§4.3."),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
         FieldDef("vision_statement", "Vision Statement", "textarea", tab="Vision"),
         FieldDef("creative_philosophy", "Creative Philosophy", "textarea", tab="Vision"),

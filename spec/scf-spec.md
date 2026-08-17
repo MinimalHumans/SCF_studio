@@ -1,7 +1,7 @@
 # The SCF Format Specification
 
-**Version 0.17 (draft) — not a release.**
-Describes schema version **2.10**.
+**Version 0.18 (draft) — not a release.**
+Describes schema version **2.11**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -99,15 +99,15 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.17` (draft).
+- **Specification version** — this document. Currently `0.18` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.10`. Increments on any
+  `schema/schema_meta.py`. Currently `2.11`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
 
-This specification describes schema **2.10 and later**. A conforming
+This specification describes schema **2.11 and later**. A conforming
 reader MUST accept any file whose schema version is greater than or
 equal to the minimum it declares support for, subject to §11.
 
@@ -181,7 +181,7 @@ A conforming writer MUST set:
 | Slot | Value |
 |---|---|
 | `application_id` | `0x53434631` (`1396917809`) — `SCF1` as big-endian ASCII |
-| `user_version` | the schema version as `major * 1000 + minor` (schema 2.10 → `2010`) |
+| `user_version` | the schema version as `major * 1000 + minor` (schema 2.11 → `2011`) |
 
 The trailing `1` in `SCF1` is the **container generation**, not the
 schema version. It changes only if the physical encoding ever breaks
@@ -265,7 +265,7 @@ exist is the registry, and what they mean is this specification.
 Each schema version's artifacts are addressable and checksummed; see
 [ARTIFACTS.md](ARTIFACTS.md).
 
-Version 2.10 defines **99 entities** across tiers 0–6.
+Version 2.11 defines **99 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -416,7 +416,7 @@ by §4.2.2 and MUST fall through to the next term in §4.1's chain.
 `sequence.sequence_number`, `scene.scene_number` and `shot.shot_number`.
 None of them is derived from position, and none may be inferred from one.
 
-`project.scene_numbering` governs whether an implementation recomputes
+`project.numbering_policy` governs whether an implementation recomputes
 them:
 
 - `derived` (default) — act, sequence and scene numbers and shot codes
@@ -439,9 +439,28 @@ and every document in the production office says so.
 scene's number stops predicting its position, which is why story order
 is derived from the screenplay and never from the number.
 
-> The field is named `scene_numbering` and governs four kinds of number.
-> Renaming it is a non-additive change and would have to happen before
-> 1.0; it is tracked in [stability.md](stability.md).
+#### 4.3.1 The deprecated column
+
+The field was called `scene_numbering` until schema 2.11 — a name that
+described one of the four things it governs. It is renamed through
+§11.4's deprecation window rather than as a break:
+
+| Schema | State |
+|---|---|
+| ≤ 2.10 | `scene_numbering` only |
+| 2.11 | Both columns. `numbering_policy` is authoritative. |
+| 2.12 | `scene_numbering` removed |
+
+A conforming reader MUST prefer `numbering_policy` and MUST fall back to
+`scene_numbering` when it is absent or empty. A file with neither, or
+with a value that is neither `derived` nor `fixed`, is `derived`.
+
+While `scene_numbering` exists, a conforming writer MUST **mirror** the
+policy into it on every change. That is a deliberate, time-boxed
+exception to §3.1's rule against storing a derivable value twice, and it
+is made for one reason: a reader that knows only the old column would
+otherwise see a stale `derived` on a locked project and renumber a shot
+list that is already on paper.
 
 ### 4.4 Shot codes
 
@@ -1051,6 +1070,7 @@ change to one without the other is a defect.
 | §1.2 file identification | `scf-core/test/fileIdentity.test.ts` |
 | §2.1 registry structure | `scf-core/test/registrySchema.test.ts` |
 | §9.4 finding vocabulary | `scf-core/test/findings.test.ts`, `spec/finding-catalog.json` |
+| §4.3 numbering policy and its deprecation window | `scf-core/test/numbering.test.ts` |
 | §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (11 cases) |
 | §9.5 serialised report | `scf-core/test/report.test.ts` |
 | §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |

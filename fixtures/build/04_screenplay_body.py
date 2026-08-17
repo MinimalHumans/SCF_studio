@@ -35,7 +35,7 @@ Three deliberate structural facts, beyond the prose:
     sits mid-script, so row-id order stops matching script order.
 
   * Scene 16 comes AFTER scene 19 in the script and keeps its number.
-    The project is `scene_numbering: fixed`, so this is not damage: it is
+    The project is `numbering_policy: fixed`, so this is not damage: it is
     what a locked script looks like after a reorder, and it is the
     hazard §4.1 warns about in as many words. Script order and
     scene-number order now differ.

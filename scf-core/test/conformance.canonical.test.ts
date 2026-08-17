@@ -14,6 +14,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { openFixture, str, type Fixture } from "./setup.ts";
 import { sceneNumberOrderJoin, sceneNumberOrderTerms }
   from "../src/sceneNumbers.ts";
+import { numberingPolicy } from "../src/numbering.ts";
 import {
   motifStateAt, propStateAt, relationshipStateAt, resolveDescription,
   resolveDirection, resolveMedia, sceneOrder, selectLocationVariant,
@@ -313,10 +314,10 @@ describe("Q03 smoke: subjects present", () => {
  */
 describe("fixture invariants", () => {
   test("numbering is fixed, so no commit can renumber it", async () => {
-    const rows = await fx.ctx.exec("SELECT scene_numbering FROM project");
+    const rows = await fx.ctx.exec("SELECT numbering_policy FROM project");
     // 'derived' would let the first commit in the app renumber the
     // scenes from script order and destroy the production numbering.
-    expect(String(rows[0]?.["scene_numbering"])).toBe("fixed");
+    expect(String(rows[0]?.["numbering_policy"])).toBe("fixed");
   });
 
   test("the gaps are still there", async () => {
@@ -372,8 +373,7 @@ describe("fixture invariants", () => {
     // sc 16 follows sc 19. The project is `fixed`, so this is not
     // damage — it is what §4.1's warning describes, and a reader that
     // renumbered it would be non-conforming under §4.3.
-    const mode = await fx.ctx.exec("SELECT scene_numbering FROM project");
-    expect(mode[0]?.["scene_numbering"]).toBe("fixed");
+    expect(await numberingPolicy(fx.ctx.exec)).toBe("fixed");
 
     const script = (await fx.ctx.exec(
       "SELECT s.scene_number AS n FROM scene s " +

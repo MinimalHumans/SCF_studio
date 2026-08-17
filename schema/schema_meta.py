@@ -11,7 +11,7 @@ Changing SCHEMA_VERSION is a deliberate act: record what changed in
 docs/schema-changelog.md in the same commit.
 """
 
-SCHEMA_VERSION = "2.10"
+SCHEMA_VERSION = "2.11"
 
 # Screenplay infrastructure tables. They are not registry entities, but
 # they carry uuid row identity on the same terms (schema 2.3), so the

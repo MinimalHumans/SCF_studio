@@ -136,7 +136,7 @@ export function scenePositions(
  * Same precedence, deliberately: script position first, then stored
  * number, then id. Ordering by `scene_number` alone was wrong in both
  * directions — a blank-written project has no numbers and fell back to
- * insertion order, and a project with `scene_numbering = 'fixed'` keeps
+ * insertion order, and a project with `numbering_policy = 'fixed'` keeps
  * numbers that no longer track the page, so a picker sorted by them
  * showed a different film from the one in the editor.
  *

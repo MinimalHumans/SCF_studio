@@ -19,6 +19,8 @@ import {
   deriveStructure, sceneOrderHint, scenePositions, type Structure,
 } from "@scf-core/structure.ts";
 import { restampShotNumber } from "@scf-core/shots.ts";
+import { numberingPolicy, setNumberingPolicy }
+  from "@scf-core/numbering.ts";
 
 export type StructureKind = "act" | "sequence";
 
@@ -183,23 +185,15 @@ export type NumberingMode = "derived" | "fixed";
  * app has always been free to renumber.
  */
 export async function numberingMode(exec: SqlExec): Promise<NumberingMode> {
-  try {
-    const rows = await exec(
-      "SELECT scene_numbering FROM project ORDER BY id LIMIT 1");
-    return String(rows[0]?.["scene_numbering"] ?? "") === "fixed"
-      ? "fixed" : "derived";
-  } catch {
-    // Older projects predate the column; initDatabase ALTER-adds it on
-    // open, but a commit racing that must not throw.
-    return "derived";
-  }
+  // Delegates to scf-core, which owns the precedence between
+  // `numbering_policy` and the deprecated `scene_numbering` (spec §4.3).
+  // Reading the column directly here is how the two would drift.
+  return numberingPolicy(exec);
 }
 
 export async function setNumberingMode(
     exec: SqlExec, mode: NumberingMode): Promise<void> {
-  await exec(
-    "UPDATE project SET scene_numbering = ? WHERE id = " +
-    "(SELECT id FROM project ORDER BY id LIMIT 1)", [mode]);
+  await setNumberingPolicy(exec, mode);
 }
 
 export interface StructureCommitResult {

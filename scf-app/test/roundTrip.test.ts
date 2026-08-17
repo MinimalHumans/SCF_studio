@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 import { canonicalDump, diffDumps } from "@scf-core/canonical.ts";
 import { initDatabase } from "@scf-core/db.ts";
 import { collectFindings } from "@scf-core/findings.ts";
+import { numberingPolicy } from "@scf-core/numbering.ts";
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { openNodeDatabase, type NodeDatabase } from "@scf-core/node.ts";
@@ -231,8 +232,9 @@ describe("edits are the only thing that changes", () => {
     const path = workingCopy();
 
     let db = await open(path, registry);
-    const mode = await db.exec("SELECT scene_numbering FROM project");
-    expect(mode[0]?.["scene_numbering"]).toBe("fixed");
+    // Read through the resolver, not the column: `scene_numbering` is
+    // deprecated in 2.11 and gone in 2.12 (spec §4.3).
+    expect(await numberingPolicy(db.exec)).toBe("fixed");
     const before = await db.exec(
       "SELECT uuid, scene_number FROM scene ORDER BY uuid");
     db.close();

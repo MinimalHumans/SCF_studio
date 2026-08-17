@@ -117,7 +117,7 @@ export function parseShotCode(
  * does narrow it. That rule protects a code a crew already holds on
  * paper, and nobody holds paper on an unlocked script: before locking,
  * a shot list that says 42A for a scene now numbered 43 is not a stable
- * identifier, it is a stale one. So the same `project.scene_numbering`
+ * identifier, it is a stale one. So the same `project.numbering_policy`
  * flag governs both — `derived` keeps shot codes tracking their scene,
  * `fixed` freezes them along with the scene numbers, which is the state
  * a distributed shot list needs.
