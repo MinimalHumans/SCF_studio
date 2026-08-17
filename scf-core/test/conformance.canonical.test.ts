@@ -12,6 +12,8 @@
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { openFixture, str, type Fixture } from "./setup.ts";
+import { sceneNumberOrderJoin, sceneNumberOrderTerms }
+  from "../src/sceneNumbers.ts";
 import {
   motifStateAt, propStateAt, relationshipStateAt, resolveDescription,
   resolveDirection, resolveMedia, sceneOrder, selectLocationVariant,
@@ -318,10 +320,76 @@ describe("fixture invariants", () => {
   });
 
   test("the gaps are still there", async () => {
+    // Ordered by §4.2.2, not by the raw column. Since the column became
+    // TEXT the raw ordering is lexicographic — 1, 10, 11, 12, 16, 19,
+    // 21, 24, 3, 7 — which is precisely the failure §4.2.2 exists to
+    // prevent, and precisely what a naive consumer will hit.
     const rows = await fx.ctx.exec(
-      "SELECT scene_number FROM scene ORDER BY scene_number");
-    const numbers = rows.map((r) => r["scene_number"]);
-    expect(numbers).toEqual([1, 3, 7, 9, 10, 11, 12, 16, 19, 21, 24]);
+      "SELECT s.scene_number AS n FROM scene s " +
+      `${sceneNumberOrderJoin("s.id", "sn")} ` +
+      `ORDER BY ${sceneNumberOrderTerms("sn")}, s.id`);
+    const numbers = rows.map((r) => String(r["n"]));
+    expect(numbers).toEqual(
+      ["1", "3", "7", "9", "10", "11", "12", "12A", "16", "19", "21",
+       "24"]);
+  });
+
+  test("the three orders are three DIFFERENT orders", async () => {
+    // The invariant that makes this fixture able to certify anything
+    // about §4.1. Until 0.17 screenplay order, scene-number order and
+    // row-id order coincided, so a reader doing the one thing §4.1
+    // explicitly forbids — ordering by scene_number alone — passed
+    // every blessed expectation. An independent implementation found
+    // that; nothing in this repository could have.
+    const script = (await fx.ctx.exec(
+      "SELECT s.id FROM scene s " +
+      "LEFT JOIN (SELECT scene_id, MIN(line_order) p FROM screenplay_lines " +
+      "WHERE line_type = 'heading' GROUP BY scene_id) sp ON sp.scene_id = s.id " +
+      "ORDER BY (sp.p IS NULL), sp.p")).map((r) => Number(r["id"]));
+
+    const byNumber = (await fx.ctx.exec(
+      "SELECT s.id FROM scene s " +
+      `${sceneNumberOrderJoin("s.id", "sn")} ` +
+      `ORDER BY ${sceneNumberOrderTerms("sn")}, s.id`))
+      .map((r) => Number(r["id"]));
+
+    const byRowId = [...script].sort((a, b) => a - b);
+
+    expect(script).not.toEqual(byNumber);
+    expect(script).not.toEqual(byRowId);
+    expect(byNumber).not.toEqual(byRowId);
+  });
+
+  test("an A-page scene number exists, so §4.2's grammar is exercised",
+       async () => {
+    const rows = await fx.ctx.exec(
+      "SELECT scene_number FROM scene WHERE scene_number = '12A'");
+    expect(rows).toHaveLength(1);
+  });
+
+  test("a locked script keeps a number that no longer matches the page",
+       async () => {
+    // sc 16 follows sc 19. The project is `fixed`, so this is not
+    // damage — it is what §4.1's warning describes, and a reader that
+    // renumbered it would be non-conforming under §4.3.
+    const mode = await fx.ctx.exec("SELECT scene_numbering FROM project");
+    expect(mode[0]?.["scene_numbering"]).toBe("fixed");
+
+    const script = (await fx.ctx.exec(
+      "SELECT s.scene_number AS n FROM scene s " +
+      "LEFT JOIN (SELECT scene_id, MIN(line_order) p FROM screenplay_lines " +
+      "WHERE line_type = 'heading' GROUP BY scene_id) sp ON sp.scene_id = s.id " +
+      "ORDER BY (sp.p IS NULL), sp.p")).map((r) => String(r["n"]));
+
+    expect(script.indexOf("16")).toBeGreaterThan(script.indexOf("19"));
+  });
+
+  test("scene numbers are stored as text (spec §4.2)", async () => {
+    // The column was INTEGER until 0.17, which left §4.2's grammar
+    // unexercised by the artifact that is supposed to demonstrate it.
+    const types = await fx.ctx.exec(
+      "SELECT DISTINCT typeof(scene_number) AS t FROM scene");
+    expect(types.map((r) => r["t"])).toEqual(["text"]);
   });
 
   test("every scene in the script has a number and a heading", async () => {

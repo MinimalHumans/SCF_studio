@@ -16,6 +16,104 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.17 — 2026-08-17
+
+*Describes schema 2.10.*
+
+The first revision written in response to an **independent
+implementation**. A Python reader built from `spec/` alone reproduced all
+eight blessed query expectations and reported 33 gaps. This closes the
+three most serious.
+
+**§7 is rewritten. The previous text was wrong.** It described the
+cascade as `project → sequence → scene → shot`; those are positional
+scopes, and the cascade is not ordered by them. The reader's proof:
+`look_development` is `scope: global` and appears fifth in Q07's chain.
+
+§7 now states what the cascade actually is:
+
+- **§7.1** A cascade is identified by its **leaf entity**, supplied by
+  the caller — it is not derivable from the data or the registry, and
+  any interface offering direction resolution must take it as an input.
+- **§7.2** The chain is the `refines` closure, walked depth-first
+  post-order, parents in declared order. `refines` had never been
+  mentioned in this specification despite being the mechanism.
+- **§7.3** One row per entity, with the selection rules stated —
+  including that a scene-level match excludes rows carrying a `shot_id`,
+  so a shot-level row never also arrives as a scene layer.
+- **§7.4** "Every contributing layer" means every entity in the chain
+  that supplied a row, not every row in the file that might have
+  applied.
+
+**§9.4's catalog is published.** `spec/finding-catalog.json`, generated
+from the implementation, with all 35 codes, their severities, the
+severity meanings, and the report ordering. §9.4 made the catalog
+normative and it existed only in TypeScript, so no independent
+implementation could satisfy it — the reader invented 21 codes of its
+own and correctly described its clean exit code as "semantically empty".
+
+**§1.3 no longer flags SQLite's own tables.** Names beginning `sqlite_`
+are excluded from the known-table test. `sqlite_sequence` exists in every
+conforming file, because the framework columns declare `AUTOINCREMENT`,
+so the rule as written put a finding on every SCF in existence.
+
+**§2.3 and §0.7 now document the registry fields that carry meaning.**
+`refines` is load-bearing and defines the cascade; `scope` and `subject`
+are described, and `scope` is explicitly *not* what orders the cascade.
+
+`conformance.md`: both previously unperformable Reader claim steps are
+now performable — step 1 against the published catalog, step 3 against
+`fixtures/negative/CASES.json`, which publishes each negative case's
+statements so a third party can build the databases rather than guess
+the reports.
+
+**§4.3 now covers all four numbers.** It governed scene numbers and shot
+codes; `act.act_number` and `sequence.sequence_number` were unmentioned,
+so an implementation could renumber acts on a locked project and remain
+conforming. All four are authored, none is derived from position, and
+`project.scene_numbering` governs all four.
+
+The section also now says what the two modes are *for*: `derived` while
+a writer is still moving the story, `fixed` once the numbers have left
+the building on schedules and call sheets and become identifiers. A
+scene numbered 12 that plays after scene 45 is correct under `fixed`,
+and §4.1's warning is the same fact seen from the reader's side.
+
+**The fixture is now a screenplay, not only an outline.** It carried
+eleven sluglines, eight section headers and no body text at all, which
+left §3.4 with no artifact behind it — there was no scene text to walk.
+Four scenes now carry action and dialogue and the rest stay sluglines,
+because an SCF is legitimately either and a reader meets both in one
+file.
+
+**The fixture's three orders now differ**, which is the more consequential
+half. Scene `12A` sits mid-script with the highest row id; scene `16`
+follows `19` in the script and keeps its number, legal precisely because
+the project is `fixed`. Until now screenplay order, scene-number order
+and row-id order coincided, so a reader ordering by `scene_number` alone
+— the one thing §4.1 forbids — passed every blessed expectation. Three
+new invariant tests pin the difference.
+
+**The fixture's `scene_number` column was rebuilt as TEXT.** The registry
+and `scf-schema.sql` had declared it text since schema 2.9; the fixture's
+column was still INTEGER, so `ARTIFACTS.md`'s claim that the published
+DDL cannot drift was false, and §4.2's grammar was unexercised by the
+artifact meant to demonstrate it.
+
+The rebuild immediately caught two consequences, both of which are §4.2
+behaving as designed: a test helper binding scene numbers as JS numbers
+matched nothing, because the driver binds numbers as doubles and `12`
+arrived as `"12.0"`; and a fixture-invariant test ordering by the raw
+column got `1, 10, 11, 12, 16, 19, 21, 24, 3, 7` — the lexicographic
+failure §4.2.2 exists to prevent. Both are fixed, and the invariant test
+now orders by §4.2.2 and pins the column's storage class.
+
+`conformance.md` §5.4 records a decision not yet implemented: the
+canonical queries are part of the format, and **the normative answer is
+the structure, not the prose**.
+
+---
+
 ## 0.16 — 2026-08-16
 
 *Describes schema 2.10.*

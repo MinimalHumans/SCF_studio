@@ -259,9 +259,19 @@ is; §10 below is where the decision gets made.
 
 ## 6. The direction cascade
 
-`spec §7`. Root-first, most specific last, and every layer returned.
+`spec §7`. The chain is the `refines` closure of a named leaf, and every
+contributing entity is returned.
 
-The second half matters more than it looks. Returning only the resolved
+The `refines` field carried this meaning from the beginning and went
+undocumented until 0.17, when an independent implementation reverse-
+engineered it from the data — correctly, and only because Q07's ordering
+ruled out every other reading. §7 had until then described a scope
+ordering that the code never implemented. The lesson is narrow and worth
+keeping: the cascade was built as a graph walk and described as a
+hierarchy, and nobody noticed for as long as the only reader was the one
+that wrote it.
+
+Returning the whole chain matters more than it looks. Returning only the resolved
 value makes the answer unarguable and unexplainable at the same time — a
 supervisor asking "why is she lit this way here" gets a value and no
 provenance. Returning the chain costs nothing and turns the cascade into
@@ -325,7 +335,8 @@ The procedure:
    reports, and the checksums:
 
    ```sh
-   cd scf-core && npm run emit-schema-sql && npm run bless-negative && cd ..
+   cd scf-core && npm run emit-schema-sql && npm run emit-finding-catalog \
+     && npm run bless-negative && cd ..
    cd scf-app && npm run bless-queries && cd ..
    python3 schema/artifact_manifest.py
    ```

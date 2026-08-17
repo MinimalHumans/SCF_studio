@@ -15,7 +15,7 @@ declaration; every consumer reads the generated registry.
 | `scf-app/` | The editor — a browser application over the same core, SQLite in OPFS, CodeMirror screenplay editor, canonical query pages. |
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
-| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. |
+| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. |
 | `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`. |
 
 ## Getting started
@@ -50,7 +50,7 @@ Conformance artifacts, all checked on every test run:
 | | |
 |---|---|
 | `fixtures/hollow_creek.scf` | The reference fixture. |
-| `fixtures/negative/` | Eleven deliberately-broken cases with blessed reports. |
+| `fixtures/negative/` | Eleven deliberately-broken cases with blessed reports, plus `CASES.json` so anyone can rebuild them. |
 | `fixtures/expectations/` | Canonical query expectations — rendered markdown plus payload shapes. | `corpus/private` is not checked
 in, and the blocks that need it (`screenplay.test.ts` stage 3 payoff,
 `fountain.test.ts` private tier) skip themselves when it is absent — a

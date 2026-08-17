@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.16 (draft) — not a release.**
+**Version 0.17 (draft) — not a release.**
 Describes schema version **2.10**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -99,7 +99,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.16` (draft).
+- **Specification version** — this document. Currently `0.17` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.10`. Increments on any
@@ -121,6 +121,16 @@ connect two others. Thirteen exist.
 **tier** — a registry-declared depth band, 0–6, grouping entities by how
 far they sit from the bedrock nouns. Tier is descriptive; it carries no
 semantics in this specification.
+
+**scope** — a registry-declared positional grain (`global`, `act`,
+`sequence`, `scene`, `shot`, `moment`). Descriptive. It does **not**
+order the direction cascade (§7.2).
+
+**subject** — the registry-declared entity a row is about. Load-bearing
+for §6.5's carve-out and nothing else in this document.
+
+**refines** — a registry-declared list of the entities an entity adds
+detail to. Load-bearing: it defines the direction cascade (§7).
 
 **span** — an act or a sequence: a run of contiguous scenes defined by
 its start alone (§5).
@@ -210,6 +220,12 @@ being SCF's and carrying row identity are different properties:
 `_scf_meta`.** Anything else is unknown content under §10.1. A reader
 MUST test against the union rather than assembling its own list.
 
+Tables whose names begin `sqlite_` are **excluded from that test**. They
+are SQLite's own — `sqlite_sequence` is created automatically for any
+`AUTOINCREMENT` column, and the registry's framework columns declare
+one, so every conforming file has it. Reporting them as unknown content
+would put a finding on every SCF in existence.
+
 A file MAY contain further tables. A conforming reader MUST ignore any
 table it does not recognise, and MUST NOT treat its presence as an
 error (§10).
@@ -277,6 +293,10 @@ them the same way, so that adding an entity requires no code change:
 - **Asset usage.** Every field anywhere in the schema whose
   `referenceEntity` is `asset` counts as a use of that asset for the
   purpose of §8.6.
+- **Direction cascades.** An entity's `refines` list is its parents in
+  the direction cascade, and the cascade chain is the closure of that
+  list (§7.2). `refines` is the most semantically loaded field in the
+  registry and carries this meaning alone.
 
 ---
 
@@ -392,14 +412,36 @@ by §4.2.2 and MUST fall through to the next term in §4.1's chain.
 
 ### 4.3 Numbering policy
 
-`project.scene_numbering` governs recomputation:
+**All four numbers are authored and stored**: `act.act_number`,
+`sequence.sequence_number`, `scene.scene_number` and `shot.shot_number`.
+None of them is derived from position, and none may be inferred from one.
 
-- `derived` (default) — scene numbers and shot codes are recomputed at
-  commit;
-- `fixed` — authored numbering is preserved.
+`project.scene_numbering` governs whether an implementation recomputes
+them:
 
-An implementation that recomputes numbering on a `fixed` file is
+- `derived` (default) — act, sequence and scene numbers and shot codes
+  are recomputed at commit to match story order;
+- `fixed` — authored numbering is preserved, in full.
+
+An implementation that recomputes any of the four on a `fixed` file is
 non-conforming.
+
+The two modes are the two halves of a project's life. While a writer is
+still moving the story around, renumbering by hand is tedious and the
+numbers carry no external commitment, so `derived` keeps them tracking
+the page. Once a production is greenlit the numbers leave the building —
+on schedules, call sheets, shot lists — and become identifiers rather
+than labels. From that point `fixed` holds them still, and a scene
+numbered 12 that plays after scene 45 is **correct**: it is scene 12,
+and every document in the production office says so.
+
+§4.1's warning is the same fact from the reader's side. Under `fixed`, a
+scene's number stops predicting its position, which is why story order
+is derived from the screenplay and never from the number.
+
+> The field is named `scene_numbering` and governs four kinds of number.
+> Renaming it is a non-additive change and would have to happen before
+> 1.0; it is tracked in [stability.md](stability.md).
 
 ### 4.4 Shot codes
 
@@ -613,18 +655,80 @@ the thirteen link entities only `actor_character_role` and
 
 ## 7. The direction cascade
 
-Look and sound resolve **root-first, most specific last**:
+Direction — how something should look, sound or be played — is authored
+at several levels of generality and resolved from the broadest to the
+most specific. This section defines that resolution.
+
+An earlier revision of this section described the cascade as
+`project → sequence → scene → shot`. **That was wrong**: those are
+positional scopes, and the cascade is not ordered by them. It was
+corrected in specification 0.17 after an independent implementation
+demonstrated the contradiction.
+
+### 7.1 A cascade is identified by its leaf
+
+There is no single cascade. A cascade is named by its **leaf entity**,
+and the caller supplies it — for the canonical queries, the query names
+it. Q07 resolves the leaf `shot_design`; Q08 resolves
+`scene_music_design`.
+
+The leaf is **not derivable** from the data or from the registry. Two
+entities can both be about sound, both be populated, and only one be part
+of the soundscape cascade. Any interface offering direction resolution
+MUST take the leaf as an input.
+
+### 7.2 The chain is the `refines` closure
+
+Each entity declares `refines`: a list of the entities it adds detail
+to. Twelve of the 99 entities declare a non-empty one.
+
+The chain for a leaf is produced by walking `refines` **depth-first,
+post-order**, so that an entity's parents precede it and the leaf is
+last. Where an entity refines several parents, they are visited in
+declared order. An entity already in the chain is not revisited.
 
 ```
-project → sequence → scene → shot
+chain(leaf):
+    for parent in leaf.refines:   # declared order
+        chain(parent)
+    append(leaf) if not already present
 ```
 
-The last layer that supplies a value wins.
+This is the whole ordering rule. It is a graph walk, not a scope
+ordering — which is why a `scope: global` entity can appear after a
+`scope: scene` one, as `look_development` does in the Q07 chain.
 
-A resolver MUST return every contributing layer, not only the resolved
-value, so that a consumer can determine where a value came from.
+### 7.3 One row per entity, most specific first
 
----
+For each entity in the chain, a resolver selects **at most one row**:
+
+1. If the entity's `positionPattern` is `latest_wins` and a scene is
+   given, the row is the latest at or before that scene in story order
+   (§4.5).
+2. Otherwise, if a shot is given and the entity has a `shot_id` column,
+   a row matching that shot.
+3. Otherwise, if a scene is given and the entity has a `scene_id`
+   column, a row matching that scene **whose `shot_id` is empty** — so a
+   shot-level row never also arrives as a scene-level layer.
+4. Otherwise, if the entity has neither column, its first row.
+5. Otherwise, nothing.
+
+An entity contributing no row is **skipped**, not represented as an
+empty layer. Absence is well-defined and is not a finding.
+
+### 7.4 What resolution returns
+
+An ordered list of `(entity, row)` pairs, root-first, with the last pair
+the most specific opinion.
+
+A resolver MUST return **every contributing entity**, not only the
+last, so a consumer can determine where a value came from. "Every
+contributing layer" means every entity in the chain that supplied a row
+under §7.3 — not every row in the file that might have applied.
+
+Returning only the resolved value makes an answer unarguable and
+unexplainable at once; the chain costs nothing and turns the cascade
+into something a person can reason about.
 
 ## 8. Assets and addressing
 
@@ -770,9 +874,14 @@ automatic acceptance.** A prop is created only by explicit user action.
 ### 9.4 Findings are enumerated
 
 Every finding a conforming implementation reports MUST carry a **code**
-drawn from the enumeration published as `FINDING_CATALOG`, and MUST take
-its **severity** from that catalog rather than assigning one at the point
-the finding is raised.
+drawn from the catalog published as
+[`finding-catalog.json`](finding-catalog.json), and MUST take its
+**severity** from that catalog rather than assigning one at the point the
+finding is raised.
+
+The catalog carries its own version, on its own track: a code added to it
+is a change to this specification, but the file's shape can change
+without one.
 
 Codes are `area.condition`, lowercase, dotted. They are a closed set:
 adding one is a change to this specification, with a catalog entry naming
@@ -941,7 +1050,7 @@ change to one without the other is a defect.
 | §3.4 derived-but-stored | `scf-app/test/sceneScript.test.ts` |
 | §1.2 file identification | `scf-core/test/fileIdentity.test.ts` |
 | §2.1 registry structure | `scf-core/test/registrySchema.test.ts` |
-| §9.4 finding vocabulary | `scf-core/test/findings.test.ts` |
+| §9.4 finding vocabulary | `scf-core/test/findings.test.ts`, `spec/finding-catalog.json` |
 | §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (11 cases) |
 | §9.5 serialised report | `scf-core/test/report.test.ts` |
 | §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |

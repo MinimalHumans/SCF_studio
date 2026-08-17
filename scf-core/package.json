@@ -19,7 +19,9 @@
     "check-schema-sql": "node --experimental-strip-types scripts/emit_schema_sql.mjs --check",
     "scf-check": "node --experimental-strip-types scripts/scf_check.mjs",
     "bless-negative": "node --experimental-strip-types scripts/build_negative.mjs",
-    "check-negative": "node --experimental-strip-types scripts/build_negative.mjs --check"
+    "check-negative": "node --experimental-strip-types scripts/build_negative.mjs --check",
+    "emit-finding-catalog": "node --experimental-strip-types scripts/emit_finding_catalog.mjs",
+    "check-finding-catalog": "node --experimental-strip-types scripts/emit_finding_catalog.mjs --check"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

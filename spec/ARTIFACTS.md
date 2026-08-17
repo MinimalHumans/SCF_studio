@@ -36,8 +36,10 @@ sha256sum -c spec/SHA256SUMS
 | `scf-core/registry/registry.json` | `89de0e535e2c8e3f…` | The normative field set. Spec §2.1. |
 | `spec/scf-schema.sql` | `a41dd309ba3fee02…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/registry.schema.json` | `448b8495efdfd09e…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
+| `spec/finding-catalog.json` | `373d91b0061960df…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
+| `fixtures/negative/CASES.json` | `4a92df07c67d6c7a…` | The eleven negative fixtures as reproducible recipes. Spec conformance.md §5.3. |
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `a4ab586e1471f9b4…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `489f80cc74cf6648…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

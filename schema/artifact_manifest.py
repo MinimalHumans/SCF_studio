@@ -43,6 +43,12 @@ ARTIFACTS = [
     ("spec/registry.schema.json",
      "JSON Schema for registry.json, so it can be consumed without "
      "running the reference implementation."),
+    ("spec/finding-catalog.json",
+     "The normative finding catalog. Spec §9.4 requires every code and "
+     "severity to come from here."),
+    ("fixtures/negative/CASES.json",
+     "The eleven negative fixtures as reproducible recipes. Spec "
+     "conformance.md §5.3."),
     ("spec/scf.magic",
      "magic(5) stanza for file(1). Spec §1.2."),
     ("fixtures/hollow_creek.scf",
