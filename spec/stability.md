@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.19 / schema 2.12. This document is expected
+Current as of specification 0.20 / schema 2.12. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -72,7 +72,10 @@ about it is ceremonial.
 | Numbering policy covers all four numbers | §4.3 | Provisional | Partly | 0.17 states that act, sequence, scene and shot numbers are all authored and all governed by `project.scene_numbering`. The implementation recomputes scene numbers and shot codes; whether it recomputes act and sequence numbers under `derived` is untested. |
 | `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in 2.11; the old column removed in 2.12 under §11.0. `numbering.ts` owns resolution, and a test asserts a stale `scene_numbering` cannot override it. |
 | Pre-1.0 change licence | §11.0 | Provisional | n/a | States that §11's rules take effect at 1.0 and that earlier files are disposable, with the fixture excepted. Provisional because it is the kind of clause that is easy to write and easy to overrun — it needs the 1.0 release to prove it was honoured. |
-| **The query layer** | §12 | **Unstable** | **No** | §0.2 now names §12 and says it is unwritten. The sixteen queries are part of the format; the normative answer is the result structure, not a rendering. Until the section exists, a query's only definition is one blessed example of its output. |
+| Result envelope and row projection | §12.1 | Provisional | Yes | `queryResult.ts`. Rows by uuid, volatile columns dropped, references resolved to uuids. Provisional until a second implementation has produced a matching result. |
+| Q05, Q07 | §12.2, §12.3 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Chosen because they stress different machinery — pattern-2 persistence with an absent baseline, and the `refines` cascade with a parameter-dependent leaf. |
+| **The other fourteen queries** | §12 | **Unstable** | **No** | Unspecified. Their only definition is a blessed example of rendered output, which is a demonstration, not a specification. Q05 and Q07 suggest the shape holds; fourteen is where that gets tested. |
+| **Whether a result excludes `cut` rows** | §12.1.2 | **Unstable** | **No** | Depends on §6.6. Until settled, results carry `lifecycle_status` and exclude nothing on its account — which means settling §6.6 changes every blessed result. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
 | Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
 | Shot-code allocation | §4.4.3 | Provisional | Yes | Continue-past-highest, with the stated no-retired-codes limitation. |
@@ -188,9 +191,9 @@ about it is ceremonial.
 
 Five Unstable rows, in rough dependency order:
 
-1. **The query layer** — sixteen normative queries, none defined. Decided
-   in principle; a multi-session job, and everything in `conformance.md`
-   §5.4 is provisional on it.
+1. **The remaining fourteen queries** (§12) — Q05 and Q07 are specified
+   and the shape held across both. The rest is repetition plus whatever
+   the harder queries break.
 2. **The asset resolution tally in `scf-check`** (§8.3) — the one check
    the validator cannot do, because §0.3 makes the root mapping a
    property of the consuming environment and no flag exists to supply
@@ -202,6 +205,9 @@ Five Unstable rows, in rough dependency order:
 5. **Artifact addressing** (§2.1) — the manifest is written and verifies,
    but no `schema-X.Y` tag exists, so the URLs it publishes do not
    resolve. One `git tag` closes it.
+
+*Closed in 0.20:* §12 exists. The queries have an envelope, a portable
+row projection, and two normative definitions.
 
 *Closed in 0.19:* `scene_numbering` is gone, and with it the one place
 the format deliberately stored a fact twice; and §8.3's resolution

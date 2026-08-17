@@ -37,6 +37,8 @@ sha256sum -c spec/SHA256SUMS
 | `spec/scf-schema.sql` | `dad495f116bebba1…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/registry.schema.json` | `448b8495efdfd09e…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/finding-catalog.json` | `a965692f614283e4…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
+| `fixtures/expectations/Q05.result.json` | `3e1d3a6e77229f49…` | Q05's normative result. Spec §12.2. |
+| `fixtures/expectations/Q07.result.json` | `e245d933b67add10…` | Q07's normative result. Spec §12.3. |
 | `fixtures/negative/CASES.json` | `73141c0f47d77389…` | The eleven negative fixtures as reproducible recipes. Spec conformance.md §5.3. |
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
 | `fixtures/hollow_creek.scf` | `514c5b74b2fcd4c5…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |

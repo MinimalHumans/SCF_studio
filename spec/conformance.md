@@ -293,18 +293,16 @@ unstamped header.
 
 ### 5.4 The canonical query expectations
 
-> **Direction, decided 2026-08-17 and not yet implemented.** The
-> canonical queries are part of the format, and **the normative answer
-> is the structure, not the prose**. A query returns a defined result;
-> conformance tests that result, serialised without row ids. The
-> rendered markdown becomes a convenience, not a contract.
+> **In progress.** Spec §12 now defines Q05 and Q07 as result
+> structures, and `Q05.result.json` / `Q07.result.json` are the
+> normative artifacts for those two: rows by uuid, no row ids, no
+> timestamps, references resolved. For those queries the markdown is a
+> convenience and is not a contract.
 >
-> Everything below describes the artifacts as they stand today, in which
-> the markdown *is* the contract. Two consequences of that are already
-> known defects: `Q13.expected.md` embeds a row id in its header, which
-> §5.4's own reasoning says these artifacts exclude; and an
-> implementation must reproduce punctuation choices no document states.
-> Both dissolve under the decision above.
+> The other fourteen still have only their rendered markdown, described
+> below. Two known defects live in that half and dissolve as each query
+> is specified: `Q13.expected.md` embeds a row id in its header, and an
+> implementation must reproduce punctuation no document states.
 
 `fixtures/expectations/`, blessed and checked on every test run.
 
@@ -347,8 +345,11 @@ are runnable, which is the whole mechanism.
    codes and severities come from
    [`finding-catalog.json`](finding-catalog.json).
 2. Reproduce the canonical query expectations in
-   `fixtures/expectations/` for the queries you implement, resolving the
-   parameters from the recorded selectors.
+   `fixtures/expectations/` for the queries you implement. For a query
+   specified in §12 — currently Q05 and Q07 — compare against its
+   `.result.json`; the rendered markdown is not a contract. For the
+   others, compare the markdown, resolving parameters from the recorded
+   selectors, and expect that to change as §12 grows.
 3. Build the eleven negative fixtures from
    [`CASES.json`](../fixtures/negative/CASES.json) — an empty conforming
    database per `scf-schema.sql`, then each case's statements in order —

@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.19 (draft) — not a release.**
+**Version 0.20 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -54,14 +54,10 @@ Normative:
 - **the canonical queries (§12)** — the sixteen questions SCF exists to
   answer, and what a conforming implementation returns for each.
 
-§12 is **not yet written**. The queries were decided to be part of the
-format on 2026-08-17, and the normative answer is the RESULT STRUCTURE,
-not any rendering of it. Until §12 exists, the only definition of a
-canonical query is the blessed expectation in `fixtures/expectations/`,
-which is a demonstration rather than a specification — an implementer
-has to infer the query from one example of its output. That is the
-largest known gap in this document and it is tracked in
-[stability.md](stability.md).
+§12 is **partial**: Q05 and Q07 are specified, the other fourteen are
+not. For those fourteen the only definition remains a blessed example of
+their output, which is a demonstration rather than a specification.
+Tracked in [stability.md](stability.md).
 
 ### 0.3 The unit of interchange
 
@@ -110,7 +106,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.19` (draft).
+- **Specification version** — this document. Currently `0.20` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -1089,6 +1085,125 @@ and writes it back without editing anything.
 
 ---
 
+## 12. The canonical queries
+
+### 12.0 What this section is
+
+The sixteen canonical queries are part of the format. They can be
+reinvented from §1–§11, but the point of SCF is to describe a film's
+structure, and shipping the questions is that description. Defining them
+does not preclude anyone asking others.
+
+**This section is incomplete.** Q05 and Q07 are specified below. The
+remaining fourteen are not, and until they are, their only definition is
+a blessed example of their output — which is a demonstration, not a
+specification. Tracked in [stability.md](stability.md).
+
+### 12.1 What a query returns
+
+#### 12.1.1 The result envelope
+
+Every canonical query returns:
+
+| Field | |
+|---|---|
+| `query` | The query's id, e.g. `"Q05"`. |
+| `resultFormat` | Version of this envelope, on its own track. A field added here is not a change to SCF. |
+| `schemaVersion` | The schema the answering implementation read. |
+| `parameters` | What was asked, each value a **uuid** or null. |
+| `result` | The query's own structure, defined per query below. |
+
+`parameters` makes a result self-describing: a reader handed one can
+tell which question it answers without being told.
+
+#### 12.1.2 Rows in a result
+
+**The normative answer is the result structure. Any rendering of it —
+markdown, HTML, prose — is a convenience and is NOT normative.** Two
+implementations that produce the same result and print it differently
+are both conforming.
+
+A row appears in a result as its `uuid` plus its authored fields:
+
+- **Row ids MUST NOT appear.** They are local to a file (§6.2) and a
+  writer may renumber them. A result carrying one describes the file
+  rather than the story.
+- `id`, `created_at` and `updated_at` MUST be omitted. They differ
+  between two files that say the same thing.
+- Fields that are null or empty MUST be omitted, so absence is
+  unambiguous.
+- **Reference columns MUST be resolved to uuids**: `scene_id` becomes
+  `scene_uuid`, carrying the referenced row's uuid. A reference that
+  cannot be resolved is omitted.
+- Field names are the registry's own column names. A result is made of
+  registry fields; a second vocabulary for them would be a second thing
+  to keep in step.
+
+> **Open.** Whether rows with `lifecycle_status = 'cut'` appear in a
+> result depends on §6.6, which is undecided. Until it is settled, a
+> result carries `lifecycle_status` as an authored field and excludes
+> nothing on its account.
+
+### 12.2 Q05 — Voice direction
+
+**How this character's lines should sound in this scene.**
+
+Parameters: `character`, `scene`.
+
+The result composes three things a consumer would otherwise have to
+assemble: the character's standing description, whatever is temporarily
+true of them here, and anything authored line by line.
+
+| Field | |
+|---|---|
+| `modality` | `"vocal"`. Q06 is the same query with `"physical"`. |
+| `baseline` | The character's `vocal_profile`, projected per §12.1.2, or **null** when none is authored. |
+| `states` | `performance_state` rows of this modality in force at this scene, resolved by §4.5 pattern 2, **oldest first**. |
+| `modulations` | The states' `modulations` merged oldest-first, so a later state overrides an earlier one key by key. Derived; carries no identity. |
+| `beats` | `performance_beat` rows for this character, scene and modality, in `beat_order` then row order. |
+
+A null `baseline` is a well-defined absence, not an error (§9.2). It is
+what a readiness report exists to warn about — the fixture leaves one
+character deliberately thin for that reason.
+
+`modulations` is a merge of an opaque JSON column. Where two states
+carry the same key, the later one wins; §4.5's "field by field" means
+keys within that object.
+
+### 12.3 Q07 — Look resolution
+
+**What a frame in this scene, or this shot, should look like.**
+
+Parameters: `scene`, and `shot` — optional.
+
+| Field | |
+|---|---|
+| `leaf` | The cascade's leaf entity (§7.1). |
+| `layers` | Root first, each `{ entity, row }`, the last being the opinion in force (§7.4). |
+
+#### 12.3.1 The leaf depends on the parameters
+
+| Given | Leaf |
+|---|---|
+| scene only | `scene_color_palette` |
+| scene and shot | `shot_design` |
+
+This is what §7.1 means by the leaf not being derivable from the data:
+it is a property of the question. A conforming implementation MUST use
+the leaf this table gives, and MUST resolve the chain by §7.2's
+`refines` closure — not by any ordering of `scope`.
+
+#### 12.3.2 Layers
+
+Each layer is one entity's contribution, selected by §7.3. An entity in
+the chain that supplies no row is **absent from `layers`**, not present
+and empty.
+
+`layers` MAY be empty. A scene with no authored look is a legitimate
+answer and not a finding.
+
+---
+
 ## Appendix A — Conformance test map
 
 Where a rule is machine-checkable, the test that pins it is named. A
@@ -1106,6 +1221,8 @@ change to one without the other is a defect.
 | §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |
 | §11.2–11.3 forward and backward compatibility | `scf-core/test/extensibility.test.ts`, `scf-app/test/roundTrip.test.ts` |
 | §11.4 deprecation window | *unpinned — a policy, checked by review* |
+| §12.1 result envelope and row projection | `scf-core/test/canonicalQueries.test.ts` |
+| §12.2 Q05, §12.3 Q07 | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
 | §11.6 document equality | `scf-core/src/canonical.ts`, exercised by `scf-app/test/roundTrip.test.ts` |
 | Round-trip integrity (`conformance.md` §3) | `scf-app/test/roundTrip.test.ts` |
 | Canonical query expectations (`conformance.md` §5.4) | `scf-app/test/queryExpectations.test.ts`, `fixtures/expectations/` |

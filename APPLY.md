@@ -1,109 +1,106 @@
-# Spec 0.19 / schema 2.12 — collapse the window, settle the states
+# Spec 0.20 — §12 exists: Q05 and Q07
 
-Apply after `scf-numbering-policy.zip`.
+Apply after `scf-ci.zip`.
 
 ```sh
 cd scf-core && npm test && npx tsc --noEmit
-cd ../scf-app && npm test && npx tsc --noEmit && npm run build
-cd .. && python3 schema/lint_registry.py
-python3 schema/generate_registry_json.py --check
-python3 schema/artifact_manifest.py --check
-cd scf-core && npm run check-schema-sql && npm run check-finding-catalog \
-  && npm run check-negative
+cd ../scf-app && npm test
+cd .. && python3 schema/artifact_manifest.py --check
+sha256sum -c spec/SHA256SUMS
 ```
 
 Verified here:
 
-- `scf-core`: 30 files, **512 passed**, 6 skipped
+- `scf-core`: 31 files, **529 passed**, 6 skipped (was 512)
 - `scf-app`: 22 files, 249 passed, 1 skipped
-- typecheck, build, lint, five `--check` modes, checksums — clean
+- typecheck clean, artifacts and checksums current (**nine** artifacts now)
+
+No schema change. Spec 0.19 → **0.20**.
 
 ---
 
-## 1. The deprecation window is gone
+## The shape, and whether it held
 
-Schema **2.12** removes `project.scene_numbering`, one version after
-2.11 renamed it. The mirroring in `setNumberingPolicy` and the fallback
-in `numberingPolicyOf` go with it, so the format no longer stores this
-fact twice anywhere.
+I specified Q05 and Q07 only, deliberately, and picked them because they
+stress genuinely different machinery:
 
-New **§11.0: these rules take effect at 1.0.** Your policy, written into
-the spec — before 1.0, files from earlier schema versions are
-disposable; `fixtures/hollow_creek.scf` is the one exception because it
-is a normative artifact.
+- **Q05** — position pattern 2 (persistence), a baseline that may be
+  absent, and a merge over an opaque JSON column.
+- **Q07** — the `refines` cascade, one row per entity, and a leaf that
+  changes depending on the parameters.
 
-I wrote the *reason* into the clause rather than leaving it as
-permission, because "we may break things" reads worse than it is: before
-1.0 nobody has built on the format, so a deprecation window protects
-nothing and leaves two descriptions of one fact. After 1.0 someone has.
-§11.4's note now lists all three changes taken under it — 2.8's
-removals, 2.9's type widening, and 2.12's.
+**One envelope and one projection rule served both**, which is the
+evidence I was after. Extending to the other fourteen now looks like
+repetition plus whatever the harder queries break, rather than a design
+problem.
 
-One test worth knowing about: a stale `scene_numbering` column **cannot
-override** the real one. Otherwise removing it would have achieved
-nothing the moment someone opened an old file.
+## §12.1 — what makes a result portable
 
-## 2. §8.3's resolution states — the audit's item, settled
+The envelope names the query, its own format version, the schema read,
+and the parameters as uuids. Then the rule the section turns on:
 
-This is the one I'd have missed. The code reported an **unmapped root**
-as `out-of-root`. It is `unaddressed`, and §8.3 *and* §0.3 both said so —
-§0.3 states outright that a `.scf` opened with no root mapping is valid
-and resolves everything to `unaddressed`.
+- **row ids MUST NOT appear** — they are file-local (§6.2);
+- `id`, `created_at`, `updated_at` omitted;
+- null and empty fields omitted, so absence is unambiguous;
+- **reference columns resolved to uuids** — `scene_id` → `scene_uuid`;
+- field names are the registry's own, because a result is made of
+  registry fields and a second vocabulary is a second thing to drift.
 
-`out-of-root` now means only what its name says: the identifier points
-outside the project **by construction** — absolute, or containing `..`.
+And: **the normative answer is the result structure. Any rendering is a
+convenience and is not normative.** Two implementations that agree on
+the result and print it differently are both conforming.
 
-The distinction is worth the words:
+One decision worth naming: an unmapped reference column is **dropped**,
+not emitted raw. Emitting the row id would be worse than losing the
+field, because it would look like data. There is a test asserting the
+number never appears in the output.
 
-| | depends on | a user does |
-|---|---|---|
-| `unaddressed` | the **session** | attach a folder, or give the row an identifier |
-| `out-of-root` | the **identifier** | fix it, or accept it will not travel |
+## §12.3.1 — the leaf is a property of the question
 
-Conflating them told a user their paths were broken when the truth was
-that they hadn't attached a folder yet — which is the first thing that
-happens to everyone. §8.3 gains a table, and the design record gains the
-story, because that one took an outside reader to catch.
+`scene_color_palette` for a scene; `shot_design` when a shot is named.
 
-**And it exposed a lie in a normative artifact.** Q13's blessed summary
-read `3 with no identifier` for three assets of which **two had
-identifiers** — the renderer's label was tied to the old meaning of
-`unaddressed`. It now reads `3 unresolvable`, which is true.
+This is what §7.1 meant by the leaf not being derivable, finally said in
+the place an implementer will look for it — the independent reader had
+to hard-code both leaves after every heuristic failed. There is a test
+asserting the same scene answers with a different leaf depending on the
+parameters, which is the property in one line.
 
-## 3. §0.2 now names the query layer
+## Where the code lives, and why
 
-It lists §12, and says plainly that §12 **is not yet written**: the
-queries are part of the format, the normative answer is the result
-structure rather than any rendering, and until the section exists a
-query's only definition is one blessed example of its output. Named in
-the document as the largest known gap in it.
+`scf-core/src/queryResult.ts` and `canonicalQueries.ts` — **in the core,
+not beside the runners in the app.** The queries are part of the format
+now, so the normative answer belongs where the format lives. The app
+renders; the core answers.
+
+The builders wrap `resolveDescription` and `resolveDirection` rather than
+reimplementing them. A second description of "what is in force at scene
+12" is a second answer, and this project has already paid for that
+mistake once.
+
+## What I checked rather than assumed
+
+Both results reproduce the blessed markdown's content exactly, including
+its **empty** sections — Q05 has no states and no modulations for
+Eleanor at scene 12, and the markdown omits those sections while the
+result carries them as `[]` and `{}`. That is the rendering/result
+distinction working rather than a disagreement.
+
+The portability test walks the whole serialised output of both results
+and asserts no key is `id`, `created_at`, `updated_at`, or ends `_id`.
+It is written over the files rather than over a projection in isolation,
+so it cannot pass by agreeing with a mistake upstream.
 
 ---
 
-## Where this leaves things
+## Still open in §12
 
-`stability.md` is down to **five** Unstable rows, from seven:
+- **Fourteen queries.** Q00–Q04, Q06, Q08–Q11, Q12, Q13, Q14, Q15.
+- **Whether a result excludes `cut` rows.** This waits on §6.6, and it
+  is worth knowing the cost: settling §6.6 changes *every* blessed
+  result. Doing it before the other fourteen are blessed is meaningfully
+  cheaper than after.
 
-1. **The query layer** — the last large piece of specification work.
-2. The asset resolution tally flag.
-3. `lifecycle_status` filtering — needs a fixture with cut rows, which is
-   cheap now.
-4. `scene_sequence` shadow rows — survive 1.0, or go.
-5. Artifact addressing — one `git tag`.
-
-**Delete by hand:** nothing this round. The stray root `APPLY.md` from
-the section-0 session is still there if you haven't removed it.
-
-## What I'd do next
-
-**The query layer**, and I'd start with the smallest possible piece
-rather than all sixteen: pick Q05 and Q07, write §12's shape — purpose,
-parameters, contributing entities, result structure — and see whether
-the shape survives two queries that stress different machinery before
-committing to fourteen more.
-
-The alternative worth considering first is **CI**, on its seventh
-revision, now twelve commands. It is the only item on the checklist that
-gets more expensive every session rather than less: every artifact I add
-is another thing that can go stale silently between now and the next
-time someone runs the checks by hand.
+That second point is my recommendation for what comes next. §6.6 needs a
+fixture containing cut rows, which is cheap now that the fixture has a
+build script — and doing it now means fourteen queries get blessed once
+instead of twice.

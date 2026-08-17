@@ -34,6 +34,8 @@ export * from "./findings.ts";
 export * from "./report.ts";
 export * from "./canonical.ts";
 export * from "./numbering.ts";
+export * from "./queryResult.ts";
+export * from "./canonicalQueries.ts";
 export * from "./sceneNumbers.ts";
 export * from "./resolution.ts";
 export * from "./queryPaths.ts";

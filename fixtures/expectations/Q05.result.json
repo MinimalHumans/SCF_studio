@@ -1,0 +1,60 @@
+{
+  "query": "Q05",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132"
+  },
+  "result": {
+    "modality": "vocal",
+    "baseline": {
+      "uuid": "7abc0a5b-e86e-49a3-835e-1334423dff69",
+      "fields": {
+        "accent": "Flat inland Oregon",
+        "accent_authenticity": "native",
+        "articulation": "precise",
+        "breathiness_level": "slight",
+        "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+        "class_markers": "Plain, unornamented",
+        "delivery_style": "minimalist",
+        "emotional_access": "controlled",
+        "fluency": "filled pauses",
+        "interruption_tendencies": "Never interrupts; waits a beat too long",
+        "lifecycle_status": "active",
+        "listening_behavior": "Listens with her whole body.",
+        "name": "Eleanor voice",
+        "pace": "measured",
+        "pitch_range": "low",
+        "rhythm": "halting",
+        "speech_pattern": "Answers a question with an instruction",
+        "subtext_playing": "hides",
+        "timbre": "warm",
+        "verbal_tics": "[\"answers questions with tasks\"]",
+        "vocal_habits": "Drops the ends of sentences she does not want to finish",
+        "voice_quality": "Low and unhurried; the voice of someone used to being obeyed by animals",
+        "volume_tendency": "soft"
+      }
+    },
+    "states": [],
+    "modulations": {},
+    "beats": [
+      {
+        "uuid": "8630a97a-4fbc-4025-ad0b-51beedc6a1c6",
+        "fields": {
+          "beat_order": 3,
+          "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "emotional_subtext": "Played: disbelief. Underneath: don't leave again — must not surface.",
+          "emphasis_words": "[\"back\"]",
+          "lifecycle_status": "active",
+          "line_text": "You came back.",
+          "modality": "vocal",
+          "name": "you-came-back",
+          "pace": "slow",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+          "volume": "soft"
+        }
+      }
+    ]
+  }
+}

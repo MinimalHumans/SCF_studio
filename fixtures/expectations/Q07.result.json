@@ -1,0 +1,111 @@
+{
+  "query": "Q07",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
+  },
+  "result": {
+    "leaf": "shot_design",
+    "layers": [
+      {
+        "entity": "project_color_palette",
+        "row": {
+          "uuid": "8d6337ee-2a99-40cc-bd4b-ab1e278ca497",
+          "fields": {
+            "lifecycle_status": "active",
+            "name": "Project Color Palette",
+            "primary_colors": "[\"desaturated earth\", \"hearth amber\", \"creek slate\"]",
+            "saturation_philosophy": "desaturated",
+            "temperature_approach": "journey",
+            "temperature_associations": "Warm: hearth, forgiveness. Cool: the creek, the unsaid."
+          }
+        }
+      },
+      {
+        "entity": "color_script",
+        "row": {
+          "uuid": "3c56cf79-f311-423c-ae7e-0c7097f62880",
+          "fields": {
+            "arc_shape": "transformative",
+            "granularity": "per act",
+            "key_color_moments": "Sc 12: amber lamp against blue storm window.",
+            "lifecycle_status": "active",
+            "name": "Color Script",
+            "progression_description": "Act 1 cool and gray. Act 2: first true warmth enters at the kitchen — hearth amber vs. storm blue; warmth must feel earned, not gifted. Act 3: warm resolves."
+          }
+        }
+      },
+      {
+        "entity": "color_script_entry",
+        "row": {
+          "uuid": "b31e2758-f9f6-4657-83f2-68b7ff16994e",
+          "fields": {
+            "key_colors": "[\"hearth amber\", \"storm blue\"]",
+            "lifecycle_status": "active",
+            "name": "First warmth",
+            "palette_shift": "First true warmth enters at the kitchen — hearth amber vs. storm blue; warmth must feel earned, not gifted.",
+            "scene_uuid": "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+            "temperature": "transitional"
+          }
+        }
+      },
+      {
+        "entity": "scene_color_palette",
+        "row": {
+          "uuid": "0c1b2c32-4594-4e6e-a966-1ef60b3de479",
+          "fields": {
+            "color_contrast_level": "high",
+            "dominant_colors": "[\"#C88A3C amber\", \"#5A6B7A slate\"]",
+            "focal_color": "hearth amber",
+            "lifecycle_status": "active",
+            "name": "Sc 12 palette",
+            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+          }
+        }
+      },
+      {
+        "entity": "look_development",
+        "row": {
+          "uuid": "5061f05b-7c24-4290-96f8-41f1c0ee163e",
+          "fields": {
+            "color_bias": "warm bias grows per act",
+            "lifecycle_status": "active",
+            "name": "Look Development"
+          }
+        }
+      },
+      {
+        "entity": "lighting_design",
+        "row": {
+          "uuid": "b821a160-d55c-429a-ad8b-196152cc673c",
+          "fields": {
+            "key_color_temperature": 3200,
+            "key_source": "oil lamp, closer wrap for the push-in",
+            "lifecycle_status": "active",
+            "lighting_style": "naturalistic",
+            "name": "12-04 lighting",
+            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+            "shot_uuid": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
+          }
+        }
+      },
+      {
+        "entity": "shot_design",
+        "row": {
+          "uuid": "d328baff-7d36-494b-940c-3bd282eb99aa",
+          "fields": {
+            "color_emphasis": "amber vs slate",
+            "composition_type": "rule of thirds",
+            "depth_of_field": "shallow",
+            "lifecycle_status": "active",
+            "name": "12-04 design",
+            "shot_uuid": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0",
+            "subject_placement": "Eleanor left third; Marcus soft right background."
+          }
+        }
+      }
+    ]
+  }
+}

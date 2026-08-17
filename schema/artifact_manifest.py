@@ -46,6 +46,10 @@ ARTIFACTS = [
     ("spec/finding-catalog.json",
      "The normative finding catalog. Spec §9.4 requires every code and "
      "severity to come from here."),
+    ("fixtures/expectations/Q05.result.json",
+     "Q05's normative result. Spec §12.2."),
+    ("fixtures/expectations/Q07.result.json",
+     "Q07's normative result. Spec §12.3."),
     ("fixtures/negative/CASES.json",
      "The eleven negative fixtures as reproducible recipes. Spec "
      "conformance.md §5.3."),

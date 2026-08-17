@@ -16,6 +16,51 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.20 — 2026-08-17
+
+*Describes schema 2.12.*
+
+**§12 exists.** The canonical queries were decided to be part of the
+format and then defined nowhere; this is the first instalment.
+
+**§12.1 defines what any query returns.** An envelope naming the query,
+its own result-format version, the schema read, and the parameters —
+each a uuid. Then §12.1.2, the rule that makes a result portable:
+
+- row ids MUST NOT appear;
+- `id`, `created_at`, `updated_at` are omitted;
+- null and empty fields are omitted, so absence is unambiguous;
+- reference columns are resolved to uuids — `scene_id` becomes
+  `scene_uuid`;
+- field names are the registry's own.
+
+And the sentence the section turns on: **the normative answer is the
+result structure. Any rendering of it is a convenience and is not
+normative.** Two implementations that agree on the result and print it
+differently are both conforming.
+
+**§12.2 Q05** — baseline, states in force by pattern 2, merged
+modulations, beats. A null baseline is stated as a well-defined absence
+rather than an error.
+
+**§12.3 Q07** — the cascade, with §12.3.1 stating that the leaf depends
+on the PARAMETERS: `scene_color_palette` for a scene,
+`shot_design` when a shot is named. That is what §7.1 means by the leaf
+not being derivable from the data, said in the place an implementer will
+look for it.
+
+Q05 and Q07 were chosen because they stress different machinery. One
+envelope and one projection rule served both, which is the evidence that
+the shape is worth extending to the other fourteen.
+
+`fixtures/expectations/Q05.result.json` and `Q07.result.json` are
+blessed and published in `ARTIFACTS.md` — nine artifacts now.
+
+**Still unspecified: fourteen queries**, and whether a result excludes
+`cut` rows, which waits on §6.6.
+
+---
+
 ## 0.19 — 2026-08-17
 
 *Describes schema 2.12.*
