@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.27 / schema 2.12. This document is expected
+Current as of specification 0.28 / schema 2.12. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -75,8 +75,7 @@ about it is ceremonial.
 | `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in 2.11; the old column removed in 2.12 under §11.0. `numbering.ts` owns resolution, and a test asserts a stale `scene_numbering` cannot override it. |
 | Pre-1.0 change licence | §11.0 | Provisional | n/a | States that §11's rules take effect at 1.0 and that earlier files are disposable, with the fixture excepted. Provisional because it is the kind of clause that is easy to write and easy to overrun — it needs the 1.0 release to prove it was honoured. |
 | Result envelope and row projection | §12.1 | Provisional | Yes | `queryResult.ts`. Rows by uuid, volatile columns dropped, references resolved to uuids. Provisional until a second implementation has produced a matching result. |
-| Thirteen queries | §12.2–12.14 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |
-| **The other three queries** | §12 | **Unstable** | **No** | Q01, Q02 and Q04 remain. They share the `dossier` and scene-assembly compositions, which live in the app and must move to the core first — the same extraction Q03 and Q12 needed. The nesting decision recorded on 2026-08-17 is **withdrawn**: its premise was that these build on other queries' results, and none of them does (§12.1.3). They are not distinguished by taking no position — Q02, Q04 and Q11 all take a scene. What they have in common is that they COMPOSE other queries: a brief, a dossier, a scene package. Specifying them means deciding whether a composite result nests the results it is built from or restates them. |
+| All sixteen queries | §12.2–12.17 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |
 | Expectation coverage | — | Provisional | Partly | Four results now sit at three different positions. The rendered-markdown expectations still cluster on scene 12, and will until the queries behind them are specified. |
 | Results exclude `cut` rows | §12.1.2 | Provisional | Yes | Follows §6.6.1. Settled before the other fourteen queries were blessed, so they get blessed once. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
@@ -197,7 +196,7 @@ about it is ceremonial.
 
 ## Summary — what stands between here and 1.0
 
-Six Unstable rows, in rough dependency order:
+Five Unstable rows, in rough dependency order:
 
 1. **The remaining three queries** (§12) — Q01, Q02, Q04. Their
    compositions live in the app and must move to the core first, as Q03's
@@ -212,9 +211,9 @@ Six Unstable rows, in rough dependency order:
 4. **A view for what was cut** (§6.6.2) — the filter is done; the way to
    read cut rows back is a library function nothing calls. Until a cut
    list exists, "inspectable" is a claim.
-5. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
+4. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
    1.0 or go. They are now at least reported.
-6. **Artifact addressing** (§2.1) — the manifest is written and verifies,
+5. **Artifact addressing** (§2.1) — the manifest is written and verifies,
    but no `schema-X.Y` tag exists, so the URLs it publishes do not
    resolve. One `git tag` closes it.
 

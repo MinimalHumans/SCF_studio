@@ -49,7 +49,9 @@ A conforming Reader MUST:
   contributing layer (§7);
 - return a usable answer on half-placed, dangling and contradictory
   data, and report the problem separately (§9.2);
-- treat a `cut` row as present, pending §6.6.
+- **exclude every row whose `lifecycle_status` is `cut`** (§6.6.1) — from
+  story order, from spans, from cascades and from every result. A cut
+  row is not in the film, so adding one to a file must change no answer.
 
 A conforming Reader MUST NOT:
 
@@ -300,27 +302,24 @@ unstamped header.
 
 ### 5.4 The canonical query expectations
 
-> **In progress.** Spec §12 defines ten queries as result structures —
-> Q03, Q05, Q06, Q07, Q08, Q09, Q10, Q12, Q13, Q14 — and their
-> `.result.json` files are the normative artifacts for those ten: rows by uuid, no row
+> **Complete.** Spec §12 defines all sixteen queries as result
+> structures, and their `.result.json` files are the normative artifacts: rows by uuid, no row
 > ids, no timestamps, references resolved. For those queries the markdown
 > is a convenience and is not a contract.
 >
-> An earlier revision claimed the specified set was "every query taking
-> a position". That was wrong — Q02, Q04 and Q11 take a scene too. The
-> six that remain are the COMPOSITES: a brief, a dossier, a subject in
-> context, a scene package, an audience state, a provenance trail.
+> Two earlier revisions described the unspecified remainder by a
+> property that turned out to be false — first that they took no
+> position parameter, then that they were composites building on other
+> queries. Both were wrong, and neither error survived contact with the
+> code. There is no remainder now.
 >
 > Q03 and Q12 are blessed **away from scene 12** — at 19, and diffing
 > 19 → 16 — because the rest of the expectations cluster there, and a
 > live ordering bug once sat under a fully passing suite for exactly
 > that reason.
 >
-> The other six still have only their rendered markdown, described
-> below, and one known defect remains in that half: an implementation
-> must reproduce punctuation no document states. `Q13.expected.md`'s
-> embedded row id is superseded — `Q13.result.json` names its subject by
-> uuid.
+> The rendered markdown in the same directory is a convenience for every
+> query now, and is a contract for none.
 
 `fixtures/expectations/`, blessed and checked on every test run.
 
@@ -365,10 +364,8 @@ are runnable, which is the whole mechanism.
    [`finding-catalog.json`](finding-catalog.json).
 2. Reproduce the canonical query expectations in
    `fixtures/expectations/` for the queries you implement. For a query
-   specified in §12 — currently Q05 and Q07 — compare against its
-   `.result.json`; the rendered markdown is not a contract. For the
-   others, compare the markdown, resolving parameters from the recorded
-   selectors, and expect that to change as §12 grows.
+   query, compare against its `.result.json`. The rendered markdown is
+   **not** a contract for any query.
 3. Build the eleven negative fixtures from
    [`CASES.json`](../fixtures/negative/CASES.json) — an empty conforming
    database per `scf-schema.sql`, then each case's statements in order —

@@ -41,6 +41,9 @@ sha256sum -c spec/SHA256SUMS
 | `spec/finding-catalog.json` | `153c3edb8a224833…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
 | `fixtures/expectations/Q00.result.json` | `afbc6b9d9d04f24f…` | Q00's normative result. Spec §12.12. |
 | `fixtures/expectations/Q03.result.json` | `6ceac30d503ec180…` | Q03's normative result. Spec §12.4. |
+| `fixtures/expectations/Q01.result.json` | `000d11cc965c5a31…` | Q01's normative result. Spec §12.15. |
+| `fixtures/expectations/Q02.result.json` | `c64a7e05f8b9e180…` | Q02's normative result. Spec §12.16. |
+| `fixtures/expectations/Q04.result.json` | `cb1b6acc95863e92…` | Q04's normative result. Spec §12.17. |
 | `fixtures/expectations/Q05.result.json` | `3e1d3a6e77229f49…` | Q05's normative result. Spec §12.2. |
 | `fixtures/expectations/Q07.result.json` | `e245d933b67add10…` | Q07's normative result. Spec §12.3. |
 | `fixtures/expectations/Q06.result.json` | `fc1c3456d9067daf…` | Q06's normative result. Spec §12.6. |

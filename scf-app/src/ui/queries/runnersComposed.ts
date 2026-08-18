@@ -22,7 +22,9 @@ import {
   resolveMedia, rows, sceneOrder, selectLocationVariant, statesInForce,
   type ScfContext,
 } from "@scf-core/resolution.ts";
-import { mentionsRow } from "@scf-core/canonicalQueries.ts";
+import {
+  composeDossier, mentionsRow, type DossierComposition,
+} from "@scf-core/canonicalQueries.ts";
 import type { ParamValues, QuerySpec } from "./runners.ts";
 
 const num = (v: SqlValue | undefined): number | null =>
@@ -120,45 +122,10 @@ export interface Q01Payload {
   thematicConnections: Row[];
 }
 
-async function dossier(ctx: ScfContext, subjectType: string,
-                       subjectId: number): Promise<Q01Payload> {
-  const subject = (await rows(ctx.exec, subjectType, "id = ?",
-                              [subjectId]))[0] ?? null;
-  const idField = `${subjectType}_id`;
-  const groups: DossierGroup[] = [];
-  // The G2 walk: every entity on X's subject axis at global scope,
-  // linked by the subject reference. No hand-maintained lists.
-  for (const name of ctx.registry.order) {
-    const e = ctx.registry.entities.get(name);
-    if (e === undefined || e.subject !== subjectType ||
-        e.scope !== "global" || name === subjectType) {
-      continue;
-    }
-    if (!e.fields.some((f) => f.name === idField &&
-                              f.fieldType === "reference")) {
-      continue;
-    }
-    const found = await rows(ctx.exec, name, `${q(idField)} = ?`,
-                             [subjectId]);
-    if (found.length > 0) groups.push({ entity: name, rows: found });
-  }
-  const carriage = await rows(
-    ctx.exec, "motif_appearance", "entity_type = ? AND entity_id = ?",
-    [subjectType, subjectId]);
-  const motifCarriage = [];
-  for (const appearance of carriage) {
-    const motif = (await rows(ctx.exec, "motif", "id = ?",
-                              [appearance["motif_id"] ?? null]))[0] ?? null;
-    motifCarriage.push({ appearance, motif });
-  }
-  const thematicConnections = await rows(
-    ctx.exec, "thematic_connection", "entity_type = ? AND entity_id = ?",
-    [subjectType, subjectId]);
-  return { subjectType, subject, groups, motifCarriage,
-           thematicConnections };
-}
-
-function dossierMarkdown(p: Q01Payload): string[] {
+// The dossier COMPOSITION moved to scf-core (spec §12.15); this is
+// rendering and stays here. Core composes, app renders, result
+// projects.
+function dossierMarkdown(p: DossierComposition): string[] {
   return [
     ...p.groups.map((g) => mdSection(g.entity,
       g.rows.flatMap((r) => [
@@ -189,7 +156,7 @@ export const q01: QuerySpec = {
   run: async (ctx, values): Promise<Q01Payload> => {
     const subjectId = num(values["subject_id"]);
     if (subjectId === null) throw new Error("pick a subject");
-    return dossier(ctx, String(values["subject"] ?? "character"),
+    return composeDossier(ctx, String(values["subject"] ?? "character"),
                    subjectId);
   },
   toMarkdown: (payload): string => {
@@ -239,7 +206,7 @@ export const q02: QuerySpec = {
       throw new Error("pick a subject and a scene");
     }
     const order = await sceneOrder(ctx);
-    const d = await dossier(ctx, subjectType, subjectId);
+    const d = await composeDossier(ctx, subjectType, subjectId);
     const scene = (await rows(ctx.exec, "scene", "id = ?",
                               [sceneId]))[0] ?? null;
     const stack: ContextLayer[] = [

@@ -1,0 +1,228 @@
+{
+  "query": "Q01",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "subjectType": "character",
+    "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64"
+  },
+  "result": {
+    "subjectType": "character",
+    "subject": {
+      "uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+      "fields": {
+        "age": "61",
+        "arc_description": "From a woman who answers questions with tasks to a woman who says the thing and lets it cost her.",
+        "archetype": "the keeper of the house",
+        "backstory": "Came west at nineteen. Buried a husband at forty-two and a daughter at fifty-four. Has not left the valley since.",
+        "casting_status": "tbd",
+        "core_belief": "Work is what love looks like when you can't speak.",
+        "external_goal": "Get the homestead through the winter.",
+        "flaw": "Mistakes silence for mercy — to others and to herself.",
+        "gender": "female",
+        "greatest_fear": "That saying it aloud makes it true forever.",
+        "internal_goal": "To stop blaming her son without having to forgive him.",
+        "lifecycle_status": "active",
+        "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
+        "name": "Eleanor Cade",
+        "occupation": "Homesteader; midwife to the valley",
+        "pronouns": "she/her",
+        "role": "protagonist",
+        "skills_abilities": "Midwifery, horse handling, reading weather",
+        "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
+      }
+    },
+    "groups": [
+      {
+        "entity": "physical_character_profile",
+        "rows": [
+          {
+            "uuid": "a3ed0b3c-4f85-43b3-ba36-06233fe7f6ac",
+            "fields": {
+              "center_of_gravity": "low",
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "emotional_manifestations": "{\"fear\": {\"body\": \"stillness\", \"breathing\": \"shallow\"}, \"joy\": {\"face\": \"crow's-feet crease before the mouth moves\"}}",
+              "energy_quality": "contained",
+              "expressiveness_level": "controlled",
+              "eye_contact_patterns": "Meets eyes only when giving instructions",
+              "facial_asymmetries": "scar through the left brow",
+              "gaze_direction_tendencies": "Looks at hands, doors, weather",
+              "injuries_visible_in_movement": "After sc 9, guards the left side",
+              "lifecycle_status": "active",
+              "movement_economy": "efficient",
+              "movement_fluidity": "smooth",
+              "movement_speed": "deliberate",
+              "movement_style": "Economical; nothing wasted",
+              "movement_weight": "grounded",
+              "name": "Eleanor physicality",
+              "physical_comfort": "at home in body",
+              "physical_training_visible": "Forty years of physical work",
+              "posture": "upright",
+              "resting_face": "guarded",
+              "spatial_presence": "takes up space",
+              "tension_level": "variable"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "vocal_profile",
+        "rows": [
+          {
+            "uuid": "7abc0a5b-e86e-49a3-835e-1334423dff69",
+            "fields": {
+              "accent": "Flat inland Oregon",
+              "accent_authenticity": "native",
+              "articulation": "precise",
+              "breathiness_level": "slight",
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "class_markers": "Plain, unornamented",
+              "delivery_style": "minimalist",
+              "emotional_access": "controlled",
+              "fluency": "filled pauses",
+              "interruption_tendencies": "Never interrupts; waits a beat too long",
+              "lifecycle_status": "active",
+              "listening_behavior": "Listens with her whole body.",
+              "name": "Eleanor voice",
+              "pace": "measured",
+              "pitch_range": "low",
+              "rhythm": "halting",
+              "speech_pattern": "Answers a question with an instruction",
+              "subtext_playing": "hides",
+              "timbre": "warm",
+              "verbal_tics": "[\"answers questions with tasks\"]",
+              "vocal_habits": "Drops the ends of sentences she does not want to finish",
+              "voice_quality": "Low and unhurried; the voice of someone used to being obeyed by animals",
+              "volume_tendency": "soft"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "character_appearance_profile",
+        "rows": [
+          {
+            "uuid": "bf84756e-01e2-4fd0-89bd-a065952438d0",
+            "fields": {
+              "body_type": "slim",
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "distinguishing_features": "Hands that have done everything twice; scar through the left brow.",
+              "hair": "grey braid",
+              "height_proportions": "5ft 6in",
+              "lifecycle_status": "active",
+              "name": "Eleanor appearance"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "costume",
+        "rows": [
+          {
+            "uuid": "e31af919-109a-4f75-812e-9b868bad2904",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "condition": "worn",
+              "continuity_notes": "Creek-soaked from sc 9; dried and stiff after",
+              "description": "Grey wool work dress, sleeves pushed back.",
+              "fabrics": "Wool, cotton apron",
+              "key_garments": "Dress, apron",
+              "lifecycle_status": "active",
+              "name": "Work dress",
+              "primary_color_hex": "#6E6B64",
+              "primary_color_name": "ash grey",
+              "silhouette": "Straight, unfitted",
+              "social_signals": "Widow who does not dress like one",
+              "texture_qualities": "Coarse, softened by washing",
+              "what_reveals": "That she has not stopped working since 1882"
+            }
+          },
+          {
+            "uuid": "ec9d9eae-79f4-4b84-be16-c00f24d37b6f",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "condition": "worn",
+              "continuity_notes": "Off the hook from sc 10 onward",
+              "description": "Knitted shawl, slightly too fine for the dress.",
+              "emotional_state_reflected": "Grief handled as a garment",
+              "fabrics": "Fine knitted wool",
+              "lifecycle_status": "active",
+              "name": "Ada's shawl",
+              "primary_color_hex": "#3F4C63",
+              "primary_color_name": "faded indigo",
+              "silhouette": "Draped, too fine for the dress",
+              "what_reveals": "That she kept it"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "physical_habit",
+        "rows": [
+          {
+            "uuid": "39290fb8-1b63-4261-b6ae-2af388d6cb24",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "description": "Touches the doorframe when entering any room.",
+              "lifecycle_status": "active",
+              "name": "Doorframe touch"
+            }
+          },
+          {
+            "uuid": "92ee559e-5187-42fa-a258-418597c8a1cb",
+            "fields": {
+              "body_parts_involved": "right hand",
+              "character_awareness": "unaware",
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "description": "Touches the doorframe entering any room.",
+              "frequency": "constant",
+              "lifecycle_status": "active",
+              "meaning": "Checking the house is still standing.",
+              "name": "Doorframe touch"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "character_environment_physicality",
+        "rows": [
+          {
+            "uuid": "5e717b6d-4c28-462e-bd79-89b8884998c0",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "comfort_level": "total",
+              "interaction_pattern": "This is her arena; she moves through it without looking, reaches for things blind.",
+              "lifecycle_status": "active",
+              "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+              "name": "Eleanor in her kitchen"
+            }
+          },
+          {
+            "uuid": "78a97268-d4cb-4197-a935-6f8bef1a9977",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "comfort_level": "uncomfortable",
+              "interaction_pattern": "Crosses fast and does not look at the water.",
+              "lifecycle_status": "active",
+              "location_uuid": "aeb81bee-5944-44d2-b885-ad03f5954173",
+              "name": "Eleanor at the creek"
+            }
+          }
+        ]
+      }
+    ],
+    "motifCarriage": [],
+    "thematicConnections": [
+      {
+        "uuid": "7a068809-522f-445d-bd89-b53f43f318b4",
+        "fields": {
+          "entity_type": "character",
+          "lifecycle_status": "active",
+          "nature_of_connection": "embodies",
+          "subtlety_level": "clear",
+          "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+        }
+      }
+    ]
+  }
+}

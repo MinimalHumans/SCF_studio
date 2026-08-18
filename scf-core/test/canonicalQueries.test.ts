@@ -22,7 +22,8 @@ import { fileURLToPath } from "node:url";
 import { beforeAll, afterAll, describe, expect, test } from "vitest";
 import {
   MOTIF_DENSITY_THRESHOLD, Q00_LAYERS, Q07_SCENE_LEAF, Q07_SHOT_LEAF,
-  mentionsRow, q00Result, q11Result, q15Result, q03Result,
+  mentionsRow, q00Result, q01Result, q02Result, q04Result,
+  q11Result, q15Result, q03Result,
   q05Result, q06Result, q07Result, q08Result, q09Result, q10Result,
   q12Result, q13Result, q14Result,
 } from "../src/canonicalQueries.ts";
@@ -588,12 +589,96 @@ describe("§12.14 Q15 — provenance", () => {
   });
 });
 
+describe("§12.15 Q01, §12.16 Q02, §12.17 Q04", () => {
+  test("Q01 matches its blessed result", async () => {
+    blessOrCheck("Q01", await q01Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id));
+  });
+
+  test("Q02 matches its blessed result", async () => {
+    blessOrCheck("Q02", await q02Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id,
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id));
+  });
+
+  test("Q04 matches its blessed result", async () => {
+    blessOrCheck("Q04", await q04Result(fx.ctx, scene12.uuid, scene12.id));
+  });
+
+  test("Q01's groups are derived, not listed", async () => {
+    // Every entity whose registry `subject` is this kind, at global
+    // scope, carrying a reference back. Adding an entity about
+    // characters puts it in every character's dossier with no code
+    // change — which is why the registry carries `subject` and `scope`.
+    const r = await q01Result(fx.ctx, "character", eleanor.uuid,
+                              eleanor.id);
+    expect(r.result.groups.length).toBeGreaterThan(0);
+    for (const g of r.result.groups) {
+      const def = registry.entities.get(g.entity);
+      expect(def?.subject, g.entity).toBe("character");
+      expect(def?.scope, g.entity).toBe("global");
+      expect(g.rows.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("Q02 nests Q13's body, and names where it came from", async () => {
+    // The ONE place a canonical query builds on another. §12.1.3
+    // withdrew the assumption that composites nest because none of them
+    // did; this is the exception, and it carries the result BODY
+    // without its envelope.
+    const q02 = await q02Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id,
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
+    const q13 = await q13Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
+
+    expect(q02.result.media.fromQuery).toBe("Q13");
+    const { fromQuery, ...body } = q02.result.media;
+    expect(fromQuery).toBe("Q13");
+    expect(body).toEqual(q13.result);
+    // The body only — no envelope inside an envelope.
+    expect(q02.result.media).not.toHaveProperty("resultFormat");
+    expect(q02.result.media).not.toHaveProperty("parameters");
+  });
+
+  test("Q02 carries the same dossier Q01 does", async () => {
+    const q01 = await q01Result(fx.ctx, "character", eleanor.uuid,
+                                eleanor.id);
+    const q02 = await q02Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id,
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
+    expect(q02.result.dossier).toEqual(q01.result);
+  });
+
+  test("Q02's subject-kind branches are empty, not absent", async () => {
+    // A character subject has no location variant and no prop state.
+    // Null says "not applicable here"; omitting the key would make a
+    // consumer guess whether it was unsupported or unauthored.
+    const r = await q02Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id,
+      scene12.uuid, scene12.id, null, null);
+    expect(r.result).toHaveProperty("locationVariant");
+    expect(r.result.locationVariant).toBeNull();
+    expect(r.result.propState).toBeNull();
+    expect(r.result.performanceStates.length).toBeGreaterThanOrEqual(0);
+  });
+
+  test("Q04's lineage is broadest first", async () => {
+    const r = await q04Result(fx.ctx, scene12.uuid, scene12.id);
+    if (r.result.lineage.length > 1) {
+      expect(r.result.lineage[0]?.entity).toBe("act");
+    }
+  });
+});
+
 describe("the results are portable", () => {
   test("no row id or timestamp appears anywhere in either", async () => {
     // The property the whole section rests on, asserted over the real
     // serialised output rather than over a projection in isolation.
-    for (const name of ["Q00", "Q03", "Q05", "Q06", "Q07", "Q08", "Q09",
-                        "Q10", "Q11", "Q12", "Q13", "Q14", "Q15"]) {
+    for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
+                        "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
+                        "Q14", "Q15"]) {
       const text = readFileSync(join(OUT, `${name}.result.json`), "utf8");
       const parsed = JSON.parse(text) as unknown;
       const walk = (v: unknown, path: string): void => {
@@ -616,8 +701,9 @@ describe("the results are portable", () => {
   });
 
   test("both declare the same result format", () => {
-    for (const name of ["Q00", "Q03", "Q05", "Q06", "Q07", "Q08", "Q09",
-                        "Q10", "Q11", "Q12", "Q13", "Q14", "Q15"]) {
+    for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
+                        "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
+                        "Q14", "Q15"]) {
       const r = JSON.parse(
         readFileSync(join(OUT, `${name}.result.json`), "utf8")) as {
           resultFormat: string; parameters: Record<string, unknown>;

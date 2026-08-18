@@ -25,7 +25,7 @@ import { readinessReport } from "./readiness.ts";
 import type { FileLocator } from "./assets.ts";
 import {
   envelope, projectRow, referencesOf, uuidLookupForAll,
-  type ProjectedRow, type QueryResult,
+  type ProjectedRow, type QueryResult, type UuidLookup,
 } from "./queryResult.ts";
 
 // ---------------------------------------------------------------------------
@@ -191,10 +191,11 @@ async function directionResult(
 // two consumers.
 // ---------------------------------------------------------------------------
 
+import { q } from "./db.ts";
 import type { Row, SqlValue } from "./db.ts";
 import {
   motifStateAt, propStateAt, relationshipStateAt, rows, sceneOrder,
-  statesInForce,
+  selectLocationVariant, statesInForce,
 } from "./resolution.ts";
 
 const asId = (v: unknown): number | null => {
@@ -947,4 +948,352 @@ export async function q15Result(
           .map((r) => projectRow(r, refs(ctx, "collaboration_note"), lookup)),
       },
     });
+}
+
+// ---------------------------------------------------------------------------
+// The dossier — shared by Q01 and Q02 (§12.15, §12.16)
+// ---------------------------------------------------------------------------
+
+export interface DossierGroup { entity: string; rows: Row[] }
+
+export interface DossierComposition {
+  subjectType: string;
+  subject: Row | null;
+  groups: DossierGroup[];
+  motifCarriage: Array<{ appearance: Row; motif: Row | null }>;
+  thematicConnections: Row[];
+}
+
+/**
+ * Everything authored about a subject before any scene bends it.
+ *
+ * The group walk is DERIVED, not listed: every entity whose registry
+ * `subject` is this kind, at global scope, carrying a reference back to
+ * it. Adding a new entity about characters puts it in every character's
+ * dossier with no code change — which is the whole argument for the
+ * registry carrying `subject` and `scope` at all.
+ *
+ * Shared by Q01 and Q02. It lives here rather than in the app for the
+ * reason Q03's and Q12's compositions did: a normative result must not
+ * re-derive what a renderer already derives.
+ */
+export async function composeDossier(
+    ctx: ScfContext, subjectType: string,
+    subjectId: number): Promise<DossierComposition> {
+  const subject = (await rows(ctx.exec, subjectType, "id = ?",
+                              [subjectId]))[0] ?? null;
+  const idField = `${subjectType}_id`;
+  const groups: DossierGroup[] = [];
+
+  for (const name of ctx.registry.order) {
+    const e = ctx.registry.entities.get(name);
+    if (e === undefined || e.subject !== subjectType ||
+        e.scope !== "global" || name === subjectType) {
+      continue;
+    }
+    if (!e.fields.some((f) => f.name === idField &&
+                              f.fieldType === "reference")) {
+      continue;
+    }
+    const found = await rows(ctx.exec, name, `${q(idField)} = ?`,
+                             [subjectId]);
+    if (found.length > 0) groups.push({ entity: name, rows: found });
+  }
+
+  const motifCarriage: DossierComposition["motifCarriage"] = [];
+  for (const appearance of await rows(
+      ctx.exec, "motif_appearance", "entity_type = ? AND entity_id = ?",
+      [subjectType, subjectId])) {
+    const motifId = asId(appearance["motif_id"]);
+    motifCarriage.push({
+      appearance,
+      motif: motifId === null
+        ? null : (await rows(ctx.exec, "motif", "id = ?", [motifId]))[0]
+          ?? null,
+    });
+  }
+
+  return {
+    subjectType, subject, groups, motifCarriage,
+    thematicConnections: await rows(
+      ctx.exec, "thematic_connection", "entity_type = ? AND entity_id = ?",
+      [subjectType, subjectId]),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Q01 — Subject dossier (§12.15)
+// ---------------------------------------------------------------------------
+
+export interface Q01Result {
+  subjectType: string;
+  subject: ProjectedRow | null;
+  groups: Array<{ entity: string; rows: ProjectedRow[] }>;
+  motifCarriage: Array<{
+    appearance: ProjectedRow; motif: ProjectedRow | null;
+  }>;
+  thematicConnections: ProjectedRow[];
+}
+
+function projectDossier(
+    ctx: ScfContext, d: DossierComposition,
+    lookup: UuidLookup): Q01Result {
+  return {
+    subjectType: d.subjectType,
+    subject: d.subject === null
+      ? null : projectRow(d.subject, refs(ctx, d.subjectType), lookup),
+    groups: d.groups.map((g) => ({
+      entity: g.entity,
+      rows: g.rows.map((r) => projectRow(r, refs(ctx, g.entity), lookup)),
+    })),
+    motifCarriage: d.motifCarriage.map((m) => ({
+      appearance: projectRow(m.appearance, refs(ctx, "motif_appearance"),
+                             lookup),
+      motif: m.motif === null
+        ? null : projectRow(m.motif, refs(ctx, "motif"), lookup),
+    })),
+    thematicConnections: d.thematicConnections.map(
+      (t) => projectRow(t, refs(ctx, "thematic_connection"), lookup)),
+  };
+}
+
+export async function q01Result(
+    ctx: ScfContext, subjectType: string, subjectUuid: string,
+    subjectId: number): Promise<QueryResult<Q01Result>> {
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
+  return envelope("Q01", ctx.registry,
+    { subjectType, subject: subjectUuid },
+    projectDossier(ctx, await composeDossier(ctx, subjectType, subjectId),
+                   lookup));
+}
+
+// ---------------------------------------------------------------------------
+// Q02 — Subject in context (§12.16)
+// ---------------------------------------------------------------------------
+
+/**
+ * The one place a canonical query genuinely builds on another.
+ *
+ * §12.1.3 withdrew the assumption that composites nest, because none of
+ * them did. Q02's media layer is the exception: it IS Q13's answer at a
+ * position, so it carries Q13's result BODY without its envelope, and
+ * names the query it came from. Everything else Q02 assembles itself.
+ */
+export interface Q02Result {
+  subjectType: string;
+  subject: ProjectedRow | null;
+  scene: ProjectedRow | null;
+  /** The subject's standing description — Q01's result body. */
+  dossier: Q01Result;
+  /** Present for a character subject; empty otherwise. */
+  costumes: ProjectedRow[];
+  relationshipStates: ProjectedRow[];
+  performanceStates: ProjectedRow[];
+  beats: ProjectedRow[];
+  /** Present for a location subject. */
+  locationVariant:
+    { variant: ProjectedRow | null; mismatches: string[] } | null;
+  /** Present for a prop subject. */
+  propState: ProjectedRow | null;
+  /**
+   * Q13's result body, unwrapped, with the query it came from named.
+   * `intent` is already part of that body — restating it here would be
+   * two places for one fact.
+   */
+  media: { fromQuery: string } & Q13Result;
+}
+
+export async function q02Result(
+    ctx: ScfContext, subjectType: string, subjectUuid: string,
+    subjectId: number, sceneUuid: string, sceneId: number,
+    shotUuid: string | null, shotId: number | null,
+): Promise<QueryResult<Q02Result>> {
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
+  const order = await sceneOrder(ctx);
+  const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
+    ?? null;
+  const dossier = await composeDossier(ctx, subjectType, subjectId);
+
+  let costumes: Row[] = [];
+  const relationshipStates: Row[] = [];
+  let performanceStates: Row[] = [];
+  let beats: Row[] = [];
+  let locationVariant: Q02Result["locationVariant"] = null;
+  let propState: Row | null = null;
+
+  if (subjectType === "character") {
+    costumes = await ctx.exec(
+      "SELECT c.* FROM costume_scene cs JOIN costume c " +
+      "ON c.id = cs.costume_id WHERE cs.scene_id = ? AND c.character_id = ?",
+      [sceneId, subjectId]);
+    for (const rel of await rows(
+        ctx.exec, "character_relationship",
+        "character_a_id = ? OR character_b_id = ?",
+        [subjectId, subjectId])) {
+      const relId = asId(rel["id"]);
+      if (relId === null) continue;
+      const state = await relationshipStateAt(ctx, relId, sceneId, order);
+      if (state !== null) relationshipStates.push(state);
+    }
+    performanceStates = await statesInForce(ctx, subjectId, sceneId, null,
+                                            order);
+    beats = await rows(ctx.exec, "performance_beat",
+                       "character_id = ? AND scene_id = ?",
+                       [subjectId, sceneId]);
+  }
+
+  if (subjectType === "location") {
+    const [variant, mismatches] = await selectLocationVariant(ctx, sceneId);
+    locationVariant = {
+      variant: variant === null
+        ? null : projectRow(variant, refs(ctx, "location_variant"), lookup),
+      mismatches,
+    };
+  }
+
+  if (subjectType === "prop") {
+    propState = await propStateAt(ctx, subjectId, sceneId, order);
+  }
+
+  // Nesting, in the one place it is honest.
+  const intent = subjectType === "location"
+    ? "environment" : "visual_identity";
+  const media = await q13Result(ctx, subjectType, subjectUuid, subjectId,
+                                intent, sceneUuid, sceneId, shotUuid,
+                                shotId);
+
+  return envelope("Q02", ctx.registry, {
+    subjectType, subject: subjectUuid, scene: sceneUuid, shot: shotUuid,
+  }, {
+    subjectType,
+    subject: dossier.subject === null
+      ? null : projectRow(dossier.subject, refs(ctx, subjectType), lookup),
+    scene: scene === null
+      ? null : projectRow(scene, refs(ctx, "scene"), lookup),
+    dossier: projectDossier(ctx, dossier, lookup),
+    costumes: costumes.map((c) => projectRow(c, refs(ctx, "costume"),
+                                             lookup)),
+    relationshipStates: relationshipStates.map(
+      (r) => projectRow(r, refs(ctx, "relationship_state"), lookup)),
+    performanceStates: performanceStates.map(
+      (r) => projectRow(r, refs(ctx, "performance_state"), lookup)),
+    beats: beats.map((b) => projectRow(b, refs(ctx, "performance_beat"),
+                                       lookup)),
+    locationVariant,
+    propState: propState === null
+      ? null : projectRow(propState, refs(ctx, "prop_state"), lookup),
+    media: { fromQuery: "Q13", ...media.result },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Q04 — Scene package (§12.17)
+// ---------------------------------------------------------------------------
+
+/**
+ * The scene-level entities a package reports. Fixed by §12.17 rather
+ * than derived, for the reason Q00's layer list is: what belongs in a
+ * scene package is an editorial choice, not a fact the registry knows.
+ */
+export const Q04_DETAIL = [
+  "scene_emotional_target", "scene_color_palette", "lighting_design",
+  "scene_music_design", "dialogue_sound_design", "set_dressing",
+  "tone_marker",
+] as const;
+
+export interface Q04Result {
+  scene: ProjectedRow | null;
+  /** Act and sequence, broadest first. */
+  lineage: Array<{ entity: string; row: ProjectedRow }>;
+  storyBeats: ProjectedRow[];
+  cast: ProjectedRow[];
+  props: ProjectedRow[];
+  location: ProjectedRow | null;
+  locationVariant:
+    { variant: ProjectedRow | null; mismatches: string[] };
+  detail: Array<{ entity: string; rows: ProjectedRow[] }>;
+  blocking: ProjectedRow[];
+  stagingBeats: ProjectedRow[];
+}
+
+export async function q04Result(
+    ctx: ScfContext, sceneUuid: string, sceneId: number,
+): Promise<QueryResult<Q04Result>> {
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
+  const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
+    ?? null;
+
+  const lineage: Array<{ entity: string; row: Row }> = [];
+  for (const link of await rows(ctx.exec, "scene_sequence", "scene_id = ?",
+                                [sceneId])) {
+    const seq = (await rows(ctx.exec, "sequence", "id = ?",
+                            [asId(link["sequence_id"])]))[0];
+    if (seq === undefined) continue;
+    const act = (await rows(ctx.exec, "act", "id = ?",
+                            [asId(seq["act_id"])]))[0];
+    if (act !== undefined) lineage.push({ entity: "act", row: act });
+    lineage.push({ entity: "sequence", row: seq });
+  }
+
+  const byBeatOrder = (a: Row, b: Row): number =>
+    (Number(a["beat_order"]) || 0) - (Number(b["beat_order"]) || 0);
+
+  const storyBeats = (await rows(ctx.exec, "story_beat", "scene_id = ?",
+                                 [sceneId])).sort(byBeatOrder);
+  const cast = await ctx.exec(
+    "SELECT c.* FROM scene_character sc JOIN character c " +
+    "ON c.id = sc.character_id WHERE sc.scene_id = ?", [sceneId]);
+  const props = await ctx.exec(
+    "SELECT p.* FROM scene_prop sp JOIN prop p " +
+    "ON p.id = sp.prop_id WHERE sp.scene_id = ?", [sceneId]);
+
+  const locationId = asId(scene?.["location_id"]);
+  const location = locationId === null
+    ? null
+    : (await rows(ctx.exec, "location", "id = ?", [locationId]))[0] ?? null;
+  const [variant, mismatches] = await selectLocationVariant(ctx, sceneId);
+
+  const detail: Array<{ entity: string; rows: Row[] }> = [];
+  for (const entity of Q04_DETAIL) {
+    if (!ctx.registry.entities.has(entity)) continue;
+    const found = await rows(ctx.exec, entity, "scene_id = ?", [sceneId]);
+    if (found.length > 0) detail.push({ entity, rows: found });
+  }
+
+  const blocking = await rows(ctx.exec, "scene_blocking", "scene_id = ?",
+                              [sceneId]);
+  const stagingBeats: Row[] = [];
+  for (const b of blocking) {
+    stagingBeats.push(...await rows(ctx.exec, "staging_beat",
+                                    "scene_blocking_id = ?",
+                                    [asId(b["id"])]));
+  }
+  stagingBeats.sort(byBeatOrder);
+
+  return envelope("Q04", ctx.registry, { scene: sceneUuid }, {
+    scene: scene === null
+      ? null : projectRow(scene, refs(ctx, "scene"), lookup),
+    lineage: lineage.map((l) => ({
+      entity: l.entity, row: projectRow(l.row, refs(ctx, l.entity), lookup),
+    })),
+    storyBeats: storyBeats.map(
+      (b) => projectRow(b, refs(ctx, "story_beat"), lookup)),
+    cast: cast.map((c) => projectRow(c, refs(ctx, "character"), lookup)),
+    props: props.map((p) => projectRow(p, refs(ctx, "prop"), lookup)),
+    location: location === null
+      ? null : projectRow(location, refs(ctx, "location"), lookup),
+    locationVariant: {
+      variant: variant === null
+        ? null : projectRow(variant, refs(ctx, "location_variant"), lookup),
+      mismatches,
+    },
+    detail: detail.map((d) => ({
+      entity: d.entity,
+      rows: d.rows.map((r) => projectRow(r, refs(ctx, d.entity), lookup)),
+    })),
+    blocking: blocking.map(
+      (b) => projectRow(b, refs(ctx, "scene_blocking"), lookup)),
+    stagingBeats: stagingBeats.map(
+      (b) => projectRow(b, refs(ctx, "staging_beat"), lookup)),
+  });
 }

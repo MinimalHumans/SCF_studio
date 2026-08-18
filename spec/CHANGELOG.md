@@ -16,6 +16,48 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.28 — 2026-08-18
+
+*Describes schema 2.12.*
+
+**§12 is complete. All sixteen canonical queries are specified**, each
+with a published normative result. Twenty-five artifacts.
+
+**§12.15 Q01** — the dossier. Its `groups` are DERIVED, not listed: any
+entity whose registry `subject` is this kind, at global scope, carrying
+a reference back. Adding a new entity about characters puts it in every
+character's dossier with no change to this section, which is what
+`subject` and `scope` are for.
+
+**§12.16 Q02** — and the one genuine exception to §12.1.3. Q02's media
+layer *is* Q13's answer at a position, so it carries **Q13's result body
+without its envelope**, with `fromQuery: "Q13"` naming where it came
+from. An envelope inside an envelope would let an inner `resultFormat`
+disagree with the outer one.
+
+Nesting was withdrawn in 0.27 as a general rule because no query built
+on another. Exactly one does, and this is it — so §12.1.3 now says so
+rather than leaving the mechanism described but unused.
+
+§12.16 also states that fields not applying to a subject's kind are
+**null or empty, never omitted**. A consumer must be able to tell "not
+applicable here" from "unauthored", and an absent key says neither.
+
+**§12.17 Q04** — the scene package. It does **not** nest Q03 or Q07
+despite covering some of the same ground: it assembles its own answer,
+and the section says so rather than quietly implying a relationship the
+implementation does not have.
+
+Its `detail` list, like Q00's layers, is fixed by the section rather
+than derived — what belongs in a scene package is an editorial choice,
+not a fact the registry knows.
+
+**The dossier composition moved to `scf-core`**, shared by Q01 and Q02,
+for the reason Q03's and Q12's did: a normative result must not
+re-derive what a renderer already derives. `dossierMarkdown` stayed in
+the app, because that is rendering. Core composes, app renders, result
+projects.
+
 ## 0.27 — 2026-08-18
 
 *Describes schema 2.12.*

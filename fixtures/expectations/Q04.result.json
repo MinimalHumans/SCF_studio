@@ -1,0 +1,349 @@
+{
+  "query": "Q04",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132"
+  },
+  "result": {
+    "scene": {
+      "uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+      "fields": {
+        "characters_present": "Eleanor, Marcus",
+        "estimated_duration": "3:40",
+        "int_ext": "interior",
+        "lifecycle_status": "active",
+        "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+        "name": "INT. FARMHOUSE KITCHEN - NIGHT",
+        "scene_number": "12",
+        "season": "winter",
+        "status": "outline",
+        "summary": "The confrontation. 'You came back.'",
+        "tension_level": "high",
+        "time_of_day": "night",
+        "tone": "held breath",
+        "weather_conditions": "storm"
+      }
+    },
+    "lineage": [
+      {
+        "entity": "act",
+        "row": {
+          "uuid": "17528f38-4fcd-428f-853d-38a57291f6a4",
+          "fields": {
+            "act_number": 2,
+            "dramatic_question": "Can they be in the same room without the truth?",
+            "function": "Force proximity until speech becomes possible.",
+            "lifecycle_status": "active",
+            "name": "Act 2 — The Thaw",
+            "shift": "From arm's length to a thaw neither will name.",
+            "start_scene_uuid": "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
+            "status": "outline",
+            "summary": "The accident at the crossing puts her in his arms; the locket moves from saddlebag to pocket."
+          }
+        }
+      },
+      {
+        "entity": "sequence",
+        "row": {
+          "uuid": "ec338c64-c596-4360-8300-37f160a9a9d3",
+          "fields": {
+            "act_uuid": "17528f38-4fcd-428f-853d-38a57291f6a4",
+            "conflict": "Neither will speak first; the storm keeps them there.",
+            "goal": "Get through one evening in the same room.",
+            "lifecycle_status": "active",
+            "name": "The Reckoning",
+            "outcome": "Eleanor speaks first — 'You came back.'",
+            "purpose": "The film's held breath.",
+            "sequence_number": 3,
+            "start_scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+            "status": "outline",
+            "turning_point": "The kettle set down."
+          }
+        }
+      }
+    ],
+    "storyBeats": [
+      {
+        "uuid": "a0871146-0c8d-4381-8344-7cb168a22221",
+        "fields": {
+          "beat_order": 1,
+          "description": "Eleanor speaks first.",
+          "lifecycle_status": "active",
+          "name": "First crack in the wall",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+        }
+      },
+      {
+        "uuid": "20517bfa-964d-48be-9fa8-e98155103971",
+        "fields": {
+          "beat_order": 2,
+          "beat_type": "setup",
+          "description": "Neither speaks; the storm does.",
+          "lifecycle_status": "active",
+          "name": "Held breath",
+          "pov_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+        }
+      },
+      {
+        "uuid": "2b40c6c0-a174-41da-9014-f5be6a10a5c6",
+        "fields": {
+          "beat_order": 3,
+          "beat_type": "revelation",
+          "description": "'You came back.'",
+          "lifecycle_status": "active",
+          "name": "She speaks first",
+          "pov_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+        }
+      }
+    ],
+    "cast": [
+      {
+        "uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+        "fields": {
+          "age": "61",
+          "arc_description": "From a woman who answers questions with tasks to a woman who says the thing and lets it cost her.",
+          "archetype": "the keeper of the house",
+          "backstory": "Came west at nineteen. Buried a husband at forty-two and a daughter at fifty-four. Has not left the valley since.",
+          "casting_status": "tbd",
+          "core_belief": "Work is what love looks like when you can't speak.",
+          "external_goal": "Get the homestead through the winter.",
+          "flaw": "Mistakes silence for mercy — to others and to herself.",
+          "gender": "female",
+          "greatest_fear": "That saying it aloud makes it true forever.",
+          "internal_goal": "To stop blaming her son without having to forgive him.",
+          "lifecycle_status": "active",
+          "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
+          "name": "Eleanor Cade",
+          "occupation": "Homesteader; midwife to the valley",
+          "pronouns": "she/her",
+          "role": "protagonist",
+          "skills_abilities": "Midwifery, horse handling, reading weather",
+          "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
+        }
+      },
+      {
+        "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+        "fields": {
+          "age": "34",
+          "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+          "archetype": "the returning prodigal",
+          "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+          "casting_status": "tbd",
+          "core_belief": "A debt can be worked off if you work hard enough.",
+          "external_goal": "Winter over at the homestead and mend what he can.",
+          "flaw": "Confesses only when cornered, then calls it honesty.",
+          "gender": "male",
+          "greatest_fear": "That his mother already knows.",
+          "internal_goal": "Absolution he cannot ask for directly.",
+          "lifecycle_status": "active",
+          "motivation": "To be told he is not what he believes he is.",
+          "name": "Marcus Cade",
+          "occupation": "Railroad surveyor",
+          "pronouns": "he/him",
+          "role": "deuteragonist",
+          "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+        }
+      }
+    ],
+    "props": [
+      {
+        "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+        "fields": {
+          "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "description": "Brass locket holding Ada's portrait.",
+          "first_appearance": "sc 11, saddlebag",
+          "key_moments": "sc 11 pocketed · sc 19 on the table",
+          "lifecycle_status": "active",
+          "name": "Ada's locket",
+          "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
+          "prop_type": "hand prop",
+          "realization_status": "sourced",
+          "story_function": "macguffin",
+          "symbolism": "What Marcus took from the creek and could not put down."
+        }
+      },
+      {
+        "uuid": "a63ce1c6-17e5-448b-8abb-9956cf2b4fcb",
+        "fields": {
+          "associated_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "first_appearance": "sc 3",
+          "lifecycle_status": "active",
+          "name": "The kettle",
+          "narrative_significance": "Eleanor's answer to every question she will not take.",
+          "prop_type": "hand prop",
+          "realization_status": "sourced",
+          "story_function": "character extension",
+          "symbolism": "Work as a way of not speaking."
+        }
+      }
+    ],
+    "location": {
+      "uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+      "fields": {
+        "geography": "Willamette foothills, Oregon",
+        "key_features": "Cast-iron stove; a long table with one chair nobody uses; a door to the porch that never quite latches",
+        "lifecycle_status": "active",
+        "location_type": "interior",
+        "name": "Farmhouse Kitchen",
+        "notes": "Eleanor's arena. She moves through it without looking.",
+        "realization_status": "built",
+        "setting": "The heart of the Cade homestead",
+        "time_period": "1889"
+      }
+    },
+    "locationVariant": {
+      "variant": {
+        "uuid": "b351c883-d82d-4fc9-912b-d1c132a8c424",
+        "fields": {
+          "is_baseline": 0,
+          "lifecycle_status": "active",
+          "lighting_differences": "Single oil lamp; storm-blue window fill.",
+          "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+          "name": "Kitchen — night, storm",
+          "season": "winter",
+          "time_of_day": "night",
+          "weather": "storm"
+        }
+      },
+      "mismatches": []
+    },
+    "detail": [
+      {
+        "entity": "scene_emotional_target",
+        "rows": [
+          {
+            "uuid": "a7372b55-38b8-4d9b-b408-41b6ff1e0fbc",
+            "fields": {
+              "audience_character_relationship": "empathy",
+              "emotional_function": "build",
+              "lifecycle_status": "active",
+              "name": "Ache, no release",
+              "primary_emotion": "ache",
+              "primary_intensity": 7,
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "scene_color_palette",
+        "rows": [
+          {
+            "uuid": "0c1b2c32-4594-4e6e-a966-1ef60b3de479",
+            "fields": {
+              "color_contrast_level": "high",
+              "dominant_colors": "[\"#C88A3C amber\", \"#5A6B7A slate\"]",
+              "focal_color": "hearth amber",
+              "lifecycle_status": "active",
+              "name": "Sc 12 palette",
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "lighting_design",
+        "rows": [
+          {
+            "uuid": "f4f62663-1043-495d-97a1-9c79eed41670",
+            "fields": {
+              "ambient_light": "Storm-blue window as the only cool source.",
+              "key_color_temperature": 3200,
+              "key_quality": "hard",
+              "key_source": "single oil lamp",
+              "lifecycle_status": "active",
+              "lighting_style": "naturalistic",
+              "name": "Sc 12 lighting",
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+            }
+          },
+          {
+            "uuid": "b821a160-d55c-429a-ad8b-196152cc673c",
+            "fields": {
+              "key_color_temperature": 3200,
+              "key_source": "oil lamp, closer wrap for the push-in",
+              "lifecycle_status": "active",
+              "lighting_style": "naturalistic",
+              "name": "12-04 lighting",
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+              "shot_uuid": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "scene_music_design",
+        "rows": [
+          {
+            "uuid": "1537cd30-7e8b-4e73-af38-d9a8d25c18da",
+            "fields": {
+              "lifecycle_status": "active",
+              "music_presence": "none",
+              "name": "Sc 12 music",
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+              "source_music_description": "Tacet: the chime is the only music Ada gets until the end."
+            }
+          }
+        ]
+      },
+      {
+        "entity": "dialogue_sound_design",
+        "rows": [
+          {
+            "uuid": "44a9d232-41aa-45cb-94ae-c6ff41b0ee6e",
+            "fields": {
+              "acoustic_environment": "minimal room",
+              "lifecycle_status": "active",
+              "name": "Sc 12 dialogue",
+              "recording_aesthetic": "close, dry",
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "tone_marker",
+        "rows": [
+          {
+            "uuid": "34446dbf-debc-4f9b-bee6-e20fcc203fc4",
+            "fields": {
+              "intensity": "heavy",
+              "lifecycle_status": "active",
+              "name": "Stillness, live wire",
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+              "tone_descriptor": "stillness with a live wire under it"
+            }
+          }
+        ]
+      }
+    ],
+    "blocking": [
+      {
+        "uuid": "6cfdb881-8743-43f4-ac6e-60d1ad0604fc",
+        "fields": {
+          "lifecycle_status": "active",
+          "name": "Kitchen as arena",
+          "proxemics": "He violates the table-width distance once, uninvited, and she doesn't retreat: that is the scene's actual event.",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+          "staging_concept": "The table between them the whole scene."
+        }
+      }
+    ],
+    "stagingBeats": [
+      {
+        "uuid": "79e6dd5f-7bed-48dc-97aa-45437a49b6cb",
+        "fields": {
+          "beat_order": 1,
+          "camera_note": "low, static",
+          "description": "Eleanor circles the table.",
+          "lifecycle_status": "active",
+          "name": "circle",
+          "scene_blocking_uuid": "6cfdb881-8743-43f4-ac6e-60d1ad0604fc"
+        }
+      }
+    ]
+  }
+}

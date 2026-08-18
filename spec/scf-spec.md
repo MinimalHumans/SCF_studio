@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.27 (draft) — not a release.**
+**Version 0.28 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -54,10 +54,7 @@ Normative:
 - **the canonical queries (§12)** — the sixteen questions SCF exists to
   answer, and what a conforming implementation returns for each.
 
-§12 is **partial**: Q05 and Q07 are specified, the other fourteen are
-not. For those fourteen the only definition remains a blessed example of
-their output, which is a demonstration rather than a specification.
-Tracked in [stability.md](stability.md).
+All sixteen are specified, each with a published normative result.
 
 ### 0.3 The unit of interchange
 
@@ -106,7 +103,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.27` (draft).
+- **Specification version** — this document. Currently `0.28` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -1130,11 +1127,9 @@ reinvented from §1–§11, but the point of SCF is to describe a film's
 structure, and shipping the questions is that description. Defining them
 does not preclude anyone asking others.
 
-**This section is incomplete.** Thirteen are specified below. The
-remaining three — Q01, Q02 and Q04 — are not, and until they are, their
-only definition is a blessed example of their rendered output, which is
-a demonstration rather than a specification. Tracked in
-[stability.md](stability.md).
+**All sixteen are specified below**, each with a normative result
+published in `fixtures/expectations/`. The rendered markdown in the same
+directory is a convenience and is not a contract for any of them.
 
 ### 12.1.3 Composition
 
@@ -1148,9 +1143,11 @@ rather than a result.
 So each query defines its own result shape. Where two queries genuinely
 share a composition — as Q01 and Q02 do — the shared part is one
 function in one place, and both results state the same structure for it.
-Nesting whole results remains available if a query is ever built by
-calling another, and would then carry the inner `result` body without
-its envelope.
+Nesting remains available where a query genuinely is built by calling
+another, and carries the inner `result` body without its envelope.
+**Exactly one query does this**: Q02's media layer is Q13's answer at a
+position (§12.16), and it carries Q13's result body with the query it
+came from named.
 
 ### 12.1 What a query returns
 
@@ -1534,6 +1531,77 @@ bare `entity`, and an object carrying an entity kind with an optional
 id. A provenance trail that silently omitted a note would be worse than
 one that included a doubtful one — §9.1, SCF describes.
 
+### 12.15 Q01 — Subject dossier
+
+**Everything about a subject, before any scene bends it.**
+
+Parameters: `subjectType` — a literal — and `subject`.
+
+| Field | |
+|---|---|
+| `subjectType`, `subject` | The subject and its kind. |
+| `groups` | Entities authored about this subject, each `{ entity, rows }`. |
+| `motifCarriage` | Motif appearances that name this subject, with the motif. |
+| `thematicConnections` | Thematic connections that name it. |
+
+**`groups` is derived, not listed.** A group is any entity whose
+registry `subject` is this kind, at `scope: global`, carrying a
+reference back to it. Adding a new entity about characters puts it in
+every character's dossier with no change here — which is what `subject`
+and `scope` are for (§0.7).
+
+A group with no rows is omitted rather than carried empty.
+
+### 12.16 Q02 — Subject in context
+
+**Everything needed to realise a subject in a scene, and optionally a
+shot.**
+
+Parameters: `subjectType`, `subject`, `scene`, and `shot` — optional.
+
+| Field | |
+|---|---|
+| `subject`, `scene` | Projected. |
+| `dossier` | Q01's result body — what is true of the subject before this scene. |
+| `costumes`, `relationshipStates`, `performanceStates`, `beats` | For a character subject. |
+| `locationVariant` | For a location subject: the variant in force and any mismatches. |
+| `propState` | For a prop subject. |
+| `media` | **Q13's result body**, with `fromQuery: "Q13"`. |
+
+**Fields that do not apply to a subject's kind are null or empty, never
+omitted.** A consumer must be able to tell "not applicable here" from
+"unauthored", and an absent key says neither.
+
+This is the one query built by calling another (§12.1.3). The media
+layer carries Q13's body without its envelope: an envelope inside an
+envelope would let an inner `resultFormat` disagree with the outer one.
+
+### 12.17 Q04 — Scene package
+
+**The complete context for a scene, as a unit of work.**
+
+Parameter: `scene`.
+
+| Field | |
+|---|---|
+| `scene` | Projected. |
+| `lineage` | Act and sequence, **broadest first**. |
+| `storyBeats` | In `beat_order`. |
+| `cast`, `props` | Present by authored link, not inference. |
+| `location`, `locationVariant` | The location and the variant in force, with mismatches. |
+| `detail` | Scene-level design entities, each `{ entity, rows }`, empty groups omitted. |
+| `blocking`, `stagingBeats` | Staging, beats in `beat_order`. |
+
+The `detail` list is fixed by this section rather than derived — what
+belongs in a scene package is an editorial choice, as Q00's layer list
+is: `scene_emotional_target`, `scene_color_palette`, `lighting_design`,
+`scene_music_design`, `dialogue_sound_design`, `set_dressing`,
+`tone_marker`.
+
+Q04 does **not** nest Q03 or Q07 despite covering some of the same
+ground. It assembles its own answer, and §12.1.3 explains why that is
+described rather than changed.
+
 ---
 
 ## Appendix A — Conformance test map
@@ -1556,7 +1624,7 @@ change to one without the other is a defect.
 | §4.1 resolution agrees with story order | `scf-core/test/conformance.canonical.test.ts` |
 | §6.6 cut rows excluded everywhere | `scf-core/test/conformance.canonical.test.ts`, `scf-core/test/lifecycle.test.ts` |
 | §12.1 result envelope and row projection | `scf-core/test/canonicalQueries.test.ts` |
-| §12.2–12.14 — thirteen queries | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
+| §12.2–12.17 — all sixteen queries | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
 | §11.6 document equality | `scf-core/src/canonical.ts`, exercised by `scf-app/test/roundTrip.test.ts` |
 | Round-trip integrity (`conformance.md` §3) | `scf-app/test/roundTrip.test.ts` |
 | Canonical query expectations (`conformance.md` §5.4) | `scf-app/test/queryExpectations.test.ts`, `fixtures/expectations/` |

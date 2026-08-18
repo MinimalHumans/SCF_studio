@@ -1,6 +1,6 @@
-# Spec 0.27 — Q00, Q11, Q15, and a decision withdrawn
+# Spec 0.28 — §12 is complete
 
-Apply after `scf-normative-data.zip`.
+Apply after `scf-q00-q11-q15.zip`.
 
 ```sh
 cd scf-core && npm test && npx tsc --noEmit
@@ -11,91 +11,99 @@ sha256sum -c spec/SHA256SUMS
 
 Verified here:
 
-- `scf-core`: 32 files, **584 passed**, 6 skipped (was 575)
+- `scf-core`: 32 files, **592 passed**, 6 skipped (was 584)
 - `scf-app`: 249 passed, 1 skipped
-- **twenty-two** artifacts, checksums verify, build clean
+- **twenty-five** artifacts, checksums verify, build clean
 
-No schema change. Spec 0.26 → **0.27**. **Thirteen of sixteen
-specified.**
-
----
-
-## The nesting decision is withdrawn, and I should say so plainly
-
-You approved it, I recorded it, and it was wrong. Before writing the
-composites I read what they actually do, and **no canonical query calls
-another.** Q04 does not build a Q03 result and a Q07 result; it
-assembles its own answer from the same resolvers. Q01 and Q02 share a
-`dossier()` helper — a shared *composition*, not a shared *result*.
-
-So nesting would have invented a relationship the implementation does
-not have, and I would have had to either reimplement Q03 inside Q04
-(forbidden) or refactor Q04 to call it (a real change, made to satisfy a
-spec sentence rather than a need).
-
-§12.1.3 now records the withdrawal and the reason. Each query defines
-its own result shape; where two genuinely share a composition, the
-shared part is one function in one place. Nesting stays available if a
-query is ever built by calling another.
-
-This is the second time my tidy story about "the remaining six" has been
-wrong — the first was claiming they took no position parameter. Both
-times the error was describing a set by a property I had not checked.
-
-## Q00 — the empty envelope
-
-The only canonical query with no parameters, which is worth having
-tested: the envelope has to survive having nothing to put in it. It
-does.
-
-Its layer list is **fixed by §12.12 rather than derived**, and the
-section says why: what belongs in a brief is an editorial choice, not a
-fact the registry knows. Adding one is a spec change. An unauthored
-layer is absent rather than present-and-empty.
-
-## Q11 — where everything may be missing
-
-Every field can be absent, and §12.13 states that absence is null or
-empty and **never invented**.
-
-While writing it I hit a real one: I guessed the table names
-(`audience_information`, `audience_identification`) instead of reading
-them. They are `information_strategy` and `identification_strategy`, and
-the test failed with `no such table`. Worth reporting because the fix
-was not only the names — I also made the fetch **total**, so a file
-lacking one of these tables yields nothing rather than throwing. §9.2
-already required that, and an older file predating an entity is not an
-error. §12.13 now says so.
-
-## Q15 — and a matcher that was in the wrong package
-
-`affected_entities` is free-form: a JSON array, a JSON object, or prose.
-`mentionsRow` handled all of that permissively — **inside the app**. Q15
-is normative, so its matcher is too, and while it lived there no
-independent implementation could know which conventions counted.
-
-Moved to `scf-core`, and §12.14 now writes the conventions down:
-`entity:id`, `entity#id`, a bare `entity`, and an object carrying an
-entity kind with an optional id. The section also says why permissive is
-right: a provenance trail that silently omitted a note would be worse
-than one that included a doubtful one.
-
-§12.14 also requires the version-chain walk to **terminate on a cycle
-rather than follow it** — a cycle is a finding, not a reason to hang.
+No schema change. Spec 0.27 → **0.28**. **All sixteen queries
+specified**, each with a published normative result.
 
 ---
 
-## What is left
+## Q01 — a dossier that maintains itself
 
-**Three queries: Q01, Q02, Q04.** They share the `dossier` and
-scene-assembly compositions, which still live in the app. Those have to
-move to `scf-core` first — the same extraction Q03 and Q12 needed, for
-the same reason: a normative result must not re-derive what a renderer
-already derives.
+`groups` is **derived, not listed**: any entity whose registry `subject`
+is this kind, at `scope: global`, carrying a reference back to it.
 
-That is one focused session.
+That means adding a new entity about characters puts it in every
+character's dossier with no change to the spec or the code. It is the
+clearest payoff so far for the registry carrying `subject` and `scope`
+at all, and the test asserts the property rather than the current
+answer — every group it returns must satisfy those three conditions.
 
-Then the third reader run, which I would still do before calling §12
-done. Two things make it a genuinely different experiment from the last:
-the artifacts it will check are corrected, and §12 will be complete
-rather than two-thirds written.
+## Q02 — the one place nesting is real
+
+0.27 withdrew nesting as a general rule because no query built on
+another. **Exactly one does.** Q02's media layer *is* Q13's answer at a
+position, so it carries **Q13's result body without its envelope**, with
+`fromQuery: "Q13"`.
+
+There is a test asserting the nested body equals a freshly computed Q13
+result and that it carries no `resultFormat` or `parameters` — an
+envelope inside an envelope would let an inner version disagree with the
+outer one.
+
+So the mechanism §12.1.3 kept available is now used, once, where it is
+honest. That is a better outcome than either the original decision (nest
+everywhere, on a false premise) or the withdrawal alone (describe a
+mechanism nothing uses).
+
+§12.16 also states that fields not applying to a subject's kind are
+**null or empty, never omitted**: a consumer must be able to tell "not
+applicable here" from "unauthored", and an absent key says neither.
+
+## Q04 — and what it deliberately does not do
+
+Q04 covers some of the same ground as Q03 and Q07 and **does not nest
+either**. It assembles its own answer, and §12.17 says so outright
+rather than leaving a reader to infer a relationship the implementation
+does not have.
+
+Its `detail` list is fixed by the section, like Q00's layers — what
+belongs in a scene package is an editorial choice, not a fact the
+registry knows.
+
+## The extraction
+
+`composeDossier` moved to `scf-core`, shared by Q01 and Q02, for the
+reason Q03's and Q12's compositions did: a normative result must not
+re-derive what a renderer already derives.
+
+`dossierMarkdown` **stayed in the app** — I removed it by accident with
+the function above it, the typecheck caught it, and putting it back was
+the right call rather than moving it too. It is rendering. Core
+composes, app renders, result projects.
+
+All 249 app tests and every blessed markdown expectation passed
+unchanged across the move, which is what "behaviour-neutral" has to mean
+here.
+
+---
+
+## Where this leaves the project
+
+`stability.md` is down to **five** Unstable rows, and the query layer —
+the largest gap in the document since it was written — is not among
+them:
+
+1. Rubric step labels resolving to entities (§12.9.1)
+2. A view for what was cut (§6.6.2)
+3. The asset resolution tally flag in `scf-check`
+4. `scene_sequence` shadow rows — survive 1.0 or go
+5. Artifact addressing — one `git tag`
+
+## What I would do next
+
+**The third reader run.** It is now a genuinely different experiment
+from the first two: the artifacts are corrected, and §12 is complete
+rather than partial. The kit and prompt exist, so the cost is one
+session of yours.
+
+Two things I would change in the kit: include all sixteen
+`.result.json` files, and drop the instruction not to attempt
+unspecified queries, since there are none.
+
+If that run comes back clean, the honest next question is not another
+fix — it is whether to tag `schema-2.12`, close section 4, and start
+treating this as something you release rather than something you
+harden.
