@@ -29,9 +29,24 @@ import type { ResolvedMedia } from "./resolution.ts";
 export type Provenance = "shot override" | "anchor" | "bundle";
 
 export interface AssetReference {
+  /**
+   * Row id of the ASSET. Local to a file (§6.2) — carried for the app's
+   * own use, never for an exported result.
+   */
   id: number;
+  /**
+   * The asset's identity (§6.1). This is what a canonical query result
+   * carries; resolving a row id to a uuid outside this function was how
+   * an anchor came to be reported as an unrelated asset.
+   */
+  uuid: string | null;
   name: string | null;
   identifier: string | null;
+  /**
+   * For an anchor, the anchor's own name — the label a person gave the
+   * reference. Null for anything else.
+   */
+  anchorName: string | null;
   format: string | null;
   /** `role_in_bundle`, where the cascade carried one. */
   role: string | null;
@@ -77,10 +92,28 @@ const EMPTY = (): Record<ResolutionState, number> => ({
 export async function mediaReferences(
   media: ResolvedMedia, locate: FileLocator,
 ): Promise<MediaReferences> {
-  const layers: [Provenance, Row[]][] = [
-    ["shot override", media.override_assets],
-    ["anchor", media.anchors],
-    ["bundle", media.base_assets],
+  // An anchor is an entity_anchor row, not an asset: it NAMES a place in
+  // an asset ("Eleanor face anchor") and points at the asset with
+  // `asset_id`. Reporting the anchor row as the reference gave a
+  // reference with no identifier, which can never resolve — and any
+  // caller that then looked the row id up in the asset table got an
+  // unrelated asset that happened to share it.
+  //
+  // Q13 asks which ASSETS are in force, so an anchor contributes the
+  // asset it anchors, keeping its own name alongside.
+  const anchorPairs: Array<[Row, Row]> = [];
+  media.anchors.forEach((anchor, i) => {
+    const asset = media.anchor_assets[i];
+    if (asset !== null && asset !== undefined) {
+      anchorPairs.push([asset, anchor]);
+    }
+  });
+
+  const layers: [Provenance, Array<[Row, Row | null]>][] = [
+    ["shot override", media.override_assets.map((r): [Row, Row | null] =>
+      [r, null])],
+    ["anchor", anchorPairs.map(([a, an]): [Row, Row | null] => [a, an])],
+    ["bundle", media.base_assets.map((r): [Row, Row | null] => [r, null])],
   ];
 
   const references: AssetReference[] = [];
@@ -88,8 +121,8 @@ export async function mediaReferences(
   const counts = EMPTY();
   const unresolved: ResolutionSummary["unresolved"] = [];
 
-  for (const [provenance, rows] of layers) {
-    for (const row of rows) {
+  for (const [provenance, entries] of layers) {
+    for (const [row, anchor] of entries) {
       const id = Number(row["id"]);
       if (seen.has(id)) continue;
       seen.add(id);
@@ -104,7 +137,11 @@ export async function mediaReferences(
       }
 
       references.push({
-        id, name, identifier,
+        id,
+        uuid: typeof row["uuid"] === "string" && row["uuid"] !== ""
+          ? row["uuid"] : null,
+        name, identifier,
+        anchorName: anchor === null ? null : str(anchor, "name"),
         format: resolution.format,
         role: str(row, "role_in_bundle"),
         intent: media.intent,

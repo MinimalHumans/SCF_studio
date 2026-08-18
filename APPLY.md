@@ -1,109 +1,103 @@
-# Spec 0.28 — §12 is complete
+# Repair — the missing half of `scf-audit2-fixes.zip`
 
-Apply after `scf-q00-q11-q15.zip`.
+Unzip over the repo root. **Eight files. Nothing else changes.**
 
 ```sh
 cd scf-core && npm test && npx tsc --noEmit
-cd ../scf-app && npm test && npx tsc --noEmit && npm run build
+cd ../scf-app && npm test && npm run build
 cd .. && python3 schema/artifact_manifest.py --check
 sha256sum -c spec/SHA256SUMS
 ```
 
-Verified here:
-
-- `scf-core`: 32 files, **592 passed**, 6 skipped (was 584)
-- `scf-app`: 249 passed, 1 skipped
-- **twenty-five** artifacts, checksums verify, build clean
-
-No schema change. Spec 0.27 → **0.28**. **All sixteen queries
-specified**, each with a published normative result.
-
 ---
 
-## Q01 — a dossier that maintains itself
+## What happened
 
-`groups` is **derived, not listed**: any entity whose registry `subject`
-is this kind, at `scope: global`, carrying a reference back to it.
+`scf-audit2-fixes.zip` was never applied. Every zip after it was.
 
-That means adding a new entity about characters puts it in every
-character's dossier with no change to the spec or the code. It is the
-clearest payoff so far for the registry carrying `subject` and `scope`
-at all, and the test asserts the property rather than the current
-answer — every group it returns must satisfy those three conditions.
+So `canonicalQueries.ts` is at its newest — importing `referencesOf`
+from `queryResult.ts` — while `queryResult.ts` is still the version from
+before that fix, 150 lines, without it. Vite resolves the import at load
+time, finds nothing, and the app never mounts.
 
-## Q02 — the one place nesting is real
+I checked which zips landed rather than guessing, by looking for one
+marker from each:
 
-0.27 withdrew nesting as a general rule because no query built on
-another. **Exactly one does.** Q02's media layer *is* Q13's answer at a
-position, so it carries **Q13's result body without its envelope**, with
-`fromQuery: "Q13"`.
+| Marker | Expected in | Present on main |
+|---|---|---|
+| `referencesOf` in `queryResult.ts` | audit2-fixes | **no** |
+| `anchorName` in `mediaReferences.ts` | audit2-fixes | **no** |
+| `anchor_assets` in `resolution.ts` | audit2-fixes | **no** |
+| `sqlite_%` in `emit_schema_sql.mjs` | audit2-fixes | **no** |
+| `emit_normative_data.mjs` | normative-data | yes |
+| `junction-keys.json` | normative-data | yes |
+| `referencesOf` in `canonicalQueries.ts` | q00/q11/q15 | yes |
 
-There is a test asserting the nested body equals a freshly computed Q13
-result and that it carries no `resultFormat` or `parameters` — an
-envelope inside an envelope would let an inner version disagree with the
-outer one.
+One zip, cleanly skipped.
 
-So the mechanism §12.1.3 kept available is now used, once, where it is
-honest. That is a better outcome than either the original decision (nest
-everywhere, on a false premise) or the withdrawal alone (describe a
-mechanism nothing uses).
+## Two more consequences you had not seen yet
 
-§12.16 also states that fields not applying to a subject's kind are
-**null or empty, never omitted**: a consumer must be able to tell "not
-applicable here" from "unauthored", and an absent key says neither.
+The white screen is the loud one. There were two quiet ones:
 
-## Q04 — and what it deliberately does not do
+**`sha256sum -c spec/SHA256SUMS` currently fails on main.**
+`spec/scf-schema.sql` is the old copy while the published manifest
+carries the hash of the corrected one. Anyone verifying your published
+artifacts today would get a checksum mismatch — and that is the artifact
+whose whole purpose is to be verifiable.
 
-Q04 covers some of the same ground as Q03 and Q07 and **does not nest
-either**. It assembles its own answer, and §12.17 says so outright
-rather than leaving a reader to infer a relationship the implementation
-does not have.
+**The published DDL still cannot be loaded.** It still carries
+`CREATE TABLE sqlite_sequence(name,seq)`, which SQLite rejects. That is
+the defect the second reader hit at negative-fixture case one of eleven.
 
-Its `detail` list is fixed by the section, like Q00's layers — what
-belongs in a scene package is an editorial choice, not a fact the
-registry knows.
+**And the anchor bug is still live in the editor.** Without
+`mediaReferences.ts` and `resolution.ts`, Q13 still reports the anchor
+row instead of the asset it anchors, so the app's media list still shows
+`Eleanor face anchor — (no identifier)` and still omits
+`eleanor_turnaround_v3.png`.
 
-## The extraction
+## Why this zip is not just the old one re-sent
 
-`composeDossier` moved to `scf-core`, shared by Q01 and Q02, for the
-reason Q03's and Q12's compositions did: a normative result must not
-re-derive what a renderer already derives.
+`scf-audit2-fixes.zip` also contained `canonicalQueries.ts`, the spec
+documents, the expectations and `SHA256SUMS` — all of which **later
+zips replaced with newer versions**. Unzipping it now would roll those
+back and break the tree in a different way.
 
-`dossierMarkdown` **stayed in the app** — I removed it by accident with
-the function above it, the typecheck caught it, and putting it back was
-the right call rather than moving it too. It is rendering. Core
-composes, app renders, result projects.
+So this carries only the files no later zip touched, at their current
+content:
 
-All 249 app tests and every blessed markdown expectation passed
-unchanged across the move, which is what "behaviour-neutral" has to mean
-here.
+```
+scf-core/src/queryResult.ts          the missing exports
+scf-core/src/resolution.ts           anchor_assets
+scf-core/src/mediaReferences.ts      the anchor fix
+scf-core/scripts/emit_schema_sql.mjs excludes sqlite_%
+scf-core/test/mediaReferences.test.ts
+spec/scf-schema.sql                  regenerated, loads cleanly
+fixtures/expectations/Q13.expected.md stale rendering
+fixtures/expectations/shapes.json     stale shape
+```
 
----
+The last two were not obvious: the app's blessed Q13 markdown still
+showed the wrong anchor, so `scf-app`'s suite failed two tests until
+they came along too.
 
-## Where this leaves the project
+## I verified this against your actual tree
 
-`stability.md` is down to **five** Unstable rows, and the query layer —
-the largest gap in the document since it was written — is not among
-them:
+Rather than assuming, I fetched `main`, applied only this zip on top,
+and ran everything:
 
-1. Rubric step labels resolving to entities (§12.9.1)
-2. A view for what was cut (§6.6.2)
-3. The asset resolution tally flag in `scf-check`
-4. `scene_sequence` shadow rows — survive 1.0 or go
-5. Artifact addressing — one `git tag`
+- `scf-core` **592 passed**, 6 skipped
+- `scf-app` **249 passed**, 1 skipped
+- both typecheck clean, production build clean
+- registry, schema SQL, finding catalog, negative fixtures and normative
+  data all `--check` clean
+- `sha256sum -c spec/SHA256SUMS` — **all 25 match**
 
-## What I would do next
+That is the full CI sequence, green, from your current commit plus these
+eight files.
 
-**The third reader run.** It is now a genuinely different experiment
-from the first two: the artifacts are corrected, and §12 is complete
-rather than partial. The kit and prompt exist, so the cost is one
-session of yours.
+## Worth noting
 
-Two things I would change in the kit: include all sixteen
-`.result.json` files, and drop the instruction not to attempt
-unspecified queries, since there are none.
-
-If that run comes back clean, the honest next question is not another
-fix — it is whether to tag `schema-2.12`, close section 4, and start
-treating this as something you release rather than something you
-harden.
+CI would have caught this the moment it was pushed — the `core` job
+typechecks, and the `artifacts` job verifies the checksums that are
+currently failing. The workflow shipped in `scf-ci.zip`; if it is on
+main and not running, the repository's Actions may need enabling.

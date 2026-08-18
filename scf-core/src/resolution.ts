@@ -488,6 +488,16 @@ export interface ResolvedMedia {
   intent: string;
   override_assets: Row[];
   anchors: Row[];
+  /**
+   * The asset each anchor points at, aligned with `anchors` by index.
+   *
+   * An anchor NAMES a place in an asset; it is not an asset itself and
+   * has no identifier. Consumers asking which assets are in force want
+   * these, and resolving `anchors[i].asset_id` outside this function is
+   * how an anchor came to be reported as an unrelated asset — a row id
+   * looked up in the wrong table.
+   */
+  anchor_assets: Array<Row | null>;
   base_assets: Row[];
   assets_most_specific_first: Row[];
   trail: string[];
@@ -535,8 +545,13 @@ export async function resolveMedia(
   anchors = anchors.filter((a) =>
     a["canonical_status"] === null || a["canonical_status"] === undefined ||
     a["canonical_status"] === "" || a["canonical_status"] === "verified");
+  const anchorAssets: Array<Row | null> = [];
   for (const a of anchors) {
     trail.push(`anchor ${pyTruthy(a["name"]) ? a["name"] : a["id"]}`);
+    const assetId = Number(a["asset_id"]);
+    anchorAssets.push(Number.isFinite(assetId)
+      ? (await rows(ctx.exec, "asset", "id = ?", [assetId]))[0] ?? null
+      : null);
   }
 
   // Shot overrides, most specific of all.
@@ -562,6 +577,7 @@ export async function resolveMedia(
     intent,
     override_assets: overrideAssets,
     anchors,
+    anchor_assets: anchorAssets,
     base_assets: baseAssets,
     assets_most_specific_first: [
       ...overrideAssets,

@@ -11,6 +11,9 @@
 -- scf-core/registry/registry.json. A database created from this file
 -- alone is structurally conforming and semantically empty.
 --
+-- SQLite's own tables are omitted: sqlite_sequence is created for you by
+-- any AUTOINCREMENT column, and SQLite refuses an explicit CREATE for it.
+--
 -- Header identification (spec §1.2) is not expressible in DDL. Apply it
 -- separately:
 --
@@ -1648,8 +1651,6 @@ CREATE TABLE "sound_perspective" (
   "psychological_logic" TEXT,
   "lifecycle_status" TEXT DEFAULT 'active'
 );
-
-CREATE TABLE sqlite_sequence(name,seq);
 
 CREATE TABLE "staging_beat" (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

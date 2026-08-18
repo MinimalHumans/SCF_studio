@@ -41,9 +41,15 @@ const exec = async (sql, params = []) => {
 
 await initDatabase(exec, registry);
 
+// SQLite's own tables are excluded. `sqlite_sequence` is created
+// automatically for any AUTOINCREMENT column, and its CREATE statement
+// appears in sqlite_master — but SQLite REJECTS that statement if you
+// try to execute it, so a published DDL containing it cannot be loaded.
+// An independent implementation hit this at the first negative fixture
+// and had to strip the line by hand.
 const rows = db.prepare(
   "SELECT type, name, sql FROM sqlite_master " +
-  "WHERE sql IS NOT NULL ORDER BY " +
+  "WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' ORDER BY " +
   "CASE type WHEN 'table' THEN 0 ELSE 1 END, name").all();
 
 const header = `-- The SCF physical schema, schema version ${registry.schemaVersion}.
@@ -58,6 +64,9 @@ const header = `-- The SCF physical schema, schema version ${registry.schemaVers
 -- the tables MEAN is spec/scf-spec.md, and the normative field set is
 -- scf-core/registry/registry.json. A database created from this file
 -- alone is structurally conforming and semantically empty.
+--
+-- SQLite's own tables are omitted: sqlite_sequence is created for you by
+-- any AUTOINCREMENT column, and SQLite refuses an explicit CREATE for it.
 --
 -- Header identification (spec §1.2) is not expressible in DDL. Apply it
 -- separately:

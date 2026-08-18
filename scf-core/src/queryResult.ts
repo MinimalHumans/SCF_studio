@@ -56,6 +56,51 @@ export interface UuidLookup {
   (entity: string, rowId: number | null): string | null;
 }
 
+/**
+ * Every reference column an entity declares, as column → target entity.
+ *
+ * DERIVED FROM THE REGISTRY, never written by hand. The first version of
+ * this module took a hand-written map per query and a hand-written list
+ * of entities to index, and an independent implementation found the
+ * result: `scene.location_id` was resolved in one query and silently
+ * dropped in another, and two reference columns on the same motif row
+ * were treated differently — because the maps disagreed and nothing
+ * could notice.
+ *
+ * §2.3 already says to prefer rules the registry implies over
+ * hand-maintained lists. This is that rule applied to the module that
+ * implements §12.1.2.
+ */
+export function referencesOf(registry: Registry, entity: string):
+    Record<string, string> {
+  const def = registry.entities.get(entity);
+  if (def === undefined) return {};
+  const out: Record<string, string> = {};
+  for (const field of def.fields) {
+    if (field.referenceEntity !== undefined && field.referenceEntity !== "") {
+      out[field.name] = field.referenceEntity;
+    }
+  }
+  return out;
+}
+
+/**
+ * A lookup covering every entity any reference column can point at, so
+ * a projection can never fail for want of an index that was not asked
+ * for. Built once per query.
+ */
+export async function uuidLookupForAll(
+    exec: SqlExec, registry: Registry): Promise<UuidLookup> {
+  const targets = new Set<string>();
+  for (const entity of registry.order) {
+    targets.add(entity);
+    for (const target of Object.values(referencesOf(registry, entity))) {
+      targets.add(target);
+    }
+  }
+  return uuidLookupFor(exec, [...targets].sort());
+}
+
 export async function uuidLookupFor(
     exec: SqlExec, entities: readonly string[]): Promise<UuidLookup> {
   const byEntity = new Map<string, Map<number, string>>();

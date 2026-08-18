@@ -538,6 +538,28 @@
         "shot_id": "shot1204"
       },
       "shape": {
+        "anchor_assets": {
+          "length": 1,
+          "of": {
+            "content_hash": null,
+            "description": null,
+            "external_id": "null",
+            "external_id_namespace": null,
+            "identifier": "string",
+            "lifecycle_status": "string",
+            "name": "string",
+            "notes": null,
+            "parent_id": "null",
+            "size_bytes": null,
+            "source": null,
+            "source_mtime": null,
+            "superseded_at": null,
+            "superseded_by_id": "null",
+            "tags": null,
+            "uuid": "string",
+            "version_label": null
+          }
+        },
         "anchors": {
           "length": 1,
           "of": {
@@ -635,8 +657,9 @@
           }
         },
         "references": {
-          "length": 3,
+          "length": 4,
           "of": {
+            "anchorName": null,
             "detail": "string",
             "format": "string",
             "identifier": "string",
@@ -645,7 +668,8 @@
             "provenance": "string",
             "role": "string",
             "sizeBytes": null,
-            "state": "string"
+            "state": "string",
+            "uuid": "string"
           }
         },
         "subject": "string",
@@ -660,7 +684,7 @@
           },
           "referenced": "number",
           "unresolved": {
-            "length": 3,
+            "length": 4,
             "of": {
               "identifier": "string",
               "name": "string",

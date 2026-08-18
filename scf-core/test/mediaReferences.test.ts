@@ -25,11 +25,15 @@ function locatorOver(paths: Record<string, boolean>): FileLocator {
 }
 
 function media(over: unknown[] = [], anchors: unknown[] = [],
-               base: unknown[] = []): ResolvedMedia {
+               base: unknown[] = [],
+               anchorAssets: unknown[] = []): ResolvedMedia {
   return {
     subject: "character", subject_id: 1, intent: "visual_identity",
     override_assets: over as ResolvedMedia["override_assets"],
     anchors: anchors as ResolvedMedia["anchors"],
+    // An anchor contributes the ASSET it points at, so a caller that
+    // supplies anchors without assets supplies nothing to resolve.
+    anchor_assets: anchorAssets as ResolvedMedia["anchor_assets"],
     base_assets: base as ResolvedMedia["base_assets"],
     assets_most_specific_first: [] as ResolvedMedia[
       "assets_most_specific_first"],
@@ -67,15 +71,25 @@ describe("mediaReferences", () => {
     const out = await mediaReferences(
       media(
         [{ id: 1, name: "here", identifier: "@project/here.png" }],
-        [{ id: 2, name: "gone", identifier: "@project/gone.png" }],
+        // An anchor and the asset it points at. The anchor itself has no
+        // identifier — it names a place in the asset — so the asset is
+        // what gets resolved.
+        [{ id: 20, name: "gone anchor", asset_id: 2 }],
         [{ id: 3, name: "cloud", identifier: "@project/cloud.exr" },
-         { id: 4, name: "bare", identifier: null }]),
+         { id: 4, name: "bare", identifier: null }],
+        [{ id: 2, name: "gone", identifier: "@project/gone.png" }]),
       locatorOver({ "here.png": true, "cloud.exr": false }));
 
     expect(out.summary.referenced).toBe(4);
     expect(out.summary.counts.resolved).toBe(1);
     expect(out.summary.counts.missing).toBe(1);
     expect(out.summary.counts.unmaterialised).toBe(1);
+    // The anchor's reference carries the ASSET's name and identifier,
+    // with the anchor's own name alongside.
+    const anchorRef = out.references.find((r) => r.provenance === "anchor");
+    expect(anchorRef?.name).toBe("gone");
+    expect(anchorRef?.identifier).toBe("@project/gone.png");
+    expect(anchorRef?.anchorName).toBe("gone anchor");
     expect(out.summary.counts.unaddressed).toBe(1);
   });
 
