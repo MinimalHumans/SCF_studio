@@ -1,0 +1,157 @@
+# SCF Studio CI
+#
+# Everything here already existed as a command. What was missing was
+# anything running them without being asked — and the cost of that grew
+# every session, because each generated artifact is another thing that
+# can go stale silently between one manual run and the next.
+#
+# The job is split into three, in increasing cost, so a failure names
+# itself: `artifacts` catches a generated file nobody regenerated,
+# `core` catches the format's semantics, `app` catches the editor.
+#
+# Two properties worth preserving if this file is edited:
+#
+#   * Every artifact check runs in --check mode, never in write mode. CI
+#     must FAIL on a stale artifact, not quietly fix it and pass — a
+#     pipeline that regenerates what it is meant to be verifying is a
+#     pipeline that verifies nothing.
+#
+#   * Nothing here is allowed to write to the repository. No blessing,
+#     no re-emitting, no committing back.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["schema-*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # node:sqlite and --experimental-strip-types both need 22+.
+  NODE_VERSION: "22"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  artifacts:
+    name: Generated artifacts are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scf-core/package-lock.json
+
+      - run: npm ci
+        working-directory: scf-core
+
+      # The registry is the source of truth; everything below is
+      # generated from it, so it is checked first.
+      - name: registry.json matches entity_registry.py
+        run: python3 schema/generate_registry_json.py --check
+
+      - name: registry ontology invariants
+        run: python3 schema/lint_registry.py
+
+      - name: scf-schema.sql matches initDatabase
+        run: npm run check-schema-sql
+        working-directory: scf-core
+
+      - name: finding-catalog.json matches findings.ts
+        run: npm run check-finding-catalog
+        working-directory: scf-core
+
+      - name: negative fixtures match their blessed reports
+        run: npm run check-negative
+        working-directory: scf-core
+
+      - name: corpus expectations are current
+        run: node --experimental-strip-types scripts/bless_corpus.mjs --check
+        working-directory: scf-core
+
+      # Last, because it hashes everything above: if any of them were
+      # regenerated without the manifest, this is what says so.
+      - name: artifact manifest is current
+        run: python3 schema/artifact_manifest.py --check
+
+      - name: published checksums verify
+        run: sha256sum -c spec/SHA256SUMS
+
+  core:
+    name: scf-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scf-core/package-lock.json
+
+      - run: npm ci
+        working-directory: scf-core
+
+      - name: typecheck
+        run: npm run typecheck
+        working-directory: scf-core
+
+      - name: test
+        run: npm test
+        working-directory: scf-core
+
+      # The validator, pointed at the artifact it is supposed to
+      # validate. Exit 0 means no error findings; a non-zero exit here
+      # means the fixture and the format have come apart.
+      - name: scf-check the conformance fixture
+        run: npm run scf-check -- ../fixtures/hollow_creek.scf
+        working-directory: scf-core
+
+      # The demo copy is the same file, byte for byte. There is a test
+      # for this, and it is cheap enough to also assert here, because
+      # the failure it prevents — a demo running a different fixture
+      # from the tests — is invisible until someone notices.
+      - name: the demo fixture is the conformance fixture
+        run: |
+          a=$(sha256sum fixtures/hollow_creek.scf | cut -d' ' -f1)
+          b=$(sha256sum scf-app/public/hollow_creek.scf | cut -d' ' -f1)
+          test "$a" = "$b" || {
+            echo "fixture copies differ: $a vs $b"; exit 1; }
+
+  app:
+    name: scf-app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scf-app/package-lock.json
+
+      - run: npm ci
+        working-directory: scf-app
+
+      - name: typecheck
+        run: npm run typecheck
+        working-directory: scf-app
+
+      # Includes queryExpectations.test.ts, which checks the blessed
+      # canonical query expectations without a separate step: the check
+      # is the default and blessing needs `--mode bless`.
+      - name: test
+        run: npm test
+        working-directory: scf-app
+
+      - name: production build
+        run: npm run build
+        working-directory: scf-app

@@ -250,10 +250,19 @@ The test for a future link: *would you want to know this used to be
 true?* If yes it is a claim. If the answer is only "it is not true now",
 it is a connection, and deleting it loses nothing.
 
-Note that `lifecycle_status` is currently **authored but unread** — no
-resolver filters on it, and the fixture has no non-active row, so "cut"
-is decorative today. `spec §6.6` marks this as the open normative gap it
-is; §10 below is where the decision gets made.
+`spec §6.6.1` settles what `cut` means: the row is not in the film, so
+no resolver may see it. The point of marking something cut rather than
+deleting it is that it stops being considered while remaining
+inspectable — which is two properties, and only the first was ever
+implemented. For a long time `lifecycle_status` was authored on 88
+entities and read by nothing, so "cut" was decorative and every consumer
+would have answered the canonical queries differently.
+
+The rule is stated in a form that can be tested: **adding a cut row
+changes no answer.** That is why the fixture carries a cut scene *with a
+heading in the screenplay* — a cut scene in a real script is struck
+through, not deleted, and an implementation that rebuilt story order
+from headings would resurrect it.
 
 ---
 
@@ -357,6 +366,11 @@ touches anything normative:
 
 8. Update `spec/scf-spec.md`, and its version, per `spec §11.5`.
 9. Update the affected row in `spec/stability.md`.
+
+Steps 2, 3 and 6 are all verified by CI in `--check` mode, so forgetting
+one fails the build rather than shipping a generated file that no longer
+matches its source. That is the whole reason CI exists here: nine
+generated artifacts, each one silently wrong the moment its source moves.
 
 **Prefer additive optional fields.** Every schema change so far has been
 one, which is why no file has ever needed converting. `spec §11.1` now

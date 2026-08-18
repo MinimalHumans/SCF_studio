@@ -1,5 +1,7 @@
 # SCF Studio
 
+[![CI](https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml/badge.svg)](https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml)
+
 Tooling for the **Story Context Framework** — a description of a film's
 intent, dense enough that a human or a machine can answer a specific
 question about a specific moment: what a character sounds like in this
@@ -56,6 +58,20 @@ in, and the blocks that need it (`screenplay.test.ts` stage 3 payoff,
 `fountain.test.ts` private tier) skip themselves when it is absent — a
 machine that has the private tier picks up the extra coverage
 automatically.
+
+## Continuous integration
+
+`.github/workflows/ci.yml`, three jobs:
+
+| Job | What fails it |
+|---|---|
+| `artifacts` | A generated file nobody regenerated: `registry.json`, `scf-schema.sql`, `finding-catalog.json`, the negative reports, the corpus expectations, `ARTIFACTS.md`, `SHA256SUMS`. |
+| `core` | Format semantics — typecheck, 500+ tests, and `scf-check` against the fixture. |
+| `app` | The editor — typecheck, tests (including the blessed query expectations), production build. |
+
+Every artifact step runs in `--check` mode and never in write mode. CI
+must fail on a stale artifact rather than quietly regenerate it and
+pass: a pipeline that rewrites what it is verifying verifies nothing.
 
 ## Changing the format
 

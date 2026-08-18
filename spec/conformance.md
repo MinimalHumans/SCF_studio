@@ -232,14 +232,21 @@ suites and MUST NOT change.
   alone — the one thing §4.1 forbids — passed every blessed expectation.
 - **Scene `12A` exists**, so §4.2.1's grammar is exercised by the
   artifact meant to demonstrate it.
+- **Scene `12B` is CUT and keeps its heading**, and a cut
+  `performance_beat` sits in scene 12. Both MUST change no answer
+  (§6.6.1). Adding a cut row that nothing may notice is a stronger
+  statement than having no cut rows at all — and it is why scene 12's
+  pin below permits a cut row while permitting nothing else.
 - **Four scenes carry action and dialogue; the rest are sluglines
   only.** An SCF is legitimately an outline or a finished screenplay,
   and a conforming reader meets both in one file. Before 0.17 the
   fixture had no body lines at all, which left §3.4 — read a scene's
   text from its heading to the next — with no artifact behind it.
 - **Scene 12 is pinned** — its motif manifest, its single sound cue, its
-  costume set and its direction chains are asserted exactly. Nothing may
-  be added to it.
+  costume set and its direction chains are asserted exactly. Nothing
+  ACTIVE may be added to it. A **cut** row may be, precisely because
+  §6.6.1 requires it to change nothing: the pin and the cut row test
+  each other.
 - **Marcus's vocal profile is deliberately thin and his voice bundle
   deliberately absent** — the readiness suite asserts Q05 warns about
   exactly those gaps. The absence is part of what the fixture
@@ -293,16 +300,27 @@ unstamped header.
 
 ### 5.4 The canonical query expectations
 
-> **In progress.** Spec §12 now defines Q05 and Q07 as result
-> structures, and `Q05.result.json` / `Q07.result.json` are the
-> normative artifacts for those two: rows by uuid, no row ids, no
-> timestamps, references resolved. For those queries the markdown is a
-> convenience and is not a contract.
+> **In progress.** Spec §12 defines ten queries as result structures —
+> Q03, Q05, Q06, Q07, Q08, Q09, Q10, Q12, Q13, Q14 — and their
+> `.result.json` files are the normative artifacts for those ten: rows by uuid, no row
+> ids, no timestamps, references resolved. For those queries the markdown
+> is a convenience and is not a contract.
 >
-> The other fourteen still have only their rendered markdown, described
-> below. Two known defects live in that half and dissolve as each query
-> is specified: `Q13.expected.md` embeds a row id in its header, and an
-> implementation must reproduce punctuation no document states.
+> An earlier revision claimed the specified set was "every query taking
+> a position". That was wrong — Q02, Q04 and Q11 take a scene too. The
+> six that remain are the COMPOSITES: a brief, a dossier, a subject in
+> context, a scene package, an audience state, a provenance trail.
+>
+> Q03 and Q12 are blessed **away from scene 12** — at 19, and diffing
+> 19 → 16 — because the rest of the expectations cluster there, and a
+> live ordering bug once sat under a fully passing suite for exactly
+> that reason.
+>
+> The other six still have only their rendered markdown, described
+> below, and one known defect remains in that half: an implementation
+> must reproduce punctuation no document states. `Q13.expected.md`'s
+> embedded row id is superseded — `Q13.result.json` names its subject by
+> uuid.
 
 `fixtures/expectations/`, blessed and checked on every test run.
 
@@ -324,8 +342,9 @@ Parameters resolve from **selectors** — scene number 12, the character
 named Eleanor — recorded alongside the expectations, so another
 implementation can resolve them for itself.
 
-Eight of the sixteen queries are covered: those taking a position or a
-subject as a parameter. The other eight either take no parameters or
+Eight of the sixteen have rendered-markdown expectations, and **all
+eight now also have normative `.result.json` files**, which supersede
+the markdown for those queries. The other eight either take no parameters or
 enumerate the whole project, so their output is a function of the
 fixture rather than of a position in it. Worth adding; not yet done.
 

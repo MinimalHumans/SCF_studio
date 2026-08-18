@@ -1,0 +1,65 @@
+{
+  "query": "Q13",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
+  },
+  "result": {
+    "subject": "character",
+    "intent": "visual_identity",
+    "trail": [
+      "binding Eleanor visual baseline -> bundle eleanor_visual_core_v3",
+      "anchor Eleanor face anchor",
+      "shot override 12-04 Eleanor override"
+    ],
+    "references": [
+      {
+        "uuid": "5911b396-58e0-455b-8bf2-57287b325889",
+        "name": "eleanor_1204_lamplit_crop.png",
+        "identifier": "@project/assets/eleanor_1204_lamplit_crop.png",
+        "format": "png",
+        "role": "override ref",
+        "intent": "visual_identity",
+        "provenance": "shot override",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "f2fd8fc9-4b32-4a33-8535-3e7ead4ce88c",
+        "name": "Eleanor face anchor",
+        "identifier": null,
+        "format": null,
+        "role": null,
+        "intent": "visual_identity",
+        "provenance": "anchor",
+        "state": "unaddressed",
+        "detail": "this asset has no identifier, so there is nothing to resolve",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "f9dfae2d-2cc7-42af-b2ac-d9089025a444",
+        "name": "eleanor_costume_textures.zip",
+        "identifier": "@project/assets/eleanor_costume_textures.zip",
+        "format": "zip",
+        "role": "textures",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      }
+    ],
+    "counts": {
+      "resolved": 0,
+      "missing": 0,
+      "unmaterialised": 0,
+      "out-of-root": 0,
+      "unaddressed": 3
+    },
+    "rootMapped": false
+  }
+}

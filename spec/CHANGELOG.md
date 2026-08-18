@@ -16,6 +16,166 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.24 — 2026-08-17
+
+*Describes schema 2.12.*
+
+**§12.10 Q09 and §12.11 Q10.** Ten of sixteen specified, seventeen
+artifacts published.
+
+**Q10 is the first query whose answer spans the whole story** rather
+than a position, and it needed nothing new from the envelope — which is
+the useful result. §12.11 states the rule that makes it worth having:
+**the spine MUST include every scene, carriers or not.** A spine listing
+only the scenes a theme reaches could not answer the question the query
+exists for, which is where the theme is absent.
+
+The spine is in story order and excludes cut scenes, and a carrier
+reaching a cut scene reaches nowhere — so its scene list and the spine's
+counts agree rather than disagreeing at one position.
+
+**Q09 states its own heuristic.** `dense` is a flag, not a finding
+(§9.1), and a result MUST publish the `densityThreshold` that produced
+it so a consumer can see the number rather than infer it from a count. A
+different implementation MAY choose a different threshold and MUST say
+which. §12.10 also says a `candidate` is not an obligation: it is a
+related motif absent from this scene, offered because a placement
+decision is easier when you can see what is adjacent.
+
+**A correction.** 0.23's notes claimed the specified queries were
+"every query taking a position", and that the remaining eight enumerated
+the project instead. That was wrong: Q02, Q04, Q09 and Q11 all take a
+scene. The claim is removed from `conformance.md` and `stability.md`.
+What the six remaining actually have in common is that they **compose
+other queries** — a brief, a dossier, a scene package — so specifying
+them means deciding whether a composite result nests the results it is
+built from or restates them.
+
+## 0.23 — 2026-08-17
+
+*Describes schema 2.12.*
+
+**Four more queries: §12.6 Q06, §12.7 Q08, §12.8 Q13, §12.9 Q14.** Eight
+of sixteen are now specified, and fifteen artifacts are published.
+
+**Q06 and Q08 cost almost nothing**, which was the point of taking them
+next. Q06 is Q05 with a different modality and Q08 is Q07 with a fixed
+leaf, so both became parameters of the existing builders rather than new
+ones — one definition each, not two. §12.7 states that Q08 takes no
+shot: sound is authored at the scene and there is no shot-level sound
+entity to be a leaf, so `shot` is always null rather than an omission an
+implementer discovers by finding nothing.
+
+**Q13 dissolves the row-id defect.** The rendered form puts
+`character #1` in its header and carries `AssetReference.id` through;
+neither travels (§6.2). The result names its subject and every asset by
+uuid.
+
+§12.8 also states what `rootMapped` is for: it is a fact about the
+SESSION, not the file. With no root mapping every reference is
+`unaddressed` — not `out-of-root`, which is a property of an identifier
+— so a result reporting zero resolved references and `rootMapped: false`
+describes a healthy file nobody has pointed at a folder.
+
+**Q14 needed a warning written into the specification, because I got it
+wrong first.** `findings` includes `ok` entries: Q14 is a rubric, not a
+problem list. The fixture's deliberately thin character produces FEWER
+findings than the well-authored one, because fewer things are there to
+be reported on at all. **Severity carries the answer**, and §12.9 says
+so. It also restates that readiness severity is its own scale and must
+not be conflated with §9.4's.
+
+**§12.1.1 is refined.** It said every parameter is a uuid or null, which
+was wrong as soon as a query took a literal: Q14's `target` is a query
+id and Q13's `intent` is an enum value. It now says a parameter
+identifying a ROW is its uuid, a literal appears as itself, and **a row
+id MUST NOT appear** — so no parameter is a bare number, which is the
+rule that actually matters and is what the portability test asserts.
+
+## 0.22 — 2026-08-17
+
+*Describes schema 2.12.*
+
+**§12.4 Q03 and §12.5 Q12 are specified**, and blessed **away from scene
+12**. Four of sixteen queries now have normative results.
+
+The previous session found a live conformance bug — `sceneOrder`
+deriving story order from `scene_number`, which §4.1 forbids — and the
+uncomfortable part was that the whole suite passed before and after the
+fix. Every blessed expectation targeted scene 12, where the forbidden
+ordering and the required one agree.
+
+So these two were blessed at positions where they do not:
+
+- **Q03 at scene 19**, which sits before 16 in the script and after it by
+  number.
+- **Q12 diffing 19 → 16**, which is forward in the script and backward
+  by number. §12.5 states the rule this pins: the two positions are
+  ordered by §4.1, never by their scene numbers, because under `fixed`
+  numbering a scene numbered 16 may play after one numbered 19 — and
+  diffing them by number resolves every pattern-2 and pattern-3 state at
+  the wrong position.
+
+**Verified rather than assumed.** Reintroducing the old ordering makes
+**four** tests fail, including a blessed expectation. Before this
+session it made none.
+
+§12.4 also states what a cut position answers: `scene` null and nothing
+present, rather than an error (§9.2) — the query-layer face of §6.6.1.
+
+**Q03 and Q12's composition moved into `scf-core`.** Q05 and Q07 could
+wrap resolvers that already lived there; these two composed in the app's
+runner, so a normative result would have had to re-derive "who is
+present and what is true of them" a second time. The core now composes
+rows, the runner renders them, and the result projects them — one
+derivation, two consumers.
+
+`ARTIFACTS.md` carries eleven artifacts.
+
+## 0.21 — 2026-08-17
+
+*Describes schema 2.12.*
+
+**§6.6 is decided: a cut row is not in the film.** It was the oldest
+open question in the document — `lifecycle_status` was authored on 88
+entities and read by nothing, so "cut" was decorative and every consumer
+would have answered the canonical queries differently.
+
+New **§6.6.1**: a resolver MUST exclude cut rows, and the consequences
+are stated rather than left to be inferred — a cut scene has no story
+position, takes part in no span, and appears in no query result; a cut
+state is in force nowhere; a cut row contributes no cascade layer.
+
+A cut scene MAY keep its heading in the screenplay, because a cut scene
+in a real script is struck through rather than deleted. An
+implementation that rebuilt story order from headings alone would
+resurrect it, and MUST NOT.
+
+The section states the property that makes the rule testable: **adding a
+cut row changes no answer.** The fixture now carries a cut scene *with a
+heading*, and a cut performance beat inside the most heavily asserted
+scene in the file.
+
+New **§6.6.2**: excluding cut rows from resolution is not hiding them.
+An implementation MAY read them back for a cut list or an audit view,
+and SHOULD keep that path distinct from the resolvers. Identity survives
+being cut — restoring a row restores the same row.
+
+**§12.1.2** follows: a result MUST NOT contain a cut row.
+
+**A live conformance bug, found by the rebuilt fixture.**
+`resolution.sceneOrder` — the function every position-dependent answer
+runs through — ordered scenes by `scene_number` and then by row id,
+which §4.1 forbids in as many words, and its own doc comment said so.
+Nothing caught it for as long as it existed because the fixture's three
+orders coincided; the moment they differed it disagreed with the
+specification on its first run. It now delegates to `scenePositions`,
+and a test asserts the two agree.
+
+That is the fixture rebuild paying for itself, and worth noting: the
+entire suite passed both before and after the fix, because the blessed
+expectations cluster on one scene.
+
 ## 0.20 — 2026-08-17
 
 *Describes schema 2.12.*

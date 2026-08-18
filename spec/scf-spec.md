@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.20 (draft) — not a release.**
+**Version 0.24 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -106,7 +106,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.20` (draft).
+- **Specification version** — this document. Currently `0.24` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -641,20 +641,47 @@ Implementations MUST report, separately:
 
 ### 6.6 Lifecycle status
 
-`lifecycle_status` marks a row as active or cut.
+`lifecycle_status` marks a row as `active` or `cut`.
 
 Where the registry declares it, an implementation MUST preserve it. Of
 the thirteen link entities only `actor_character_role` and
 `thematic_connection` carry it; the others MUST NOT.
 
-> **1.0 requirement, not yet defined.** Whether resolvers exclude `cut`
-> rows by default, and how a consumer asks for history, is a normative
-> gap. It is in scope for 1.0 and is tracked in
-> [stability.md](stability.md). Until it is specified, implementations
-> MUST treat a `cut` row as present, and MUST NOT rely on that remaining
-> the answer.
+#### 6.6.1 A cut row is not in the film
 
----
+**A resolver MUST exclude rows whose `lifecycle_status` is `cut`.** The
+point of marking something cut rather than deleting it is that it stops
+being considered while remaining inspectable — so nothing that answers a
+question about the film may see it.
+
+This applies to every derivation in this specification, and the
+consequences are meant to reach that far:
+
+- a cut scene has **no story position** (§4.1), takes part in no span
+  (§5), and appears in no canonical query result (§12);
+- a cut state is in force nowhere (§4.5);
+- a cut row contributes no layer to a cascade (§7.3);
+- a cut link joins nothing.
+
+A cut scene MAY still carry its heading in the screenplay — a cut scene
+in a real script is struck through, not deleted. An implementation that
+derived story order from headings alone would resurrect it, and MUST
+NOT.
+
+Because a cut row is excluded everywhere, **adding one to a file changes
+no answer.** That is the test of a conforming implementation, and the
+conformance fixture is built to make it: it carries a cut scene, with a
+heading, and a cut performance beat in its most heavily asserted scene.
+
+#### 6.6.2 Reading what was cut
+
+Excluding cut rows from resolution is not hiding them. An
+implementation MAY offer a view that reads them back — a cut list, an
+audit trail, a history panel — and SHOULD keep that path distinct from
+the resolvers, so that the two cannot be confused at a call site.
+
+Row identity survives being cut (§6.1): a cut row keeps its uuid, and
+restoring it restores the same row rather than creating a new one.
 
 ## 7. The direction cascade
 
@@ -1094,10 +1121,11 @@ reinvented from §1–§11, but the point of SCF is to describe a film's
 structure, and shipping the questions is that description. Defining them
 does not preclude anyone asking others.
 
-**This section is incomplete.** Q05 and Q07 are specified below. The
-remaining fourteen are not, and until they are, their only definition is
-a blessed example of their output — which is a demonstration, not a
-specification. Tracked in [stability.md](stability.md).
+**This section is incomplete.** Ten are specified below: Q03, Q05, Q06,
+Q07, Q08, Q09, Q10, Q12, Q13 and Q14. The remaining six — Q00, Q01, Q02,
+Q04, Q11, Q15 — are not, and until they are, their only definition is a
+blessed example of their rendered output, which is a demonstration
+rather than a specification. Tracked in [stability.md](stability.md).
 
 ### 12.1 What a query returns
 
@@ -1110,7 +1138,7 @@ Every canonical query returns:
 | `query` | The query's id, e.g. `"Q05"`. |
 | `resultFormat` | Version of this envelope, on its own track. A field added here is not a change to SCF. |
 | `schemaVersion` | The schema the answering implementation read. |
-| `parameters` | What was asked, each value a **uuid** or null. |
+| `parameters` | What was asked. A parameter identifying a ROW is its **uuid**; a literal parameter — a query id, an enum value — appears as itself. **A row id MUST NOT appear**, so no parameter is a bare number. |
 | `result` | The query's own structure, defined per query below. |
 
 `parameters` makes a result self-describing: a reader handed one can
@@ -1139,10 +1167,11 @@ A row appears in a result as its `uuid` plus its authored fields:
   registry fields; a second vocabulary for them would be a second thing
   to keep in step.
 
-> **Open.** Whether rows with `lifecycle_status = 'cut'` appear in a
-> result depends on §6.6, which is undecided. Until it is settled, a
-> result carries `lifecycle_status` as an authored field and excludes
-> nothing on its account.
+**A result MUST NOT contain a cut row** (§6.6.1). It carries
+`lifecycle_status` on the rows it does contain, because an
+implementation may legitimately mark something cut between one answer
+and the next, and a consumer holding a result should be able to see what
+it was told.
 
 ### 12.2 Q05 — Voice direction
 
@@ -1202,6 +1231,170 @@ and empty.
 `layers` MAY be empty. A scene with no authored look is a legitimate
 answer and not a finding.
 
+### 12.4 Q03 — World state
+
+**Everything true at one position.**
+
+Parameter: `scene`.
+
+| Field | |
+|---|---|
+| `scene` | The scene itself, projected. Null when the position does not resolve — including when the scene is cut (§6.6.1). |
+| `characters` | Each character present, with `states` in force there (§4.5) and the `costumes` they are wearing. |
+| `props` | Each prop present, with its `state` at this position by pattern 3, or null where none is yet established. |
+| `motifs` | Motif appearances at this position: name and domain. These come from a join rather than a table and carry no identity of their own. |
+
+Presence is authored, not inferred: a character appears because a
+`scene_character` link says so, not because a state mentions them.
+
+A cut scene answers as an empty position rather than an error (§9.2):
+`scene` null, and no characters, props or motifs.
+
+### 12.5 Q12 — Continuity
+
+**What changed between two positions.**
+
+Parameters: `from`, `to`.
+
+| Field | |
+|---|---|
+| `from`, `to` | The two scenes, projected. |
+| `characters` | Each character present at either position, with `statesFrom` and `statesTo`. |
+| `relationships` | Each relationship with a stage at either position, as `stageFrom` and `stageTo`. |
+| `props` | Each prop with a state at either position, as `whereFrom` and `whereTo`. |
+
+A row appears when it has something to say at **either** position, so an
+appearance and a disappearance are both visible.
+
+**The two positions are ordered by §4.1, never by their scene numbers.**
+Under `fixed` numbering a scene numbered 16 may play after one numbered
+19, and diffing them by number resolves every pattern-2 and pattern-3
+state at the wrong position. The conformance fixture is built so that
+this is not hypothetical: its blessed Q12 result diffs 19 → 16, which is
+forward in the script and backward by number.
+
+### 12.6 Q06 — Physical direction
+
+**How this character moves and behaves in this scene.**
+
+Q05 with `modality` `"physical"`. Same parameters, same result
+structure, different content. It is one definition rather than two
+because two would be two places for the shape to change.
+
+### 12.7 Q08 — Soundscape
+
+**What this scene sounds like.**
+
+Parameter: `scene`. **No shot.** Sound is authored at the scene, and
+there is no shot-level sound entity to be a leaf (§7.1), so `shot` is
+always null in the envelope. That is stated rather than left for an
+implementer to discover by finding nothing.
+
+Leaf: `scene_music_design`. Result structure as §12.3.
+
+### 12.8 Q13 — Media resolution
+
+**Which assets are in force for a subject and an intent.**
+
+Parameters: `subject` — a character, prop or location — plus `scene` and
+`shot`, both optional. `intent` and the subject's kind are literals and
+appear in the result rather than the envelope.
+
+| Field | |
+|---|---|
+| `subject`, `intent` | What was asked, as literals. |
+| `trail` | The resolution trail, most specific first. |
+| `references` | Each asset in force: `uuid`, name, identifier, format, role, intent, provenance, resolution `state` (§8.3), `detail` for anything not resolved, and size. |
+| `counts` | References per resolution state. |
+| `rootMapped` | Whether the session had a root mapping at all. |
+
+**A reference names its asset by uuid**, never by row id (§12.1.2).
+
+`rootMapped` is a fact about the SESSION, not the file. With no root
+mapping every reference is `unaddressed` (§0.3, §8.3) — not
+`out-of-root`, which is a property of an identifier. A result reporting
+zero resolved references and `rootMapped: false` is describing a
+perfectly healthy file that nobody has pointed at a folder.
+
+**A result carries references, never bytes** (§8.1).
+
+### 12.9 Q14 — Readiness
+
+**What is missing for another query to answer well.**
+
+Parameters: `target` — the query being assessed, a literal — plus
+`character`, `scene` and `shot` as the target needs them.
+
+| Field | |
+|---|---|
+| `target`, `targetName` | The query assessed. |
+| `findings` | Each with `severity`, the `entity` it concerns, and a message. |
+| `counts` | Findings per severity. |
+
+**`findings` includes `ok` entries.** Q14 is a rubric, not a problem
+list: it reports what is present as well as what is missing, so a
+consumer counting findings would read it backwards — a thin subject can
+produce FEWER findings than a well-authored one, because fewer things
+are there to be reported on at all. **Severity carries the answer.**
+
+Readiness severity is its own scale — `blocker`, `warning`,
+`suggestion`, `ok` — and is not the finding-vocabulary severity of §9.4.
+That vocabulary answers whether a file is well-formed; this answers
+whether a query can be answered well from it, and §9.4 forbids
+conflating them.
+
+### 12.10 Q09 — Motif manifest
+
+**Which motifs should be perceivable in this scene, and how.**
+
+Parameter: `scene`.
+
+| Field | |
+|---|---|
+| `scene` | The scene, projected. |
+| `manifest` | Each motif placed here: the `motif`, its `appearance` at this position, and its evolved `state` there by pattern 3 (§4.5). |
+| `candidates` | Motifs related to something placed here that are **not** placed here. |
+| `dense` | Whether the manifest exceeds the density threshold. |
+| `densityThreshold` | The threshold that produced `dense`. |
+
+A **candidate is not an obligation.** It is a related motif absent from
+this scene, offered because a placement decision is easier to make when
+you can see what is adjacent to it. Nothing is wrong with a scene that
+places none of them.
+
+`dense` is a **heuristic, not a finding** (§9.1). A result MUST publish
+the threshold alongside the flag, so a consumer can see what produced it
+rather than inferring a number from a count. A different implementation
+MAY use a different threshold and MUST say which.
+
+### 12.11 Q10 — Thematic accounting
+
+**Where a theme lives across the whole story, and where it does not.**
+
+Parameter: `theme`. This is the first query whose answer spans the
+entire spine rather than a position.
+
+| Field | |
+|---|---|
+| `theme` | The theme, projected. |
+| `carriers` | Each `thematic_connection`, with the entity kind it points at, that row's `targetUuid` and name, and the scenes it reaches as uuids in story order. |
+| `spine` | **Every scene in story order**, each with the number of carriers reaching it. |
+
+**The zeroes are the point.** A spine listing only the scenes a theme
+reaches could not answer the question this query exists for, which is
+where the theme is absent. A conforming result MUST include every scene,
+carriers or not.
+
+The spine is in **story order** (§4.1), never scene-number order, and
+excludes cut scenes (§6.6.1). A carrier reaching a cut scene reaches
+nowhere, so its `sceneUuids` and the spine's counts agree.
+
+How a carrier reaches scenes depends on what it points at: a scene
+carries the theme at itself; a motif carries it wherever it appears; a
+character carries it wherever they are present. A carrier pointing at
+anything else reaches no scenes, which is a legitimate answer and not a
+finding.
+
 ---
 
 ## Appendix A — Conformance test map
@@ -1221,8 +1414,10 @@ change to one without the other is a defect.
 | §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |
 | §11.2–11.3 forward and backward compatibility | `scf-core/test/extensibility.test.ts`, `scf-app/test/roundTrip.test.ts` |
 | §11.4 deprecation window | *unpinned — a policy, checked by review* |
+| §4.1 resolution agrees with story order | `scf-core/test/conformance.canonical.test.ts` |
+| §6.6 cut rows excluded everywhere | `scf-core/test/conformance.canonical.test.ts`, `scf-core/test/lifecycle.test.ts` |
 | §12.1 result envelope and row projection | `scf-core/test/canonicalQueries.test.ts` |
-| §12.2 Q05, §12.3 Q07 | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
+| §12.2–12.11 — Q03, Q05, Q06, Q07, Q08, Q09, Q10, Q12, Q13, Q14 | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
 | §11.6 document equality | `scf-core/src/canonical.ts`, exercised by `scf-app/test/roundTrip.test.ts` |
 | Round-trip integrity (`conformance.md` §3) | `scf-app/test/roundTrip.test.ts` |
 | Canonical query expectations (`conformance.md` §5.4) | `scf-app/test/queryExpectations.test.ts`, `fixtures/expectations/` |

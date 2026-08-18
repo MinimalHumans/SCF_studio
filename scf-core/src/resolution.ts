@@ -29,6 +29,7 @@
 
 import { q, type Row, type SqlExec, type SqlValue } from "./db.ts";
 import { cascadeChain, type Registry } from "./registry.ts";
+import { scenePositions, sceneOrderHint } from "./structure.ts";
 
 /** The context every semantics function operates in. */
 export interface ScfContext {
@@ -52,7 +53,36 @@ function asNum(v: SqlValue | undefined): number | null {
   return typeof v === "number" ? v : null;
 }
 
+/**
+ * Fetch rows for RESOLUTION, excluding anything cut (spec §6.6).
+ *
+ * A cut row is not in the film. The whole point of marking something cut
+ * rather than deleting it is that it stops being considered while
+ * remaining inspectable, so every resolver — and therefore every
+ * canonical query — must not see it. Cut rows are read back through
+ * `rowsIncludingCut`, by tools built to show history.
+ *
+ * The filter is applied in JS rather than in SQL on purpose: 88 of 99
+ * entities declare `lifecycle_status` and eleven do not, and a SQL
+ * predicate would have to probe for the column on every table it
+ * touched. A missing column reads as undefined and keeps the row, which
+ * is the correct answer for an entity that has no notion of being cut.
+ */
 export async function rows(
+    exec: SqlExec, table: string, where = "",
+    params: SqlValue[] = []): Promise<Row[]> {
+  return (await rowsIncludingCut(exec, table, where, params))
+    .filter((r) => r["lifecycle_status"] !== "cut");
+}
+
+/**
+ * Fetch rows without the §6.6 filter — everything, cut included.
+ *
+ * For tools that show what was removed: a cut list, an audit view, a
+ * history panel. NOT for answering a question about the film, which is
+ * what `rows` is for.
+ */
+export async function rowsIncludingCut(
     exec: SqlExec, table: string, where = "",
     params: SqlValue[] = []): Promise<Row[]> {
   const sql = `SELECT * FROM ${q(table)}` + (where ? ` WHERE ${where}` : "");
@@ -65,21 +95,32 @@ async function cols(exec: SqlExec, table: string): Promise<Set<string>> {
 }
 
 /**
- * Story-position index per scene. Screen order = scene_number when
- * populated, id order otherwise. (The reserved nonlinear-chronology seam
- * would swap this function's source; see conventions.md.)
+ * Story-position index per scene: scene id → 0-based position.
+ *
+ * Derived from the SCREENPLAY (spec §4.1), by delegating to
+ * `scenePositions`. It must not be derived any other way, and this
+ * function used to be the counter-example: it sorted by `scene_number`
+ * and then by row id, which §4.1 forbids in as many words.
+ *
+ * Nothing caught it for a long time because the conformance fixture's
+ * three orders coincided — screenplay order, scene-number order and
+ * row-id order were the same list, so the forbidden derivation and the
+ * required one agreed on every scene. Rebuilding the fixture so they
+ * differ made this function disagree with the specification on its
+ * first run, which is what the rebuild was for.
+ *
+ * Every position-dependent answer runs through here: states in force,
+ * latest-wins lookups, the continuity diff. Deriving it twice is how
+ * the two would drift, so it is derived once, there.
  */
 export async function sceneOrder(ctx: ScfContext): Promise<SceneOrder> {
   const scenes = await rows(ctx.exec, "scene");
-  scenes.sort((a, b) => {
-    const an = asNum(a["scene_number"]);
-    const bn = asNum(b["scene_number"]);
-    if ((an === null) !== (bn === null)) return an === null ? 1 : -1;
-    if ((an ?? 0) !== (bn ?? 0)) return (an ?? 0) - (bn ?? 0);
-    return (asNum(a["id"]) ?? 0) - (asNum(b["id"]) ?? 0);
-  });
+  const headings = await ctx.exec(
+    "SELECT scene_id, line_order FROM screenplay_lines " +
+    "WHERE line_type = 'heading'");
   const order: SceneOrder = new Map();
-  scenes.forEach((r, i) => order.set(asNum(r["id"]) ?? -1, i));
+  scenePositions(scenes, sceneOrderHint(headings))
+    .forEach((p, i) => order.set(p.id, i));
   return order;
 }
 

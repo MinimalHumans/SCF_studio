@@ -1,0 +1,43 @@
+{
+  "query": "Q08",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": null
+  },
+  "result": {
+    "leaf": "scene_music_design",
+    "layers": [
+      {
+        "entity": "sonic_identity",
+        "row": {
+          "uuid": "dd9d0071-1dca-4940-a834-299c341fa558",
+          "fields": {
+            "instrumentation_palette": "fiddle, pump organ",
+            "lifecycle_status": "active",
+            "name": "Sonic Identity",
+            "score_approach": "acoustic/intimate",
+            "score_density": "selective",
+            "silence_philosophy": "Silence before confession.",
+            "sonic_density": "sparse",
+            "sound_aesthetic": "naturalistic"
+          }
+        }
+      },
+      {
+        "entity": "scene_music_design",
+        "row": {
+          "uuid": "1537cd30-7e8b-4e73-af38-d9a8d25c18da",
+          "fields": {
+            "lifecycle_status": "active",
+            "music_presence": "none",
+            "name": "Sc 12 music",
+            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+            "source_music_description": "Tacet: the chime is the only music Ada gets until the end."
+          }
+        }
+      }
+    ]
+  }
+}

@@ -21,6 +21,7 @@ import {
   type ScfContext,
 } from "@scf-core/resolution.ts";
 import { readinessReport } from "@scf-core/readiness.ts";
+import { composeQ03, composeQ12 } from "@scf-core/canonicalQueries.ts";
 import {
   mediaReferences, referencesMarkdown, type MediaReferences,
 } from "@scf-core/mediaReferences.ts";
@@ -116,40 +117,10 @@ const q03: QuerySpec = {
   run: async (ctx, values): Promise<Q03Payload> => {
     const sceneId = num(values["scene_id"]);
     if (sceneId === null) throw new Error("pick a position");
-    const order = await sceneOrder(ctx);
-    const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
-      ?? null;
-    const cast = await rows(ctx.exec, "scene_character", "scene_id = ?",
-                            [sceneId]);
-    const characters = [];
-    for (const link of cast) {
-      const cid = num(link["character_id"]);
-      if (cid === null) continue;
-      const character = (await rows(ctx.exec, "character", "id = ?",
-                                    [cid]))[0];
-      if (character === undefined) continue;
-      const states = await statesInForce(ctx, cid, sceneId, null, order);
-      const costumes = await ctx.exec(
-        "SELECT c.* FROM costume_scene cs JOIN costume c " +
-        "ON c.id = cs.costume_id WHERE cs.scene_id = ? " +
-        "AND c.character_id = ?", [sceneId, cid]);
-      characters.push({ character, states, costumes });
-    }
-    const propLinks = await rows(ctx.exec, "scene_prop", "scene_id = ?",
-                                 [sceneId]);
-    const props = [];
-    for (const link of propLinks) {
-      const pid = num(link["prop_id"]);
-      if (pid === null) continue;
-      const prop = (await rows(ctx.exec, "prop", "id = ?", [pid]))[0];
-      if (prop === undefined) continue;
-      props.push({ prop,
-                   state: await propStateAt(ctx, pid, sceneId, order) });
-    }
-    const motifs = await ctx.exec(
-      "SELECT m.name, a.domain, a.id FROM motif_appearance a " +
-      "JOIN motif m ON m.id = a.motif_id WHERE a.scene_id = ?", [sceneId]);
-    return { scene, characters, props, motifs };
+    // The composition lives in scf-core (spec §12.4). Deriving "who is
+    // present and what is true of them" here as well would be a second
+    // answer to the same question.
+    return composeQ03(ctx, sceneId);
   },
   toMarkdown: (payload): string => {
     const p = payload as Q03Payload;
@@ -287,57 +258,7 @@ const q12: QuerySpec = {
     const a = num(values["scene_a"]);
     const b = num(values["scene_b"]);
     if (a === null || b === null) throw new Error("pick two positions");
-    const order = await sceneOrder(ctx);
-    const sceneA = (await rows(ctx.exec, "scene", "id = ?", [a]))[0] ?? null;
-    const sceneB = (await rows(ctx.exec, "scene", "id = ?", [b]))[0] ?? null;
-
-    const castRows = await ctx.exec(
-      "SELECT DISTINCT character_id FROM scene_character " +
-      "WHERE scene_id IN (?, ?)", [a, b]);
-    const characters = [];
-    for (const c of castRows) {
-      const cid = num(c["character_id"]);
-      if (cid === null) continue;
-      const character = (await rows(ctx.exec, "character", "id = ?",
-                                    [cid]))[0];
-      if (character === undefined) continue;
-      characters.push({
-        character,
-        statesA: (await statesInForce(ctx, cid, a, null, order))
-          .map((s) => String(s["name"])),
-        statesB: (await statesInForce(ctx, cid, b, null, order))
-          .map((s) => String(s["name"])),
-      });
-    }
-
-    const relationships = [];
-    for (const rel of await rows(ctx.exec, "character_relationship")) {
-      const rid = num(rel["id"]);
-      if (rid === null) continue;
-      const sa = await relationshipStateAt(ctx, rid, a, order);
-      const sb = await relationshipStateAt(ctx, rid, b, order);
-      if (sa === null && sb === null) continue;
-      relationships.push({
-        relationship: rel,
-        stageA: sa === null ? null : String(sa["stage_label"] ?? ""),
-        stageB: sb === null ? null : String(sb["stage_label"] ?? ""),
-      });
-    }
-
-    const props = [];
-    for (const prop of await rows(ctx.exec, "prop")) {
-      const pid = num(prop["id"]);
-      if (pid === null) continue;
-      const pa = await propStateAt(ctx, pid, a, order);
-      const pb = await propStateAt(ctx, pid, b, order);
-      if (pa === null && pb === null) continue;
-      props.push({
-        prop,
-        whereA: pa === null ? null : String(pa["whereabouts"] ?? ""),
-        whereB: pb === null ? null : String(pb["whereabouts"] ?? ""),
-      });
-    }
-    return { a: sceneA, b: sceneB, characters, relationships, props };
+    return composeQ12(ctx, a, b);   // scf-core, spec §12.5
   },
   toMarkdown: (payload): string => {
     const p = payload as Q12Payload;

@@ -1,0 +1,243 @@
+{
+  "query": "Q10",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "theme": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+  },
+  "result": {
+    "theme": {
+      "uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d",
+      "fields": {
+        "lifecycle_status": "active",
+        "name": "Forgiveness"
+      }
+    },
+    "carriers": [
+      {
+        "connection": {
+          "uuid": "7a068809-522f-445d-bd89-b53f43f318b4",
+          "fields": {
+            "entity_type": "character",
+            "lifecycle_status": "active",
+            "nature_of_connection": "embodies",
+            "subtlety_level": "clear",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "character",
+        "targetUuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+        "targetName": "Eleanor Cade",
+        "sceneUuids": [
+          "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+          "c0a1f7bf-600f-48a9-af90-162079ee1f24",
+          "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
+          "06857531-3e91-41a9-95dd-3262407d8132",
+          "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+          "e4fa4c60-5f66-4b81-942f-6a026ab56c62",
+          "774518cf-1a5e-4129-8830-eff14222a770"
+        ]
+      },
+      {
+        "connection": {
+          "uuid": "0c77b37f-7934-4e2f-b9b5-2443d8e59945",
+          "fields": {
+            "entity_type": "motif",
+            "lifecycle_status": "active",
+            "nature_of_connection": "embodies",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "motif",
+        "targetUuid": "5dce4db3-c9d3-48e6-8a9f-19c7ea287d8f",
+        "targetName": "Open doors",
+        "sceneUuids": [
+          "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+          "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+          "06857531-3e91-41a9-95dd-3262407d8132",
+          "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+          "774518cf-1a5e-4129-8830-eff14222a770"
+        ]
+      },
+      {
+        "connection": {
+          "uuid": "855ea8a1-4c3e-4d0b-ab19-2f134094122a",
+          "fields": {
+            "entity_type": "motif",
+            "lifecycle_status": "active",
+            "nature_of_connection": "represents",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "motif",
+        "targetUuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+        "targetName": "Ada's locket",
+        "sceneUuids": [
+          "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+          "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+          "774518cf-1a5e-4129-8830-eff14222a770"
+        ]
+      },
+      {
+        "connection": {
+          "uuid": "041ce689-b1c8-4fe8-9e56-3b4945e422f4",
+          "fields": {
+            "entity_type": "scene",
+            "lifecycle_status": "active",
+            "nature_of_connection": "challenges",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "scene",
+        "targetUuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+        "targetName": "INT. FARMHOUSE KITCHEN - NIGHT (CONFESSION)",
+        "sceneUuids": [
+          "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+        ]
+      },
+      {
+        "connection": {
+          "uuid": "b3cf1aa4-6d01-42c9-8b98-fd86eda8c2b5",
+          "fields": {
+            "entity_type": "character",
+            "intended_perception": "must recognize",
+            "lifecycle_status": "active",
+            "nature_of_connection": "explores",
+            "subtlety_level": "clear",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "character",
+        "targetUuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+        "targetName": "Marcus Cade",
+        "sceneUuids": [
+          "32bf7b14-2f5f-41ee-bca0-7ee2d0888b4e",
+          "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+          "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
+          "06857531-3e91-41a9-95dd-3262407d8132",
+          "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+          "0ab2d511-97de-4090-8d4c-dedf55536222",
+          "774518cf-1a5e-4129-8830-eff14222a770"
+        ]
+      },
+      {
+        "connection": {
+          "uuid": "dffd1b9e-078b-4327-8946-f799997430bb",
+          "fields": {
+            "entity_type": "character",
+            "intended_perception": "reward for careful viewing",
+            "lifecycle_status": "active",
+            "nature_of_connection": "represents",
+            "subtlety_level": "subtle",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "character",
+        "targetUuid": "7cceb35d-fced-485b-ad73-8d73a9b2e41e",
+        "targetName": "Ada Cade",
+        "sceneUuids": [
+          "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+          "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+        ]
+      },
+      {
+        "connection": {
+          "uuid": "5587cce8-7fb1-439f-9602-bab776235d06",
+          "fields": {
+            "entity_type": "prop",
+            "intended_perception": "must recognize",
+            "lifecycle_status": "active",
+            "nature_of_connection": "represents",
+            "subtlety_level": "clear",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "prop",
+        "targetUuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+        "targetName": "Ada's locket",
+        "sceneUuids": []
+      },
+      {
+        "connection": {
+          "uuid": "a8ac8b0f-4db6-4055-bcd5-f46ca7e97a75",
+          "fields": {
+            "entity_type": "scene",
+            "intended_perception": "enhances if recognized",
+            "lifecycle_status": "active",
+            "nature_of_connection": "resolves",
+            "subtlety_level": "subtle",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "scene",
+        "targetUuid": "774518cf-1a5e-4129-8830-eff14222a770",
+        "targetName": "EXT. FARMHOUSE PORCH - DAWN",
+        "sceneUuids": [
+          "774518cf-1a5e-4129-8830-eff14222a770"
+        ]
+      }
+    ],
+    "spine": [
+      {
+        "sceneUuid": "32bf7b14-2f5f-41ee-bca0-7ee2d0888b4e",
+        "sceneNumber": "1",
+        "carriers": 1
+      },
+      {
+        "sceneUuid": "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+        "sceneNumber": "3",
+        "carriers": 4
+      },
+      {
+        "sceneUuid": "c0a1f7bf-600f-48a9-af90-162079ee1f24",
+        "sceneNumber": "7",
+        "carriers": 1
+      },
+      {
+        "sceneUuid": "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
+        "sceneNumber": "9",
+        "carriers": 2
+      },
+      {
+        "sceneUuid": "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+        "sceneNumber": "10",
+        "carriers": 1
+      },
+      {
+        "sceneUuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+        "sceneNumber": "11",
+        "carriers": 1
+      },
+      {
+        "sceneUuid": "06857531-3e91-41a9-95dd-3262407d8132",
+        "sceneNumber": "12",
+        "carriers": 3
+      },
+      {
+        "sceneUuid": "00000000-0000-4000-8000-00000000c12a",
+        "sceneNumber": "12A",
+        "carriers": 0
+      },
+      {
+        "sceneUuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+        "sceneNumber": "19",
+        "carriers": 6
+      },
+      {
+        "sceneUuid": "e4fa4c60-5f66-4b81-942f-6a026ab56c62",
+        "sceneNumber": "16",
+        "carriers": 1
+      },
+      {
+        "sceneUuid": "0ab2d511-97de-4090-8d4c-dedf55536222",
+        "sceneNumber": "21",
+        "carriers": 1
+      },
+      {
+        "sceneUuid": "774518cf-1a5e-4129-8830-eff14222a770",
+        "sceneNumber": "24",
+        "carriers": 5
+      }
+    ]
+  }
+}

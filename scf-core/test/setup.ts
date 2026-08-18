@@ -26,7 +26,9 @@ export interface Fixture {
   ctx: ScfContext;
   close: () => void;
   oneId: (table: string, name: string) => Promise<number>;
-  sceneByNumber: (n: number) => Promise<number>;
+  /** Scene numbers are labels (§4.2); a number is accepted for
+   *  readability and bound as text. */
+  sceneByNumber: (n: number | string) => Promise<number>;
 }
 
 export function openFixture(): Fixture {
@@ -44,11 +46,17 @@ export function openFixture(): Fixture {
     return id;
   };
 
-  const sceneByNumber = async (n: number): Promise<number> => {
+  /**
+   * A scene number is a LABEL (spec §4.2), so it is bound as text.
+   * Binding it as a number matched nothing once the column became TEXT:
+   * the driver binds JS numbers as doubles, so 12 arrived as "12.0".
+   * Callers may still pass 12 for readability.
+   */
+  const sceneByNumber = async (n: number | string): Promise<number> => {
     const r = await db.exec(
-      "SELECT id FROM scene WHERE scene_number=?", [n]);
+      "SELECT id FROM scene WHERE scene_number=?", [String(n)]);
     const id = r[0]?.["id"];
-    if (typeof id !== "number") throw new Error(`no scene #${n}`);
+    if (typeof id !== "number") throw new Error(`no scene #${String(n)}`);
     return id;
   };
 

@@ -1,0 +1,226 @@
+{
+  "query": "Q03",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "scene": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+  },
+  "result": {
+    "scene": {
+      "uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+      "fields": {
+        "characters_present": "Eleanor, Marcus",
+        "emotional_beat": "The worst thing said aloud",
+        "estimated_duration": "4:20",
+        "int_ext": "interior",
+        "lifecycle_status": "active",
+        "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+        "name": "INT. FARMHOUSE KITCHEN - NIGHT (CONFESSION)",
+        "purpose": "The confession, and the locket revealed.",
+        "scene_number": "19",
+        "season": "winter",
+        "status": "outline",
+        "summary": "Marcus confesses he was at the creek the day Ada drowned. The locket revealed.",
+        "tension_level": "high",
+        "time_of_day": "night",
+        "tone": "rupture"
+      }
+    },
+    "characters": [
+      {
+        "character": {
+          "uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "fields": {
+            "age": "61",
+            "arc_description": "From a woman who answers questions with tasks to a woman who says the thing and lets it cost her.",
+            "archetype": "the keeper of the house",
+            "backstory": "Came west at nineteen. Buried a husband at forty-two and a daughter at fifty-four. Has not left the valley since.",
+            "casting_status": "tbd",
+            "core_belief": "Work is what love looks like when you can't speak.",
+            "external_goal": "Get the homestead through the winter.",
+            "flaw": "Mistakes silence for mercy — to others and to herself.",
+            "gender": "female",
+            "greatest_fear": "That saying it aloud makes it true forever.",
+            "internal_goal": "To stop blaming her son without having to forgive him.",
+            "lifecycle_status": "active",
+            "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
+            "name": "Eleanor Cade",
+            "occupation": "Homesteader; midwife to the valley",
+            "pronouns": "she/her",
+            "role": "protagonist",
+            "skills_abilities": "Midwifery, horse handling, reading weather",
+            "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
+          }
+        },
+        "states": [
+          {
+            "uuid": "b319b490-9794-4541-9ea3-b82d1ab6fb9a",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "lifecycle_status": "active",
+              "modality": "physical",
+              "modulations": "{\"tension\": \"guarding left side\", \"movement\": \"dragging step\"}",
+              "name": "wounded",
+              "persistence": "until_resolved",
+              "scene_uuid": "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
+              "state_description": "Thrown at the crossing; guarding her left side, dragging step."
+            }
+          },
+          {
+            "uuid": "834f49fa-f2da-485c-b766-a3fae7a8be7c",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "emotional_coloring": "hollowed",
+              "lifecycle_status": "active",
+              "modality": "vocal",
+              "modulations": "{\"volume\": \"quieter\"}",
+              "name": "wrung-out",
+              "persistence": "scene_only",
+              "scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+              "state_description": "Voice gone thin after the confession."
+            }
+          }
+        ],
+        "costumes": [
+          {
+            "uuid": "ec9d9eae-79f4-4b84-be16-c00f24d37b6f",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "condition": "worn",
+              "continuity_notes": "Off the hook from sc 10 onward",
+              "description": "Knitted shawl, slightly too fine for the dress.",
+              "emotional_state_reflected": "Grief handled as a garment",
+              "fabrics": "Fine knitted wool",
+              "lifecycle_status": "active",
+              "name": "Ada's shawl",
+              "primary_color_hex": "#3F4C63",
+              "primary_color_name": "faded indigo",
+              "silhouette": "Draped, too fine for the dress",
+              "what_reveals": "That she kept it"
+            }
+          }
+        ]
+      },
+      {
+        "character": {
+          "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "fields": {
+            "age": "34",
+            "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+            "archetype": "the returning prodigal",
+            "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+            "casting_status": "tbd",
+            "core_belief": "A debt can be worked off if you work hard enough.",
+            "external_goal": "Winter over at the homestead and mend what he can.",
+            "flaw": "Confesses only when cornered, then calls it honesty.",
+            "gender": "male",
+            "greatest_fear": "That his mother already knows.",
+            "internal_goal": "Absolution he cannot ask for directly.",
+            "lifecycle_status": "active",
+            "motivation": "To be told he is not what he believes he is.",
+            "name": "Marcus Cade",
+            "occupation": "Railroad surveyor",
+            "pronouns": "he/him",
+            "role": "deuteragonist",
+            "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+          }
+        },
+        "states": [],
+        "costumes": [
+          {
+            "uuid": "bd8f42c0-645b-4e75-b35f-23f3060ef09c",
+            "fields": {
+              "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+              "condition": "worn",
+              "description": "Borrowed from a hook in the porch.",
+              "emotional_state_reflected": "Belonging attempted",
+              "lifecycle_status": "active",
+              "name": "Work shirt",
+              "primary_color_name": "unbleached",
+              "silhouette": "Loose",
+              "what_reveals": "He has started doing the work"
+            }
+          }
+        ]
+      },
+      {
+        "character": {
+          "uuid": "7cceb35d-fced-485b-ad73-8d73a9b2e41e",
+          "fields": {
+            "age": "19 at her death",
+            "archetype": "the absent daughter",
+            "casting_status": "tbd",
+            "core_belief": "Never appears on screen; every design decision about her is an absence decision.",
+            "gender": "female",
+            "lifecycle_status": "active",
+            "name": "Ada Cade",
+            "pronouns": "she/her",
+            "role": "minor",
+            "summary": "Drowned at the creek crossing seven years before the story opens. Present in the film only as objects: a shawl, a locket, a chime by the door."
+          }
+        },
+        "states": [],
+        "costumes": []
+      }
+    ],
+    "props": [
+      {
+        "prop": {
+          "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+          "fields": {
+            "description": "Brass locket holding Ada's portrait.",
+            "first_appearance": "sc 11, saddlebag",
+            "key_moments": "sc 11 pocketed · sc 19 on the table",
+            "lifecycle_status": "active",
+            "name": "Ada's locket",
+            "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "macguffin",
+            "symbolism": "What Marcus took from the creek and could not put down."
+          }
+        },
+        "state": {
+          "uuid": "88c36f76-f82a-46f7-bc6b-90b9b5964076",
+          "fields": {
+            "custody_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+            "lifecycle_status": "active",
+            "name": "locket revealed",
+            "prop_uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+            "scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+            "whereabouts": "revealed, on the kitchen table"
+          }
+        }
+      },
+      {
+        "prop": {
+          "uuid": "a09f2920-eb3d-4c6d-b6c9-900c799ab781",
+          "fields": {
+            "description": "The kitchen's only light after dark.",
+            "lifecycle_status": "active",
+            "name": "Oil lamp",
+            "narrative_significance": "Carried up the ridge in sc 21.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "atmosphere"
+          }
+        },
+        "state": null
+      }
+    ],
+    "motifs": [
+      {
+        "name": "Ada's locket",
+        "domain": "visual"
+      },
+      {
+        "name": "Open doors",
+        "domain": "visual"
+      },
+      {
+        "name": "Unfinished sentences",
+        "domain": "dialogue"
+      }
+    ]
+  }
+}

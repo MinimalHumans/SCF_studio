@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.20 / schema 2.12. This document is expected
+Current as of specification 0.24 / schema 2.12. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -73,9 +73,10 @@ about it is ceremonial.
 | `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in 2.11; the old column removed in 2.12 under §11.0. `numbering.ts` owns resolution, and a test asserts a stale `scene_numbering` cannot override it. |
 | Pre-1.0 change licence | §11.0 | Provisional | n/a | States that §11's rules take effect at 1.0 and that earlier files are disposable, with the fixture excepted. Provisional because it is the kind of clause that is easy to write and easy to overrun — it needs the 1.0 release to prove it was honoured. |
 | Result envelope and row projection | §12.1 | Provisional | Yes | `queryResult.ts`. Rows by uuid, volatile columns dropped, references resolved to uuids. Provisional until a second implementation has produced a matching result. |
-| Q05, Q07 | §12.2, §12.3 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Chosen because they stress different machinery — pattern-2 persistence with an absent baseline, and the `refines` cascade with a parameter-dependent leaf. |
-| **The other fourteen queries** | §12 | **Unstable** | **No** | Unspecified. Their only definition is a blessed example of rendered output, which is a demonstration, not a specification. Q05 and Q07 suggest the shape holds; fourteen is where that gets tested. |
-| **Whether a result excludes `cut` rows** | §12.1.2 | **Unstable** | **No** | Depends on §6.6. Until settled, results carry `lifecycle_status` and exclude nothing on its account — which means settling §6.6 changes every blessed result. |
+| Q03, Q05–Q10, Q12, Q13, Q14 | §12.2–12.11 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |
+| **The other six queries** | §12 | **Unstable** | **No** | Q00, Q01, Q02, Q04, Q11, Q15 remain. They are not distinguished by taking no position — Q02, Q04 and Q11 all take a scene. What they have in common is that they COMPOSE other queries: a brief, a dossier, a scene package. Specifying them means deciding whether a composite result nests the results it is built from or restates them. |
+| Expectation coverage | — | Provisional | Partly | Four results now sit at three different positions. The rendered-markdown expectations still cluster on scene 12, and will until the queries behind them are specified. |
+| Results exclude `cut` rows | §12.1.2 | Provisional | Yes | Follows §6.6.1. Settled before the other fourteen queries were blessed, so they get blessed once. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
 | Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
 | Shot-code allocation | §4.4.3 | Provisional | Yes | Continue-past-highest, with the stated no-retired-codes limitation. |
@@ -108,7 +109,9 @@ about it is ceremonial.
 | Relationship `directionality` | §6.5 | Provisional | Yes | Schema 2.4. |
 | Read from both character columns | §6.5 | Stable | Yes | |
 | `lifecycle_status` preserved | §6.6 | Provisional | Yes | The column exists and is authored on every non-link entity. |
-| **Whether resolvers filter `cut`** | §6.6 | **Unstable** | **No** | The open normative gap. Nothing in `scf-core` reads the column, and the fixture has no non-active row, so "cut" is currently decorative. In scope for 1.0. Deciding it changes the answer to every canonical query, so it also needs a fixture with cut rows and suite expectations for both readings. |
+| Cut rows excluded from every derivation | §6.6.1 | Provisional | Yes | `rows()` filters; `rowsIncludingCut()` is the history path. The fixture carries a cut scene with a heading and a cut beat in scene 12, so the rule is exercised rather than asserted. |
+| Reading back what was cut | §6.6.2 | **Unstable** | Partly | `rowsIncludingCut` exists; no tool uses it. A cut list or audit view is unbuilt, and until one exists "inspectable" is a claim rather than a feature. |
+| `sceneOrder` derives from the screenplay | §4.1 | Provisional | Yes | Fixed in 0.21 — it had sorted by `scene_number` then row id, which §4.1 forbids. Now delegates to `scenePositions`, with a test asserting the two agree. |
 
 ### Cascade
 
@@ -161,7 +164,7 @@ about it is ceremonial.
 | Ignore unknown content | §10.1 | Provisional | Yes | Pinned by `extensibility.test.ts`. |
 | Preserve unknown content on write | §10.1 | Provisional | **Yes — verified** | An `x_` table, an `x_` column with its values, and an unprefixed unknown table survive `initDatabase` across five cycles, and survive the app's own open→edit→save cycle across three. Provisional rather than Stable because the browser's `sqlite3_js_db_export` path is still exercised only by hand. |
 | Document equality / canonical dump | §11.6 | Provisional | Yes | `canonical.ts`. Answers `conformance.md` §3's open question about what a round trip is compared on. Provisional until a second implementation has produced a dump. |
-| Canonical query expectations as data | — | Provisional | Partly | `fixtures/expectations/` — blessed markdown plus payload shapes, both free of row ids and timestamps. Eight of sixteen queries; the other eight take no position parameter. |
+| Canonical query expectations as data | — | Provisional | Partly | `fixtures/expectations/` — blessed markdown plus payload shapes, both free of row ids and timestamps, and normative `.result.json` for every specified query. |
 | Conformance claim process | — | Provisional | n/a | `conformance.md` §6: self-certification, per role, with the reports published. Untested in the only way that matters — nobody has made a claim. |
 | Reserved names | §10.2 | Provisional | Yes | `@plates` and `@nas` reserved; entity and column names checked by `lint_registry.py` and `registrySchema.test.ts`. |
 | `x_` extension prefix | §10.3 | Provisional | Yes | Enforced at the moment a name is chosen (the linter) and again at the generated artifact (the schema test). Preservation covered by the row above. |
@@ -191,20 +194,38 @@ about it is ceremonial.
 
 Five Unstable rows, in rough dependency order:
 
-1. **The remaining fourteen queries** (§12) — Q05 and Q07 are specified
-   and the shape held across both. The rest is repetition plus whatever
-   the harder queries break.
+1. **The remaining six queries** (§12) — all composites. The envelope
+   has now held for a position query, a two-position diff, a cascade and
+   a whole-story spine, so the open question is not the envelope but
+   whether a composite result nests the results it is built from.
 2. **The asset resolution tally in `scf-check`** (§8.3) — the one check
    the validator cannot do, because §0.3 makes the root mapping a
    property of the consuming environment and no flag exists to supply
    one.
-3. **`lifecycle_status` filtering** (§6.6) — changes the answer to every
-   canonical query. Needs a fixture with cut rows.
+3. **A view for what was cut** (§6.6.2) — the filter is done; the way to
+   read cut rows back is a library function nothing calls. Until a cut
+   list exists, "inspectable" is a claim.
 4. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
    1.0 or go.
 5. **Artifact addressing** (§2.1) — the manifest is written and verifies,
    but no `schema-X.Y` tag exists, so the URLs it publishes do not
    resolve. One `git tag` closes it.
+
+*Closed in 0.24:* the envelope holds for a whole-story answer, not only
+a positional one.
+
+*Closed in 0.23:* every query that takes a position is specified. Q13's
+embedded row id is gone, and §12.1.1 now distinguishes a row reference
+from a literal parameter.
+
+*Closed in 0.22:* the expectations no longer cluster on one scene. The
+suite can now distinguish a conforming resolver from one using the
+ordering §4.1 forbids — which it could not do when that bug was live.
+
+*Closed in 0.21:* §6.6 is decided — cut rows are excluded from every
+derivation, and the fixture carries cut rows that prove it by changing
+nothing. `sceneOrder` was also found ordering by `scene_number`, which
+§4.1 forbids, and now derives from the screenplay.
 
 *Closed in 0.20:* §12 exists. The queries have an envelope, a portable
 row projection, and two normative definitions.

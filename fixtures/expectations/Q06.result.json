@@ -1,0 +1,72 @@
+{
+  "query": "Q06",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132"
+  },
+  "result": {
+    "modality": "physical",
+    "baseline": {
+      "uuid": "a3ed0b3c-4f85-43b3-ba36-06233fe7f6ac",
+      "fields": {
+        "center_of_gravity": "low",
+        "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+        "emotional_manifestations": "{\"fear\": {\"body\": \"stillness\", \"breathing\": \"shallow\"}, \"joy\": {\"face\": \"crow's-feet crease before the mouth moves\"}}",
+        "energy_quality": "contained",
+        "expressiveness_level": "controlled",
+        "eye_contact_patterns": "Meets eyes only when giving instructions",
+        "facial_asymmetries": "scar through the left brow",
+        "gaze_direction_tendencies": "Looks at hands, doors, weather",
+        "injuries_visible_in_movement": "After sc 9, guards the left side",
+        "lifecycle_status": "active",
+        "movement_economy": "efficient",
+        "movement_fluidity": "smooth",
+        "movement_speed": "deliberate",
+        "movement_style": "Economical; nothing wasted",
+        "movement_weight": "grounded",
+        "name": "Eleanor physicality",
+        "physical_comfort": "at home in body",
+        "physical_training_visible": "Forty years of physical work",
+        "posture": "upright",
+        "resting_face": "guarded",
+        "spatial_presence": "takes up space",
+        "tension_level": "variable"
+      }
+    },
+    "states": [
+      {
+        "uuid": "b319b490-9794-4541-9ea3-b82d1ab6fb9a",
+        "fields": {
+          "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "lifecycle_status": "active",
+          "modality": "physical",
+          "modulations": "{\"tension\": \"guarding left side\", \"movement\": \"dragging step\"}",
+          "name": "wounded",
+          "persistence": "until_resolved",
+          "scene_uuid": "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
+          "state_description": "Thrown at the crossing; guarding her left side, dragging step."
+        }
+      }
+    ],
+    "modulations": {
+      "tension": "guarding left side",
+      "movement": "dragging step"
+    },
+    "beats": [
+      {
+        "uuid": "5d750439-dc7c-46ad-8636-0b5763352a3d",
+        "fields": {
+          "beat_order": 2,
+          "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "lifecycle_status": "active",
+          "modality": "physical",
+          "name": "kettle",
+          "physical_action": "Sets the kettle down slowly — the scene's held breath.",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "query": "Q09",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132"
+  },
+  "result": {
+    "scene": {
+      "uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+      "fields": {
+        "characters_present": "Eleanor, Marcus",
+        "estimated_duration": "3:40",
+        "int_ext": "interior",
+        "lifecycle_status": "active",
+        "name": "INT. FARMHOUSE KITCHEN - NIGHT",
+        "scene_number": "12",
+        "season": "winter",
+        "status": "outline",
+        "summary": "The confrontation. 'You came back.'",
+        "tension_level": "high",
+        "time_of_day": "night",
+        "tone": "held breath",
+        "weather_conditions": "storm"
+      }
+    },
+    "manifest": [
+      {
+        "motif": {
+          "uuid": "5dce4db3-c9d3-48e6-8a9f-19c7ea287d8f",
+          "fields": {
+            "lifecycle_status": "active",
+            "modality": "visual",
+            "name": "Open doors",
+            "recurrence": "recurring",
+            "subtlety_level": "subtle",
+            "symbolic_meaning": "Choice; forgiveness held open."
+          }
+        },
+        "appearance": {
+          "uuid": "8d7a9bad-98fe-48e9-96c2-37a85c5cf04a",
+          "fields": {
+            "domain": "visual",
+            "entity_type": "scene",
+            "manifestation_notes": "Door stays ajar through the argument; Eleanor doesn't close it.",
+            "motif_uuid": "5dce4db3-c9d3-48e6-8a9f-19c7ea287d8f",
+            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+          }
+        },
+        "state": {
+          "uuid": "1eb68754-8541-44c5-8eb7-355596158fc7",
+          "fields": {
+            "lifecycle_status": "active",
+            "motif_uuid": "5dce4db3-c9d3-48e6-8a9f-19c7ea287d8f",
+            "name": "Doors: held open",
+            "scene_uuid": "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+            "stage_description": "After the accident the door habit becomes legible — she is holding something open on purpose now.",
+            "subtlety_level": "noticeable"
+          }
+        }
+      },
+      {
+        "motif": {
+          "uuid": "0e811b89-34fe-4d63-b351-21c11ca8020b",
+          "fields": {
+            "description": "Brass chime Ada hung by the porch door; irregular.",
+            "lifecycle_status": "active",
+            "modality": "sonic",
+            "name": "Wind chime",
+            "recurrence": "recurring",
+            "related_motif_uuid": "5dce4db3-c9d3-48e6-8a9f-19c7ea287d8f",
+            "symbolic_meaning": "Ada's presence."
+          }
+        },
+        "appearance": {
+          "uuid": "9f80a20f-7324-496b-b8b8-f1a2d0c90edb",
+          "fields": {
+            "domain": "sonic",
+            "manifestation_notes": "One chime when the door swings.",
+            "motif_uuid": "0e811b89-34fe-4d63-b351-21c11ca8020b",
+            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+          }
+        },
+        "state": null
+      },
+      {
+        "motif": {
+          "uuid": "6a3d2ee3-b109-40f8-8aec-918acc9f1a31",
+          "fields": {
+            "lifecycle_status": "active",
+            "modality": "verbal",
+            "name": "Unfinished sentences",
+            "recurrence": "recurring",
+            "symbolic_meaning": "What this family cannot say."
+          }
+        },
+        "appearance": {
+          "uuid": "d760436f-09d4-44d7-b292-00aa8eef8f7e",
+          "fields": {
+            "domain": "dialogue",
+            "manifestation_notes": "Eleanor trails off twice; the second time replaces the accusation.",
+            "motif_uuid": "6a3d2ee3-b109-40f8-8aec-918acc9f1a31",
+            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+          }
+        },
+        "state": null
+      }
+    ],
+    "candidates": [],
+    "dense": false,
+    "densityThreshold": 3
+  }
+}

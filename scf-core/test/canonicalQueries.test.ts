@@ -21,9 +21,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, afterAll, describe, expect, test } from "vitest";
 import {
-  Q07_SCENE_LEAF, Q07_SHOT_LEAF, q05Result, q07Result,
+  MOTIF_DENSITY_THRESHOLD, Q07_SCENE_LEAF, Q07_SHOT_LEAF, q03Result,
+  q05Result, q06Result, q07Result, q08Result, q09Result, q10Result,
+  q12Result, q13Result, q14Result,
 } from "../src/canonicalQueries.ts";
 import { QUERY_RESULT_FORMAT, projectRow } from "../src/queryResult.ts";
+import { sceneOrder } from "../src/resolution.ts";
 import { openFixture, registry, type Fixture } from "./setup.ts";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)),
@@ -38,6 +41,9 @@ let fx: Fixture;
 let eleanor: { id: number; uuid: string };
 let scene12: { id: number; uuid: string };
 let shot1204: { id: number; uuid: string };
+let scene19: { id: number; uuid: string };
+let scene16: { id: number; uuid: string };
+let theme: { id: number; uuid: string };
 
 const pick = async (sql: string): Promise<{ id: number; uuid: string }> => {
   const r = (await fx.ctx.exec(sql))[0];
@@ -53,6 +59,13 @@ beforeAll(async () => {
     "SELECT id, uuid FROM scene WHERE scene_number = '12'");
   shot1204 = await pick(
     "SELECT id, uuid FROM shot WHERE name LIKE '%12-04%'");
+  // Deliberately off scene 12, and deliberately the pair whose script
+  // order and scene-number order disagree: 19 comes BEFORE 16 in the
+  // script. An implementation ordering by scene_number would diff them
+  // backwards, which is the bug that hid under 540 passing tests.
+  scene19 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '19'");
+  scene16 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '16'");
+  theme = await pick("SELECT id, uuid FROM theme ORDER BY id LIMIT 1");
   if (BLESS) mkdirSync(OUT, { recursive: true });
 });
 
@@ -205,11 +218,252 @@ describe("§12.3 Q07 — look resolution", () => {
   });
 });
 
+describe("§12.4 Q03 — world state, away from scene 12", () => {
+  test("matches its blessed result at scene 19", async () => {
+    blessOrCheck("Q03", await q03Result(fx.ctx, scene19.uuid, scene19.id));
+  });
+
+  test("the cut scene is not a position anything answers about",
+       async () => {
+    // §6.6.1 at the query layer. 12B is cut and keeps its heading, so a
+    // reader that took positions from the screenplay would answer here.
+    const cut = await fx.ctx.exec(
+      "SELECT id, uuid FROM scene WHERE lifecycle_status = 'cut'");
+    const r = await q03Result(fx.ctx, String(cut[0]?.["uuid"]),
+                              Number(cut[0]?.["id"]));
+    expect(r.result.scene).toBeNull();
+    expect(r.result.characters).toEqual([]);
+    expect(r.result.props).toEqual([]);
+  });
+
+  test("every row in the result carries a uuid", async () => {
+    const r = await q03Result(fx.ctx, scene19.uuid, scene19.id);
+    for (const c of r.result.characters) {
+      expect(c.character.uuid).toBeTypeOf("string");
+    }
+  });
+});
+
+describe("§12.5 Q12 — continuity across the reorder", () => {
+  test("matches its blessed result from 19 to 16", async () => {
+    blessOrCheck("Q12", await q12Result(
+      fx.ctx, scene19.uuid, scene16.uuid, scene19.id, scene16.id));
+  });
+
+  test("the diff follows story order, not scene-number order", async () => {
+    // The test the suite was missing. In the script 19 precedes 16, so
+    // 19 → 16 is FORWARD. An implementation ordering by scene_number
+    // would treat it as backward and resolve every pattern-2 and
+    // pattern-3 state at the wrong position.
+    const order = await sceneOrder(fx.ctx);
+    const posFrom = order.get(scene19.id);
+    const posTo = order.get(scene16.id);
+    expect(posFrom).toBeDefined();
+    expect(posTo).toBeDefined();
+    expect(posTo ?? 0).toBeGreaterThan(posFrom ?? 0);
+    // ...while their numbers say the opposite.
+    expect(Number("16")).toBeLessThan(Number("19"));
+  });
+
+  test("names the two positions it diffed", async () => {
+    const r = await q12Result(fx.ctx, scene19.uuid, scene16.uuid,
+                              scene19.id, scene16.id);
+    expect(r.parameters).toEqual({
+      from: scene19.uuid, to: scene16.uuid,
+    });
+    expect(r.result.from?.uuid).toBe(scene19.uuid);
+    expect(r.result.to?.uuid).toBe(scene16.uuid);
+  });
+});
+
+describe("§12.6 Q06 and §12.7 Q08 — the twins", () => {
+  test("Q06 matches its blessed result", async () => {
+    blessOrCheck("Q06", await q06Result(
+      fx.ctx, eleanor.uuid, scene12.uuid, eleanor.id, scene12.id));
+  });
+
+  test("Q08 matches its blessed result", async () => {
+    blessOrCheck("Q08", await q08Result(fx.ctx, scene12.uuid, scene12.id));
+  });
+
+  test("Q06 is Q05 with a different modality, and says so", async () => {
+    const q05 = await q05Result(fx.ctx, eleanor.uuid, scene12.uuid,
+                                eleanor.id, scene12.id);
+    const q06 = await q06Result(fx.ctx, eleanor.uuid, scene12.uuid,
+                                eleanor.id, scene12.id);
+    expect(q05.result.modality).toBe("vocal");
+    expect(q06.result.modality).toBe("physical");
+    // Same shape, different content — which is the argument for one
+    // builder rather than two.
+    expect(Object.keys(q06.result).sort())
+      .toEqual(Object.keys(q05.result).sort());
+    expect(q06.query).toBe("Q06");
+  });
+
+  test("Q08 takes no shot, and its parameters say so", async () => {
+    // §12.7: sound is authored at the scene and there is no shot-level
+    // sound entity to be a leaf. The null is the statement.
+    const r = await q08Result(fx.ctx, scene12.uuid, scene12.id);
+    expect(r.parameters["shot"]).toBeNull();
+    expect(r.result.leaf).toBe("scene_music_design");
+  });
+});
+
+describe("§12.8 Q13 — media resolution", () => {
+  test("matches its blessed result", async () => {
+    blessOrCheck("Q13", await q13Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id));
+  });
+
+  test("names assets by uuid, never by row id", async () => {
+    // The defect this specification dissolves: the rendered form puts
+    // `character #1` in its header and carries `AssetReference.id`
+    // through. Neither travels (§6.2).
+    const r = await q13Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
+    expect(r.parameters["subject"]).toBe(eleanor.uuid);
+    expect(r.result.references.length).toBeGreaterThan(0);
+    for (const ref of r.result.references) {
+      if (ref.uuid !== null) expect(ref.uuid).toHaveLength(36);
+    }
+  });
+
+  test("with no root mapping everything is unaddressed (§8.3)",
+       async () => {
+    const r = await q13Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
+    expect(r.result.rootMapped).toBe(false);
+    expect(r.result.counts["unaddressed"])
+      .toBe(r.result.references.length);
+    // And NOT out-of-root, which is what it used to say — that is a
+    // property of an identifier, not of a session.
+    expect(r.result.counts["out-of-root"]).toBe(0);
+  });
+});
+
+describe("§12.9 Q14 — readiness", () => {
+  test("matches its blessed result", async () => {
+    blessOrCheck("Q14", await q14Result(
+      fx.ctx, "Q05", eleanor.uuid, eleanor.id, scene12.uuid, scene12.id,
+      null, null));
+  });
+
+  test("reports about absence, and drops the row ids it was given",
+       async () => {
+    // The readiness report carries the row ids it was called with in
+    // `params`. Those do not travel, so the envelope carries uuids and
+    // the raw params are dropped rather than passed through.
+    const r = await q14Result(
+      fx.ctx, "Q05", eleanor.uuid, eleanor.id, scene12.uuid, scene12.id,
+      null, null);
+    expect(r.parameters["character"]).toBe(eleanor.uuid);
+    expect(JSON.stringify(r)).not.toContain(`"character_id"`);
+    expect(r.result.target).toBe("Q05");
+    expect(r.result.targetName).toBeTypeOf("string");
+  });
+
+  test("findings include `ok`, so severity is what carries the answer",
+       async () => {
+    // I got this wrong first: Marcus is deliberately the thin character
+    // and produces FEWER findings than Eleanor, not more. `ok` entries
+    // are findings too — Q14 is a rubric, not a problem list, and a
+    // consumer counting findings would read it exactly backwards.
+    const marcus = await pick(
+      "SELECT id, uuid FROM character WHERE name LIKE '%Marcus%'");
+    const thin = await q14Result(fx.ctx, "Q05", marcus.uuid, marcus.id,
+                                 scene12.uuid, scene12.id, null, null);
+    const full = await q14Result(fx.ctx, "Q05", eleanor.uuid, eleanor.id,
+                                 scene12.uuid, scene12.id, null, null);
+
+    expect(thin.result.findings.length)
+      .toBeLessThan(full.result.findings.length);
+
+    const blocking = (r: { counts: Record<string, number> }): number =>
+      (r.counts["blocker"] ?? 0) + (r.counts["warning"] ?? 0);
+    expect(blocking(thin.result)).toBeGreaterThan(blocking(full.result));
+    expect(thin.result.counts["blocker"]).toBeGreaterThan(0);
+    expect(full.result.counts["blocker"]).toBe(0);
+  });
+});
+
+describe("§12.10 Q09 — motif manifest", () => {
+  test("matches its blessed result at scene 12", async () => {
+    blessOrCheck("Q09", await q09Result(fx.ctx, scene12.uuid, scene12.id));
+  });
+
+  test("density is a heuristic the result declares, not a finding",
+       async () => {
+    // §9.1: SCF describes. A consumer must be able to see the threshold
+    // that produced the flag rather than inferring it from the count.
+    const r = await q09Result(fx.ctx, scene12.uuid, scene12.id);
+    expect(r.result.densityThreshold).toBe(MOTIF_DENSITY_THRESHOLD);
+    expect(r.result.dense)
+      .toBe(r.result.manifest.length > MOTIF_DENSITY_THRESHOLD);
+  });
+
+  test("a candidate is a motif NOT placed here", async () => {
+    const r = await q09Result(fx.ctx, scene12.uuid, scene12.id);
+    const placed = new Set(
+      r.result.manifest
+        .map((m) => m.motif?.uuid)
+        .filter((u): u is string => typeof u === "string"));
+    for (const c of r.result.candidates) {
+      if (c.uuid === null) continue;
+      expect(placed.has(c.uuid)).toBe(false);
+    }
+  });
+});
+
+describe("§12.11 Q10 — thematic accounting", () => {
+  test("matches its blessed result", async () => {
+    blessOrCheck("Q10", await q10Result(fx.ctx, theme.uuid, theme.id));
+  });
+
+  test("the spine covers every scene in story order, zeroes included",
+       async () => {
+    // The zeroes are the point: this query answers "where is the theme
+    // NOT", and a spine listing only hits could not say.
+    const r = await q10Result(fx.ctx, theme.uuid, theme.id);
+    const order = await sceneOrder(fx.ctx);
+    expect(r.result.spine).toHaveLength(order.size);
+    expect(r.result.spine.some((s) => s.carriers === 0)).toBe(true);
+  });
+
+  test("the cut scene is not on the spine (§6.6.1)", async () => {
+    const r = await q10Result(fx.ctx, theme.uuid, theme.id);
+    const cut = await fx.ctx.exec(
+      "SELECT uuid FROM scene WHERE lifecycle_status = 'cut'");
+    const cutUuid = String(cut[0]?.["uuid"]);
+    expect(r.result.spine.map((s) => s.sceneUuid)).not.toContain(cutUuid);
+  });
+
+  test("the spine is in story order, not scene-number order", async () => {
+    // 12A before 19 before 16, per the script.
+    const r = await q10Result(fx.ctx, theme.uuid, theme.id);
+    const numbers = r.result.spine.map((s) => s.sceneNumber);
+    expect(numbers.indexOf("19")).toBeLessThan(numbers.indexOf("16"));
+  });
+
+  test("carriers name their target by uuid, and reach only live scenes",
+       async () => {
+    const r = await q10Result(fx.ctx, theme.uuid, theme.id);
+    expect(r.result.carriers.length).toBeGreaterThan(0);
+    const live = new Set(r.result.spine.map((s) => s.sceneUuid));
+    for (const c of r.result.carriers) {
+      for (const u of c.sceneUuids) expect(live.has(u)).toBe(true);
+    }
+  });
+});
+
 describe("the results are portable", () => {
   test("no row id or timestamp appears anywhere in either", async () => {
     // The property the whole section rests on, asserted over the real
     // serialised output rather than over a projection in isolation.
-    for (const name of ["Q05", "Q07"]) {
+    for (const name of ["Q03", "Q05", "Q06", "Q07", "Q08", "Q09", "Q10",
+                        "Q12", "Q13", "Q14"]) {
       const text = readFileSync(join(OUT, `${name}.result.json`), "utf8");
       const parsed = JSON.parse(text) as unknown;
       const walk = (v: unknown, path: string): void => {
@@ -232,15 +486,19 @@ describe("the results are portable", () => {
   });
 
   test("both declare the same result format", () => {
-    for (const name of ["Q05", "Q07"]) {
+    for (const name of ["Q03", "Q05", "Q06", "Q07", "Q08", "Q09", "Q10",
+                        "Q12", "Q13", "Q14"]) {
       const r = JSON.parse(
         readFileSync(join(OUT, `${name}.result.json`), "utf8")) as {
           resultFormat: string; parameters: Record<string, unknown>;
         };
       expect(r.resultFormat).toBe(QUERY_RESULT_FORMAT);
-      // Every parameter is a uuid or null — never a row id.
-      for (const v of Object.values(r.parameters)) {
-        if (v !== null) expect(String(v)).toMatch(/^[0-9a-f-]{36}$/);
+      // §12.1.1: a parameter identifying a ROW is its uuid; a literal
+      // parameter — a query id, an enum value — appears as itself. What
+      // may never appear is a row id, so nothing numeric is allowed.
+      for (const [key, v] of Object.entries(r.parameters)) {
+        if (v === null) continue;
+        expect(Number.isFinite(Number(v)), `${name}.${key}`).toBe(false);
       }
     }
   });

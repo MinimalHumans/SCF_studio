@@ -151,6 +151,12 @@ SCREENPLAY = [
     ("action", "He goes to bed.", None),
     ("blank", "", None),
 
+    ("heading", "EXT. FARMHOUSE YARD - NIGHT (CUT)", "12B"),
+    ("blank", "", None),
+    ("action", "Marcus crosses the yard to the truck and stands with his "
+               "hand on the door. He does not open it.", None),
+    ("blank", "", None),
+
     ("heading", "INT. FARMHOUSE KITCHEN - NIGHT (LATER)", "12A"),
     ("blank", "", None),
     ("action", "The lamp is out. Eleanor has not moved.", None),
@@ -200,6 +206,26 @@ SCREENPLAY = [
 # Scenes the script contains that the fixture may not have yet.
 NEW_SCENES = [
     {
+        # CUT — spec §6.6. This scene must not appear in story order, in
+        # any span, or in any query result, and adding it must therefore
+        # change NOTHING. That is the whole test: a cut row is not in the
+        # film, and the fixture proves it by carrying one that no answer
+        # is allowed to notice.
+        #
+        # It keeps its heading in the screenplay on purpose. A cut scene
+        # in a real script is struck through rather than deleted, and a
+        # reader that rebuilt story order from headings alone would
+        # resurrect it — which is the mistake this row is here to catch.
+        "scene_number": "12B",
+        "name": "EXT. FARMHOUSE YARD - NIGHT (CUT)",
+        "int_ext": "exterior",
+        "time_of_day": "night",
+        "summary": "Marcus almost leaves. Cut in the edit — the beat is "
+                   "carried by his hand stopping on the door in 12A.",
+        "location_of": "EXT. FARMHOUSE PORCH - DAY",
+        "lifecycle_status": "cut",
+    },
+    {
         "scene_number": "12A",
         "name": "INT. FARMHOUSE KITCHEN - NIGHT (LATER)",
         "int_ext": "interior",
@@ -241,16 +267,43 @@ def main(db_path: str) -> int:
         cur = con.execute(
             "INSERT INTO scene (uuid, name, scene_number, int_ext, "
             "time_of_day, summary, location_id, status, lifecycle_status) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, 'outline', 'active')",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'outline', ?)",
             (
-                "00000000-0000-4000-8000-00000000c12a",
+                # Deterministic and WELL-FORMED: the last group is
+                # exactly 12 hex digits. A first attempt interpolated the
+                # scene number without padding and produced a 35-char
+                # uuid, which auditIdentity caught on the next run.
+                "00000000-0000-4000-8000-{:0>12}".format(
+                    "c" + "".join(ch for ch in spec["scene_number"].lower()
+                                  if ch in "0123456789abcdef")),
                 spec["name"], spec["scene_number"], spec["int_ext"],
                 spec["time_of_day"], spec["summary"],
                 src["location_id"] if src else None,
+                spec.get("lifecycle_status", "active"),
             ),
         )
         scene_by_number[spec["scene_number"]] = cur.lastrowid
         print(f"  + scene {spec['scene_number']} (id {cur.lastrowid})")
+
+    # A cut performance beat in the pinned scene. Every answer about
+    # scene 12 must be identical with and without it (spec §6.6), which
+    # is a stronger statement than the fixture could make by having no
+    # cut rows at all.
+    eleanor = con.execute(
+        "SELECT id FROM character WHERE name LIKE '%Eleanor%'").fetchone()
+    scene12 = con.execute(
+        "SELECT id FROM scene WHERE scene_number = '12'").fetchone()
+    if eleanor is not None and scene12 is not None:
+        con.execute("DELETE FROM performance_beat WHERE name = ?",
+                    ("kettle-reprise",))
+        con.execute(
+            "INSERT INTO performance_beat (uuid, name, character_id, "
+            "scene_id, modality, beat_order, line_text, pace, volume, "
+            "lifecycle_status) VALUES (?, ?, ?, ?, 'vocal', 99, ?, "
+            "'slow', 'soft', 'cut')",
+            ("00000000-0000-4000-8000-00000000cb01", "kettle-reprise",
+             eleanor["id"], scene12["id"],
+             "You never could leave a kettle alone."))
 
     con.execute("DELETE FROM screenplay_lines")
 

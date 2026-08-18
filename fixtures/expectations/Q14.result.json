@@ -1,0 +1,58 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "target": "Q05",
+    "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": null
+  },
+  "result": {
+    "target": "Q05",
+    "targetName": "Voice direction",
+    "findings": [
+      {
+        "severity": "suggestion",
+        "entity": "performance_state",
+        "message": "Physical state persists here (wounded) with no vocal state — does it color the voice?"
+      },
+      {
+        "severity": "ok",
+        "entity": "vocal_profile",
+        "message": "Eleanor Cade: voice baseline present."
+      },
+      {
+        "severity": "ok",
+        "entity": "bundle",
+        "message": "Eleanor Cade: 1 voice asset(s) resolve."
+      },
+      {
+        "severity": "ok",
+        "entity": "performance_state",
+        "message": "No vocal state in force — baseline holds (by design)."
+      },
+      {
+        "severity": "ok",
+        "entity": "performance_beat",
+        "message": "1 vocal beat(s) authored."
+      },
+      {
+        "severity": "ok",
+        "entity": "dialogue_rhythm",
+        "message": "scene speech rhythm present."
+      },
+      {
+        "severity": "ok",
+        "entity": "sound_perspective",
+        "message": "sound perspective present."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 0,
+      "suggestion": 1,
+      "ok": 6
+    }
+  }
+}

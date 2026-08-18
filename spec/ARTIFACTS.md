@@ -37,11 +37,19 @@ sha256sum -c spec/SHA256SUMS
 | `spec/scf-schema.sql` | `dad495f116bebba1…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/registry.schema.json` | `448b8495efdfd09e…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/finding-catalog.json` | `a965692f614283e4…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
+| `fixtures/expectations/Q03.result.json` | `045b52afe56d3354…` | Q03's normative result. Spec §12.4. |
 | `fixtures/expectations/Q05.result.json` | `3e1d3a6e77229f49…` | Q05's normative result. Spec §12.2. |
 | `fixtures/expectations/Q07.result.json` | `e245d933b67add10…` | Q07's normative result. Spec §12.3. |
+| `fixtures/expectations/Q06.result.json` | `fc1c3456d9067daf…` | Q06's normative result. Spec §12.6. |
+| `fixtures/expectations/Q08.result.json` | `58e36eb89faeb1d1…` | Q08's normative result. Spec §12.7. |
+| `fixtures/expectations/Q09.result.json` | `d8c960141ff4f167…` | Q09's normative result. Spec §12.10. |
+| `fixtures/expectations/Q10.result.json` | `a70fab760ea4979f…` | Q10's normative result. Spec §12.11. |
+| `fixtures/expectations/Q12.result.json` | `a6c721f7a84b240e…` | Q12's normative result. Spec §12.5. |
+| `fixtures/expectations/Q13.result.json` | `335c36db2a2954e5…` | Q13's normative result. Spec §12.8. |
+| `fixtures/expectations/Q14.result.json` | `4365b2128d872867…` | Q14's normative result. Spec §12.9. |
 | `fixtures/negative/CASES.json` | `73141c0f47d77389…` | The eleven negative fixtures as reproducible recipes. Spec conformance.md §5.3. |
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `514c5b74b2fcd4c5…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `87d275cfb4baedc6…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

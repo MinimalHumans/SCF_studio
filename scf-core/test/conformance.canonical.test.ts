@@ -331,8 +331,59 @@ describe("fixture invariants", () => {
       `ORDER BY ${sceneNumberOrderTerms("sn")}, s.id`);
     const numbers = rows.map((r) => String(r["n"]));
     expect(numbers).toEqual(
-      ["1", "3", "7", "9", "10", "11", "12", "12A", "16", "19", "21",
-       "24"]);
+      ["1", "3", "7", "9", "10", "11", "12", "12A", "12B", "16", "19",
+       "21", "24"]);
+  });
+
+  test("12B is cut, and cut means absent from every answer (§6.6)",
+       async () => {
+    // The strongest form of the rule: the fixture carries a cut scene
+    // WITH a heading in the screenplay, so a reader that rebuilt story
+    // order from headings alone would resurrect it. Nothing may.
+    const cut = await fx.ctx.exec(
+      "SELECT id, scene_number FROM scene WHERE lifecycle_status = 'cut'");
+    expect(cut.map((r) => String(r["scene_number"]))).toEqual(["12B"]);
+    const cutId = Number(cut[0]?.["id"]);
+
+    const heading = await fx.ctx.exec(
+      "SELECT scene_id FROM screenplay_lines " +
+      "WHERE line_type = 'heading' AND scene_id = ?", [cutId]);
+    expect(heading).toHaveLength(1);
+
+    const order = await sceneOrder(fx.ctx);
+    expect(order.has(cutId)).toBe(false);
+  });
+
+  test("a cut beat is in the table and in no result (§6.6)", async () => {
+    const all = await fx.ctx.exec(
+      "SELECT name FROM performance_beat WHERE lifecycle_status = 'cut'");
+    expect(all.map((r) => String(r["name"]))).toEqual(["kettle-reprise"]);
+
+    const sc12 = await fx.sceneByNumber("12");
+    const eleanor = await fx.oneId("character", "Eleanor Cade");
+    const resolved = await resolveDescription(fx.ctx, eleanor, sc12,
+                                              "vocal");
+    expect(resolved.beats.map((b) => String(b["name"])))
+      .not.toContain("kettle-reprise");
+  });
+
+  test("resolution agrees with §4.1, not with scene_number", async () => {
+    // The test that was missing. `resolution.sceneOrder` — which every
+    // position-dependent answer runs through — sorted by scene_number
+    // and then row id, the derivation §4.1 forbids in as many words.
+    // Nothing caught it because the fixture's three orders coincided;
+    // once they differed it disagreed on its first run.
+    const script = (await fx.ctx.exec(
+      "SELECT s.id FROM scene s " +
+      "LEFT JOIN (SELECT scene_id, MIN(line_order) p FROM screenplay_lines " +
+      "WHERE line_type = 'heading' GROUP BY scene_id) sp ON sp.scene_id = s.id " +
+      "WHERE s.lifecycle_status != 'cut' " +
+      "ORDER BY (sp.p IS NULL), sp.p")).map((r) => Number(r["id"]));
+
+    const resolved = [...(await sceneOrder(fx.ctx)).entries()]
+      .sort((a, b) => a[1] - b[1]).map(([id]) => id);
+
+    expect(resolved).toEqual(script);
   });
 
   test("the three orders are three DIFFERENT orders", async () => {
