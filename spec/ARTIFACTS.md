@@ -34,19 +34,24 @@ sha256sum -c spec/SHA256SUMS
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `scf-core/registry/registry.json` | `49fe6cf205c24f40…` | The normative field set. Spec §2.1. |
-| `spec/scf-schema.sql` | `dad495f116bebba1…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
+| `spec/scf-schema.sql` | `6f10cb380911f2df…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/registry.schema.json` | `448b8495efdfd09e…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
-| `spec/finding-catalog.json` | `a965692f614283e4…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
-| `fixtures/expectations/Q03.result.json` | `045b52afe56d3354…` | Q03's normative result. Spec §12.4. |
+| `spec/junction-keys.json` | `a5e4c75b4a741a9e…` | Natural keys for every link entity. Spec §6.3. |
+| `spec/readiness-rubrics.json` | `83fb4926595bafd4…` | What Q14 assesses, per target query. Spec §12.9.1. |
+| `spec/finding-catalog.json` | `153c3edb8a224833…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
+| `fixtures/expectations/Q00.result.json` | `afbc6b9d9d04f24f…` | Q00's normative result. Spec §12.12. |
+| `fixtures/expectations/Q03.result.json` | `6ceac30d503ec180…` | Q03's normative result. Spec §12.4. |
 | `fixtures/expectations/Q05.result.json` | `3e1d3a6e77229f49…` | Q05's normative result. Spec §12.2. |
 | `fixtures/expectations/Q07.result.json` | `e245d933b67add10…` | Q07's normative result. Spec §12.3. |
 | `fixtures/expectations/Q06.result.json` | `fc1c3456d9067daf…` | Q06's normative result. Spec §12.6. |
 | `fixtures/expectations/Q08.result.json` | `58e36eb89faeb1d1…` | Q08's normative result. Spec §12.7. |
-| `fixtures/expectations/Q09.result.json` | `d8c960141ff4f167…` | Q09's normative result. Spec §12.10. |
+| `fixtures/expectations/Q09.result.json` | `80d2741b1ba1bf08…` | Q09's normative result. Spec §12.10. |
 | `fixtures/expectations/Q10.result.json` | `a70fab760ea4979f…` | Q10's normative result. Spec §12.11. |
-| `fixtures/expectations/Q12.result.json` | `a6c721f7a84b240e…` | Q12's normative result. Spec §12.5. |
-| `fixtures/expectations/Q13.result.json` | `335c36db2a2954e5…` | Q13's normative result. Spec §12.8. |
+| `fixtures/expectations/Q11.result.json` | `4a1382c7281a440c…` | Q11's normative result. Spec §12.13. |
+| `fixtures/expectations/Q12.result.json` | `d28fc8f037482e2c…` | Q12's normative result. Spec §12.5. |
+| `fixtures/expectations/Q13.result.json` | `0bce5fd1b9a538ab…` | Q13's normative result. Spec §12.8. |
 | `fixtures/expectations/Q14.result.json` | `4365b2128d872867…` | Q14's normative result. Spec §12.9. |
+| `fixtures/expectations/Q15.result.json` | `247eaafca6ea6a0d…` | Q15's normative result. Spec §12.14. |
 | `fixtures/negative/CASES.json` | `73141c0f47d77389…` | The eleven negative fixtures as reproducible recipes. Spec conformance.md §5.3. |
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
 | `fixtures/hollow_creek.scf` | `87d275cfb4baedc6…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |

@@ -1,0 +1,36 @@
+{
+  "query": "Q15",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "entityType": "scene",
+    "row": "06857531-3e91-41a9-95dd-3262407d8132"
+  },
+  "result": {
+    "entityType": "scene",
+    "row": {
+      "uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+      "fields": {
+        "characters_present": "Eleanor, Marcus",
+        "estimated_duration": "3:40",
+        "int_ext": "interior",
+        "lifecycle_status": "active",
+        "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+        "name": "INT. FARMHOUSE KITCHEN - NIGHT",
+        "scene_number": "12",
+        "season": "winter",
+        "status": "outline",
+        "summary": "The confrontation. 'You came back.'",
+        "tension_level": "high",
+        "time_of_day": "night",
+        "tone": "held breath",
+        "weather_conditions": "storm"
+      }
+    },
+    "versionChain": [],
+    "attached": {
+      "decisions": [],
+      "notes": []
+    }
+  }
+}

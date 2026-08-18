@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.24 (draft) — not a release.**
+**Version 0.27 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -106,7 +106,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.24` (draft).
+- **Specification version** — this document. Currently `0.27` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -569,8 +569,10 @@ whose start falls in this act" is incorrect.
 written against them keep working. The boundary is the truth and those
 rows are its shadow; they MAY be stale between commits.
 
-Rows that no boundary explains MUST be counted and reported as a finding
-(§9), and MUST NOT be silently deleted.
+Rows that no boundary explains MUST be reported as
+`structure.shadow_row_unexplained` (§9.4), and MUST NOT be silently
+deleted. Deleting authored data to satisfy a derivation is not a
+migration.
 
 ### 5.5 Half-placed structure is valid
 
@@ -604,9 +606,16 @@ Across files, a junction is identified by its **natural key**: the rows
 it joins, plus the polymorphic target where it has one, plus `domain`
 where present.
 
-The natural key for each of the thirteen link entities is stated by
-`junctionKeyFields()`. Any implementation that merges, de-duplicates, or
-validates junctions MUST use that key.
+The natural key of every link entity is published as
+[`junction-keys.json`](junction-keys.json). Any implementation that
+merges, de-duplicates or validates junctions MUST use those keys.
+
+The keys are derived from the registry — every non-auto-injected
+reference field the entity declares, then `entity_type`, `entity_id` and
+`domain` where present — and the file records that derivation. It is
+published rather than described because an earlier revision cited a
+function instead of an artifact, and an independent implementation could
+not compute a natural key at all.
 
 ### 6.4 Duplicates are findings
 
@@ -1121,11 +1130,27 @@ reinvented from §1–§11, but the point of SCF is to describe a film's
 structure, and shipping the questions is that description. Defining them
 does not preclude anyone asking others.
 
-**This section is incomplete.** Ten are specified below: Q03, Q05, Q06,
-Q07, Q08, Q09, Q10, Q12, Q13 and Q14. The remaining six — Q00, Q01, Q02,
-Q04, Q11, Q15 — are not, and until they are, their only definition is a
-blessed example of their rendered output, which is a demonstration
-rather than a specification. Tracked in [stability.md](stability.md).
+**This section is incomplete.** Thirteen are specified below. The
+remaining three — Q01, Q02 and Q04 — are not, and until they are, their
+only definition is a blessed example of their rendered output, which is
+a demonstration rather than a specification. Tracked in
+[stability.md](stability.md).
+
+### 12.1.3 Composition
+
+An earlier note recorded a decision that a composite query's result
+would **nest** the result bodies of the queries it is built from. That
+decision has not been applied, because the premise was wrong: no
+canonical query calls another. What look like composites assemble their
+own answers from the same resolvers, and Q01 and Q02 share a helper
+rather than a result.
+
+So each query defines its own result shape. Where two queries genuinely
+share a composition — as Q01 and Q02 do — the shared part is one
+function in one place, and both results state the same structure for it.
+Nesting whole results remains available if a query is ever built by
+calling another, and would then carry the inner `result` body without
+its envelope.
 
 ### 12.1 What a query returns
 
@@ -1163,6 +1188,10 @@ A row appears in a result as its `uuid` plus its authored fields:
 - **Reference columns MUST be resolved to uuids**: `scene_id` becomes
   `scene_uuid`, carrying the referenced row's uuid. A reference that
   cannot be resolved is omitted.
+  **Which columns are references is declared by the registry**
+  (`referenceEntity`, §2.3) and MUST be derived from it. An
+  implementation maintaining its own list will project a column in one
+  query and drop it in another, and nothing will notice.
 - Field names are the registry's own column names. A result is made of
   registry fields; a second vocabulary for them would be a second thing
   to keep in step.
@@ -1303,12 +1332,24 @@ appear in the result rather than the envelope.
 | Field | |
 |---|---|
 | `subject`, `intent` | What was asked, as literals. |
-| `trail` | The resolution trail, most specific first. |
-| `references` | Each asset in force: `uuid`, name, identifier, format, role, intent, provenance, resolution `state` (§8.3), `detail` for anything not resolved, and size. |
+| `trail` | The resolution trail, **broadest first**, matching §7.4's root-first convention. |
+| `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles. `uuid`, name, identifier, format, role, intent, provenance, resolution `state` (§8.3), `detail` for anything not resolved, size, and `anchorName` where the reference came from an anchor. |
 | `counts` | References per resolution state. |
 | `rootMapped` | Whether the session had a root mapping at all. |
 
 **A reference names its asset by uuid**, never by row id (§12.1.2).
+
+**`trail` and `references` run in opposite directions**, and both are
+deliberate: the trail reads as an explanation, broadest first, the way
+§7.4 returns a cascade; the references read as an answer, most specific
+first, so the opinion in force is at the top.
+
+**An anchor contributes the asset it anchors**, not itself. An
+`entity_anchor` row names a place in an asset — a face, a frame, a
+region — and carries no identifier of its own, so reporting the anchor
+row as the reference would produce something that can never resolve.
+The reference carries the asset's identity and the anchor's name in
+`anchorName`.
 
 `rootMapped` is a fact about the SESSION, not the file. With no root
 mapping every reference is `unaddressed` (§0.3, §8.3) — not
@@ -1330,6 +1371,39 @@ Parameters: `target` — the query being assessed, a literal — plus
 | `target`, `targetName` | The query assessed. |
 | `findings` | Each with `severity`, the `entity` it concerns, and a message. |
 | `counts` | Findings per severity. |
+
+#### 12.9.1 The rubric
+
+What Q14 assesses is published as
+[`readiness-rubrics.json`](readiness-rubrics.json). Each rubric names a target query and the things it depends on, each
+marked `required`, `recommended` or `optional`.
+
+A step's `label` is **prose, not a registry entity name** — several name
+two entities, a filtered subset, or a pattern. `requirement` is the
+machine-readable part. Making the labels resolve against the registry is
+outstanding work and is tracked in [stability.md](stability.md); until
+it is done, a conforming implementation can reproduce a rubric's
+severities but must interpret its labels the way a person would.
+
+A conforming implementation MUST draw its findings from that file, and
+MUST map requirement to severity as the file states:
+
+| Step | If absent | If present |
+|---|---|---|
+| `required` | `blocker` | `ok` |
+| `recommended` | `warning` | `ok` |
+| `optional` | `suggestion` | `ok` |
+
+**Only some queries have a rubric.** A query with a generative or
+pre-flight consumer — one you act on before shooting or rendering — has
+readiness semantics of its own. An analytic query reads whatever exists
+and has none beyond the walkable queries it is built from; asking Q14
+about one is answered by assessing those.
+
+Until this file was published, §12.9 defined the envelope and the
+severity scale and nothing about what was assessed, and an independent
+implementation correctly declined to claim anything for the rubric it
+had to invent.
 
 **`findings` includes `ok` entries.** Q14 is a rubric, not a problem
 list: it reports what is present as well as what is missing, so a
@@ -1395,6 +1469,71 @@ character carries it wherever they are present. A carrier pointing at
 anything else reaches no scenes, which is a legitimate answer and not a
 finding.
 
+### 12.12 Q00 — Brief
+
+**What film is this, and what are its rules.**
+
+No parameters. The only canonical query with an empty envelope.
+
+| Field | |
+|---|---|
+| `layers` | The project-level entities, **broadest first**, each `{ entity, row }`. |
+| `themes` | Every theme in the project. |
+
+The layer list is an editorial choice about what a brief *is*, not a
+fact the registry knows, so it is fixed by this section rather than
+derived: `project`, `project_vision`, `project_tone`, `visual_identity`,
+`project_color_palette`, `cinematographic_philosophy`, `sonic_identity`,
+`look_development`, `costume_design_philosophy`, `technical_specs`.
+Adding one is a change to this section.
+
+An unauthored layer is **absent** from `layers`, not present and empty.
+
+### 12.13 Q11 — Audience state
+
+**What the audience knows and should feel at a position.**
+
+Parameter: `scene`.
+
+| Field | |
+|---|---|
+| `scene` | The scene, projected. |
+| `information` | The information strategy here, or null. |
+| `identification` | The identification strategy with its primary and secondary characters, or null. |
+| `emotionalBeats` | Each beat with the arc it belongs to. |
+| `toneMarkers` | Tone markers at this position. |
+| `emotionalCascade` | The direction cascade for leaf `scene_emotional_design`, root first (§7). |
+
+Every one of these may be absent, and absence is **null or empty, never
+invented** (§9.2). A scene with no authored audience design is a
+legitimate answer.
+
+A file that does not contain one of these tables yields nothing for it
+rather than failing — an older file predating an entity is not an error.
+
+### 12.14 Q15 — Provenance
+
+**Why is this value what it is, and who touched it.**
+
+Parameters: `entityType` — a literal — and `row`.
+
+| Field | |
+|---|---|
+| `entityType`, `row` | The row asked about. |
+| `versionChain` | The row's version chain, **oldest first**, walked back to the root and then forward. Empty when the entity is not versionable. |
+| `attached` | `creative_decision` and `collaboration_note` rows that mention this row. |
+
+Walking the chain MUST terminate on a cycle rather than following it
+(§9.2). A cycle is a finding (`identity.chain_cycle`), not a reason to
+hang.
+
+**Attachment is matched permissively.** `affected_entities` is
+free-form and may hold a JSON array, a JSON object, or prose, so an
+implementation MUST accept the conventions `entity:id`, `entity#id`, a
+bare `entity`, and an object carrying an entity kind with an optional
+id. A provenance trail that silently omitted a note would be worse than
+one that included a doubtful one — §9.1, SCF describes.
+
 ---
 
 ## Appendix A — Conformance test map
@@ -1417,7 +1556,7 @@ change to one without the other is a defect.
 | §4.1 resolution agrees with story order | `scf-core/test/conformance.canonical.test.ts` |
 | §6.6 cut rows excluded everywhere | `scf-core/test/conformance.canonical.test.ts`, `scf-core/test/lifecycle.test.ts` |
 | §12.1 result envelope and row projection | `scf-core/test/canonicalQueries.test.ts` |
-| §12.2–12.11 — Q03, Q05, Q06, Q07, Q08, Q09, Q10, Q12, Q13, Q14 | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
+| §12.2–12.14 — thirteen queries | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
 | §11.6 document equality | `scf-core/src/canonical.ts`, exercised by `scf-app/test/roundTrip.test.ts` |
 | Round-trip integrity (`conformance.md` §3) | `scf-app/test/roundTrip.test.ts` |
 | Canonical query expectations (`conformance.md` §5.4) | `scf-app/test/queryExpectations.test.ts`, `fixtures/expectations/` |

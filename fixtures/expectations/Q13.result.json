@@ -18,6 +18,7 @@
     "references": [
       {
         "uuid": "5911b396-58e0-455b-8bf2-57287b325889",
+        "anchorName": null,
         "name": "eleanor_1204_lamplit_crop.png",
         "identifier": "@project/assets/eleanor_1204_lamplit_crop.png",
         "format": "png",
@@ -29,19 +30,34 @@
         "sizeBytes": null
       },
       {
-        "uuid": "f2fd8fc9-4b32-4a33-8535-3e7ead4ce88c",
-        "name": "Eleanor face anchor",
-        "identifier": null,
-        "format": null,
+        "uuid": "93f32769-76c1-4985-9313-bf6c689907b6",
+        "anchorName": "Eleanor face anchor",
+        "name": "eleanor_face_ref.png",
+        "identifier": "@project/assets/eleanor_face_ref.png",
+        "format": "png",
         "role": null,
         "intent": "visual_identity",
         "provenance": "anchor",
         "state": "unaddressed",
-        "detail": "this asset has no identifier, so there is nothing to resolve",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "f2fd8fc9-4b32-4a33-8535-3e7ead4ce88c",
+        "anchorName": null,
+        "name": "eleanor_turnaround_v3.png",
+        "identifier": "@project/assets/eleanor_turnaround_v3.png",
+        "format": "png",
+        "role": "turnaround",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
         "sizeBytes": null
       },
       {
         "uuid": "f9dfae2d-2cc7-42af-b2ac-d9089025a444",
+        "anchorName": null,
         "name": "eleanor_costume_textures.zip",
         "identifier": "@project/assets/eleanor_costume_textures.zip",
         "format": "zip",
@@ -58,7 +74,7 @@
       "missing": 0,
       "unmaterialised": 0,
       "out-of-root": 0,
-      "unaddressed": 3
+      "unaddressed": 4
     },
     "rootMapped": false
   }

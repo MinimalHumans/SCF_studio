@@ -13,6 +13,7 @@
         "estimated_duration": "3:40",
         "int_ext": "interior",
         "lifecycle_status": "active",
+        "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
         "name": "INT. FARMHOUSE KITCHEN - NIGHT",
         "scene_number": "12",
         "season": "winter",
@@ -29,6 +30,7 @@
         "motif": {
           "uuid": "5dce4db3-c9d3-48e6-8a9f-19c7ea287d8f",
           "fields": {
+            "first_appearance_scene_uuid": "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
             "lifecycle_status": "active",
             "modality": "visual",
             "name": "Open doors",
@@ -64,6 +66,7 @@
           "uuid": "0e811b89-34fe-4d63-b351-21c11ca8020b",
           "fields": {
             "description": "Brass chime Ada hung by the porch door; irregular.",
+            "first_appearance_scene_uuid": "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
             "lifecycle_status": "active",
             "modality": "sonic",
             "name": "Wind chime",

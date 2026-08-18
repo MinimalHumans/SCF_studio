@@ -175,6 +175,7 @@
         "prop": {
           "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
           "fields": {
+            "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
             "description": "Brass locket holding Ada's portrait.",
             "first_appearance": "sc 11, saddlebag",
             "key_moments": "sc 11 pocketed · sc 19 on the table",
@@ -194,6 +195,7 @@
         "prop": {
           "uuid": "a63ce1c6-17e5-448b-8abb-9956cf2b4fcb",
           "fields": {
+            "associated_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
             "first_appearance": "sc 3",
             "lifecycle_status": "active",
             "name": "The kettle",

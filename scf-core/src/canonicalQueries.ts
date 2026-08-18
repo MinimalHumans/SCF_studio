@@ -24,7 +24,7 @@ import { mediaReferences } from "./mediaReferences.ts";
 import { readinessReport } from "./readiness.ts";
 import type { FileLocator } from "./assets.ts";
 import {
-  envelope, projectRow, uuidLookupFor,
+  envelope, projectRow, referencesOf, uuidLookupForAll,
   type ProjectedRow, type QueryResult,
 } from "./queryResult.ts";
 
@@ -51,14 +51,13 @@ export interface Q05Result {
   beats: ProjectedRow[];
 }
 
-const STATE_REFS = {
-  scene_id: "scene",
-  resolved_at_scene_id: "scene",
-  character_id: "character",
-};
-
-const BEAT_REFS = { scene_id: "scene", character_id: "character" };
-const PROFILE_REFS = { character_id: "character" };
+// No hand-written reference maps. `referencesOf(registry, entity)`
+// derives them from the registry's own `referenceEntity` declarations,
+// and `uuidLookupForAll` indexes every entity any of them can point at.
+// The previous version maintained both by hand per query, and the maps
+// disagreed — see referencesOf's comment.
+const refs = (ctx: ScfContext, entity: string): Record<string, string> =>
+  referencesOf(ctx.registry, entity);
 
 export async function q05Result(
     ctx: ScfContext, characterUuid: string, sceneUuid: string,
@@ -90,18 +89,18 @@ async function descriptionResult(
 ): Promise<QueryResult<Q05Result>> {
   const resolved = await resolveDescription(ctx, characterId, sceneId,
                                             modality);
-  const lookup = await uuidLookupFor(ctx.exec, ["scene", "character"]);
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
   return envelope(query, ctx.registry,
     { character: characterUuid, scene: sceneUuid },
     {
       modality: resolved.modality,
       baseline: resolved.profile === null
-        ? null : projectRow(resolved.profile, PROFILE_REFS, lookup),
+        ? null : projectRow(resolved.profile, refs(ctx, "vocal_profile"), lookup),
       states: resolved.states.map(
-        (s) => projectRow(s, STATE_REFS, lookup)),
+        (s) => projectRow(s, refs(ctx, "performance_state"), lookup)),
       modulations: resolved.modulations,
-      beats: resolved.beats.map((b) => projectRow(b, BEAT_REFS, lookup)),
+      beats: resolved.beats.map((b) => projectRow(b, refs(ctx, "performance_beat"), lookup)),
     });
 }
 
@@ -162,8 +161,7 @@ async function directionResult(
 
   // Every entity in the chain, so a layer's own references resolve.
   const entities = [...new Set(layers.map(([entity]) => entity))];
-  const lookup = await uuidLookupFor(
-    ctx.exec, [...entities, "scene", "shot", "project", "sequence"]);
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
   const refs: Record<string, string> = {
     scene_id: "scene", shot_id: "shot",
@@ -193,7 +191,7 @@ async function directionResult(
 // two consumers.
 // ---------------------------------------------------------------------------
 
-import type { Row } from "./db.ts";
+import type { Row, SqlValue } from "./db.ts";
 import {
   motifStateAt, propStateAt, relationshipStateAt, rows, sceneOrder,
   statesInForce,
@@ -334,32 +332,24 @@ export interface Q03Result {
   motifs: Array<{ name: string; domain: string | null }>;
 }
 
-const SCENE_REFS = { location_id: "location" };
-const CHAR_REFS = { };
-const COSTUME_REFS = { character_id: "character" };
-const PROP_STATE_REFS = {
-  scene_id: "scene", prop_id: "prop",
-  custody_character_id: "character", location_id: "location",
-};
 
 export async function q03Result(
     ctx: ScfContext, sceneUuid: string, sceneId: number,
 ): Promise<QueryResult<Q03Result>> {
   const c = await composeQ03(ctx, sceneId);
-  const lookup = await uuidLookupFor(
-    ctx.exec, ["scene", "character", "location", "prop"]);
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
   return envelope("Q03", ctx.registry, { scene: sceneUuid }, {
-    scene: c.scene === null ? null : projectRow(c.scene, SCENE_REFS, lookup),
+    scene: c.scene === null ? null : projectRow(c.scene, refs(ctx, "scene"), lookup),
     characters: c.characters.map((x) => ({
-      character: projectRow(x.character, CHAR_REFS, lookup),
-      states: x.states.map((s) => projectRow(s, STATE_REFS, lookup)),
-      costumes: x.costumes.map((s) => projectRow(s, COSTUME_REFS, lookup)),
+      character: projectRow(x.character, refs(ctx, "character"), lookup),
+      states: x.states.map((s) => projectRow(s, refs(ctx, "performance_state"), lookup)),
+      costumes: x.costumes.map((s) => projectRow(s, refs(ctx, "costume"), lookup)),
     })),
     props: c.props.map((x) => ({
-      prop: projectRow(x.prop, {}, lookup),
+      prop: projectRow(x.prop, refs(ctx, "prop"), lookup),
       state: x.state === null
-        ? null : projectRow(x.state, PROP_STATE_REFS, lookup),
+        ? null : projectRow(x.state, refs(ctx, "prop_state"), lookup),
     })),
     // Motifs arrive from a join, not a table, so they carry no identity
     // of their own here — name and domain are the whole fact.
@@ -390,29 +380,27 @@ export interface Q12Result {
   }>;
 }
 
-const REL_REFS = { character_a_id: "character", character_b_id: "character" };
 
 export async function q12Result(
     ctx: ScfContext, fromUuid: string, toUuid: string,
     fromId: number, toId: number,
 ): Promise<QueryResult<Q12Result>> {
   const c = await composeQ12(ctx, fromId, toId);
-  const lookup = await uuidLookupFor(
-    ctx.exec, ["scene", "character", "location", "prop"]);
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
   return envelope("Q12", ctx.registry, { from: fromUuid, to: toUuid }, {
-    from: c.a === null ? null : projectRow(c.a, SCENE_REFS, lookup),
-    to: c.b === null ? null : projectRow(c.b, SCENE_REFS, lookup),
+    from: c.a === null ? null : projectRow(c.a, refs(ctx, "scene"), lookup),
+    to: c.b === null ? null : projectRow(c.b, refs(ctx, "scene"), lookup),
     characters: c.characters.map((x) => ({
-      character: projectRow(x.character, CHAR_REFS, lookup),
+      character: projectRow(x.character, refs(ctx, "character"), lookup),
       statesFrom: x.statesA, statesTo: x.statesB,
     })),
     relationships: c.relationships.map((x) => ({
-      relationship: projectRow(x.relationship, REL_REFS, lookup),
+      relationship: projectRow(x.relationship, refs(ctx, "character_relationship"), lookup),
       stageFrom: x.stageA, stageTo: x.stageB,
     })),
     props: c.props.map((x) => ({
-      prop: projectRow(x.prop, {}, lookup),
+      prop: projectRow(x.prop, refs(ctx, "prop"), lookup),
       whereFrom: x.whereA, whereTo: x.whereB,
     })),
   });
@@ -426,6 +414,8 @@ export interface Q13Reference {
   /** The asset's identity. Never its row id — §12.1.2. */
   uuid: string | null;
   name: string | null;
+  /** For an anchor, the anchor's own name. Null otherwise. */
+  anchorName: string | null;
   identifier: string | null;
   format: string | null;
   role: string | null;
@@ -466,7 +456,6 @@ export async function q13Result(
   const media = await resolveMedia(ctx, subject, subjectId, intent,
                                    sceneId, shotId);
   const refs = await mediaReferences(media, locate);
-  const lookup = await uuidLookupFor(ctx.exec, ["asset"]);
 
   return envelope("Q13", ctx.registry, {
     subject: subjectUuid, scene: sceneUuid, shot: shotUuid,
@@ -475,11 +464,13 @@ export async function q13Result(
     intent,
     trail: media.trail,
     references: refs.references.map((r) => ({
-      // The one substantive change from the rendered form: an asset is
-      // named by uuid, not by the row id AssetReference carries. The
-      // blessed markdown puts `character #1` in its header for the same
-      // reason, and that defect dissolves here rather than being copied.
-      uuid: lookup("asset", r.id),
+      // The uuid comes from the reference itself, never from looking its
+      // row id up in a table. That lookup was the defect: an anchor's
+      // row id resolved against `asset` returned an unrelated asset that
+      // happened to share it, and produced a well-formed uuid, so every
+      // portability test passed.
+      uuid: r.uuid,
+      anchorName: r.anchorName,
       name: r.name,
       identifier: r.identifier,
       format: r.format,
@@ -562,9 +553,6 @@ export interface Q09Result {
   densityThreshold: number;
 }
 
-const APPEARANCE_REFS = { scene_id: "scene", motif_id: "motif" };
-const MOTIF_REFS = { related_motif_id: "motif" };
-const MOTIF_STATE_REFS = { scene_id: "scene", motif_id: "motif" };
 
 export async function q09Result(
     ctx: ScfContext, sceneUuid: string, sceneId: number,
@@ -574,7 +562,7 @@ export async function q09Result(
     ?? null;
   const appearances = await rows(ctx.exec, "motif_appearance",
                                  "scene_id = ?", [sceneId]);
-  const lookup = await uuidLookupFor(ctx.exec, ["scene", "motif"]);
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
   const manifest: Array<{ motif: Row | null; appearance: Row;
                           state: Row | null }> = [];
@@ -604,15 +592,15 @@ export async function q09Result(
   }
 
   return envelope("Q09", ctx.registry, { scene: sceneUuid }, {
-    scene: scene === null ? null : projectRow(scene, SCENE_REFS, lookup),
+    scene: scene === null ? null : projectRow(scene, refs(ctx, "scene"), lookup),
     manifest: manifest.map((m) => ({
       motif: m.motif === null
-        ? null : projectRow(m.motif, MOTIF_REFS, lookup),
-      appearance: projectRow(m.appearance, APPEARANCE_REFS, lookup),
+        ? null : projectRow(m.motif, refs(ctx, "motif"), lookup),
+      appearance: projectRow(m.appearance, refs(ctx, "motif_appearance"), lookup),
       state: m.state === null
-        ? null : projectRow(m.state, MOTIF_STATE_REFS, lookup),
+        ? null : projectRow(m.state, refs(ctx, "motif_state"), lookup),
     })),
-    candidates: candidates.map((c) => projectRow(c, MOTIF_REFS, lookup)),
+    candidates: candidates.map((c) => projectRow(c, refs(ctx, "motif"), lookup)),
     dense: manifest.length > MOTIF_DENSITY_THRESHOLD,
     densityThreshold: MOTIF_DENSITY_THRESHOLD,
   });
@@ -642,7 +630,6 @@ export interface Q10Result {
                  carriers: number }>;
 }
 
-const CONNECTION_REFS = { theme_id: "theme" };
 
 export async function q10Result(
     ctx: ScfContext, themeUuid: string, themeId: number,
@@ -656,8 +643,7 @@ export async function q10Result(
     .sort((a, b) => (order.get(asId(a["id"]) ?? -1) ?? 0) -
                     (order.get(asId(b["id"]) ?? -1) ?? 0));
 
-  const lookup = await uuidLookupFor(
-    ctx.exec, ["scene", "theme", "motif", "character", "prop", "location"]);
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
   const counts = new Map<number, number>();
   const carriers: Q10Result["carriers"] = [];
@@ -698,7 +684,7 @@ export async function q10Result(
     for (const sid of reached) counts.set(sid, (counts.get(sid) ?? 0) + 1);
 
     carriers.push({
-      connection: projectRow(connection, CONNECTION_REFS, lookup),
+      connection: projectRow(connection, refs(ctx, "thematic_connection"), lookup),
       targetEntity,
       targetUuid: lookup(targetEntity, targetId),
       targetName,
@@ -710,7 +696,7 @@ export async function q10Result(
   }
 
   return envelope("Q10", ctx.registry, { theme: themeUuid }, {
-    theme: theme === null ? null : projectRow(theme, {}, lookup),
+    theme: theme === null ? null : projectRow(theme, refs(ctx, "theme"), lookup),
     carriers,
     spine: scenes.map((s) => {
       const sid = asId(s["id"]) ?? -1;
@@ -723,4 +709,242 @@ export async function q10Result(
       };
     }),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Q00 — Brief (§12.12)
+// ---------------------------------------------------------------------------
+
+/**
+ * The project-level layers a brief reports, in the order it reports
+ * them. Broadest first, matching §7.4 — a brief reads as an
+ * explanation, not as a ranked answer.
+ *
+ * A fixed list rather than a derived one, and deliberately so: this is
+ * an editorial choice about what a brief IS, not a fact the registry
+ * knows. Adding an entity here is a change to §12.12.
+ */
+export const Q00_LAYERS = [
+  "project", "project_vision", "project_tone", "visual_identity",
+  "project_color_palette", "cinematographic_philosophy", "sonic_identity",
+  "look_development", "costume_design_philosophy", "technical_specs",
+] as const;
+
+export interface Q00Result {
+  layers: Array<{ entity: string; row: ProjectedRow }>;
+  themes: ProjectedRow[];
+}
+
+export async function q00Result(
+    ctx: ScfContext): Promise<QueryResult<Q00Result>> {
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
+  const layers: Q00Result["layers"] = [];
+  for (const entity of Q00_LAYERS) {
+    const row = (await rows(ctx.exec, entity))[0];
+    // An unauthored layer is absent, not present and empty (§12.3.2's
+    // rule, applied here for the same reason).
+    if (row === undefined) continue;
+    layers.push({ entity, row: projectRow(row, refs(ctx, entity), lookup) });
+  }
+  return envelope("Q00", ctx.registry, {}, {
+    layers,
+    themes: (await rows(ctx.exec, "theme"))
+      .map((t) => projectRow(t, refs(ctx, "theme"), lookup)),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Q11 — Audience state (§12.13)
+// ---------------------------------------------------------------------------
+
+export interface Q11Result {
+  scene: ProjectedRow | null;
+  /** What the audience knows here, if authored. */
+  information: ProjectedRow | null;
+  identification: {
+    row: ProjectedRow;
+    primary: ProjectedRow | null;
+    secondary: ProjectedRow | null;
+  } | null;
+  emotionalBeats: Array<{ beat: ProjectedRow; arc: ProjectedRow | null }>;
+  toneMarkers: ProjectedRow[];
+  /** The emotional-design cascade, root first (§7.4). */
+  emotionalCascade: Array<{ entity: string; row: ProjectedRow }>;
+}
+
+export async function q11Result(
+    ctx: ScfContext, sceneUuid: string, sceneId: number,
+): Promise<QueryResult<Q11Result>> {
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
+  const one = async (entity: string, id: number | null): Promise<Row | null> =>
+    id === null ? null
+      : (await rows(ctx.exec, entity, "id = ?", [id]))[0] ?? null;
+
+  /**
+   * A table a file does not contain yields nothing, rather than
+   * throwing. §9.2 — resolvers stay total, and an older file that
+   * predates an entity is not an error.
+   */
+  const maybe = async (entity: string, where: string,
+                       params: SqlValue[]): Promise<Row[]> => {
+    try { return await rows(ctx.exec, entity, where, params); }
+    catch { return []; }
+  };
+
+  const scene = await one("scene", sceneId);
+  const information = (await maybe("information_strategy",
+                                   "scene_id = ?", [sceneId]))[0] ?? null;
+
+  const identRow = (await maybe("identification_strategy",
+                                "scene_id = ?", [sceneId]))[0] ?? null;
+  let identification: Q11Result["identification"] = null;
+  if (identRow !== null) {
+    const primary = await one("character", asId(identRow["primary_character_id"]));
+    const secondary = await one("character",
+                                asId(identRow["secondary_character_id"]));
+    identification = {
+      row: projectRow(identRow, refs(ctx, "identification_strategy"), lookup),
+      primary: primary === null
+        ? null : projectRow(primary, refs(ctx, "character"), lookup),
+      secondary: secondary === null
+        ? null : projectRow(secondary, refs(ctx, "character"), lookup),
+    };
+  }
+
+  const emotionalBeats: Q11Result["emotionalBeats"] = [];
+  for (const beat of await maybe("emotional_beat", "scene_id = ?",
+                                 [sceneId])) {
+    const arc = await one("emotional_arc", asId(beat["emotional_arc_id"]));
+    emotionalBeats.push({
+      beat: projectRow(beat, refs(ctx, "emotional_beat"), lookup),
+      arc: arc === null
+        ? null : projectRow(arc, refs(ctx, "emotional_arc"), lookup),
+    });
+  }
+
+  const cascade = await resolveDirection(ctx, Q11_LEAF, sceneId, null);
+
+  return envelope("Q11", ctx.registry, { scene: sceneUuid }, {
+    scene: scene === null
+      ? null : projectRow(scene, refs(ctx, "scene"), lookup),
+    information: information === null
+      ? null : projectRow(information, refs(ctx, "information_strategy"),
+                          lookup),
+    identification,
+    emotionalBeats,
+    toneMarkers: (await maybe("tone_marker", "scene_id = ?", [sceneId]))
+      .map((t) => projectRow(t, refs(ctx, "tone_marker"), lookup)),
+    emotionalCascade: cascade.map(([entity, row]) => ({
+      entity, row: projectRow(row, refs(ctx, entity), lookup),
+    })),
+  });
+}
+
+/** Q11's cascade leaf (§7.1). */
+export const Q11_LEAF = "scene_emotional_design";
+
+// ---------------------------------------------------------------------------
+// Q15 — Provenance (§12.14)
+// ---------------------------------------------------------------------------
+
+/**
+ * Does an `affected_entities` value mention this row?
+ *
+ * Deliberately permissive, because the column is free-form: it may hold
+ * a JSON array, a JSON object, or prose. A note that mentions the right
+ * entity in a shape nobody anticipated should still surface — §9.1, SCF
+ * describes, and a provenance trail that silently omitted a note would
+ * be worse than one that included a doubtful one.
+ *
+ * Moved into the core in 0.27: Q15 is normative, so its matcher is too.
+ * It had lived in the app, which meant an independent implementation had
+ * no way to know which conventions counted.
+ */
+export function mentionsRow(affected: unknown,
+                            entityType: string, id: number): boolean {
+  if (affected === null || affected === undefined || affected === "") {
+    return false;
+  }
+  try {
+    const parsed: unknown = JSON.parse(String(affected));
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    return items.some((item) => {
+      if (typeof item === "string") {
+        return item === `${entityType}:${String(id)}` ||
+               item === `${entityType}#${String(id)}` || item === entityType;
+      }
+      if (item !== null && typeof item === "object") {
+        const o = item as Record<string, unknown>;
+        const t = o["entity"] ?? o["type"] ?? o["entity_type"];
+        const i = o["id"] ?? o["entity_id"];
+        return t === entityType && (i === undefined || Number(i) === id);
+      }
+      return false;
+    });
+  } catch {
+    const text = String(affected);
+    return text.includes(`${entityType}:${String(id)}`) ||
+           text.includes(entityType);
+  }
+}
+
+export interface Q15Result {
+  entityType: string;
+  row: ProjectedRow | null;
+  /** Oldest first: the row's version chain (§6.1). */
+  versionChain: ProjectedRow[];
+  attached: { decisions: ProjectedRow[]; notes: ProjectedRow[] };
+}
+
+export async function q15Result(
+    ctx: ScfContext, entityType: string, rowUuid: string, rowId: number,
+    mentions: (affected: unknown, entityType: string, id: number) => boolean,
+): Promise<QueryResult<Q15Result>> {
+  const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
+  const row = (await rows(ctx.exec, entityType, "id = ?", [rowId]))[0]
+    ?? null;
+
+  const chain: Row[] = [];
+  if (row !== null && ctx.registry.entities.get(entityType)?.versionable) {
+    const seen = new Set<number>([rowId]);
+    let cursor: Row | undefined = row;
+    // Backwards to the root, then forwards, so the chain reads oldest
+    // first. A cycle stops the walk rather than hanging it (§9.2).
+    const back: Row[] = [];
+    while (cursor !== undefined) {
+      const pid = asId(cursor["parent_id"]);
+      if (pid === null || seen.has(pid)) break;
+      seen.add(pid);
+      cursor = (await rows(ctx.exec, entityType, "id = ?", [pid]))[0];
+      if (cursor !== undefined) back.unshift(cursor);
+    }
+    chain.push(...back, row);
+    cursor = row;
+    while (cursor !== undefined) {
+      const sid = asId(cursor["superseded_by_id"]);
+      if (sid === null || seen.has(sid)) break;
+      seen.add(sid);
+      cursor = (await rows(ctx.exec, entityType, "id = ?", [sid]))[0];
+      if (cursor !== undefined) chain.push(cursor);
+    }
+  }
+
+  const attach = async (table: string): Promise<Row[]> =>
+    (await rows(ctx.exec, table))
+      .filter((r) => mentions(r["affected_entities"], entityType, rowId));
+
+  return envelope("Q15", ctx.registry,
+    { entityType, row: rowUuid }, {
+      entityType,
+      row: row === null
+        ? null : projectRow(row, refs(ctx, entityType), lookup),
+      versionChain: chain.map(
+        (r) => projectRow(r, refs(ctx, entityType), lookup)),
+      attached: {
+        decisions: (await attach("creative_decision"))
+          .map((r) => projectRow(r, refs(ctx, "creative_decision"), lookup)),
+        notes: (await attach("collaboration_note"))
+          .map((r) => projectRow(r, refs(ctx, "collaboration_note"), lookup)),
+      },
+    });
 }

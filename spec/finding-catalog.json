@@ -27,7 +27,7 @@
     "then table, lexicographic",
     "then lowest row id"
   ],
-  "codeCount": 35,
+  "codeCount": 36,
   "codes": [
     {
       "code": "asset.identifier_absent",
@@ -238,6 +238,12 @@
       "severity": "info",
       "title": "Sequence crosses an act boundary",
       "spec": "§5.3"
+    },
+    {
+      "code": "structure.shadow_row_unexplained",
+      "severity": "warning",
+      "title": "scene_sequence rows no span boundary explains",
+      "spec": "§5.4"
     }
   ]
 }

@@ -1,0 +1,139 @@
+{
+  "query": "Q11",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132"
+  },
+  "result": {
+    "scene": {
+      "uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+      "fields": {
+        "characters_present": "Eleanor, Marcus",
+        "estimated_duration": "3:40",
+        "int_ext": "interior",
+        "lifecycle_status": "active",
+        "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+        "name": "INT. FARMHOUSE KITCHEN - NIGHT",
+        "scene_number": "12",
+        "season": "winter",
+        "status": "outline",
+        "summary": "The confrontation. 'You came back.'",
+        "tension_level": "high",
+        "time_of_day": "night",
+        "tone": "held breath",
+        "weather_conditions": "storm"
+      }
+    },
+    "information": {
+      "uuid": "8f8acab2-1781-472a-b653-f94f49f5984e",
+      "fields": {
+        "audience_position": "with characters",
+        "information_withheld": "Marcus was at the creek the day Ada drowned (withheld until sc 19).",
+        "knowledge_asymmetry": "mystery",
+        "lifecycle_status": "active",
+        "name": "Sc 12 knowledge",
+        "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+      }
+    },
+    "identification": {
+      "row": {
+        "uuid": "a5090025-899f-4d0f-ab17-4616d4c3ddc0",
+        "fields": {
+          "audience_position": "with character",
+          "lifecycle_status": "active",
+          "name": "Sc 12 identification",
+          "primary_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+          "secondary_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182"
+        }
+      },
+      "primary": {
+        "uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+        "fields": {
+          "age": "61",
+          "arc_description": "From a woman who answers questions with tasks to a woman who says the thing and lets it cost her.",
+          "archetype": "the keeper of the house",
+          "backstory": "Came west at nineteen. Buried a husband at forty-two and a daughter at fifty-four. Has not left the valley since.",
+          "casting_status": "tbd",
+          "core_belief": "Work is what love looks like when you can't speak.",
+          "external_goal": "Get the homestead through the winter.",
+          "flaw": "Mistakes silence for mercy — to others and to herself.",
+          "gender": "female",
+          "greatest_fear": "That saying it aloud makes it true forever.",
+          "internal_goal": "To stop blaming her son without having to forgive him.",
+          "lifecycle_status": "active",
+          "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
+          "name": "Eleanor Cade",
+          "occupation": "Homesteader; midwife to the valley",
+          "pronouns": "she/her",
+          "role": "protagonist",
+          "skills_abilities": "Midwifery, horse handling, reading weather",
+          "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
+        }
+      },
+      "secondary": {
+        "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+        "fields": {
+          "age": "34",
+          "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+          "archetype": "the returning prodigal",
+          "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+          "casting_status": "tbd",
+          "core_belief": "A debt can be worked off if you work hard enough.",
+          "external_goal": "Winter over at the homestead and mend what he can.",
+          "flaw": "Confesses only when cornered, then calls it honesty.",
+          "gender": "male",
+          "greatest_fear": "That his mother already knows.",
+          "internal_goal": "Absolution he cannot ask for directly.",
+          "lifecycle_status": "active",
+          "motivation": "To be told he is not what he believes he is.",
+          "name": "Marcus Cade",
+          "occupation": "Railroad surveyor",
+          "pronouns": "he/him",
+          "role": "deuteragonist",
+          "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+        }
+      }
+    },
+    "emotionalBeats": [
+      {
+        "beat": {
+          "uuid": "607beba9-835c-498c-8dfd-060f7c7e8269",
+          "fields": {
+            "beat_order": 3,
+            "emotional_arc_uuid": "c3669dd9-ace4-49ed-a7fd-5205c92614d1",
+            "intensity": 7,
+            "lifecycle_status": "active",
+            "name": "First crack",
+            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+            "target_emotion": "ache"
+          }
+        },
+        "arc": {
+          "uuid": "c3669dd9-ace4-49ed-a7fd-5205c92614d1",
+          "fields": {
+            "closing_emotional_state": "Release at the door.",
+            "emotional_shape": "transformation",
+            "lifecycle_status": "active",
+            "name": "Ache, ascending",
+            "opening_emotional_state": "Withheld grief."
+          }
+        }
+      }
+    ],
+    "toneMarkers": [
+      {
+        "uuid": "34446dbf-debc-4f9b-bee6-e20fcc203fc4",
+        "fields": {
+          "intensity": "heavy",
+          "lifecycle_status": "active",
+          "name": "Stillness, live wire",
+          "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132",
+          "tone_descriptor": "stillness with a live wire under it"
+        }
+      }
+    ],
+    "emotionalCascade": []
+  }
+}

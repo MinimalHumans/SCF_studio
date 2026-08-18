@@ -168,6 +168,7 @@
         "prop": {
           "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
           "fields": {
+            "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
             "description": "Brass locket holding Ada's portrait.",
             "first_appearance": "sc 11, saddlebag",
             "key_moments": "sc 11 pocketed · sc 19 on the table",

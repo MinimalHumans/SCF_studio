@@ -22,7 +22,9 @@
     "check-negative": "node --experimental-strip-types scripts/build_negative.mjs --check",
     "emit-finding-catalog": "node --experimental-strip-types scripts/emit_finding_catalog.mjs",
     "check-finding-catalog": "node --experimental-strip-types scripts/emit_finding_catalog.mjs --check",
-    "bless-queries": "vitest run test/canonicalQueries.test.ts --mode bless"
+    "bless-queries": "vitest run test/canonicalQueries.test.ts --mode bless",
+    "emit-normative-data": "node --experimental-strip-types scripts/emit_normative_data.mjs",
+    "check-normative-data": "node --experimental-strip-types scripts/emit_normative_data.mjs --check"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

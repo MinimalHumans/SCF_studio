@@ -16,6 +16,139 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.27 — 2026-08-18
+
+*Describes schema 2.12.*
+
+**§12.12 Q00, §12.13 Q11, §12.14 Q15.** Thirteen of sixteen specified,
+twenty-two artifacts published.
+
+**The nesting decision is withdrawn, and §12.1.3 says why.** It was
+recorded on the premise that the six remaining queries were composites
+that build on other queries' results. They are not: **no canonical query
+calls another.** What look like composites assemble their own answers
+from the same resolvers, and Q01 and Q02 share a helper rather than a
+result. Nesting whole results would have invented a relationship the
+implementation does not have.
+
+Each query therefore defines its own result shape, and where two share a
+composition the shared part is one function in one place. Nesting
+remains available if a query is ever built by calling another.
+
+**Q00 is the only query with an empty envelope**, which is worth having
+tested: the envelope has to survive having nothing to put in it. Its
+layer list is fixed by §12.12 rather than derived, because what belongs
+in a brief is an editorial choice and not a fact the registry knows.
+
+**§12.13 states that every part of an audience state may be absent**,
+and that absence is null or empty and never invented. It also requires
+that a file lacking one of these tables yields nothing for it rather
+than failing — an older file predating an entity is not an error.
+
+**§12.14 specifies the permissive matching** Q15 needs.
+`affected_entities` is free-form and may hold a JSON array, an object,
+or prose, so the accepted conventions are now written down:
+`entity:id`, `entity#id`, a bare `entity`, and an object carrying an
+entity kind with an optional id. `mentionsRow` moved from the app into
+`scf-core` with it — Q15 is normative, so its matcher is too, and while
+it lived in the app no independent implementation could know which
+conventions counted.
+
+§12.14 also requires the version-chain walk to terminate on a cycle
+rather than follow it: a cycle is a finding, not a reason to hang.
+
+## 0.26 — 2026-08-18
+
+*Describes schema 2.12.*
+
+Fixes 5, 6 and 7 of the second audit's list. All three were the same
+failure as the four before them — **a normative fact that lived only in
+code** — and all three are fixed the same way, which is now the third
+time this move has been needed.
+
+**§6.3's junction natural keys are published** as
+`spec/junction-keys.json`. The section cited `junctionKeyFields()`, a
+function, so an independent implementation could not compute a natural
+key and therefore could not de-duplicate, merge or validate a junction
+as §6.3 requires. Thirteen entities, with the derivation recorded in the
+file.
+
+**§5.4's finding now has a code.** It required unexplained
+`scene_sequence` rows to be reported as a finding while §9.4's catalog —
+closed — had no code for it, so the two sections could not both be
+obeyed. `structure.shadow_row_unexplained` is added at `warning`, and
+`collectFindings` detects them: the detection previously existed only
+inside the editor's commit path as a count on a result object, which
+means `scf-check`, the one tool a third party actually runs, never
+mentioned them.
+
+**§12.9.1 publishes Q14's rubric** as `spec/readiness-rubrics.json`,
+with the requirement-to-severity mapping that turns it into findings.
+§12.9 had defined the envelope and the severity scale and nothing about
+what was assessed, so the second reader implemented an invented rubric
+and correctly declined to claim anything for it.
+
+**And an overclaim caught while publishing it.** The rubric's steps were
+emitted under a field called `entity`, which asserts they resolve
+against the registry. They do not: several are prose — `sound_cue /
+music_cue`, `bundle + *_asset_binding`, `performance_state (vocal)` —
+naming two entities, a pattern, or a filtered subset. The field is now
+`label`, the file says which half is machine-readable, and §12.9.1 says
+so too. Making the labels resolve is tracked as Unstable rather than
+quietly implied to be done.
+
+## 0.25 — 2026-08-18
+
+*Describes schema 2.12.*
+
+The first revision written in response to the **second** independent
+implementation. It reproduced five of ten queries exactly, attempted a
+conformance claim, and found that what was failing was no longer the
+specification but its own artifacts.
+
+**A blessed artifact named the wrong asset.** `Q13.result.json`'s anchor
+reference carried the uuid of `eleanor_turnaround_v3.png`; the anchor
+points at `eleanor_face_ref.png`, which appeared nowhere in the result.
+The cause was a row id looked up in the wrong table — an `entity_anchor`
+row's id resolved against `asset`. It produced a well-formed uuid, so
+every portability test passed.
+
+The fix is at the source rather than at the projection. §12.8 now states
+that **an anchor contributes the asset it anchors, not itself**: an
+`entity_anchor` names a place in an asset and carries no identifier of
+its own, so reporting the anchor row would produce a reference that can
+never resolve. The reference carries the asset's identity, with the
+anchor's name in `anchorName`. `mediaReferences` no longer needs any
+cross-table lookup, which removes the class of defect rather than this
+instance of it.
+
+§12.8 also states that **`trail` and `references` run in opposite
+directions** — the trail broadest-first as an explanation, matching
+§7.4, the references most-specific-first as an answer. The previous text
+claimed both were most-specific-first, which was wrong about the trail.
+
+**Reference maps MUST be derived from the registry.** §12.1.2 now says
+so. Three results dropped a reference column §12.1.2 required, because
+the implementation maintained a hand-written map per query — the exact
+antipattern §2.3 warns against, inside the module implementing §12.1.2.
+`scene.location_id` was projected in one result and silently dropped in
+another; two reference columns on one motif row were treated
+differently.
+
+**`conformance.md` contradicted this specification** and has been
+corrected. Its Reader requirements told an implementer to "treat a `cut`
+row as present, pending §6.6" — §6.6.1 forbids exactly that, so the
+document an implementer reads to learn what is required would have sent
+a careful one to a wrong answer on every query. Its step 2 also still
+named two specified queries when there are ten.
+
+**`spec/scf-schema.sql` could not be executed as published.** It carried
+`CREATE TABLE sqlite_sequence(name,seq)`, which SQLite rejects; the
+emitter dumped `sqlite_master` without excluding SQLite's own tables. A
+third party who did not know to strip it failed at the first negative
+fixture. The emitter now excludes `sqlite_%`, and the published DDL
+loads into an empty database unmodified.
+
 ## 0.24 — 2026-08-17
 
 *Describes schema 2.12.*

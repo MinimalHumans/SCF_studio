@@ -1,0 +1,164 @@
+{
+  "query": "Q00",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.12",
+  "parameters": {},
+  "result": {
+    "layers": [
+      {
+        "entity": "project",
+        "row": {
+          "uuid": "5fd8e5ac-fdd0-4180-8a92-0f4be3ead2e0",
+          "fields": {
+            "lifecycle_status": "active",
+            "logline": "1889, an Oregon homestead: a son returns after seven years to the mother who has never said aloud that she blames him for his sister's drowning.",
+            "name": "Hollow Creek",
+            "numbering_policy": "fixed",
+            "production_status": "development",
+            "workflow_mode": "generation_first"
+          }
+        }
+      },
+      {
+        "entity": "project_vision",
+        "row": {
+          "uuid": "2b77870c-b97c-425f-97e9-6b52417aa446",
+          "fields": {
+            "filmmaking_philosophy": "actor-focused",
+            "lifecycle_status": "active",
+            "name": "Project Vision",
+            "risk_tolerance": "balanced",
+            "technical_approach": "naturalistic",
+            "vision_statement": "A story about the sentence a mother can't finish."
+          }
+        }
+      },
+      {
+        "entity": "project_tone",
+        "row": {
+          "uuid": "d12d2ecc-f5d6-4352-bcf4-d7d9472db4d3",
+          "fields": {
+            "lifecycle_status": "active",
+            "name": "Project Tone",
+            "overall_pacing": "slow/contemplative",
+            "pacing_inflection_points": "Acceleration: the act-3 storm.",
+            "primary_tone": "melancholic, warming"
+          }
+        }
+      },
+      {
+        "entity": "visual_identity",
+        "row": {
+          "uuid": "7ba90d49-247e-4af7-b960-95d7243edd7f",
+          "fields": {
+            "aesthetic_genre": "naturalistic",
+            "design_era": "1889 Oregon frontier",
+            "forbidden_materials": "[\"plastic\", \"chrome\"]",
+            "lifecycle_status": "active",
+            "name": "Visual Identity",
+            "primary_materials": "[\"oak\", \"brass\", \"iron\", \"wool\"]",
+            "textural_philosophy": "weathered",
+            "visual_statement": "Naturalistic, lived-in; everything aged thirty years."
+          }
+        }
+      },
+      {
+        "entity": "project_color_palette",
+        "row": {
+          "uuid": "8d6337ee-2a99-40cc-bd4b-ab1e278ca497",
+          "fields": {
+            "lifecycle_status": "active",
+            "name": "Project Color Palette",
+            "primary_colors": "[\"desaturated earth\", \"hearth amber\", \"creek slate\"]",
+            "saturation_philosophy": "desaturated",
+            "temperature_approach": "journey",
+            "temperature_associations": "Warm: hearth, forgiveness. Cool: the creek, the unsaid."
+          }
+        }
+      },
+      {
+        "entity": "cinematographic_philosophy",
+        "row": {
+          "uuid": "32e3eccb-aaa8-4429-8f24-1571c8abf08d",
+          "fields": {
+            "camera_personality": "objective observer",
+            "coverage_priorities": "Faces first.",
+            "coverage_style": "single camera",
+            "framing_philosophy": "classical",
+            "lifecycle_status": "active",
+            "movement_philosophy": "motivated",
+            "name": "Cinematographic Philosophy"
+          }
+        }
+      },
+      {
+        "entity": "sonic_identity",
+        "row": {
+          "uuid": "dd9d0071-1dca-4940-a834-299c341fa558",
+          "fields": {
+            "instrumentation_palette": "fiddle, pump organ",
+            "lifecycle_status": "active",
+            "name": "Sonic Identity",
+            "score_approach": "acoustic/intimate",
+            "score_density": "selective",
+            "silence_philosophy": "Silence before confession.",
+            "sonic_density": "sparse",
+            "sound_aesthetic": "naturalistic"
+          }
+        }
+      },
+      {
+        "entity": "look_development",
+        "row": {
+          "uuid": "5061f05b-7c24-4290-96f8-41f1c0ee163e",
+          "fields": {
+            "color_bias": "warm bias grows per act",
+            "lifecycle_status": "active",
+            "name": "Look Development"
+          }
+        }
+      },
+      {
+        "entity": "costume_design_philosophy",
+        "row": {
+          "uuid": "387c30ab-6093-4dad-871b-ac1dc9724655",
+          "fields": {
+            "condition_philosophy": "Everything mended, nothing replaced.",
+            "design_approach": "Work-worn wool and calico; nothing new-bought except what Marcus arrives in.",
+            "lifecycle_status": "active",
+            "name": "Costume Design Philosophy"
+          }
+        }
+      },
+      {
+        "entity": "technical_specs",
+        "row": {
+          "uuid": "1f653575-c667-4fa9-94b4-dd7e0d37dd23",
+          "fields": {
+            "aspect_ratio": "1.85:1",
+            "frame_rate": "24",
+            "lifecycle_status": "active",
+            "name": "Technical Specs",
+            "resolution": "4K DCI"
+          }
+        }
+      }
+    ],
+    "themes": [
+      {
+        "uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d",
+        "fields": {
+          "lifecycle_status": "active",
+          "name": "Forgiveness"
+        }
+      },
+      {
+        "uuid": "6a2cf780-3e85-439c-929c-78fb6074c03c",
+        "fields": {
+          "lifecycle_status": "active",
+          "name": "What the water keeps"
+        }
+      }
+    ]
+  }
+}

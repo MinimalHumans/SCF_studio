@@ -104,6 +104,7 @@ export type FindingCode =
   | "structure.boundary_unnumbered"
   | "structure.scenes_before_first_act"
   | "structure.scene_not_in_script"
+  | "structure.shadow_row_unexplained"
   // Assets — spec §8.2, §8.6
   | "asset.identifier_absent"
   | "asset.identifier_escapes_root"
@@ -274,6 +275,11 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     severity: "info",
     title: "Scenes precede the first act boundary",
     spec: "§5.5",
+  },
+  "structure.shadow_row_unexplained": {
+    severity: "warning",
+    title: "scene_sequence rows no span boundary explains",
+    spec: "§5.4",
   },
   "structure.scene_not_in_script": {
     severity: "info",
@@ -486,6 +492,38 @@ export async function collectFindings(
       table: f.entity, rowIds: f.rowId === null ? [] : [f.rowId],
     }));
   }
+
+  // --- shadow rows (§5.4) ---
+  //
+  // §5.4 requires these to be counted and reported as a finding, and
+  // until 0.26 the catalog had no code for it — so §5.4 and §9.4 could
+  // not both be obeyed. The detection existed only inside the editor's
+  // commit path as a count on a result object, which means the one tool
+  // a third party actually runs never mentioned them.
+  //
+  // Reported, never deleted: silently dropping someone's authored links
+  // to satisfy a derivation is not a migration.
+  try {
+    const explained = new Set<string>();
+    for (const span of structure.sequences) {
+      for (const sceneId of span.sceneIds) {
+        explained.add(`${String(sceneId)}:${String(span.id)}`);
+      }
+    }
+    const orphaned = (await exec(
+      "SELECT id, scene_id, sequence_id FROM scene_sequence"))
+      .filter((r) => !explained.has(
+        `${String(Number(r["scene_id"]))}:${String(Number(r["sequence_id"]))}`));
+    if (orphaned.length > 0) {
+      out.push(make("structure.shadow_row_unexplained",
+        `${String(orphaned.length)} scene_sequence row(s) are explained ` +
+        "by no sequence boundary; the boundary is the truth and these " +
+        "are its shadow (§5.4).",
+        { table: "scene_sequence",
+          rowIds: orphaned.map((r) => Number(r["id"])).sort((a, b) => a - b),
+          count: orphaned.length }));
+    }
+  } catch { /* table absent: not a finding */ }
 
   // --- assets (§8.2, §8.6) ---
   const assets = await listAssets(exec);

@@ -22,6 +22,7 @@ import {
   resolveMedia, rows, sceneOrder, selectLocationVariant, statesInForce,
   type ScfContext,
 } from "@scf-core/resolution.ts";
+import { mentionsRow } from "@scf-core/canonicalQueries.ts";
 import type { ParamValues, QuerySpec } from "./runners.ts";
 
 const num = (v: SqlValue | undefined): number | null =>
@@ -758,37 +759,6 @@ export interface Q15Payload {
   versionChain: Row[];
   attached: { decisions: Row[]; notes: Row[] };
   unattached: { decisions: Row[]; notes: Row[] };
-}
-
-/** Permissive matcher for the affected_entities JSON conventions. */
-export function mentionsRow(affected: SqlValue | undefined,
-                            entityType: string, id: number): boolean {
-  if (affected === null || affected === undefined || affected === "") {
-    return false;
-  }
-  try {
-    const parsed: unknown = JSON.parse(String(affected));
-    const items = Array.isArray(parsed) ? parsed : [parsed];
-    return items.some((item) => {
-      if (typeof item === "string") {
-        return item === `${entityType}:${id}` ||
-               item === `${entityType}#${id}` || item === entityType;
-      }
-      if (item !== null && typeof item === "object") {
-        const o = item as Record<string, unknown>;
-        const t = o["entity"] ?? o["type"] ?? o["entity_type"];
-        const i = o["id"] ?? o["entity_id"];
-        return t === entityType &&
-               (i === undefined || Number(i) === id);
-      }
-      return false;
-    });
-  } catch {
-    // Free-text field: substring match on "entity" or "entity:id".
-    const text = String(affected);
-    return text.includes(`${entityType}:${id}`) ||
-           text.includes(entityType);
-  }
 }
 
 export const q15: QuerySpec = {

@@ -69,6 +69,10 @@ jobs:
         run: npm run check-finding-catalog
         working-directory: scf-core
 
+      - name: junction keys and readiness rubrics match the code
+        run: npm run check-normative-data
+        working-directory: scf-core
+
       - name: negative fixtures match their blessed reports
         run: npm run check-negative
         working-directory: scf-core

@@ -13,6 +13,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { FINDING_CATALOG, type FindingCode } from "../src/findings.ts";
 import { REPORT_FORMAT_VERSION } from "../src/report.ts";
+import { junctionEntities, junctionKeyFields } from "../src/junctions.ts";
+import { QUERY_PATHS } from "../src/queryPaths.ts";
 import { registry } from "./setup.ts";
 
 const read = (url: string): unknown =>
@@ -72,6 +74,97 @@ describe("the published finding catalog", () => {
   test("records which schema and report format it belongs to", () => {
     expect(catalog.schemaVersion).toBe(registry.schemaVersion);
     expect(catalog.reportFormat).toBe(REPORT_FORMAT_VERSION);
+  });
+});
+
+interface JunctionDoc {
+  entityCount: number;
+  entities: Array<{ entity: string; keyFields: string[] }>;
+}
+const junctions = read("../../spec/junction-keys.json") as JunctionDoc;
+
+interface RubricDoc {
+  requirementToSeverity: Record<string, string>;
+  queryCount: number;
+  queries: Array<{
+    query: string; name: string; params: string[];
+    steps: Array<{ label: string; requirement: string; purpose: string }>;
+  }>;
+}
+const rubrics = read("../../spec/readiness-rubrics.json") as RubricDoc & {
+  $stepLabels: string;
+};
+
+describe("the published junction keys (§6.3)", () => {
+  test("cover every link entity, with the keys the code computes", () => {
+    const live = junctionEntities(registry)
+      .map((e) => ({ entity: e.name, keyFields: junctionKeyFields(e) }))
+      .sort((a, b) => a.entity.localeCompare(b.entity));
+    expect(junctions.entities).toEqual(live);
+    expect(junctions.entityCount).toBe(live.length);
+  });
+
+  test("every key field exists on its entity", () => {
+    // A published key naming a column that is not there would be worse
+    // than no published key: it looks authoritative.
+    for (const { entity, keyFields } of junctions.entities) {
+      const def = registry.entities.get(entity);
+      expect(def, entity).toBeDefined();
+      for (const field of keyFields) {
+        expect(def?.fields.some((f) => f.name === field), `${entity}.${field}`)
+          .toBe(true);
+      }
+    }
+  });
+
+  test("no key is empty", () => {
+    for (const j of junctions.entities) {
+      expect(j.keyFields.length, j.entity).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("the published readiness rubrics (§12.9.1)", () => {
+  test("match QUERY_PATHS", () => {
+    expect(rubrics.queries.map((q) => q.query))
+      .toEqual(Object.keys(QUERY_PATHS).sort());
+  });
+
+  test("every step has a label, a known requirement and a purpose", () => {
+    const known = new Set(["required", "recommended", "optional"]);
+    for (const q of rubrics.queries) {
+      expect(q.steps.length, q.query).toBeGreaterThan(0);
+      for (const step of q.steps) {
+        expect(step.label, q.query).not.toBe("");
+        expect(known.has(step.requirement), step.requirement).toBe(true);
+        expect(step.purpose).not.toBe("");
+      }
+    }
+  });
+
+  test("step labels are prose, and the artifact says so", () => {
+    // They are not registry entity names — "sound_cue / music_cue",
+    // "bundle + *_asset_binding", "performance_state (vocal)". Calling
+    // the field `entity` claimed they resolved; they do not. A consumer
+    // must be told which half is machine-readable.
+    const unresolvable = rubrics.queries.flatMap(
+      (q) => q.steps.map((s) => s.label))
+      .filter((label) => !registry.entities.has(label));
+    expect(unresolvable.length).toBeGreaterThan(0);
+    expect(rubrics.$stepLabels).toContain("prose");
+  });
+
+  test("the requirement-to-severity map covers every requirement used",
+       () => {
+    // The map is the half a third party cannot guess: it is what turns a
+    // rubric into findings at the severities §12.9 says carry the answer.
+    for (const q of rubrics.queries) {
+      for (const step of q.steps) {
+        expect(rubrics.requirementToSeverity[step.requirement],
+               step.requirement).toBeTypeOf("string");
+      }
+    }
+    expect(rubrics.requirementToSeverity["present"]).toBe("ok");
   });
 });
 

@@ -1,109 +1,101 @@
-# Spec 0.24 — Q09, Q10, and a correction
+# Spec 0.27 — Q00, Q11, Q15, and a decision withdrawn
 
-Apply after `scf-queries-8.zip`.
+Apply after `scf-normative-data.zip`.
 
 ```sh
 cd scf-core && npm test && npx tsc --noEmit
-cd ../scf-app && npm test && npm run build
+cd ../scf-app && npm test && npx tsc --noEmit && npm run build
 cd .. && python3 schema/artifact_manifest.py --check
 sha256sum -c spec/SHA256SUMS
 ```
 
 Verified here:
 
-- `scf-core`: 32 files, **564 passed**, 6 skipped (was 556)
-- `scf-app`: 22 files, 249 passed, 1 skipped
-- **seventeen** published artifacts, checksums verify, build clean
+- `scf-core`: 32 files, **584 passed**, 6 skipped (was 575)
+- `scf-app`: 249 passed, 1 skipped
+- **twenty-two** artifacts, checksums verify, build clean
 
-No schema change. Spec 0.23 → **0.24**. **Ten of sixteen specified.**
-
----
-
-## A correction, first
-
-Last session I wrote — in `stability.md`, in `conformance.md`, and in my
-notes to you — that the specified queries were *"every query taking a
-position"* and that the eight remaining *"enumerate the whole project"*.
-
-**That was wrong.** I checked the parameter list before writing Q09 and
-found Q02, Q04, Q09 and Q11 all take a `scene_id`. The claim was a
-tidy-sounding story about a split that did not exist, and I had put it
-in two normative documents.
-
-Both are corrected. What the remaining six actually have in common is
-that they are **composites** — a brief, a dossier, a subject in context,
-a scene package, an audience state, a provenance trail. That is a real
-distinction and it changes what is left to decide (below).
-
-## Q10 was the interesting one
-
-It is the **first query whose answer spans the whole story** rather than
-a position, which is why I took it now: if the envelope needed anything
-for project-wide answers, better to find out before six composites
-depend on it.
-
-**It needed nothing.** Same envelope, same projection rule.
-
-§12.11 states the rule that makes the query worth having: **the spine
-MUST include every scene, carriers or not.** A spine listing only the
-scenes a theme reaches cannot answer the question the query exists for,
-which is where the theme is *absent*. The blessed result shows it
-working:
-
-```
-1:1  3:4  7:1  9:2  10:1  11:1  12:3  12A:0  19:6  16:1  21:1  24:5
-```
-
-`19` before `16` — story order, not scene-number order. `12A:0` is a
-real gap. The cut scene is absent entirely, and a carrier reaching it
-reaches nowhere, so its scene list and the spine's counts agree rather
-than disagreeing at one position.
-
-## Q09 states its own heuristic
-
-`dense` is a flag, not a finding (§9.1), so a result MUST publish the
-`densityThreshold` that produced it. A consumer should be able to see
-the number rather than infer it from a count, and a different
-implementation may choose a different threshold and must say which.
-
-§12.10 also says a **candidate is not an obligation** — it is a related
-motif *absent* from this scene, offered because a placement decision is
-easier when you can see what is adjacent. Nothing is wrong with a scene
-that places none.
+No schema change. Spec 0.26 → **0.27**. **Thirteen of sixteen
+specified.**
 
 ---
 
-## What is left, and the question it raises
+## The nesting decision is withdrawn, and I should say so plainly
 
-Six remain: **Q00, Q01, Q02, Q04, Q11, Q15.** All composites.
+You approved it, I recorded it, and it was wrong. Before writing the
+composites I read what they actually do, and **no canonical query calls
+another.** Q04 does not build a Q03 result and a Q07 result; it
+assembles its own answer from the same resolvers. Q01 and Q02 share a
+`dossier()` helper — a shared *composition*, not a shared *result*.
 
-The envelope has now held for a position query, a two-position diff, a
-cascade, a media resolution, a readiness rubric and a whole-story spine.
-So the open question is no longer the envelope. It is:
+So nesting would have invented a relationship the implementation does
+not have, and I would have had to either reimplement Q03 inside Q04
+(forbidden) or refactor Q04 to call it (a real change, made to satisfy a
+spec sentence rather than a need).
 
-**Does a composite result nest the results it is built from, or restate
-them?**
+§12.1.3 now records the withdrawal and the reason. Each query defines
+its own result shape; where two genuinely share a composition, the
+shared part is one function in one place. Nesting stays available if a
+query is ever built by calling another.
 
-Q04 "Scene package" is the clearest case — it is Q03 plus Q07 plus Q08
-plus more, at one scene. Nesting means a `Q04` result contains whole
-`Q03` and `Q07` results, envelopes and all, which is honest about what
-it is but verbose and awkward to version. Restating means Q04 defines
-its own flat shape and the relationship to Q03 is documentation rather
-than structure.
+This is the second time my tidy story about "the remaining six" has been
+wrong — the first was claiming they took no position parameter. Both
+times the error was describing a set by a property I had not checked.
 
-I lean toward **nesting the `result` bodies without their envelopes** —
-a composite carries `{ worldState: <Q03 result>, look: <Q07 result> }`
-and names which query each came from. It keeps one definition per
-answer, and a consumer already holding a Q03 result can compare directly.
+## Q00 — the empty envelope
 
-That is a decision worth your input before I write six sections that all
-assume it.
+The only canonical query with no parameters, which is worth having
+tested: the envelope has to survive having nothing to put in it. It
+does.
 
-## Next
+Its layer list is **fixed by §12.12 rather than derived**, and the
+section says why: what belongs in a brief is an editorial choice, not a
+fact the registry knows. Adding one is a spec change. An unauthored
+layer is absent rather than present-and-empty.
 
-Either you settle the nesting question and I do the six, or — and this
-is what I would actually suggest — **re-run the independent reader
-first**, now that ten queries are specified. The kit and prompt exist,
-so it is cheap, and it is the only way to find out whether §12 reads as
-a specification to someone who did not write it. Finding that out before
-the last six is better than after.
+## Q11 — where everything may be missing
+
+Every field can be absent, and §12.13 states that absence is null or
+empty and **never invented**.
+
+While writing it I hit a real one: I guessed the table names
+(`audience_information`, `audience_identification`) instead of reading
+them. They are `information_strategy` and `identification_strategy`, and
+the test failed with `no such table`. Worth reporting because the fix
+was not only the names — I also made the fetch **total**, so a file
+lacking one of these tables yields nothing rather than throwing. §9.2
+already required that, and an older file predating an entity is not an
+error. §12.13 now says so.
+
+## Q15 — and a matcher that was in the wrong package
+
+`affected_entities` is free-form: a JSON array, a JSON object, or prose.
+`mentionsRow` handled all of that permissively — **inside the app**. Q15
+is normative, so its matcher is too, and while it lived there no
+independent implementation could know which conventions counted.
+
+Moved to `scf-core`, and §12.14 now writes the conventions down:
+`entity:id`, `entity#id`, a bare `entity`, and an object carrying an
+entity kind with an optional id. The section also says why permissive is
+right: a provenance trail that silently omitted a note would be worse
+than one that included a doubtful one.
+
+§12.14 also requires the version-chain walk to **terminate on a cycle
+rather than follow it** — a cycle is a finding, not a reason to hang.
+
+---
+
+## What is left
+
+**Three queries: Q01, Q02, Q04.** They share the `dossier` and
+scene-assembly compositions, which still live in the app. Those have to
+move to `scf-core` first — the same extraction Q03 and Q12 needed, for
+the same reason: a normative result must not re-derive what a renderer
+already derives.
+
+That is one focused session.
+
+Then the third reader run, which I would still do before calling §12
+done. Two things make it a genuinely different experiment from the last:
+the artifacts it will check are corrected, and §12 will be complete
+rather than two-thirds written.

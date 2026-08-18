@@ -5,7 +5,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.24 / schema 2.12. This document is expected
+Current as of specification 0.27 / schema 2.12. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -43,7 +43,9 @@ about it is ceremonial.
 |---|---|---|---|---|
 | Registry as normative source | §2.1 | Stable | Yes | Generated from `entity_registry.py`; linted. |
 | Registry structure published | §2.1 | Provisional | Yes | `spec/registry.schema.json`, validated against `registry.json` by `registrySchema.test.ts`. Provisional until a third party has consumed it. |
-| Physical DDL published | §1.3 | Provisional | Yes | `spec/scf-schema.sql`, dumped from `initDatabase()` rather than generated a second time, with a `--check` mode. |
+| Physical DDL published | §1.3 | Provisional | Yes | `spec/scf-schema.sql`, dumped from `initDatabase()`, with a `--check` mode. Excludes `sqlite_%` since 0.25 — it previously carried `CREATE TABLE sqlite_sequence`, which SQLite rejects, so the published DDL could not be loaded. |
+| Reference projection derived from the registry | §12.1.2 | Provisional | Yes | `referencesOf()`. Replaced hand-written per-query maps that disagreed with each other. |
+| Anchors contribute their asset | §12.8 | Provisional | Yes | `resolveMedia` dereferences; `mediaReferences` needs no cross-table lookup, so the row-id conflation cannot recur. |
 | Artifact addressing and checksums | §2.1 | **Unstable** | Partly | `spec/ARTIFACTS.md` and `SHA256SUMS` exist and verify. The addressing scheme depends on `schema-X.Y` tags, and **no tag exists yet**, so every URL in the manifest currently 404s. |
 | Framework columns | §2.2 | Stable | Yes | |
 | Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `sceneOps.ts`. Derived, so new entities are covered without an edit. |
@@ -73,8 +75,8 @@ about it is ceremonial.
 | `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in 2.11; the old column removed in 2.12 under §11.0. `numbering.ts` owns resolution, and a test asserts a stale `scene_numbering` cannot override it. |
 | Pre-1.0 change licence | §11.0 | Provisional | n/a | States that §11's rules take effect at 1.0 and that earlier files are disposable, with the fixture excepted. Provisional because it is the kind of clause that is easy to write and easy to overrun — it needs the 1.0 release to prove it was honoured. |
 | Result envelope and row projection | §12.1 | Provisional | Yes | `queryResult.ts`. Rows by uuid, volatile columns dropped, references resolved to uuids. Provisional until a second implementation has produced a matching result. |
-| Q03, Q05–Q10, Q12, Q13, Q14 | §12.2–12.11 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |
-| **The other six queries** | §12 | **Unstable** | **No** | Q00, Q01, Q02, Q04, Q11, Q15 remain. They are not distinguished by taking no position — Q02, Q04 and Q11 all take a scene. What they have in common is that they COMPOSE other queries: a brief, a dossier, a scene package. Specifying them means deciding whether a composite result nests the results it is built from or restates them. |
+| Thirteen queries | §12.2–12.14 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |
+| **The other three queries** | §12 | **Unstable** | **No** | Q01, Q02 and Q04 remain. They share the `dossier` and scene-assembly compositions, which live in the app and must move to the core first — the same extraction Q03 and Q12 needed. The nesting decision recorded on 2026-08-17 is **withdrawn**: its premise was that these build on other queries' results, and none of them does (§12.1.3). They are not distinguished by taking no position — Q02, Q04 and Q11 all take a scene. What they have in common is that they COMPOSE other queries: a brief, a dossier, a scene package. Specifying them means deciding whether a composite result nests the results it is built from or restates them. |
 | Expectation coverage | — | Provisional | Partly | Four results now sit at three different positions. The rendered-markdown expectations still cluster on scene 12, and will until the queries behind them are specified. |
 | Results exclude `cut` rows | §12.1.2 | Provisional | Yes | Follows §6.6.1. Settled before the other fourteen queries were blessed, so they get blessed once. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
@@ -104,7 +106,10 @@ about it is ceremonial.
 |---|---|---|---|---|
 | Row `uuid` on all entities | §6.1 | Stable | Yes | Schema 2.3. |
 | Uuids do not cross files | §6.2 | Stable | Yes | |
-| Junction natural keys | §6.3 | Provisional | Yes | `junctionKeyFields()`. Stated for all thirteen links but only exercised by de-duplication; merge is the real test and does not exist. |
+| Junction natural keys | §6.3 | Provisional | Yes | Published as `spec/junction-keys.json` in 0.26 — it was cited as a FUNCTION until then, so no third party could compute one. Still only exercised by de-duplication; merge is the real test and does not exist. |
+| Q14's rubric published | §12.9.1 | Provisional | Partly | `spec/readiness-rubrics.json`. Requirement-to-severity is machine-readable; **step labels are prose** and do not resolve against the registry. |
+| **Rubric step labels resolve to entities** | §12.9.1 | **Unstable** | **No** | Six rubrics carry labels like `sound_cue / music_cue`, `bundle + *_asset_binding`, `performance_state (vocal)` — two entities, a pattern, a filtered subset. A third party can reproduce the severities but must read the labels as a person would, which is not a specification. |
+| Unexplained shadow rows reported | §5.4 | Provisional | Yes | `structure.shadow_row_unexplained`, added in 0.26. §5.4 required a finding the closed catalog had no code for, and the detection lived only in the editor's commit path — so the one tool a third party runs never mentioned them. |
 | Duplicates as findings | §6.4 | Stable | Yes | |
 | Relationship `directionality` | §6.5 | Provisional | Yes | Schema 2.4. |
 | Read from both character columns | §6.5 | Stable | Yes | |
@@ -192,22 +197,24 @@ about it is ceremonial.
 
 ## Summary — what stands between here and 1.0
 
-Five Unstable rows, in rough dependency order:
+Six Unstable rows, in rough dependency order:
 
-1. **The remaining six queries** (§12) — all composites. The envelope
-   has now held for a position query, a two-position diff, a cascade and
-   a whole-story spine, so the open question is not the envelope but
-   whether a composite result nests the results it is built from.
+1. **The remaining three queries** (§12) — Q01, Q02, Q04. Their
+   compositions live in the app and must move to the core first, as Q03's
+   and Q12's did.
 2. **The asset resolution tally in `scf-check`** (§8.3) — the one check
    the validator cannot do, because §0.3 makes the root mapping a
    property of the consuming environment and no flag exists to supply
    one.
-3. **A view for what was cut** (§6.6.2) — the filter is done; the way to
+3. **Rubric step labels** (§12.9.1) — prose where a specification needs
+   references. The requirement half is publishable and published; the
+   subject half is not.
+4. **A view for what was cut** (§6.6.2) — the filter is done; the way to
    read cut rows back is a library function nothing calls. Until a cut
    list exists, "inspectable" is a claim.
-4. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
-   1.0 or go.
-5. **Artifact addressing** (§2.1) — the manifest is written and verifies,
+5. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
+   1.0 or go. They are now at least reported.
+6. **Artifact addressing** (§2.1) — the manifest is written and verifies,
    but no `schema-X.Y` tag exists, so the URLs it publishes do not
    resolve. One `git tag` closes it.
 

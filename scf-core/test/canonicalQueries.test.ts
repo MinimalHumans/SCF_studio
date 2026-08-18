@@ -21,11 +21,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, afterAll, describe, expect, test } from "vitest";
 import {
-  MOTIF_DENSITY_THRESHOLD, Q07_SCENE_LEAF, Q07_SHOT_LEAF, q03Result,
+  MOTIF_DENSITY_THRESHOLD, Q00_LAYERS, Q07_SCENE_LEAF, Q07_SHOT_LEAF,
+  mentionsRow, q00Result, q11Result, q15Result, q03Result,
   q05Result, q06Result, q07Result, q08Result, q09Result, q10Result,
   q12Result, q13Result, q14Result,
 } from "../src/canonicalQueries.ts";
-import { QUERY_RESULT_FORMAT, projectRow } from "../src/queryResult.ts";
+import {
+  QUERY_RESULT_FORMAT, projectRow, referencesOf,
+} from "../src/queryResult.ts";
 import { sceneOrder } from "../src/resolution.ts";
 import { openFixture, registry, type Fixture } from "./setup.ts";
 
@@ -79,6 +82,23 @@ const blessOrCheck = (name: string, value: unknown): void => {
     .toBe(true);
   expect(text).toBe(readFileSync(path, "utf8"));
 };
+
+describe("§12.1.2 reference maps come from the registry", () => {
+  test("every reference column an entity declares is projected", () => {
+    // Hand-written maps disagreed between queries: `scene.location_id`
+    // was resolved in one result and dropped in another. Deriving them
+    // makes that impossible rather than unlikely.
+    const sceneRefs = referencesOf(registry, "scene");
+    expect(sceneRefs["location_id"]).toBe("location");
+    const motifRefs = referencesOf(registry, "motif");
+    expect(Object.keys(motifRefs).sort())
+      .toEqual(["first_appearance_scene_id", "related_motif_id"]);
+  });
+
+  test("an entity with no references yields an empty map", () => {
+    expect(referencesOf(registry, "nonexistent_entity")).toEqual({});
+  });
+});
 
 describe("§12.1.2 row projection", () => {
   test("drops row ids and volatile columns", () => {
@@ -316,6 +336,38 @@ describe("§12.8 Q13 — media resolution", () => {
       scene12.uuid, scene12.id, shot1204.uuid, shot1204.id));
   });
 
+  test("an anchor contributes the asset it anchors, not itself",
+       async () => {
+    // The defect an independent implementation found: the anchor row was
+    // reported as the reference, so it had no identifier and could never
+    // resolve — and a caller looking its row id up in `asset` got an
+    // unrelated asset that happened to share the id. It produced a
+    // well-formed uuid, so every portability test passed.
+    const r = await q13Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
+
+    const anchor = r.result.references.find((x) => x.provenance === "anchor");
+    expect(anchor).toBeDefined();
+    expect(anchor?.anchorName).toBe("Eleanor face anchor");
+    // The asset, with its own identity and its own identifier.
+    expect(anchor?.identifier).not.toBeNull();
+    const asset = await fx.ctx.exec(
+      "SELECT a.uuid FROM entity_anchor e JOIN asset a ON a.id = e.asset_id " +
+      "WHERE e.name = 'Eleanor face anchor'");
+    expect(anchor?.uuid).toBe(String(asset[0]?.["uuid"]));
+  });
+
+  test("references are most specific first; the trail is broadest first",
+       async () => {
+    const r = await q13Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
+    expect(r.result.references[0]?.provenance).toBe("shot override");
+    expect(r.result.trail[0]).toContain("binding");
+    expect(r.result.trail.at(-1)).toContain("override");
+  });
+
   test("names assets by uuid, never by row id", async () => {
     // The defect this specification dissolves: the rendered form puts
     // `character #1` in its header and carries `AssetReference.id`
@@ -458,12 +510,90 @@ describe("§12.11 Q10 — thematic accounting", () => {
   });
 });
 
+describe("§12.12 Q00 — brief", () => {
+  test("matches its blessed result", async () => {
+    blessOrCheck("Q00", await q00Result(fx.ctx));
+  });
+
+  test("takes no parameters at all", async () => {
+    // The only canonical query with an empty envelope. Worth pinning:
+    // the envelope must survive having nothing to put in it.
+    const r = await q00Result(fx.ctx);
+    expect(r.parameters).toEqual({});
+    expect(r.query).toBe("Q00");
+  });
+
+  test("layers are broadest first, and unauthored ones are absent",
+       async () => {
+    const r = await q00Result(fx.ctx);
+    const order = r.result.layers.map((l) => l.entity);
+    expect(order[0]).toBe("project");
+    // Present in the declared order, with gaps closed rather than
+    // carried as empty entries.
+    const declared = [...Q00_LAYERS] as string[];
+    expect(order).toEqual(declared.filter((e) => order.includes(e)));
+    for (const l of r.result.layers) {
+      expect(Object.keys(l.row.fields).length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("§12.13 Q11 — audience state", () => {
+  test("matches its blessed result", async () => {
+    blessOrCheck("Q11", await q11Result(fx.ctx, scene12.uuid, scene12.id));
+  });
+
+  test("absent audience rows are null, not invented", async () => {
+    // §9.2: a scene with no authored audience information is a
+    // legitimate answer, not an error and not an empty object.
+    const r = await q11Result(fx.ctx, scene16.uuid, scene16.id);
+    expect(r.result).toHaveProperty("information");
+    expect(r.result).toHaveProperty("identification");
+  });
+
+  test("the emotional cascade is a refines closure like any other",
+       async () => {
+    const r = await q11Result(fx.ctx, scene12.uuid, scene12.id);
+    for (const layer of r.result.emotionalCascade) {
+      expect(Object.keys(layer.row.fields).length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("§12.14 Q15 — provenance", () => {
+  const never = (): boolean => false;
+
+  test("matches its blessed result", async () => {
+    blessOrCheck("Q15", await q15Result(
+      fx.ctx, "scene", scene12.uuid, scene12.id, mentionsRow));
+  });
+
+  test("a non-versionable entity has an empty chain, not a fabricated one",
+       async () => {
+    const r = await q15Result(fx.ctx, "scene", scene12.uuid, scene12.id,
+                              never);
+    expect(Array.isArray(r.result.versionChain)).toBe(true);
+    expect(r.result.attached.decisions).toEqual([]);
+    expect(r.result.attached.notes).toEqual([]);
+  });
+
+  test("the envelope carries the row's uuid and its entity kind",
+       async () => {
+    const r = await q15Result(fx.ctx, "scene", scene12.uuid, scene12.id,
+                              never);
+    expect(r.parameters).toEqual({
+      entityType: "scene", row: scene12.uuid,
+    });
+    expect(r.result.row?.uuid).toBe(scene12.uuid);
+  });
+});
+
 describe("the results are portable", () => {
   test("no row id or timestamp appears anywhere in either", async () => {
     // The property the whole section rests on, asserted over the real
     // serialised output rather than over a projection in isolation.
-    for (const name of ["Q03", "Q05", "Q06", "Q07", "Q08", "Q09", "Q10",
-                        "Q12", "Q13", "Q14"]) {
+    for (const name of ["Q00", "Q03", "Q05", "Q06", "Q07", "Q08", "Q09",
+                        "Q10", "Q11", "Q12", "Q13", "Q14", "Q15"]) {
       const text = readFileSync(join(OUT, `${name}.result.json`), "utf8");
       const parsed = JSON.parse(text) as unknown;
       const walk = (v: unknown, path: string): void => {
@@ -486,8 +616,8 @@ describe("the results are portable", () => {
   });
 
   test("both declare the same result format", () => {
-    for (const name of ["Q03", "Q05", "Q06", "Q07", "Q08", "Q09", "Q10",
-                        "Q12", "Q13", "Q14"]) {
+    for (const name of ["Q00", "Q03", "Q05", "Q06", "Q07", "Q08", "Q09",
+                        "Q10", "Q11", "Q12", "Q13", "Q14", "Q15"]) {
       const r = JSON.parse(
         readFileSync(join(OUT, `${name}.result.json`), "utf8")) as {
           resultFormat: string; parameters: Record<string, unknown>;
