@@ -76,8 +76,8 @@ Everything required of a Reader, plus:
 - never store a value §3.2 requires to be derived;
 - never rewrite an authored `shot.shot_number`, except when the shot
   moves to a different scene (§3.3);
-- never recompute numbering on a file whose `project.scene_numbering` is
-  `fixed` (§4.2);
+- never recompute numbering on a file whose `project.numbering_policy`
+  is `fixed` (§4.3);
 - report duplicate natural keys rather than rejecting them (§6.4);
 - never create a prop by automatic acceptance (§9.3);
 - carry a resolution report on any export containing asset references
@@ -328,9 +328,16 @@ file-local:
 
 - `<Q>.expected.md` — the rendered context markdown, which is what a
   consumer of these queries actually receives. Names, not ids.
-- `shapes.json` — the payload's structure: key names, array lengths,
-  tuple positions, with `id`, `created_at` and `updated_at` dropped and
-  foreign keys recorded as `<row-ref>` rather than as values.
+- `shapes.json` — an **internal** structural check over the app's
+  runner payloads: key names, array lengths, tuple positions, with
+  `id`, `created_at` and `updated_at` dropped and foreign keys recorded
+  as `<row-ref>` rather than as values. It predates §12 and describes
+  the runners' own shape, **not** the result structure §12.1 defines —
+  it records a flat row with a `<row-ref>` where a result carries
+  `{ uuid, fields }` with the reference resolved. It is unpinned, is not
+  a published artifact, and **a third-party implementation should
+  ignore it**: `fixtures/expectations/*.result.json` are the normative
+  artifacts for §12.
 
 **Payloads themselves are not blessed.** They carry row ids, and row ids
 are file-local (§6.2), so a second implementation reading the same
@@ -341,11 +348,14 @@ Parameters resolve from **selectors** — scene number 12, the character
 named Eleanor — recorded alongside the expectations, so another
 implementation can resolve them for itself.
 
-Eight of the sixteen have rendered-markdown expectations, and **all
-eight now also have normative `.result.json` files**, which supersede
-the markdown for those queries. The other eight either take no parameters or
-enumerate the whole project, so their output is a function of the
-fixture rather than of a position in it. Worth adding; not yet done.
+**All sixteen have normative `.result.json` files.** Eight also have
+rendered markdown, which those files supersede; the markdown is a
+convenience for every query now and a contract for none.
+
+Two earlier revisions of this paragraph described a remainder that no
+longer exists — first eight queries without results, then eight
+"worth adding; not yet done" after they had been added. The count is
+now stated once, above, and this paragraph does not repeat it.
 
 ---
 

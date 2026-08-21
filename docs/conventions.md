@@ -362,15 +362,35 @@ The procedure:
    ```
 
 Since the specification exists, two more steps apply when the change
-touches anything normative:
+touches anything normative. **They run BEFORE step 6, not after it** —
+`SHA256SUMS` covers files that these steps edit, so a manifest
+regenerated before the prose is written is stale the moment it is
+written:
 
-8. Update `spec/scf-spec.md`, and its version, per `spec §11.5`.
-9. Update the affected row in `spec/stability.md`.
+5a. Update `spec/scf-spec.md`, and its version, per `spec §11.5`.
+5b. Update the affected row in `spec/stability.md`.
+
+Numbered this way rather than 8 and 9 because the order is the point.
+The numbering above is the order to work in.
 
 Steps 2, 3 and 6 are all verified by CI in `--check` mode, so forgetting
 one fails the build rather than shipping a generated file that no longer
 matches its source. That is the whole reason CI exists here: nine
 generated artifacts, each one silently wrong the moment its source moves.
+
+### Lockfiles
+
+**Any change to a `package.json` requires `npm install` in that package
+and the resulting lockfile committed in the same commit.** Both, always
+— a dependency edit and a `scripts` edit alike, because `npm ci` fails
+on a lockfile that does not match its manifest whatever the mismatch is.
+
+`npm ci` enforces this, but only where CI runs. A lockfile that is stale
+— or, as happened once here, never committed at all — leaves a
+developer with a working `node_modules` and a build that cannot start
+from nothing. The failure is invisible in the place the change is made
+and total in the place it runs, which is the same shape as every other
+failure this document records.
 
 **Prefer additive optional fields.** Every schema change so far has been
 one, which is why no file has ever needed converting. `spec §11.1` now

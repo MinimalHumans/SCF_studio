@@ -71,18 +71,24 @@ about it is ceremonial.
 | Scene-number grammar and ordering | §4.2.1–4.2.3 | Provisional | Yes | `sceneNumbers.ts`. Implemented in both engines and pinned, including a test asserting the two agree. Provisional rather than Stable only because no second implementation has exercised it. |
 | `scene_number` declared type | §4.2.3 | Provisional | Yes | Widened to text in schema 2.9. The FIXTURE's column was rebuilt to match in 0.17 — until then the registry, the published DDL and the fixture disagreed, and §4.2's grammar was unexercised by the artifact meant to demonstrate it. |
 | The fixture exercises §4.1's ordering rule | §4.1 | Provisional | Yes | Fixed in 0.17: `12A` sits mid-script with the highest row id, and `16` follows `19` keeping its number. The three orders now differ, and three invariant tests pin that. |
-| Numbering policy covers all four numbers | §4.3 | Provisional | Partly | 0.17 states that act, sequence, scene and shot numbers are all authored and all governed by `project.scene_numbering`. The implementation recomputes scene numbers and shot codes; whether it recomputes act and sequence numbers under `derived` is untested. |
+| Numbering policy covers all four numbers | §4.3 | Provisional | Partly | 0.17 states that act, sequence, scene and shot numbers are all authored and all governed by `project.numbering_policy`. The implementation recomputes scene numbers and shot codes; whether it recomputes act and sequence numbers under `derived` is untested. |
 | `project.numbering_policy` | §4.3 | Provisional | Yes | Renamed from `scene_numbering` in 2.11; the old column removed in 2.12 under §11.0. `numbering.ts` owns resolution, and a test asserts a stale `scene_numbering` cannot override it. |
 | Pre-1.0 change licence | §11.0 | Provisional | n/a | States that §11's rules take effect at 1.0 and that earlier files are disposable, with the fixture excepted. Provisional because it is the kind of clause that is easy to write and easy to overrun — it needs the 1.0 release to prove it was honoured. |
 | Result envelope and row projection | §12.1 | Provisional | Yes | `queryResult.ts`. Rows by uuid, volatile columns dropped, references resolved to uuids. Provisional until a second implementation has produced a matching result. |
+| The `{uuid, fields}` projected row | §12.1.2 | Provisional | Yes | Stated in 0.29. It had been demonstrated by the blessed artifacts and never defined, which was the third reader run's central finding. Provisional until a second implementation has produced one from the text alone. |
+| Polymorphic `_id` columns dropped | §12.1.2 | Provisional | Yes | `projectRow()` drops any `_id` with no `referenceEntity`. Stated in 0.29; Q10 and Q15 both depend on it. |
+| Derived records carry nulls | §12.1.4 | Provisional | Yes | Stated in 0.29. The opposite of §12.1.2's omit-empties rule, and the two were indistinguishable in the artifacts. |
+| §12's closed vocabularies | §12.1.5 | Provisional | Partly | Stated in 0.29: §8.3's states, §12.9's severities, §12.8's `provenance`. `provenance` is the only one §12 introduces, and 0.29 states its three members in §12.8 rather than leaving them in `mediaReferences.ts`. Partly, because unlike the other two it has no published artifact behind it — a fourth layer would be a spec edit with nothing to check it against. |
+| Label lists | §12.1.5 | Provisional | Yes | Stated in 0.29, with the source column named per query. Q12 only. |
+| Q09 relatedness is one hop | §12.10 | Provisional | Yes | Stated in 0.29. Non-transitive, deliberately. |
+| Report `clean`, `rowIds`, `count` | §9.5 | Provisional | Yes | Stated in 0.29. `clean` was listed in §9.5 and never defined; the semantics lived only in `findings.ts`. |
 | All sixteen queries | §12.2–12.17 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |
 | Expectation coverage | — | Provisional | Partly | Four results now sit at three different positions. The rendered-markdown expectations still cluster on scene 12, and will until the queries behind them are specified. |
 | Results exclude `cut` rows | §12.1.2 | Provisional | Yes | Follows §6.6.1. Settled before the other fourteen queries were blessed, so they get blessed once. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
 | Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
 | Shot-code allocation | §4.4.3 | Provisional | Yes | Continue-past-highest, with the stated no-retired-codes limitation. |
-| Restamping under `scene_numbering` | §4.4.4 | Provisional | Yes | |
-| `project.scene_numbering` | §4.2 | Provisional | Yes | Schema 2.5. Two values today; a third (per-act, per-reel) is conceivable. |
+| Restamping under `numbering_policy` | §4.4.4 | Provisional | Yes | Corrected in 0.29: §4.4.4 had cited `project.scene_numbering`, removed in schema 2.12. |
 | Pattern 1 — explicit rows | §4.3 | Stable | Yes | |
 | Pattern 2 — persistence | §4.3 | Stable | Yes | Pinned. |
 | Pattern 3 — latest wins | §4.3 | Stable | Yes | Pinned. |

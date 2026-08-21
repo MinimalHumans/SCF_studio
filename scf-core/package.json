@@ -4,7 +4,7 @@
   "description": "SCF (Story Context Framework) core: registry types, database layer, and resolution/readiness semantics. UI-free. Structured publishable, unpublished until the format settles (design decision 6, 2026-07-15).",
   "private": true,
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "exports": {
     ".": "./src/index.ts",
     "./node": "./src/node.ts",

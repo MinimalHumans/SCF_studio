@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.28 (draft) — not a release.**
+**Version 0.29 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -103,7 +103,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.28` (draft).
+- **Specification version** — this document. Currently `0.29` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -499,11 +499,11 @@ counter, which this version does not define.
 
 #### 4.4.4 Restamping
 
-When a scene's number changes and `project.scene_numbering` is
+When a scene's number changes and `project.numbering_policy` is
 `derived`, an implementation MUST restamp each of that scene's shot
 codes onto the new number, preserving the ordinal (§4.4.2).
 
-When `scene_numbering` is `fixed`, shot codes MUST be left unchanged
+When `numbering_policy` is `fixed`, shot codes MUST be left unchanged
 along with the scene numbers. That is the state a distributed shot list
 requires.
 
@@ -969,10 +969,50 @@ A validation report MUST carry:
   REPORT, which changes for reasons unrelated to the format reported on.
 - `toolSchemaVersion` and `fileSchemaVersion` — what the tool knows, and
   what the file claims. They differ routinely and both matter.
-- `source`, `counts`, `clean`, and `findings`.
+- `source` — identifies the file reported on, never its contents.
+- `counts` — how many findings were raised at each severity of §9.4.
+  **Every severity is a key, including those with a count of zero**, so
+  a consumer never has to distinguish an absent key from a zero.
+- `clean` — **true when `counts.error` is zero**, and false otherwise.
+  It is a restatement of the error count, not a second judgement:
+  warnings and info findings do not affect it. **`clean` does not mean
+  "no findings"**, and it never means the file was accepted or refused
+  — §9.1 leaves that to the consumer. It says only that no two
+  conforming readers would disagree about what this file says.
+- `findings` — the findings, in §9.4's order.
 
-Each finding carries its code, severity, table, row ids, message, count,
-and the specification section it derives from.
+Each finding carries:
+
+| | |
+|---|---|
+| `code`, `severity` | From the catalog (§9.4). |
+| `title` | The catalog's one-line title for the code, so a report reads without one. Carried on the finding rather than looked up, because a report is read where the catalog is not. |
+| `table` | The table the finding is about, or **null** where it is file-wide. |
+| `rowIds` | The rows at fault. |
+| `message` | One sentence, written for a person. **MUST NOT be parsed** — `code` is the machine-readable answer. |
+| `count` | How many occurrences this finding stands for. |
+| `spec` | The section of this document the finding derives from. |
+
+**`rowIds` is an array and MAY be empty.** It is empty when the finding
+is about a table or the file rather than about particular rows, and
+carries several ids when the finding is inherently about a set — two
+rows sharing a key, a contradictory pair. **An empty `rowIds` is not an
+absence of evidence**, and a consumer MUST NOT treat it as one; `table`
+and `message` locate a finding that no single row is at fault for.
+
+**`rowIds` carries bare row ids, and this is the one place in SCF where
+that is correct.** §6.2 and §12.1.2 forbid them in a query result
+because a result travels and describes a story. A report does not
+travel: it names one file, in `source`, and its whole purpose is to send
+a person to a row in that file. Publishing uuids instead would be
+useless at exactly the moment the report is read.
+
+**`count` is an occurrence count, not a row count**, and the two differ
+routinely: a finding standing for one duplicated uuid across two rows
+has a `count` of 1 and two entries in `rowIds`. A finding MUST NOT be
+raised more than once for the same condition on the same table — that is
+what `count` is for — and `count` is **1** for a finding that stands for
+a single occurrence, never 0.
 
 A report MUST be byte-identical across two runs over an unchanged file.
 Any volatile field — a timestamp above all — MUST be omitted by default,
@@ -1131,24 +1171,6 @@ does not preclude anyone asking others.
 published in `fixtures/expectations/`. The rendered markdown in the same
 directory is a convenience and is not a contract for any of them.
 
-### 12.1.3 Composition
-
-An earlier note recorded a decision that a composite query's result
-would **nest** the result bodies of the queries it is built from. That
-decision has not been applied, because the premise was wrong: no
-canonical query calls another. What look like composites assemble their
-own answers from the same resolvers, and Q01 and Q02 share a helper
-rather than a result.
-
-So each query defines its own result shape. Where two queries genuinely
-share a composition — as Q01 and Q02 do — the shared part is one
-function in one place, and both results state the same structure for it.
-Nesting remains available where a query genuinely is built by calling
-another, and carries the inner `result` body without its envelope.
-**Exactly one query does this**: Q02's media layer is Q13's answer at a
-position (§12.16), and it carries Q13's result body with the query it
-came from named.
-
 ### 12.1 What a query returns
 
 #### 12.1.1 The result envelope
@@ -1173,15 +1195,44 @@ markdown, HTML, prose — is a convenience and is NOT normative.** Two
 implementations that produce the same result and print it differently
 are both conforming.
 
-A row appears in a result as its `uuid` plus its authored fields:
+**The projected row.** Wherever a result carries a row, it carries an
+object with exactly two members:
+
+| Member | |
+|---|---|
+| `uuid` | The row's identity (§6.1), or **null** when the row carries none. |
+| `fields` | An object holding that row's values under the registry's own column names. |
+
+Both members are ALWAYS present, and `fields` is present even when it
+holds nothing, as `{}`. A row with nothing authored is a row that
+exists, and collapsing it to null would say something else.
+
+**Nothing else appears beside them.** A projected row is not a place to
+hang a derived value, because a consumer walking `fields` has to be able
+to assume that every name in it is a registry column. Values a query
+computed are §12.1.4's business, and belong next to the projected row
+rather than inside it.
+
+The shape is nested rather than flat so that identity and content never
+share a namespace: in a flat shape a registry that one day declared a
+column named `uuid` would overwrite the row's identity, and nothing
+would notice.
+
+**What `fields` contains:**
 
 - **Row ids MUST NOT appear.** They are local to a file (§6.2) and a
   writer may renumber them. A result carrying one describes the file
   rather than the story.
 - `id`, `created_at` and `updated_at` MUST be omitted. They differ
   between two files that say the same thing.
-- Fields that are null or empty MUST be omitted, so absence is
-  unambiguous.
+- **A value that is null, absent, or the empty string MUST be omitted**,
+  so absence is unambiguous. **Zero and `false` are values, not
+  absences**, and MUST be kept — a `false` dropped as empty would be
+  read back as unauthored.
+- A column holding JSON is carried **as stored**, as the column's text,
+  unparsed. The registry declares a column's type, not a schema for its
+  contents, so a parsed value would be one implementation's reading of
+  an opaque string rather than the value the file holds.
 - **Reference columns MUST be resolved to uuids**: `scene_id` becomes
   `scene_uuid`, carrying the referenced row's uuid. A reference that
   cannot be resolved is omitted.
@@ -1193,11 +1244,128 @@ A row appears in a result as its `uuid` plus its authored fields:
   registry fields; a second vocabulary for them would be a second thing
   to keep in step.
 
+**Any remaining column whose name ends `_id` MUST be dropped.** This is
+the rule for a **polymorphic reference** — a column such as
+`motif_appearance.entity_id` or `thematic_connection.entity_id`, whose
+target entity is named by a sibling column at run time and which
+therefore carries no `referenceEntity` for the previous rule to act on.
+Dropping it is not a loss of information but a refusal to publish a row
+id under a name that looks like content. The sibling column naming the
+kind — `entity_type` — is an ordinary stored value and is kept.
+
+**Where a query needs the target itself, it MUST resolve it and carry it
+beside the projected row, never inside it.** §12.11 is the worked
+example: Q10 keeps `entity_type` in the connection's `fields`, drops
+`entity_id`, and publishes `targetEntity`, `targetUuid` and `targetName`
+as members of the carrier record. A polymorphic reference whose kind is
+not a registry entity, or whose row is absent, resolves to a null
+`targetUuid`; that is a legitimate answer and not a finding (§9.2).
+
 **A result MUST NOT contain a cut row** (§6.6.1). It carries
 `lifecycle_status` on the rows it does contain, because an
 implementation may legitimately mark something cut between one answer
 and the next, and a consumer holding a result should be able to see what
 it was told.
+
+#### 12.1.3 Composition
+
+An earlier note recorded a decision that a composite query's result
+would **nest** the result bodies of the queries it is built from. That
+decision has not been applied, because the premise was wrong: no
+canonical query calls another. What look like composites assemble their
+own answers from the same resolvers, and Q01 and Q02 share a helper
+rather than a result.
+
+So each query defines its own result shape. Where two queries genuinely
+share a composition — as Q01 and Q02 do — the shared part is one
+function in one place, and both results state the same structure for it.
+Nesting remains available where a query genuinely is built by calling
+another, and carries the inner `result` body without its envelope.
+**Exactly one query does this**: Q02's media layer is Q13's answer at a
+position (§12.16), and it carries Q13's result body with the query it
+came from named.
+
+#### 12.1.4 Values that are not rows
+
+Not every member of a result is a projected row, and the difference is
+normative, because the two obey **opposite rules about absence**.
+
+A **derived record** is an object a query composes rather than reads. It
+mixes values drawn from several rows with values a resolver computed, so
+no single registry column set describes it. §12.8's `references` entries
+are the clearest case: the asset's `identifier` comes from the asset
+row, `anchorName` from the link that reached it, `state` and `detail`
+from the resolver, and `sizeBytes` from the filesystem.
+
+**A derived record has a fixed member set, declared by the query's
+section below, and every declared member MUST be present. An absent
+value is carried as null and MUST NOT be omitted.** §12.1.2's
+omit-empties rule does not apply here and MUST NOT be applied to it.
+
+The asymmetry is deliberate. In a projected row, an absent field means
+"not authored", and a consumer can discover which fields could have been
+there by reading the registry. A derived record has no registry to ask,
+so an omitted member and a member that legitimately has no value would
+be indistinguishable, and a consumer could not tell a reference with no
+role from a reference whose role it failed to parse. This is why
+`"role": null` appears in a published Q13 result while an unauthored
+`role` on a projected row is simply gone.
+
+A **label list** is an array of bare strings naming rows the result does
+not carry — §12.1.5.
+
+A **scalar** — a count, a boolean, a threshold — is itself. Where a
+scalar is a **judgement rather than a fact**, the query MUST publish
+whatever produced it alongside it, so a consumer can see the basis
+instead of inferring it: §12.10 requires `densityThreshold` beside
+`dense` for exactly this reason.
+
+#### 12.1.5 Vocabularies and label lists
+
+Every string in a result is one of three things, and each query's
+section below MUST say which of the three each of its strings is:
+
+| | |
+|---|---|
+| **A stored value** | Carried through from a column. Its vocabulary, where it has one, is the registry's, and this section adds nothing to it. |
+| **A closed vocabulary** | A fixed set of strings **this specification** defines and a conforming implementation MUST produce exactly. Adding a member is a change to this specification. |
+| **A label list** | An array of bare strings, each the `name` of a row the result does not otherwise carry. |
+
+The closed vocabularies of §12 are: the resolution states of §8.3, as
+they appear in §12.8's `state` and in every `counts` keyed by them; the
+readiness severities of §12.9; and §12.8's `provenance`. There are no
+others. A string not covered by one of them is a stored value or a label
+and is named as such where it appears.
+
+**A label list is a convenience, not an identity.** A bare name cannot
+be resolved back to a row — two rows may carry the same one, and a name
+may be edited without the thing it names changing. **A consumer needing
+identity MUST ask the query that carries the rows themselves**, which
+for §12.5's lists is §12.4 at either position.
+
+They exist because the queries that use them are **diffs**, and a diff
+whose two sides are full projections is unreadable at the moment a
+person most wants to read it. Where a query carries a label list, its
+section below MUST name the column the labels are taken from.
+
+#### 12.1.6 Order within a result
+
+**Every array in a result is ordered, and each query's section below
+states the order for each of its arrays.** An array whose order is not
+stated there is in **story order** (§4.1). Nothing in a result is in row
+order, which is a fact about the file rather than the story.
+
+**Member order within an object is not part of the answer.** Results
+compare as JSON values, not as bytes, on the same reasoning as §11.6.
+An implementation MAY serialise members in any order and remain
+conforming.
+
+The **published artifacts** are nonetheless serialised to a fixed order
+so that they diff cleanly and can be regenerated and checked byte for
+byte: envelope members in the order §12.1.1 lists them, `fields` keys
+ascending by code point. That is a property of the artifacts, not a
+requirement on an implementation, and conformance is never a byte
+comparison against them.
 
 ### 12.2 Q05 — Voice direction
 
@@ -1285,12 +1453,25 @@ Parameters: `from`, `to`.
 | Field | |
 |---|---|
 | `from`, `to` | The two scenes, projected. |
-| `characters` | Each character present at either position, with `statesFrom` and `statesTo`. |
-| `relationships` | Each relationship with a stage at either position, as `stageFrom` and `stageTo`. |
-| `props` | Each prop with a state at either position, as `whereFrom` and `whereTo`. |
+| `characters` | Each character present at either position, projected, with `statesFrom` and `statesTo`. |
+| `relationships` | Each relationship with a stage at either position, projected, with `stageFrom` and `stageTo`. |
+| `props` | Each prop with a state at either position, projected, with `whereFrom` and `whereTo`. |
 
 A row appears when it has something to say at **either** position, so an
 appearance and a disappearance are both visible.
+
+**The paired members are labels, not rows** (§12.1.5), and each names
+the column it is taken from:
+
+| Member | Kind | Taken from |
+|---|---|---|
+| `statesFrom`, `statesTo` | Label list, resolved by §4.5 pattern 2, **oldest first** | `character_state.name` |
+| `stageFrom`, `stageTo` | A single label, or **null** where no stage is in force | `relationship_state.stage_label` |
+| `whereFrom`, `whereTo` | A single label, or **null** where no state is in force | `prop_state.whereabouts` |
+
+Each is a derived record member under §12.1.4, so a null is carried
+rather than omitted. **A consumer needing the state rows themselves MUST
+ask §12.4 at either position**, which returns them projected.
 
 **The two positions are ordered by §4.1, never by their scene numbers.**
 Under `fixed` numbering a scene numbered 16 may play after one numbered
@@ -1330,11 +1511,33 @@ appear in the result rather than the envelope.
 |---|---|
 | `subject`, `intent` | What was asked, as literals. |
 | `trail` | The resolution trail, **broadest first**, matching §7.4's root-first convention. |
-| `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles. `uuid`, name, identifier, format, role, intent, provenance, resolution `state` (§8.3), `detail` for anything not resolved, size, and `anchorName` where the reference came from an anchor. |
-| `counts` | References per resolution state. |
+| `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles. |
+| `counts` | References per resolution state, keyed by §8.3's states. Every state is a key, including those with a count of zero. |
 | `rootMapped` | Whether the session had a root mapping at all. |
 
 **A reference names its asset by uuid**, never by row id (§12.1.2).
+
+**Each reference is a derived record** (§12.1.4), not a projected row.
+Its members are fixed, and one absent is carried as **null**:
+
+| Member | Kind | |
+|---|---|---|
+| `uuid` | Identity | The asset's own uuid, taken from the asset row. Never resolved from a row id — see below. |
+| `name`, `identifier`, `format` | Stored values | From the asset. |
+| `role` | Stored value | `asset_bundle_item.role_in_bundle` where the cascade reached this asset through a bundle. Free-form; the registry constrains it, this section does not. Null otherwise. |
+| `anchorName` | Stored value | `entity_anchor.name` where the reference came from an anchor. Null otherwise. |
+| `intent` | Literal | Echoes the `intent` asked for. |
+| `provenance` | **Closed vocabulary** | Which layer put this reference in force: `shot override`, `anchor`, `bundle`. |
+| `state` | **Closed vocabulary** | The resolution state, §8.3. |
+| `detail` | Prose | Why, for anything not `resolved`. Written for a person and **MUST NOT be parsed**; `state` carries the machine-readable answer. Null when `state` is `resolved`. |
+| `sizeBytes` | Number | Read from the resolved file. Null unless `state` is `resolved`. |
+
+**An asset appears at most once.** The layers are walked most specific
+first and an asset already carried is skipped, so `provenance` names the
+**strongest** layer that reached it rather than every layer that did. An
+asset both overridden at the shot and present in the bundle appears once,
+as `shot override`. Reporting it twice would make `counts` disagree with
+the number of distinct assets a consumer has to fetch.
 
 **`trail` and `references` run in opposite directions**, and both are
 deliberate: the trail reads as an explanation, broadest first, the way
@@ -1424,9 +1627,21 @@ Parameter: `scene`.
 |---|---|
 | `scene` | The scene, projected. |
 | `manifest` | Each motif placed here: the `motif`, its `appearance` at this position, and its evolved `state` there by pattern 3 (§4.5). |
-| `candidates` | Motifs related to something placed here that are **not** placed here. |
+| `candidates` | Motifs related to something placed here that are **not** placed here, projected. |
 | `dense` | Whether the manifest exceeds the density threshold. |
 | `densityThreshold` | The threshold that produced `dense`. |
+
+**Related means one hop along `motif.related_motif_id`**, and nothing
+else. A motif is a candidate when some motif in `manifest` points at it
+through that column and it is not itself placed in this scene. **The
+relation is followed exactly once and is not transitive**: a motif
+reached only through another candidate is not a candidate. A closure
+would grow with the project until the list stopped being an aid to
+judgement, which is the only thing it is for.
+
+`candidates` carries **each motif once**, in the order the manifest
+first reaches it. `manifest` is in the row order of the appearances at
+this scene.
 
 A **candidate is not an obligation.** It is a related motif absent from
 this scene, offered because a placement decision is easier to make when
@@ -1448,7 +1663,7 @@ entire spine rather than a position.
 | Field | |
 |---|---|
 | `theme` | The theme, projected. |
-| `carriers` | Each `thematic_connection`, with the entity kind it points at, that row's `targetUuid` and name, and the scenes it reaches as uuids in story order. |
+| `carriers` | Each `thematic_connection` projected, plus `targetEntity`, `targetUuid`, `targetName` and `sceneUuids` in story order. |
 | `spine` | **Every scene in story order**, each with the number of carriers reaching it. |
 
 **The zeroes are the point.** A spine listing only the scenes a theme
@@ -1459,6 +1674,13 @@ carriers or not.
 The spine is in **story order** (§4.1), never scene-number order, and
 excludes cut scenes (§6.6.1). A carrier reaching a cut scene reaches
 nowhere, so its `sceneUuids` and the spine's counts agree.
+
+**`thematic_connection.entity_id` is polymorphic**, so §12.1.2 drops it
+from the projected connection and this query resolves it into the three
+`target*` members beside it. `entity_type` stays in the connection's
+`fields` as an ordinary stored value. A connection whose `entity_type`
+is not a registry entity, or whose row is absent, carries a null
+`targetUuid` and `targetName` and reaches no scenes.
 
 How a carrier reaches scenes depends on what it points at: a scene
 carries the theme at itself; a motif carries it wherever it appears; a

@@ -431,7 +431,11 @@ export interface Q13Reference {
 export interface Q13Result {
   subject: string;
   intent: string;
-  /** The cascade trail, most specific first. */
+  /**
+   * The cascade trail, BROADEST FIRST — spec §12.8, matching §7.4's
+   * root-first convention. Runs opposite to `references` below, which
+   * is most specific first so the opinion in force is at the top.
+   */
   trail: string[];
   references: Q13Reference[];
   /** How many references landed in each resolution state (§8.3). */
