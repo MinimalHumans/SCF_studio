@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Spec §6.6 — a cut row is not in the film.
  *

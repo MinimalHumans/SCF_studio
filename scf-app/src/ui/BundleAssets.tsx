@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * BundleAssets — the missing half of the bundle editor.
  *

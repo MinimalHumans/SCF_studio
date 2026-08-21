@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * AssetFileFacts — what the file itself says (metadata, not storage).
  *

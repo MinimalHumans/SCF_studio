@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useState } from "react";
 import type { FieldDef } from "@scf-core/registry.ts";
 import type { SqlValue } from "@scf-core/db.ts";

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useEffect, useRef } from "react";
 import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";

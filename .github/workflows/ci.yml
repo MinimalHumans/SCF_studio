@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 # SCF Studio CI
 #
 # Everything here already existed as a command. What was missing was
@@ -70,6 +71,10 @@ jobs:
 
       - name: scf-schema.sql matches initDatabase
         run: npm run check-schema-sql
+        working-directory: scf-core
+
+      - name: screenplay-tables.json matches initDatabase and LINE_TYPES
+        run: npm run check-screenplay-tables
         working-directory: scf-core
 
       - name: finding-catalog.json matches findings.ts

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * emit_finding_catalog.mjs — write spec/finding-catalog.json.
  *

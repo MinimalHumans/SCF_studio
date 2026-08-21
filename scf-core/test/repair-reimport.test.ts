@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * repair-reimport.test.ts — the repair pass (scope-bounded) and the
  * revision flow's uuid-preserving diff.

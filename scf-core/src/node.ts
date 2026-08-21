@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * node.ts — Node driver for scf-core's SqlExec seam.
  *

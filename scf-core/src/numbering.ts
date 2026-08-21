@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * numbering.ts — resolving the numbering policy. Spec §4.3.
  *

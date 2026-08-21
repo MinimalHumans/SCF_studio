@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useMemo } from "react";
 import { q } from "@scf-core/db.ts";
 import type { Row } from "@scf-core/db.ts";

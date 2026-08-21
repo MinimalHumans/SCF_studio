@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fileAdapter.ts — all file I/O goes through one adapter interface.
  *

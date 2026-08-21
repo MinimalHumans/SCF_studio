@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * queryPaths.ts — machine-readable canonical query paths (G6, part 2).
  * Canonical query paths; see docs/conventions.md.

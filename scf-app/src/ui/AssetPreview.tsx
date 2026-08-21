@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * AssetPreview — showing the bytes an identifier points at (P5).
  *

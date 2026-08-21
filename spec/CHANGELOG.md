@@ -16,6 +16,78 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.30 — 2026-08-21
+
+*Describes schema 2.12.*
+
+**Minor.** One MUST and one MUST NOT added, in §1.3.1. No requirement
+removed or changed in meaning.
+
+### §1.3.1 — the screenplay tables are published
+
+`screenplay-tables.json` joins the manifest, taking it to twenty-six
+artifacts. It carries both of §1.3's table lists with each table's
+columns, types, nullability and defaults, dumped from a database created
+by `initDatabase()` on the same reasoning as `scf-schema.sql`: a second
+description of the same tables would be free to drift from the code
+without anything noticing.
+
+**`line_type` is now stated as a closed vocabulary of fifteen values.**
+It was previously a TypeScript union — a value the compiler could see
+and a generator, a test, or a third-party reader could not. §1.3 named
+the tables, published the physical DDL, and said nothing about what may
+go in the column.
+
+The cost of that was measured. A third-party reader, building against
+§1.3, wrote `scene_heading` for a scene heading. The correct value is
+`heading`. Because `line_type` is free `TEXT`, no constraint rejected
+it, no finding fired, and no test could have caught it — and because
+story order is derived from this table (§4.1), the reader produced a
+**confidently wrong story order in silence**. That is a worse failure
+than a refusal, and §1.3.1 exists to close it.
+
+So §1.3.1 requires two things this specification had never said: a
+writer MUST NOT store a value outside the published set, and a reader
+encountering one MUST treat the line as unknown content (§10.1) and
+**MUST NOT map it to a value it resembles**. Resemblance is not a rule.
+
+The requirement is on implementations rather than on files, and §1.3.1
+says so: SQLite enforces nothing on a `TEXT` column, and **no finding is
+raised for an unrecognised `line_type`**. That is deliberate, and stated
+so that nobody reads its absence as permission.
+
+`LINE_TYPES` in `fountain/types.ts` is now a runtime array with the type
+derived from it, the artifact is generated from that array, and
+`screenplayTables.test.ts` checks the published file back against the
+code. Adding a member without regenerating fails CI.
+
+### `shapes.json` is retired
+
+It sketched the app runners' raw payload structure and predated §12: it
+recorded a flat row with an unresolved `<row-ref>` where a result
+carries `{ uuid, fields }` with the reference resolved (§12.1.2). Once
+all sixteen queries had normative `.result.json` files it was asserting
+a weaker version of the same property in a shape this specification does
+not describe — two artifacts for one property, free to disagree.
+
+`conformance.md` §5.4 records the retirement and now states the
+expectation set once: a normative result for all sixteen, rendered
+markdown for eight, a contract for none of the markdown.
+
+### Elsewhere
+
+`schema/entity_registry.py` had nine `help_text` and `description`
+strings citing `conventions.md` for a **rule** — lifecycle status,
+external ids, latest-wins position keying, state persistence, asset
+identifiers. The README calls that a defect in as many words: the spec
+states rules and the design record explains them, and a rule found only
+in the design record is a defect. Each now cites the section of this
+document that actually carries the rule. They regenerate into
+`registry.json`, which is where a consumer reads them; the schema
+version does not move, because nothing structural changed.
+
+---
+
 ## 0.29 — 2026-08-21
 
 *Describes schema 2.12.*

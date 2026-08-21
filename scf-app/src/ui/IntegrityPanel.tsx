@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * IntegrityPanel — what the script left behind.
  *

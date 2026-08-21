@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor/pasteLines.ts — keeping paste from stealing a line's identity.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fdx/parser.ts — FDX import: XML → the same typed line stream Fountain
  * produces, so Stages 2–3 are shared.

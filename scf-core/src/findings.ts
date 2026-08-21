@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * findings.ts — the finding vocabulary. Spec §9.5.
  *

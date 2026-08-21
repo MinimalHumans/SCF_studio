@@ -17,6 +17,8 @@
     "bless-corpus": "node --experimental-strip-types scripts/bless_corpus.mjs",
     "emit-schema-sql": "node --experimental-strip-types scripts/emit_schema_sql.mjs",
     "check-schema-sql": "node --experimental-strip-types scripts/emit_schema_sql.mjs --check",
+    "emit-screenplay-tables": "node --experimental-strip-types scripts/emit_screenplay_tables.mjs",
+    "check-screenplay-tables": "node --experimental-strip-types scripts/emit_screenplay_tables.mjs --check",
     "scf-check": "node --experimental-strip-types scripts/scf_check.mjs",
     "bless-negative": "node --experimental-strip-types scripts/build_negative.mjs",
     "check-negative": "node --experimental-strip-types scripts/build_negative.mjs --check",

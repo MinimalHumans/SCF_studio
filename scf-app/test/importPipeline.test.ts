@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * importPipeline.test.ts — the whole Part 3 import path against a real
  * database, headless. This is the closest this environment gets to the

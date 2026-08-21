@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { describe, expect, test } from "vitest";
 import { nextShotNumber, parseShotCode, shotCode, shotLetter,
          restampShotNumber } from "../src/shots.ts";

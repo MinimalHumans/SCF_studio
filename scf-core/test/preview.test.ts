@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * preview.test.ts — preview tiers (P5).
  *

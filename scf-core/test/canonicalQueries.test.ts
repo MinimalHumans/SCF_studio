@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Spec §12 — the canonical queries' normative results.
  *

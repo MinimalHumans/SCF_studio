@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * screenplay/rowModel.ts — Stage 2: the typed line stream becomes the row
  * model. Pure mapping, no heuristics, and — pointedly — NO entity

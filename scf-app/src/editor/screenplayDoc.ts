@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor/screenplayDoc.ts — the editor's document model glue.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * readiness.ts — Q14: readiness reports. Q14 semantics; see docs/conventions.md.
  *

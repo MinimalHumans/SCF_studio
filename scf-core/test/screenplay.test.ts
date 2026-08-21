@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * screenplay.test.ts — Stages 2 and 3.
  *

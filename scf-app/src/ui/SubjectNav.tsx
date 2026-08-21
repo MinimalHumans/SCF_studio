@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useMemo, useState } from "react";
 import { useQuery } from "./useQuery.ts";
 import { registry, rowName, useStore } from "../state/store.ts";

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * report.ts — the serialised form of a validation run. Spec §9.6.
  *

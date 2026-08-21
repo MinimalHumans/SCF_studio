@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * sqlWorker.ts — the official @sqlite.org/sqlite-wasm in a Web Worker,
  * on the opfs-sahpool VFS.

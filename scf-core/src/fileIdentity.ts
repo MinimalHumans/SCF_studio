@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fileIdentity.ts — the header stamps that make a `.scf` identifiable
  * without opening a table. Spec §1.2.

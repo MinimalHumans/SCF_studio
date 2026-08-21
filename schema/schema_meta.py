@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 schema_meta.py — the format's version and the tables outside the
 registry that still carry row identity.

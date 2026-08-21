@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Spec §10.1 and §10.3 — extensibility, tested rather than asserted.
  *

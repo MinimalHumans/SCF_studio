@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 SCF Entity Registry — Full Schema
 ====================================
@@ -180,7 +181,7 @@ class EntityDef:
             options=LIFECYCLE_STATUS_OPTIONS,
             default="active",
             tab=LIFECYCLE_TAB,
-            help_text="Cross-cutting record state. See conventions.md.",
+            help_text="Cross-cutting record state. See spec §6.6.",
             auto_injected=True,
         ))
 
@@ -237,7 +238,7 @@ class EntityDef:
                 tab=EXTERNAL_TAB,
                 placeholder="identifier in external system",
                 help_text="Optional. Identifier in an external system "
-                          "(OMC, EIDR, production DB, etc.). See conventions.md.",
+                          "(OMC, EIDR, production DB, etc.). See spec §6.3.",
                 auto_injected=True,
             ),
             FieldDef(
@@ -1068,7 +1069,7 @@ register(EntityDef(
     sort_order=201,
     tier=2,
     description="The stage a relationship is in as of a story position. "
-                "Latest-wins position keying (pattern 3, conventions.md): the "
+                "Latest-wins position keying (pattern 3, spec §4.5): the "
                 "state in force at position P is the latest row keyed "
                 "at-or-before P. The prose relationship_arc / "
                 "physical_evolution fields remain as narrative summaries; "
@@ -1480,7 +1481,7 @@ register(EntityDef(
     tier=2,
     description="Custody, condition, and whereabouts of a prop as of a story "
                 "position. Latest-wins position keying (pattern 3, "
-                "conventions.md). G1, schema 2.2.",
+                "spec §4.5). G1, schema 2.2.",
     fields=[
         FieldDef("name", "Name"),
         FieldDef("prop_id", "Prop", "reference",
@@ -2491,7 +2492,7 @@ register(EntityDef(
     tier=4,
     description="A motif's evolution stage as of a story position — how its "
                 "meaning or loudness has shifted. Latest-wins position keying "
-                "(pattern 3, conventions.md). The motif's "
+                "(pattern 3, spec §4.5). The motif's "
                 "evolution_description remains the narrative summary. "
                 "G1, schema 2.2.",
     fields=[
@@ -2652,7 +2653,7 @@ register(EntityDef(
     tier=4,
     description="Position-keyed color intent — the row form of the color "
                 "script (Phase B found color_script itself is prose). "
-                "Latest-wins position keying (pattern 3, conventions.md): "
+                "Latest-wins position keying (pattern 3, spec §4.5): "
                 "the intent in force at P is the latest entry at-or-before P. "
                 "Act-level intent is keyed to the act's first scene by "
                 "convention. Sits in the visual direction cascade between "
@@ -2974,8 +2975,8 @@ register(EntityDef(
                 "modality. Replaces physical_state and vocal_state (2.0 consolidation). "
                 "The modality enum mirrors bundle intents so per-modality tools can "
                 "filter states the same way they filter bundles. Temporal reach is "
-                "governed by the persistence field — see 'Persistence and position' "
-                "in conventions.md.",
+                "governed by the persistence field — see spec §4.5, pattern 2 "
+                "— the state is in force from its keyed scene onward.",
     fields=[
         FieldDef("name", "Name"),
         FieldDef("character_id", "Character", "reference",
@@ -2988,7 +2989,7 @@ register(EntityDef(
                  options=["scene_only", "until_resolved"],
                  help_text="scene_only (default): in force only for the keyed scene. "
                            "until_resolved: in force from the keyed scene onward, "
-                           "until resolved_at_scene. See conventions.md."),
+                           "until resolved_at_scene. See spec §4.5, pattern 2."),
         FieldDef("resolved_at_scene_id", "Resolved At Scene", "reference",
                  reference_entity="scene",
                  help_text="For until_resolved states: the scene at which this state "
@@ -3333,7 +3334,7 @@ register(EntityDef(
                  placeholder="@project/characters/eleanor/face_ref.png",
                  help_text="Rooted, portable address of the bytes. "
                            "@project is the project folder. Resolution is "
-                           "derived and never stored. See conventions.md §9."),
+                           "derived and never stored. See spec §8.2."),
         FieldDef("size_bytes", "Size (bytes)", "integer",
                  tab="Resolution",
                  help_text="Cached hint for staleness detection. Not "

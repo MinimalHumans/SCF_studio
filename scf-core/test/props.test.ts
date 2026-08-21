@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { beforeAll, describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";

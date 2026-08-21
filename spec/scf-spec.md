@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.29 (draft) — not a release.**
+**Version 0.30 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -103,7 +103,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.29` (draft).
+- **Specification version** — this document. Currently `0.30` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -240,6 +240,32 @@ by the reference implementation rather than written by hand, so it
 cannot drift from what that implementation produces. It is the physical
 schema only: a database created from it alone is structurally conforming
 and semantically empty.
+
+#### 1.3.1 The screenplay tables
+
+The infrastructure tables are published as
+[`screenplay-tables.json`](screenplay-tables.json): both lists, each
+table's columns with types, nullability and defaults, and what each
+table is for. Their columns are not in the registry, because they are
+not registry entities, and until 0.30 nothing published them.
+
+**`line_type` is a closed vocabulary of fifteen values, published in
+that file.** It is carried by `screenplay_lines.line_type` and
+`screenplay_version_lines.line_type`, both of which default to `action`.
+
+A writer MUST NOT store a value outside the published set. A reader
+encountering one MUST treat that line as unknown content (§10.1) and
+**MUST NOT map it to a value it resembles**. The set is closed and the
+resemblance is not a rule: a scene heading is `heading`, and
+`scene_heading` is not a synonym for it.
+
+The column is declared `TEXT` and SQLite enforces nothing, so this is a
+requirement on implementations rather than a constraint the file can
+carry. **No finding is raised for an unrecognised `line_type`**, which
+is deliberate and is why the requirement is stated here: story order is
+derived from this table (§4.1), so a reader that guesses wrong produces
+a wrong answer confidently and in silence. That is not hypothetical — it
+is how this subsection came to exist.
 
 ### 1.4 Missing columns
 

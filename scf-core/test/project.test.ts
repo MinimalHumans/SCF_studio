@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * project.test.ts — the folder-is-a-project rule.
  *

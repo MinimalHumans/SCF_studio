@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * handleStore.ts — remember which .scf file a session was writing to,
  * and which folder it lives in, across a reload.

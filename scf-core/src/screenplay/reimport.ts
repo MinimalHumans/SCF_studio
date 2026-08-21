@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * screenplay/reimport.ts — uuid-preserving re-import (the revision flow's
  * diff step). The sacred flow: export → edit elsewhere → re-import must

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * AssetBrowser — navigating a project's assets (P4).
  *

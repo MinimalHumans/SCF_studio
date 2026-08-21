@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * mediaReferences.ts — what a query says about the assets it reaches (P6).
  *

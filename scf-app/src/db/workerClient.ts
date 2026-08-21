@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * workerClient.ts — main-thread client for the SQLite worker.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * assetLocator.ts — the I/O half of asset resolution.
  *

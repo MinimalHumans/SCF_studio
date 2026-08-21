@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * registry.ts — the SCF entity registry, as consumed by scf-core.
  *

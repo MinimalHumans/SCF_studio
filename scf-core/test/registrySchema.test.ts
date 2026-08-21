@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * spec/registry.schema.json is published so a third party can consume
  * the registry without running any of this code. A published schema

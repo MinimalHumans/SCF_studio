@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * runners.ts — the query page's engine bindings.
  *

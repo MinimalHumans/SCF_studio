@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * emit_normative_data.mjs — publish the two remaining normative facts
  * that lived only in TypeScript.

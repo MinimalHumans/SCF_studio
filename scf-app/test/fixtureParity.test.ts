@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * The conformance fixture exists twice: `fixtures/hollow_creek.scf` is
  * what the suites open, `scf-app/public/hollow_creek.scf` is what the

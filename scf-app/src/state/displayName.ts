@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * displayName.ts — what a row is CALLED on screen, in one place.
  *

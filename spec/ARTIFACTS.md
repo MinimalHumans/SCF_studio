@@ -33,8 +33,9 @@ sha256sum -c spec/SHA256SUMS
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `scf-core/registry/registry.json` | `49fe6cf205c24f40…` | The normative field set. Spec §2.1. |
+| `scf-core/registry/registry.json` | `f983cd1659ae6631…` | The normative field set. Spec §2.1. |
 | `spec/scf-schema.sql` | `6f10cb380911f2df…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
+| `spec/screenplay-tables.json` | `985b2561b3aaa1be…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
 | `spec/registry.schema.json` | `448b8495efdfd09e…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `a5e4c75b4a741a9e…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `83fb4926595bafd4…` | What Q14 assesses, per target query. Spec §12.9.1. |

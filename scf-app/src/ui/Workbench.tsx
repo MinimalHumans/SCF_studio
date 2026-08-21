@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { registry, useStore } from "../state/store.ts";
 import { CategoryTree } from "./CategoryTree.tsx";
 import { SubjectNav } from "./SubjectNav.tsx";

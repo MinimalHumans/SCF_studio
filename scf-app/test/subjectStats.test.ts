@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
 import registryJson from "../../scf-core/registry/registry.json"
   with { type: "json" };

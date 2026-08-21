@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * conformance.readiness.test.ts — TypeScript port of
  * the readiness rules against the Hollow Creek fixture.

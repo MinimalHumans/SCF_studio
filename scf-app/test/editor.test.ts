@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor.test.ts — the Part 3 state layer, headless.
  *

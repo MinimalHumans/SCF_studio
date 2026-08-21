@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
 // bless_corpus.mjs — (re)generate expected classification files for the
 // golden corpus. For every corpus script, writes <name>.types.txt beside
 // it: one line type per input line. Private-tier expectations live in the

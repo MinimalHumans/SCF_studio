@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo, useState } from "react";
 import type { Row, SqlValue } from "@scf-core/db.ts";
 import { q } from "@scf-core/db.ts";

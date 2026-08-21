@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * The negative fixtures. Spec §9, `conformance.md` §5.3.
  *

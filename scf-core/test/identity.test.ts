@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * identity.test.ts — the uuid inspector's answers, pinned.
  *

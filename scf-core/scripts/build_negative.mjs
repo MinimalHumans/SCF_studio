@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * build_negative.mjs — the negative fixtures.
  *

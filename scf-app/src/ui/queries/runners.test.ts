@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * runners.test.ts — every query runner exercised headlessly against the
  * Hollow Creek fixture (Node driver). Human views aren't covered here;

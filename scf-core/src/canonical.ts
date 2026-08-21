@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * canonical.ts — the canonical dump. Spec §11.6.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor/lineState.ts — line identity and line type as CodeMirror state.
  *

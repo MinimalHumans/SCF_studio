@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useState } from "react";
 import type { EntityDef } from "@scf-core/registry.ts";
 import { newUuid, q } from "@scf-core/db.ts";

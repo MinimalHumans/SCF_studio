@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * The published artifacts of spec §9.4 and `conformance.md` §5.3.
  *

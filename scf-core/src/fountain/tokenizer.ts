@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fountain/tokenizer.ts — Stage 1: text → typed line stream.
  *

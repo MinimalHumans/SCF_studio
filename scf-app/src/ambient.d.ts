@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Ambient declarations: wa-sqlite example modules (shipped untyped) and
  * the File System Access API (Chromium; not yet in lib.dom).

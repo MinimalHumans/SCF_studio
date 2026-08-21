@@ -323,21 +323,21 @@ unstamped header.
 
 `fixtures/expectations/`, blessed and checked on every test run.
 
-Two artifacts per the reasoning below, neither containing anything
-file-local:
+**`<Q>.result.json` is the normative artifact for every one of the
+sixteen**, and carries nothing file-local: rows by uuid, no row ids, no
+timestamps, references resolved.
 
-- `<Q>.expected.md` — the rendered context markdown, which is what a
-  consumer of these queries actually receives. Names, not ids.
-- `shapes.json` — an **internal** structural check over the app's
-  runner payloads: key names, array lengths, tuple positions, with
-  `id`, `created_at` and `updated_at` dropped and foreign keys recorded
-  as `<row-ref>` rather than as values. It predates §12 and describes
-  the runners' own shape, **not** the result structure §12.1 defines —
-  it records a flat row with a `<row-ref>` where a result carries
-  `{ uuid, fields }` with the reference resolved. It is unpinned, is not
-  a published artifact, and **a third-party implementation should
-  ignore it**: `fixtures/expectations/*.result.json` are the normative
-  artifacts for §12.
+`<Q>.expected.md` accompanies eight of them — the rendered context
+markdown, which is what a consumer of those queries actually receives.
+Names, not ids. It is a convenience and a contract for none of them.
+
+A third artifact, `shapes.json`, was **retired in 0.30**. It sketched
+the app runners' raw payload structure, predated §12, and recorded a
+flat row with an unresolved `<row-ref>` where a result carries
+`{ uuid, fields }`. Once all sixteen queries had normative results it
+asserted a weaker version of the same property in a shape this
+specification does not describe — two artifacts for one property,
+free to disagree.
 
 **Payloads themselves are not blessed.** They carry row ids, and row ids
 are file-local (§6.2), so a second implementation reading the same

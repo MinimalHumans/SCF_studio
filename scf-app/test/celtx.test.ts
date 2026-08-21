@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * celtx.test.ts — the import-normalization contract, pinned on the real
  * Celtx export that motivated it (skipped when the private corpus is

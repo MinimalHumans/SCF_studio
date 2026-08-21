@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * features.test.ts — beats (G5), versions, prop tags, headless against a
  * real database. The re-anchoring tests exercise the exact contract the

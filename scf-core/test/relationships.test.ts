@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * relationships.test.ts — the both-columns rule, made executable.
  *

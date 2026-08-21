@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * conformance.canonical.test.ts — the executable statement of SCF's
  * resolution semantics, run against the checked-in Hollow Creek fixture.

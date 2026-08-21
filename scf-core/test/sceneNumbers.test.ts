@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Spec §4.2. The last describe block is the one that matters most: the
  * TypeScript comparison and its SQL twin must order the same list the

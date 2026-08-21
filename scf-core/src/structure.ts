@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * structure.ts — acts and sequences as contiguous spans over the scene
  * order, derived from a single anchor each.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fileMetadata.ts — reading what a file says about itself.
  *

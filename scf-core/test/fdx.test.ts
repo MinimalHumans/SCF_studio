@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fdx.test.ts — FDX import onto the shared typed line stream.
  *

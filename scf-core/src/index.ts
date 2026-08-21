@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * scf-core — SCF (Story Context Framework) core library.
  *

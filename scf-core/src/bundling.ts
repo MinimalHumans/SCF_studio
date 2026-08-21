@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * bundling.ts — getting an asset into a bundle.
  *

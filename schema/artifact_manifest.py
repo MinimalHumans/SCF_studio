@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """
 artifact_manifest.py — record the published artifacts for a schema
 version, with checksums.
@@ -40,6 +41,9 @@ ARTIFACTS = [
      "The normative field set. Spec §2.1."),
     ("spec/scf-schema.sql",
      "The physical DDL, dumped from initDatabase(). Spec §1.3."),
+    ("spec/screenplay-tables.json",
+     "The screenplay infrastructure tables and the `line_type` "
+     "vocabulary. Spec §1.3."),
     ("spec/registry.schema.json",
      "JSON Schema for registry.json, so it can be consumed without "
      "running the reference implementation."),

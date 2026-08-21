@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useMemo } from "react";
 import { referenceGraph, registry, rowName, useStore }
   from "../state/store.ts";

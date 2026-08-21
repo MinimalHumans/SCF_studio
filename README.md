@@ -24,7 +24,7 @@ normative artifact.
 | `scf-app/` | The editor — a browser application over the same core, SQLite in OPFS, CodeMirror screenplay editor, canonical query pages. |
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
-| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. The manifest lists twenty-five in all, including the sixteen canonical query results under `fixtures/`. |
+| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. `screenplay-tables.json` (the screenplay infrastructure tables and the `line_type` vocabulary). The manifest lists twenty-six in all, including the sixteen canonical query results under `fixtures/`. |
 | `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `story-structure-design-record.md`. |
 
 ## Getting started
@@ -73,7 +73,7 @@ picks up the extra coverage automatically.
 
 | Job | What fails it |
 |---|---|
-| `artifacts` | A generated file nobody regenerated: `registry.json`, `scf-schema.sql`, `finding-catalog.json`, the negative reports, the corpus expectations, `ARTIFACTS.md`, `SHA256SUMS`. |
+| `artifacts` | A generated file nobody regenerated: `registry.json`, `scf-schema.sql`, `screenplay-tables.json`, `finding-catalog.json`, the negative reports, the corpus expectations, `ARTIFACTS.md`, `SHA256SUMS`. |
 | `core` | Format semantics — typecheck, 500+ tests, and `scf-check` against the fixture. |
 | `app` | The editor — typecheck, tests (including the blessed query expectations), production build. |
 

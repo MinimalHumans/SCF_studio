@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor/importPipeline.ts — the import flow behind the staging screen.
  *

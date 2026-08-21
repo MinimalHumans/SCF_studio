@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * relationships.ts — reading a relationship from both ends.
  *

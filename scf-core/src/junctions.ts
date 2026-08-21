@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * junctions.ts — what makes two link rows the same link.
  *

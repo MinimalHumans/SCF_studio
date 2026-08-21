@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * assetIndex.test.ts — the asset browser's data layer (P4).
  *

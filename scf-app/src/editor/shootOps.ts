@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * shootOps.ts — the writes the shoot outline makes.
  *

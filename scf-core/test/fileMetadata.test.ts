@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fileMetadata.test.ts — reading headers without decoding (P5 follow-on).
  *

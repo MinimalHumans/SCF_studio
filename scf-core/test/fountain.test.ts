@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * fountain.test.ts — Stage 1 test suite.
  *

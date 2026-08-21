@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * subjectStats.ts — how often a subject appears, and where it first
  * does, so the subject rail can be sorted by something other than the

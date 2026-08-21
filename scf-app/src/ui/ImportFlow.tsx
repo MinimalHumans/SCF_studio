@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * ImportFlow — the staging screen between parsing and rows.
  *

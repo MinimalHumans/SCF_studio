@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// SPDX-License-Identifier: Apache-2.0
 /**
  * scf-check — validate a .scf and report findings. Spec §9.
  *

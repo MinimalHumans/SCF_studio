@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * registryGraph.ts — derived views over registry.json.
  *

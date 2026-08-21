@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * assets.test.ts — addressing and resolution (P3).
  *

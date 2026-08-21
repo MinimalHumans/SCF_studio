@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import type { Row } from "@scf-core/db.ts";
 import { registry, useStore } from "../../state/store.ts";
 import { AuthoredFields } from "./QueryRunner.tsx";

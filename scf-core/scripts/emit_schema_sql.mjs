@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * emit_schema_sql.mjs — write spec/scf-schema.sql.
  *

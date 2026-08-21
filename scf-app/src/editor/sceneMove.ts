@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor/sceneMove.ts — moving a whole scene within the script.
  *

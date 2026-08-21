@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor/sceneOps.ts — removing and duplicating a scene from the rail.
  *

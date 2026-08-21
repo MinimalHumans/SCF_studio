@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Spec §4.3 — the numbering policy, across schema 2.11's rename.
  *

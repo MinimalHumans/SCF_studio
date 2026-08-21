@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * queryResult.ts — the canonical queries' normative answers. Spec §12.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * preview.ts — what can actually be shown (P5).
  *

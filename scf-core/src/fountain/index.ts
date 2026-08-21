@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 export * from "./types.ts";
 export * from "./tokenizer.ts";
 export * from "../fdx/parser.ts";

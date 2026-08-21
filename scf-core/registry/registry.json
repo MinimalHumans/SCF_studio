@@ -250,7 +250,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -261,7 +261,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -511,7 +511,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -522,7 +522,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -673,7 +673,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -684,7 +684,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -873,7 +873,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -884,7 +884,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -1033,7 +1033,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -1198,7 +1198,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -1465,7 +1465,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -1476,7 +1476,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -1627,7 +1627,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -1737,7 +1737,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -2179,7 +2179,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -2334,7 +2334,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -2601,7 +2601,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -2756,7 +2756,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -2948,7 +2948,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -3106,7 +3106,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -3282,7 +3282,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -3459,7 +3459,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -3573,7 +3573,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -3806,7 +3806,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -3817,7 +3817,7 @@
       "icon": "📈",
       "nameField": "name",
       "category": "Character Depth",
-      "description": "The stage a relationship is in as of a story position. Latest-wins position keying (pattern 3, conventions.md): the state in force at position P is the latest row keyed at-or-before P. The prose relationship_arc / physical_evolution fields remain as narrative summaries; this table is the queryable truth (G1, schema 2.2).",
+      "description": "The stage a relationship is in as of a story position. Latest-wins position keying (pattern 3, spec §4.5): the state in force at position P is the latest row keyed at-or-before P. The prose relationship_arc / physical_evolution fields remain as narrative summaries; this table is the queryable truth (G1, schema 2.2).",
       "sortOrder": 201,
       "tier": 2,
       "parentEntity": null,
@@ -3902,7 +3902,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -4246,7 +4246,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -4594,7 +4594,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -4768,7 +4768,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -4974,7 +4974,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -5177,7 +5177,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -5330,7 +5330,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -5422,7 +5422,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -5552,7 +5552,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -5756,7 +5756,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -5851,7 +5851,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -5862,7 +5862,7 @@
       "icon": "📦",
       "nameField": "name",
       "category": "Prop Depth",
-      "description": "Custody, condition, and whereabouts of a prop as of a story position. Latest-wins position keying (pattern 3, conventions.md). G1, schema 2.2.",
+      "description": "Custody, condition, and whereabouts of a prop as of a story position. Latest-wins position keying (pattern 3, spec §4.5). G1, schema 2.2.",
       "sortOrder": 405,
       "tier": 2,
       "parentEntity": null,
@@ -5964,7 +5964,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -6200,7 +6200,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -6366,7 +6366,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -6499,7 +6499,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -6628,7 +6628,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -6759,7 +6759,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "parent_id",
@@ -7055,7 +7055,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -7207,7 +7207,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -7369,7 +7369,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -7603,7 +7603,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -7729,7 +7729,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -7792,7 +7792,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -7803,7 +7803,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -7941,7 +7941,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -8106,7 +8106,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -8117,7 +8117,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -8372,7 +8372,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -8383,7 +8383,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -8705,7 +8705,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -8874,7 +8874,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "parent_id",
@@ -9084,7 +9084,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "parent_id",
@@ -9294,7 +9294,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "parent_id",
@@ -9471,7 +9471,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -9604,7 +9604,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -9832,7 +9832,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -9992,7 +9992,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -10127,7 +10127,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -10256,7 +10256,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -10378,7 +10378,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -10552,7 +10552,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -10748,7 +10748,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -10759,7 +10759,7 @@
       "icon": "🔶",
       "nameField": "name",
       "category": "Thematic Tracking",
-      "description": "A motif's evolution stage as of a story position — how its meaning or loudness has shifted. Latest-wins position keying (pattern 3, conventions.md). The motif's evolution_description remains the narrative summary. G1, schema 2.2.",
+      "description": "A motif's evolution stage as of a story position — how its meaning or loudness has shifted. Latest-wins position keying (pattern 3, spec §4.5). The motif's evolution_description remains the narrative summary. G1, schema 2.2.",
       "sortOrder": 501,
       "tier": 4,
       "parentEntity": null,
@@ -10857,7 +10857,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11108,7 +11108,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11243,7 +11243,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11361,7 +11361,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11488,7 +11488,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11499,7 +11499,7 @@
       "icon": "🎞️",
       "nameField": "name",
       "category": "Thematic Tracking",
-      "description": "Position-keyed color intent — the row form of the color script (Phase B found color_script itself is prose). Latest-wins position keying (pattern 3, conventions.md): the intent in force at P is the latest entry at-or-before P. Act-level intent is keyed to the act's first scene by convention. Sits in the visual direction cascade between the project palette and scene palettes. G1, schema 2.2.",
+      "description": "Position-keyed color intent — the row form of the color script (Phase B found color_script itself is prose). Latest-wins position keying (pattern 3, spec §4.5): the intent in force at P is the latest entry at-or-before P. Act-level intent is keyed to the act's first scene by convention. Sits in the visual direction cascade between the project palette and scene palettes. G1, schema 2.2.",
       "sortOrder": 507,
       "tier": 4,
       "parentEntity": null,
@@ -11597,7 +11597,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11694,7 +11694,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11814,7 +11814,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -11934,7 +11934,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -12050,7 +12050,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -12237,7 +12237,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "external_id",
@@ -12248,7 +12248,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",
@@ -12410,7 +12410,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -12527,7 +12527,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -12638,7 +12638,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -12768,7 +12768,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -12900,7 +12900,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -12985,7 +12985,7 @@
       "icon": "🌡️",
       "nameField": "name",
       "category": "Production",
-      "description": "Modulation of a character's baseline profile, in one performance modality. Replaces physical_state and vocal_state (2.0 consolidation). The modality enum mirrors bundle intents so per-modality tools can filter states the same way they filter bundles. Temporal reach is governed by the persistence field — see 'Persistence and position' in conventions.md.",
+      "description": "Modulation of a character's baseline profile, in one performance modality. Replaces physical_state and vocal_state (2.0 consolidation). The modality enum mirrors bundle intents so per-modality tools can filter states the same way they filter bundles. Temporal reach is governed by the persistence field — see spec §4.5, pattern 2 — the state is in force from its keyed scene onward.",
       "sortOrder": 608,
       "tier": 6,
       "parentEntity": null,
@@ -13070,7 +13070,7 @@
             "scene_only",
             "until_resolved"
           ],
-          "helpText": "scene_only (default): in force only for the keyed scene. until_resolved: in force from the keyed scene onward, until resolved_at_scene. See conventions.md."
+          "helpText": "scene_only (default): in force only for the keyed scene. until_resolved: in force from the keyed scene onward, until resolved_at_scene. See spec §4.5, pattern 2."
         },
         {
           "name": "resolved_at_scene_id",
@@ -13137,7 +13137,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -13364,7 +13364,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -13469,7 +13469,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -13587,7 +13587,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -13696,7 +13696,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -13811,7 +13811,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -13939,7 +13939,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -14071,7 +14071,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -14178,7 +14178,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -14320,7 +14320,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -14426,7 +14426,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -14553,7 +14553,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -14677,7 +14677,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         }
       ]
     },
@@ -14723,7 +14723,7 @@
           "tab": "General",
           "autoInjected": false,
           "placeholder": "@project/characters/eleanor/face_ref.png",
-          "helpText": "Rooted, portable address of the bytes. @project is the project folder. Resolution is derived and never stored. See conventions.md §9."
+          "helpText": "Rooted, portable address of the bytes. @project is the project folder. Resolution is derived and never stored. See spec §8.2."
         },
         {
           "name": "size_bytes",
@@ -14809,7 +14809,7 @@
             "cut",
             "archived"
           ],
-          "helpText": "Cross-cutting record state. See conventions.md."
+          "helpText": "Cross-cutting record state. See spec §6.6."
         },
         {
           "name": "parent_id",
@@ -14863,7 +14863,7 @@
           "tab": "External",
           "autoInjected": true,
           "placeholder": "identifier in external system",
-          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See conventions.md."
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
         },
         {
           "name": "external_id_namespace",

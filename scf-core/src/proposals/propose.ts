@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * proposals/propose.ts — Stage 3: entity proposal. Heuristic, and honest
  * about it: this stage produces PROPOSALS, never rows. The user reviews a

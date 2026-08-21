@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * setup.ts — shared conformance-test scaffolding.
  *

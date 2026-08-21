@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * editor/integrity.ts — links that outlived the text they described.
  *

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * runnersComposed.ts — the composed and analytic canonical queries.
  *

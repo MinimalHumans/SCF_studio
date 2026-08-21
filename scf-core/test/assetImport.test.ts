@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * assetImport.test.ts — bulk import (P4 follow-on).
  *
