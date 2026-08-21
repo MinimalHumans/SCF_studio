@@ -84,13 +84,26 @@ SKIP_DIR_PARTS = {
     ".git",
     "node_modules",
     "dist",
-    "build",
     "out",
     "vendor",
     "third_party",
     "__pycache__",
     ".venv",
     "corpus",  # never touch corpus material
+}
+
+# `build` is NOT in the set above, and was until 0.31. As a bare name it
+# matched at any depth, so it silently swallowed `fixtures/build/` —
+# which is not build output but the three scripts that BUILD the
+# conformance fixture, the closest thing this repository has to a
+# reproducible-fixture path. They went unstamped through a full run and
+# nothing reported it, because a skip is not a failure.
+#
+# Build output that actually needs skipping is named by full relative
+# path instead, so a directory called `build` cannot be excluded by
+# accident again.
+SKIP_REL_PATHS = {
+    "fixtures/negative/build",
 }
 
 # How many leading lines to inspect when checking for an existing tag.
@@ -142,6 +155,9 @@ def walk_files(root: Path) -> list[Path]:
 
 
 def should_skip(path: Path, root: Path) -> bool:
+    rel = path.relative_to(root).as_posix()
+    if any(rel == p or rel.startswith(p + "/") for p in SKIP_REL_PATHS):
+        return True
     if path.name in SKIP_NAMES:
         return True
     rel_parts = set(path.relative_to(root).parts[:-1])
@@ -178,6 +194,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", help="write changes to disk")
     parser.add_argument("--root", default=".", help="subdirectory to limit the run to")
+    parser.add_argument(
+        "--check", action="store_true",
+        help="exit non-zero if any file needs a header; writes nothing")
     args = parser.parse_args()
 
     repo_root = Path.cwd()
@@ -221,6 +240,25 @@ def main() -> int:
                 fh.write(insert(text, build_header(ext)))
 
     verb = "Updated" if args.apply else "Would update"
+    if args.check:
+        # A one-off run stamps what exists on the day it runs, and every
+        # file added afterwards arrives unstamped. That happened here:
+        # a full run left 161 files tagged, and three commits later six
+        # files had no header again — two of them created by the same
+        # round that ran the tool. Coverage is only a property of the
+        # repository if something checks it on every push.
+        for path in changed:
+            print(f"MISSING SPDX: {path.relative_to(repo_root)}",
+                  file=sys.stderr)
+        if changed:
+            print(f"\n{len(changed)} file(s) need an SPDX header.",
+                  file=sys.stderr)
+            print("  run: python3 tools/add_spdx_headers.py --apply",
+                  file=sys.stderr)
+            return 1
+        print(f"[spdx] all {already} source file(s) carry a header.")
+        return 0
+
     for path in changed:
         print(f"{verb}: {path.relative_to(repo_root)}")
     for path in skipped_binary:

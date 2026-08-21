@@ -358,9 +358,16 @@ The procedure:
 7. Tag it, which is what makes the published URLs resolve:
 
    ```sh
-   git tag -s schema-X.Y -m 'schema X.Y'
+   git tag -a schema-X.Y -m 'schema X.Y'
    git push origin schema-X.Y
    ```
+
+   Annotated, not signed. `-s` was written here before anyone had tried
+   it, and it needs a configured signing key that this project does not
+   yet have; a step nobody can run is a step that gets skipped, and a
+   skipped step in a nine-step procedure is how the procedure stops
+   being followed. Substitute `-s` wherever a key exists — nothing else
+   about the release changes.
 
 Since the specification exists, two more steps apply when the change
 touches anything normative. **They run BEFORE step 6, not after it** —

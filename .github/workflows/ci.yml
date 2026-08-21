@@ -73,6 +73,9 @@ jobs:
         run: npm run check-schema-sql
         working-directory: scf-core
 
+      - name: every source file carries an SPDX header
+        run: python3 tools/add_spdx_headers.py --check
+
       - name: screenplay-tables.json matches initDatabase and LINE_TYPES
         run: npm run check-screenplay-tables
         working-directory: scf-core

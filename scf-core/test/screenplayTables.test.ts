@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * screenplayTables.test.ts — the published screenplay tables, checked
  * back against the implementation. Spec §1.3.

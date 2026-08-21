@@ -16,6 +16,79 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.31 — 2026-08-21
+
+*Describes schema 2.12.*
+
+**Editorial**, with one addition to §2.1 that adds no requirement on an
+implementation. No MUST changes.
+
+### The manifest covers the specification
+
+`ARTIFACTS.md` and `SHA256SUMS` went from twenty-six files to
+**forty-one**: the four specification documents and the eleven blessed
+negative reports joined the generated artifacts.
+
+The specification documents were the conspicuous omission. Three
+independent implementations have now been written from this prose, and
+until this revision the manifest checksummed the data those readers
+consumed while leaving the text that told them what it MEANT unstamped.
+A reader could verify `registry.json` byte for byte and had no way to
+confirm the specification it read alongside it was the one that was
+published.
+
+The negative reports were the other. `conformance.md` §5.3 turns a
+conformance claim on reproducing all eleven exactly, which makes their
+bytes as load-bearing as any generated artifact's, and they were not
+covered.
+
+**The list is now exhaustive in both directions.** Everything in
+`ARTIFACTS.md` is checksummed and everything checksummed is described
+there — no third category of file that is stamped but not published, or
+published but not verifiable. Two lists would have been free to drift,
+which is the failure this repository keeps finding. `ARTIFACTS.md` and
+`SHA256SUMS` are necessarily absent from their own list; regenerating
+them is what verifies them, and CI does that on every run.
+
+The table is grouped rather than flat, because forty-one undifferentiated
+rows is a list nobody reads.
+
+### Releasing is annotated, not signed
+
+`ARTIFACTS.md` and `conventions.md` §8 both instructed `git tag -s`.
+That was written before anyone had run it, and it needs a signing key
+this project has not set up. **A step nobody can run is a step that gets
+skipped**, and a skipped step in a nine-step procedure is how the
+procedure stops being followed at all.
+
+Both now say `git tag -a`. A signature would add provenance — proof the
+tag came from whoever holds the key — which matters once third parties
+fetch artifacts by tag, and not before. `-s` substitutes wherever a key
+is configured and nothing else about the release changes.
+
+### Elsewhere
+
+§2.1 records that the digests are over raw bytes, so a checkout that
+converts line endings will not verify. `.gitattributes` now sets
+`eol=lf` to prevent it. This is not hypothetical: it made
+`artifact_manifest.py --check` fail on a clean Windows checkout that had
+nothing wrong with it, and the failure message pointed at the one action
+that would have made it worse.
+
+`tools/add_spdx_headers.py` gained `--check`, and CI runs it. A one-off
+run stamps what exists on the day it runs: a full run left 161 files
+tagged, and three commits later six files had none — two of them created
+by the same round that ran the tool. Coverage is only a property of the
+repository if something checks it on every push.
+
+The same tool had been skipping `fixtures/build/`, because `build` was
+in its directory-name skip list and matched at any depth. Those three
+files are not build output; they are the scripts that build the
+conformance fixture. Build output is now named by full relative path, so
+a directory called `build` cannot be excluded by accident again.
+
+---
+
 ## 0.30 — 2026-08-21
 
 *Describes schema 2.12.*

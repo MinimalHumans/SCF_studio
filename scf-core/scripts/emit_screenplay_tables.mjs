@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * emit_screenplay_tables.mjs — write spec/screenplay-tables.json.
  *

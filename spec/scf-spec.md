@@ -1,6 +1,6 @@
 # The SCF Format Specification
 
-**Version 0.30 (draft) — not a release.**
+**Version 0.31 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -103,7 +103,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.30` (draft).
+- **Specification version** — this document. Currently `0.31` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -293,7 +293,15 @@ implementation. That document constrains shape only — which entities
 exist is the registry, and what they mean is this specification.
 
 Each schema version's artifacts are addressable and checksummed; see
-[ARTIFACTS.md](ARTIFACTS.md).
+[ARTIFACTS.md](ARTIFACTS.md). **The manifest covers this document and
+the other three specification documents**, so a reader can verify that
+the prose it built against is the prose that was published — three
+independent implementations have now been written from these files, and
+until 0.31 nothing let them confirm they had read the same bytes.
+
+The digests are over raw bytes. A checkout whose working tree converts
+line endings will not match, which is a property of the checkout rather
+than of the artifacts.
 
 Version 2.12 defines **99 entities** across tiers 0–6.
 

@@ -29,7 +29,30 @@ https://raw.githubusercontent.com/MinimalHumans/SCF_studio/schema-2.12/scf-core/
 sha256sum -c spec/SHA256SUMS
 ```
 
-## Artifacts
+## Artifacts (41)
+
+This list is exhaustive in both directions: everything below is
+published here AND checksummed in `SHA256SUMS`, and nothing is
+checksummed that is not described here.
+
+`ARTIFACTS.md` and `SHA256SUMS` are necessarily absent — a file
+cannot carry its own digest. They are verified by regenerating
+them, which is what CI does on every run.
+
+### The specification
+
+The normative documents. Stamped since 0.31: three independent readers built against this prose, and until now nothing let them confirm they had read the same bytes it was written as.
+
+| Artifact | SHA-256 | What it is |
+|---|---|---|
+| `spec/scf-spec.md` | `e6bc4154b87e458b…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/conformance.md` | `11d39a656065866f…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/stability.md` | `afe8a9cc762efa3a…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `e2962b2e9215d811…` | The specification changelog. Spec §11.5. |
+
+### Schema and registry
+
+Generated from `schema/`, which is the source of truth for all of them.
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
@@ -40,6 +63,13 @@ sha256sum -c spec/SHA256SUMS
 | `spec/junction-keys.json` | `a5e4c75b4a741a9e…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `83fb4926595bafd4…` | What Q14 assesses, per target query. Spec §12.9.1. |
 | `spec/finding-catalog.json` | `153c3edb8a224833…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
+
+### The canonical query results
+
+One normative result per query, spec §12. Rows by uuid, no row ids, no timestamps.
+
+| Artifact | SHA-256 | What it is |
+|---|---|---|
 | `fixtures/expectations/Q00.result.json` | `afbc6b9d9d04f24f…` | Q00's normative result. Spec §12.12. |
 | `fixtures/expectations/Q03.result.json` | `6ceac30d503ec180…` | Q03's normative result. Spec §12.4. |
 | `fixtures/expectations/Q01.result.json` | `000d11cc965c5a31…` | Q01's normative result. Spec §12.15. |
@@ -56,7 +86,30 @@ sha256sum -c spec/SHA256SUMS
 | `fixtures/expectations/Q13.result.json` | `0bce5fd1b9a538ab…` | Q13's normative result. Spec §12.8. |
 | `fixtures/expectations/Q14.result.json` | `4365b2128d872867…` | Q14's normative result. Spec §12.9. |
 | `fixtures/expectations/Q15.result.json` | `247eaafca6ea6a0d…` | Q15's normative result. Spec §12.14. |
+
+### The negative fixtures
+
+Eleven files that are wrong in a stated way, and the report each MUST produce. Stamped since 0.31: conformance turns on reproducing these reports exactly, so their bytes matter as much as any generated artifact's.
+
+| Artifact | SHA-256 | What it is |
+|---|---|---|
 | `fixtures/negative/CASES.json` | `73141c0f47d77389…` | The eleven negative fixtures as reproducible recipes. Spec conformance.md §5.3. |
+| `fixtures/negative/asset-absolute.expected.json` | `916bb30403bd4efe…` | An absolute asset path where a rooted one is required. Spec conformance.md §5.3. |
+| `fixtures/negative/asset-escapes-root.expected.json` | `633a6b40902ac27a…` | An asset address that resolves outside the root. Spec conformance.md §5.3. |
+| `fixtures/negative/header-unstamped.expected.json` | `77283898b6675539…` | A file carrying no SCF application id. Spec conformance.md §5.3. |
+| `fixtures/negative/relationship-contradictory.expected.json` | `177f51ad2409fa74…` | Two relationship rows that disagree. Spec conformance.md §5.3. |
+| `fixtures/negative/relationship-directionality-absent.expected.json` | `2783449dfa6e3b33…` | A directional relationship with no direction. Spec conformance.md §5.3. |
+| `fixtures/negative/relationship-endpoint-absent.expected.json` | `78876d5b997f2471…` | A relationship pointing at a row that is not there. Spec conformance.md §5.3. |
+| `fixtures/negative/span-boundary-dangling.expected.json` | `f32f993b4d15b703…` | A span anchored past the end of its line. Spec conformance.md §5.3. |
+| `fixtures/negative/unknown-table.expected.json` | `b2c9cb9799f6aae1…` | A table the registry does not declare. Spec conformance.md §5.3. |
+| `fixtures/negative/uuid-duplicate.expected.json` | `393b40eedc5df465…` | One uuid on more than one row. Spec conformance.md §5.3. |
+| `fixtures/negative/uuid-malformed.expected.json` | `35e240d7b21836ce…` | A uuid that is not a uuid. Spec conformance.md §5.3. |
+| `fixtures/negative/uuid-missing.expected.json` | `b23a187218cc1d51…` | A row carrying no uuid at all. Spec conformance.md §5.3. |
+
+### File identification and the fixture
+
+| Artifact | SHA-256 | What it is |
+|---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
 | `fixtures/hollow_creek.scf` | `87d275cfb4baedc6…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
@@ -68,9 +121,19 @@ Step 6 of the change procedure in `docs/conventions.md` §8:
 
 ```sh
 python3 schema/artifact_manifest.py
-git tag -s schema-2.12 -m 'schema 2.12'
+git tag -a schema-2.12 -m 'schema 2.12'
 git push origin schema-2.12
 ```
 
 The tag is what makes the URLs above resolve. Until it exists,
 this manifest describes an address that 404s.
+
+An **annotated** tag, not a signed one. A signed tag would add
+provenance — proof the tag came from whoever holds the key —
+and that matters once third parties fetch artifacts by tag and
+not before. `git tag -s` is a drop-in substitute wherever a
+signing key is configured, and nothing else here changes.
+
+Digests are over RAW BYTES. A checkout whose working tree has
+CRLF line endings will not match; `.gitattributes` sets
+`eol=lf` to prevent that.
