@@ -11,6 +11,10 @@ lines are left alone. Dry run by default.
 
 Run it from the repository root. It only touches files tracked by git, so it
 will not wander into node_modules, build output, or anything gitignored.
+
+Generated artifacts checksummed in spec/SHA256SUMS are skipped: stamping one
+would put it out of step with the manifest until its generator emitted the
+same header, and CI would fail on the next --check.
 """
 
 from __future__ import annotations
@@ -57,6 +61,24 @@ SKIP_NAMES = {
     "yarn.lock",
     "pnpm-lock.yaml",
 }
+
+# Generated, published artifacts are never stamped. They are checksummed in
+# spec/SHA256SUMS, so stamping one here would make it disagree with the
+# manifest until the generator was taught to emit the same header — two
+# places describing one file, which is the drift this repository is built to
+# avoid. The list is READ FROM the manifest rather than maintained here, so a
+# new artifact is excluded the moment it is published.
+def checksummed_paths(root: Path) -> set[Path]:
+    sums = root / "spec" / "SHA256SUMS"
+    if not sums.exists():
+        return set()
+    out: set[Path] = set()
+    for line in sums.read_text(encoding="utf-8").splitlines():
+        _, _, rel = line.partition("  ")
+        if rel.strip():
+            out.add((root / rel.strip()).resolve())
+    return out
+
 
 SKIP_DIR_PARTS = {
     ".git",
@@ -131,9 +153,11 @@ def main() -> int:
 
     repo_root = Path.cwd()
     limit = (repo_root / args.root).resolve()
+    generated = checksummed_paths(repo_root)
 
     changed: list[Path] = []
     skipped_binary: list[Path] = []
+    skipped_generated: list[Path] = []
     already: int = 0
 
     for path in tracked_files(repo_root):
@@ -145,6 +169,9 @@ def main() -> int:
         if ext not in COMMENT_STYLES:
             continue
         if should_skip(path, repo_root):
+            continue
+        if path.resolve() in generated:
+            skipped_generated.append(path)
             continue
         try:
             text = path.read_text(encoding="utf-8")
@@ -163,6 +190,9 @@ def main() -> int:
         print(f"{verb}: {path.relative_to(repo_root)}")
     for path in skipped_binary:
         print(f"Skipped (not utf-8): {path.relative_to(repo_root)}", file=sys.stderr)
+    for path in skipped_generated:
+        print(f"Skipped (generated, checksummed): "
+              f"{path.relative_to(repo_root)}", file=sys.stderr)
 
     print(f"\n{verb.lower()} {len(changed)} file(s); {already} already tagged.")
     if changed and not args.apply:

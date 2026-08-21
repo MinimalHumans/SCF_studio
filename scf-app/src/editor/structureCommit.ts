@@ -10,7 +10,7 @@
  * the only fact stored — no end, no per-scene rows — so acts cannot
  * overlap or leave gaps, and a scene inserted mid-act joins it with no
  * write at all. See scf-core/src/structure.ts for the derivation and
- * docs/story-structure-spec.md for why.
+ * docs/story-structure-design-record.md for why.
  */
 
 import type { Row, SqlExec } from "@scf-core/db.ts";

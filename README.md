@@ -10,6 +10,13 @@ scene, what is in force here, what a shot is for.
 An `.scf` file is a SQLite database. The schema is generated from one
 declaration; every consumer reads the generated registry.
 
+**Status: pre-1.0.** The specification is a draft at `spec/scf-spec.md`,
+and `spec/stability.md` states what is safe to build against. Until 1.0
+ships, existing `.scf` files are disposable — there is no migration path
+and no backward compatibility owed to anything already written (spec
+§11.0). The one exception is `fixtures/hollow_creek.scf`, which is a
+normative artifact.
+
 | Directory | What it holds |
 |---|---|
 | `schema/` | **The source of truth for the format.** Entity and field declarations, the version, the registry generator and linter. |
@@ -17,8 +24,8 @@ declaration; every consumer reads the generated registry.
 | `scf-app/` | The editor — a browser application over the same core, SQLite in OPFS, CodeMirror screenplay editor, canonical query pages. |
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
-| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. |
-| `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`. |
+| `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. The manifest lists twenty-five in all, including the sixteen canonical query results under `fixtures/`. |
+| `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `story-structure-design-record.md`. |
 
 ## Getting started
 
@@ -53,11 +60,12 @@ Conformance artifacts, all checked on every test run:
 |---|---|
 | `fixtures/hollow_creek.scf` | The reference fixture. |
 | `fixtures/negative/` | Eleven deliberately-broken cases with blessed reports, plus `CASES.json` so anyone can rebuild them. |
-| `fixtures/expectations/` | Canonical query expectations — rendered markdown plus payload shapes. | `corpus/private` is not checked
-in, and the blocks that need it (`screenplay.test.ts` stage 3 payoff,
-`fountain.test.ts` private tier) skip themselves when it is absent — a
-machine that has the private tier picks up the extra coverage
-automatically.
+| `fixtures/expectations/` | The sixteen canonical queries' normative results, plus rendered markdown for eight of them. The markdown is a convenience and is a contract for none. |
+
+`corpus/private` is not checked in, and the blocks that need it
+(`screenplay.test.ts` stage 3 payoff, `fountain.test.ts` private tier)
+skip themselves when it is absent — a machine that has the private tier
+picks up the extra coverage automatically.
 
 ## Continuous integration
 

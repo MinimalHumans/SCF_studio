@@ -1,2 +1,7 @@
 node_modules/
 fixtures/negative/build/
+__pycache__/
+*.pyc
+.venv/
+dist/
+.DS_Store
