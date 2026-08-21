@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: Apache-2.0
 """
 artifact_manifest.py — record the published artifacts for a schema
 version, with checksums.
@@ -191,6 +190,32 @@ def main() -> int:
             stale.append(str(sums_path.relative_to(ROOT)))
         if stale:
             print("[artifacts] STALE: " + ", ".join(stale))
+            crlf = [rel for rel, _ in ARTIFACTS
+                    if b"\r\n" in (ROOT / rel).read_bytes()]
+            if crlf:
+                # Almost always the real cause on Windows, and the
+                # message above sends you to the one command that makes
+                # it worse: regenerating writes CRLF-derived digests
+                # that then fail on the Linux runner.
+                print()
+                print(f"  {len(crlf)} artifact(s) have CRLF line endings, "
+                      "including:")
+                for rel in crlf[:3]:
+                    print(f"    {rel}")
+                print()
+                print("  These digests are over RAW BYTES, so a CRLF "
+                      "working tree cannot match")
+                print("  a manifest blessed on LF. DO NOT REGENERATE — "
+                      "fix the checkout:")
+                print()
+                print("    git add --renormalize .")
+                print("    git checkout-index -a -f")
+                print()
+                print("  .gitattributes sets `eol=lf` to prevent this. "
+                      "A checkout made")
+                print("  before that line existed still has CRLF until "
+                      "it is renormalised.")
+                return 1
             print("  run: python3 schema/artifact_manifest.py")
             return 1
         print(f"[artifacts] up to date ({len(ARTIFACTS)} artifacts, "

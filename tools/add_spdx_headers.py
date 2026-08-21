@@ -105,11 +105,40 @@ def tracked_files(root: Path) -> list[Path]:
             capture_output=True,
             check=True,
         )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print("error: not a git repository, or git is not on PATH", file=sys.stderr)
-        raise SystemExit(2)
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        # git is preferred because it honours .gitignore for free. It is
+        # not REQUIRED: a licence-header tool depending on a VCS binary
+        # is a dependency nobody would choose deliberately, and every
+        # other script in this repository runs on Python alone. GitHub
+        # Desktop, in particular, ships a git that is not on PATH.
+        print("note: git unavailable — walking the filesystem instead",
+              file=sys.stderr)
+        return walk_files(root)
     names = result.stdout.decode("utf-8", "replace").split("\0")
     return [root / n for n in names if n]
+
+
+def walk_files(root: Path) -> list[Path]:
+    """Every file under root, minus the directories git would ignore.
+
+    SKIP_DIR_PARTS already names them, so this reuses the same list
+    rather than restating it — the two would drift otherwise, and the
+    walk is the path that runs when nothing is watching.
+
+    It does NOT read .gitignore, so it can see a file `git ls-files`
+    would not. That is acceptable here only because every ignored
+    directory in this repository is already in SKIP_DIR_PARTS, and
+    because the tool is idempotent and reports what it touched. Prefer
+    the git path; this one is a fallback, not an equivalent.
+    """
+    out: list[Path] = []
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        if any(part in SKIP_DIR_PARTS for part in path.relative_to(root).parts):
+            continue
+        out.append(path)
+    return out
 
 
 def should_skip(path: Path, root: Path) -> bool:
@@ -183,7 +212,13 @@ def main() -> int:
             continue
         changed.append(path)
         if args.apply:
-            path.write_text(insert(text, build_header(ext)), encoding="utf-8")
+            # newline="" so Python does not translate \n to the platform
+            # line ending. On Windows the default would rewrite every
+            # touched file to CRLF — a whole-file diff for a one-line
+            # header, and churn in a repository whose .gitattributes
+            # asks for LF everywhere.
+            with path.open("w", encoding="utf-8", newline="") as fh:
+                fh.write(insert(text, build_header(ext)))
 
     verb = "Updated" if args.apply else "Would update"
     for path in changed:

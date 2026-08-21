@@ -1,2 +1,29 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Line endings.
+#
+# Every text file is LF in the repository AND in the working tree, on
+# every platform. `eol=lf` is the load-bearing half: without it a
+# Windows checkout gets CRLF, and this repository publishes SHA-256
+# digests over the RAW BYTES of twenty-six artifacts. A CRLF working
+# tree hashes differently from the Linux runner that blessed them, so
+# `schema/artifact_manifest.py --check` fails on a clean Windows
+# checkout that has nothing wrong with it — and, worse, regenerating to
+# "fix" it writes CRLF-derived digests that then fail in CI.
+#
+# The digests are over raw bytes on purpose: a consumer fetching an
+# artifact by URL runs `sha256sum -c`, and a manifest that hashed some
+# normalised form would verify something other than what they
+# downloaded. So the working tree conforms to the manifest, not the
+# other way round.
+* text=auto eol=lf
+
+# Binary. Never examined, never converted.
+*.scf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.zip   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
