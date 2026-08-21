@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SCF stability tiers
 
 Companion to [scf-spec.md](scf-spec.md). Every normative area of the
@@ -47,6 +48,8 @@ about it is ceremonial.
 | Reference projection derived from the registry | §12.1.2 | Provisional | Yes | `referencesOf()`. Replaced hand-written per-query maps that disagreed with each other. |
 | Anchors contribute their asset | §12.8 | Provisional | Yes | `resolveMedia` dereferences; `mediaReferences` needs no cross-table lookup, so the row-id conflation cannot recur. |
 | Artifact addressing and checksums | §2.1 | **Unstable** | Yes | `spec/ARTIFACTS.md` and `SHA256SUMS` cover **41 files** as of 0.31 — the four specification documents and the eleven blessed negative reports joined the twenty-six generated artifacts. Unstable until a `schema-X.Y` tag exists and the URLs it publishes resolve. |
+| Licensing boundary: prose CC BY 4.0, generated data Apache-2.0 | — | Provisional | Yes | Stated in `spec/LICENSE` since 0.32 and enforced per file by `tools/add_spdx_headers.py --check`, which CI runs. Provisional only because no third party has yet relied on it. |
+| The proposal path | — | Provisional | Yes | `proposals/` since 0.32. Provisional because no proposal has been through it — the procedure is written and untested, and the first real one will find what is wrong with it. |
 | Framework columns | §2.2 | Stable | Yes | |
 | Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `sceneOps.ts`. Derived, so new entities are covered without an edit. |
 | Hidden `nameField` rule | §2.3 | Stable | Yes | |

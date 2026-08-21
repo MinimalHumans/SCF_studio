@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # Rebuilding the Hollow Creek fixture
 
 Three additive passes over a copy of the fixture, in order:

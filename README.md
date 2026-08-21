@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SCF Studio
 
 [![CI](https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml/badge.svg)](https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml)
@@ -91,6 +92,39 @@ affected row in `spec/stability.md` in the same commit.
 The two documents have distinct jobs and must not overlap: the spec
 states rules and nothing else, the design record explains them and
 states no rules. A rule found only in `docs/conventions.md` is a defect.
+
+## Contributing and governance
+
+| | |
+|---|---|
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to contribute, and which of the three routes a change takes |
+| [`proposals/`](proposals/) | Changes to the **format** get argued here before they get built |
+| [`GOVERNANCE.md`](GOVERNANCE.md) | Who decides, what they weigh, and how a decision is recorded |
+| [`SECURITY.md`](SECURITY.md) | What is in scope, and how to report privately |
+| [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Contributor Covenant 2.1 |
+
+A **defect** in the specification is an issue, not a proposal. Three
+independent implementations have been written against this format and
+their authors found dozens of them; every one was worth having quickly
+and without ceremony. Proposals are for changes where the answer is
+arguable and the argument is the valuable part.
+
+## Licensing
+
+Code is Apache-2.0 ([`LICENSE`](LICENSE)). **Prose is CC BY 4.0** — the
+specification is written to be implemented by other people, and a
+document nobody may quote is a document nobody adopts.
+
+The boundary runs between written documents and generated data, and is
+stated once in [`spec/LICENSE`](spec/LICENSE). Generated artifacts carry
+the licence of the code that produces them; so do the fixtures, because
+an attribution burden on a conformance fixture is a burden on
+conformance. Neither licence is copyleft: nothing here obliges you to
+open your implementation.
+
+Names are covered separately in [`NOTICE`](NOTICE). Short version: say
+your software reads, writes or conforms to SCF as much as you like —
+just do not imply this project endorses it.
 
 ## History
 

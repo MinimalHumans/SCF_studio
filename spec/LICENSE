@@ -1,0 +1,81 @@
+Licence for spec/
+=================
+
+This directory holds two kinds of file under two licences. The boundary
+is by file type, and it is the same boundary everywhere it appears in
+this repository.
+
+PROSE — Creative Commons Attribution 4.0 International (CC BY 4.0)
+------------------------------------------------------------------
+
+    scf-spec.md
+    conformance.md
+    stability.md
+    CHANGELOG.md
+    ARTIFACTS.md
+    (and any other .md in this directory)
+
+    SPDX-License-Identifier: CC-BY-4.0
+    Copyright 2023-2026 Christopher Smallfield and Jesse Kretschmer
+
+Full licence text: https://creativecommons.org/licenses/by/4.0/legalcode
+Summary:           https://creativecommons.org/licenses/by/4.0/
+
+You may share and adapt these documents, including commercially,
+provided you give appropriate credit, link to the licence, and indicate
+whether changes were made. You may not suggest that the licensor
+endorses you or your use.
+
+A specification nobody may quote is a specification nobody adopts. CC BY
+is what a format written to be implemented by other people should carry:
+it lets an implementer paste a rule into their own documentation, lets a
+standards body cite it, and lets someone else carry the format on if
+this project stops (GOVERNANCE.md).
+
+GENERATED DATA — Apache License 2.0
+-----------------------------------
+
+    scf-schema.sql
+    screenplay-tables.json
+    registry.schema.json
+    finding-catalog.json
+    junction-keys.json
+    readiness-rubrics.json
+    scf.magic
+    SHA256SUMS
+
+    SPDX-License-Identifier: Apache-2.0
+    Copyright 2023-2026 Christopher Smallfield and Jesse Kretschmer
+
+Full licence text: ../LICENSE
+
+These are not prose. Every one is generated from code in schema/ or
+scf-core/, regenerated on every change and verified by CI, and they are
+consumed by programs rather than read by people. They carry the licence
+of the code that produces them, because that is what they are: output.
+
+The same reasoning puts fixtures/ under Apache-2.0 — the conformance
+fixture, the sixteen query results and the eleven negative reports are
+data an implementer needs to embed in a test suite, and a share-alike or
+attribution burden on a test fixture is a burden on conformance itself.
+
+WHY TWO LICENCES
+----------------
+
+Apache-2.0 is written for software. It speaks of source and object form,
+of derivative works and patent grants, and its attribution requirements
+are shaped around distributing a program. Applied to a specification it
+is at best awkward and at worst unclear about the thing that matters
+most: whether you may quote it.
+
+CC BY 4.0 is written for documents and answers that question directly.
+
+Neither licence is copyleft, so nothing here obliges anyone to open their
+implementation.
+
+WHAT IS NOT LICENSED HERE
+-------------------------
+
+corpus/ is screenplay material and is covered by corpus/README.md and
+the repository's root LICENSE. Do not assume the licence of this
+directory extends to it.

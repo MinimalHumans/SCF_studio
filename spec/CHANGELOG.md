@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SCF specification changelog
 
 Changes to [`scf-spec.md`](scf-spec.md). Governed by its §11.5:
@@ -13,6 +14,104 @@ two move independently by design (spec §0.6).
 
 Every entry names the schema version the specification described at the
 time, so that a reader of an old spec knows what it was describing.
+
+---
+
+## 0.32 — 2026-08-21
+
+*Describes schema 2.12.*
+
+**Editorial.** No requirement changes. Governance, licensing and a
+process for proposing changes — none of it alters what a conforming
+implementation must do.
+
+### `spec/` is CC BY 4.0
+
+Prose carries a different licence from code, stated in `spec/LICENSE`
+and reflected in `NOTICE`, `README.md` and `CONTRIBUTING.md`. The
+boundary runs between **written documents and generated data**, not
+along directory lines: the four specification documents are CC BY 4.0,
+while `scf-schema.sql`, `screenplay-tables.json`, the JSON artifacts and
+`scf.magic` stay Apache-2.0 with the code that generates them. Fixtures
+stay Apache-2.0 too — an attribution burden on a conformance fixture is
+a burden on conformance.
+
+Apache-2.0 is written for software: source and object form, derivative
+works, patent grants. Applied to a specification it is at best awkward
+and at worst unclear about the thing that matters most, which is whether
+you may quote it. A format written to be implemented by other people
+needs a documentation licence that answers that directly.
+
+**The licence is enforced per file, not asserted in three documents.**
+`tools/add_spdx_headers.py` now knows Markdown and stamps prose with
+`CC-BY-4.0` instead of `Apache-2.0`, and CI checks it. 182 files carry a
+header.
+
+Two files are generated Markdown and are skipped: `ARTIFACTS.md`, which
+now emits its own header from `artifact_manifest.py`, and the blessed
+`fixtures/expectations/*.expected.md`, which are rewritten wholesale on
+every bless. A header added to either by hand would survive until the
+next regeneration and no longer.
+
+One thing 0.31 broke and this revision repairs: that tool skipped every
+file in `SHA256SUMS`, on the reasoning that a checksummed file is a
+generated one whose generator owns its header. That held until 0.31,
+when the four specification documents were added to the manifest —
+hand-written prose, checksummed precisely so that readers can verify it.
+"Checksummed" and "generated" stopped naming the same set, and the rule
+silently kept the old meaning, skipping the licence header on the four
+documents that most need to declare one. Markdown is now exempt from
+that skip.
+
+### Governance
+
+`GOVERNANCE.md` names the maintainers, states what they weigh when
+accepting a change, and says where each kind of decision is recorded. It
+also says plainly that this is a two-person project with a bus factor of
+two, because a governance document describing a process that does not
+exist is worse than none — someone would rely on it.
+
+`SECURITY.md` scopes the surface that actually matters: **reading a file
+you did not write.** A malicious `.scf` is an ordinary SQLite database
+that arrives from somewhere else, and §8.2's asset addressing has an
+`out-of-root` state precisely because an address can point outside the
+mapped root. It is equally explicit about what is NOT a security issue:
+a file that is merely wrong is expected input, and the answer to every
+one of them is a finding (§9). A reader that refuses one of the eleven
+negative fixtures is the bug.
+
+`CODE_OF_CONDUCT.md` is Contributor Covenant 2.1.
+
+`NOTICE` gains a trademark statement. Naming the format in order to say
+your software reads or writes it is fine and always will be — a format
+nobody may name is a format nobody adopts. Implying endorsement is not.
+
+### A proposal path
+
+`proposals/` exists, with a template and a procedure. This closes the
+most conspicuous gap in the release checklist: three independent
+implementations were written against this specification, their authors
+produced roughly seventy findings between them, and **none of them had
+anywhere to file one.** Two sent prose that was read once and acted on
+by one person, and the reasoning behind what was accepted and what was
+not exists nowhere.
+
+The distinction the directory insists on: **a defect is not a
+proposal.** If the text is simply wrong, that is an issue, and it gets
+fixed without ceremony — dozens were, and every one was worth having
+quickly. Proposals are for changes where the answer is genuinely
+arguable and the argument is the valuable part.
+
+Declined proposals stay in the directory with their reasoning. A
+rejected idea that leaves no trace gets proposed again, and the second
+time nobody remembers what was wrong with it.
+
+Issue templates route accordingly: a specification-defect form that asks
+what the text says, what is wrong with it, and — the useful question —
+**what you implemented instead, and how confident you were.** A guess
+that happened to match the artifact is still a defect, and knowing it
+was a guess is what makes it visible. A pull-request template checks the
+steps of `conventions.md` §8 that are easiest to miss.
 
 ---
 

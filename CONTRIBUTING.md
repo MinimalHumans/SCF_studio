@@ -1,13 +1,34 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # Contributing
 
 Thanks for your interest in this project.
 
+## Where a change goes
+
+Three routes, and picking the right one is most of the work:
+
+| | |
+|---|---|
+| **A change to the format** | A proposal in [`proposals/`](proposals/). Anything that changes what a conforming implementation must do. |
+| **A defect** | An issue. The specification says one thing and the artifacts do another, a rule cannot be implemented as written, a term is used and never defined. You do not need to propose a fix. |
+| **Everything else** | A pull request. Editorial fixes, tests, tooling, clarifications that change no requirement. |
+
+[`GOVERNANCE.md`](GOVERNANCE.md) says who decides and what they weigh.
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) applies throughout.
+Security issues go privately — [`SECURITY.md`](SECURITY.md), never an issue.
+
 ## Licence
 
-This project is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+Code is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+
+**Prose is licensed CC BY 4.0**, which is not the same licence. The boundary
+runs between written documents and generated data, and is stated in
+[`spec/LICENSE`](spec/LICENSE). Generated artifacts carry the licence of the
+code that produces them.
 
 By contributing, you agree that your contributions will be licensed under the
-same terms. You retain the copyright in your contributions.
+licence applying to the files you touched. You retain the copyright in your
+contributions.
 
 ## Developer Certificate of Origin
 
@@ -80,11 +101,22 @@ fail.
 
 ## Source file headers
 
-New source files should carry an SPDX identifier as their first line (after any
+New source files MUST carry an SPDX identifier as their first line (after any
 shebang):
 
 ```
 // SPDX-License-Identifier: Apache-2.0
 ```
 
-Use the comment syntax appropriate to the file type.
+Use the comment syntax appropriate to the file type. Markdown takes an HTML
+comment, and prose carries `CC-BY-4.0` rather than `Apache-2.0`.
+
+CI checks this on every push:
+
+```sh
+python3 tools/add_spdx_headers.py --check     # reports what is missing
+python3 tools/add_spdx_headers.py --apply     # writes the headers
+```
+
+The tool is idempotent, skips generated artifacts that are checksummed, and
+runs without git if it has to.

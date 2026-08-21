@@ -1,0 +1,48 @@
+name: Bug in the tools
+description: scf-core, scf-app, scf-check, or anything under schema/ or tools/
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        For defects in the implementation. If the *specification* is wrong,
+        use the specification defect template — the distinction matters,
+        because one is fixed by changing code and the other by changing what
+        every implementation must do.
+  - type: input
+    id: where
+    attributes:
+      label: Which part
+      placeholder: scf-core / scf-app / scf-check / schema / tools
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Schema version and commit
+      description: The schema version reported by scf-check, and the commit or tag.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: What you did
+      description: >-
+        Commands, in order. If a file is involved, please do not attach a
+        screenplay you cannot redistribute (CONTRIBUTING.md) — describe its
+        shape and we will build a fixture.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS and Node version
+      placeholder: Windows 11, Node 22
+    validations:
+      required: false

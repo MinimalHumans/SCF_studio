@@ -1,0 +1,56 @@
+name: Specification defect
+description: The specification is wrong, ambiguous, or silent where it must not be
+labels: ["spec"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        For when the text and the artifacts disagree, a rule cannot be
+        implemented as written, or something is required and never defined.
+        You do not need to propose a fix — finding it is the contribution.
+
+
+        If you are proposing a *change* rather than reporting a defect, use
+        the proposal path in `proposals/` instead.
+  - type: input
+    id: section
+    attributes:
+      label: Where
+      description: Section and document, e.g. "spec/scf-spec.md §12.1.2" or "conformance.md §5.3".
+      placeholder: spec/scf-spec.md §
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Specification version
+      description: The line at the top of scf-spec.md, e.g. 0.31.
+    validations:
+      required: true
+  - type: textarea
+    id: says
+    attributes:
+      label: What it says
+      description: Quote or paraphrase the text as it stands.
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What is wrong with it
+      description: >-
+        If the text and a published artifact disagree, name the artifact.
+        If two readings are both defensible, give both — that is the most
+        useful form of this report.
+    validations:
+      required: true
+  - type: textarea
+    id: guessed
+    attributes:
+      label: What did you do instead?
+      description: >-
+        If you implemented something anyway, what did you choose and how
+        confident were you? A guess that happened to match the artifact is
+        still a defect, and knowing it was a guess is what makes it visible.
+    validations:
+      required: false

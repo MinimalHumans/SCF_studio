@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SCF conformance
 
 Companion to [scf-spec.md](scf-spec.md). This document defines what it

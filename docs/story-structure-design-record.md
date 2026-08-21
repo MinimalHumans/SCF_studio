@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # Story structure and the shoot surface — design record
 
 **This is not a specification.** It states no rules; the rules are in

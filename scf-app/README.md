@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # scf-app
 
 The SCF editor: React + Vite + TypeScript + Zustand, local-first, no

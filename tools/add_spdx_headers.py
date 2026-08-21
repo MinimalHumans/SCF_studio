@@ -51,12 +51,25 @@ COMMENT_STYLES: dict[str, tuple[str, str]] = {
     ".h": ("// ", ""),
     ".cpp": ("// ", ""),
     ".hpp": ("// ", ""),
+    ".md": ("<!-- ", " -->"),
+}
+
+# Prose is CC BY 4.0, not Apache-2.0 — spec/LICENSE states the boundary and
+# this is where it is enforced per file. Without this the licence would be
+# asserted in three documents and checkable in none, which is the shape of
+# every drift this repository has had to correct.
+LICENSE_BY_EXT: dict[str, str] = {
+    ".md": "CC-BY-4.0",
 }
 
 # Files that must not be modified even if the extension matches.
 SKIP_NAMES = {
     "LICENSE",
     "NOTICE",
+    # Generated prose. artifact_manifest.py emits its own header; stamping
+    # it here would put the tool and the generator in a loop, each undoing
+    # the other on alternate runs.
+    "ARTIFACTS.md",
     "package-lock.json",
     "yarn.lock",
     "pnpm-lock.yaml",
@@ -68,6 +81,17 @@ SKIP_NAMES = {
 # places describing one file, which is the drift this repository is built to
 # avoid. The list is READ FROM the manifest rather than maintained here, so a
 # new artifact is excluded the moment it is published.
+#
+# MARKDOWN IS EXEMPT, and the exemption is the interesting part. Until spec
+# 0.31 the manifest held only generated files, so "checksummed" and
+# "generated" named the same set and this rule could use one to mean the
+# other. 0.31 added the four specification documents — hand-written prose
+# that is checksummed precisely BECAUSE readers need to verify it — and the
+# two sets stopped coinciding. Without the exemption the licence header
+# would be skipped on the four documents that most need to declare one.
+#
+# The one generated Markdown file, ARTIFACTS.md, is in SKIP_NAMES above and
+# emits its own header from artifact_manifest.py.
 def checksummed_paths(root: Path) -> set[Path]:
     sums = root / "spec" / "SHA256SUMS"
     if not sums.exists():
@@ -104,6 +128,13 @@ SKIP_DIR_PARTS = {
 # accident again.
 SKIP_REL_PATHS = {
     "fixtures/negative/build",
+    # Blessed output, not prose. The .expected.md files are RENDERED by
+    # scf-app/test/queryExpectations.test.ts and rewritten wholesale on
+    # every bless; a header added here would survive exactly until the
+    # next one. They are artifacts of the same kind as the .result.json
+    # beside them, which this tool never sees because JSON has no
+    # comment syntax to put a header in.
+    "fixtures/expectations",
 }
 
 # How many leading lines to inspect when checking for an existing tag.
@@ -173,7 +204,8 @@ def has_spdx(text: str) -> bool:
 
 def build_header(ext: str) -> str:
     prefix, suffix = COMMENT_STYLES[ext]
-    return f"{prefix}{SPDX_TAG}: {LICENSE_ID}{suffix}\n"
+    licence = LICENSE_BY_EXT.get(ext, LICENSE_ID)
+    return f"{prefix}{SPDX_TAG}: {licence}{suffix}\n"
 
 
 def insert(text: str, header: str) -> str:
@@ -218,7 +250,7 @@ def main() -> int:
             continue
         if should_skip(path, repo_root):
             continue
-        if path.resolve() in generated:
+        if path.resolve() in generated and ext != ".md":
             skipped_generated.append(path)
             continue
         try:

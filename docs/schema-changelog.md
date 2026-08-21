@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # SCF schema changelog
 
 The registry is generated from `schema/entity_registry.py` by

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # scf-core
 
 The SCF (Story Context Framework) core library: **format + executable semantics +
