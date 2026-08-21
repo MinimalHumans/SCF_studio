@@ -1,103 +1,102 @@
-# Repair — the missing half of `scf-audit2-fixes.zip`
+# CI fix — two causes, both mine
 
-Unzip over the repo root. **Eight files. Nothing else changes.**
+Unzip over the repo root. **Three files.**
 
-```sh
-cd scf-core && npm test && npx tsc --noEmit
-cd ../scf-app && npm test && npm run build
-cd .. && python3 schema/artifact_manifest.py --check
-sha256sum -c spec/SHA256SUMS
 ```
+.github/workflows/ci.yml     action majors bumped
+scf-core/package-lock.json   NEW — was never committed
+scf-app/package-lock.json    regenerated — was out of sync
+```
+
+Then push, or re-run the workflow.
 
 ---
 
-## What happened
+## What was actually wrong
 
-`scf-audit2-fixes.zip` was never applied. Every zip after it was.
+I diagnosed both against your repository rather than guessing, and
+reproduced the failure locally.
 
-So `canonicalQueries.ts` is at its newest — importing `referencesOf`
-from `queryResult.ts` — while `queryResult.ts` is still the version from
-before that fix, 150 lines, without it. Vite resolves the import at load
-time, finds nothing, and the app never mounts.
+### Cause 1 — `scf-core/package-lock.json` does not exist on `main`
 
-I checked which zips landed rather than guessing, by looking for one
-marker from each:
+Nothing ignores it. **I wrote CI to use `npm ci` and never shipped the
+lockfile it requires.** That produced the cache warning you saw twice —
+`cache-dependency-path: scf-core/package-lock.json` cannot resolve a
+file that isn't there — and `npm ci` cannot install without it either.
 
-| Marker | Expected in | Present on main |
+### Cause 2 — `scf-app/package-lock.json` was stale
+
+This is the `exit code 1`. Reproduced exactly:
+
+```
+npm error code EUSAGE
+npm error `npm ci` can only install packages when your package.json and
+npm error package-lock.json are in sync.
+npm error Missing: esbuild@0.28.2 from lock file
+```
+
+The committed lockfile predates several dependency changes. Both are
+regenerated and in sync here.
+
+**Worth saying plainly:** `npm ci` failing on a stale lockfile is the
+feature working. It refuses to install something other than what the
+lockfile says. The alternative — `npm install` in CI — would have
+silently drifted and passed.
+
+## The Node 20 warnings
+
+Separate from the failure, and not about your `NODE_VERSION`. They are
+about the runtime **the actions themselves** run on. Node 20 reached end
+of life in April 2026 and is being removed from the runners this autumn.
+
+I checked the current majors rather than assuming, and bumped all three:
+
+| | was | now |
 |---|---|---|
-| `referencesOf` in `queryResult.ts` | audit2-fixes | **no** |
-| `anchorName` in `mediaReferences.ts` | audit2-fixes | **no** |
-| `anchor_assets` in `resolution.ts` | audit2-fixes | **no** |
-| `sqlite_%` in `emit_schema_sql.mjs` | audit2-fixes | **no** |
-| `emit_normative_data.mjs` | normative-data | yes |
-| `junction-keys.json` | normative-data | yes |
-| `referencesOf` in `canonicalQueries.ts` | q00/q11/q15 | yes |
+| `actions/checkout` | v4 | **v7** |
+| `actions/setup-node` | v4 | **v7** |
+| `actions/setup-python` | v5 | **v7** |
 
-One zip, cleanly skipped.
+**`NODE_VERSION` stays at 22.** That is the Node your jobs run, it is
+still in LTS maintenance, and `node:sqlite` plus type stripping are
+known to work on it. Moving the job runtime and the action runtime at
+the same time would have been two changes with one test. The comment in
+the file now says which is which.
 
-## Two more consequences you had not seen yet
+## Verified, not assumed
 
-The white screen is the loud one. There were two quiet ones:
+Fetched `main`, applied only this zip, deleted both `node_modules`, and
+ran the full workflow:
 
-**`sha256sum -c spec/SHA256SUMS` currently fails on main.**
-`spec/scf-schema.sql` is the old copy while the published manifest
-carries the hash of the corrected one. Anyone verifying your published
-artifacts today would get a checksum mismatch — and that is the artifact
-whose whole purpose is to be verifiable.
+- `npm ci` clean in **both** packages from nothing
+- **artifacts job**: registry, lint, schema SQL, finding catalog,
+  normative data, negative fixtures, corpus, manifest, all 41 checksums
+- **core job**: typecheck, **592 passed** / 6 skipped, `scf-check` on the
+  fixture → *no findings*
+- **app job**: typecheck, **249 passed** / 1 skipped, production build
 
-**The published DDL still cannot be loaded.** It still carries
-`CREATE TABLE sqlite_sequence(name,seq)`, which SQLite rejects. That is
-the defect the second reader hit at negative-fixture case one of eleven.
+All three jobs pass.
 
-**And the anchor bug is still live in the editor.** Without
-`mediaReferences.ts` and `resolution.ts`, Q13 still reports the anchor
-row instead of the asset it anchors, so the app's media list still shows
-`Eleanor face anchor — (no identifier)` and still omits
-`eleanor_turnaround_v3.png`.
+---
 
-## Why this zip is not just the old one re-sent
+## The uncomfortable part
 
-`scf-audit2-fixes.zip` also contained `canonicalQueries.ts`, the spec
-documents, the expectations and `SHA256SUMS` — all of which **later
-zips replaced with newer versions**. Unzipping it now would roll those
-back and break the tree in a different way.
+CI has been on `main` since I shipped it, and it has **never passed
+once**. I wrote it, verified the twelve commands by running them in my
+own environment where `node_modules` already existed, and never
+exercised the `npm ci` path that a real runner starts from.
 
-So this carries only the files no later zip touched, at their current
-content:
+That is the same mistake this project keeps finding: something verified
+in the place it was written rather than the place it runs. The broken
+import that gave you a white screen would have been caught by the `core`
+job — which could not have run, because the job before it could not
+install.
 
-```
-scf-core/src/queryResult.ts          the missing exports
-scf-core/src/resolution.ts           anchor_assets
-scf-core/src/mediaReferences.ts      the anchor fix
-scf-core/scripts/emit_schema_sql.mjs excludes sqlite_%
-scf-core/test/mediaReferences.test.ts
-spec/scf-schema.sql                  regenerated, loads cleanly
-fixtures/expectations/Q13.expected.md stale rendering
-fixtures/expectations/shapes.json     stale shape
-```
+Two things follow from that, and I'd take both:
 
-The last two were not obvious: the app's blessed Q13 markdown still
-showed the wrong anchor, so `scf-app`'s suite failed two tests until
-they came along too.
-
-## I verified this against your actual tree
-
-Rather than assuming, I fetched `main`, applied only this zip on top,
-and ran everything:
-
-- `scf-core` **592 passed**, 6 skipped
-- `scf-app` **249 passed**, 1 skipped
-- both typecheck clean, production build clean
-- registry, schema SQL, finding catalog, negative fixtures and normative
-  data all `--check` clean
-- `sha256sum -c spec/SHA256SUMS` — **all 25 match**
-
-That is the full CI sequence, green, from your current commit plus these
-eight files.
-
-## Worth noting
-
-CI would have caught this the moment it was pushed — the `core` job
-typechecks, and the `artifacts` job verifies the checksums that are
-currently failing. The workflow shipped in `scf-ci.zip`; if it is on
-main and not running, the repository's Actions may need enabling.
+1. **Add a `package-lock.json` freshness check to `conventions.md` §8.**
+   Any change to a `package.json` needs `npm install` and the lockfile
+   committed with it. `npm ci` enforces it, but only where CI runs.
+2. **Treat the first green run as the real completion of §10's CI item.**
+   Rev 9 marks CI ✅; it should have been ⚠️ until a run went green. I'll
+   correct that in the next revision once you've seen one pass.

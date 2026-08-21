@@ -29,7 +29,10 @@ on:
   workflow_dispatch:
 
 env:
-  # node:sqlite and --experimental-strip-types both need 22+.
+  # node:sqlite and --experimental-strip-types both need 22+. This is the
+  # Node the JOB runs; the actions above run on their own runtime, which
+  # is why they are pinned to majors that use Node 24 — Node 20 reached
+  # end of life in April 2026 and is being removed from the runners.
   NODE_VERSION: "22"
   PYTHON_VERSION: "3.12"
 
@@ -38,18 +41,22 @@ jobs:
     name: Generated artifacts are current
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: scf-core/package-lock.json
 
+      # `npm ci` and not `npm install`, deliberately: it installs strictly
+      # from the lockfile and FAILS if the lockfile and package.json have
+      # drifted apart. That is the determinism CI is for — and it is what
+      # caught scf-app's lockfile being stale by several dependencies.
       - run: npm ci
         working-directory: scf-core
 
@@ -93,14 +100,18 @@ jobs:
     name: scf-core
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: scf-core/package-lock.json
 
+      # `npm ci` and not `npm install`, deliberately: it installs strictly
+      # from the lockfile and FAILS if the lockfile and package.json have
+      # drifted apart. That is the determinism CI is for — and it is what
+      # caught scf-app's lockfile being stale by several dependencies.
       - run: npm ci
         working-directory: scf-core
 
@@ -134,9 +145,9 @@ jobs:
     name: scf-app
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
