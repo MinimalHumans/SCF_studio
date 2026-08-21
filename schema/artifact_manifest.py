@@ -73,6 +73,9 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("spec/screenplay-tables.json",
          "The screenplay infrastructure tables and the `line_type` "
          "vocabulary. Spec §1.3."),
+        ("spec/api-surface.json",
+         "Every name importable from `@minimalhumans/scf-core`, per "
+         "entry point, with its kind."),
         ("spec/registry.schema.json",
          "JSON Schema for registry.json, so it can be consumed without "
          "running the reference implementation."),

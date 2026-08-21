@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Ambient declarations: wa-sqlite example modules (shipped untyped) and
- * the File System Access API (Chromium; not yet in lib.dom).
+ * Ambient declarations: wa-sqlite example modules (shipped untyped), the
+ * File System Access API (Chromium; not yet in lib.dom), and the build
+ * identity Vite injects.
  */
+
+/** Build identity, replaced at build time by vite.config.ts. */
+declare const __APP_VERSION__: string;
+/** Short commit, or "unknown" when built without git. */
+declare const __APP_COMMIT__: string;
+/** Build date, YYYY-MM-DD. */
+declare const __APP_BUILT__: string;
 
 declare module "wa-sqlite/src/examples/OriginPrivateFileSystemVFS.js" {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

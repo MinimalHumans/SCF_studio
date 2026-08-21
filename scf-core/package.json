@@ -1,16 +1,28 @@
 {
   "name": "@minimalhumans/scf-core",
   "version": "0.1.0",
-  "description": "SCF (Story Context Framework) core: registry types, database layer, and resolution/readiness semantics. UI-free. Structured publishable, unpublished until the format settles (design decision 6, 2026-07-15).",
+  "description": "SCF (Story Context Framework) core: registry types, database layer, and resolution/readiness semantics. UI-free.",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
   "exports": {
-    ".": "./src/index.ts",
-    "./node": "./src/node.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    },
     "./registry.json": "./registry/registry.json"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "prepack": "npm run clean && npm run build",
+    "pack-test": "node --experimental-strip-types scripts/pack_test.mjs",
+    "emit-api-surface": "node --experimental-strip-types scripts/emit_api_surface.mjs",
+    "check-api-surface": "node --experimental-strip-types scripts/emit_api_surface.mjs --check",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "conformance": "vitest run test/conformance.canonical.test.ts test/conformance.readiness.test.ts",
@@ -19,7 +31,7 @@
     "check-schema-sql": "node --experimental-strip-types scripts/emit_schema_sql.mjs --check",
     "emit-screenplay-tables": "node --experimental-strip-types scripts/emit_screenplay_tables.mjs",
     "check-screenplay-tables": "node --experimental-strip-types scripts/emit_screenplay_tables.mjs --check",
-    "scf-check": "node --experimental-strip-types scripts/scf_check.mjs",
+    "scf-check": "npm run build --silent && node scripts/scf_check.mjs",
     "bless-negative": "node --experimental-strip-types scripts/build_negative.mjs",
     "check-negative": "node --experimental-strip-types scripts/build_negative.mjs --check",
     "emit-finding-catalog": "node --experimental-strip-types scripts/emit_finding_catalog.mjs",
@@ -36,5 +48,19 @@
   },
   "bin": {
     "scf-check": "./scripts/scf_check.mjs"
-  }
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "registry/registry.json",
+    "scripts/scf_check.mjs",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ]
 }

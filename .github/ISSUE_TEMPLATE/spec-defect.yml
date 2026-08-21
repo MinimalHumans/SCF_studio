@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 name: Specification defect
 description: The specification is wrong, ambiguous, or silent where it must not be
 labels: ["spec"]

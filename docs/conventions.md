@@ -346,8 +346,9 @@ The procedure:
 
    ```sh
    cd scf-core && npm run emit-schema-sql && npm run emit-screenplay-tables \
-     && npm run emit-finding-catalog && npm run emit-normative-data \
-     && npm run bless-negative && npm run bless-queries && cd ..
+     && npm run emit-api-surface && npm run emit-finding-catalog \
+     && npm run emit-normative-data && npm run bless-negative \
+     && npm run bless-queries && cd ..
    cd scf-app && npm run bless-queries && cd ..
    python3 schema/artifact_manifest.py
    ```

@@ -31,6 +31,25 @@ it — is stated in spec/LICENSE.
 
 ---
 
+CORPUS
+
+corpus/public/scripts/alexis-nexus.fountain is an original screenplay and
+is NOT licensed under Apache-2.0 or CC BY 4.0.
+
+    Alexis Nexus
+    Copyright 2023-2026 Christopher Smallfield
+    All rights reserved, except as granted in
+    corpus/public/scripts/LICENSE
+
+That grant permits redistribution as part of this repository or a fork,
+and use in developing or testing software. It permits nothing else — not
+production, not adaptation, not distribution as a standalone work.
+
+Conformance does not depend on it. The normative fixture is
+fixtures/hollow_creek.scf, which is Apache-2.0.
+
+---
+
 TRADEMARKS
 
 "SCF", "SCF Studio", "Story Context Framework" and "Minimal Humans" are

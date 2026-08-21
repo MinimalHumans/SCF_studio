@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 name: Bug in the tools
 description: scf-core, scf-app, scf-check, or anything under schema/ or tools/
 labels: ["bug"]

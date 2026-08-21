@@ -17,6 +17,101 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.33 — 2026-08-21
+
+*Describes schema 2.12.*
+
+**Editorial.** No requirement changes. Packaging, the public API surface,
+and a licence carve-out.
+
+### `schema-2.12` exists, and the addressing scheme is proven
+
+The first tag in this repository's life. `spec/scf-spec.md` was fetched
+at that tag over the published URL and its SHA-256 matched `SHA256SUMS`
+exactly — so §2.1's addressing scheme is demonstrated end to end rather
+than described. `stability.md` moves artifact addressing off the
+Unstable list, where it had been solely because no tag existed.
+
+### The package can be consumed
+
+`@minimalhumans/scf-core` builds to `dist/` with declarations, and
+`exports` points there instead of at `src/index.ts`.
+
+That was not cosmetic. **A downstream TypeScript project that emits
+JavaScript could not compile against this package at all.** The internal
+imports carry `.ts` extensions, so a consumer's `tsc` failed with TS5097
+on every one of them unless they set `allowImportingTsExtensions` —
+which itself requires `noEmit`. The only consumers who could use the
+package were ones that never compiled.
+
+**And `npx scf-check` was broken**, for a different reason found only by
+testing it: `scripts/scf_check.mjs` imported `../src/*.ts`, and Node
+refuses to strip types for files under `node_modules`
+(`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`). It worked from a
+checkout and failed once installed, which is the only way anyone else
+would ever run it. It now resolves through the package's own entry
+points, so the CLI consumes the library exactly as a stranger does — if
+it ever needs something the entry points do not expose, that fails here
+rather than in somebody else's project.
+
+`scripts/pack_test.mjs` builds a real tarball, installs it into a
+throwaway project, and checks all three: a JavaScript consumer, a
+TypeScript consumer that emits, and the installed bin. CI runs it. Every
+other check in this repository runs inside the repository, where the
+source is on disk and Node strips types for us; none of that is true
+downstream, and the gap is where both of the above were hiding.
+
+**The package remains unpublished.** Publishing is a one-way door — npm
+blocks unpublish after 72 hours — and the format is pre-1.0 with
+everything disposable by policy (§11.0). Nothing is gained by pressing
+it before the surface below has been decided.
+
+### The API surface is pinned, and not yet decided
+
+`spec/api-surface.json` joins the manifest, taking it to **42**. It
+records every name importable from each entry point, with its kind:
+**259 across two entry points**, of which 109 are types invisible to a
+runtime import.
+
+`index.ts` re-exports eighteen modules with `export *`, so that set
+includes every helper written for internal use. **A name a consumer can
+import is a name they will import**, and removing it afterwards is a
+breaking change whether or not it was ever intended as API.
+
+Pinning is not deciding. This artifact makes a change to the surface a
+visible diff in review — the same guarantee the registry and the finding
+catalog already have — and gives the cut a list to work from.
+`stability.md` carries it as **Unstable** and expects it to shrink.
+
+### `alexis-nexus.fountain` is not Apache-2.0
+
+The public corpus tier previously shipped "under the repo's licence",
+which put a feature-length original screenplay under a software licence
+permitting anyone to redistribute and adapt it commercially.
+
+It now carries its own narrow grant in
+`corpus/public/scripts/LICENSE`: redistribution as part of this
+repository or a fork, and use in developing or testing software.
+Everything else is reserved — production, performance, adaptation,
+standalone distribution.
+
+The grant exists rather than a flat reservation because **an open format
+that cannot be forked without infringing something is not open in any
+way that matters.** `NOTICE`, `corpus/README.md` and `spec/LICENSE`
+record the carve-out, and all three say the same thing: conformance
+never depends on that file. The normative fixture is
+`fixtures/hollow_creek.scf`, which is Apache-2.0.
+
+### Build identity in the app
+
+The topbar shows the app version beside the schema version, with commit
+and build date in its tooltip, injected by Vite at build time. "Which
+build am I looking at" is the first question anyone asks about a bug
+report, and the app could not answer it. The commit is best-effort: a
+build from a tarball has no git, and that is not a reason to fail.
+
+---
+
 ## 0.32 — 2026-08-21
 
 *Describes schema 2.12.*

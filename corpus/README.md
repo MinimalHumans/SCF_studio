@@ -12,8 +12,15 @@ breaks another script is visible before merge.
   edges) plus `features.fdx` for FDX-specific features. `scripts/` holds
   redistributable full scripts — currently `alexis-nexus.fountain`, a
   first-party feature-length screenplay (127 headings, 45 locations, 27
-  speaking characters). Nothing in this tier may be third-party material:
-  the public corpus ships with the repo, under the repo's licence.
+  speaking characters). Nothing in this tier may be third-party material.
+
+  **`alexis-nexus.fountain` is NOT Apache-2.0.** It is an original
+  screenplay under ordinary copyright, carrying a narrow grant that lets
+  it be redistributed with this repository or a fork and used to test
+  software — and nothing else. See
+  [`public/scripts/LICENSE`](public/scripts/LICENSE). The hand-written
+  fixtures under `public/spec/` are Apache-2.0 with the rest of the
+  repository. Conformance never depends on either.
 - **private/** — **gitignored, local-only.** Real scripts that cannot be
   redistributed: PDF→Fountain conversions and FDX files. Their blessed
   expectations live beside them and are equally private (expected files

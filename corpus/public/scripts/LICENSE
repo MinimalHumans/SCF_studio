@@ -1,0 +1,52 @@
+Licence for alexis-nexus.fountain
+=================================
+
+    Alexis Nexus
+    Copyright 2023-2026 Christopher Smallfield
+    All rights reserved, except as granted below.
+
+THIS FILE IS NOT COVERED BY THE REPOSITORY'S APACHE-2.0 LICENCE.
+
+It is a screenplay — an original creative work, protected by copyright
+from the moment it was written, and included here only because a format
+for describing films needs at least one real film-length script to be
+tested against. A feature screenplay is not source code and is not
+licensed as if it were.
+
+WHAT YOU MAY DO
+---------------
+
+You may copy, store and redistribute this file verbatim as part of this
+repository or any fork of it, and you may use it to develop, test or
+demonstrate software that reads, writes or converts SCF, Fountain or
+related formats. That includes commercial software.
+
+This grant exists so that forking the repository is lawful. An open
+format that cannot be forked without infringing something is not open in
+any way that matters, and a test corpus nobody may redistribute is a
+test corpus nobody can run.
+
+WHAT YOU MAY NOT DO
+-------------------
+
+All other rights are reserved. In particular this grant does NOT permit
+you to produce, perform, adapt, translate or publish the screenplay or
+any part of it, to create derivative creative works from it, or to
+distribute it as a standalone work outside this repository or a fork.
+
+Nothing here grants any right to train a machine-learning model on this
+file. That is neither permitted nor, by this document, conceded to be
+something that would otherwise require permission.
+
+NOTE FOR IMPLEMENTERS
+---------------------
+
+Conformance never depends on this file. The normative fixture is
+`fixtures/hollow_creek.scf`, which is Apache-2.0 with the rest of the
+repository, and the sixteen canonical query results are computed from
+it. This screenplay is a regression baseline for the parser — 127 scene
+headings, 45 locations, 27 speaking characters — and nothing in
+`spec/conformance.md` refers to it.
+
+The other files under `corpus/public/spec/` are hand-written test
+fixtures rather than creative work, and are Apache-2.0.

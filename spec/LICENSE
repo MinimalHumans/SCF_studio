@@ -76,6 +76,9 @@ implementation.
 WHAT IS NOT LICENSED HERE
 -------------------------
 
-corpus/ is screenplay material and is covered by corpus/README.md and
-the repository's root LICENSE. Do not assume the licence of this
-directory extends to it.
+corpus/ is screenplay material. The hand-written fixtures under
+corpus/public/spec/ are Apache-2.0 with the code, but
+corpus/public/scripts/alexis-nexus.fountain is an original screenplay
+under ordinary copyright with a narrow redistribution grant — see
+corpus/public/scripts/LICENSE and NOTICE. Do not assume the licence of
+this directory, or of the repository root, extends to it.

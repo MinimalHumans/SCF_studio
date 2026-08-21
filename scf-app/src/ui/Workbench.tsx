@@ -165,8 +165,10 @@ export function Workbench(): JSX.Element {
       <header className="topbar">
         <span className="topbar-mark">SCF</span>
         <span className="topbar-project">{projectName}</span>
-        <span className="topbar-schema">
-          schema {registry.schemaVersion}
+        <span className="topbar-schema"
+              title={`scf-app ${__APP_VERSION__} · ${__APP_COMMIT__}` +
+                     ` · built ${__APP_BUILT__}`}>
+          schema {registry.schemaVersion} · v{__APP_VERSION__}
         </span>
         <RootStatus />
         <button className="ghost tiny"

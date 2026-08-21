@@ -31,7 +31,7 @@ https://raw.githubusercontent.com/MinimalHumans/SCF_studio/schema-2.12/scf-core/
 sha256sum -c spec/SHA256SUMS
 ```
 
-## Artifacts (41)
+## Artifacts (42)
 
 This list is exhaustive in both directions: everything below is
 published here AND checksummed in `SHA256SUMS`, and nothing is
@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `5ca7e74ce44ef8ea…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/scf-spec.md` | `2aa9117fd795a2a7…` | The specification. Everything normative about the format is here or cited from here. |
 | `spec/conformance.md` | `498e273a1c0db8f1…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `8fa67c20dc1902fa…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `7707451508992720…` | The specification changelog. Spec §11.5. |
+| `spec/stability.md` | `ec9b81511daf71b3…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `3490305df411de19…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -61,6 +61,7 @@ Generated from `schema/`, which is the source of truth for all of them.
 | `scf-core/registry/registry.json` | `f983cd1659ae6631…` | The normative field set. Spec §2.1. |
 | `spec/scf-schema.sql` | `6f10cb380911f2df…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/screenplay-tables.json` | `985b2561b3aaa1be…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
+| `spec/api-surface.json` | `d49016cae4387ebb…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `448b8495efdfd09e…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `a5e4c75b4a741a9e…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `83fb4926595bafd4…` | What Q14 assesses, per target query. Spec §12.9.1. |

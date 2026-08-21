@@ -76,6 +76,10 @@ jobs:
       - name: every source file carries an SPDX header
         run: python3 tools/add_spdx_headers.py --check
 
+      - name: api-surface.json matches the entry points
+        run: npm run check-api-surface
+        working-directory: scf-core
+
       - name: screenplay-tables.json matches initDatabase and LINE_TYPES
         run: npm run check-screenplay-tables
         working-directory: scf-core
@@ -136,6 +140,19 @@ jobs:
       # means the fixture and the format have come apart.
       - name: scf-check the conformance fixture
         run: npm run scf-check -- ../fixtures/hollow_creek.scf
+        working-directory: scf-core
+
+      # Packaging, exercised the way a consumer meets it: pack a real
+      # tarball, install it into a throwaway project, and check that a
+      # JavaScript consumer, a TypeScript consumer that EMITS, and the
+      # installed `scf-check` bin all work. Every other check in this
+      # workflow runs inside the repository, where the source is on disk
+      # and Node strips types for us. None of that is true downstream,
+      # and the difference has already broken this package once: Node
+      # refuses to strip types under node_modules, so `npx scf-check`
+      # failed while every in-repo check passed.
+      - name: a consumer can install, import, compile and run
+        run: npm run pack-test
         working-directory: scf-core
 
       # The demo copy is the same file, byte for byte. There is a test

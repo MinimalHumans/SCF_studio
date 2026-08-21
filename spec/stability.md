@@ -47,8 +47,9 @@ about it is ceremonial.
 | Physical DDL published | §1.3 | Provisional | Yes | `spec/scf-schema.sql`, dumped from `initDatabase()`, with a `--check` mode. Excludes `sqlite_%` since 0.25 — it previously carried `CREATE TABLE sqlite_sequence`, which SQLite rejects, so the published DDL could not be loaded. |
 | Reference projection derived from the registry | §12.1.2 | Provisional | Yes | `referencesOf()`. Replaced hand-written per-query maps that disagreed with each other. |
 | Anchors contribute their asset | §12.8 | Provisional | Yes | `resolveMedia` dereferences; `mediaReferences` needs no cross-table lookup, so the row-id conflation cannot recur. |
-| Artifact addressing and checksums | §2.1 | **Unstable** | Yes | `spec/ARTIFACTS.md` and `SHA256SUMS` cover **41 files** as of 0.31 — the four specification documents and the eleven blessed negative reports joined the twenty-six generated artifacts. Unstable until a `schema-X.Y` tag exists and the URLs it publishes resolve. |
+| Artifact addressing and checksums | §2.1 | Provisional | Yes | `spec/ARTIFACTS.md` and `SHA256SUMS` cover **41 files** as of 0.31 — the four specification documents and the eleven blessed negative reports joined the twenty-six generated artifacts, and **42 as of 0.33**. `schema-2.12` exists; the URLs resolve and verify against their digests. |
 | Licensing boundary: prose CC BY 4.0, generated data Apache-2.0 | — | Provisional | Yes | Stated in `spec/LICENSE` since 0.32 and enforced per file by `tools/add_spdx_headers.py --check`, which CI runs. Provisional only because no third party has yet relied on it. |
+| `@minimalhumans/scf-core` public API | — | **Unstable** | Yes | `spec/api-surface.json` pins 259 names across two entry points as of 0.33, and CI checks it. **Pinned is not decided**: `index.ts` re-exports eighteen modules with `export *`, so the set includes helpers written for internal use. It is expected to SHRINK before 1.0. The package is unpublished. |
 | The proposal path | — | Provisional | Yes | `proposals/` since 0.32. Provisional because no proposal has been through it — the procedure is written and untested, and the first real one will find what is wrong with it. |
 | Framework columns | §2.2 | Stable | Yes | |
 | Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `sceneOps.ts`. Derived, so new entities are covered without an edit. |
@@ -224,9 +225,13 @@ Five Unstable rows, in rough dependency order:
    list exists, "inspectable" is a claim.
 4. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
    1.0 or go. They are now at least reported.
-5. **Artifact addressing** (§2.1) — the manifest is written, covers all
-   41 files as of 0.31, and verifies. No `schema-X.Y` tag exists, so the
-   URLs it publishes do not resolve. One `git tag` closes it.
+5. **The published API surface** — `spec/api-surface.json` records what
+   is importable, and nothing has decided what SHOULD be. Cutting the
+   internal helpers out of the entry points is cheap while the package
+   is unpublished and a breaking change afterwards.
+
+*Closed in 0.33:* artifact addressing. `schema-2.12` exists, and every
+URL the manifest publishes resolves and verifies against its digest.
 
 *Closed in 0.24:* the envelope holds for a whole-story answer, not only
 a positional one.

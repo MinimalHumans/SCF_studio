@@ -32,9 +32,22 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadRegistry } from "../src/registry.ts";
-import { openNodeDatabase } from "../src/node.ts";
-import { renderReport, validationReport } from "../src/report.ts";
+// SELF-REFERENCE, not a relative path into src/. Two reasons, and the
+// first is not a preference:
+//
+// Node REFUSES to strip types for files under node_modules
+// (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING). Importing "../src/*.ts"
+// works when this script is run from a checkout and fails the moment the
+// package is installed, which is the only way anyone else will ever run
+// it. `npx scf-check` was broken by exactly this.
+//
+// Second, resolving through the package's own `exports` means this CLI
+// consumes the library the way a stranger does. If it ever needs
+// something the entry points do not expose, that fails here rather than
+// in somebody else's project.
+import { loadRegistry, renderReport, validationReport }
+  from "@minimalhumans/scf-core";
+import { openNodeDatabase } from "@minimalhumans/scf-core/node";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
