@@ -349,6 +349,16 @@ The procedure:
      && npm run emit-api-surface && npm run emit-finding-catalog \
      && npm run emit-normative-data && npm run bless-negative \
      && npm run bless-queries && cd ..
+
+   If the change alters what the CONFORMANCE FIXTURE contains, edit it in
+   `scf-app`, then dump and rebuild before any of the above — the query
+   results and the negative reports are blessed FROM the fixture, so a
+   stale fixture blesses stale artifacts:
+
+   ```sh
+   python3 fixtures/build/dump_fixture.py     # .scf -> reviewable JSON
+   python3 fixtures/build/build_fixture.py    # JSON -> .scf, + demo copy
+   ```
    cd scf-app && npm run bless-queries && cd ..
    python3 schema/artifact_manifest.py
    ```

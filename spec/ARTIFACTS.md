@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `5dc2b6291ac05b95…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/scf-spec.md` | `899736343036f7fa…` | The specification. Everything normative about the format is here or cited from here. |
 | `spec/conformance.md` | `498e273a1c0db8f1…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `7fdf2b243533275f…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `2ac7d9e2349d18a0…` | The specification changelog. Spec §11.5. |
+| `spec/stability.md` | `ff90009f27f17de5…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `c31ba9f6a5cc2993…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -114,7 +114,7 @@ Eleven files that are wrong in a stated way, and the report each MUST produce. S
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `87d275cfb4baedc6…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `b098d3408d4b9de5…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

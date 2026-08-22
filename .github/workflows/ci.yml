@@ -155,6 +155,13 @@ jobs:
         run: npm run pack-test
         working-directory: scf-core
 
+      # The fixture is a build output. Rebuilding it from the published
+      # DDL plus hollow_creek.data.json must reproduce what is checked
+      # in — otherwise the source and the artifact have come apart and
+      # the JSON everyone reviews describes a file nobody runs.
+      - name: the fixture rebuilds from its source
+        run: python3 fixtures/build/build_fixture.py --check
+
       # The demo copy is the same file, byte for byte. There is a test
       # for this, and it is cheap enough to also assert here, because
       # the failure it prevents — a demo running a different fixture

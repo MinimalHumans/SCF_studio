@@ -17,6 +17,76 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.35 — 2026-08-21
+
+*Describes schema 2.12.*
+
+**Editorial.** No requirement changes. The conformance fixture becomes a
+build output with a reviewable source.
+
+### The fixture builds from nothing
+
+`fixtures/build/build_fixture.py` takes three inputs and no existing
+fixture: the published `scf-schema.sql`, a new
+`hollow_creek.data.json` carrying the 375 authored rows, and the
+screenplay. Two builds from the same source are **byte-identical**.
+
+The old chain could not do this. `01_people_and_world` through
+`04_screenplay_body` ran additively over a file whose origin was lost,
+and `01` failed on its first statement against an empty database,
+looking up a scene 12 nothing had created. Checklist §10's reproducible
+build was unreachable.
+
+**The reason that mattered was not reproducibility.** It was that the
+fixture is a conformance artifact whose exact content eleven suites
+assert against, and a pull request touching it showed one line saying a
+binary file differed. Nobody could review a change to it. The loop is
+now: author in `scf-app`, dump to JSON, **review the JSON diff**,
+rebuild, commit both. CI checks that the rebuild still matches what is
+checked in.
+
+The four old scripts are kept unrun in `fixtures/build/history/`, with
+a README recording what the data file cannot: scene 12 is pinned, name
+anchors are relied on by both suites, scene numbers are deliberately not
+sequential, and some gaps exist on purpose so §9.2's half-placed-data
+requirement is actually exercised.
+
+### Three bugs the rebuild found
+
+None was visible while the fixture was never built from nothing.
+
+**`screenplay_body.py` stamped `user_version = 2010`**, hardcoded. It
+stayed there through schema 2.11 and 2.12, so every run backdated the
+file's header by two schema versions. It went unnoticed because the
+value in the checked-in fixture came from somewhere else and this line
+quietly disagreed with it. The version is now read from `_scf_meta`.
+
+**It deleted and re-inserted a performance beat without preserving its
+row id**, so each run advanced `sqlite_sequence` and produced a
+different file. The uuid was pinned; the row id was not, and row ids are
+what every foreign key in the file points at.
+
+**Generated screenplay lines took `CURRENT_TIMESTAMP`.** Two builds from
+identical source, minutes apart, differed in 106 rows and agreed about
+everything that means anything. Timestamps on generated rows are values,
+not observations, and are now preserved or fixed.
+
+### The fixture changed, and nothing noticed
+
+Rebuilding reset `screenplay_lines` row ids from 228 to 1 — accumulated
+autoincrement drift from repeated delete-and-reinsert, referenced by
+nothing. `screenplay_prop_tags` anchors to lines by **uuid and
+character offsets, never by row id**, and no foreign key targets that
+table.
+
+So the fixture's bytes changed and **every blessed artifact stayed
+identical**: all sixteen query results, all eleven negative reports, 602
+core tests and 248 app tests, unmoved. That is §12.1.2's rule — row ids
+never appear in a result — demonstrated rather than asserted, on a
+change that would have broken any artifact that had smuggled one in.
+
+---
+
 ## 0.34 — 2026-08-21
 
 *Describes schema 2.12.*
