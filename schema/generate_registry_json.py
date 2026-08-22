@@ -37,7 +37,7 @@ sys.path.insert(0, str(SCHEMA_DIR))
 
 from entity_registry import ENTITY_REGISTRY, FieldDef  # noqa: E402
 from schema_meta import (  # noqa: E402
-    OWNED_TABLES, SCHEMA_VERSION, UUID_EXTRA_TABLES,
+    OWNED_TABLES, SCHEMA_VERSION, TIER_LABELS, UUID_EXTRA_TABLES,
 )
 
 GENERATOR_VERSION = "1.0.0"
@@ -114,6 +114,7 @@ def build() -> dict:
             {"name": "updated_at", "sqlType": "TEXT",
              "default": "(datetime('now'))"},
         ],
+        "tierLabels": {str(k): v for k, v in sorted(TIER_LABELS.items())},
         "uuidExtraTables": list(UUID_EXTRA_TABLES),
         "ownedTables": list(OWNED_TABLES),
         "entityCount": len(ENTITY_REGISTRY),

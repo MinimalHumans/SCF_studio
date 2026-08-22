@@ -17,6 +17,72 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.37 — 2026-08-22
+
+*Describes schema 2.12.*
+
+**Editorial.** No requirement changes. Two reading aids, both generated.
+
+### `entity-reference.md` and `query-reference.md`
+
+The manifest goes to **44**. Neither document is normative and both say
+so in their own first lines.
+
+**The entity reference** carries all 99 entities and their fields from
+`registry.json` — tier, category, subject, scope, position pattern,
+ownership, what refines what, and for each entity the list of fields
+that point at it, derived rather than declared.
+
+**The query reference** puts all sixteen queries on one page: what each
+answers, what it takes, what its result carries, and where §12 states
+it. Every fact is read from the specification, the published
+`.result.json` artifacts, or `queryPaths.ts`.
+
+They are generated because the alternative is a fourth description of
+the same sixteen queries and a second description of the registry, each
+correct on the day it was written and drifting by the following week.
+That is the shape of every recurring defect this project has found.
+
+The query reference follows **§12's order**, which is not the numeric
+order of the query ids — Q05 is §12.2 and Q00 is §12.12, because the
+section builds from a single position outward to the whole story.
+Sorting by id would have implied the spec was disordered.
+
+### `tierLabels` joins the registry
+
+Tier names — "Structural foundation", "Thematic tracking" and the rest —
+existed as banner **comments** in `entity_registry.py` and nowhere a
+generator could reach.
+
+So the entity reference invented them, and **four of the seven were
+wrong**. It put "Production" on tier 4, which is Thematic tracking, and
+called tier 6 "Connections" when tier 6 *is* Production. Nothing in the
+output would have looked wrong to a reader who did not already know.
+
+`TIER_LABELS` is now declared in `schema_meta.py`, emitted into
+`registry.json`, and read from there. The generator exits rather than
+guess if the field is absent. Spec §2 says tier is descriptive and
+carries no semantics, which makes the label free to state and pointless
+to invent.
+
+`registry.json` changes; the schema version does not, because nothing
+structural moved.
+
+### A parser that failed quietly, then loudly
+
+The query reference reads each query's one-line summary from the bold
+sentence under its §12 heading. §12.16's **wraps across two lines**, and
+the first version of the match returned an empty string for it — a blank
+cell in a generated table, which is exactly the kind of gap nobody reads
+twice.
+
+Fixed, and a missing summary is now fatal rather than blank: the
+generator names the query and the section and exits. The same applies to
+a query with no published result, and to §12 carrying any number of
+query sections other than sixteen.
+
+---
+
 ## 0.36 — 2026-08-22
 
 *Describes schema 2.12.*

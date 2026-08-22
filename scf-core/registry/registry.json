@@ -23,6 +23,15 @@
       "default": "(datetime('now'))"
     }
   ],
+  "tierLabels": {
+    "0": "Structural foundation",
+    "1": "Project-level creative direction",
+    "2": "Depth — character, prop and location",
+    "3": "Scene detail",
+    "4": "Thematic tracking",
+    "5": "Emotional architecture",
+    "6": "Production"
+  },
   "uuidExtraTables": [
     "screenplay_lines",
     "screenplay_versions",

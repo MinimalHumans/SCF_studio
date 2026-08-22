@@ -14,6 +14,27 @@ docs/schema-changelog.md in the same commit.
 
 SCHEMA_VERSION = "2.12"
 
+# What each tier band is called.
+#
+# These names existed as banner COMMENTS in entity_registry.py and
+# nowhere else, so anything that wanted to label a tier had to either
+# read Python source or invent one. The entity reference did invent one,
+# and got four of the seven wrong before anybody looked. Spec §2 says
+# tier is descriptive and carries no semantics, which makes the label
+# free to state and pointless to guess at.
+#
+# Tier 2 spans three banners in entity_registry.py — character, prop and
+# location depth — so its label is the union rather than any one of them.
+TIER_LABELS = {
+    0: "Structural foundation",
+    1: "Project-level creative direction",
+    2: "Depth — character, prop and location",
+    3: "Scene detail",
+    4: "Thematic tracking",
+    5: "Emotional architecture",
+    6: "Production",
+}
+
 # Screenplay infrastructure tables. They are not registry entities, but
 # they carry uuid row identity on the same terms (schema 2.3), so the
 # generator and every initDatabase must know about them.

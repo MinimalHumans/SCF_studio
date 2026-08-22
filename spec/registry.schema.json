@@ -41,6 +41,11 @@
         }
       }
     },
+    "tierLabels": {
+      "description": "What each tier band is called, keyed by tier as a string. Descriptive only — spec §2 states that tier carries no semantics. Present so that a consumer labelling a tier does not have to invent a name; absent in registries written before schema 2.12.",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
     "uuidExtraTables": {
       "description": "Non-entity tables that carry uuid row identity (spec §6.1).",
       "type": "array",

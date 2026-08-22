@@ -80,6 +80,14 @@ jobs:
         run: npm run check-api-surface
         working-directory: scf-core
 
+      - name: entity-reference.md matches the registry
+        run: npm run check-entity-reference
+        working-directory: scf-core
+
+      - name: query-reference.md matches §12 and the published results
+        run: npm run check-query-reference
+        working-directory: scf-core
+
       - name: screenplay-tables.json matches initDatabase and LINE_TYPES
         run: npm run check-screenplay-tables
         working-directory: scf-core

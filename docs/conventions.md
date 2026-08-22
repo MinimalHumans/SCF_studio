@@ -346,7 +346,8 @@ The procedure:
 
    ```sh
    cd scf-core && npm run emit-schema-sql && npm run emit-screenplay-tables \
-     && npm run emit-api-surface && npm run emit-finding-catalog \
+     && npm run emit-api-surface && npm run emit-entity-reference \
+     && npm run emit-query-reference && npm run emit-finding-catalog \
      && npm run emit-normative-data && npm run bless-negative \
      && npm run bless-queries && cd ..
 

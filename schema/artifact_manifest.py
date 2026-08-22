@@ -73,6 +73,12 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("spec/screenplay-tables.json",
          "The screenplay infrastructure tables and the `line_type` "
          "vocabulary. Spec §1.3."),
+        ("spec/entity-reference.md",
+         "Every entity and field, generated from the registry. Not "
+         "normative — a reading aid over `registry.json`."),
+        ("spec/query-reference.md",
+         "All sixteen queries in one page, generated from §12, the "
+         "published results and `queryPaths.ts`. Not normative."),
         ("spec/api-surface.json",
          "Every name importable from `@minimalhumans/scf-core`, per "
          "entry point, with its kind."),

@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.36 (draft) — not a release.**
+**Version 0.37 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.36` (draft).
+- **Specification version** — this document. Currently `0.37` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -294,7 +294,14 @@ implementation. That document constrains shape only — which entities
 exist is the registry, and what they mean is this specification.
 
 Each schema version's artifacts are addressable and checksummed; see
-[ARTIFACTS.md](ARTIFACTS.md). **The manifest covers this document and
+[ARTIFACTS.md](ARTIFACTS.md).
+
+Two generated reading aids accompany this document and are **not
+normative**: [entity-reference.md](entity-reference.md), every entity
+and field from the registry, and [query-reference.md](query-reference.md),
+all sixteen queries on one page. Both are derived and checked in CI.
+Where either disagrees with this document or with the registry, they are
+wrong. **The manifest covers this document and
 the other three specification documents**, so a reader can verify that
 the prose it built against is the prose that was published — three
 independent implementations have now been written from these files, and

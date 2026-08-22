@@ -143,16 +143,15 @@ conventions, and the first that could verify the bytes it read.
 | ✅ | `docs/story-structure-spec.md` renamed | It was a second document called a spec, next to the real one |
 | ⚠️ | ~38 inbound references to `conventions.md` meaning "the rules" | The nine user-facing `help_text` strings were repointed at spec sections in 0.30; the rest are prose |
 | ○ | **"What is SCF" for a cold reader** | Three readers have started from §0.1, which is written for an implementer |
-| ○ | Authoring guide, query reference, entity reference, API docs, walkthrough, docs site, FAQ | **The only substantial block left on this list** |
+| ✅ | **Query reference, entity reference** | Generated, not written — from §12, the published results, `queryPaths.ts` and the registry. CI-checked, explicitly not normative |
+| ○ | Authoring guide, "what is SCF", walkthrough, docs site, FAQ | **The remaining block.** Prose, plus a docs-site build |
 
-**Two of these are not prose.** A **query reference** and an **entity
-reference** should be generated from the registry and from
-`api-surface.json` rather than written, for the same reason every other
-derived document here is generated: a hand-written entity reference over
-99 entities is a second description of the registry, free to drift from
-it within a week. A **docs site** is build and CI work. The rest —
-"what is SCF", the authoring guide, the walkthrough, the FAQ — is
-writing, and no tooling helps.
+**The two references are generated**, as of 0.37, for the same reason
+every other derived document here is: a hand-written entity reference
+over 99 entities is a second description of the registry, free to drift
+from it within a week. A **docs site** is build and CI work. What is
+left — "what is SCF", the authoring guide, the walkthrough, the FAQ —
+is writing, and no tooling helps.
 
 ## 8. Licensing and IP — ✅ complete
 
