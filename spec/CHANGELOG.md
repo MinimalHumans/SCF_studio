@@ -17,6 +17,60 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.36 — 2026-08-22
+
+*Describes schema 2.12.*
+
+**Editorial.** No requirement changes. `stability.md` is corrected where
+it had drifted, and the release checklist rejoins the repository.
+
+### `stability.md` was describing a project that no longer exists
+
+Three claims in it were false, in a document that is normative,
+checksummed, and the one place a third party is told to look for what is
+safe to build against.
+
+**The queries row said "Nothing is specified yet. This is the largest
+remaining piece of specification work."** §12 has been complete since
+0.23, with all sixteen queries specified and each carrying a published
+normative result; 0.29 added the shape conventions. The row was four
+revisions stale and pointed a reader at the opposite of the truth.
+
+**The summary listed "the remaining three queries — Q01, Q02, Q04.
+Their compositions live in the app and must move to the core first."**
+All three live in `canonicalQueries.ts` and have published results. The
+same list numbered two of its items `4`, and counted five Unstable rows
+where there are three.
+
+**The finding catalog was described as 35 codes.** It has 36.
+
+The corrected summary also separates two Provisional rows with known
+gaps — the `scf-check` asset tally and the `scf-core` API surface — from
+the Unstable rows that define a 1.0, so that "what stands between here
+and 1.0" is a list of three things rather than an impression.
+
+### The release checklist is in the repository
+
+`docs/release-checklist.md`, at **rev 11**, regenerated from the tree
+rather than edited forward from rev 10.
+
+Rev 10 lived outside the repository and had drifted the way an untracked
+description always does: it claimed spec 0.29, forty-one checksummed
+files and a published `screenplay-tables.json` at a time when `main` had
+0.28, twenty-five, and no such file. It had become a second place where
+the project's state was written down, and it disagreed with the first.
+
+Being in `docs/` does not make it true — nothing checks it — but it puts
+it where the change procedure can reach it, in a diff, beside the things
+it describes.
+
+**What it records:** nine of eleven sections complete. Nothing that
+remains is specification work. Section 7 — documentation for people who
+are not implementing the format — has not moved since rev 10 called it
+the largest untouched block, and everything else on that list has.
+
+---
+
 ## 0.35 — 2026-08-21
 
 *Describes schema 2.12.*

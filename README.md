@@ -26,7 +26,7 @@ normative artifact.
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
 | `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. `screenplay-tables.json` (the screenplay infrastructure tables and the `line_type` vocabulary). `api-surface.json` (every name importable from `scf-core`). The manifest lists **42 files** in all: these four documents, the generated artifacts, the sixteen canonical query results and the eleven blessed negative reports under `fixtures/`. |
-| `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `story-structure-design-record.md`. |
+| `docs/` | `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `story-structure-design-record.md`, `release-checklist.md` (what stands between here and 1.0). |
 
 ## Getting started
 

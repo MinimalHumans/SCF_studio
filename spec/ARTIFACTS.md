@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `899736343036f7fa…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/scf-spec.md` | `f17210f621288628…` | The specification. Everything normative about the format is here or cited from here. |
 | `spec/conformance.md` | `498e273a1c0db8f1…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `ff90009f27f17de5…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `c31ba9f6a5cc2993…` | The specification changelog. Spec §11.5. |
+| `spec/stability.md` | `8edaf7d19f7cb52f…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `eb4ac63ea700db05…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
