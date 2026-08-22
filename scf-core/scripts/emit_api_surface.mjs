@@ -93,8 +93,78 @@ const program = ts.createProgram(
 );
 const checker = program.getTypeChecker();
 
+/**
+ * Every type named in a public signature must itself be public.
+ *
+ * This is the invariant that makes a surface usable rather than merely
+ * small. If `q05Result()` is exported and its return type `Q05Result` is
+ * not, a consumer can call the function and cannot write down what it
+ * gave them — no variable annotation, no wrapper signature, no
+ * re-export. The failure is silent at our end and immediate at theirs,
+ * which is the worst place for it to show up.
+ *
+ * Checked on syntax rather than by walking resolved types: a type
+ * reference written in a declaration is exactly what a consumer has to
+ * be able to name, and inferred structure they never spell out is not.
+ */
+function closureViolations(_unused, exported, checker, nameable = exported) {
+  const srcDir = join(PKG, "src");
+  const bad = [];
+  for (const symbol of exported.values()) {
+    const resolved = symbol.flags & ts.SymbolFlags.Alias
+      ? checker.getAliasedSymbol(symbol) : symbol;
+    for (const decl of resolved.declarations ?? []) {
+      const owner = decl.getSourceFile().fileName;
+      if (!owner.startsWith(srcDir)) continue;
+      const seen = new Set();
+      const visit = (node) => {
+        if (ts.isTypeReferenceNode(node)) {
+          const name = ts.isQualifiedName(node.typeName)
+            ? node.typeName.right.text : node.typeName.text;
+          if (!seen.has(name)) {
+            seen.add(name);
+            const sym = checker.getSymbolAtLocation(
+              ts.isQualifiedName(node.typeName)
+                ? node.typeName.right : node.typeName);
+            const target = sym && sym.flags & ts.SymbolFlags.Alias
+              ? checker.getAliasedSymbol(sym) : sym;
+            const home0 = target?.declarations?.[0];
+            // A generic parameter is not a type a consumer names; it is
+            // filled in at the call site.
+            if (home0 && ts.isTypeParameterDeclaration(home0)) return;
+            const home = home0?.getSourceFile().fileName;
+            if (home && home.startsWith(srcDir) && !nameable.has(name)) {
+              bad.push({
+                exportName: resolved.getName(),
+                needs: name,
+                from: home.slice(srcDir.length + 1),
+              });
+            }
+          }
+        }
+        ts.forEachChild(node, visit);
+      };
+      // Signature and type position only: a function BODY may mention
+      // whatever it likes, and none of it reaches a consumer.
+      if (ts.isFunctionDeclaration(decl) || ts.isMethodDeclaration(decl)) {
+        decl.parameters.forEach(visit);
+        if (decl.type) visit(decl.type);
+        decl.typeParameters?.forEach(visit);
+      } else if (ts.isVariableDeclaration(decl)) {
+        if (decl.type) visit(decl.type);
+      } else {
+        visit(decl);
+      }
+    }
+  }
+  return bad;
+}
+
 const entries = {};
 let total = 0;
+const violations = [];
+/** Checked after every entry point is known — see the note below. */
+const pending = [];
 for (const [specifier, rel] of Object.entries(ENTRIES)) {
   const source = program.getSourceFile(join(PKG, rel));
   if (!source) {
@@ -106,6 +176,10 @@ for (const [specifier, rel] of Object.entries(ENTRIES)) {
   for (const symbol of checker.getExportsOfModule(moduleSymbol)) {
     names[symbol.getName()] = kindOf(symbol, checker);
   }
+  const exportedSymbols = new Map(
+    checker.getExportsOfModule(moduleSymbol).map((s) => [s.getName(), s]));
+  pending.push(exportedSymbols);
+
   const sorted = Object.keys(names).sort();
   entries[specifier] = {
     module: rel,
@@ -130,6 +204,32 @@ const text = `${JSON.stringify({
   total,
   entries,
 }, null, 2)}\n`;
+
+// The nameable set is the UNION across entry points, because a consumer
+// importing "@minimalhumans/scf-core/node" can still name a type from
+// "@minimalhumans/scf-core". Checking each entry in isolation would
+// report reachable types as missing.
+const nameable = new Map();
+for (const m of pending) for (const [k, v] of m) nameable.set(k, v);
+for (const m of pending) violations.push(...closureViolations(null, m, checker,
+  nameable));
+
+if (violations.length > 0) {
+  console.error(
+    "[api-surface] the surface is not self-contained. A consumer can " +
+    "call these\n  but cannot name what they take or return:\n");
+  const shown = new Set();
+  for (const v of violations) {
+    const key = `${v.exportName}:${v.needs}`;
+    if (shown.has(key)) continue;
+    shown.add(key);
+    console.error(`  ${v.exportName} needs ${v.needs} (src/${v.from})`);
+  }
+  console.error(
+    "\n  Export the missing types from src/index.ts, or stop exporting " +
+    "what needs them.");
+  process.exit(1);
+}
 
 if (process.argv.includes("--check")) {
   let current = "";

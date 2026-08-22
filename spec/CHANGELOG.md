@@ -17,6 +17,69 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.34 — 2026-08-21
+
+*Describes schema 2.12.*
+
+**Editorial.** No requirement changes. The package's public surface is
+stated rather than accumulated.
+
+### `src/index.ts` is an explicit list
+
+It was twenty-six `export *` lines, which is not a surface but the
+absence of one: every helper written for internal use was exported by
+accident, and nothing distinguished a name meant for consumers from one
+that happened to be reachable.
+
+**259 names became 224.** Four modules are cut — `assetIndex` (browsing,
+facets, the derived path tree), `preview` (display tiers), `assetImport`
+(candidate and relink plans) and `bundling` (bundle mutations). They
+appear in no conformance role, no query result and no published
+artifact. They remain importable by deep path; they are simply not part
+of what the package promises to keep working.
+
+**The organising question was not "what does the editor use."** That
+turned out to be the wrong question entirely: `scf-app` imports twenty-six
+modules directly through a path alias and **has never gone through the
+entry point at all**. The barrel served nobody. So the surface is
+organised by `conformance.md`'s three roles instead, and the file is
+sectioned to match — a reader can see which claim each group serves.
+
+### The surface must be self-contained
+
+`emit_api_surface.mjs` now enforces that **every type named in a public
+signature is itself public**, and CI runs it.
+
+This is the invariant that makes a surface usable rather than merely
+small. If `q05Result()` is exported and `Q05Result` is not, a consumer
+can call the function and cannot write down what it gave them — no
+variable annotation, no wrapper signature, no re-export. The failure is
+silent at this end and immediate at theirs.
+
+It is checked on syntax rather than by walking resolved types: a type
+reference written in a declaration is exactly what a consumer must be
+able to name, and inferred structure they never spell out is not.
+
+Writing the check found one real gap immediately — `NodeDatabase` on the
+`./node` entry names `SqlExec`, which that entry does not export. It is
+reachable from `.`, so the check compares against the union of the entry
+points rather than each in isolation, which is what a consumer actually
+experiences.
+
+### What is left, and what it is not
+
+`stability.md` moves the API surface off the Unstable list. What remains
+is judgement rather than structure: a few rendering and browsing helpers
+inside kept modules could still go — `referencesMarkdown`, `summaryLine`,
+`browseUuids`, `actOutline`, `planRelink`/`applyRelink`. Each has an
+argument both ways, none is a defect, and the route for changing one is
+now `proposals/` rather than a quiet edit.
+
+The package remains unpublished. Nothing about this revision changes
+that, and the cut it makes is only cheap because of it.
+
+---
+
 ## 0.33 — 2026-08-21
 
 *Describes schema 2.12.*
