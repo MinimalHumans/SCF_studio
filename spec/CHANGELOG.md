@@ -17,6 +17,91 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.38 — 2026-08-22
+
+*Describes schema 2.12.*
+
+**Minor.** One MUST added in §5.4. The last three Unstable rows in
+`stability.md` are closed.
+
+### §12.9.1 — rubric steps resolve against the registry
+
+A step carried a single free-text `label`, and several used it for
+things the registry could not resolve: `costume + costume_scene` (two
+entities), `bundle + *_asset_binding` (a pattern),
+`performance_state (vocal)` (a filtered subset), `media: voice_identity`
+(an asset intent, not an entity at all).
+
+A step now carries **`entities`** — registry names, always — with an
+optional **`filter`** (a field and a disjunction of values) and
+**`intent`** (the asset intent whose bundle must resolve). `label` is
+derived from those for display, and a consumer MUST NOT parse it.
+
+`emit_normative_data.mjs` checks every name against the registry and
+every `filter` field against the columns of the entities it names, and
+refuses to publish otherwise.
+
+**And the rubric was not the only description of what Q14 does.**
+`readiness.ts` never walked `QUERY_PATHS`: it has a hand-written
+assessment per query, so the published rubric was a second description
+free to drift from the implementation it describes. `media:
+voice_identity` is where it already had — Q14 reports that finding
+against `bundle`, which no step named.
+
+`readinessRubric.test.ts` pins the agreement rather than merging the
+two. Merging would change what Q14 says, and its messages carry
+judgement a rubric cannot — *"Physical state persists here (wounded)
+with no vocal state — does it color the voice?"* is not something a
+requirement level produces. The test asserts that every entity Q14
+reports is one the rubric declares, which is the property a third party
+actually depends on.
+
+### §6.6.2 — `scf-check --cut`
+
+`rowsIncludingCut` existed and nothing called it, so "inspectable" was a
+claim. `scf-check --cut` now lists every cut row by uuid and name.
+
+It is a **separate code path from the report**, which §6.6.2 asks for,
+and the reason is worth stating: **a cut row is not a finding.** It is a
+deliberate authorial act, not something wrong with the file, and
+reporting it as a defect would say the opposite. Row identity survives
+being cut (§6.1), so the uuid listed is the uuid that comes back if the
+row is restored.
+
+### §5.4 — the shadow rows stay, and nothing normative reads them
+
+The question was whether `scene_sequence` should survive 1.0: it stores
+a derived fact, which §3.1 forbids everywhere else.
+
+It resolved differently than expected. **Q04 was reading the shadow.**
+§12.17's lineage came from `scene_sequence` directly — a table this
+section explicitly permits to be stale — so a normative query could
+return a lineage the file's own boundaries contradict. The defect was
+never that the rows exist; it was that a query treated them as truth.
+
+Q04 now derives lineage from span boundaries via `deriveStructure`, and
+§5.4 states that **a conforming reader MUST derive membership from
+boundaries** rather than from these rows. What remains is a
+compatibility surface for consumers outside this specification, with
+`structure.shadow_row_unexplained` reporting rows no boundary explains.
+
+The published Q04 result is **unchanged**: on the fixture the shadow and
+the boundaries agree, which is exactly why nothing caught this.
+
+### What this means, and what it does not
+
+`stability.md` defines a 1.0 as the act of moving every Unstable row to
+Provisional, and **there are none left.**
+
+That is a fact about this document, not a claim that the format is
+finished. What remains is outside it: documentation for people who are
+not implementing the format, a second *maintained* implementation, and a
+package that is published rather than merely publishable.
+`docs/release-checklist.md` tracks those, and `stability.md` now says so
+rather than letting an empty Unstable column imply more than it means.
+
+---
+
 ## 0.37 — 2026-08-22
 
 *Describes schema 2.12.*

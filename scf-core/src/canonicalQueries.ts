@@ -198,6 +198,8 @@ import {
   motifStateAt, propStateAt, relationshipStateAt, rows, sceneOrder,
   selectLocationVariant, statesInForce,
 } from "./resolution.ts";
+import { actOf, deriveStructure, sceneOrderHint, sequenceOf } from
+  "./structure.ts";
 
 const asId = (v: unknown): number | null => {
   const n = Number(v);
@@ -1228,16 +1230,37 @@ export async function q04Result(
   const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
     ?? null;
 
+  // Lineage is DERIVED from span boundaries, not read from
+  // `scene_sequence`.
+  //
+  // It was read from `scene_sequence` until 0.38, which made this
+  // normative query answer from a table §5.4 explicitly permits to be
+  // STALE — "the boundary is the truth and those rows are its shadow;
+  // they MAY be stale between commits". A query that reads the shadow
+  // can return a lineage the file's own boundaries contradict, and §3.1
+  // forbids treating a stored derived fact as truth everywhere else.
+  //
+  // The shadow rows stay: an editor materialises them at commit and
+  // `structure.shadow_row_unexplained` reports the ones no boundary
+  // explains (§9.4). They are a compatibility surface, not a source.
+  const structure = deriveStructure(
+    await rows(ctx.exec, "scene"),
+    await rows(ctx.exec, "act"),
+    await rows(ctx.exec, "sequence"),
+    sceneOrderHint(await rows(ctx.exec, "screenplay_lines",
+                              "line_type = ?", ["heading"])));
+
   const lineage: Array<{ entity: string; row: Row }> = [];
-  for (const link of await rows(ctx.exec, "scene_sequence", "scene_id = ?",
-                                [sceneId])) {
-    const seq = (await rows(ctx.exec, "sequence", "id = ?",
-                            [asId(link["sequence_id"])]))[0];
-    if (seq === undefined) continue;
-    const act = (await rows(ctx.exec, "act", "id = ?",
-                            [asId(seq["act_id"])]))[0];
+  const actSpan = actOf(structure, sceneId);
+  const sequenceSpan = sequenceOf(structure, sceneId);
+  if (actSpan !== null) {
+    const act = (await rows(ctx.exec, "act", "id = ?", [actSpan.id]))[0];
     if (act !== undefined) lineage.push({ entity: "act", row: act });
-    lineage.push({ entity: "sequence", row: seq });
+  }
+  if (sequenceSpan !== null) {
+    const seq = (await rows(ctx.exec, "sequence", "id = ?",
+                            [sequenceSpan.id]))[0];
+    if (seq !== undefined) lineage.push({ entity: "sequence", row: seq });
   }
 
   const byBeatOrder = (a: Row, b: Row): number =>

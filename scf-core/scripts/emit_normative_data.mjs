@@ -66,6 +66,36 @@ const junctionDoc = {
 
 // --- readiness rubrics, spec §12.9 -----------------------------------
 
+// Every entity a step names must BE an entity. This is the check that
+// makes §12.9.1's steps resolvable rather than readable: a typo, a
+// renamed entity, or a return to prose fails the build instead of
+// shipping a rubric a third party has to interpret.
+// loadRegistry() returns entities as a Map keyed by name.
+const registryEntities = registry.entities;
+const unresolved = [];
+for (const [id, path] of Object.entries(QUERY_PATHS)) {
+  for (const s of path.steps) {
+    for (const name of s.entities) {
+      if (!registryEntities.has(name)) unresolved.push(`${id}: ${name}`);
+    }
+    if (s.filter !== undefined) {
+      // The filter column must exist on every entity the step names,
+      // or the step describes a subset that cannot be taken.
+      for (const name of s.entities) {
+        const entity = registryEntities.get(name);
+        const has = entity?.fields.some((f) => f.name === s.filter.field);
+        if (!has) unresolved.push(`${id}: ${name} has no ${s.filter.field}`);
+      }
+    }
+  }
+}
+if (unresolved.length > 0) {
+  console.error("[normative-data] rubric steps do not resolve against the " +
+                "registry:");
+  for (const u of unresolved) console.error(`  ${u}`);
+  process.exit(1);
+}
+
 const rubrics = Object.entries(QUERY_PATHS)
   .map(([id, path]) => ({
     query: id,
@@ -73,12 +103,15 @@ const rubrics = Object.entries(QUERY_PATHS)
     params: path.params,
     description: path.description,
     steps: path.steps.map((s) => ({
-      // `label`, not `entity`. These are written for a person —
-      // "performance_state (vocal)", "sound_cue / music_cue",
-      // "bundle + *_asset_binding" — and several name two entities, a
-      // filtered subset, or a pattern. Publishing them as `entity` would
-      // claim they resolve against the registry, and they do not.
-      label: s.entity, requirement: s.requirement, purpose: s.purpose,
+      // `entities` is the machine-readable part and every name in it is
+      // a registry entity, checked above. `label` is derived from it for
+      // display and is the only prose here.
+      entities: s.entities,
+      requirement: s.requirement,
+      purpose: s.purpose,
+      ...(s.filter === undefined ? {} : { filter: s.filter }),
+      ...(s.intent === undefined ? {} : { intent: s.intent }),
+      label: s.label,
     })),
   }))
   .sort((a, b) => a.query.localeCompare(b.query));
@@ -99,11 +132,13 @@ const rubricDoc = {
     optional: "suggestion",
     present: "ok",
   },
-  $stepLabels:
-    "A step's `label` is prose, not a registry entity name: several " +
-    "name two entities, a filtered subset, or a pattern. `requirement` " +
-    "is the machine-readable part. Making labels resolve against the " +
-    "registry is outstanding work — see spec/stability.md.",
+  $steps:
+    "A step's `entities` are REGISTRY ENTITY NAMES, checked against the " +
+    "registry at generation time. `filter` narrows the step to a subset " +
+    "of those rows and its `values` are a disjunction; `intent` names " +
+    "the asset intent whose bundle must resolve. `label` is derived " +
+    "from those three for display and is the only prose here — a " +
+    "consumer should never parse it.",
   $note:
     "Only queries with a generative or pre-flight consumer have a " +
     "rubric. The analytic queries read whatever exists and have no " +

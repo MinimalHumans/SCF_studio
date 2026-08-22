@@ -63,12 +63,12 @@ says so (§12.9).
 
 | Entity | | Why |
 |---|---|---|
-| `vocal_profile` | required | the voice baseline |
-| `media: voice_identity` | required | reference audio to condition on |
-| `performance_state (vocal)` | optional | modulation; absence = baseline holds |
-| `performance_beat (vocal)` | recommended | per-line direction |
-| `dialogue_rhythm` | recommended | scene speech rhythm |
-| `sound_perspective` | optional | whose ears we use |
+| `` | required | the voice baseline |
+| `` | required | reference audio to condition on |
+| `` | optional | modulation; absence = baseline holds |
+| `` | recommended | per-line direction |
+| `` | recommended | scene speech rhythm |
+| `` | optional | whose ears we use |
 
 ---
 
@@ -91,13 +91,13 @@ says so (§12.9).
 
 | Entity | | Why |
 |---|---|---|
-| `project_color_palette` | required | the direction cascade's color root |
-| `visual_identity` | required | material/aesthetic root |
-| `color_script_entry` | recommended | position-keyed color intent (latest-wins) |
-| `scene_color_palette` | recommended | scene color opinion |
-| `lighting_design` | recommended | scene/shot lighting |
-| `shot_design` | optional | shot-level composition |
-| `character_appearance_profile (per cast)` | recommended | who's in frame |
+| `` | required | the direction cascade's color root |
+| `` | required | material/aesthetic root |
+| `` | recommended | position-keyed color intent (latest-wins) |
+| `` | recommended | scene color opinion |
+| `` | recommended | scene/shot lighting |
+| `` | optional | shot-level composition |
+| `` | recommended | who's in frame |
 
 ---
 
@@ -144,12 +144,12 @@ says so (§12.9).
 
 | Entity | | Why |
 |---|---|---|
-| `physical_character_profile` | required | movement baseline |
-| `scene_blocking / action_sequence` | recommended | staging container |
-| `performance_state (physical)` | optional | modulation; absence = baseline holds |
-| `performance_beat (physical/facial)` | optional | moment direction |
-| `character_environment_physicality` | optional | how they relate to this place |
-| `media: motion` | optional | motion reference |
+| `` | required | movement baseline |
+| `` | recommended | staging container |
+| `` | optional | modulation; absence = baseline holds |
+| `` | optional | moment direction |
+| `` | optional | how they relate to this place |
+| `` | optional | motion reference |
 
 ---
 
@@ -172,11 +172,11 @@ says so (§12.9).
 
 | Entity | | Why |
 |---|---|---|
-| `sonic_identity` | required | the sound world's root |
-| `scene_music_design` | recommended | authored silence beats accidental silence |
-| `location_sound_profile` | recommended | the room itself |
-| `dialogue_sound_design` | optional | speech treatment |
-| `sound_cue / music_cue` | optional | specific cues |
+| `` | required | the sound world's root |
+| `` | recommended | authored silence beats accidental silence |
+| `` | recommended | the room itself |
+| `` | optional | speech treatment |
+| `` | optional | specific cues |
 
 ---
 
@@ -199,9 +199,9 @@ says so (§12.9).
 
 | Entity | | Why |
 |---|---|---|
-| `bundle + *_asset_binding` | required | something to resolve |
-| `entity_anchor` | recommended | identity pinning |
-| `*_shot_override` | optional | shot-specific swaps |
+| `` | required | something to resolve |
+| `` | recommended | identity pinning |
+| `` | optional | shot-specific swaps |
 
 ---
 
@@ -308,13 +308,13 @@ says so (§12.9).
 
 | Entity | | Why |
 |---|---|---|
-| `character_appearance_profile` | recommended | static appearance baseline |
-| `physical_character_profile` | recommended | movement/face baseline |
-| `vocal_profile` | optional | voice baseline |
-| `costume + costume_scene` | recommended | what they wear here |
-| `relationship_state` | optional | where their relationships stand |
-| `performance_state` | optional | scene-scoped modulation (absence = baseline holds) |
-| `media: visual_identity` | required | assets to condition on |
+| `` | recommended | static appearance baseline |
+| `` | recommended | movement/face baseline |
+| `` | optional | voice baseline |
+| `` | recommended | what they wear here |
+| `` | optional | where their relationships stand |
+| `` | optional | scene-scoped modulation (absence = baseline holds) |
+| `` | required | assets to condition on |
 
 ---
 

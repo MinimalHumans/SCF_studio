@@ -110,7 +110,7 @@ about it is ceremonial.
 | Contiguity constraint | §5.2 | Stable | Yes | Accepted cost, stated in the design record. A cross-cut requirement would require replacing the model, not patching it. |
 | Acts and sequences independent | §5.3 | Stable | Yes | |
 | Run-grouping requirement for renderers | §5.3 | Provisional | Yes | `actOutline()`. A presentation requirement in a data spec — sits oddly, may move to a rendering note. |
-| `scene_sequence` shadow rows | §5.4 | **Unstable** | Yes | Materialised for compatibility with queries that predate spans. A candidate for removal in 1.0: they are a derived fact that is stored, which §3.1 forbids everywhere else. |
+| `scene_sequence` shadow rows | §5.4 | Provisional | Yes | **Decided in 0.38: they stay.** The question was whether a stored derived fact should survive 1.0. It resolved differently than expected once Q04 was found reading them — the defect was not that the rows exist but that a normative query treated a permitted-to-be-stale shadow as truth. Q04 now derives from boundaries, no canonical query reads the table, and §5.4 requires a conforming reader to derive. What remains is a compatibility surface for consumers outside this specification, with `structure.shadow_row_unexplained` reporting rows no boundary explains. |
 | Half-placed structure valid | §5.5 | Stable | Yes | |
 
 ### Identity
@@ -121,14 +121,14 @@ about it is ceremonial.
 | Uuids do not cross files | §6.2 | Stable | Yes | |
 | Junction natural keys | §6.3 | Provisional | Yes | Published as `spec/junction-keys.json` in 0.26 — it was cited as a FUNCTION until then, so no third party could compute one. Still only exercised by de-duplication; merge is the real test and does not exist. |
 | Q14's rubric published | §12.9.1 | Provisional | Partly | `spec/readiness-rubrics.json`. Requirement-to-severity is machine-readable; **step labels are prose** and do not resolve against the registry. |
-| **Rubric step labels resolve to entities** | §12.9.1 | **Unstable** | **No** | Six rubrics carry labels like `sound_cue / music_cue`, `bundle + *_asset_binding`, `performance_state (vocal)` — two entities, a pattern, a filtered subset. A third party can reproduce the severities but must read the labels as a person would, which is not a specification. |
+| **Rubric steps resolve to entities** | §12.9.1 | Provisional | Yes | **Closed in 0.38.** A step now carries `entities` (registry names, checked against the registry at generation time), an optional `filter` and `intent`, and a `label` derived from them for display only. `readinessRubric.test.ts` additionally pins that every entity Q14 reports is one the rubric declares — `readiness.ts` assesses by hand rather than walking the rubric, so the two were free to drift and nothing checked them. |
 | Unexplained shadow rows reported | §5.4 | Provisional | Yes | `structure.shadow_row_unexplained`, added in 0.26. §5.4 required a finding the closed catalog had no code for, and the detection lived only in the editor's commit path — so the one tool a third party runs never mentioned them. |
 | Duplicates as findings | §6.4 | Stable | Yes | |
 | Relationship `directionality` | §6.5 | Provisional | Yes | Schema 2.4. |
 | Read from both character columns | §6.5 | Stable | Yes | |
 | `lifecycle_status` preserved | §6.6 | Provisional | Yes | The column exists and is authored on every non-link entity. |
 | Cut rows excluded from every derivation | §6.6.1 | Provisional | Yes | `rows()` filters; `rowsIncludingCut()` is the history path. The fixture carries a cut scene with a heading and a cut beat in scene 12, so the rule is exercised rather than asserted. |
-| Reading back what was cut | §6.6.2 | **Unstable** | Partly | `rowsIncludingCut` exists; no tool uses it. A cut list or audit view is unbuilt, and until one exists "inspectable" is a claim rather than a feature. |
+| Reading back what was cut | §6.6.2 | Provisional | Yes | **Closed in 0.38.** `scf-check --cut` lists every cut row by uuid and name, through `rowsIncludingCut`, on a code path separate from the report — §6.6.2 asks for that separation, and a cut row is an authorial act rather than a finding. |
 | `sceneOrder` derives from the screenplay | §4.1 | Provisional | Yes | Fixed in 0.21 — it had sorted by `scene_number` then row id, which §4.1 forbids. Now delegates to `scenePositions`, with a test asserting the two agree. |
 
 ### Cascade
@@ -210,22 +210,14 @@ about it is ceremonial.
 
 ## Summary — what stands between here and 1.0
 
-**Three Unstable rows**, in rough dependency order. None is
-specification work: §12 was the last of that, and it closed in 0.29.
+**No Unstable rows remain.** The last three closed in 0.38: rubric steps
+now resolve against the registry (§12.9.1), `scf-check --cut` reads back
+what was cut (§6.6.2), and `scene_sequence` shadow rows are decided —
+they stay, and no canonical query reads them (§5.4).
 
-1. **Rubric step labels** (§12.9.1) — prose where a specification needs
-   references. The requirement half is publishable and published; the
-   subject half is not. A third party can reproduce Q14's severities but
-   must read the labels as a person would.
-2. **A view for what was cut** (§6.6.2) — the filter is done; the way to
-   read cut rows back is a library function nothing calls. Until a cut
-   list exists, "inspectable" is a claim.
-3. **`scene_sequence` shadow rows** (§5.4) — decide whether they survive
-   1.0 or go. A derived fact that is stored, which §3.1 forbids
-   everywhere else. They are now at least reported.
-
-Two Provisional rows carry known gaps and are worth naming here even
-though they do not block the definition above:
+By the definition at the top of this document, **that is what a 1.0
+is.** It is not a claim that the format is finished, and this section
+should not be read as one. Two Provisional rows carry known gaps:
 
 - **The asset resolution tally in `scf-check`** (§8.3) — the one check
   of `conformance.md` §4's nine the validator cannot do, because §0.3
@@ -234,6 +226,16 @@ though they do not block the definition above:
 - **The `scf-core` public API** — stated and enforced since 0.34, but a
   handful of rendering and browsing helpers inside kept modules could
   still be cut. That is a proposal, not a defect.
+
+And what remains outside this document is real: documentation for people
+who are not implementing the format, a second MAINTAINED implementation,
+and a package that is published rather than merely publishable. None of
+those is a stability question, which is why none of them appears above —
+`docs/release-checklist.md` is where they are tracked.
+
+*Closed in 0.38:* all three remaining Unstable rows. See §12.9.1, §6.6.2
+and §5.4, and the note below on what a 1.0 means.
+
 *Closed in 0.34:* the published API surface. `src/index.ts` states it
 explicitly, the closure is enforced, and the four editor-tooling modules
 are out. What remains is judgement rather than structure — a handful of

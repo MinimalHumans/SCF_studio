@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.37 (draft) — not a release.**
+**Version 0.38 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.37` (draft).
+- **Specification version** — this document. Currently `0.38` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -608,6 +608,13 @@ whose start falls in this act" is incorrect.
 written against them keep working. The boundary is the truth and those
 rows are its shadow; they MAY be stale between commits.
 
+**No canonical query reads them.** §12.17's lineage is derived from span
+boundaries, and until 0.38 it was not: Q04 read `scene_sequence`
+directly, which let a normative answer come from a table this section
+permits to be stale. A shadow is a compatibility surface for consumers
+outside this specification, and **a conforming reader MUST derive
+membership from boundaries** (§5.1) rather than from these rows.
+
 Rows that no boundary explains MUST be reported as
 `structure.shadow_row_unexplained` (§9.4), and MUST NOT be silently
 deleted. Deleting authored data to satisfy a derivation is not a
@@ -727,6 +734,13 @@ Excluding cut rows from resolution is not hiding them. An
 implementation MAY offer a view that reads them back — a cut list, an
 audit trail, a history panel — and SHOULD keep that path distinct from
 the resolvers, so that the two cannot be confused at a call site.
+
+The reference implementation offers `scf-check --cut`, which lists every
+cut row by uuid and name. It reads through `rowsIncludingCut`, the one
+function in the library that sees past §6.6.1's exclusion, and is a
+separate code path from the report: **a cut row is not a finding.** It
+is a deliberate authorial act, not something wrong with the file, and
+reporting it as a defect would say the opposite.
 
 Row identity survives being cut (§6.1): a cut row keeps its uuid, and
 restoring it restores the same row rather than creating a new one.
@@ -1620,12 +1634,25 @@ What Q14 assesses is published as
 [`readiness-rubrics.json`](readiness-rubrics.json). Each rubric names a target query and the things it depends on, each
 marked `required`, `recommended` or `optional`.
 
-A step's `label` is **prose, not a registry entity name** — several name
-two entities, a filtered subset, or a pattern. `requirement` is the
-machine-readable part. Making the labels resolve against the registry is
-outstanding work and is tracked in [stability.md](stability.md); until
-it is done, a conforming implementation can reproduce a rubric's
-severities but must interpret its labels the way a person would.
+**Every step resolves against the registry.** A step carries:
+
+| Member | |
+|---|---|
+| `entities` | One or more **registry entity names**. Never prose. A step naming several is satisfied by any of them unless its `purpose` says otherwise. |
+| `requirement` | `required`, `recommended` or `optional`. |
+| `filter` | Present where the step is about a subset of those rows: a `field` and a disjunction of `values`. |
+| `intent` | Present on a media step: the asset intent whose bundle must resolve. The entity is `bundle` either way. |
+| `purpose` | Why the step is there. Prose, for a person. |
+| `label` | **Derived** from the four above, for display. A consumer MUST NOT parse it. |
+
+Until 0.38 a step carried a single free-text `label` and nothing else,
+and several used it for things the registry could not resolve —
+`costume + costume_scene`, `bundle + *_asset_binding`,
+`performance_state (vocal)`, `media: voice_identity`. A third party
+could reproduce the severities but had to read the labels as a person
+would, which is not a specification. The generator now checks every name
+in `entities` against the registry, and every `filter` field against the
+columns of the entities it names, and refuses to publish otherwise.
 
 A conforming implementation MUST draw its findings from that file, and
 MUST map requirement to severity as the file states:

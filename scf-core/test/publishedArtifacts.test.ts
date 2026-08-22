@@ -89,11 +89,16 @@ interface RubricDoc {
   queryCount: number;
   queries: Array<{
     query: string; name: string; params: string[];
-    steps: Array<{ label: string; requirement: string; purpose: string }>;
+    steps: Array<{
+      entities: string[]; requirement: string; purpose: string;
+      label: string;
+      filter?: { field: string; values: string[] };
+      intent?: string;
+    }>;
   }>;
 }
 const rubrics = read("../../spec/readiness-rubrics.json") as RubricDoc & {
-  $stepLabels: string;
+  $steps: string;
 };
 
 describe("the published junction keys (§6.3)", () => {
@@ -143,16 +148,33 @@ describe("the published readiness rubrics (§12.9.1)", () => {
     }
   });
 
-  test("step labels are prose, and the artifact says so", () => {
-    // They are not registry entity names — "sound_cue / music_cue",
-    // "bundle + *_asset_binding", "performance_state (vocal)". Calling
-    // the field `entity` claimed they resolved; they do not. A consumer
-    // must be told which half is machine-readable.
+  test("every step resolves against the registry", () => {
+    // INVERTED IN 0.38. This test used to assert the opposite — that
+    // some labels were NOT registry entity names, and that the artifact
+    // admitted as much. That was honest while it was true: the labels
+    // were prose ("sound_cue / music_cue", "bundle + *_asset_binding",
+    // "performance_state (vocal)") and a test claiming otherwise would
+    // have been the lie. Now `entities` carries registry names and the
+    // label is derived from them, so the assertion flips.
     const unresolvable = rubrics.queries.flatMap(
-      (q) => q.steps.map((s) => s.label))
-      .filter((label) => !registry.entities.has(label));
-    expect(unresolvable.length).toBeGreaterThan(0);
-    expect(rubrics.$stepLabels).toContain("prose");
+      (q) => q.steps.flatMap((s) => s.entities))
+      .filter((name) => !registry.entities.has(name));
+    expect(unresolvable).toEqual([]);
+    expect(rubrics.$steps).toContain("REGISTRY ENTITY NAMES");
+  });
+
+  test("a label never carries something the structure does not", () => {
+    // The label is derived, so it must add nothing. A parenthetical
+    // means a filter; a `media:` prefix means an intent. If either
+    // appears in prose alone, the label has become load-bearing again.
+    for (const q of rubrics.queries) {
+      for (const step of q.steps) {
+        if (step.label.includes("(")) expect(step.filter).toBeDefined();
+        if (step.label.startsWith("media:")) {
+          expect(step.intent).toBeDefined();
+        }
+      }
+    }
   });
 
   test("the requirement-to-severity map covers every requirement used",

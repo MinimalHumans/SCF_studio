@@ -24,14 +24,20 @@ decision.
 1. **Section 7 — documentation for people who are not implementing the
    format.** The only substantial block left on this list. Three
    independent readers have each started from §0.1, which is written for
-   an implementer.
-2. **Decide the remaining three Unstable rows** (`stability.md`). None is
-   specification work; each is a small build-or-cut decision, and a 1.0
-   is by definition the act of moving all of them.
+   an implementer. The query and entity references are generated as of
+   0.37; what remains is prose and a docs site.
+2. **A fourth reader run.** Worth doing now and not before: it would be
+   the first against a specification that states its own shape
+   conventions, publishes its screenplay vocabulary, and can be verified
+   byte for byte at a tag.
 3. **Publish `@minimalhumans/scf-core`** — deliberately held. Packaging
    is proven end to end by CI; only `"private": true` and the npm org
    stand between here and a published package. Held because npm blocks
    unpublish after 72 hours and the format is pre-1.0.
+
+**`stability.md` has no Unstable rows left**, as of 0.38. By its own
+definition that is what a 1.0 is — which makes items 1 and 2 above the
+real remaining work rather than a formality.
 
 ## Where three reader runs left the format
 
@@ -84,7 +90,7 @@ conventions, and the first that could verify the bytes it read.
 | ✅ | The envelope holds across every shape | A position, a diff, a cascade, a media resolution, a rubric, a whole-story spine, and one query with no parameters |
 | ✅ | **Q14 correctly declared not byte-comparable** | Conformance is coverage, severity range, justified departures |
 | ⚠️ | The registry's `queries` field is still wrong in both directions | Unchanged since rev 6 |
-| ⚠️ | Rubric step labels are prose, not entity references | **Unstable** in `stability.md`. A third party can reproduce Q14's severities but must read the labels as a person would |
+| ✅ | **Rubric steps resolve to entities** | 0.38. `entities` are registry names, checked at generation time; `filter` and `intent` carry what the prose used to. A test pins that Q14 reports only what the rubric declares |
 
 ## 2. Versioning — ✅ complete
 

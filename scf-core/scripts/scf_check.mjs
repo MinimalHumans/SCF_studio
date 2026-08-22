@@ -17,6 +17,13 @@
  *   scf-check FILE...            human-readable report
  *   scf-check --json FILE...     the serialised report (spec §9.6)
  *   scf-check --quiet FILE...    exit code only
+ *   scf-check --cut FILE...      list the cut rows (spec §6.6.2)
+ *
+ * `--cut` is a separate path from the report on purpose. §6.6.2 says an
+ * implementation offering a view of cut rows SHOULD keep it distinct
+ * from the resolvers, so the two cannot be confused at a call site — and
+ * a cut row is not a finding: it is a deliberate authorial act, not
+ * something wrong with the file.
  *
  * Exit codes:
  *   0  no errors  (warnings and info do not fail — spec §9.1: findings
@@ -45,7 +52,7 @@ import { fileURLToPath } from "node:url";
 // consumes the library the way a stranger does. If it ever needs
 // something the entry points do not expose, that fails here rather than
 // in somebody else's project.
-import { loadRegistry, renderReport, validationReport }
+import { loadRegistry, renderReport, rowsIncludingCut, validationReport }
   from "@minimalhumans/scf-core";
 import { openNodeDatabase } from "@minimalhumans/scf-core/node";
 
@@ -56,6 +63,7 @@ const USAGE = `scf-check — validate an SCF document
   scf-check [options] FILE...
 
   --json         emit the serialised report instead of prose
+  --cut          list rows marked cut instead of validating (spec §6.6.2)
   --timestamp    include generatedAt (off by default: reports stay
                  diffable between runs)
   --quiet        no output; exit code only
@@ -71,6 +79,7 @@ if (argv.length === 0 || argv.includes("--help")) {
 }
 
 const asJson = argv.includes("--json");
+const cutList = argv.includes("--cut");
 const quiet = argv.includes("--quiet");
 const timestamp = argv.includes("--timestamp");
 const paths = argv.filter((a) => !a.startsWith("--"));
@@ -82,6 +91,60 @@ if (paths.length === 0) {
 
 const registry = loadRegistry(JSON.parse(readFileSync(
   join(HERE, "..", "registry", "registry.json"), "utf8")));
+
+/**
+ * Every cut row in the file, by table.
+ *
+ * Uses `rowsIncludingCut` — the one function in the library that reads
+ * past §6.6.1's exclusion — and filters to the cut ones. Only entities
+ * the registry says carry `lifecycle_status` are asked: eleven of
+ * thirteen link entities do not, and a cut link is a state they cannot
+ * be in.
+ *
+ * Row identity survives being cut (§6.1), so each row is named by uuid.
+ * That is what makes this a usable audit view rather than a curiosity:
+ * a uuid here is the same uuid that comes back if the row is restored.
+ */
+async function collectCut(exec, reg) {
+  const out = [];
+  for (const [name, entity] of reg.entities) {
+    if (!entity.hasLifecycleStatus) continue;
+    const rows = (await rowsIncludingCut(exec, name))
+      .filter((r) => r["lifecycle_status"] === "cut");
+    if (rows.length === 0) continue;
+    out.push({
+      entity: name,
+      count: rows.length,
+      rows: rows.map((r) => ({
+        uuid: r["uuid"] ?? null,
+        name: entity.nameField ? (r[entity.nameField] ?? null) : null,
+      })),
+    });
+  }
+  return out.sort((a, b) => a.entity.localeCompare(b.entity));
+}
+
+function renderCut(path, cut) {
+  const total = cut.reduce((n, e) => n + e.count, 0);
+  if (total === 0) {
+    return `${path}\n\n  no cut rows\n\n`;
+  }
+  const lines = [path, "", `  ${String(total)} cut row(s) in ` +
+                           `${String(cut.length)} table(s)`, ""];
+  for (const entry of cut) {
+    lines.push(`  ${entry.entity} (${String(entry.count)})`);
+    for (const row of entry.rows) {
+      lines.push(`    ${String(row.uuid)}` +
+                 (row.name === null ? "" : `  ${String(row.name)}`));
+    }
+    lines.push("");
+  }
+  lines.push("  Cut rows appear in no query result (spec §6.6.1). They " +
+             "keep their",
+             "  identity and restoring one restores the same row (§6.1).",
+             "");
+  return lines.join("\n");
+}
 
 let worstExit = 0;
 const reports = [];
@@ -102,6 +165,16 @@ for (const path of paths) {
   }
 
   try {
+    if (cutList) {
+      const cut = await collectCut(db.exec, registry);
+      if (!quiet) {
+        process.stdout.write(asJson
+          ? `${JSON.stringify({ source: path, cut }, null, 2)}\n`
+          : renderCut(path, cut));
+      }
+      continue;
+    }
+
     const report = await validationReport(db.exec, registry, {
       source: path, timestamp,
     });
@@ -119,7 +192,7 @@ for (const path of paths) {
   }
 }
 
-if (asJson && !quiet) {
+if (asJson && !quiet && !cutList) {
   // One report for one file, an array for several. A caller passing one
   // path should not have to unwrap.
   process.stdout.write(

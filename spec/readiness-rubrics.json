@@ -8,7 +8,7 @@
     "optional": "suggestion",
     "present": "ok"
   },
-  "$stepLabels": "A step's `label` is prose, not a registry entity name: several name two entities, a filtered subset, or a pattern. `requirement` is the machine-readable part. Making labels resolve against the registry is outstanding work — see spec/stability.md.",
+  "$steps": "A step's `entities` are REGISTRY ENTITY NAMES, checked against the registry at generation time. `filter` narrows the step to a subset of those rows and its `values` are a disjunction; `intent` names the asset intent whose bundle must resolve. `label` is derived from those three for display and is the only prose here — a consumer should never parse it.",
   "$note": "Only queries with a generative or pre-flight consumer have a rubric. The analytic queries read whatever exists and have no readiness semantics of their own beyond the walkable queries they are built from — asking Q14 about one is answered by assessing those.",
   "queryCount": 6,
   "queries": [
@@ -22,39 +22,62 @@
       "description": "Everything needed to realize a character in a scene.",
       "steps": [
         {
-          "label": "character_appearance_profile",
+          "entities": [
+            "character_appearance_profile"
+          ],
           "requirement": "recommended",
-          "purpose": "static appearance baseline"
+          "purpose": "static appearance baseline",
+          "label": "character_appearance_profile"
         },
         {
-          "label": "physical_character_profile",
+          "entities": [
+            "physical_character_profile"
+          ],
           "requirement": "recommended",
-          "purpose": "movement/face baseline"
+          "purpose": "movement/face baseline",
+          "label": "physical_character_profile"
         },
         {
-          "label": "vocal_profile",
+          "entities": [
+            "vocal_profile"
+          ],
           "requirement": "optional",
-          "purpose": "voice baseline"
+          "purpose": "voice baseline",
+          "label": "vocal_profile"
         },
         {
-          "label": "costume + costume_scene",
+          "entities": [
+            "costume",
+            "costume_scene"
+          ],
           "requirement": "recommended",
-          "purpose": "what they wear here"
+          "purpose": "what they wear here",
+          "label": "costume + costume_scene"
         },
         {
-          "label": "relationship_state",
+          "entities": [
+            "relationship_state"
+          ],
           "requirement": "optional",
-          "purpose": "where their relationships stand"
+          "purpose": "where their relationships stand",
+          "label": "relationship_state"
         },
         {
-          "label": "performance_state",
+          "entities": [
+            "performance_state"
+          ],
           "requirement": "optional",
-          "purpose": "scene-scoped modulation (absence = baseline holds)"
+          "purpose": "scene-scoped modulation (absence = baseline holds)",
+          "label": "performance_state"
         },
         {
-          "label": "media: visual_identity",
+          "entities": [
+            "bundle"
+          ],
           "requirement": "required",
-          "purpose": "assets to condition on"
+          "purpose": "assets to condition on",
+          "intent": "visual_identity",
+          "label": "media: visual_identity"
         }
       ]
     },
@@ -68,34 +91,65 @@
       "description": "How this character's lines should sound in a scene.",
       "steps": [
         {
-          "label": "vocal_profile",
+          "entities": [
+            "vocal_profile"
+          ],
           "requirement": "required",
-          "purpose": "the voice baseline"
+          "purpose": "the voice baseline",
+          "label": "vocal_profile"
         },
         {
-          "label": "media: voice_identity",
+          "entities": [
+            "bundle"
+          ],
           "requirement": "required",
-          "purpose": "reference audio to condition on"
+          "purpose": "reference audio to condition on",
+          "intent": "voice_identity",
+          "label": "media: voice_identity"
         },
         {
-          "label": "performance_state (vocal)",
+          "entities": [
+            "performance_state"
+          ],
           "requirement": "optional",
-          "purpose": "modulation; absence = baseline holds"
+          "purpose": "modulation; absence = baseline holds",
+          "filter": {
+            "field": "modality",
+            "values": [
+              "vocal"
+            ]
+          },
+          "label": "performance_state (vocal)"
         },
         {
-          "label": "performance_beat (vocal)",
+          "entities": [
+            "performance_beat"
+          ],
           "requirement": "recommended",
-          "purpose": "per-line direction"
+          "purpose": "per-line direction",
+          "filter": {
+            "field": "modality",
+            "values": [
+              "vocal"
+            ]
+          },
+          "label": "performance_beat (vocal)"
         },
         {
-          "label": "dialogue_rhythm",
+          "entities": [
+            "dialogue_rhythm"
+          ],
           "requirement": "recommended",
-          "purpose": "scene speech rhythm"
+          "purpose": "scene speech rhythm",
+          "label": "dialogue_rhythm"
         },
         {
-          "label": "sound_perspective",
+          "entities": [
+            "sound_perspective"
+          ],
           "requirement": "optional",
-          "purpose": "whose ears we use"
+          "purpose": "whose ears we use",
+          "label": "sound_perspective"
         }
       ]
     },
@@ -109,34 +163,67 @@
       "description": "How this character moves/behaves in a scene.",
       "steps": [
         {
-          "label": "physical_character_profile",
+          "entities": [
+            "physical_character_profile"
+          ],
           "requirement": "required",
-          "purpose": "movement baseline"
+          "purpose": "movement baseline",
+          "label": "physical_character_profile"
         },
         {
-          "label": "scene_blocking / action_sequence",
+          "entities": [
+            "scene_blocking",
+            "action_sequence"
+          ],
           "requirement": "recommended",
-          "purpose": "staging container"
+          "purpose": "staging container",
+          "label": "scene_blocking + action_sequence"
         },
         {
-          "label": "performance_state (physical)",
+          "entities": [
+            "performance_state"
+          ],
           "requirement": "optional",
-          "purpose": "modulation; absence = baseline holds"
+          "purpose": "modulation; absence = baseline holds",
+          "filter": {
+            "field": "modality",
+            "values": [
+              "physical"
+            ]
+          },
+          "label": "performance_state (physical)"
         },
         {
-          "label": "performance_beat (physical/facial)",
+          "entities": [
+            "performance_beat"
+          ],
           "requirement": "optional",
-          "purpose": "moment direction"
+          "purpose": "moment direction",
+          "filter": {
+            "field": "modality",
+            "values": [
+              "physical",
+              "facial"
+            ]
+          },
+          "label": "performance_beat (physical/facial)"
         },
         {
-          "label": "character_environment_physicality",
+          "entities": [
+            "character_environment_physicality"
+          ],
           "requirement": "optional",
-          "purpose": "how they relate to this place"
+          "purpose": "how they relate to this place",
+          "label": "character_environment_physicality"
         },
         {
-          "label": "media: motion",
+          "entities": [
+            "bundle"
+          ],
           "requirement": "optional",
-          "purpose": "motion reference"
+          "purpose": "motion reference",
+          "intent": "motion",
+          "label": "media: motion"
         }
       ]
     },
@@ -150,39 +237,60 @@
       "description": "What a frame in this scene/shot should look like.",
       "steps": [
         {
-          "label": "project_color_palette",
+          "entities": [
+            "project_color_palette"
+          ],
           "requirement": "required",
-          "purpose": "the direction cascade's color root"
+          "purpose": "the direction cascade's color root",
+          "label": "project_color_palette"
         },
         {
-          "label": "visual_identity",
+          "entities": [
+            "visual_identity"
+          ],
           "requirement": "required",
-          "purpose": "material/aesthetic root"
+          "purpose": "material/aesthetic root",
+          "label": "visual_identity"
         },
         {
-          "label": "color_script_entry",
+          "entities": [
+            "color_script_entry"
+          ],
           "requirement": "recommended",
-          "purpose": "position-keyed color intent (latest-wins)"
+          "purpose": "position-keyed color intent (latest-wins)",
+          "label": "color_script_entry"
         },
         {
-          "label": "scene_color_palette",
+          "entities": [
+            "scene_color_palette"
+          ],
           "requirement": "recommended",
-          "purpose": "scene color opinion"
+          "purpose": "scene color opinion",
+          "label": "scene_color_palette"
         },
         {
-          "label": "lighting_design",
+          "entities": [
+            "lighting_design"
+          ],
           "requirement": "recommended",
-          "purpose": "scene/shot lighting"
+          "purpose": "scene/shot lighting",
+          "label": "lighting_design"
         },
         {
-          "label": "shot_design",
+          "entities": [
+            "shot_design"
+          ],
           "requirement": "optional",
-          "purpose": "shot-level composition"
+          "purpose": "shot-level composition",
+          "label": "shot_design"
         },
         {
-          "label": "character_appearance_profile (per cast)",
+          "entities": [
+            "character_appearance_profile"
+          ],
           "requirement": "recommended",
-          "purpose": "who's in frame"
+          "purpose": "who's in frame",
+          "label": "character_appearance_profile"
         }
       ]
     },
@@ -195,29 +303,45 @@
       "description": "What this scene sounds like.",
       "steps": [
         {
-          "label": "sonic_identity",
+          "entities": [
+            "sonic_identity"
+          ],
           "requirement": "required",
-          "purpose": "the sound world's root"
+          "purpose": "the sound world's root",
+          "label": "sonic_identity"
         },
         {
-          "label": "scene_music_design",
+          "entities": [
+            "scene_music_design"
+          ],
           "requirement": "recommended",
-          "purpose": "authored silence beats accidental silence"
+          "purpose": "authored silence beats accidental silence",
+          "label": "scene_music_design"
         },
         {
-          "label": "location_sound_profile",
+          "entities": [
+            "location_sound_profile"
+          ],
           "requirement": "recommended",
-          "purpose": "the room itself"
+          "purpose": "the room itself",
+          "label": "location_sound_profile"
         },
         {
-          "label": "dialogue_sound_design",
+          "entities": [
+            "dialogue_sound_design"
+          ],
           "requirement": "optional",
-          "purpose": "speech treatment"
+          "purpose": "speech treatment",
+          "label": "dialogue_sound_design"
         },
         {
-          "label": "sound_cue / music_cue",
+          "entities": [
+            "sound_cue",
+            "music_cue"
+          ],
           "requirement": "optional",
-          "purpose": "specific cues"
+          "purpose": "specific cues",
+          "label": "sound_cue + music_cue"
         }
       ]
     },
@@ -234,19 +358,33 @@
       "description": "Assets in force for a subject and intent.",
       "steps": [
         {
-          "label": "bundle + *_asset_binding",
+          "entities": [
+            "bundle",
+            "character_asset_binding",
+            "location_asset_binding",
+            "prop_asset_binding"
+          ],
           "requirement": "required",
-          "purpose": "something to resolve"
+          "purpose": "something to resolve",
+          "label": "bundle + character_asset_binding + location_asset_binding + prop_asset_binding"
         },
         {
-          "label": "entity_anchor",
+          "entities": [
+            "entity_anchor"
+          ],
           "requirement": "recommended",
-          "purpose": "identity pinning"
+          "purpose": "identity pinning",
+          "label": "entity_anchor"
         },
         {
-          "label": "*_shot_override",
+          "entities": [
+            "character_shot_override",
+            "location_shot_override",
+            "prop_shot_override"
+          ],
           "requirement": "optional",
-          "purpose": "shot-specific swaps"
+          "purpose": "shot-specific swaps",
+          "label": "character_shot_override + location_shot_override + prop_shot_override"
         }
       ]
     }
