@@ -92,7 +92,7 @@ export {
 export {
   type ResolvedDescription, type ResolvedMedia, type SceneOrder,
   type ScfContext,
-  latestState, mergedModulations, motifStateAt, propStateAt,
+  excludeCut, latestState, mergedModulations, motifStateAt, propStateAt,
   relationshipStateAt, resolveDescription, resolveDirection, resolveMedia,
   rows, rowsIncludingCut, sceneOrder, selectLocationVariant, statesInForce,
 } from "./resolution.ts";

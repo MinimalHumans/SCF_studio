@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `eb4ab6f16d26f0af…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `498e273a1c0db8f1…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `afa00252d786b4f9…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `0c7f60ac572eb16b…` | The specification changelog. Spec §11.5. |
+| `spec/scf-spec.md` | `20702942db79a3ba…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/conformance.md` | `7fabc5e92ac84ca1…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/stability.md` | `0619daef0047096e…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `edfe8e5f99a0075d…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -63,7 +63,7 @@ Generated from `schema/`, which is the source of truth for all of them.
 | `spec/screenplay-tables.json` | `985b2561b3aaa1be…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
 | `spec/entity-reference.md` | `7f8dfe2b43ba8b01…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
 | `spec/query-reference.md` | `9170cd9290a1c0a6…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
-| `spec/api-surface.json` | `0ead4b9b32fd7d02…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
+| `spec/api-surface.json` | `d2d35ead7d489cb1…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `2817b8ea510342a9…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `a5e4c75b4a741a9e…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `de69fd03c44afa4d…` | What Q14 assesses, per target query. Spec §12.9.1. |

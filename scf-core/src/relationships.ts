@@ -79,15 +79,23 @@ export async function relationshipsFor(
 ): Promise<RelationshipView[]> {
   const rows = await exec(
     `SELECT r.*, ` +
-    `  a.name AS _a_name, b.name AS _b_name ` +
+    `  a.name AS _a_name, b.name AS _b_name, ` +
+    `  a.lifecycle_status AS _a_cut, b.lifecycle_status AS _b_cut ` +
     `FROM ${q("character_relationship")} r ` +
     `LEFT JOIN ${q("character")} a ON a.id = r.character_a_id ` +
     `LEFT JOIN ${q("character")} b ON b.id = r.character_b_id ` +
-    `WHERE r.character_a_id = ? OR r.character_b_id = ? ` +
+    `WHERE (r.character_a_id = ? OR r.character_b_id = ?) ` +
     `ORDER BY r.id`,
     [characterId, characterId]);
 
-  return rows.map((row) => {
+  // A relationship whose ENDPOINT is cut joins nothing (spec §6.6.1).
+  // The endpoints are filtered here rather than in the WHERE clause: the
+  // clause already carries an OR, and `a OR b AND c` does not group the
+  // way it reads. `r.*` carries the relationship's OWN lifecycle_status,
+  // which `rows()` would filter — these two columns are the endpoints'.
+  return rows
+    .filter((row) => row["_a_cut"] !== "cut" && row["_b_cut"] !== "cut")
+    .map((row) => {
     const aId = row["character_a_id"] === null ||
                 row["character_a_id"] === undefined
       ? null : Number(row["character_a_id"]);
@@ -98,6 +106,8 @@ export async function relationshipsFor(
     const clean: Row = { ...row };
     delete clean["_a_name"];
     delete clean["_b_name"];
+    delete clean["_a_cut"];
+    delete clean["_b_cut"];
 
     return {
       id: Number(row["id"]),

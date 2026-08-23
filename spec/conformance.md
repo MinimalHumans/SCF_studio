@@ -64,6 +64,13 @@ A conforming Reader MUST NOT:
 assets MUST report every asset as `unaddressed` (§8.3) rather than
 `missing`.
 
+**`unmaterialised` is not required of any role.** Detecting a cloud
+placeholder is a property of the environment, not of the format (§8.3),
+and no conformance check asks for it — there is no fixture for it and
+there cannot be one, since a placeholder is a filesystem state rather
+than a file. A resolver that never produces the state is conforming; one
+that reports a placeholder as `missing` is not.
+
 ### 2.2 Writer
 
 **Claim:** *reads and writes SCF 1.0.*

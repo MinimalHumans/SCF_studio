@@ -1,0 +1,16 @@
+{
+  "name": "@minimalhumans/scf-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The SCF documentation site. Renders the repository's own Markdown; authors nothing.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs --check",
+    "serve": "node --experimental-strip-types serve.mjs"
+  },
+  "dependencies": {
+    "marked": "^15.0.0"
+  }
+}

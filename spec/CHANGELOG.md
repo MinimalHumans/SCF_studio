@@ -17,6 +17,101 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.39 — 2026-08-22
+
+*Describes schema 2.12.*
+
+**Minor.** §6.6 and §6.6.1 gain requirements that were true and unstated;
+§8.3 states what it had left to the reader. One real defect fixed in the
+reference implementation.
+
+### §6.6.1 — a cut endpoint, and the mirror nobody had written down
+
+§6.6.1 says **adding a cut row changes no answer**, and calls that the
+test of a conforming implementation. It has a mirror: **cutting an
+existing row MUST change the answer.** Both are now stated, and the
+second is the load-bearing one — the test as written is satisfied by an
+implementation that ignores `lifecycle_status` entirely, since nothing
+it adds is ever looked at.
+
+**The reference implementation failed the mirror.** `rows()` applies the
+exclusion to everything fetched a table at a time, and five canonical
+queries reached an entity THROUGH a junction in a single SQL join —
+Q04's cast and props, Q03's costumes and motifs, Q02's costumes. Each
+joined a junction that cannot be cut to an entity that can, and filtered
+neither. **Marking a character cut left them in the scene's cast.**
+
+Fixed at all five, plus `relationshipsFor`, through one exported
+predicate rather than five local ones. `cutChangesTheAnswer.test.ts`
+pins the property for each, and keeps a test for the original direction
+too, because the fix could have been written as "filter everything and
+report less".
+
+§6.6.1 now says this outright: a link whose ENDPOINT is cut joins
+nothing, whether or not the link itself can carry a status.
+
+### §6.6 — why eleven link entities must not carry a status
+
+§6.6 stated that eleven of the thirteen link entities MUST NOT carry
+`lifecycle_status` and never said why, which left the neighbouring rule
+about cut links looking like a rule about a state most of them cannot be
+in.
+
+**A link inherits its endpoints' lifecycle.** A junction is a
+*connection*, and a connection to something not in the film is not in
+the film either. A link needs a status of its own only when the row is a
+**claim** rather than a connection — an actor's casting and a thematic
+connection can both be cut while both endpoints survive, which is
+exactly why those two carry it.
+
+### §8.3 — `unmaterialised` is the environment's job
+
+The state was defined and no implementation could produce it from
+anything this specification said. Whether a path holds real bytes or a
+cloud placeholder is not a property of the identifier or of the file; it
+is a fact about the filesystem the session is attached to, and the
+mechanisms differ per platform and per sync client. Any rule stated here
+would be wrong somewhere.
+
+So §8.3 now states the shape rather than the mechanism, as §0.3 does for
+the root mapping: an environment that can distinguish a placeholder MUST
+report `unmaterialised` and SHOULD document how it decides; one that
+cannot MUST report `resolved` and MUST NOT report `missing`, because the
+bytes are reachable and slow is not absent. **No role is required to
+produce the state at all**, and `conformance.md` says so — there is no
+fixture for it and there cannot be one.
+
+The reference implementation's heuristic, a zero-length file carrying a
+modification time, is recorded in `assetLocator.ts` and is explicitly
+not normative.
+
+### A documentation site
+
+`site/` renders the repository's own Markdown to a static site, deployed
+to Pages from `main`. It authors nothing but its landing page: a site
+carrying its own copy of the specification would be this project's
+recurring defect with the drifting copy on the internet.
+
+**It makes §-references clickable, and a dangling one fails the build.**
+The specification cross-references itself constantly and in plain
+Markdown every one of those is dead text — three independent
+implementations were written by people navigating this document by
+scrolling. 1,208 references now resolve to 112 sections.
+
+Resolving them means knowing which sections exist, which means knowing
+when one does not. That check is the reason this is a generator rather
+than a Jekyll configuration, and `ci.yml` runs it on every pull request:
+a `§9.7` in prose when §9 stops at §9.6 is a defect in the
+SPECIFICATION, and it now fails there rather than costing a reader ten
+minutes.
+
+The changelog is exempt, and only the changelog. §4.3.1 was added in
+0.16 and deleted in 0.21, and both entries are correct about the
+document as it stood — recording history is the one place a reference to
+something gone is not a defect.
+
+---
+
 ## 0.38 — 2026-08-22
 
 *Describes schema 2.12.*

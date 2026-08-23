@@ -72,8 +72,29 @@ function asNum(v: SqlValue | undefined): number | null {
 export async function rows(
     exec: SqlExec, table: string, where = "",
     params: SqlValue[] = []): Promise<Row[]> {
-  return (await rowsIncludingCut(exec, table, where, params))
-    .filter((r) => r["lifecycle_status"] !== "cut");
+  return excludeCut(await rowsIncludingCut(exec, table, where, params));
+}
+
+/**
+ * §6.6.1's predicate, exported so a JOIN can apply it too.
+ *
+ * `rows()` covers everything fetched a table at a time. It does not
+ * cover a query that reaches an entity THROUGH a junction in one SQL
+ * statement — and five did: Q04's cast and props, Q03's costumes and
+ * motifs, Q02's costumes. All five joined a junction that cannot be cut
+ * to an entity that can, and filtered neither.
+ *
+ * The visible consequence was that marking a character cut did not
+ * remove them from Q04's cast. §6.6.1 states its test as "adding a cut
+ * row changes no answer", and that has a mirror nobody had written
+ * down: **cutting an existing row MUST change the answer.** These
+ * queries failed the mirror while passing the test as stated.
+ *
+ * One predicate, two call shapes. A second definition of "cut" would
+ * eventually disagree with this one.
+ */
+export function excludeCut(rows: Row[]): Row[] {
+  return rows.filter((r) => r["lifecycle_status"] !== "cut");
 }
 
 /**

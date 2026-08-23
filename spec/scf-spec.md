@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.38 (draft) — not a release.**
+**Version 0.39 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.38` (draft).
+- **Specification version** — this document. Currently `0.39` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -702,6 +702,14 @@ Where the registry declares it, an implementation MUST preserve it. Of
 the thirteen link entities only `actor_character_role` and
 `thematic_connection` carry it; the others MUST NOT.
 
+**A link inherits its endpoints' lifecycle.** That is why eleven of the
+thirteen have no `lifecycle_status` of their own and must not gain one:
+a junction is a *connection*, and a connection to something that is not
+in the film is not in the film either. It needs a status of its own only
+when the row is a **claim** rather than a connection — an actor's
+casting and a thematic connection are both assertions that can be cut
+while both endpoints survive, which is exactly why those two carry it.
+
 #### 6.6.1 A cut row is not in the film
 
 **A resolver MUST exclude rows whose `lifecycle_status` is `cut`.** The
@@ -716,7 +724,16 @@ consequences are meant to reach that far:
   (§5), and appears in no canonical query result (§12);
 - a cut state is in force nowhere (§4.5);
 - a cut row contributes no layer to a cascade (§7.3);
-- a cut link joins nothing.
+- a cut link joins nothing — **and so does a link whose ENDPOINT is
+  cut**, whether or not the link itself can carry a status (§6.6).
+
+That last one is the easiest to get wrong, and the reference
+implementation had it wrong until 0.39. A resolver that filters rows one
+table at a time is not enough: a query that reaches an entity *through*
+a junction in a single join sees the junction, which cannot be cut, and
+the entity, which can — and filters neither unless it is written to.
+Five canonical queries did exactly that, and a cut character stayed in
+the scene's cast.
 
 A cut scene MAY still carry its heading in the screenplay — a cut scene
 in a real script is struck through, not deleted. An implementation that
@@ -727,6 +744,13 @@ Because a cut row is excluded everywhere, **adding one to a file changes
 no answer.** That is the test of a conforming implementation, and the
 conformance fixture is built to make it: it carries a cut scene, with a
 heading, and a cut performance beat in its most heavily asserted scene.
+
+**The mirror is also required: cutting an existing row MUST change the
+answer.** Stated on its own, the test above is satisfied by an
+implementation that ignores `lifecycle_status` entirely — nothing it
+adds is ever looked at, so nothing it adds ever changes anything. Both
+halves are needed, and the second is the one that catches a resolver
+which filters some paths and not others.
 
 #### 6.6.2 Reading what was cut
 
@@ -873,6 +897,34 @@ Every asset resolves to exactly one state:
 
 `unmaterialised` MUST NOT be reported as a kind of `missing`. A synced
 project full of placeholders is healthy.
+
+**Detecting it is the environment's job, and this specification does
+not say how.** Whether a path holds real bytes or a cloud placeholder is
+not a property of the identifier, of the file's name, or of anything in
+the `.scf` — it is a fact about the filesystem the session is attached
+to, and the mechanisms differ per platform and per sync client. Any rule
+stated here would be wrong somewhere.
+
+So:
+
+- An implementation whose environment **can** distinguish a placeholder
+  MUST report it as `unmaterialised`, and SHOULD document how it decides.
+- An implementation whose environment **cannot** distinguish one MUST
+  report the file as `resolved`, and **MUST NOT** report it as `missing`.
+  The bytes are reachable — fetching them may be slow, and slow is not
+  absent.
+- **A conforming implementation is not required to produce
+  `unmaterialised` at all.** A resolver that never emits it is
+  conforming; one that emits `missing` for a placeholder is not.
+
+This is the same shape as §0.3's root mapping: a property of the
+consuming environment rather than of the format, stated so that its
+absence is not mistaken for a defect. The reference implementation's
+heuristic — a zero-length file that carries a modification time — is
+recorded in `assetLocator.ts` and is **not normative**; it is one
+environment's answer, and a deliberately imprecise one, because being
+wrong there costs a label and reporting a synced project as broken would
+cost the user's trust in the report.
 
 `unaddressed` is the state of every asset in a document opened with no
 root mapping (§0.3). An implementation MUST distinguish it from

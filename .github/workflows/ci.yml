@@ -159,6 +159,15 @@ jobs:
       # and the difference has already broken this package once: Node
       # refuses to strip types under node_modules, so `npx scf-check`
       # failed while every in-repo check passed.
+      # The docs site is built here, not only in the Pages workflow.
+      # Pages runs on main, which is after the merge; this runs on the
+      # pull request. The build's own check is the valuable half: a
+      # §-reference naming a section that does not exist fails it, and
+      # that is a defect in the SPECIFICATION rather than in the site.
+      - name: the docs site builds and its cross-references resolve
+        run: npm install --no-audit --no-fund && npm run check
+        working-directory: site
+
       - name: a consumer can install, import, compile and run
         run: npm run pack-test
         working-directory: scf-core

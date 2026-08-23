@@ -195,8 +195,8 @@ async function directionResult(
 import { q } from "./db.ts";
 import type { Row, SqlValue } from "./db.ts";
 import {
-  motifStateAt, propStateAt, relationshipStateAt, rows, sceneOrder,
-  selectLocationVariant, statesInForce,
+  excludeCut, motifStateAt, propStateAt, relationshipStateAt, rows,
+  sceneOrder, selectLocationVariant, statesInForce,
 } from "./resolution.ts";
 import { actOf, deriveStructure, sceneOrderHint, sequenceOf } from
   "./structure.ts";
@@ -231,10 +231,10 @@ export async function composeQ03(
     characters.push({
       character,
       states: await statesInForce(ctx, cid, sceneId, null, order),
-      costumes: await ctx.exec(
+      costumes: excludeCut(await ctx.exec(
         "SELECT c.* FROM costume_scene cs JOIN costume c " +
         "ON c.id = cs.costume_id WHERE cs.scene_id = ? " +
-        "AND c.character_id = ?", [sceneId, cid]),
+        "AND c.character_id = ?", [sceneId, cid])),
     });
   }
 
@@ -248,9 +248,14 @@ export async function composeQ03(
     props.push({ prop, state: await propStateAt(ctx, pid, sceneId, order) });
   }
 
-  const motifs = await ctx.exec(
-    "SELECT m.name, a.domain, a.id FROM motif_appearance a " +
-    "JOIN motif m ON m.id = a.motif_id WHERE a.scene_id = ?", [sceneId]);
+  // The junction carries no lifecycle_status and cannot; the motif can.
+  // Selecting m.name rather than m.* means the filter needs the column,
+  // so it is selected explicitly and dropped after.
+  const motifs = excludeCut(await ctx.exec(
+    "SELECT m.name, m.lifecycle_status, a.domain, a.id " +
+    "FROM motif_appearance a " +
+    "JOIN motif m ON m.id = a.motif_id WHERE a.scene_id = ?", [sceneId]))
+    .map(({ lifecycle_status: _drop, ...rest }) => rest);
 
   return { scene, characters, props, motifs };
 }
@@ -1129,10 +1134,10 @@ export async function q02Result(
   let propState: Row | null = null;
 
   if (subjectType === "character") {
-    costumes = await ctx.exec(
+    costumes = excludeCut(await ctx.exec(
       "SELECT c.* FROM costume_scene cs JOIN costume c " +
       "ON c.id = cs.costume_id WHERE cs.scene_id = ? AND c.character_id = ?",
-      [sceneId, subjectId]);
+      [sceneId, subjectId]));
     for (const rel of await rows(
         ctx.exec, "character_relationship",
         "character_a_id = ? OR character_b_id = ?",
@@ -1268,12 +1273,12 @@ export async function q04Result(
 
   const storyBeats = (await rows(ctx.exec, "story_beat", "scene_id = ?",
                                  [sceneId])).sort(byBeatOrder);
-  const cast = await ctx.exec(
+  const cast = excludeCut(await ctx.exec(
     "SELECT c.* FROM scene_character sc JOIN character c " +
-    "ON c.id = sc.character_id WHERE sc.scene_id = ?", [sceneId]);
-  const props = await ctx.exec(
+    "ON c.id = sc.character_id WHERE sc.scene_id = ?", [sceneId]));
+  const props = excludeCut(await ctx.exec(
     "SELECT p.* FROM scene_prop sp JOIN prop p " +
-    "ON p.id = sp.prop_id WHERE sp.scene_id = ?", [sceneId]);
+    "ON p.id = sp.prop_id WHERE sp.scene_id = ?", [sceneId]));
 
   const locationId = asId(scene?.["location_id"]);
   const location = locationId === null
