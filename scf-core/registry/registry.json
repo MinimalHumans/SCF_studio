@@ -7438,6 +7438,7 @@
           "required": true,
           "tab": "General",
           "autoInjected": false,
+          "polymorphicType": "subject_type",
           "helpText": "Polymorphic reference into the table named by subject_type."
         },
         {
@@ -7448,6 +7449,7 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
+          "polymorphicType": "subject_type",
           "helpText": "Optional. Polymorphic reference into the matching variant table (character_variant / prop_variant / location_variant)."
         },
         {
@@ -10950,7 +10952,8 @@
           "sqlType": "INTEGER",
           "required": false,
           "tab": "General",
-          "autoInjected": false
+          "autoInjected": false,
+          "polymorphicType": "entity_type"
         },
         {
           "name": "domain",
@@ -11188,7 +11191,8 @@
           "sqlType": "INTEGER",
           "required": true,
           "tab": "General",
-          "autoInjected": false
+          "autoInjected": false,
+          "polymorphicType": "entity_type"
         },
         {
           "name": "nature_of_connection",
@@ -14948,7 +14952,8 @@
           "sqlType": "INTEGER",
           "required": true,
           "tab": "General",
-          "autoInjected": false
+          "autoInjected": false,
+          "polymorphicType": "entity_type"
         },
         {
           "name": "relationship_type",

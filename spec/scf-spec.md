@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.39 (draft) — not a release.**
+**Version 0.40 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.39` (draft).
+- **Specification version** — this document. Currently `0.40` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -554,7 +554,24 @@ that disagrees, so that a list can be reissued deliberately (§3.3).
 
 ### 4.5 Position patterns
 
-Each entity declares a `positionPattern`. Three exist, and a resolver
+Each entity declares a `positionPattern`. **Four values exist**, and the
+registry's names for them are `none`, `explicit`, `sparse_persistence`
+and `latest_wins`:
+
+| Registry value | | |
+|---|---|---|
+| `none` | Not positioned | 93 of 99 entities. The row is not keyed to a scene, so nothing below applies to it. |
+| `explicit` | Pattern 1 | One row per scene. |
+| `sparse_persistence` | Pattern 2 | Keyed at a scene, in force onward per its `persistence` field. |
+| `latest_wins` | Pattern 3 | The most recent row at or before a position is in force. |
+
+This section described three until 0.40 and never named `none`, which
+is what almost every entity declares — so a reader matching the
+registry against the prose found a fourth value the specification did
+not mention and had to decide for itself whether that was an error in
+the registry or in the document.
+
+The three numbered patterns are the ones a resolver acts on, and it
 MUST apply the one the registry declares.
 
 **Pattern 1 — explicit rows.** One row per scene. What is in force is
@@ -696,7 +713,31 @@ Implementations MUST report, separately:
 
 ### 6.6 Lifecycle status
 
-`lifecycle_status` marks a row as `active` or `cut`.
+`lifecycle_status` records where a row stands. **The registry declares
+the vocabulary** (§2.1) and currently holds six values:
+
+| value | |
+|---|---|
+| `active` | In the film. The default. |
+| `draft` | In the film, and not settled. Treated as `active` by every derivation. |
+| `superseded` | Replaced by another row, which §6.4's version chain names. |
+| `deprecated` | Kept for compatibility, discouraged for new authoring. |
+| `cut` | **Not in the film** (§6.6.1). |
+| `archived` | Retained for the record and not in the working film. |
+
+**Only `cut` is excluded from resolution.** Every other value, including
+`archived` and `superseded`, is in force as far as §6.6.1 is concerned.
+That is a deliberate narrowness rather than an oversight: `cut` is the
+only one of the six that makes a claim about the FILM, and the rest
+describe the row's editorial standing. A resolver that also excluded
+`archived` would be answering a different question from one that did
+not, and both would believe they conformed.
+
+This section said "`active` or `cut`" until 0.40, naming two of the six
+the registry declares. A reader implementing from it had to decide for
+itself what an `archived` scene's story position was, and §2.1 already
+said the registry wins — so the specification and the artifact it
+defers to disagreed in the one place a reader could not tell.
 
 Where the registry declares it, an implementation MUST preserve it. Of
 the thirteen link entities only `actor_character_role` and
@@ -1288,7 +1329,7 @@ Every canonical query returns:
 | Field | |
 |---|---|
 | `query` | The query's id, e.g. `"Q05"`. |
-| `resultFormat` | Version of this envelope, on its own track. A field added here is not a change to SCF. |
+| `resultFormat` | Version of this envelope, on its own track. A field added here is not a change to SCF. **Currently `1.0`**, and every published result carries it. |
 | `schemaVersion` | The schema the answering implementation read. |
 | `parameters` | What was asked. A parameter identifying a ROW is its **uuid**; a literal parameter — a query id, an enum value — appears as itself. **A row id MUST NOT appear**, so no parameter is a bare number. |
 | `result` | The query's own structure, defined per query below. |
@@ -1352,14 +1393,32 @@ would notice.
   registry fields; a second vocabulary for them would be a second thing
   to keep in step.
 
-**Any remaining column whose name ends `_id` MUST be dropped.** This is
-the rule for a **polymorphic reference** — a column such as
-`motif_appearance.entity_id` or `thematic_connection.entity_id`, whose
-target entity is named by a sibling column at run time and which
-therefore carries no `referenceEntity` for the previous rule to act on.
-Dropping it is not a loss of information but a refusal to publish a row
-id under a name that looks like content. The sibling column naming the
-kind — `entity_type` — is an ordinary stored value and is kept.
+**A column the registry declares POLYMORPHIC MUST be dropped.** A
+polymorphic reference — `motif_appearance.entity_id`,
+`thematic_connection.entity_id`, `asset_relationship.entity_id`,
+`entity_anchor.subject_id` and `subject_variant_id` — names its target
+table in a sibling column at run time, so it carries no
+`referenceEntity` for the previous rule to act on and holds a bare row
+id that must not travel. **The registry says which columns these are**,
+through `polymorphicType` (§2.3), which names that sibling column. The
+sibling itself — `entity_type`, `subject_type` — is an ordinary stored
+value and is kept.
+
+**A column whose name merely ends `_id` MUST NOT be dropped on that
+basis.** Until 0.40 this section said the opposite, and the difference
+is not academic: `external_id` (§6.3) is a declared, authored field on
+ten entities, and `clip.screenplay_line_start_id` and `_end_id` are
+ordinary references whose target is a screenplay table rather than a
+registry entity. The old rule silently deleted twelve legitimate
+columns from every projected row.
+
+**No published artifact could catch that**, which is why it survived
+four revisions and three reader runs: the conformance fixture authors
+no `external_id` and its `clip` table is empty, so the omit-empties
+rule above makes a correct implementation and a data-losing one produce
+byte-identical output on all sixteen published results. A rule that
+pattern-matches on a name will eventually match something the name
+did not mean; a rule that reads a declaration will not.
 
 **Where a query needs the target itself, it MUST resolve it and carry it
 beside the projected row, never inside it.** §12.11 is the worked
@@ -1419,6 +1478,21 @@ role from a reference whose role it failed to parse. This is why
 `"role": null` appears in a published Q13 result while an unauthored
 `role` on a projected row is simply gone.
 
+**A derived record that carries a projected row names that member for
+the entity**: §12.10's manifest entries carry `motif`, `appearance` and
+`state`; §12.11's carriers carry `connection`. A section MAY name it
+otherwise and then MUST say so — §12.13's `identification` and §12.14's
+top-level row both use `row`, because neither carries an entity a name
+would identify.
+
+This was unstated until 0.40, and it is the member every derived record
+has. A reader could see from §12.1.2 that a projected row has exactly
+two members and that computed values sit beside it rather than inside
+it, and had nothing telling it what the row itself sits under. Five of
+the sixteen sections could not be shaped correctly from the document,
+and a reader that guessed differently would answer the same question
+with a structurally different result and nothing to warn it.
+
 A **label list** is an array of bare strings naming rows the result does
 not carry — §12.1.5.
 
@@ -1460,8 +1534,21 @@ section below MUST name the column the labels are taken from.
 
 **Every array in a result is ordered, and each query's section below
 states the order for each of its arrays.** An array whose order is not
-stated there is in **story order** (§4.1). Nothing in a result is in row
-order, which is a fact about the file rather than the story.
+stated there is in **story order** (§4.1).
+
+**Row order is never the default, and a section MUST NOT rely on it
+silently.** It is a fact about the file rather than about the story, so
+a result that falls back on it is answering with something the story
+does not contain. Where a section needs it — because the rows are
+peers with no story position of their own, as §12.5's `beats` within a
+`beat_order` and §12.10's `manifest` are — that section states it, and
+those are the only two.
+
+This paragraph read "Nothing in a result is in row order" until 0.40,
+which was flatly contradicted by both of those sections and by a
+published artifact: §12.5's `characters` were emitted in junction row
+order while nothing said so. The absolute was the wrong shape for the
+rule — the problem is unstated reliance, not reliance.
 
 **Member order within an object is not part of the answer.** Results
 compare as JSON values, not as bytes, on the same reasoning as §11.6.
@@ -1542,7 +1629,7 @@ Parameter: `scene`.
 | Field | |
 |---|---|
 | `scene` | The scene itself, projected. Null when the position does not resolve — including when the scene is cut (§6.6.1). |
-| `characters` | Each character present, with `states` in force there (§4.5) and the `costumes` they are wearing. |
+| `characters` | Each character present, with `states` in force there (§4.5) and the `costumes` they are wearing. In the row order of this scene's `scene_character` rows (§12.1.6). |
 | `props` | Each prop present, with its `state` at this position by pattern 3, or null where none is yet established. |
 | `motifs` | Motif appearances at this position: name and domain. These come from a join rather than a table and carry no identity of their own. |
 
@@ -1561,7 +1648,7 @@ Parameters: `from`, `to`.
 | Field | |
 |---|---|
 | `from`, `to` | The two scenes, projected. |
-| `characters` | Each character present at either position, projected, with `statesFrom` and `statesTo`. |
+| `characters` | Each character present at either position, projected, with `statesFrom` and `statesTo`. In the row order of the `scene_character` rows at the two positions, first appearance first — these are peers with no story position of their own (§12.1.6). |
 | `relationships` | Each relationship with a stage at either position, projected, with `stageFrom` and `stageTo`. |
 | `props` | Each prop with a state at either position, projected, with `whereFrom` and `whereTo`. |
 
@@ -1573,7 +1660,7 @@ the column it is taken from:
 
 | Member | Kind | Taken from |
 |---|---|---|
-| `statesFrom`, `statesTo` | Label list, resolved by §4.5 pattern 2, **oldest first** | `character_state.name` |
+| `statesFrom`, `statesTo` | Label list, resolved by §4.5 pattern 2, **oldest first** | `performance_state.name` |
 | `stageFrom`, `stageTo` | A single label, or **null** where no stage is in force | `relationship_state.stage_label` |
 | `whereFrom`, `whereTo` | A single label, or **null** where no state is in force | `prop_state.whereabouts` |
 
@@ -1632,7 +1719,7 @@ Its members are fixed, and one absent is carried as **null**:
 |---|---|---|
 | `uuid` | Identity | The asset's own uuid, taken from the asset row. Never resolved from a row id — see below. |
 | `name`, `identifier`, `format` | Stored values | From the asset. |
-| `role` | Stored value | `asset_bundle_item.role_in_bundle` where the cascade reached this asset through a bundle. Free-form; the registry constrains it, this section does not. Null otherwise. |
+| `role` | Stored value | `bundle_asset.role_in_bundle` where the cascade reached this asset through a bundle. Free-form; the registry constrains it, this section does not. Null otherwise. |
 | `anchorName` | Stored value | `entity_anchor.name` where the reference came from an anchor. Null otherwise. |
 | `intent` | Literal | Echoes the `intent` asked for. |
 | `provenance` | **Closed vocabulary** | Which layer put this reference in force: `shot override`, `anchor`, `bundle`. |
@@ -1680,6 +1767,20 @@ Parameters: `target` — the query being assessed, a literal — plus
 | `findings` | Each with `severity`, the `entity` it concerns, and a message. |
 | `counts` | Findings per severity. |
 
+**Q14 is the one query that is NOT reproduced byte for byte.** Its
+messages are written for a person and carry judgement — *"Physical state
+persists here (wounded) with no vocal state — does it color the voice?"*
+is an observation, not a lookup. Requiring two implementations to agree
+on that wording would require them to agree on a sentence, which is not
+something a specification can ask for.
+
+Conformance for Q14 is therefore **coverage, severity range and
+disclosed departures**: every step of §12.9.1's rubric MUST be assessed
+and reported, each finding's severity MUST fall within what §12.9.1
+permits for that step, and an implementation MUST disclose any finding
+it raises beyond one per step. The published `Q14.result.json` is a
+worked example of a conforming answer, not the only one.
+
 #### 12.9.1 The rubric
 
 What Q14 assesses is published as
@@ -1706,14 +1807,36 @@ would, which is not a specification. The generator now checks every name
 in `entities` against the registry, and every `filter` field against the
 columns of the entities it names, and refuses to publish otherwise.
 
-A conforming implementation MUST draw its findings from that file, and
-MUST map requirement to severity as the file states:
+A conforming implementation MUST assess every step in that file, and
+MUST keep each finding's severity within the range the step permits:
 
 | Step | If absent | If present |
 |---|---|---|
 | `required` | `blocker` | `ok` |
 | `recommended` | `warning` | `ok` |
-| `optional` | `suggestion` | `ok` |
+| `optional` | `ok`, or `suggestion` where the absence is notable | `ok` |
+
+**An absent `optional` step is `ok` by default.** That is what optional
+means, and a report that raised a `suggestion` every time one was absent
+would be mostly noise on any real project. An implementation MAY raise
+`suggestion` instead where something about *this* position makes the
+absence worth remarking on, and MUST say what in the message.
+`readiness-rubrics.json`'s `requirementToSeverity` gives the severity
+for a notable absence, not for every absence.
+
+**An implementation MAY raise a finding that no single step produces**,
+where it observes something across steps — a physical state in force
+with no vocal state beside it is the worked example, and it is why the
+published result carries seven findings for a six-step rubric. Such a
+finding MUST name an entity the rubric declares, and MUST be disclosed
+under §12.9's conformance terms.
+
+Until 0.40 this table read `optional` → `suggestion` absolutely, and
+the published artifact disobeyed it in exactly the way described above
+while a test checked only that reported entities were declared ones.
+An independent implementation followed the table, produced six findings,
+and was right to say the artifact was non-conforming to the rule as
+written. The rule was wrong, not the artifact.
 
 **Only some queries have a rubric.** A query with a generative or
 pre-flight consumer — one you act on before shooting or rendering — has
@@ -1750,7 +1873,7 @@ Parameter: `scene`.
 | `manifest` | Each motif placed here: the `motif`, its `appearance` at this position, and its evolved `state` there by pattern 3 (§4.5). |
 | `candidates` | Motifs related to something placed here that are **not** placed here, projected. |
 | `dense` | Whether the manifest exceeds the density threshold. |
-| `densityThreshold` | The threshold that produced `dense`. |
+| `densityThreshold` | The threshold that produced `dense`. **This specification's threshold is 3**; an implementation MAY use another and MUST publish the one it used. |
 
 **Related means one hop along `motif.related_motif_id`**, and nothing
 else. A motif is a candidate when some motif in `manifest` points at it
@@ -1785,7 +1908,7 @@ entire spine rather than a position.
 |---|---|
 | `theme` | The theme, projected. |
 | `carriers` | Each `thematic_connection` projected, plus `targetEntity`, `targetUuid`, `targetName` and `sceneUuids` in story order. |
-| `spine` | **Every scene in story order**, each with the number of carriers reaching it. |
+| `spine` | **Every scene in story order**, each with the number of carriers reaching it: `sceneUuid`, `sceneNumber`, `carriers`. It carries no projected scene — a spine is a shape, and §12.17 is where a scene is answered. |
 
 **The zeroes are the point.** A spine listing only the scenes a theme
 reaches could not answer the question this query exists for, which is
@@ -1839,7 +1962,7 @@ Parameter: `scene`.
 |---|---|
 | `scene` | The scene, projected. |
 | `information` | The information strategy here, or null. |
-| `identification` | The identification strategy with its primary and secondary characters, or null. |
+| `identification` | The identification strategy, or null: `row` (projected), `primary`, `secondary`. Named `row` rather than for an entity, per §12.1.4, because the strategy is what the record is about. |
 | `emotionalBeats` | Each beat with the arc it belongs to. |
 | `toneMarkers` | Tone markers at this position. |
 | `emotionalCascade` | The direction cascade for leaf `scene_emotional_design`, root first (§7). |
@@ -1861,7 +1984,7 @@ Parameters: `entityType` — a literal — and `row`.
 |---|---|
 | `entityType`, `row` | The row asked about. |
 | `versionChain` | The row's version chain, **oldest first**, walked back to the root and then forward. Empty when the entity is not versionable. |
-| `attached` | `creative_decision` and `collaboration_note` rows that mention this row. |
+| `attached` | An object, **not an array**: `decisions` and `notes`, each a list of projected rows that mention this one. |
 
 Walking the chain MUST terminate on a cycle rather than following it
 (§9.2). A cycle is a finding (`identity.chain_cycle`), not a reason to
@@ -1904,6 +2027,7 @@ Parameters: `subjectType`, `subject`, `scene`, and `shot` — optional.
 
 | Field | |
 |---|---|
+| `subjectType` | Which kind of subject was asked about. Echoes the parameter, as §12.15 does. |
 | `subject`, `scene` | Projected. |
 | `dossier` | Q01's result body — what is true of the subject before this scene. |
 | `costumes`, `relationshipStates`, `performanceStates`, `beats` | For a character subject. |
@@ -1933,7 +2057,7 @@ Parameter: `scene`.
 | `cast`, `props` | Present by authored link, not inference. |
 | `location`, `locationVariant` | The location and the variant in force, with mismatches. |
 | `detail` | Scene-level design entities, each `{ entity, rows }`, empty groups omitted. |
-| `blocking`, `stagingBeats` | Staging, beats in `beat_order`. |
+| `blocking`, `stagingBeats` | Staging, beats in `beat_order`. **`blocking` is an array** — a scene may carry several — and both hold projected rows. |
 
 The `detail` list is fixed by this section rather than derived — what
 belongs in a scene package is an editorial choice, as Q00's layer list

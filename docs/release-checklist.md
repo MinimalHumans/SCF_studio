@@ -26,10 +26,11 @@ decision.
    independent readers have each started from §0.1, which is written for
    an implementer. The query and entity references are generated as of
    0.37; what remains is prose and a docs site.
-2. **A fourth reader run.** Worth doing now and not before: it would be
-   the first against a specification that states its own shape
-   conventions, publishes its screenplay vocabulary, and can be verified
-   byte for byte at a tag.
+2. **A fifth reader run**, eventually. The fourth ran against 0.39 and
+   its findings are answered in 0.40 — but the two it rated critical
+   were both invisible to every published artifact, which is an argument
+   for running these until one comes back quiet rather than for
+   declaring the format read.
 3. **Publish `@minimalhumans/scf-core`** — deliberately held. Packaging
    is proven end to end by CI; only `"private": true` and the npm org
    stand between here and a published package. Held because npm blocks
@@ -79,8 +80,11 @@ conventions, and the first that could verify the bytes it read.
 | ✅ | **§9.5's undefined terms defined** | `clean`, `rowIds`, `count`, `title`. The semantics had lived only in `findings.ts` |
 | ✅ | **§1.3.1 — the screenplay tables** | `line_type` closed at fifteen values; a reader hitting an unknown one MUST treat the line as unknown content and MUST NOT map it to a value it resembles |
 | ✅ | Stale MUSTs corrected | §4.4.4 and `conformance.md` §2.2 both cited `project.scene_numbering`, removed in schema 2.12 |
-| ⚠️ | **§8.3's `unmaterialised` has no detection mechanism** | So no independent implementation produces it |
-| ⚠️ | **§6.6 vs §6.6.1** | Eleven of thirteen link entities MUST NOT carry `lifecycle_status`, yet "a cut link joins nothing" is a rule about a state they cannot be in |
+| ✅ | **`unmaterialised` scoped to the environment** | 0.39. No role is required to produce it, and `conformance.md` says so |
+| ✅ | **§6.6's link rule explained, and the cut bug fixed** | 0.39. A link inherits its endpoints' lifecycle; five queries were joining past the filter |
+| ✅ | **§12.1.2 no longer deletes `external_id`** | 0.40. The registry declares which references are polymorphic; the rule reads the declaration instead of the name |
+| ✅ | **§6.6's full six-value vocabulary stated** | 0.40. The section had named two of the six the registry declares |
+| ✅ | **Spec prose checked against the registry** | 0.40. Two invented entity names had survived four revisions |
 
 ## 1A. The query layer — ✅ complete
 
@@ -111,7 +115,7 @@ conventions, and the first that could verify the bytes it read.
 | | Item | Notes |
 |---|---|---|
 | ✅ | Registry, generator, linter, DDL, JSON Schema, `x_` prefix, reserved names, unknown-content survival | |
-| ✅ | **42 artifacts, all published and all checksummed** | One exhaustive list, grouped. Everything in `ARTIFACTS.md` is in `SHA256SUMS` and nothing is checksummed that is not described |
+| ✅ | **45 artifacts, all published and all checksummed** | One exhaustive list, grouped. Everything in `ARTIFACTS.md` is in `SHA256SUMS` and nothing is checksummed that is not described |
 | ✅ | **The manifest covers the specification itself** | 0.31. Three implementations were written from this prose and nothing let them confirm they had the published bytes |
 | ✅ | **`schema-2.12` tagged, and the addressing scheme proven** | Annotated. `spec/scf-spec.md` was fetched at the tag and its digest matched `SHA256SUMS` exactly |
 
@@ -119,7 +123,9 @@ conventions, and the first that could verify the bytes it read.
 
 | | Item | Notes |
 |---|---|---|
-| ✅ | Fixture, suites, roles, `scf-check`, report format, negative fixtures, round trip, expectations as data, test map, claim process | **602 core / 248 app** |
+| ✅ | Fixture, suites, roles, `scf-check`, report format, negative fixtures, round trip, expectations as data, test map, claim process | **618 core / 248 app** |
+| ✅ | **Query selectors published** | 0.40. `conformance.md` §5.4 had promised them since it was written; a third party had been reading parameters out of the artifact it was graded against |
+| ✅ | **Four independent reader runs** | The fourth: 14/16 queries, 11/11 negative fixtures, and two correct claims that a normative artifact was wrong |
 | ✅ | **Three independent readers have built against this** | The third made a Reader claim with all three steps performed |
 | ✅ | **The negative set is solid** | 11 of 11, twice running, no missing and no extra findings |
 | ✅ | **The artifact/implementation circle is broken** | 0.29 stated the conventions the artifacts had been demonstrating. Q11's empty cascade — a wrong leaf blessed into truth — is the case it was written against |

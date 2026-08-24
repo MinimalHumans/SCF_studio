@@ -352,9 +352,21 @@ are file-local (§6.2), so a second implementation reading the same
 fixture would legitimately produce different ones. Expectations that
 failed for that reason would teach a reader to stop believing them.
 
-Parameters resolve from **selectors** — scene number 12, the character
+Parameters resolve from **selectors**, published as
+[`selectors.json`](../fixtures/expectations/selectors.json) — scene number 12, the character
 named Eleanor — recorded alongside the expectations, so another
 implementation can resolve them for itself.
+
+That sentence was true of the intent and false of the repository until
+0.40: the selectors lived in two test files, one of which covered only
+the eight queries with rendered markdown, and nothing shipped. The
+fourth reader run recovered five from prose in this document and then
+read four more out of the `parameters` block of the artifact it was
+about to be graded against. Q13's was the sharpest — its `intent` was
+not in that block either, and the reader took it from the RESULT, so it
+had to read the answer in order to learn the question. Both are fixed:
+the selectors are published and Q13's envelope carries what it was
+asked.
 
 **All sixteen have normative `.result.json` files.** Eight also have
 rendered markdown, which those files supersede; the markdown is a

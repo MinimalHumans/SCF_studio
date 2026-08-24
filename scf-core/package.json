@@ -27,6 +27,8 @@
     "check-entity-reference": "node --experimental-strip-types scripts/emit_entity_reference.mjs --check",
     "emit-query-reference": "node --experimental-strip-types scripts/emit_query_reference.mjs",
     "check-query-reference": "node --experimental-strip-types scripts/emit_query_reference.mjs --check",
+    "emit-selectors": "node --experimental-strip-types scripts/emit_selectors.mjs",
+    "check-selectors": "node --experimental-strip-types scripts/emit_selectors.mjs --check",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "conformance": "vitest run test/conformance.canonical.test.ts test/conformance.readiness.test.ts",

@@ -22,7 +22,7 @@ the whole story. It is not the numeric order of the ids.
 | 12.5 | **Q12** Continuity | What changed between two positions. | `from`, `to` |
 | 12.6 | **Q06** Physical direction | How this character moves and behaves in this scene. | `character`, `scene` |
 | 12.7 | **Q08** Soundscape | What this scene sounds like. | `scene`, `shot` |
-| 12.8 | **Q13** Media resolution | Which assets are in force for a subject and an intent. | `subject`, `scene`, `shot` |
+| 12.8 | **Q13** Media resolution | Which assets are in force for a subject and an intent. | `subjectType`, `subject`, `intent`, `scene`, `shot` |
 | 12.9 | **Q14** Readiness | What is missing for another query to answer well. | `target`, `character`, `scene`, `shot` |
 | 12.10 | **Q09** Motif manifest | Which motifs should be perceivable in this scene, and how. | `scene` |
 | 12.11 | **Q10** Thematic accounting | Where a theme lives across the whole story, and where it does not. | `theme` |
@@ -186,7 +186,7 @@ says so (§12.9).
 
 Specified in **§12.8**. Normative result: [`fixtures/expectations/Q13.result.json`](../fixtures/expectations/Q13.result.json).
 
-Parameters: `subject`, `scene`, `shot`.
+Parameters: `subjectType`, `subject`, `intent`, `scene`, `shot`.
 
 Result members: `subject`, `intent`, `trail`, `references`, `counts`, `rootMapped`.
 

@@ -29,7 +29,7 @@ import {
   q12Result, q13Result, q14Result,
 } from "../src/canonicalQueries.ts";
 import {
-  QUERY_RESULT_FORMAT, projectRow, referencesOf,
+  POLYMORPHIC, QUERY_RESULT_FORMAT, projectRow, referencesOf,
 } from "../src/queryResult.ts";
 import { sceneOrder } from "../src/resolution.ts";
 import { openFixture, registry, type Fixture } from "./setup.ts";
@@ -127,12 +127,39 @@ describe("§12.1.2 row projection", () => {
     expect(p.fields["scene_id"]).toBeUndefined();
   });
 
-  test("drops an unmapped reference rather than emitting a row id", () => {
+  test("drops a POLYMORPHIC reference rather than emitting a row id", () => {
     // The defect this module exists to prevent. Emitting the raw id
     // would be worse than losing the field: it would look like data.
-    const p = projectRow({ uuid: "u", mystery_id: 42 });
-    expect(p.fields["mystery_id"]).toBeUndefined();
+    const p = projectRow({ uuid: "u", entity_id: 42 },
+                         { entity_id: POLYMORPHIC });
+    expect(p.fields["entity_id"]).toBeUndefined();
     expect(JSON.stringify(p)).not.toContain("42");
+  });
+
+  test("keeps a column ending _id that is NOT a reference", () => {
+    // INVERTED IN 0.40, and this is the whole point of the change.
+    // The rule was "any remaining column ending `_id` is dropped",
+    // which is true of the four polymorphic columns and ALSO true of
+    // `external_id` — a declared, authored field on ten entities
+    // (§6.3) — and of clip.screenplay_line_start_id/_end_id, which are
+    // ordinary references into a screenplay table.
+    //
+    // Twelve legitimate columns were deleted from every projected row,
+    // and no published artifact could catch it: the fixture authors no
+    // external_id and its clip table is empty, so §12.1.2's
+    // omit-empties rule made a correct implementation and a
+    // data-losing one byte-identical on all sixteen results.
+    const p = projectRow({ uuid: "u", external_id: "OMC:12345" });
+    expect(p.fields["external_id"]).toBe("OMC:12345");
+  });
+
+  test("external_id survives on a real entity's reference map", () => {
+    // Through referencesOf rather than a hand-built map, because the
+    // bug was in what referencesOf did NOT say about the column.
+    const refs = referencesOf(fx.ctx.registry, "character");
+    expect(refs["external_id"]).toBeUndefined();
+    const p = projectRow({ uuid: "u", external_id: "tt0000001" }, refs);
+    expect(p.fields["external_id"]).toBe("tt0000001");
   });
 
   test("a row with no uuid projects with a null one, not a throw", () => {

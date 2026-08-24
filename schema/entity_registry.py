@@ -93,6 +93,20 @@ class FieldDef:
     hidden: bool = False
     sql_type: str | None = None
     auto_injected: bool = False
+    #: For a POLYMORPHIC reference: the sibling column naming which table
+    #: this one points into.
+    #:
+    #: Declared rather than pattern-matched. Spec §12.1.2 used to say
+    #: "any remaining column whose name ends `_id` MUST be dropped",
+    #: which is true of the four polymorphic columns and also true of
+    #: `external_id` on ten entities and of `clip.screenplay_line_*_id`,
+    #: which are an ordinary value and two real references. The rule
+    #: silently deleted twelve legitimate columns from every projected
+    #: row, and no published artifact could catch it: the fixture
+    #: authors no `external_id` and its `clip` table is empty, so a
+    #: correct implementation and a data-losing one produce identical
+    #: output on all sixteen.
+    polymorphic_type: str | None = None
 
     def get_sql_type(self) -> str:
         if self.sql_type:
@@ -1816,8 +1830,12 @@ register(EntityDef(
                  help_text="Hard closed enum. Tools switch on this exhaustively. "
                            "Distinct from the open-polymorphism entity_type used elsewhere."),
         FieldDef("subject_id", "Subject ID", "integer", required=True,
+                 polymorphic_type="subject_type",
                  help_text="Polymorphic reference into the table named by subject_type."),
+        # Keyed by the SAME discriminator as subject_id: a variant of the
+        # subject is a row in whatever table subject_type names.
         FieldDef("subject_variant_id", "Subject Variant ID", "integer",
+                 polymorphic_type="subject_type",
                  help_text="Optional. Polymorphic reference into the matching variant table "
                            "(character_variant / prop_variant / location_variant)."),
         FieldDef("anchor_type", "Anchor Type", "select", required=True, options=[
@@ -2534,7 +2552,8 @@ register(EntityDef(
                  options=["location", "prop", "costume", "character", "scene", "shot"],
                  help_text="Open polymorphism — names the table entity_id points into. "
                            "Optional when the appearance is scoped by scene alone."),
-        FieldDef("entity_id", "Entity ID", "integer"),
+        FieldDef("entity_id", "Entity ID", "integer",
+                 polymorphic_type="entity_type"),
         FieldDef("domain", "Domain", "select",
                  options=["visual", "sonic", "dialogue", "action"],
                  help_text="The sensory/dramatic channel the motif manifests through."),
@@ -2587,7 +2606,8 @@ register(EntityDef(
         FieldDef("entity_type", "Connected Entity Type", "select", options=[
             "character", "scene", "location", "prop", "costume", "motif"
         ]),
-        FieldDef("entity_id", "Connected Entity ID", "integer", required=True),
+        FieldDef("entity_id", "Connected Entity ID", "integer", required=True,
+                 polymorphic_type="entity_type"),
         FieldDef("nature_of_connection", "Nature of Connection", "select", options=[
             "embodies", "explores", "represents", "challenges", "resolves"
         ]),
@@ -3376,7 +3396,8 @@ register(EntityDef(
                  reference_entity="asset", required=True),
         FieldDef("entity_type", "Entity Type", "text", required=True,
                  help_text="Open-ended — any entity name."),
-        FieldDef("entity_id", "Entity ID", "integer", required=True),
+        FieldDef("entity_id", "Entity ID", "integer", required=True,
+                 polymorphic_type="entity_type"),
         FieldDef("relationship_type", "Relationship Type", "select", options=[
             "reference", "documentation", "concept", "inspiration", "final", "other"
         ]),

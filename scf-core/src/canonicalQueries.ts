@@ -470,8 +470,15 @@ export async function q13Result(
                                    sceneId, shotId);
   const refs = await mediaReferences(media, locate);
 
+  // `subjectType` and `intent` belong in the ENVELOPE, not only in the
+  // body. §12.1.1 says parameters record what was asked so a result is
+  // self-describing, and both were asked and both change the answer.
+  // Omitting `intent` was the sharper of the two: it is a literal that
+  // also appears in the RESULT, so a third party reproducing this
+  // artifact had to read the answer in order to learn the question.
   return envelope("Q13", ctx.registry, {
-    subject: subjectUuid, scene: sceneUuid, shot: shotUuid,
+    subjectType: subject, subject: subjectUuid,
+    intent, scene: sceneUuid, shot: shotUuid,
   }, {
     subject,
     intent,

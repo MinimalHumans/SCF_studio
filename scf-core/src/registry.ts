@@ -29,6 +29,13 @@ export interface FieldDef {
   placeholder?: string;
   options?: string[];
   referenceEntity?: string;
+  /**
+   * On a polymorphic reference: the sibling column naming which table
+   * this one points into. Its presence is what marks the column for
+   * §12.1.2's drop — NOT the fact that its name ends `_id`, which is
+   * also true of `external_id` and of two ordinary references.
+   */
+  polymorphicType?: string;
   helpText?: string;
   hidden?: boolean;
 }

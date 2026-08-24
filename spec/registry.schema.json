@@ -181,6 +181,10 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "polymorphicType": {
+          "description": "Present on a POLYMORPHIC reference: names the sibling column saying which table this one points into. Such a column carries no referenceEntity, because its target is chosen per row. Spec \u00a712.1.2 drops these from a projected row; a column whose name ends _id WITHOUT this property is an ordinary value or an ordinary reference and MUST NOT be dropped. Absent in registries written before schema 2.12.",
+          "type": "string"
+        },
         "referenceEntity": {
           "description": "Target entity for a reference field. Every field whose referenceEntity is `asset` counts as a use of that asset — spec §8.6.",
           "$ref": "#/$defs/entityName"

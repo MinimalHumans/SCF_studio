@@ -80,6 +80,13 @@ jobs:
         run: npm run check-api-surface
         working-directory: scf-core
 
+      - name: every entity.column in the spec resolves
+        run: python3 schema/check_spec_references.py
+
+      - name: selectors.json matches every published result's parameters
+        run: npm run check-selectors
+        working-directory: scf-core
+
       - name: entity-reference.md matches the registry
         run: npm run check-entity-reference
         working-directory: scf-core
@@ -165,7 +172,7 @@ jobs:
       # §-reference naming a section that does not exist fails it, and
       # that is a defect in the SPECIFICATION rather than in the site.
       - name: the docs site builds and its cross-references resolve
-        run: npm install --no-audit --no-fund && npm run check
+        run: npm ci --no-audit --no-fund && npm run check
         working-directory: site
 
       - name: a consumer can install, import, compile and run

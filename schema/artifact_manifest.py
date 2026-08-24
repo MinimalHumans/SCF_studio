@@ -132,6 +132,15 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "Q15's normative result. Spec §12.14."),
      ]),
 
+    ("The canonical query parameters",
+     "What each published result was asked, as selectors that resolve "
+     "against the fixture by content rather than by row id.",
+     [
+        ("fixtures/expectations/selectors.json",
+         "The seven selectors and the sixteen queries' parameters. "
+         "Conformance §5.4."),
+     ]),
+
     ("The negative fixtures",
      "Eleven files that are wrong in a stated way, and the report "
      "each MUST produce. Stamped since 0.31: conformance turns on "

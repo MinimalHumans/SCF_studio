@@ -34,7 +34,7 @@ jobs:
           node-version: "22"
 
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
         working-directory: site
 
       - name: Build the site

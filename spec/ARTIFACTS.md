@@ -31,7 +31,7 @@ https://raw.githubusercontent.com/MinimalHumans/SCF_studio/schema-2.12/scf-core/
 sha256sum -c spec/SHA256SUMS
 ```
 
-## Artifacts (44)
+## Artifacts (45)
 
 This list is exhaustive in both directions: everything below is
 published here AND checksummed in `SHA256SUMS`, and nothing is
@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `20702942db79a3ba…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `7fabc5e92ac84ca1…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `0619daef0047096e…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `edfe8e5f99a0075d…` | The specification changelog. Spec §11.5. |
+| `spec/scf-spec.md` | `6f08df6c8b1e2d09…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/conformance.md` | `7442bcb174d4f562…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/stability.md` | `c6968889f4986eb0…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `bc725767505898be…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -58,13 +58,13 @@ Generated from `schema/`, which is the source of truth for all of them.
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `scf-core/registry/registry.json` | `0b8cf5fd9f42c897…` | The normative field set. Spec §2.1. |
+| `scf-core/registry/registry.json` | `24dca852ee0c9db3…` | The normative field set. Spec §2.1. |
 | `spec/scf-schema.sql` | `6f10cb380911f2df…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/screenplay-tables.json` | `985b2561b3aaa1be…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
 | `spec/entity-reference.md` | `7f8dfe2b43ba8b01…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
-| `spec/query-reference.md` | `9170cd9290a1c0a6…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
-| `spec/api-surface.json` | `d2d35ead7d489cb1…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
-| `spec/registry.schema.json` | `2817b8ea510342a9…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
+| `spec/query-reference.md` | `a3f0a2aea07bc8ff…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
+| `spec/api-surface.json` | `674c064902c458fc…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
+| `spec/registry.schema.json` | `038b3a4ed0768105…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `a5e4c75b4a741a9e…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `de69fd03c44afa4d…` | What Q14 assesses, per target query. Spec §12.9.1. |
 | `spec/finding-catalog.json` | `153c3edb8a224833…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
@@ -88,9 +88,17 @@ One normative result per query, spec §12. Rows by uuid, no row ids, no timestam
 | `fixtures/expectations/Q10.result.json` | `a70fab760ea4979f…` | Q10's normative result. Spec §12.11. |
 | `fixtures/expectations/Q11.result.json` | `4a1382c7281a440c…` | Q11's normative result. Spec §12.13. |
 | `fixtures/expectations/Q12.result.json` | `d28fc8f037482e2c…` | Q12's normative result. Spec §12.5. |
-| `fixtures/expectations/Q13.result.json` | `0bce5fd1b9a538ab…` | Q13's normative result. Spec §12.8. |
+| `fixtures/expectations/Q13.result.json` | `0dab0ab9c266bca0…` | Q13's normative result. Spec §12.8. |
 | `fixtures/expectations/Q14.result.json` | `4365b2128d872867…` | Q14's normative result. Spec §12.9. |
 | `fixtures/expectations/Q15.result.json` | `247eaafca6ea6a0d…` | Q15's normative result. Spec §12.14. |
+
+### The canonical query parameters
+
+What each published result was asked, as selectors that resolve against the fixture by content rather than by row id.
+
+| Artifact | SHA-256 | What it is |
+|---|---|---|
+| `fixtures/expectations/selectors.json` | `2e5184f1c0cdbd05…` | The seven selectors and the sixteen queries' parameters. Conformance §5.4. |
 
 ### The negative fixtures
 

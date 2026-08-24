@@ -72,13 +72,30 @@ export interface UuidLookup {
  * hand-maintained lists. This is that rule applied to the module that
  * implements §12.1.2.
  */
+/**
+ * Marks a column as a POLYMORPHIC reference in a reference map.
+ *
+ * A reference map normally says "this column points at that entity".
+ * A polymorphic column points at whichever table a sibling column names
+ * at run time, so there is no entity to record — and it must still be
+ * dropped from a projected row, because it holds a bare row id.
+ *
+ * Carried in the same map rather than in a second argument so that the
+ * registry stays the only thing that decides, in one function, rather
+ * than at fifty-nine call sites.
+ */
+export const POLYMORPHIC = "\u0000polymorphic";
+
 export function referencesOf(registry: Registry, entity: string):
     Record<string, string> {
   const def = registry.entities.get(entity);
   if (def === undefined) return {};
   const out: Record<string, string> = {};
   for (const field of def.fields) {
-    if (field.referenceEntity !== undefined && field.referenceEntity !== "") {
+    if (field.polymorphicType !== undefined && field.polymorphicType !== "") {
+      out[field.name] = POLYMORPHIC;
+    } else if (field.referenceEntity !== undefined
+               && field.referenceEntity !== "") {
       out[field.name] = field.referenceEntity;
     }
   }
@@ -132,10 +149,27 @@ const empty = (v: unknown): boolean =>
  * Project a row into its portable form (§12.1.2).
  *
  * `references` maps a column to the entity it points at, so `scene_id`
- * can become `scene_uuid`. Anything ending `_id` with no mapping is
- * DROPPED rather than emitted raw: a bare row id in a result is the
- * defect this module exists to prevent, and emitting it silently would
- * be worse than losing the field.
+ * can become `scene_uuid`. A reference that cannot be resolved is
+ * dropped rather than emitted raw: a bare row id in a result is the
+ * defect this module exists to prevent.
+ *
+ * A column the REGISTRY declares polymorphic — a reference whose target
+ * table is chosen per row by a sibling column — is dropped too, marked
+ * in the reference map by `POLYMORPHIC`. The query lifts the resolved
+ * target alongside the projected row (§12.11).
+ *
+ * THIS USED TO DROP EVERY COLUMN ENDING `_id` that carried no
+ * reference, which is a different and much larger set. It deleted
+ * `external_id` — a declared, authored field on ten entities — and
+ * `clip.screenplay_line_start_id` and `_end_id`, which are ordinary
+ * references whose target is a screenplay table rather than a registry
+ * entity. Twelve legitimate columns, gone from every projected row.
+ *
+ * No artifact could catch it. The fixture authors no `external_id` and
+ * its `clip` table is empty, and §12.1.2 omits empty fields, so a
+ * correct implementation and a data-losing one produce byte-identical
+ * output on all sixteen published results. It took a reader
+ * implementing from the specification to see it.
  */
 export function projectRow(
     row: Row,
@@ -146,9 +180,9 @@ export function projectRow(
     if (DROPPED.has(key) || key === "uuid") continue;
     const value = row[key];
 
-    if (key.endsWith("_id")) {
-      const entity = references[key];
-      if (entity === undefined) continue;
+    const entity = references[key];
+    if (entity === POLYMORPHIC) continue;
+    if (entity !== undefined) {
       const target = empty(value) ? null : Number(value);
       const uuid = lookup(entity, Number.isFinite(target) ? target : null);
       if (uuid !== null) fields[`${key.slice(0, -3)}_uuid`] = uuid;

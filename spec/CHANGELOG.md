@@ -17,6 +17,149 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.40 — 2026-08-23
+
+*Describes schema 2.12.*
+
+**Minor.** Two MUSTs corrected — both were wrong rather than incomplete
+— and several things the document assumed a reader already knew.
+
+This revision is the response to the **fourth independent reader run**,
+which reproduced fourteen of sixteen queries and eleven of eleven
+negative fixtures and declined an unqualified claim on the grounds that
+two normative artifacts were non-conforming. It was right about both.
+
+### §12.1.2 — the drop rule was deleting authored data
+
+The rule read: *any remaining column whose name ends `_id` MUST be
+dropped.* That is true of the four polymorphic references it was
+written for. It is also true of **`external_id`** — a declared,
+authored field on ten entities, with its own registry flag (§6.3) — and
+of `clip.screenplay_line_start_id` and `_end_id`, ordinary references
+whose target happens to be a screenplay table rather than a registry
+entity. **Twelve legitimate columns, deleted from every projected row.**
+
+**No published artifact could catch it.** The conformance fixture
+authors no `external_id` and its `clip` table is empty, so §12.1.2's
+omit-empties rule made a correct implementation and a data-losing one
+produce byte-identical output on all sixteen results. It survived four
+revisions and three reader runs, and the fourth found it by reading the
+sentence and noticing what else it was true of.
+
+The registry now declares which columns are polymorphic, through
+**`polymorphicType`**, which names the sibling column that says where
+the reference points. §12.1.2 drops those and nothing else. A rule that
+pattern-matches on a name will eventually match something the name did
+not mean; a rule that reads a declaration will not.
+
+### §6.6 — two of six values
+
+§6.6 said `lifecycle_status` marks a row `active` or `cut`. The
+registry declares **six**: `active`, `draft`, `superseded`,
+`deprecated`, `cut`, `archived` — and §2.1 says the registry wins, so
+the specification and the artifact it defers to disagreed in the one
+place a reader could not tell which was right.
+
+All six are now stated, with **only `cut` excluded from resolution**
+and the reason given: `cut` is the only one of the six making a claim
+about the FILM, and the other five describe the row's editorial
+standing. Two readers, one excluding `archived` and one not, would have
+answered different questions and both believed they conformed.
+
+### §12.1.4 — the member every derived record has
+
+§12.1.2 established that a projected row has exactly two members and
+that computed values sit beside it. **Nothing said what the row itself
+sits under.** §12.1.4 now states the convention — named for the entity
+it carries, unless the section says otherwise — and the five sections
+that say otherwise now do: §12.11's `spine`, §12.13's `identification`,
+§12.14's `attached`, §12.17's `blocking`, and §12.16's `subjectType`,
+which its field table had simply omitted.
+
+Five of sixteen queries could not be shaped correctly from the
+document. A reader that guessed differently would answer the same
+question with a structurally different result and nothing to warn it.
+
+### §12.1.6 — an absolute that was false
+
+It read *"Nothing in a result is in row order"*, and was contradicted by
+two sections of this document (§12.5's `beats`, §12.10's `manifest`)
+and by a published artifact (§12.5's `characters`, in junction row
+order with nothing saying so).
+
+**The problem was unstated reliance, not reliance.** Row order is never
+the default and a section MUST NOT fall back on it silently; where rows
+are peers with no story position of their own, the section states it.
+§12.3 and §12.5 now state it.
+
+### §12.9 — Q14 was never declared incomparable, and its table was too crude
+
+Q14's messages carry judgement — *"Physical state persists here
+(wounded) with no vocal state — does it color the voice?"* is an
+observation, not a lookup — and requiring two implementations to agree
+on that is requiring them to agree on a sentence.
+
+§12.9 now says Q14 is the one query **not reproduced byte for byte**,
+and that conformance is coverage, severity range and disclosed
+departures. That has been claimed in the release checklist for months
+and was written nowhere.
+
+§12.9.1's table said an absent `optional` step is `suggestion`. The
+published artifact reports `ok`, which is right — that is what optional
+means, and a report raising a suggestion for every absent optional step
+is mostly noise. The table now gives `optional` a range, and permits a
+finding no single step produces, which is why the artifact carries seven
+findings for a six-step rubric. **The rule was wrong, not the artifact**,
+and the reader that followed the rule and got six was correct to say so.
+
+### §5.4 — the selectors it promised now exist
+
+`conformance.md` has always said parameters resolve from selectors
+"recorded alongside the expectations, so another implementation can
+resolve them for itself". Nothing shipped. They lived in two test files,
+one covering only the eight queries with rendered markdown.
+
+`fixtures/expectations/selectors.json` publishes seven selectors and all
+sixteen queries' parameters, resolving by CONTENT rather than row id —
+row ids are file-local (§6.2) and did change the last time the fixture
+was rebuilt. The generator cross-checks every selector against every
+published `parameters` block, and found six of my own assumptions wrong
+while doing so.
+
+**Q13's envelope omitted `intent`.** §12.1.1 says parameters record what
+was asked so a result is self-describing; `intent` was asked, changes
+the answer, and appeared only in the body. The fourth reader took it
+from the result — reading the answer to learn the question. Fixed, with
+`subjectType` alongside it.
+
+### Prose is checked against the registry now
+
+`schema/check_spec_references.py` validates every `entity.column` written
+in the specification, in `conformance.md` and in `stability.md` against
+`registry.json`. CI runs it.
+
+0.29 wrote `character_state.name` and `asset_bundle_item.role_in_bundle`
+into two field tables. **Neither entity exists** — they are
+`performance_state` and `bundle_asset` — and both names were invented
+while writing the sentence. 0.38 made the readiness rubric's entity
+names checkable and refused to publish an unknown one, and left the
+prose, which is where a reader looks first, entirely unchecked.
+
+### Smaller
+
+§4.5 described **three** position patterns; the registry declares four,
+and the fourth, `none`, is what 93 of 99 entities carry. All four are
+named, with the registry's own values.
+
+§12.1.1 now gives `resultFormat`'s value. §12.10 now gives the density
+threshold this specification uses, which it required a result to publish
+and never stated.
+
+`stability.md` carried two rows about the readiness rubric, three lines
+apart, one of them describing the state before 0.38 fixed it.
+
+---
+
 ## 0.39 — 2026-08-22
 
 *Describes schema 2.12.*
