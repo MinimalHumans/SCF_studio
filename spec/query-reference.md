@@ -188,7 +188,7 @@ Specified in **§12.8**. Normative result: [`fixtures/expectations/Q13.result.js
 
 Parameters: `subjectType`, `subject`, `intent`, `scene`, `shot`.
 
-Result members: `subject`, `intent`, `trail`, `references`, `counts`, `rootMapped`.
+Result members: `subjectKind`, `intent`, `trail`, `references`, `counts`, `rootMapped`.
 
 ### What it needs
 

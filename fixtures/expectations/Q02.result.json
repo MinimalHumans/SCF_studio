@@ -372,7 +372,7 @@
     "propState": null,
     "media": {
       "fromQuery": "Q13",
-      "subject": "character",
+      "subjectKind": "character",
       "intent": "visual_identity",
       "trail": [
         "binding Eleanor visual baseline -> bundle eleanor_visual_core_v3",

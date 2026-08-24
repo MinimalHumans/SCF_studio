@@ -437,7 +437,19 @@ export interface Q13Reference {
 }
 
 export interface Q13Result {
-  subject: string;
+  /**
+   * The subject's KIND — "character", "location", "prop" — not its uuid.
+   *
+   * Named `subject` until 0.41, four lines from an envelope whose
+   * `subject` is a uuid (§12.1.1). One key, two meanings, in one
+   * document: a reader implementing from §12.8 read it as the uuid,
+   * caught it, and said `subjectKind` would have cost nothing.
+   *
+   * It stays in the body rather than moving wholly to the envelope
+   * because §12.16 nests this result WITHOUT its envelope, and the
+   * nested copy has to remain self-describing.
+   */
+  subjectKind: string;
   intent: string;
   /**
    * The cascade trail, BROADEST FIRST — spec §12.8, matching §7.4's
@@ -480,7 +492,7 @@ export async function q13Result(
     subjectType: subject, subject: subjectUuid,
     intent, scene: sceneUuid, shot: shotUuid,
   }, {
-    subject,
+    subjectKind: subject,
     intent,
     trail: media.trail,
     references: refs.references.map((r) => ({

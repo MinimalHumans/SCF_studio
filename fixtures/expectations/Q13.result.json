@@ -10,7 +10,7 @@
     "shot": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
   },
   "result": {
-    "subject": "character",
+    "subjectKind": "character",
     "intent": "visual_identity",
     "trail": [
       "binding Eleanor visual baseline -> bundle eleanor_visual_core_v3",

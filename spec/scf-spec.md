@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.40 (draft) — not a release.**
+**Version 0.41 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.40` (draft).
+- **Specification version** — this document. Currently `0.41` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -407,6 +407,18 @@ A scene the screenplay does not contain has no screenplay position, and
 implementations MUST fall back to `scene_number` — unnumbered scenes
 last — and then to row id.
 
+**Every scene the screenplay contains precedes every scene it does
+not.** The two populations have no shared axis — a scripted scene has a
+line position and an unscripted one has a number — so they cannot be
+interleaved, only concatenated, and the script is what §4.1 says order
+comes from. A scene with no heading is one nothing has placed yet, and
+placing it after everything that has been placed is the reading that
+does not invent a position for it.
+
+The full comparison, in order: whether the scene has a screenplay
+position at all (those that do, first); then that position; then
+`scene_number` by §4.2.2; then row id.
+
 **Implementations MUST NOT order scenes by `scene_number` alone.** Doing
 so is wrong for any file written without a screenplay, and for any scene
 moved since the last commit.
@@ -580,13 +592,35 @@ what is written. No inference.
 **Pattern 2 — persistence.** A state row is keyed at a scene and carries
 `persistence`:
 
+**`persistence` is a closed set of two values**, and the registry
+declares them:
+
 - `scene_only` — in force at its own scene and nowhere else;
 - `until_resolved` — in force from its scene forward until
   `resolved_at_scene_id` (exclusive), or to the end of the story.
 
+**A reader encountering any other value MUST treat the row as
+`scene_only`.** This is a narrower rule than §10.1's general "ignore
+what you do not understand", because §10.1 does not say whether the
+unknown FIELD or the whole ROW is ignored, and here the two readings
+differ in an unsafe direction: ignoring the field would leave the
+default, and defaulting to `until_resolved` would silently extend a
+state the reader does not understand across the rest of the story.
+Treating it as `scene_only` confines the damage to the scene the author
+keyed it at.
+
 Where several persistent states apply at one position, implementations
 MUST merge them oldest-first, so a later state overrides an earlier one
 field by field.
+
+**Two rows can sit at one scene**, and both patterns below need an order
+for them. **Row id breaks the tie**: it is the only stable key available
+at a shared position, and it means the row written later wins — which is
+what an author doing the writing would expect. Pattern 2 merges them
+oldest-first, so a later row's value overrides an earlier one key by
+key; pattern 3 takes the highest row id at the winning position. Row id
+is file-local (§6.2), so this is a rule about resolving within a file
+and never about comparing across them.
 
 **Pattern 3 — latest wins.** A state row exists at each scene where the
 value changed. The answer at any position is the most recent row at or
@@ -1698,13 +1732,16 @@ Leaf: `scene_music_design`. Result structure as §12.3.
 
 **Which assets are in force for a subject and an intent.**
 
-Parameters: `subject` — a character, prop or location — plus `scene` and
-`shot`, both optional. `intent` and the subject's kind are literals and
-appear in the result rather than the envelope.
+Parameters: `subjectType`, `subject` — a character, prop or location —
+`intent`, and `scene` and `shot`, both optional. All five appear in the
+envelope, as §12.1.1 requires: `intent` and `subjectType` were carried
+only in the result until 0.40, which left the envelope unable to say
+what question it answered.
 
 | Field | |
 |---|---|
-| `subject`, `intent` | What was asked, as literals. |
+| `subjectKind` | The subject's KIND — `character`, `location`, `prop` — echoing `subjectType`. **Not its uuid**, which the envelope's `subject` carries. It was itself named `subject` until 0.41, four lines from an envelope member of the same name meaning something else. |
+| `intent` | The intent asked for, echoed. |
 | `trail` | The resolution trail, **broadest first**, matching §7.4's root-first convention. |
 | `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles. |
 | `counts` | References per resolution state, keyed by §8.3's states. Every state is a key, including those with a count of zero. |
@@ -1815,6 +1852,24 @@ MUST keep each finding's severity within the range the step permits:
 | `required` | `blocker` | `ok` |
 | `recommended` | `warning` | `ok` |
 | `optional` | `ok`, or `suggestion` where the absence is notable | `ok` |
+
+**A step is assessed AT THE POSITION THE QUERY WAS ASKED ABOUT**, not
+across the file. This was unstated, and it is the difference between
+"does this character have a vocal profile" and "does anything in this
+project have one" — two questions with different answers on any real
+project.
+
+Concretely, a step's rows are narrowed by whichever of the target
+query's parameters the step's entities declare as a column: an entity
+with `character_id` is narrowed to the character asked about, one with
+`scene_id` to the scene, and so on for each parameter the query
+received. A step naming several entities is narrowed the same way for
+each. Where the step carries a `filter`, it applies on top. Where it
+carries an `intent`, the step is satisfied by a bundle of that intent
+carrying at least one asset.
+
+An entity declaring none of the query's parameters as a column is
+assessed across the file, because there is nothing to narrow it by.
 
 **An absent `optional` step is `ok` by default.** That is what optional
 means, and a report that raised a `suggestion` every time one was absent
@@ -2012,9 +2067,16 @@ Parameters: `subjectType` — a literal — and `subject`.
 
 **`groups` is derived, not listed.** A group is any entity whose
 registry `subject` is this kind, at `scope: global`, carrying a
-reference back to it. Adding a new entity about characters puts it in
-every character's dossier with no change here — which is what `subject`
-and `scope` are for (§0.7).
+reference back to it **through the column named `<subject>_id`** —
+`character_id` for a character, `location_id` for a location. That is
+§2.3's ownership convention, and naming the column matters because an
+entity may declare several references to the same target and only one
+of them says *this row is about that subject*. The subject's own entity
+is not a group of itself.
+
+Adding a new entity about characters puts it in every character's
+dossier with no change here — which is what `subject` and `scope` are
+for (§0.7).
 
 A group with no rows is omitted rather than carried empty.
 
@@ -2055,7 +2117,7 @@ Parameter: `scene`.
 | `lineage` | Act and sequence, **broadest first**. |
 | `storyBeats` | In `beat_order`. |
 | `cast`, `props` | Present by authored link, not inference. |
-| `location`, `locationVariant` | The location and the variant in force, with mismatches. |
+| `location`, `locationVariant` | The location, and `{ variant, mismatches }` — see below. |
 | `detail` | Scene-level design entities, each `{ entity, rows }`, empty groups omitted. |
 | `blocking`, `stagingBeats` | Staging, beats in `beat_order`. **`blocking` is an array** — a scene may carry several — and both hold projected rows. |
 
@@ -2064,6 +2126,31 @@ belongs in a scene package is an editorial choice, as Q00's layer list
 is: `scene_emotional_target`, `scene_color_palette`, `lighting_design`,
 `scene_music_design`, `dialogue_sound_design`, `set_dressing`,
 `tone_marker`.
+
+**The variant in force is chosen by axis agreement, not by position.**
+`location_variant` declares `positionPattern: none` (§4.5) — it is not
+keyed to a scene at all — so "in force" here means *the variant that
+best describes this scene*:
+
+1. Score each variant of the scene's location by how many of three axes
+   it agrees with the scene on: `scene.time_of_day` against
+   `location_variant.time_of_day`, `scene.weather_conditions` against
+   `weather`, and `scene.season` against `season`. An axis counts only
+   where **both** sides carry a value, compared case-insensitively and
+   trimmed. An absent value on either side is not a disagreement.
+2. Take the highest score, breaking a tie in favour of `is_baseline`
+   and then in favour of the first such row.
+3. **If the best score is zero, take the first `is_baseline` variant.**
+   Nothing agreed, so agreement is not what chose it, and the baseline
+   is the honest answer.
+
+`mismatches` lists the axes where the CHOSEN variant disagrees with the
+scene — both carry a value and the values differ. It is an **array of
+strings**, each naming the scene's axis and both values, and it is a
+report rather than a rejection: a variant can be the best available and
+still be wrong about the weather, and saying so is more useful than
+choosing nothing. The fixture's chosen variant has none, so a reader had
+nothing to check the shape against and no way to know it was guessing.
 
 Q04 does **not** nest Q03 or Q07 despite covering some of the same
 ground. It assembles its own answer, and §12.1.3 explains why that is

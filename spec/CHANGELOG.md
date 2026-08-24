@@ -17,6 +17,101 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.41 — 2026-08-23
+
+*Describes schema 2.12.*
+
+**Minor.** One member renamed; the rest is rules that were true, relied
+on, and never written down.
+
+This closes the fourth reader run's remaining findings. **None of these
+was a wrong statement** — they are places the document was silent and
+the reader had to choose. It chose correctly almost every time, which is
+the point: a specification that can be guessed right is still one that
+has to be guessed.
+
+### §4.1 — how scripted and unscripted scenes interleave
+
+They do not. **Every scene the screenplay contains precedes every scene
+it does not**, because the two have no shared axis: a scripted scene has
+a line position and an unscripted one has a number. §4.1 gave the
+fallback chain and never said how the populations relate, so a reader
+had to invent a rule for the case where both exist.
+
+The full comparison is now stated in order: whether the scene has a
+screenplay position at all, then that position, then `scene_number`,
+then row id.
+
+**The fixture cannot check this.** All thirteen scenes carry a heading,
+so the fallback never fires. Given how much `conformance.md` §5.1 makes
+of the three-orders property, the missing half is conspicuous, and a
+single unheaded scene would pin it.
+
+### §4.5 — the tie-break, and a closed vocabulary
+
+Two rows can sit at one scene and neither pattern said which came first.
+**Row id breaks the tie** — the only stable key available at a shared
+position, and it means the row written later wins. Pattern 2 merges
+oldest-first so a later row overrides key by key; pattern 3 takes the
+highest row id at the winning position.
+
+**`persistence` is closed at two values**, and a reader encountering
+another **MUST treat the row as `scene_only`**. §10.1's general "ignore
+what you do not understand" does not say whether the unknown field or
+the whole row is ignored, and here the two readings differ in an unsafe
+direction: defaulting to `until_resolved` would silently extend a state
+the reader does not understand across the rest of the story.
+
+### §12.9.1 — what "absent" is relative to
+
+A step is assessed **at the position the query was asked about**, not
+across the file. Unstated, and it is the difference between "does this
+character have a vocal profile" and "does anything in this project have
+one" — two questions with different answers on any real project.
+
+A step's rows are narrowed by whichever of the target query's parameters
+the step's entities declare as a column, with `filter` applied on top
+and an `intent` step satisfied by a bundle of that intent carrying at
+least one asset. An entity declaring none of them is assessed across the
+file, because there is nothing to narrow it by.
+
+### §12.17 — "the variant in force" now says what that means
+
+`location_variant` declares `positionPattern: none`. It is not keyed to
+a scene at all, so "in force" cannot mean what it means everywhere else
+in this document, and §12.17 used the phrase anyway.
+
+It means *the variant that best describes this scene*: score each
+variant on three axes, take the highest, break ties toward
+`is_baseline`, and **fall back to the first baseline when nothing
+agrees** — because agreement is not what chose it, and the baseline is
+the honest answer.
+
+`mismatches` is an **array of strings** naming the axes where the chosen
+variant disagrees with the scene. The fixture's chosen variant has none,
+so a reader implementing this had nothing to check the shape against and
+no way to know it was guessing. It guessed a different shape.
+
+### §12.15 — which column makes a group
+
+A dossier group is an entity "carrying a reference back to it", which
+does not name the column, and an entity may declare several references
+to the same target. It is **`<subject>_id`** — §2.3's ownership
+convention — and only that one says *this row is about that subject*.
+
+### §12.8 — `subject` meant two things, four lines apart
+
+`parameters.subject` is a uuid, as §12.1.1 requires. `result.subject` was
+the string `"character"` — the subject's *kind*. One key, two meanings,
+in one document. A reader read it as the uuid, caught itself, and
+observed that `subjectKind` would have cost nothing.
+
+It is now **`subjectKind`**. It stays in the body rather than moving
+wholly to the envelope because §12.16 nests this result without its
+envelope, and the nested copy has to remain self-describing.
+
+---
+
 ## 0.40 — 2026-08-23
 
 *Describes schema 2.12.*

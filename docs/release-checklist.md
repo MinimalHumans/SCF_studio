@@ -27,10 +27,16 @@ decision.
    an implementer. The query and entity references are generated as of
    0.37; what remains is prose and a docs site.
 2. **A fifth reader run**, eventually. The fourth ran against 0.39 and
-   its findings are answered in 0.40 — but the two it rated critical
-   were both invisible to every published artifact, which is an argument
-   for running these until one comes back quiet rather than for
-   declaring the format read.
+   all twenty-two of its findings are answered in 0.40 and 0.41 — but
+   the two it rated critical were invisible to every published artifact,
+   which is an argument for running these until one comes back quiet
+   rather than for declaring the format read.
+3. **Two rules the fixture cannot exercise.** §4.1's fallback for
+   unscripted scenes never fires — all thirteen scenes carry a heading —
+   and §12.17's `mismatches` is always empty, so its shape rests on the
+   reference implementation alone. Both are stated as of 0.41 and
+   neither is checked by anything. One unheaded scene and one
+   disagreeing variant would close both.
 3. **Publish `@minimalhumans/scf-core`** — deliberately held. Packaging
    is proven end to end by CI; only `"private": true` and the npm org
    stand between here and a published package. Held because npm blocks
