@@ -381,9 +381,17 @@ export function structureFindings(
       if (orderHint.has(id)) continue;
       out.push({ level: "info", code: "not-in-script", entity: "scene",
         rowId: id,
-        message: `${nameById.get(id) ?? "scene"} is not in the ` +
-                 "screenplay, so it has no number and belongs to no act. " +
-                 "Its record and everything linked to it are untouched." });
+        // "no number" was wrong: a scene not in the script can carry a
+        // scene_number perfectly well — the fixture's scene 17 does.
+        // What it has no STORY POSITION, which is a different thing and
+        // is what §4.1's fallback exists for. The message went four
+        // years without being read because nothing in the fixture
+        // produced it until 0.42.
+        message: `${nameById.get(id) ?? "scene"} has no heading in the ` +
+                 "screenplay, so it has no story position and belongs " +
+                 "to no act. It sorts after every scene that does " +
+                 "(§4.1). Its record and everything linked to it are " +
+                 "untouched." });
     }
   }
 

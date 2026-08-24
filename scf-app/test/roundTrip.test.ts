@@ -276,8 +276,21 @@ describe("the file stays valid across the cycle", () => {
     const after = await collectFindings(db.exec, registry);
     db.close();
 
-    expect(before.findings).toEqual([]);
-    expect(after.findings).toEqual([]);
+    // CHANGED IN 0.42. This asserted NO findings at all. The fixture
+    // now carries one — scene 17 has no screenplay heading, so §4.1's
+    // fallback is exercised by something — and what this test is
+    // actually about is that the ROUND TRIP changes nothing.
+    //
+    // Asserting the same set before and after is the stronger check:
+    // it would catch an edit that introduced a finding AND one that
+    // silenced an existing one, and the old form could only catch the
+    // first.
+    expect(before.findings.map((f) => f.code))
+      .toEqual(after.findings.map((f) => f.code));
+    expect(before.findings.filter((f) => f.severity !== "info"))
+      .toEqual([]);
+    expect(after.findings.filter((f) => f.severity !== "info"))
+      .toEqual([]);
   });
 
   test("the header stamps survive (spec §1.2)", async () => {

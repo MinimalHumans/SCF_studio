@@ -17,6 +17,64 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.42 — 2026-08-23
+
+*Describes schema 2.12.*
+
+**Editorial.** No requirement changes. The fixture gains two rows so
+that two rules stop being unexercised.
+
+### Two rules nothing tested
+
+0.41 stated §4.1's ordering for scenes the screenplay does not contain,
+and §12.17's `mismatches`. Both were correct, implemented, and **checked
+by nothing** — the fixture's thirteen scenes all carried headings, so
+the fallback never fired, and its chosen location variant agreed on
+every axis, so `mismatches` was always empty.
+
+The fourth reader run guessed §12.17's shape and guessed **wrong**,
+emitting `{field, scene, variant}` triples where the format is an array
+of strings. It could not have known: no artifact showed it, and a rule
+no artifact demonstrates is a rule the next reader will guess at too.
+
+**Scene 17** — "INT. HOLLOW CREEK CHURCH - VESTRY - DAY" — carries a
+scene number and no screenplay heading. It sorts after scene 24, and the
+published Q10 spine says so. A reader ordering by `scene_number` alone
+puts it between 16 and 19 and now diverges from a published artifact
+instead of from nothing.
+
+**Scene 12's kitchen dressing was built for an autumn night**, and the
+film uses it in winter. It still wins on time of day and weather, so it
+is still the variant in force, and the published Q04 result now carries
+the season it is wrong about. That is precisely what `mismatches` is
+for: the best available variant, and an honest note about where it does
+not fit.
+
+### The fixture reports a finding now, deliberately
+
+Scene 17 raises `structure.scene_not_in_script` at `info`. The fixture
+is no longer finding-free, and that is the point rather than a cost.
+
+§9.2 requires a reader to answer usefully on half-placed data **and to
+say what is missing**. A fixture with nothing missing can demonstrate
+the first half and not the second, and the eleven negative fixtures
+cover files that are *wrong*, not files that are *unfinished* — a
+different and much more common condition. `report.test.ts` now asserts
+both halves: nothing is wrong with the fixture, and something in it is
+plainly unfinished.
+
+### A message nobody had read
+
+`structure.scene_not_in_script` said the scene "has no number and
+belongs to no act". **A scene absent from the script can carry a number
+perfectly well** — scene 17 does. What it has no story POSITION, which
+is a different thing and is exactly what §4.1's fallback exists for.
+
+The wording had never been wrong in practice because nothing in the
+fixture had ever produced it.
+
+---
+
 ## 0.41 — 2026-08-23
 
 *Describes schema 2.12.*

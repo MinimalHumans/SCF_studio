@@ -161,7 +161,11 @@ describe("composed query runners against the fixture", () => {
     expect(p.cast.length).toBe(2);
     expect(p.variant).not.toBeNull();
     expect(String(p.variant!["name"]).toLowerCase()).toContain("night");
-    expect(p.variantMismatches).toEqual([]);
+    // The variant is the best available AND wrong about the season —
+    // built for an autumn night, reused in winter (0.42). Asserting an
+    // empty list here left §12.17's mismatches shape unexercised.
+    expect(p.variantMismatches).toHaveLength(1);
+    expect(p.variantMismatches[0]).toContain("season");
   });
 
   test("Q09 manifest matches the conformance scene and finds no locket",

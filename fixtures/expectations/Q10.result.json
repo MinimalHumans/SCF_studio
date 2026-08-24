@@ -237,6 +237,11 @@
         "sceneUuid": "774518cf-1a5e-4129-8830-eff14222a770",
         "sceneNumber": "24",
         "carriers": 5
+      },
+      {
+        "sceneUuid": "00000000-0000-4000-8000-00000000c13a",
+        "sceneNumber": "17",
+        "carriers": 0
       }
     ]
   }

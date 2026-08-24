@@ -77,11 +77,41 @@ describe("the report carries what a consumer needs", () => {
 });
 
 describe("the prose rendering agrees with the JSON", () => {
-  test("a clean file says so without listing nothing", async () => {
-    const text = renderReport(await validationReport(
-      fixture.ctx.exec, registry, { source: "hollow_creek.scf" }));
+  test("a file with nothing wrong still reports what is unfinished",
+       async () => {
+    // The fixture stopped being finding-free in 0.42, deliberately: it
+    // gained a scene with no screenplay heading so that §4.1's fallback
+    // is exercised by something. That raises `structure.scene_not_in_
+    // script` at `info`, which is the point — §9.2 requires a reader to
+    // answer usefully on half-placed data AND say what is missing, and
+    // a fixture with nothing missing cannot demonstrate the second half.
+    const report = await validationReport(
+      fixture.ctx.exec, registry, { source: "hollow_creek.scf" });
+    const text = renderReport(report);
     expect(text).toContain("hollow_creek.scf");
-    expect(text).toContain("no findings");
+
+    // Nothing is WRONG with it.
+    expect(report.counts.error).toBe(0);
+    expect(report.counts.warning).toBe(0);
+    expect(report.clean).toBe(true);
+
+    // And something is unfinished, said plainly.
+    expect(report.findings.map((f) => f.code))
+      .toContain("structure.scene_not_in_script");
+    expect(text).toContain("no story position");
+  });
+
+  test("a file with no findings at all says so without listing nothing",
+       async () => {
+    const db: NodeDatabase = openNodeDatabase(":memory:");
+    await initDatabase(db.exec, registry);
+    try {
+      const text = renderReport(await validationReport(
+        db.exec, registry, { source: "empty.scf" }));
+      expect(text).toContain("no findings");
+    } finally {
+      db.close();
+    }
   });
 
   test("an error is named, counted, and explained", async () => {

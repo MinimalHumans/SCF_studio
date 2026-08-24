@@ -13,6 +13,7 @@
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { openFixture, str, type Fixture } from "./setup.ts";
+import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "../src/structure.ts";
 import { sceneNumberOrderJoin, sceneNumberOrderTerms }
   from "../src/sceneNumbers.ts";
 import { numberingPolicy } from "../src/numbering.ts";
@@ -215,13 +216,25 @@ describe("Q13: media resolution", () => {
 });
 
 describe("G4: location variant selection", () => {
-  test("selects night/storm kitchen variant with no mismatches",
-      async () => {
+  test("selects the night/storm kitchen variant, and reports what it "
+     + "is wrong about", async () => {
+    // INVERTED IN 0.42, and the inversion is the point. This asserted
+    // an EMPTY mismatches list, which meant §12.17's `mismatches` shape
+    // was demonstrated by no artifact and no test — and the fourth
+    // reader run guessed a different shape and could not have known.
+    //
+    // Scene 12's kitchen dressing is now built for an autumn night and
+    // reused in winter. It still wins on time of day and weather, so it
+    // is still the variant in force, and the season it is wrong about
+    // is now said out loud.
     const [variant, mismatches] = await selectLocationVariant(fx.ctx,
                                                               sc[12]!);
     expect(variant).not.toBeNull();
     expect(str(variant!["name"]).toLowerCase()).toContain("night");
-    expect(mismatches).toEqual([]);
+    expect(mismatches).toHaveLength(1);
+    expect(mismatches[0]).toContain("season");
+    expect(mismatches[0]).toContain("winter");
+    expect(mismatches[0]).toContain("autumn");
   });
 });
 
@@ -332,8 +345,8 @@ describe("fixture invariants", () => {
       `ORDER BY ${sceneNumberOrderTerms("sn")}, s.id`);
     const numbers = rows.map((r) => String(r["n"]));
     expect(numbers).toEqual(
-      ["1", "3", "7", "9", "10", "11", "12", "12A", "12B", "16", "19",
-       "21", "24"]);
+      ["1", "3", "7", "9", "10", "11", "12", "12A", "12B", "16", "17",
+       "19", "21", "24"]);
   });
 
   test("12B is cut, and cut means absent from every answer (§6.6)",
@@ -444,15 +457,31 @@ describe("fixture invariants", () => {
     expect(types.map((r) => r["t"])).toEqual(["text"]);
   });
 
-  test("every scene in the script has a number and a heading", async () => {
+  test("exactly one scene has a number and no heading", async () => {
+    // CHANGED IN 0.42. This asserted that EVERY scene had a heading,
+    // which made §4.1's fallback for a scene the screenplay does not
+    // contain unreachable — stated, implemented, and exercised by
+    // nothing. Scene 17 now carries a number and no heading.
     const orphans = await fx.ctx.exec(
       "SELECT id FROM scene WHERE scene_number IS NULL");
-    expect(orphans).toHaveLength(0);
-    const headings = await fx.ctx.exec(
-      "SELECT COUNT(*) AS n FROM screenplay_lines " +
-      "WHERE line_type = 'heading' AND scene_id IS NOT NULL");
-    const scenes = await fx.ctx.exec("SELECT COUNT(*) AS n FROM scene");
-    expect(headings[0]!["n"]).toBe(scenes[0]!["n"]);
+    expect(orphans, "a scene with no number is a different case")
+      .toHaveLength(0);
+
+    const unscripted = await fx.ctx.exec(
+      "SELECT s.scene_number AS n FROM scene s WHERE s.id NOT IN " +
+      "(SELECT scene_id FROM screenplay_lines " +
+      " WHERE line_type = 'heading' AND scene_id IS NOT NULL)");
+    expect(unscripted.map((r) => String(r["n"]))).toEqual(["17"]);
+  });
+
+  test("the unscripted scene sorts after every scripted one", async () => {
+    // The property §4.1 states and nothing checked. Scene 17 sits
+    // between 16 and 19 by number and must come LAST by story order.
+    const rows = await fx.ctx.exec(
+      "SELECT s.scene_number AS n FROM scene s " +
+      `${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`);
+    const numbers = rows.map((r) => String(r["n"]));
+    expect(numbers[numbers.length - 1]).toBe("17");
   });
 
   test("every row that carries identity has it", async () => {

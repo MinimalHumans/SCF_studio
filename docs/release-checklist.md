@@ -2,73 +2,81 @@
 # What an "official" SCF release contains
 
 A checklist, with OpenUSD as the reference example. Status against
-`SCF_studio@main` as of 2026-08-22, **rev 11** — spec 0.35, schema 2.12,
+`SCF_studio@main` as of 2026-08-23, **rev 12** — spec 0.42, schema 2.12,
 tag `schema-2.12` published.
 
 ✅ have · ◑ partial · ○ missing · ⚠️ needs attention
 
-**Rev 11 was regenerated from the repository, not edited forward from
-rev 10.** Rev 10 had drifted: it claimed spec 0.29, 41 checksummed
-files and a published `screenplay-tables.json`, none of which were on
-`main` — the file had become a second place where the project's state
-was described, and it disagreed with the first. Everything below was
-checked against the tree.
+Checked against the tree, as rev 11 was. Rev 10 lived outside the
+repository and had drifted into describing a project that did not exist;
+this file has been in `docs/` since 0.36, where the change procedure can
+reach it.
 
 ---
 
+## Where this stands
+
+**Ten of eleven sections are complete.** Section 7 is not, and nothing
+else on this list is technical.
+
+Since rev 11 the specification has been through **four independent
+reader runs' worth of correction** and seven revisions. 0.40 and 0.41
+answered all twenty-two findings of the fourth run, including two the
+run rated critical:
+
+- **§12.1.2 was deleting authored data.** "Any column ending `_id`" also
+  matched `external_id` on ten entities. Twelve columns gone from every
+  projected row, and **no published artifact could catch it** — the
+  fixture authors no `external_id`, so a correct implementation and a
+  data-losing one were byte-identical on all sixteen results.
+- **§6.6 named two of six `lifecycle_status` values**, while §2.1 says
+  the registry wins. Two conforming readers would have answered
+  different questions about an `archived` scene.
+
+Both are fixed by making the registry declare what the prose had been
+guessing at, and CI now checks that every `entity.column` written in the
+specification resolves against it.
+
 ## Start here in the next session
 
-**The technical work is done.** What is left is section 7, and one
-decision.
-
 1. **Section 7 — documentation for people who are not implementing the
-   format.** The only substantial block left on this list. Three
-   independent readers have each started from §0.1, which is written for
-   an implementer. The query and entity references are generated as of
-   0.37; what remains is prose and a docs site.
-2. **A fifth reader run**, eventually. The fourth ran against 0.39 and
-   all twenty-two of its findings are answered in 0.40 and 0.41 — but
-   the two it rated critical were invisible to every published artifact,
-   which is an argument for running these until one comes back quiet
-   rather than for declaring the format read.
-3. **Two rules the fixture cannot exercise.** §4.1's fallback for
-   unscripted scenes never fires — all thirteen scenes carry a heading —
-   and §12.17's `mismatches` is always empty, so its shape rests on the
-   reference implementation alone. Both are stated as of 0.41 and
-   neither is checked by anything. One unheaded scene and one
-   disagreeing variant would close both.
-3. **Publish `@minimalhumans/scf-core`** — deliberately held. Packaging
+   format.** The only substantial block left. Four independent readers
+   have each started from §0.1, which is written for an implementer. The
+   query and entity references are generated as of 0.37 and the docs
+   site ships as of 0.39; what remains is prose: "what is SCF", an
+   authoring guide, a walkthrough, a FAQ.
+2. **Publish `@minimalhumans/scf-core`** at 1.0, not before. Packaging
    is proven end to end by CI; only `"private": true` and the npm org
-   stand between here and a published package. Held because npm blocks
-   unpublish after 72 hours and the format is pre-1.0.
+   stand in the way. Held because npm blocks unpublish after 72 hours.
+3. **A fifth reader run**, eventually. Worth doing when section 7 has
+   something in it, so the run tests the documents a stranger would
+   actually start from.
 
-**`stability.md` has no Unstable rows left**, as of 0.38. By its own
-definition that is what a 1.0 is — which makes items 1 and 2 above the
-real remaining work rather than a formality.
-
-## Where three reader runs left the format
+## Where four reader runs left the format
 
 | Run | Result | What was wrong |
 |---|---|---|
 | 1 | no claim possible | The spec was **silent** about what a reader does |
 | 2 | 5/10 queries, claim with 8 divergences | The **artifacts** contradicted the spec, from code bugs |
-| 3 | **15/16 queries**, claim with 11 divergences | The **spec** was wrong; the artifacts faithfully recorded it |
+| 3 | 15/16 queries, claim with 11 divergences | The **spec** was wrong; the artifacts faithfully recorded it |
+| 4 | **14/16 queries, 11/11 negatives**, claim declined | The spec was **silent in shape** where it was complete in content — and two artifacts were wrong |
 
 Run 3's central finding — that the `.result.json` files had become the
-specification for §12, and were generated by the implementation they
-exist to test — was answered in **0.29**, which stated §12.1's shape
-conventions: the `{uuid, fields}` row, the polymorphic `entity_id` rule,
-derived records versus projected rows, the closed vocabularies, and
-ordering. Seven of its eleven divergences were marked `guessed`; those
-are the things a reader can now look up.
+specification for §12 — was answered in 0.29. Run 4 tested that fix and
+returned a precise verdict: *"the fix moved the problem rather than
+closing it."* §12.1's conventions implemented cleanly from prose, and
+then **stopped at the boundary of the carrier record**: every query
+section named the computed members and never the member the row itself
+sat under. Five of sixteen queries could not be shaped from the
+document. 0.40 closed that.
 
-Its confidently-wrong story order — `scene_heading` where the format
-says `heading` — was answered in **0.30** by publishing
-`screenplay-tables.json` and closing the `line_type` vocabulary.
+**Run 4 declined an unqualified claim**, not because a conformance step
+failed but because it disbelieved two normative artifacts. It was right
+about both.
 
-**A fourth reader run is now worth doing**, and it was not at rev 10. It
-would be the first against a specification that states its own shape
-conventions, and the first that could verify the bytes it read.
+**The two findings it rated critical were invisible to every published
+artifact.** That is the argument for running these until one comes back
+quiet, rather than for deciding the format has been read.
 
 ## 0. Scope — ✅ complete
 
@@ -130,6 +138,8 @@ conventions, and the first that could verify the bytes it read.
 | | Item | Notes |
 |---|---|---|
 | ✅ | Fixture, suites, roles, `scf-check`, report format, negative fixtures, round trip, expectations as data, test map, claim process | **618 core / 248 app** |
+| ✅ | **The fixture exercises the fallbacks** | 0.42. Scene 17 has a number and no heading, so §4.1's ordering fallback fires; scene 12's variant disagrees on season, so §12.17's `mismatches` is non-empty. Both rules were stated and checked by nothing |
+| ✅ | **The fixture reports one `info` finding, deliberately** | §9.2 asks a reader to answer on half-placed data *and say what is missing*; a fixture with nothing missing can only demonstrate the first half |
 | ✅ | **Query selectors published** | 0.40. `conformance.md` §5.4 had promised them since it was written; a third party had been reading parameters out of the artifact it was graded against |
 | ✅ | **Four independent reader runs** | The fourth: 14/16 queries, 11/11 negative fixtures, and two correct claims that a normative artifact was wrong |
 | ✅ | **Three independent readers have built against this** | The third made a Reader claim with all three steps performed |
@@ -212,22 +222,35 @@ is writing, and no tooling helps.
 
 ---
 
-## The short version, rev 11
+## The short version, rev 12
 
-**Sections 0, 1, 1A, 2, 3, 4, 5, 8 and 9 are complete.** Section 6 is
-complete but for a publish decision that is deliberately held. Section
-10 is complete but for a release that does not exist yet.
+**Sections 0, 1, 1A, 2, 3, 4, 5, 8, 9, 10 and 11's technical half are
+complete.** Section 6 is complete but for a publish decision that is
+deliberately held until 1.0.
 
-**Nothing that remains is specification work.** That was true at rev 10
-and is more true now: §12 closed in 0.29, the screenplay tables in 0.30,
-and `stability.md` carries **three Unstable rows**, none of which is a
-question about what the format says. They are: rubric step labels
-(§12.9.1), a view for what was cut (§6.6.2), and whether
-`scene_sequence` shadow rows survive 1.0.
+**`stability.md` carries no Unstable rows.** The last three closed in
+0.38, and by that document's own definition — a 1.0 is the act of moving
+every Unstable row to Provisional — that is what a 1.0 is. It is not a
+claim that the format is finished, and the paragraph below is why.
 
-What is actually missing is **section 7**, and it has not moved since
-rev 10 described it as the largest untouched block. Everything else on
-this list has.
+**What is missing is section 7**, and it has not moved since rev 10
+called it the largest untouched block. Everything else on this list has.
+The two items that were generated rather than written — the query and
+entity references — landed in 0.37, and the docs site in 0.39. What
+remains is prose for people who are not implementing the format: "what
+is SCF", an authoring guide, a walkthrough, a FAQ. Four independent
+readers have each started from §0.1, which is written for an implementer.
 
 That block is what decides whether anyone outside this project ever
 tries.
+
+**And one thing worth carrying forward.** Four reader runs have now
+found defects that no test, no artifact and no amount of internal review
+had caught, and the two most serious were **invisible to every published
+artifact** — the fixture could not distinguish a correct implementation
+from a broken one. Each round since has added a check for the class
+rather than the instance: generated-and-checked artifacts, a packaging
+test that runs where a consumer runs, a prose checker that resolves
+every name against the registry, a fixture that now exercises its own
+fallbacks. The list of checks is a better record of what this project
+learned than the list of fixes.

@@ -202,13 +202,15 @@
           "lifecycle_status": "active",
           "lighting_differences": "Single oil lamp; storm-blue window fill.",
           "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
-          "name": "Kitchen — night, storm",
-          "season": "winter",
+          "name": "Kitchen — night, storm (autumn build)",
+          "season": "autumn",
           "time_of_day": "night",
           "weather": "storm"
         }
       },
-      "mismatches": []
+      "mismatches": [
+        "season: scene=\"winter\" variant=\"autumn\""
+      ]
     },
     "detail": [
       {

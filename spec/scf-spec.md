@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.41 (draft) — not a release.**
+**Version 0.42 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.41` (draft).
+- **Specification version** — this document. Currently `0.42` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -418,6 +418,11 @@ does not invent a position for it.
 The full comparison, in order: whether the scene has a screenplay
 position at all (those that do, first); then that position; then
 `scene_number` by §4.2.2; then row id.
+
+The conformance fixture exercises this: scene **17** carries a number
+and no heading, and sorts after scene 24. A reader that ordered by
+`scene_number` alone would put it between 16 and 19, and the published
+Q10 spine says otherwise.
 
 **Implementations MUST NOT order scenes by `scene_number` alone.** Doing
 so is wrong for any file written without a screenplay, and for any scene
@@ -2148,9 +2153,14 @@ best describes this scene*:
 scene — both carry a value and the values differ. It is an **array of
 strings**, each naming the scene's axis and both values, and it is a
 report rather than a rejection: a variant can be the best available and
-still be wrong about the weather, and saying so is more useful than
-choosing nothing. The fixture's chosen variant has none, so a reader had
-nothing to check the shape against and no way to know it was guessing.
+still be wrong, and saying so is more useful than choosing nothing.
+
+The fixture exercises this too. Scene 12's kitchen dressing was built
+for an autumn night and reused in winter: it still wins on time of day
+and weather, and the published Q04 result carries the season it is wrong
+about. Until 0.42 the chosen variant agreed on everything, so a reader
+had nothing to check the shape against and no way to know it was
+guessing — and one did guess, differently.
 
 Q04 does **not** nest Q03 or Q07 despite covering some of the same
 ground. It assembles its own answer, and §12.1.3 explains why that is
