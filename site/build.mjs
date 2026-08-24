@@ -93,6 +93,13 @@ const PAGES = [
     slug: "security", source: "SECURITY.md",
     blurb: "What is in scope, and how to report" },
 
+  { group: "Understanding SCF", title: "Glossary",
+    slug: "glossary", source: "docs/glossary.md",
+    blurb: "Plain-language definitions of the terms the spec assumes" },
+  { group: "Understanding SCF", title: "FAQ",
+    slug: "faq", source: "docs/faq.md",
+    blurb: "What it is, what it is not, and whether to build on it" },
+
   { group: "Design record", title: "Why it is like this",
     slug: "conventions", source: "docs/conventions.md",
     blurb: "The design record. States no rules" },

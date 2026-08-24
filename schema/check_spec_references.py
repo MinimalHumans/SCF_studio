@@ -42,7 +42,13 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DOCS = ["spec/scf-spec.md", "spec/conformance.md", "spec/stability.md"]
+#: Normative documents, plus the reader-facing ones that name entities
+#: and columns. A glossary or an FAQ that names a column wrongly sends a
+#: reader looking for something that is not there exactly as the
+#: specification would, and it is read FIRST — so it is checked on the
+#: same terms rather than trusted because it is informative.
+DOCS = ["spec/scf-spec.md", "spec/conformance.md", "spec/stability.md",
+        "docs/glossary.md", "docs/faq.md"]
 
 #: Suffixes that make `a.b` a filename rather than a reference.
 EXTENSIONS = {
