@@ -26,6 +26,7 @@ gives, applied to publication rather than generation.
 """
 import argparse
 import hashlib
+import pathlib
 import sys
 from pathlib import Path
 
@@ -308,8 +309,17 @@ def main() -> int:
             stale.append(str(sums_path.relative_to(ROOT)))
         if stale:
             print("[artifacts] STALE: " + ", ".join(stale))
+            # TEXT artifacts only. `hollow_creek.scf` is a SQLite
+            # database and contains \r\n byte pairs by coincidence, so
+            # including it made this branch fire on any staleness at all
+            # and advise renormalising a binary file. A NUL in the first
+            # few KB is the same binary test git itself uses.
+            def is_text(path: pathlib.Path) -> bool:
+                return b"\x00" not in path.read_bytes()[:8000]
+
             crlf = [rel for rel, _ in ARTIFACTS
-                    if b"\r\n" in (ROOT / rel).read_bytes()]
+                    if is_text(ROOT / rel)
+                    and b"\r\n" in (ROOT / rel).read_bytes()]
             if crlf:
                 # Almost always the real cause on Windows, and the
                 # message above sends you to the one command that makes

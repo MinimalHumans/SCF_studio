@@ -395,6 +395,11 @@ written:
 Numbered this way rather than 8 and 9 because the order is the point.
 The numbering above is the order to work in.
 
+`python3 tools/verify.py` runs every one of these checks in one command
+and returns a single exit code. Use it in preference to running them
+individually: the failure mode of a hand-assembled chain is a step whose
+exit code gets swallowed by a pipe, and that has happened here.
+
 Steps 2, 3 and 6 are all verified by CI in `--check` mode, so forgetting
 one fails the build rather than shipping a generated file that no longer
 matches its source. That is the whole reason CI exists here: nine

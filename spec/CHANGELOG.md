@@ -17,6 +17,66 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.43 — 2026-08-24
+
+*Describes schema 2.12.*
+
+**Editorial.** No specification changes. A CI failure, its cause, and
+the reason the cause was not caught.
+
+### `pack-test` asserted the fixture was clean
+
+0.42 gave the fixture a scene with no screenplay heading, so that §4.1's
+ordering fallback is exercised by something. That raises
+`structure.scene_not_in_script` at `info`, deliberately.
+
+Four test files were updated for that change. **`pack_test.mjs` was
+not**, because it is a script rather than a test and does not run under
+vitest, and it asserted the literal string `no findings`.
+
+The assertion was also testing the wrong thing. That step exists to
+prove the INSTALLED BIN RUNS — that it resolves its imports from the
+package, opens a real `.scf` and reports on it — and coupling it to what
+the fixture happens to contain made it break for a reason unrelated to
+packaging. It now checks that the report names the file, its schema
+version, and zero errors and warnings.
+
+### Why the local check said it was fine
+
+The pre-push verification was a hand-assembled chain, and one link read:
+
+    npm run pack-test 2>&1 | tail -1 && npm run typecheck
+
+**A pipe reports the exit code of the last command in it.** `tail`
+succeeded, the chain continued, and a failing step scrolled past as one
+blank line. Every step after it ran and passed, so the run looked green.
+
+`tools/verify.py` replaces the chain: every check CI runs, in order, no
+pipes, one exit code, and the full output of any step that fails.
+Twenty-four steps, about eighty seconds. `CONTRIBUTING.md` and
+`conventions.md` §8 now point at it.
+
+It is not a second description of CI — it runs the same commands, and
+where the two drift the workflow is right, because that is what gates a
+merge. Keeping them in step is manual, and saying so here is better than
+pretending otherwise.
+
+### A diagnostic that gave the wrong advice
+
+Writing `verify.py` surfaced a second defect. `artifact_manifest.py
+--check` detects CRLF line endings when it reports a stale manifest,
+because a Windows checkout cannot match digests taken over raw bytes
+(0.30). It tested every artifact, including `hollow_creek.scf` — a
+SQLite database, which contains `\r\n` byte pairs by coincidence.
+
+So **any** staleness, from any cause, printed a confident instruction to
+renormalise line endings and `DO NOT REGENERATE`. Exactly the wrong
+advice, delivered with the authority of a specific diagnosis. It now
+tests text artifacts only, using the same NUL-in-the-first-8KB check git
+uses.
+
+---
+
 ## 0.42 — 2026-08-23
 
 *Describes schema 2.12.*

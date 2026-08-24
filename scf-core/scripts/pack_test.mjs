@@ -120,8 +120,21 @@ const report = run(join(sandbox, "node_modules", ".bin",
                           ? "scf-check.cmd" : "scf-check"),
                    ["hollow_creek.scf"], sandbox,
                    "installed scf-check runs with no flags");
-if (!report.includes("no findings")) {
-  console.error("[pack-test] scf-check did not report a clean fixture:");
+// What this step is about is that the INSTALLED BIN RUNS: resolves its
+// imports from the package, opens a real .scf, and reports on it. It is
+// not about what the fixture happens to contain.
+//
+// It asserted `no findings` until 0.43, which coupled a packaging test
+// to the fixture's contents — and broke the moment the fixture gained a
+// deliberate `info` finding in 0.42, exercising §4.1's fallback. Four
+// test files were updated for that change and this one was missed,
+// because it is a script rather than a test and does not run under
+// vitest.
+const wanted = ["hollow_creek.scf", "(schema", "0 error", "0 warning"];
+const missing = wanted.filter((s) => !report.includes(s));
+if (missing.length > 0) {
+  console.error("[pack-test] the installed scf-check did not report as "
+              + `expected — missing ${missing.join(", ")}:`);
   console.error(report);
   process.exit(1);
 }
