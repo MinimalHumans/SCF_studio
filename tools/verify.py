@@ -143,6 +143,19 @@ def main() -> int:
         print(f"error: {NPM} is not on PATH", file=sys.stderr)
         return 2
 
+    # A checkout with no node_modules fails seven unrelated steps with
+    # errors like "cannot find type definition file for 'node'", which
+    # reads as seven problems rather than one missing install. Say the
+    # one thing instead.
+    uninstalled = [pkg for pkg in ("scf-core", "scf-app", "site")
+                   if not (ROOT / pkg / "node_modules").is_dir()]
+    if uninstalled:
+        print("error: dependencies are not installed in "
+              + ", ".join(uninstalled), file=sys.stderr)
+        for pkg in uninstalled:
+            print(f"  (cd {pkg} && npm ci)", file=sys.stderr)
+        return 2
+
     failures = []
     started = time.monotonic()
 

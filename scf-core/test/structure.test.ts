@@ -134,21 +134,45 @@ describe("findings", () => {
       .toContain("shared-boundary");
   });
 
-  test("a stored act_id that disagrees with the boundary is reported", () => {
-    // Two truths by design: act_id is authored, membership is derived.
-    // The authored field wins and the disagreement is surfaced.
+  test("a sequence whose span crosses an act boundary is reported", () => {
+    // REWRITTEN IN 0.44. This asserted something else entirely: that a
+    // stored `act_id` disagreeing with the act derived for the
+    // sequence's FIRST scene was reported. That is not what the catalog
+    // declares ("Sequence crosses an act boundary"), and comparing on
+    // the start is the very thing §5.3 calls incorrect.
+    //
+    // The old check never fired on the conformance fixture even though
+    // the fixture contains a crossing, because the crossing sequence's
+    // start does agree with its stored act. A reader deriving span
+    // membership per §5.1 found it; this repository's own test suite
+    // had been asserting the wrong property for four revisions.
     const acts = [act(1, "Act I", 100), act(2, "Act II", 105)];
-    const seqs = [seq(10, "The Siege", 106, 1)];
+    const seqs = [seq(10, "The Siege", 103, 1)];   // starts in I, runs into II
     const structure = deriveStructure(scenes, acts, seqs);
     const finding = structureFindings(structure, acts, seqs)
       .find((f) => f.code === "act-mismatch");
     expect(finding).toBeDefined();
+    expect(finding!.level, "§5.3 says a crossing is legal").toBe("info");
+    expect(finding!.message).toContain("Act I");
     expect(finding!.message).toContain("Act II");
   });
 
-  test("agreement is silent", () => {
+  test("a sequence contained in one act is silent", () => {
     const acts = [act(1, "Act I", 100), act(2, "Act II", 105)];
     const seqs = [seq(10, "The Siege", 106, 2)];
+    const structure = deriveStructure(scenes, acts, seqs);
+    expect(structureFindings(structure, acts, seqs)
+      .map((f) => f.code)).not.toContain("act-mismatch");
+  });
+
+  test("a stored act_id that disagrees with the span is NOT this finding",
+       () => {
+    // Deliberate. `act_id` is authored and membership is derived, and
+    // §5.3 says the two are independent rather than a hierarchy — so a
+    // sequence filed under one act and sitting wholly inside another is
+    // not a crossing and this code does not claim it is.
+    const acts = [act(1, "Act I", 100), act(2, "Act II", 105)];
+    const seqs = [seq(10, "The Siege", 106, 1)];   // filed under I, sits in II
     const structure = deriveStructure(scenes, acts, seqs);
     expect(structureFindings(structure, acts, seqs)
       .map((f) => f.code)).not.toContain("act-mismatch");

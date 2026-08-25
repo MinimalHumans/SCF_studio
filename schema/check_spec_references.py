@@ -48,7 +48,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 #: specification would, and it is read FIRST — so it is checked on the
 #: same terms rather than trusted because it is informative.
 DOCS = ["spec/scf-spec.md", "spec/conformance.md", "spec/stability.md",
-        "docs/glossary.md", "docs/faq.md"]
+        "docs/glossary.md", "docs/faq.md", "docs/what-is-scf.md",
+        "docs/authoring-guide.md", "docs/walkthrough.md"]
 
 #: Suffixes that make `a.b` a filename rather than a reference.
 EXTENSIONS = {
@@ -60,6 +61,20 @@ EXTENSIONS = {
 #: Small, and each one is a member this specification defines itself.
 MEMBERS = {"counts.error", "counts.warning", "counts.info", "area.condition"}
 
+#: Names that are not registry identifiers and legitimately appear in
+#: backticks. Everything else on the legal side is DERIVED — entity
+#: names, column names, option values, position patterns, framework
+#: columns, screenplay columns, finding codes, and the `X_uuid` form of
+#: every reference column.
+NOT_REGISTRY_NAMES = {
+    # SQLite's own, spec §1.2 and §5.4, plus the wa-sqlite export
+    # entry point conformance.md §3.1 names.
+    "user_version", "application_id", "sqlite_sequence",
+    "sqlite3_js_db_export",
+    # §1.3.1 names this deliberately, as the value that is NOT correct.
+    "scene_heading",
+}
+
 #: Columns that EXISTED and were REMOVED. A reference to one is history
 #: — §11.0's note records what was taken out, and `stability.md` records
 #: what was corrected — not a defect.
@@ -70,8 +85,17 @@ MEMBERS = {"counts.error", "counts.warning", "counts.info", "area.condition"}
 #: into describing something that exists.
 REMOVED = {
     "project.scene_numbering",   # renamed in 2.11, removed in 2.12
+    "scene_numbering",           #   ... and named bare in the same notes
     "asset.asset_type",          # removed in 2.8
+    "asset_type",                #   ...
     "asset.file_path",           # removed in 2.8
+    "file_path",                 #   ...
+    # Never existed at all: §12.13's cascade leaf until 0.44, and the
+    # reason this check learned to read bare names. The notes recording
+    # that name it, which is correct and must not fail the check.
+    "scene_emotional_design",
+    # The check's own subject, written in prose about the check.
+    "entity.column",
 }
 
 
@@ -97,6 +121,23 @@ def main() -> int:
                   file=sys.stderr)
         return 1
 
+    # Every bare identifier a document may legitimately name.
+    legal = set(entities) | framework | extra | codes | NOT_REGISTRY_NAMES
+    for cols in entities.values():
+        legal |= cols
+    for entity in registry["entities"]:
+        legal.add(entity["positionPattern"])
+        for field in entity["fields"]:
+            legal.update(str(o) for o in (field.get("options") or []))
+            # §12.1.2 projects `scene_id` as `scene_uuid`.
+            if field["name"].endswith("_id"):
+                legal.add(field["name"][:-3] + "_uuid")
+    screenplay = json.loads(
+        (ROOT / "spec/screenplay-tables.json").read_text(encoding="utf-8"))
+    for table in screenplay["tables"].values():
+        legal.update(c["name"] for c in table["columns"])
+    legal.update(v["value"] for v in screenplay["lineTypeColumn"]["values"])
+
     bad: list[tuple[str, int, str, str]] = []
     for rel in DOCS:
         path = ROOT / rel
@@ -114,6 +155,20 @@ def main() -> int:
                 elif column not in entities[entity] and column not in framework:
                     bad.append((rel, lineno, ref,
                                 f"{entity} has no column {column}"))
+
+            # BARE names too. `scene_emotional_design` was written into
+            # §12.13 as the leaf of Q11's cascade, matched nothing in the
+            # registry, and made that member `[]` for every file that
+            # could ever exist — and the blessed artifact recorded the
+            # empty array, so the test pinning it asserted the dead
+            # answer was correct. The qualified check above could not see
+            # it, because the name carries no column.
+            for m in re.finditer(r"`([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`", line):
+                token = m.group(1)
+                if token in legal or token in REMOVED:
+                    continue
+                bad.append((rel, lineno, token,
+                            "not an entity, column, option or pattern"))
 
     if bad:
         print("[spec-refs] references in the specification that do not "
