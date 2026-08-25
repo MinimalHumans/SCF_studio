@@ -134,35 +134,6 @@
         }
       }
     ],
-    "emotionalCascade": [
-      {
-        "entity": "project_tone",
-        "row": {
-          "uuid": "d12d2ecc-f5d6-4352-bcf4-d7d9472db4d3",
-          "fields": {
-            "lifecycle_status": "active",
-            "name": "Project Tone",
-            "overall_pacing": "slow/contemplative",
-            "pacing_inflection_points": "Acceleration: the act-3 storm.",
-            "primary_tone": "melancholic, warming"
-          }
-        }
-      },
-      {
-        "entity": "scene_emotional_target",
-        "row": {
-          "uuid": "a7372b55-38b8-4d9b-b408-41b6ff1e0fbc",
-          "fields": {
-            "audience_character_relationship": "empathy",
-            "emotional_function": "build",
-            "lifecycle_status": "active",
-            "name": "Ache, no release",
-            "primary_emotion": "ache",
-            "primary_intensity": 7,
-            "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
-          }
-        }
-      }
-    ]
+    "emotionalCascade": []
   }
 }

@@ -42,7 +42,7 @@ A conforming Reader MUST:
 - order scenes by story order, with the full fallback chain, and never
   by `scene_number` alone (§4.1);
 - apply the position pattern the registry declares for each entity
-  (§4.5);
+  (§4.3);
 - derive span membership from start boundaries (§5.1) and treat
   `scene_sequence` rows as potentially stale (§5.4);
 - read relationships from both character columns (§6.5);

@@ -21,9 +21,9 @@ the whole story. It is not the numeric order of the ids.
 | 12.4 | **Q03** World state | Everything true at one position. | `scene` |
 | 12.5 | **Q12** Continuity | What changed between two positions. | `from`, `to` |
 | 12.6 | **Q06** Physical direction | How this character moves and behaves in this scene. | `character`, `scene` |
-| 12.7 | **Q08** Soundscape | What this scene sounds like. | `scene` |
+| 12.7 | **Q08** Soundscape | What this scene sounds like. | `scene`, `shot` |
 | 12.8 | **Q13** Media resolution | Which assets are in force for a subject and an intent. | `subjectType`, `subject`, `intent`, `scene`, `shot` |
-| 12.9 | **Q14** Readiness | What is missing for another query to answer well. | `target`, `character`, `scene` |
+| 12.9 | **Q14** Readiness | What is missing for another query to answer well. | `target`, `character`, `scene`, `shot` |
 | 12.10 | **Q09** Motif manifest | Which motifs should be perceivable in this scene, and how. | `scene` |
 | 12.11 | **Q10** Thematic accounting | Where a theme lives across the whole story, and where it does not. | `theme` |
 | 12.12 | **Q00** Brief | What film is this, and what are its rules. | *no parameters* |
@@ -159,9 +159,7 @@ says so (§12.9).
 
 Specified in **§12.7**. Normative result: [`fixtures/expectations/Q08.result.json`](../fixtures/expectations/Q08.result.json).
 
-Parameters: `scene`.
-
-The envelope also carries `shot` as null: the published result was computed without it. Whether the query accepts it at all is stated in the section above, not here.
+Parameters: `scene`, `shot`.
 
 Result members: `leaf`, `layers`.
 
@@ -213,9 +211,7 @@ says so (§12.9).
 
 Specified in **§12.9**. Normative result: [`fixtures/expectations/Q14.result.json`](../fixtures/expectations/Q14.result.json).
 
-Parameters: `target`, `character`, `scene`.
-
-The envelope also carries `shot` as null: the published result was computed without it. Whether the query accepts it at all is stated in the section above, not here.
+Parameters: `target`, `character`, `scene`, `shot`.
 
 Result members: `target`, `targetName`, `findings`, `counts`.
 

@@ -87,17 +87,8 @@ const published = new Map();
 for (const file of readdirSync(EXPECT)) {
   if (!file.endsWith(".result.json")) continue;
   const doc = JSON.parse(readFileSync(join(EXPECT, file), "utf8"));
-  // A parameter the envelope carries as NULL was not asked for. §12.7
-  // says Q08 takes "No shot … `shot` is always null in the envelope",
-  // and listing it among Q08's parameters contradicted the section this
-  // document indexes.
-  const asked = Object.entries(doc.parameters ?? {})
-    .filter(([, v]) => v !== null).map(([k]) => k);
-  const nulled = Object.entries(doc.parameters ?? {})
-    .filter(([, v]) => v === null).map(([k]) => k);
   published.set(doc.query, {
-    parameters: asked,
-    nulled,
+    parameters: Object.keys(doc.parameters ?? {}),
     members: Object.keys(doc.result ?? {}),
     file: `fixtures/expectations/${file}`,
   });
@@ -169,13 +160,6 @@ for (const q of queries) {
   lines.push(p.parameters.length
     ? "Parameters: " + p.parameters.map((x) => `\`${x}\``).join(", ") + "."
     : "Takes no parameters — it answers about the whole project.", "");
-  if (p.nulled.length > 0) {
-    lines.push("The envelope also carries " +
-               p.nulled.map((x) => `\`${x}\``).join(", ") +
-               " as null: the published result was computed without it. " +
-               "Whether the query accepts it at all is stated in the " +
-               "section above, not here.", "");
-  }
 
   if (p.members.length > 0) {
     lines.push("Result members: " +

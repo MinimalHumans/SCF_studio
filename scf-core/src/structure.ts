@@ -430,41 +430,23 @@ export function structureFindings(
   collide(structure.acts, "act");
   collide(structure.sequences, "sequence");
 
-  // A sequence whose SPAN crosses an act boundary.
-  //
-  // This tested the start scene only until 0.44 — whether the stored
-  // `act_id` matched the act derived for the sequence's first scene —
-  // which is a different condition from the one the catalog declares
-  // ("Sequence crosses an act boundary") and, worse, is the comparison
-  // §5.3 explicitly calls incorrect: "Grouping by 'sequences whose
-  // start falls in this act' is incorrect."
-  //
-  // So the code never fired on the conformance fixture even though the
-  // fixture contains a crossing. "The Reckoning" is filed under act 2,
-  // starts in act 2 — matching, so the old check said nothing — and
-  // runs on into act 3. The fifth reader run found it by deriving span
-  // membership per §5.1 rather than by trusting the start.
-  //
-  // §5.3 says a crossing is LEGAL and MUST NOT be rejected, which is
-  // why the catalog rates it `info`: it is a note to whoever presents
-  // acts and sequences as nested, who has to split the sequence into
-  // per-act runs.
+  // A stored act_id that disagrees with where the boundary puts it.
+  // The authored field wins; the finding reports the disagreement
+  // rather than silently picking a side.
   const actByRow = new Map(structure.acts.map((a) => [a.id, a]));
-  for (const span of structure.sequences) {
-    const acts = new Set<number>();
-    for (const sceneId of span.sceneIds) {
-      const act = structure.actOfScene.get(sceneId);
-      if (act !== undefined) acts.add(act);
+  for (const r of sequences) {
+    const storedAct = num(r["act_id"]);
+    if (storedAct === null) continue;
+    const span = structure.sequences.find((s) => s.id === Number(r["id"]));
+    if (span === undefined) continue;
+    const derived = structure.actOfScene.get(span.startSceneId);
+    if (derived !== undefined && derived !== storedAct) {
+      out.push({ level: "warning", code: "act-mismatch", entity: "sequence",
+        rowId: span.id,
+        message: `${span.name} is filed under ` +
+                 `${actByRow.get(storedAct)?.name ?? "an act"} but starts ` +
+                 `inside ${actByRow.get(derived)?.name ?? "another act"}.` });
     }
-    if (acts.size <= 1) continue;
-    const names = [...acts]
-      .map((id) => actByRow.get(id)?.name ?? `act ${String(id)}`)
-      .join(" and ");
-    out.push({ level: "info", code: "act-mismatch", entity: "sequence",
-      rowId: span.id,
-      message: `${span.name} spans ${names}. That is legal (§5.3); a ` +
-               "presenter showing acts and sequences as nested must " +
-               "split it into the part belonging to each." });
   }
 
   // A boundary on an unnumbered scene sorts after every numbered one.
