@@ -17,6 +17,93 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.44 — 2026-08-25
+
+*Describes schema 2.12.*
+
+**Minor.** Two defects, both of which a published artifact certified as
+correct. This is the response to the **fifth independent reader run**,
+which reproduced fifteen of sixteen queries and eleven of eleven
+negative fixtures and made a full Reader claim with divergences
+disclosed — the first run to perform all three of `conformance.md`
+§6.1's steps and disclose rather than decline.
+
+### §12.13 named an entity that does not exist
+
+`emotionalCascade` gave its cascade leaf as `scene_emotional_design`.
+**There is no such entity.** The string occurred exactly twice in the
+project — that line and a constant in the reference implementation — and
+matched nothing in the registry, the DDL, the generated references or
+the fixture.
+
+So the member was `[]` for every SCF file that could ever exist. And
+`Q11.result.json` blessed the empty array, which made the test pinning
+§12.13 assert that the dead answer was correct.
+
+**This is a harder case than 0.40's `external_id`.** That was a rule
+broader than it meant, invisible because the fixture happened not to
+exercise it. This one *was* exercised: the fixture authors a
+`scene_emotional_target` row and the `project_tone` row it refines —
+exactly the data the cascade was written for — and the artifact recorded
+the empty answer anyway. The specification and the artifact agreed with
+each other, and neither agreed with the schema.
+
+The leaf is now `scene_emotional_target`, and Q11 returns the two layers
+it always should have.
+
+### §5.3 — a code that could not fire on a fixture that triggers it
+
+`structure.sequence_act_mismatch` is declared in the catalog as
+"Sequence crosses an act boundary", `info`, §5.3. The check tested
+whether a sequence's stored `act_id` matched the act derived for its
+**first scene** — a different condition, and specifically the comparison
+§5.3 calls incorrect: *"Grouping by 'sequences whose start falls in this
+act' is incorrect."*
+
+The fixture contains a crossing. "The Reckoning" is filed under act 2,
+starts in act 2 — so the old check was satisfied — and runs on into act
+3. The reader found it by deriving span membership per §5.1 rather than
+by trusting the start.
+
+The check now tests the span, and reports at `info` because §5.3 says a
+crossing is **legal and MUST NOT be rejected**. It is a note to whoever
+presents acts and sequences as nested, who has to split the sequence
+into per-act runs.
+
+This repository's own test suite had been asserting the wrong property
+for four revisions, which is why nothing caught it.
+
+### The checker that should have caught the first one
+
+`check_spec_references.py`, added in 0.40 after two invented entity
+names reached a reader, validates every `entity.column` written in the
+prose against the registry. **`scene_emotional_design` carries no
+column**, so it was invisible to exactly the tool built for this.
+
+It now validates bare backticked snake_case identifiers as well.
+Everything on the legal side is derived — entity names, column names,
+option values, position patterns, framework columns, the screenplay
+tables' columns, the `line_type` vocabulary, finding codes, and the
+`X_uuid` form of every reference column. Four names are allow-listed:
+three SQLite identifiers and `scene_heading`, which §1.3.1 names
+deliberately as the value that is wrong.
+
+Re-introducing `scene_emotional_design` now fails the check.
+
+### Smaller
+
+Four citations gave §4.3 for position patterns, which are §4.5; §4.3 is
+numbering policy. One of them was in the Reader role's requirement list
+in `conformance.md`.
+
+`query-reference.md` listed `shot` among Q08's parameters, which §12.7
+forbids in as many words. The generator read the envelope's
+`parameters` block, where `shot` is present and null. A null there means
+the answer was computed without it, and the generated index now says so
+separately rather than listing it as something you supply.
+
+---
+
 ## 0.43 — 2026-08-24
 
 *Describes schema 2.12.*

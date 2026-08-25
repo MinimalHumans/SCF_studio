@@ -873,7 +873,24 @@ export async function q11Result(
 }
 
 /** Q11's cascade leaf (§7.1). */
-export const Q11_LEAF = "scene_emotional_design";
+/**
+ * The leaf of Q11's emotional cascade.
+ *
+ * This was `scene_emotional_design` until 0.44 — a name that is not a
+ * registry entity and never was. The string occurred exactly twice in
+ * the whole project, here and in §12.13, and matched nothing in the
+ * registry, the DDL, the generated references or the fixture.
+ *
+ * So `emotionalCascade` was `[]` for every SCF file that could ever
+ * exist, and `Q11.result.json` blessed the empty array — which made the
+ * test pinning §12.13 assert that the empty answer was correct. The
+ * specification and the artifact agreed with each other and neither
+ * agreed with the schema.
+ *
+ * `scene_emotional_target` is the entity, and it declares
+ * `refines: ["project_tone"]`, which is the cascade §12.13 describes.
+ */
+export const Q11_LEAF = "scene_emotional_target";
 
 // ---------------------------------------------------------------------------
 // Q15 — Provenance (§12.14)

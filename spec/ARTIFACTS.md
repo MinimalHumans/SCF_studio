@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `5bed399d2eb6903b…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `7442bcb174d4f562…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `a15c4402ee124edd…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `ed2649d098a0e457…` | The specification changelog. Spec §11.5. |
+| `spec/scf-spec.md` | `fb3d20d613a32320…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/conformance.md` | `2463b44b97a3c956…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/stability.md` | `868241d4ead9bde7…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `d9137b29f87f020e…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -62,7 +62,7 @@ Generated from `schema/`, which is the source of truth for all of them.
 | `spec/scf-schema.sql` | `6f10cb380911f2df…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/screenplay-tables.json` | `985b2561b3aaa1be…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
 | `spec/entity-reference.md` | `7f8dfe2b43ba8b01…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
-| `spec/query-reference.md` | `3b0aca78b31f8b68…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
+| `spec/query-reference.md` | `870924cdb0a75f2e…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
 | `spec/api-surface.json` | `674c064902c458fc…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `038b3a4ed0768105…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `a5e4c75b4a741a9e…` | Natural keys for every link entity. Spec §6.3. |
@@ -86,7 +86,7 @@ One normative result per query, spec §12. Rows by uuid, no row ids, no timestam
 | `fixtures/expectations/Q08.result.json` | `58e36eb89faeb1d1…` | Q08's normative result. Spec §12.7. |
 | `fixtures/expectations/Q09.result.json` | `80d2741b1ba1bf08…` | Q09's normative result. Spec §12.10. |
 | `fixtures/expectations/Q10.result.json` | `2a27056e208ddae1…` | Q10's normative result. Spec §12.11. |
-| `fixtures/expectations/Q11.result.json` | `4a1382c7281a440c…` | Q11's normative result. Spec §12.13. |
+| `fixtures/expectations/Q11.result.json` | `6abeed3a999f3b4c…` | Q11's normative result. Spec §12.13. |
 | `fixtures/expectations/Q12.result.json` | `d28fc8f037482e2c…` | Q12's normative result. Spec §12.5. |
 | `fixtures/expectations/Q13.result.json` | `dba1abff7e610edc…` | Q13's normative result. Spec §12.8. |
 | `fixtures/expectations/Q14.result.json` | `4365b2128d872867…` | Q14's normative result. Spec §12.9. |

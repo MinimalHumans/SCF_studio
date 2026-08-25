@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.43 (draft) — not a release.**
+**Version 0.44 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.43` (draft).
+- **Specification version** — this document. Currently `0.44` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -143,7 +143,7 @@ its start alone (§5).
 **position** — a scene's place in story order (§4.1).
 
 **in force** — a state row applies at a given position, under that row's
-position pattern (§4.3).
+position pattern (§4.5).
 
 **cascade** — the ordered resolution of direction from broad to specific
 (§7).
@@ -2025,7 +2025,7 @@ Parameter: `scene`.
 | `identification` | The identification strategy, or null: `row` (projected), `primary`, `secondary`. Named `row` rather than for an entity, per §12.1.4, because the strategy is what the record is about. |
 | `emotionalBeats` | Each beat with the arc it belongs to. |
 | `toneMarkers` | Tone markers at this position. |
-| `emotionalCascade` | The direction cascade for leaf `scene_emotional_design`, root first (§7). |
+| `emotionalCascade` | The direction cascade for leaf `scene_emotional_target`, root first (§7). |
 
 Every one of these may be absent, and absence is **null or empty, never
 invented** (§9.2). A scene with no authored audience design is a
@@ -2196,8 +2196,8 @@ change to one without the other is a defect.
 | §10.2–10.3 reserved namespaces | `scf-core/test/registrySchema.test.ts`, `schema/lint_registry.py` |
 | §4.2 scene-number grammar and ordering | `scf-core/test/sceneNumbers.test.ts` — including a case asserting the TypeScript comparison and its SQL twin order the same list identically |
 | §4.4 shot codes | `scf-core/test/shots.test.ts` |
-| §4.3 pattern 2 | `scf-core/test/conformance.canonical.test.ts` → "persistence rule" |
-| §4.3 pattern 3 | `scf-core/test/conformance.canonical.test.ts` → "pattern 3 (latest-wins)" |
+| §4.5 pattern 2 | `scf-core/test/conformance.canonical.test.ts` → "persistence rule" |
+| §4.5 pattern 3 | `scf-core/test/conformance.canonical.test.ts` → "pattern 3 (latest-wins)" |
 | §5 spans | `scf-core/test/structure.test.ts` |
 | §6.3–6.4 natural keys | `scf-core/test/junctions.test.ts` |
 | §6.5 relationships | `scf-core/test/relationships.test.ts` |
