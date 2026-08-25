@@ -17,6 +17,53 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.46 — 2026-08-25
+
+*Describes schema 2.12.*
+
+**Editorial.** No specification changes. Two proposals opened, and one
+small defect found while checking them.
+
+### The proposal path gets its first two entries
+
+`proposals/0001` and `0002`, both from the fifth reader run's findings.
+They are proposals rather than fixes because **neither is a defect**:
+each is a decision about what the format should do, with a defensible
+answer on both sides. That is the distinction `proposals/README.md`
+draws, and until now nothing had tested it.
+
+**0001 — `clip`'s screenplay line columns.** Two integer columns index
+`screenplay_lines.id` and carry no `referenceEntity`, so they survive
+projection as bare row ids in the section that forbids exactly that.
+0.40 created this: the old rule dropped them by accident while
+destroying `external_id`, and fixing the larger defect uncovered a
+smaller one it had been concealing. No published artifact can catch it —
+the fixture's `clip` table is empty.
+
+**0002 — ownership by declaration.** §2.3 decides who gets deleted with
+what by matching a column named `scene_id`. Thirty-seven entities
+declare one. It is the construction §12.1.2 spent four revisions
+removing, in a rule whose failure mode is data loss rather than a
+missing field — and the registry already has `parentEntity`, which
+**only four of the thirty-seven use**. The mechanism and the rule
+disagree about what the mechanism is.
+
+Neither is acted on here.
+
+### A sentinel that was querying a table named after a NUL byte
+
+Checking 0001's implementation risk turned this up. 0.40 marks a
+polymorphic column in a reference map with a `POLYMORPHIC` sentinel, and
+`uuidLookupForAll` builds its index from every value in that map — so
+the sentinel went in as a table name, and every query since has issued
+`SELECT id, uuid FROM "<NUL>polymorphic"` and swallowed the error.
+
+Harmless, wasteful, and it quietly widened a `catch` written for a
+different case: a missing table is a finding, not a lookup failure, and
+the catch had been covering both.
+
+---
+
 ## 0.45 — 2026-08-25
 
 *Describes schema 2.12.*

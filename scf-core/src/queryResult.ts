@@ -113,7 +113,12 @@ export async function uuidLookupForAll(
   for (const entity of registry.order) {
     targets.add(entity);
     for (const target of Object.values(referencesOf(registry, entity))) {
-      targets.add(target);
+      // POLYMORPHIC is a marker, not a table. It reached this set when
+      // the sentinel was introduced in 0.40, and every query since has
+      // issued a SELECT against a table named after a NUL byte and
+      // swallowed the error in the catch below. Harmless and wasteful,
+      // and it made the catch cover a case it was not written for.
+      if (target !== POLYMORPHIC) targets.add(target);
     }
   }
   return uuidLookupFor(exec, [...targets].sort());

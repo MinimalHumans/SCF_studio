@@ -88,3 +88,9 @@ known to be unfinished.
 Backfilling them as proposals would be writing history rather than
 recording it. Anything still genuinely open and genuinely arguable
 should be filed here fresh.
+
+**0001 and 0002 are the first two**, and both came from the fifth run.
+They are here rather than fixed directly because neither is a defect:
+each is a decision about what the format should do, with a defensible
+answer on both sides. That is the distinction this directory exists
+for.

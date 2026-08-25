@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.45 (draft) — not a release.**
+**Version 0.46 (draft) — not a release.**
 Describes schema version **2.12**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.45` (draft).
+- **Specification version** — this document. Currently `0.46` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
