@@ -48,7 +48,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 #: specification would, and it is read FIRST — so it is checked on the
 #: same terms rather than trusted because it is informative.
 DOCS = ["spec/scf-spec.md", "spec/conformance.md", "spec/stability.md",
-        "docs/glossary.md", "docs/faq.md"]
+        "docs/glossary.md", "docs/faq.md", "docs/what-is-scf.md",
+        "docs/authoring-guide.md", "docs/walkthrough.md"]
 
 #: Suffixes that make `a.b` a filename rather than a reference.
 EXTENSIONS = {
