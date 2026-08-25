@@ -138,6 +138,25 @@ def main() -> int:
         legal.update(c["name"] for c in table["columns"])
     legal.update(v["value"] for v in screenplay["lineTypeColumn"]["values"])
 
+    # A document in DOCS that is not on disk used to raise
+    # FileNotFoundError and print a traceback, which tells a reader of
+    # the CI log that the checker is broken rather than that a file is
+    # missing. It is a real failure — a document listed here and absent
+    # means either the list or the repository is wrong — so it fails,
+    # but it says which.
+    absent = [rel for rel in DOCS if not (ROOT / rel).exists()]
+    if absent:
+        print("[spec-refs] listed for checking and not in the repository:\n",
+              file=sys.stderr)
+        for rel in absent:
+            print(f"  {rel}", file=sys.stderr)
+        print("\n  Either the file was removed and DOCS in this script "
+              "still lists it,\n  or a commit that should have added it did "
+              "not. Both are worth\n  stopping for: a document nobody checks "
+              "is how two entity names\n  that did not exist reached a "
+              "reader.", file=sys.stderr)
+        return 1
+
     bad: list[tuple[str, int, str, str]] = []
     for rel in DOCS:
         path = ROOT / rel

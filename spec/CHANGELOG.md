@@ -17,6 +17,46 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.45 — 2026-08-25
+
+*Describes schema 2.12.*
+
+**Editorial.** Two documents restored, and a checker that failed the
+wrong way.
+
+### `what-is-scf.md` and `authoring-guide.md` were not in the repository
+
+A revert-and-reapply sequence dropped both. `walkthrough.md`,
+`glossary.md` and `faq.md` from the same change survived, so the loss
+was invisible in `docs/` — the directory still looked populated.
+
+What made it visible was `check_spec_references.py`, which lists all
+five for checking. That is the tool working: a document listed as
+checked and absent is a real inconsistency, and it stopped the build.
+
+Both are restored, along with their entries in `site/build.mjs` and the
+`docs/` row of the README, which the same revert had also removed.
+
+### The checker crashed instead of reporting
+
+It raised `FileNotFoundError` and printed a Python traceback, which
+tells whoever reads the CI log that **the checker is broken** rather
+than that a file is missing. The reader has to work out which from a
+stack trace.
+
+It now names the absent documents and says what the two possibilities
+are: the list is stale, or a commit that should have added a file did
+not. Both are worth stopping for, so it still fails — it just fails
+legibly.
+
+This is the second time a check in this repository has been right about
+there being a problem and wrong about how it said so. 0.44's CRLF
+diagnostic fired on a SQLite database and confidently advised
+renormalising line endings. A check that reports badly costs more than
+one that does not exist, because it is believed.
+
+---
+
 ## 0.44 — 2026-08-25
 
 *Describes schema 2.12.*
