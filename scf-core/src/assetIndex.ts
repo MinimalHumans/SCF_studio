@@ -73,13 +73,33 @@ export async function listAssets(exec: SqlExec): Promise<AssetRow[]> {
  */
 export function assetReferenceColumns(
   registry: Registry,
-): { table: string; column: string }[] {
-  const out: { table: string; column: string }[] = [];
+): { table: string; column: string; discriminator?: string }[] {
+  const out: { table: string; column: string; discriminator?: string }[] = [];
   for (const [name, edef] of registry.entities) {
     for (const field of edef.fields) {
-      if (field.referenceEntity !== "asset") continue;
       if (name === "asset" && field.autoInjected) continue;
-      out.push({ table: name, column: field.name });
+
+      if (field.referenceEntity === "asset") {
+        out.push({ table: name, column: field.name });
+        continue;
+      }
+
+      // A POLYMORPHIC column can point at an asset too, and carries no
+      // `referenceEntity` by definition — its target is chosen per row.
+      // Reading only the declared target missed
+      // `asset_relationship.entity_id` entirely, so an asset related to
+      // another asset was reported as an orphan with a row in the same
+      // file pointing straight at it.
+      //
+      // The sibling named by `polymorphicType` says which table a given
+      // row means, so the rows have to be filtered rather than the
+      // column excluded. Still derived from the registry; nothing here
+      // is a list.
+      if (field.polymorphicType !== undefined
+          && field.polymorphicType !== "") {
+        out.push({ table: name, column: field.name,
+                   discriminator: field.polymorphicType });
+      }
     }
   }
   return out;
@@ -101,11 +121,19 @@ export async function orphanIds(
     .map((r) => String(r["name"])));
 
   const used = new Set<number>();
-  for (const { table, column } of columns) {
+  for (const { table, column, discriminator } of columns) {
     if (!present.has(table)) continue;
-    const rows = await exec(
-      `SELECT DISTINCT ${q(column)} AS ref FROM ${q(table)} ` +
-      `WHERE ${q(column)} IS NOT NULL`);
+    // A polymorphic column counts only on the rows where its
+    // discriminator says `asset` — every other row points somewhere
+    // else, and counting those would mark unrelated ids as used.
+    const rows = discriminator === undefined
+      ? await exec(
+          `SELECT DISTINCT ${q(column)} AS ref FROM ${q(table)} ` +
+          `WHERE ${q(column)} IS NOT NULL`)
+      : await exec(
+          `SELECT DISTINCT ${q(column)} AS ref FROM ${q(table)} ` +
+          `WHERE ${q(column)} IS NOT NULL AND ${q(discriminator)} = ?`,
+          ["asset"]);
     for (const row of rows) used.add(Number(row["ref"]));
   }
 

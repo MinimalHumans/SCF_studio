@@ -68,7 +68,9 @@ about it is ceremonial.
 | Q11's emotional cascade | §12.13 | Provisional | Yes | Fixed in 0.44. The leaf was `scene_emotional_design`, which is not a registry entity, so the member was `[]` for every file that could exist — and the blessed artifact recorded the empty array. Now `scene_emotional_target`, which declares `refines: ["project_tone"]`. |
 | Sequences crossing an act boundary | §5.3 | Provisional | Yes | Fixed in 0.44. `structure.sequence_act_mismatch` tested the start scene, which is the comparison §5.3 calls incorrect, and so never fired on a fixture that contains a crossing. It now tests the span. |
 | Bare entity names in prose are checked | — | Provisional | Yes | `check_spec_references.py` since 0.44 validates backticked snake_case identifiers, not only `entity.column`. The 0.40 version could not have caught `scene_emotional_design`. |
-| The proposal path | — | Provisional | Yes | `proposals/` since 0.32. Provisional because no proposal has been through it — the procedure is written and untested, and the first real one will find what is wrong with it. |
+| `clip`'s screenplay line references | §12.1.2 | Provisional | Yes | Declared in schema 2.13. First reference in the schema targeting a `uuidExtraTable`; exercised by two fixture clips. |
+| Polymorphic references count as asset usage | §2.3, §8.6 | Provisional | Yes | Stated in 0.47 and exercised by a fixture asset reachable only through `asset_relationship.entity_id`. |
+| The proposal path | — | Provisional | Yes | `proposals/` since 0.32. **Used as of 0.47**: 0001 accepted and implemented, 0002 still open — its question (should a clip be deleted with its scene?) is a production decision rather than a schema one. |
 | Framework columns | §2.2 | Stable | Yes | |
 | Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `sceneOps.ts`. Derived, so new entities are covered without an edit. |
 | Hidden `nameField` rule | §2.3 | Stable | Yes | |

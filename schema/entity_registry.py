@@ -2013,9 +2013,22 @@ register(EntityDef(
         FieldDef("clip_type", "Clip Type", "select", options=[
             "dialogue", "action", "reaction", "transition", "insert", "atmospheric"
         ]),
-        FieldDef("screenplay_line_start_id", "Screenplay Line Start", "integer",
+        # References into `screenplay_lines`, which is a uuidExtraTable
+        # rather than one of the 99 entities — it carries uuid identity
+        # on §6.1's terms, so §12.1.2 can resolve these.
+        #
+        # Declared as references since 2.13. They were plain integers,
+        # so §12.1.2's resolution rule did not reach them and both
+        # survived projection as bare row ids, in the section that
+        # forbids exactly that. The drop-everything-ending-`_id` rule
+        # had been catching them by accident; 0.40 fixed that rule and
+        # uncovered this.
+        FieldDef("screenplay_line_start_id", "Screenplay Line Start",
+                 "reference", reference_entity="screenplay_lines",
                  tab="Screenplay"),
-        FieldDef("screenplay_line_end_id", "Screenplay Line End", "integer", tab="Screenplay"),
+        FieldDef("screenplay_line_end_id", "Screenplay Line End",
+                 "reference", reference_entity="screenplay_lines",
+                 tab="Screenplay"),
         FieldDef("beat_id", "Story Beat", "reference",
                  reference_entity="story_beat", tab="Screenplay"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),

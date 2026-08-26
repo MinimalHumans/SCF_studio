@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | draft — still open |
 | **Author** | Found by the fifth independent reader run (G-28); written up by the maintainers |
 | **Opened** | 2026-08-25 |
 | **Affects** | Spec §2.3, `schema/entity_registry.py`, `registry.json`, Editor conformance (`conformance.md` §2.3) |
@@ -133,4 +133,16 @@ something it happens to cascade with.
 
 ## Resolution
 
-*Left empty until the proposal is accepted, declined or deferred.*
+*Still open.* 0.47 implemented 0001 and a defect adjacent to this one —
+§2.3's asset-usage rule could not see a polymorphic reference — but
+neither touches ownership.
+
+The adjacent fix is worth noting here because it is evidence for this
+proposal rather than against it: §2.3's asset rule already read a
+declaration and still had a gap, which suggests the problem with the
+ownership bullet is not that declarations are unreliable but that
+ownership is the one bullet in that list still matching on a name.
+
+**The question this waits on is unchanged and is not a schema question:
+should a clip be deleted with its scene?** As of 2.13 the fixture has
+clips, so somebody can now try it and see what they lose.

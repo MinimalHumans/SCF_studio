@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.12",
+ "schemaVersion": "2.13",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.12"
+    "value": "2.13"
    },
    {
     "key": "updated_at",
@@ -167,6 +167,15 @@
     "source": "Sound design",
     "lifecycle_status": "active",
     "identifier": "@project/assets/sound/chime_hero_takes.wav"
+   },
+   {
+    "id": 9,
+    "uuid": "00000000-0000-4000-8000-00000000a009",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "eleanor_kitchen_concept.png",
+    "lifecycle_status": "active",
+    "identifier": "@project/assets/eleanor_kitchen_concept.png"
    }
   ],
   "bundle": [
@@ -4914,7 +4923,76 @@
     "delivery_style": "theatrical",
     "lifecycle_status": "active"
    }
+  ],
+  "performance_corpus": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000c001",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "Hollow Creek — scene 12 reference session",
+    "corpus_notes": "Reference recordings of the kitchen confrontation, used to hold Eleanor's and Marcus's delivery steady across the shoot.",
+    "lifecycle_status": "active"
+   }
+  ],
+  "take": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000da01",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "12-04 take 3",
+    "corpus_id": 1,
+    "take_number": 3,
+    "preferred": 1,
+    "camera_designation": "A",
+    "lifecycle_status": "active"
+   }
+  ],
+  "clip": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000cf01",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "You came back",
+    "take_id": 1,
+    "scene_id": 7,
+    "clip_type": "dialogue",
+    "screenplay_line_start_id": 51,
+    "screenplay_line_end_id": 52,
+    "notes": "Eleanor's line and the cue above it.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 2,
+    "uuid": "00000000-0000-4000-8000-00000000cf02",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "I came back",
+    "take_id": 1,
+    "scene_id": 7,
+    "clip_type": "dialogue",
+    "screenplay_line_start_id": 54,
+    "screenplay_line_end_id": 55,
+    "notes": "Marcus's answer.",
+    "lifecycle_status": "active"
+   }
+  ],
+  "asset_relationship": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000ae01",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "turnaround derives from concept",
+    "asset_id": 1,
+    "entity_type": "asset",
+    "entity_id": 9,
+    "relationship_type": "derived_from",
+    "notes": "The turnaround was painted over this concept. The concept is referenced by nothing else, so §8.6 reports it as an orphan unless a polymorphic reference counts as a use."
+   }
   ]
  },
- "rowCount": 376
+ "rowCount": 382
 }

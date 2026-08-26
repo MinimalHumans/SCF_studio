@@ -1,7 +1,7 @@
 {
   "query": "Q00",
   "resultFormat": "1.0",
-  "schemaVersion": "2.12",
+  "schemaVersion": "2.13",
   "parameters": {},
   "result": {
     "layers": [

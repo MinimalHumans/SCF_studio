@@ -17,6 +17,71 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.47 — 2026-08-25
+
+*Describes schema **2.13**.*
+
+**Minor.** Two MUSTs added, one schema change, one reader-visible change
+to a projected row. Both resolve findings from the fifth reader run, one
+of them through the proposal path.
+
+### 0001 — `clip`'s screenplay line references are declared
+
+`clip.screenplay_line_start_id` and `clip.screenplay_line_end_id` hold
+`screenplay_lines` row ids and carried no `referenceEntity`, so §12.1.2
+could not resolve them and both survived projection as bare row ids — in
+the section that spends a paragraph forbidding exactly that.
+
+Both are now declared as references to `screenplay_lines`, and §12.1.2
+projects them as `screenplay_line_start_uuid` and `_end_uuid` through
+the derivation it already had. **No new rule and no special case:** the
+independent reader that found this resolves them correctly with no code
+change, which is the evidence that the defect was in the registry rather
+than in the prose.
+
+§12.1.2 now records that a reference MAY target a `uuidExtraTable`.
+This is the first one that does.
+
+**The fixture gains two clips**, without which the defect stays
+invisible: `clip` was empty, and §12.1.2 omits empty fields, so a
+correct implementation and a row-id-leaking one produced byte-identical
+output on all sixteen results.
+
+### A polymorphic reference to an asset counts as a use
+
+§2.3 defined asset usage as "every field whose `referenceEntity` is
+`asset`". **A polymorphic column carries no `referenceEntity` by
+definition** — its target is chosen per row — so
+`asset_relationship.entity_id` was invisible to the rule, and an asset
+related to another asset was reported by §8.6 as an orphan with a row in
+the same file pointing straight at it.
+
+§2.3 and §8.6 now require the `polymorphicType` sibling to be resolved
+per row and the reference counted where it resolves to `asset`. Still
+derived from the registry; nothing is listed.
+
+**The fixture gains an asset relationship**, and a concept painting
+reachable only through it. `asset_relationship` was empty, so a reader
+that counted polymorphic references and one that did not produced
+identical `asset.orphan` findings on the fixture and on all eleven
+negative cases.
+
+### The shape both share
+
+0.40 replaced §12.1.2's name-matching rule with one that reads
+declarations. These are the two places that change left exposed, seen
+from opposite sides: **one column the registry had not declared**, and
+**one rule that reads declarations meeting a column whose target is
+declared per row**. Neither could be found from the published artifacts,
+because in both cases the table that would have shown it was empty.
+
+That is the third and fourth defect in this repository invisible to
+every published artifact, and the response each time has been the same —
+put a row in the fixture that tells a correct implementation apart from
+a broken one.
+
+---
+
 ## 0.46 — 2026-08-25
 
 *Describes schema 2.12.*

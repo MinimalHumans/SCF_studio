@@ -1,7 +1,7 @@
 {
   "query": "Q12",
   "resultFormat": "1.0",
-  "schemaVersion": "2.12",
+  "schemaVersion": "2.13",
   "parameters": {
     "from": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
     "to": "e4fa4c60-5f66-4b81-942f-6a026ab56c62"

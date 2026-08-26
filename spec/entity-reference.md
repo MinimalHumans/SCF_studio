@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.12** — **99 entities**.
+Schema **2.13** — **99 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -1300,8 +1300,8 @@ A meaningful within-scene segment of a take. Plates are clips with clip_type=atm
 | `clip_out_timecode` | text |  |  |
 | `duration_seconds` | integer |  |  |
 | `clip_type` | select |  | one of `dialogue`, `action`, `reaction`, `transition`, `insert`, `atmospheric` |
-| `screenplay_line_start_id` | integer |  |  |
-| `screenplay_line_end_id` | integer |  |  |
+| `screenplay_line_start_id` | reference |  | → `screenplay_lines` (resolves to `screenplay_line_start_uuid` in a result, §12.1.2) |
+| `screenplay_line_end_id` | reference |  | → `screenplay_lines` (resolves to `screenplay_line_end_uuid` in a result, §12.1.2) |
 | `beat_id` | reference |  | → `story_beat` (resolves to `beat_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |

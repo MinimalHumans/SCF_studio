@@ -80,8 +80,13 @@ describe("the fixture's mix", () => {
     async () => {
       const assets = await listAssets(fixture.exec);
       const tiers = assets.map((a) => previewCapability(a.format).tier);
-      expect(tiers.filter((t) => t === "native").length).toBe(5);
+      // Six native since schema 2.13, which added a concept painting
+      // reachable only through a polymorphic asset_relationship (§8.6).
+      // The point of the test is the MIX, not the total.
+      expect(tiers.filter((t) => t === "native").length).toBe(6);
       expect(tiers.filter((t) => t === "decoded").length).toBe(2); // exr, glb
       expect(tiers.filter((t) => t === "named").length).toBe(1);   // zip
+      expect(tiers.filter((t) => t !== "native").length)
+        .toBeGreaterThanOrEqual(3);
     });
 });

@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.12",
+  "schemaVersion": "2.13",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -8332,20 +8332,22 @@
         {
           "name": "screenplay_line_start_id",
           "label": "Screenplay Line Start",
-          "fieldType": "integer",
+          "fieldType": "reference",
           "sqlType": "INTEGER",
           "required": false,
           "tab": "Screenplay",
-          "autoInjected": false
+          "autoInjected": false,
+          "referenceEntity": "screenplay_lines"
         },
         {
           "name": "screenplay_line_end_id",
           "label": "Screenplay Line End",
-          "fieldType": "integer",
+          "fieldType": "reference",
           "sqlType": "INTEGER",
           "required": false,
           "tab": "Screenplay",
-          "autoInjected": false
+          "autoInjected": false,
+          "referenceEntity": "screenplay_lines"
         },
         {
           "name": "beat_id",

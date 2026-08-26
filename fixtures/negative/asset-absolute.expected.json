@@ -1,8 +1,8 @@
 {
   "about": "An absolute identifier. Representable on purpose (§8.2), non-portable, and a warning rather than an error.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.12",
-  "fileSchemaVersion": "2.12",
+  "toolSchemaVersion": "2.13",
+  "fileSchemaVersion": "2.13",
   "source": "fixtures/negative/build/asset-absolute.scf",
   "counts": {
     "error": 0,

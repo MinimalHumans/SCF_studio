@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.13, spec 0.47 |
 | **Author** | Found by the fifth independent reader run (G-04); written up by the maintainers |
 | **Opened** | 2026-08-25 |
 | **Affects** | `schema/entity_registry.py`, `registry.json`, spec §12.1.2 (no wording change), `Q13`/`Q15` results for any file with `clip` rows |
@@ -127,4 +127,28 @@ revisions removing, and would resolve `external_id` if an entity called
 
 ## Resolution
 
-*Left empty until the proposal is accepted, declined or deferred.*
+**Accepted and implemented**, schema 2.13 / spec 0.47, as proposed and
+with no change to the shape of the fix.
+
+Both columns are declared as references to `screenplay_lines` in
+`entity_registry.py`, and §12.1.2 resolves them with the derivation it
+already had. No new rule was written.
+
+The open questions resolved as follows:
+
+- **`uuidLookupForAll` needed no change.** `uuidLookupFor` issues
+  `SELECT id, uuid FROM <table>` and is indifferent to whether the table
+  is a registry entity, so the reference target indexes like any other.
+  §12.1.2 records that a reference may target a `uuidExtraTable`; this
+  is the first that does.
+- **`clip` looks like a special case.** `screenplay_prop_tags` anchors
+  to a line by uuid and character offsets rather than by row id, so the
+  format already preferred the other approach everywhere it had the
+  choice. No general rule was needed.
+- **Whether a line range is better as a span** is untouched and remains
+  arguable. It would make this moot rather than wrong.
+
+**The fixture gained two clips**, which the proposal did not ask for and
+which the change is worthless without: `clip` was empty, so the defect
+was invisible to all sixteen published results. Disabling the fix now
+changes the blessed output.

@@ -51,7 +51,11 @@ describe("initDatabase parity with the fixture", () => {
   test("schema_version stamped identically", async () => {
     const ourMeta = await readMeta(fresh.exec);
     const theirMeta = await readMeta(fixture.exec);
-    expect(ourMeta["schema_version"]).toBe("2.12");
+    // Read from the registry rather than written here. The literal was
+    // "2.12" and had to be hand-edited at every schema bump — a second
+    // place the version lives. The assertion that matters is the one
+    // below: what we stamp equals what the fixture carries.
+    expect(ourMeta["schema_version"]).toBe(registry.schemaVersion);
     expect(ourMeta["schema_version"]).toBe(theirMeta["schema_version"]);
   });
 

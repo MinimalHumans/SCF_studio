@@ -6,6 +6,30 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.13
+
+**`clip.screenplay_line_start_id` and `clip.screenplay_line_end_id`
+declared as references** to `screenplay_lines`. They were plain
+integers, so spec §12.1.2's resolution rule could not reach them and
+both survived projection as bare row ids — file-local values in a result
+that is supposed to describe the story.
+
+**No DDL change, and no file needs converting.** The generator emits no
+foreign key for a registry reference, so the physical schema is
+identical to 2.12's apart from its version comment. A 2.12 file opened
+by a 2.13 reader projects the two columns as
+`screenplay_line_start_uuid` and `_end_uuid` with no migration.
+
+This is the first reference anywhere in the schema whose target is a
+`uuidExtraTable` rather than one of the 99 entities. `screenplay_lines`
+carries uuid row identity on spec §6.1's terms, so there is a uuid to
+resolve to; `uuidLookupFor` indexes any table with `id` and `uuid` and
+needed no change.
+
+The old drop-every-column-ending-`_id` rule had been hiding this by
+catching both columns for the wrong reason. Spec 0.40 replaced that rule
+with one that reads declarations, and this is the declaration it needed.
+
 ## 2.12
 
 **`project.scene_numbering` removed.** It was deprecated in 2.11 when the

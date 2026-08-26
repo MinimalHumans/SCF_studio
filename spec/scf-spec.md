@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.46 (draft) — not a release.**
-Describes schema version **2.12**.
+**Version 0.47 (draft) — not a release.**
+Describes schema version **2.13**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.46` (draft).
+- **Specification version** — this document. Currently `0.47` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -338,7 +338,10 @@ them the same way, so that adding an entity requires no code change:
   one (§3.2).
 - **Asset usage.** Every field anywhere in the schema whose
   `referenceEntity` is `asset` counts as a use of that asset for the
-  purpose of §8.6.
+  purpose of §8.6. **A polymorphic column counts too**: where a column
+  declares a `polymorphicType` and the sibling it names holds `asset` on
+  a given row, that row uses the asset its column points at. Both are
+  derived from the registry and neither may be written as a list.
 - **Direction cascades.** An entity's `refines` list is its parents in
   the direction cascade, and the cascade chain is the closure of that
   list (§7.2). `refines` is the most semantically loaded field in the
@@ -1062,6 +1065,20 @@ maintained list.
 row whose only inbound reference is its own successor is still an
 orphan.
 
+**A polymorphic reference is a reference.** `asset_relationship.entity_id`
+is polymorphic on `entity_type`, and `entity_type` is not a closed set,
+so a row may legitimately relate one asset to another — a plate to the
+concept painting it came from. Reading §2.3's first sentence alone
+excludes such a row from the usage count and reports as an orphan an
+asset the file plainly references. An implementation MUST resolve the
+`polymorphicType` sibling per row and count the reference where it
+resolves to `asset`.
+
+Until schema 2.13 the fixture's `asset_relationship` table was empty, so
+an implementation that got this right and one that did not produced
+identical `asset.orphan` findings on every published case. It now
+carries a concept painting reachable only through that column.
+
 ### 8.7 Content metadata is read, never stored
 
 `size_bytes` and `source_mtime` are stored, because they are hints about
@@ -1442,6 +1459,12 @@ id that must not travel. **The registry says which columns these are**,
 through `polymorphicType` (§2.3), which names that sibling column. The
 sibling itself — `entity_type`, `subject_type` — is an ordinary stored
 value and is kept.
+
+A reference MAY target a table in `uuidExtraTables` (§1.3.1) rather than
+one of the 99 entities — `clip.screenplay_line_start_id` and `_end_id`
+point at `screenplay_lines`, which carries uuid identity on §6.1's terms,
+and resolve to `screenplay_line_start_uuid` and `_end_uuid` like any
+other reference.
 
 **A column whose name merely ends `_id` MUST NOT be dropped on that
 basis.** Until 0.40 this section said the opposite, and the difference
