@@ -17,6 +17,73 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.48 — 2026-08-26
+
+*Describes schema 2.13.*
+
+**Editorial.** No requirement changes. §8.2 says out loud a permission it
+already granted, and the documentation stops contradicting it.
+
+### The documentation forbade something the format allows
+
+`docs/authoring-guide.md` said:
+
+> **Never paste an absolute path.** It will work on your machine and
+> nowhere else, and the format reports it as a defect rather than
+> silently accepting it.
+
+**None of that is the format's position.** §8.2 says absolute paths are
+representable, `asset.identifier_absolute` is a **warning**, and the
+negative fixture's own description reads *"Representable on purpose
+(§8.2), non-portable, and a warning rather than an error."*
+
+What happened is narrower and worth naming: the reference editor writes
+rooted addresses by default, which is a good default, and the
+documentation wrote that preference down as a rule. A tool's convention
+became a prohibition in the one document a newcomer reads first.
+
+§8.2 now states the permission rather than leaving it to be inferred
+from a severity: an absolute identifier is legal, a conforming
+implementation MUST NOT refuse a file for carrying one, and **`..` is
+the case that is an error** — because where it lands depends on where
+its root sits.
+
+### Nothing said that a project can have more than one root
+
+`@project` is the common case. It is not the only one: §10.2 reserves
+`@plates` and `@nas`, the resolver passes a root name through, and a
+project whose material is spread across volumes can address all of it
+portably.
+
+**None of the five reader-facing documents mentioned this**, which is
+why the multi-drive case looked like it required absolute paths. The
+authoring guide and the glossary now cover it, with the point that a
+second studio maps the same roots at their own locations and every
+address still resolves.
+
+The reference editor supports `@project` only, so the portable answer to
+that use case is currently unavailable in it. That is separate work.
+
+### And a contradiction the documentation was hiding
+
+§8.3 defines `out-of-root` as **"resolvable but non-portable"**, and
+`resolveIdentifier` returns that state for an absolute path **without
+ever calling the locator** — no size, no mtime, no confirmation the file
+exists, even on the machine where the path is correct. Its own detail
+string says the path "resolves on this machine", which is precisely what
+the code declines to find out.
+
+`proposals/0003` argues for attempting the lookup and keeping the state.
+§8.2 records in the meantime that an implementation **MAY** resolve an
+absolute path and MUST keep `out-of-root` if it does, so the sentence a
+reader hits first is no longer wrong about what is permitted.
+
+This is the second time a preference of the reference implementation's
+was written into a document as though it were a rule of the format's.
+The first was §12.9.1's severity table, corrected in 0.40.
+
+---
+
 ## 0.47 — 2026-08-25
 
 *Describes schema **2.13**.*

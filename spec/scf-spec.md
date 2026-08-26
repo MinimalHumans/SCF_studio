@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.47 (draft) — not a release.**
+**Version 0.48 (draft) — not a release.**
 Describes schema version **2.13**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,7 +104,7 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.47` (draft).
+- **Specification version** — this document. Currently `0.48` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
   `schema/schema_meta.py`. Currently `2.12`. Increments on any
@@ -965,6 +965,19 @@ supplied by the consuming environment and MUST NOT be stored in the
 
 Absolute paths are representable. They MUST be flagged non-portable and
 MUST resolve to `out-of-root`.
+
+**This is a statement about portability, not a prohibition.** An
+absolute identifier is legal, `asset.identifier_absolute` is a
+**warning** rather than an error, and a conforming implementation MUST
+NOT refuse a file for carrying one. A path containing `..` is the
+different case: it is an error (§9.4) and MUST NOT be resolved, because
+where it lands depends on where its root happens to sit.
+
+An implementation **MAY** attempt to locate an absolute path and report
+its size, and MUST keep the state at `out-of-root` if it does — the
+address is reachable here and nowhere else, which is what that state
+means. An implementation whose environment cannot open one, such as a
+browser, reports `out-of-root` with nothing found, and is conforming.
 
 ### 8.3 Resolution states
 

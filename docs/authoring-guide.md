@@ -160,9 +160,47 @@ folder that whoever opens the file supplies. Two studios with entirely
 different storage can open the same `.scf` and resolve the same assets,
 because nothing in the file hard-codes a path.
 
-**Never paste an absolute path.** It will work on your machine and
-nowhere else, and the format reports it as a defect rather than silently
-accepting it.
+### More than one root
+
+`@project` is the common case and not the only one. **A project's
+material can live under several roots** — plates on one volume, a
+reference corpus on another, finals on a NAS — and each is mapped
+independently by whoever opens the file:
+
+```
+@project/ref/eleanor/voice_01.wav
+@plates/sh010/sh010_v004.exr
+@nas/corpus/session_03/take_12.wav
+```
+
+`@plates` and `@nas` are named by the specification (§10.2); a project
+may use others. **This is the right answer when your material is spread
+across drives**, because the addresses still travel — a second studio
+maps the same three roots at their own locations and every asset
+resolves.
+
+The mapping from a root to a folder is never stored in the `.scf`. That
+is what makes the file portable, and it is why a root nobody has mapped
+reports `unaddressed` — "I did not look" — rather than `missing`.
+
+### Absolute paths
+
+**Absolute paths are allowed.** `/Volumes/plates/sh010.exr` is a valid
+identifier, the format represents it deliberately, and it resolves to
+`out-of-root` with a **warning** — not an error, and not a refusal.
+
+The warning says one thing only: this address will not travel. It is
+true on your machine and false on anyone else's, and the format would
+rather tell you that than pretend otherwise.
+
+Prefer a named root where you can, because it costs nothing and the file
+stays portable. Reach for an absolute path when you genuinely have to —
+and the editor writes rooted addresses by default, which is a preference
+of the editor's rather than a rule of the format's.
+
+**A `..` segment is a different matter and IS an error.** An address
+that climbs above its own root is never resolved, because where it lands
+depends on where the root happens to be.
 
 Assets attach in layers — a global bundle for a character, a binding for
 a scene, an override for a specific shot — and the media query returns

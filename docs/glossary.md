@@ -109,6 +109,18 @@ folder that the machine reading the file supplies. Two studios can open
 the same `.scf` with entirely different storage and both resolve the
 same assets, because the file never hard-codes a path.
 
+A project may use **several roots** — `@project` for its own content,
+and others such as `@plates` or `@nas` for material on separate volumes.
+Each is mapped independently by whoever opens the file, so a project
+spread across drives is still portable.
+
+**Absolute path** — an address that names a location directly, like
+`/Volumes/plates/sh010.exr`, rather than through a root. **Permitted**,
+and represented deliberately: it resolves to `out-of-root` and raises a
+warning saying it will not travel. That is a statement about
+portability, not a defect. A path containing `..` is a different case
+and is an error, because where it lands depends on where its root sits.
+
 **Resolver** — whatever turns an identifier into actual bytes. Not part
 of the file; part of the environment reading it.
 

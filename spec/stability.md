@@ -70,6 +70,7 @@ about it is ceremonial.
 | Bare entity names in prose are checked | — | Provisional | Yes | `check_spec_references.py` since 0.44 validates backticked snake_case identifiers, not only `entity.column`. The 0.40 version could not have caught `scene_emotional_design`. |
 | `clip`'s screenplay line references | §12.1.2 | Provisional | Yes | Declared in schema 2.13. First reference in the schema targeting a `uuidExtraTable`; exercised by two fixture clips. |
 | Polymorphic references count as asset usage | §2.3, §8.6 | Provisional | Yes | Stated in 0.47 and exercised by a fixture asset reachable only through `asset_relationship.entity_id`. |
+| Absolute identifiers are permitted | §8.2 | Provisional | Yes | Stated explicitly in 0.48: a warning, never a refusal, and `..` is the error instead. Whether an implementation may resolve one to bytes is 0003 and open. |
 | The proposal path | — | Provisional | Yes | `proposals/` since 0.32. **Used as of 0.47**: 0001 accepted and implemented, 0002 still open — its question (should a clip be deleted with its scene?) is a production decision rather than a schema one. |
 | Framework columns | §2.2 | Stable | Yes | |
 | Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `sceneOps.ts`. Derived, so new entities are covered without an edit. |

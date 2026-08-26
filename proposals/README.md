@@ -94,3 +94,7 @@ They are here rather than fixed directly because neither is a defect:
 each is a decision about what the format should do, with a defensible
 answer on both sides. That is the distinction this directory exists
 for.
+
+**0003 came from a use case rather than a reader run** — a studio with
+corpus footage across several volumes — and is the first to arrive that
+way.
