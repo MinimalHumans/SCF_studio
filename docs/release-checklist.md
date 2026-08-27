@@ -2,8 +2,9 @@
 # What an "official" SCF release contains
 
 A checklist, with OpenUSD as the reference example. Status against
-`SCF_studio@main` as of 2026-08-23, **rev 12** — spec 0.42, schema 2.12,
-tag `schema-2.12` published.
+`SCF_studio@main` as of 2026-08-26, **rev 13** — spec 0.49, schema 2.13.
+The published tag is still `schema-2.12`; **2.13 shipped in 0.47 and has
+not been tagged.**
 
 ✅ have · ◑ partial · ○ missing · ⚠️ needs attention
 
@@ -16,43 +17,50 @@ reach it.
 
 ## Where this stands
 
-**Ten of eleven sections are complete.** Section 7 is not, and nothing
-else on this list is technical.
+**Eleven of eleven sections are complete or complete-but-for-a-decision.**
+Section 7 — the block rev 10, 11 and 12 each named as the only
+substantial thing left — closed between rev 12 and this one.
 
-Since rev 11 the specification has been through **four independent
-reader runs' worth of correction** and seven revisions. 0.40 and 0.41
-answered all twenty-two findings of the fourth run, including two the
-run rated critical:
+Since rev 12 the specification has been through **a fifth independent
+reader run** and seven revisions:
 
-- **§12.1.2 was deleting authored data.** "Any column ending `_id`" also
-  matched `external_id` on ten entities. Twelve columns gone from every
-  projected row, and **no published artifact could catch it** — the
-  fixture authors no `external_id`, so a correct implementation and a
-  data-losing one were byte-identical on all sixteen results.
-- **§6.6 named two of six `lifecycle_status` values**, while §2.1 says
-  the registry wins. Two conforming readers would have answered
-  different questions about an `archived` scene.
+- **0.44** fixed run 4's and run 5's shared critical finding: §12.13
+  named a cascade leaf, `scene_emotional_design`, that the registry does
+  not define. The member was `[]` for every file that could exist and
+  the blessed artifact recorded the empty array as correct.
+- **0.47** landed **proposal 0001** — `clip.screenplay_line_start_id`
+  and `_end_id` declared as references — with a schema bump to 2.13 and
+  two fixture clips, because the defect was invisible while the table
+  was empty.
+- **0.48** removed a prose rule the format does not hold: the authoring
+  guide forbade absolute paths that §8.2 explicitly permits.
+- **0.49** gave Q04 the scene's own text (§12.17.1), closing the last
+  place where the reference editor printed a promise about a work
+  package that had already shipped.
 
-Both are fixed by making the registry declare what the prose had been
-guessing at, and CI now checks that every `entity.column` written in the
-specification resolves against it.
+The **proposals directory now has live entries** rather than only a
+template: 0001 implemented, 0002 and 0003 open.
 
 ## Start here in the next session
 
-1. **Section 7 — documentation for people who are not implementing the
-   format.** The only substantial block left. Four independent readers
-   have each started from §0.1, which is written for an implementer. The
-   query and entity references are generated as of 0.37 and the docs
-   site ships as of 0.39; what remains is prose: "what is SCF", an
-   authoring guide, a walkthrough, a FAQ.
-2. **Publish `@minimalhumans/scf-core`** at 1.0, not before. Packaging
-   is proven end to end by CI; only `"private": true` and the npm org
-   stand in the way. Held because npm blocks unpublish after 72 hours.
-3. **A fifth reader run**, eventually. Worth doing when section 7 has
-   something in it, so the run tests the documents a stranger would
-   actually start from.
+1. **Tag `schema-2.13`.** It shipped in 0.47 and the published tag is
+   still 2.12. Annotated, per §10's reasoning about steps nobody can
+   run.
+2. **The editor MVP** — [`editor-mvp.md`](editor-mvp.md), new in this
+   revision. Its live item is the three Part 3 features the fixture does
+   not exercise: `performance_beat.line_ref` is null on all fourteen
+   beats, `screenplay_prop_tags` is empty, and all three version tables
+   are empty. That is the invisible-defect class this list has been
+   fighting since rev 10, applied to the editor rather than the format.
+3. **Publish `@minimalhumans/scf-core`** at 1.0, not before. Unchanged
+   from rev 12: packaging is proven end to end by CI, and only
+   `"private": true` and the npm org stand in the way. Held because npm
+   blocks unpublish after 72 hours.
+4. **A sixth reader run**, now that section 7 exists — so a run finally
+   tests the documents a stranger would actually start from, rather than
+   §0.1.
 
-## Where four reader runs left the format
+## Where five reader runs left the format
 
 | Run | Result | What was wrong |
 |---|---|---|
@@ -60,6 +68,7 @@ specification resolves against it.
 | 2 | 5/10 queries, claim with 8 divergences | The **artifacts** contradicted the spec, from code bugs |
 | 3 | 15/16 queries, claim with 11 divergences | The **spec** was wrong; the artifacts faithfully recorded it |
 | 4 | **14/16 queries, 11/11 negatives**, claim declined | The spec was **silent in shape** where it was complete in content — and two artifacts were wrong |
+| 5 | **15/16 queries, 11/11 negatives**, 24 guesses | The spec was largely **right**; what was left was **unexercised** — two defects only an empty table was hiding |
 
 Run 3's central finding — that the `.result.json` files had become the
 specification for §12 — was answered in 0.29. Run 4 tested that fix and
@@ -73,6 +82,14 @@ document. 0.40 closed that.
 **Run 4 declined an unqualified claim**, not because a conformance step
 failed but because it disbelieved two normative artifacts. It was right
 about both.
+
+**Run 5 found the pattern rather than an instance.** Its two most
+serious findings were both cases where the fixture's empty tables made a
+conforming and a non-conforming reader byte-identical — the same shape
+as run 4's `external_id` finding, arriving through a different door.
+Proposal 0001 closed one by declaring the columns *and* authoring two
+clip rows; the declaration alone would have left the defect exactly as
+invisible as it was.
 
 **The two findings it rated critical were invisible to every published
 artifact.** That is the argument for running these until one comes back
@@ -156,30 +173,35 @@ quiet, rather than for deciding the format has been read.
 | ✅ | Lockfiles committed and in sync | |
 | ✅ | **Licence corrected** | `scf-core/package.json` said MIT against an Apache-2.0 root, flagged since rev 2 |
 | ✅ | **Built distribution** | `dist/` with declarations. A downstream TypeScript project that emits JS could not compile against the package at all before this |
-| ✅ | **Stable public API surface** | 0.34. `src/index.ts` is an explicit list organised by conformance role — 224 names, down from 259 — and CI enforces that every type named in a public signature is itself public |
+| ✅ | **Stable public API surface** | 0.34. `src/index.ts` is an explicit list organised by conformance role — **226 names**, down from 259 — and CI enforces that every type named in a public signature is itself public |
 | ✅ | **`npx scf-check` works** | It did not: Node refuses to strip types under `node_modules`, so the CLI worked from a checkout and failed once installed. It now resolves through the package's own entry points |
 | ✅ | **Packaging proven where consumers meet it** | `pack-test` packs a tarball, installs it, and checks a JS consumer, a TS consumer that emits, and the installed bin. In CI |
-| ◑ | Independent implementations: three | None maintained; none is the second *maintained* implementation the format needs |
+| ◑ | Independent implementations: **five** | None maintained; none is the second *maintained* implementation the format needs |
 | ○ | **Published package** | Still `"private": true`, **deliberately**. npm blocks unpublish after 72 hours and the format is pre-1.0 with everything disposable by policy (§11.0). Publish at 1.0 |
 | ○ | Hosted editor build | |
 
-## 7. Documentation set — the remaining block
+## 7. Documentation set — ✅ complete
 
 | | Item | Notes |
 |---|---|---|
 | ✅ | README, design record, glossary, CI documentation | |
 | ✅ | `docs/story-structure-spec.md` renamed | It was a second document called a spec, next to the real one |
 | ⚠️ | ~38 inbound references to `conventions.md` meaning "the rules" | The nine user-facing `help_text` strings were repointed at spec sections in 0.30; the rest are prose |
-| ○ | **"What is SCF" for a cold reader** | Three readers have started from §0.1, which is written for an implementer |
+| ✅ | **"What is SCF" for a cold reader** | `what-is-scf.md`. Written for someone who has not decided whether to care, rather than for someone about to implement |
 | ✅ | **Query reference, entity reference** | Generated, not written — from §12, the published results, `queryPaths.ts` and the registry. CI-checked, explicitly not normative |
-| ○ | Authoring guide, "what is SCF", walkthrough, docs site, FAQ | **The remaining block.** Prose, plus a docs-site build |
+| ✅ | **Authoring guide, walkthrough, FAQ, docs site** | All in `docs/`; the site builds and its cross-references resolve in CI |
+| ✅ | **Editor design record** | `editor-mvp.md`, new in rev 13. The second-implementation plan lived only as an upload, and four `Part N` references in the source pointed at a document no contributor could open |
 
-**The two references are generated**, as of 0.37, for the same reason
-every other derived document here is: a hand-written entity reference
-over 99 entities is a second description of the registry, free to drift
-from it within a week. A **docs site** is build and CI work. What is
-left — "what is SCF", the authoring guide, the walkthrough, the FAQ —
-is writing, and no tooling helps.
+**The block that had not moved since rev 10 has moved.** What made it
+hard was never tooling: the two documents that could be generated —
+the query and entity references — landed in 0.37, and the site in 0.39.
+The rest was prose for people not implementing the format, and prose is
+the one thing on this list nothing automates.
+
+One caveat worth keeping in front: **none of it has been read by a
+stranger yet.** Five reader runs have each started from §0.1 because
+that was all there was. The value of section 7 is untested until a run
+starts from `what-is-scf.md` instead.
 
 ## 8. Licensing and IP — ✅ complete
 
@@ -196,7 +218,7 @@ is writing, and no tooling helps.
 | | Item | Notes |
 |---|---|---|
 | ✅ | Change procedure (nine steps), `CONTRIBUTING.md` | |
-| ✅ | **A proposal/RFC path** | `proposals/`, with a template and a stated procedure. Was the most conspicuous gap on this list: three outside implementers produced roughly seventy findings and none had anywhere to file one |
+| ✅ | **A proposal/RFC path** | `proposals/`, with a template and a stated procedure — and, since rev 12, **live entries**: 0001 implemented in 0.47, 0002 and 0003 open. Was the most conspicuous gap on this list: outside implementers produced roughly seventy findings and none had anywhere to file one |
 | ✅ | `CODE_OF_CONDUCT.md`, `SECURITY.md`, issue templates, PR template | |
 | ✅ | **Who decides** | `GOVERNANCE.md`. States plainly that the bus factor is two |
 | ✅ | Lockfile rule in `conventions.md` §8 | |
@@ -207,7 +229,7 @@ is writing, and no tooling helps.
 | | Item | Notes |
 |---|---|---|
 | ✅ | **CI — green** | Three jobs. Every artifact in `--check` mode, SPDX coverage, the API surface, the packaging test, and the fixture rebuild |
-| ✅ | **A git tag** | `schema-2.12`, annotated. Signed tags need a key this project does not have, and a step nobody can run is a step that gets skipped |
+| ⚠️ | **A git tag** | `schema-2.12`, annotated. **`schema-2.13` shipped in 0.47 and is not tagged** — the one item on this list that regressed since rev 12. Signed tags need a key this project does not have, and a step nobody can run is a step that gets skipped |
 | ✅ | **Reproducible fixture build** | 0.35. Published DDL + `hollow_creek.data.json` + the screenplay, from nothing, **byte-identical across runs**, checked in CI |
 | ✅ | **`VERSION` in the app** | Topbar shows the app version beside the schema version, commit and build date in the tooltip |
 | ○ | A GitHub Release, release notes, downloadable artifacts | Describes a release. Worth doing at 1.0 and not before |
@@ -217,40 +239,43 @@ is writing, and no tooling helps.
 
 | | Item | Notes |
 |---|---|---|
-| ◑ | Proof the format is implementable outside TypeScript | Three times, independently |
+| ◑ | Proof the format is implementable outside TypeScript | **Five times, independently** — all in Python, all discarded after the run |
 | ○ | Announcement, landing page, citable reference, bridge docs, positioning document | Deferred deliberately to a final pass before release |
 
 ---
 
-## The short version, rev 12
+## The short version, rev 13
 
-**Sections 0, 1, 1A, 2, 3, 4, 5, 8, 9, 10 and 11's technical half are
-complete.** Section 6 is complete but for a publish decision that is
-deliberately held until 1.0.
+**Every section on this list is complete, or complete but for a decision
+taken deliberately.** Section 6's publish is held until 1.0 because npm
+blocks unpublish after 72 hours. Section 11's announcement half is
+deferred to a final pass. Section 7 — the block rev 10, 11 and 12 each
+named as the largest untouched thing here — is done.
 
 **`stability.md` carries no Unstable rows.** The last three closed in
 0.38, and by that document's own definition — a 1.0 is the act of moving
 every Unstable row to Provisional — that is what a 1.0 is. It is not a
-claim that the format is finished, and the paragraph below is why.
+claim that the format is finished.
 
-**What is missing is section 7**, and it has not moved since rev 10
-called it the largest untouched block. Everything else on this list has.
-The two items that were generated rather than written — the query and
-entity references — landed in 0.37, and the docs site in 0.39. What
-remains is prose for people who are not implementing the format: "what
-is SCF", an authoring guide, a walkthrough, a FAQ. Four independent
-readers have each started from §0.1, which is written for an implementer.
+**Two things stand between here and a tag worth calling a release.**
+Neither is large. `schema-2.13` is untagged, which is a five-minute
+regression. And the reference editor has three shipped features the
+published fixture does not exercise — beat anchoring, prop tags,
+versions — which is not a documentation gap but the same invisible-defect
+class that produced the two most serious findings of the last two reader
+runs, sitting in the editor rather than in the format.
+[`editor-mvp.md`](editor-mvp.md) carries that list.
 
-That block is what decides whether anyone outside this project ever
-tries.
-
-**And one thing worth carrying forward.** Four reader runs have now
+**And one thing worth carrying forward.** Five reader runs have now
 found defects that no test, no artifact and no amount of internal review
-had caught, and the two most serious were **invisible to every published
+had caught, and the most serious were **invisible to every published
 artifact** — the fixture could not distinguish a correct implementation
 from a broken one. Each round since has added a check for the class
 rather than the instance: generated-and-checked artifacts, a packaging
 test that runs where a consumer runs, a prose checker that resolves
 every name against the registry, a fixture that now exercises its own
-fallbacks. The list of checks is a better record of what this project
-learned than the list of fixes.
+fallbacks, and — from run 5 — the rule that **declaring a thing and
+authoring a row that exercises it are one change, not two.**
+
+The list of checks is a better record of what this project learned than
+the list of fixes.

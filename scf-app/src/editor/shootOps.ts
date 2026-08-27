@@ -32,31 +32,13 @@ export function summarize(beats: number, shots: number): string {
 
 /**
  * The lines of one scene, located by its HEADING rather than by every
- * line's own scene_id.
+ * line's own scene_id — §3.4, and now §12.17.1's `screenplay` member.
  *
- * Body lines do carry a scene_id — it is threaded onto them at commit —
- * but that threading is derived state and can be absent or stale: a
- * line typed after the last commit has none, and a project written
- * before the threading existed has none at all. The heading's link is
- * the reliable one, because commit enforces one scene per heading. So:
- * find the heading, then take everything up to the next heading, which
- * is what "the scene" means in a screenplay anyway.
- *
- * Bind the scene id three times.
+ * The derivation moved into scf-core at spec 0.49, when Q04 needed the
+ * same rule. It is re-exported here so the Shoot tab's call sites do
+ * not change and so there is exactly one description of a MUST NOT.
  */
-export const SCENE_SCRIPT_SQL =
-  "SELECT line_type, content FROM screenplay_lines " +
-  "WHERE line_order >= COALESCE(" +
-  "    (SELECT MIN(line_order) FROM screenplay_lines " +
-  "     WHERE scene_id = ? AND line_type = 'heading'), " +
-  "    (SELECT MIN(line_order) FROM screenplay_lines WHERE scene_id = ?), " +
-  "    9e18) " +
-  "  AND line_order < COALESCE((SELECT MIN(line_order) " +
-  "     FROM screenplay_lines WHERE line_type = 'heading' " +
-  "       AND line_order > COALESCE(" +
-  "         (SELECT MIN(line_order) FROM screenplay_lines " +
-  "          WHERE scene_id = ? AND line_type = 'heading'), -1)), 9e18) " +
-  "ORDER BY line_order";
+export { SCENE_SCRIPT_SQL } from "@scf-core/screenplay/sceneScript.ts";
 
 export async function addBeat(exec: SqlExec,
                               sceneId: number): Promise<void> {

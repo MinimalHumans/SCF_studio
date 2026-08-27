@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.48 (draft) — not a release.**
+**Version 0.49 (draft) — not a release.**
 Describes schema version **2.13**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -2161,6 +2161,7 @@ Parameter: `scene`.
 | `location`, `locationVariant` | The location, and `{ variant, mismatches }` — see below. |
 | `detail` | Scene-level design entities, each `{ entity, rows }`, empty groups omitted. |
 | `blocking`, `stagingBeats` | Staging, beats in `beat_order`. **`blocking` is an array** — a scene may carry several — and both hold projected rows. |
+| `screenplay` | The scene's own text — §12.17.1. |
 
 The `detail` list is fixed by this section rather than derived — what
 belongs in a scene package is an editorial choice, as Q00's layer list
@@ -2201,6 +2202,70 @@ guessing — and one did guess, differently.
 Q04 does **not** nest Q03 or Q07 despite covering some of the same
 ground. It assembles its own answer, and §12.1.3 explains why that is
 described rather than changed.
+
+#### 12.17.1 The screenplay member
+
+**`screenplay` is an array of projected rows from `screenplay_lines`,
+ordered by `line_order` ascending.**
+
+Which lines: **the scene's heading line, and every line after it up to
+but not including the next heading line by `line_order`.** This is §3.4
+restated as a result, and the rule it restates is a MUST NOT: body
+lines carry a `scene_id` threaded at commit, and an implementation
+answering this member from that column will answer wrongly for any line
+typed since the last commit and for every file written before the
+threading existed.
+
+The **terminating bound is the next heading, whichever scene owns it**.
+A cut scene's heading still bounds the preceding scene's text, and its
+lines are absent from this member because the bound stops before them
+rather than because anything filtered them — §6.6.1 is about rows in a
+result, and a screenplay line carries no `lifecycle_status` to filter
+on.
+
+**`screenplay` is `[]` when the scene has no heading line**, and that is
+an answer rather than an absence: a scene authored in the database that
+the screenplay has not reached yet. Scene 17 of the conformance fixture
+is exactly this case. Where a scene has no heading but some line carries
+its `scene_id`, an implementation MUST start at the lowest such
+`line_order` — the derived column is not a source of truth, but it is
+better than answering nothing when it is the only anchor present.
+
+**Projection.** `screenplay_lines` is a `uuidExtraTable` (§1.3) and
+carries uuid identity on §6.1's terms, so its rows are **projected rows
+under §12.1.2** like any other: `{ uuid, fields }`, `id`, `created_at`
+and `updated_at` omitted, nulls and empty strings omitted, `metadata`
+carried as stored text. The only difference is where the column names
+come from — `screenplay-tables.json` (§1.3.1), not the registry.
+
+Because the registry cannot declare them, **this section declares the
+reference columns**, and they are the whole set:
+
+| Column | Resolves to |
+|---|---|
+| `character_id` | `character_uuid` |
+| `location_id` | `location_uuid` |
+
+**`scene_id` MUST be omitted.** It is neither resolved nor carried. It
+is a stored derived value under §3.4 and publishing it in a normative
+answer would hand a consumer the one column the specification tells
+implementations not to trust.
+
+`line_type` is a **stored value**, and its vocabulary is §1.3.1's closed
+fifteen — this section adds nothing to it. `content` is a stored value
+and is carried verbatim, including whatever the file holds; a blank line
+is a row whose `content` is empty, so §12.1.2's omit-empties rule leaves
+it with a `line_type` and a `line_order` and nothing else, which is
+correct and is what the published result shows.
+
+**Why the member exists at all.** Q04 is the scene as a unit of work,
+and until 0.49 it answered with everything addressed to a scene except
+the scene. The gap was visible in the reference editor, which printed
+*"Screenplay text joins this package when Part 3 lands"* in its rendered
+view and in the prompt-ready block a writer pastes into an assisted
+writing session — a note referring to a work package that had shipped.
+A result that carries the design, the cast, the props and the staging
+but not the words is not the complete context for a scene.
 
 ---
 

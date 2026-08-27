@@ -17,6 +17,56 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.49 — 2026-08-26
+
+*Describes schema 2.13.*
+
+**Minor.** Q04 gains a `screenplay` member (§12.17.1). No schema change:
+the data has been in every conforming file since the screenplay tables
+existed, and no query carried it.
+
+### Q04 answered with everything about the scene except the scene
+
+§12.17 assembles the complete context for a scene — lineage, beats,
+cast, props, location and its variant, the scene-level design layer,
+staging — and did not carry the scene's text. The reference editor said
+so in its own output, in the rendered view and in the prompt-ready block
+a writer pastes into an assisted writing session:
+
+> *Screenplay text joins this package when Part 3 lands.*
+
+Part 3 — the screenplay editor of the second-implementation plan — had
+shipped. The sentence had become false in the product and in every block
+copied out of it, and the reason nobody caught it is that the work
+package it named existed only in a design document that was never in the
+repository.
+
+### What the new member had to settle
+
+`screenplay_lines` is a `uuidExtraTable`, so §12.1's projection rules
+reach it only for identity — the registry declares none of its columns
+and none of its references. §12.17.1 therefore states its own shape
+rather than inheriting one, which is the lesson of §12.1.4: five of
+sixteen sections could not be shaped correctly from the document, and a
+sixth would have joined them.
+
+Three decisions are worth naming:
+
+- **`scene_id` is omitted rather than resolved.** §3.4 says
+  implementations MUST NOT rely on it. A normative answer that carried
+  it would invite exactly that.
+- **The terminating bound is the next heading by `line_order`, whichever
+  scene owns it** — including a cut one. Those lines are absent because
+  the bound stops before them, not because §6.6.1 filtered them; a
+  screenplay line has no `lifecycle_status` to filter on.
+- **An empty array is an answer.** Scene 17 of the fixture is a scene
+  the screenplay has not reached, and it is the case that keeps the
+  member from being guessed as "never empty".
+
+`Q04.result.json` is re-blessed; it now carries scene 12's twenty lines.
+
+---
+
 ## 0.48 — 2026-08-26
 
 *Describes schema 2.13.*

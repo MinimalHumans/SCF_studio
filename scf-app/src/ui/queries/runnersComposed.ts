@@ -9,7 +9,9 @@
  * ordered context stack, most specific last.
  *
  * Known absences stated in output rather than hidden:
- *  - Q04's screenplay text arrives with Part 3 (lines-are-rows storage).
+ *  - Q04 carries the scene's text since spec 0.49 (§12.17.1), located
+ *    by the scene's heading per §3.4 — never by the body lines'
+ *    threaded scene_id.
  *  - Q10's subtext linkage: `subtext` has no theme reference in schema
  *    2.3, so theme-tagged subtext can't be collected yet.
  *  - Q15's attachment field (`affected_entities`) is unpopulated in
@@ -26,6 +28,8 @@ import {
 import {
   composeDossier, mentionsRow, type DossierComposition,
 } from "@scf-core/canonicalQueries.ts";
+import { sceneScriptLines }
+  from "@scf-core/screenplay/sceneScript.ts";
 import type { ParamValues, QuerySpec } from "./runners.ts";
 
 const num = (v: SqlValue | undefined): number | null =>
@@ -341,14 +345,15 @@ export interface Q04Payload {
   detail: Array<{ entity: string; rows: Row[] }>;
   blocking: Row[];
   stagingBeats: Row[];
+  /** §12.17.1 — heading to the line before the next heading. */
+  screenplay: Row[];
 }
 
 export const q04: QuerySpec = {
   id: "Q04",
   name: "Scene package",
   description: "The complete context for a scene — the scene as a work " +
-               "surface. (Screenplay text joins when Part 3's " +
-               "lines-are-rows storage lands.)",
+               "surface, its own text included.",
   params: [{ key: "scene_id", label: "Scene", kind: "scene" }],
   run: async (ctx, values): Promise<Q04Payload> => {
     const sceneId = num(values["scene_id"]);
@@ -411,8 +416,13 @@ export const q04: QuerySpec = {
       ((a["beat_order"] as number) ?? 0) -
       ((b["beat_order"] as number) ?? 0));
 
+    // §3.4 / §12.17.1: located by the heading, shared with scf-core
+    // rather than reimplemented here.
+    const screenplay = await sceneScriptLines(ctx.exec, sceneId);
+
     return { scene, lineage, storyBeats, cast, props, location, variant,
-             variantMismatches, detail, blocking, stagingBeats };
+             variantMismatches, detail, blocking, stagingBeats,
+             screenplay };
   },
   toMarkdown: (payload): string => {
     const p = payload as Q04Payload;
@@ -443,7 +453,11 @@ export const q04: QuerySpec = {
           `  - beat ${String(b["beat_order"] ?? "")}: ` +
           `${String(b["name"] ?? b["description"] ?? "")}`),
       ]),
-      "\n*Screenplay text joins this package when Part 3 lands.*",
+      mdSection("Screenplay", p.screenplay.map((l) => {
+        const type = String(l["line_type"] ?? "");
+        const text = String(l["content"] ?? "");
+        return type === "blank" ? "" : `${type}: ${text}`;
+      }), "*(no lines — the screenplay has not reached this scene)*"),
     ]);
   },
 };

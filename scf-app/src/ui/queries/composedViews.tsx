@@ -275,9 +275,21 @@ export function PackageView({ p }: { p: Q04Payload }): JSX.Element {
           ))}
         </ul>
       ) : <p className="muted">no blocking authored</p>}
-      <p className="muted planned-note">
-        Screenplay text joins this package when Part 3 lands.
-      </p>
+      <h3>Screenplay</h3>
+      {p.screenplay.length > 0 ? (
+        <div className="scene-script">
+          {p.screenplay.map((l) => (
+            <p key={String(l["id"])}
+               className={`sl sl-${String(l["line_type"] ?? "action")}`}>
+              {String(l["content"] ?? "")}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <p className="muted">
+          no lines — the screenplay has not reached this scene
+        </p>
+      )}
     </div>
   );
 }

@@ -22,6 +22,8 @@ import {
   resolveDescription, resolveDirection, resolveMedia,
 } from "./resolution.ts";
 import { mediaReferences } from "./mediaReferences.ts";
+import { projectScreenplayLines, sceneScriptLines }
+  from "./screenplay/sceneScript.ts";
 import { readinessReport } from "./readiness.ts";
 import type { FileLocator } from "./assets.ts";
 import {
@@ -1262,6 +1264,12 @@ export interface Q04Result {
   detail: Array<{ entity: string; rows: ProjectedRow[] }>;
   blocking: ProjectedRow[];
   stagingBeats: ProjectedRow[];
+  /**
+   * The scene's own text (§12.17.1), in `line_order`, from the scene's
+   * heading to the line before the next one. Empty when the scene has
+   * no line in the screenplay.
+   */
+  screenplay: ProjectedRow[];
 }
 
 export async function q04Result(
@@ -1329,6 +1337,9 @@ export async function q04Result(
     if (found.length > 0) detail.push({ entity, rows: found });
   }
 
+  // §3.4: located by the heading, never by the body lines' scene_id.
+  const screenplay = await sceneScriptLines(ctx.exec, sceneId);
+
   const blocking = await rows(ctx.exec, "scene_blocking", "scene_id = ?",
                               [sceneId]);
   const stagingBeats: Row[] = [];
@@ -1364,5 +1375,6 @@ export async function q04Result(
       (b) => projectRow(b, refs(ctx, "scene_blocking"), lookup)),
     stagingBeats: stagingBeats.map(
       (b) => projectRow(b, refs(ctx, "staging_beat"), lookup)),
+    screenplay: projectScreenplayLines(screenplay, lookup),
   });
 }

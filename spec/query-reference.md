@@ -330,7 +330,7 @@ Specified in **§12.17**. Normative result: [`fixtures/expectations/Q04.result.j
 
 Parameters: `scene`.
 
-Result members: `scene`, `lineage`, `storyBeats`, `cast`, `props`, `location`, `locationVariant`, `detail`, `blocking`, `stagingBeats`.
+Result members: `scene`, `lineage`, `storyBeats`, `cast`, `props`, `location`, `locationVariant`, `detail`, `blocking`, `stagingBeats`, `screenplay`.
 
 ---
 

@@ -18,7 +18,7 @@ npm run build      # static bundle in dist/
 
 ## Where the work happens
 
-Six tabs, in the order the work is usually done:
+Seven tabs, in the order the work is usually done:
 
 | Tab | Surface | Owns |
 |---|---|---|
@@ -28,6 +28,7 @@ Six tabs, in the order the work is usually done:
 | **Schema** | `CategoryTree`, `EntityList` | Every entity type, with row counts. |
 | **Subjects** | `SubjectNav`, `SubjectView` | One thing and everything addressed to it. |
 | **Queries** | `ui/queries/` | The 16 canonical queries, each with view / JSON / copy-as-context. |
+| **Assets** | `AssetBrowser`, `BundleAssets`, `AssetPreview` | Bundles, bindings and anchors, and whether an identifier resolves to bytes. |
 
 ## Architecture
 
@@ -84,6 +85,14 @@ React UI (registry-driven)
 browser. Logic that deserves a test lives in a module the view imports —
 `editor/shootOps.ts`, `state/displayName.ts`, `state/subjectStats.ts`,
 `state/undoDelete.ts` — not in the component.
+
+## Where it is going
+
+[`../docs/editor-mvp.md`](../docs/editor-mvp.md) is the editor's design
+record: what the four work packages of the second-implementation plan
+were, which have landed, and what is left before MVP. Read it before
+starting anything that sounds like a new surface — and add to it rather
+than starting a new document, which is how the last one got lost.
 
 ## Conventions
 
