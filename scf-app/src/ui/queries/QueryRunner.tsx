@@ -67,6 +67,10 @@ export function QueryRunner(): JSX.Element {
 
 function QueryBody({ spec }: { spec: QuerySpec }): JSX.Element {
   const revision = useStore((s) => s.revision);
+  // Q13 reports what resolves, which depends on the session's root and
+  // not on any row in the file. Without this a query run before a
+  // folder was attached keeps its `rootMapped: false` answer on screen.
+  const environmentRevision = useStore((s) => s.environmentRevision);
   const [values, setValues] = useState<ParamValues>({});
   const [payload, setPayload] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +100,7 @@ function QueryBody({ spec }: { spec: QuerySpec }): JSX.Element {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(values), ready, revision]);
+  }, [JSON.stringify(values), ready, revision, environmentRevision]);
 
   const markdown = payload !== null
     ? spec.toMarkdown(payload, values) : "";

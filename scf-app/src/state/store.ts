@@ -25,15 +25,15 @@ import {
   captureForUndo, restoreFromUndo, type UndoEntry,
 } from "./undoDelete.ts";
 import {
-  forgetHandle, forgetRoot, recallHandle, recallRoot, rememberHandle,
-  rememberRoot,
+  forgetHandle, forgetRoot, recallHandle, recallPairFor, recallRoot,
+  rememberHandle, rememberPair, rememberRoot,
 } from "../files/handleStore.ts";
 import type { ProjectFinding } from "@scf-core/project.ts";
 import { resolveAllAssets, type ResolutionReport }
   from "@scf-core/assets.ts";
 import { makeLocator } from "../files/assetLocator.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
-import type { RootPermission } from "../files/fileAdapter.ts";
+import type { RootMode, RootPermission } from "../files/fileAdapter.ts";
 import { renumberForScene } from "../editor/shootOps.ts";
 
 export { suggestSaveAsName };
@@ -85,6 +85,25 @@ interface AppState {
    *  single-file session. Assets can only resolve when this is set. */
   projectRoot: unknown | null;
   rootPermission: RootPermission;
+  /** Which grant the root was acquired under. Folder-first needs
+   *  `readwrite` (it saves through a handle taken from the root);
+   *  file-first only ever reads. Carried because querying in the wrong
+   *  mode misreports a working folder as needing reconnection. */
+  rootMode: RootMode;
+  /** Whether anything CHECKED that this folder holds the open file.
+   *  False for a root attached to a session with no file on disk — the
+   *  demo, an unsaved project — where the pairing is the user's word
+   *  and the UI has to say so rather than imply a check happened. */
+  rootVerified: boolean;
+  /** Bumped when the ENVIRONMENT changes rather than the data: a folder
+   *  attached, a permission re-granted. Asset resolution and Q13 depend
+   *  on it and must re-run; `revision` cannot carry it, because
+   *  `revision !== lastSavedRevision` is what marks the project unsaved
+   *  and attaching a folder writes nothing. */
+  environmentRevision: number;
+  /** Why the last attach was refused, for the topbar. Null when there
+   *  is nothing to say. */
+  attachError: string | null;
   /** Whether files can be reached THROUGH the root handle. Separate
    *  from listing: a machine can block enumeration and still traverse,
    *  or block both. P3's resolver depends on traversal and not at all
@@ -141,6 +160,10 @@ interface AppState {
   dismissFolderChoice: () => void;
   /** Escape hatch when the root scan misses an .scf that is there. */
   pickScfInRoot: () => Promise<void>;
+  /** Attach a project folder to a session that is already open. Must
+   *  run inside a click: it opens a picker. */
+  attachFolder: () => Promise<void>;
+  dismissAttachError: () => void;
   /** Resolve every asset against the current root. Never throws. */
   resolveAssets: () => Promise<ResolutionReport>;
   /** Re-ask for a remembered root. Must run inside a click. */
@@ -231,6 +254,102 @@ if (import.meta.hot) {
  * rather than a silent retry: a page that could re-grant itself access
  * to a folder would make the original prompt meaningless.
  */
+function describeError(e: unknown): string {
+  return e instanceof DOMException ? `${e.name}: ${e.message}`
+    : e instanceof Error ? e.message : String(e);
+}
+
+/**
+ * Can files be reached THROUGH this root?
+ *
+ * Probed with the project's own filename, which is the exact string
+ * P3's resolver would use — no typing, no paste artefacts, and the
+ * answer arrives without anyone opening a console.
+ *
+ * Lives here rather than inside the open path because attaching a
+ * folder mid-session needs the identical answer, and a second copy of
+ * this reasoning would eventually disagree with the first.
+ */
+async function probeTraversal(
+  root: FileSystemDirectoryHandle, fileName: string | null,
+): Promise<{ rootTraversal: "ok" | "blocked";
+             rootTraversalError: string | null }> {
+  // A session with no file on disk (demo, unsaved project) has no
+  // name to probe with, so the synthetic probe is the only one.
+  if (fileName !== null) {
+    try {
+      await root.getFileHandle(fileName);
+      return { rootTraversal: "ok", rootTraversalError: null };
+    } catch (e) {
+      return await syntheticProbe(root, describeError(e));
+    }
+  }
+  return await syntheticProbe(root, null);
+}
+
+/**
+ * The second probe, with a name that cannot exist. The two failures
+ * look nothing alike and mean opposite things: NotFoundError proves
+ * traversal WORKS and the first failure was about that particular name,
+ * while a repeat of the first error means the capability itself is
+ * unavailable. Guessing between them from one sample is what went wrong
+ * the last three times.
+ */
+async function syntheticProbe(
+  root: FileSystemDirectoryHandle, first: string | null,
+): Promise<{ rootTraversal: "ok" | "blocked";
+             rootTraversalError: string | null }> {
+  try {
+    await root.getFileHandle("__scf_traversal_probe__.tmp");
+    return { rootTraversal: "ok", rootTraversalError: null };
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "NotFoundError") {
+      return {
+        rootTraversal: "ok",
+        rootTraversalError: first === null ? null
+          : `traversal works — but this project's own filename was ` +
+            `rejected by the browser (${first}), so its assets resolve ` +
+            `and it alone does not`,
+      };
+    }
+    return {
+      rootTraversal: "blocked",
+      rootTraversalError: first === null
+        ? describeError(e)
+        : `${first} (probe with a synthetic name: ${describeError(e)})`,
+    };
+  }
+}
+
+/**
+ * Put a root into the session: probe it, wire the locator, remember it
+ * against the file it belongs to, and tell the views to re-resolve.
+ *
+ * Shared by both acquisition orders. Whichever way the folder arrived,
+ * everything downstream of it is identical — which is the claim
+ * conventions §9 already makes ("the resulting session is identical in
+ * every respect") and now the code says it once instead of twice.
+ */
+async function applyRoot(
+  set: (partial: Partial<AppState>) => void,
+  get: () => AppState,
+  root: FileSystemDirectoryHandle,
+  opts: { fileToken: unknown; fileName: string | null; mode: RootMode;
+          verified: boolean },
+): Promise<void> {
+  const probe = await probeTraversal(root, opts.fileName);
+  await rememberRoot(root);
+  await rememberPair(opts.fileToken, root, opts.mode);
+  setAssetLocator(makeLocator(root));
+  set({ projectRoot: root,
+        rootPermission: await adapter.rootPermission(root, opts.mode),
+        rootMode: opts.mode,
+        rootVerified: opts.verified,
+        attachError: null,
+        environmentRevision: get().environmentRevision + 1,
+        ...probe });
+}
+
 async function finishFolderOpen(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
@@ -242,53 +361,18 @@ async function finishFolderOpen(
   localStorage.setItem("scf:auto-resume", "1");
   localStorage.setItem("scf:last-session", opened.name);
   await rememberHandle(opened.token);
-  await rememberRoot(root);
   const rev = get().revision + 1;
-  // Probe traversal with the name the picker gave us, which is the
-  // exact string P3's resolver would use — no typing, no paste
-  // artefacts, and the answer arrives without anyone opening a console.
-  const describe = (e: unknown): string => e instanceof DOMException
-    ? `${e.name}: ${e.message}`
-    : e instanceof Error ? e.message : String(e);
-
-  let rootTraversal: "ok" | "blocked" = "blocked";
-  let rootTraversalError: string | null = null;
-  try {
-    await root.getFileHandle(opened.name);
-    rootTraversal = "ok";
-  } catch (e) {
-    const first = describe(e);
-    // Second probe, with a name that cannot exist. The two failures
-    // look nothing alike and mean opposite things: NotFoundError proves
-    // traversal WORKS and the first failure was about that particular
-    // name, while a repeat of the first error means the capability
-    // itself is unavailable. Guessing between them from one sample is
-    // what went wrong the last three times.
-    try {
-      await root.getFileHandle("__scf_traversal_probe__.tmp");
-      rootTraversal = "ok";
-    } catch (e2) {
-      if (e2 instanceof DOMException && e2.name === "NotFoundError") {
-        rootTraversal = "ok";
-        rootTraversalError =
-          `traversal works — but this project's own filename was ` +
-          `rejected by the browser (${first}), so its assets resolve ` +
-          `and it alone does not`;
-      } else {
-        rootTraversalError =
-          `${first} (probe with a synthetic name: ${describe(e2)})`;
-      }
-    }
-  }
-  setAssetLocator(makeLocator(root));
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         phase: "open", projectName: opened.name,
         fileToken: opened.token, lastSession: opened.name,
-        projectRoot: root,
-        rootPermission: await adapter.rootPermission(root),
-        rootTraversal, rootTraversalError,
         folderChoice: null,
         revision: rev, lastSavedRevision: rev });
+  // The file handle came out of this root, so the grant has to cover
+  // writing to it — the folder-first order cannot ask for less.
+  await applyRoot(set, get, root, {
+    fileToken: opened.token, fileName: opened.name,
+    mode: "readwrite", verified: true,
+  });
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -304,6 +388,10 @@ export const useStore = create<AppState>((set, get) => ({
   folderSupported: FsAccessAdapter.folderSupported(),
   projectRoot: null,
   rootPermission: "none",
+  rootMode: "readwrite",
+  rootVerified: false,
+  environmentRevision: 0,
+  attachError: null,
   rootTraversal: "unknown",
   rootTraversalError: null,
   folderChoice: null,
@@ -369,13 +457,26 @@ export const useStore = create<AppState>((set, get) => ({
       // state rather than prompting — a prompt outside a click is
       // rejected by the browser anyway, and the topbar offers the
       // re-grant.
-      const projectRoot = await recallRoot();
+      // The root is recalled BY THE FILE, not on its own. The old
+      // single-root key paired whatever folder was last opened with
+      // whatever file was last opened, which are not always the same
+      // project; `recallRoot()` remains only as the fallback for a
+      // session that has no file handle to key on.
+      const pair = await recallPairFor(fileToken);
+      const projectRoot = pair?.root ?? await recallRoot();
+      const rootMode = pair?.mode ?? "readwrite";
       const rev = get().revision + 1;
+      setAssetLocator(
+        projectRoot === null
+          ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: `${name}`, fileToken,
-            projectRoot,
+            projectRoot, rootMode,
+            rootVerified: pair !== null,
+            attachError: null,
             rootPermission: projectRoot === null
-              ? "none" : await adapter.rootPermission(projectRoot),
+              ? "none" : await adapter.rootPermission(projectRoot, rootMode),
+            environmentRevision: get().environmentRevision + 1,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
       set({ phase: "error",
@@ -393,10 +494,31 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:last-session", opened.name);
       await rememberHandle(opened.token);
       const rev = get().revision + 1;
+      // Clear the root EXPLICITLY. Opening a file while a folder
+      // session was live used to leave `projectRoot` untouched, so the
+      // new project silently inherited the old one's folder and
+      // addressed every asset against another film's disk. Nothing
+      // reported it, because a stale root resolves perfectly well.
+      setAssetLocator(null);
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
+            projectRoot: null, rootPermission: "none",
+            rootMode: "read", rootVerified: false, attachError: null,
+            rootTraversal: "unknown", rootTraversalError: null,
+            folderChoice: null,
+            environmentRevision: get().environmentRevision + 1,
             revision: rev, lastSavedRevision: rev });
+      // Opened before? Then its folder is known, and re-granting is one
+      // click in the topbar rather than another trip through the
+      // picker. The grant does not survive a reload; the pairing does.
+      const pair = await recallPairFor(opened.token);
+      if (pair !== null) {
+        await applyRoot(set, get, pair.root as FileSystemDirectoryHandle, {
+          fileToken: opened.token, fileName: opened.name,
+          mode: pair.mode, verified: true,
+        });
+      }
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -464,6 +586,50 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
+  /**
+   * The folder, asked for after the file — the other half of file-first
+   * opening, and the only route to assets for a session that started
+   * from a plain `.scf`.
+   *
+   * The refusal is the point. `resolve()` says whether the picked
+   * folder actually holds this file, and anything other than "at its
+   * root" is reported and dropped rather than accepted. A wrong
+   * acceptance would not fail loudly: every identifier would resolve
+   * against the wrong place, some of them successfully, and the project
+   * would look fine while pointing at another film's assets.
+   *
+   * A session with no file on disk cannot be checked at all. That is
+   * not a reason to refuse — it is the demo, and pointing it at a
+   * downloaded asset folder is a legitimate thing to want — but the
+   * session is marked unverified and the topbar says so.
+   */
+  attachFolder: async () => {
+    const { fileToken, projectName } = get();
+    set({ attachError: null });
+    try {
+      const attached = await adapter.attachRoot(
+        fileToken, projectName ?? "this project");
+      if (attached === null) return;                     // user cancelled
+      if (attached.pairing !== null &&
+          attached.pairing.kind !== "at-root") {
+        set({ attachError: attached.pairing.message });
+        return;
+      }
+      await applyRoot(set, get, attached.root, {
+        fileToken, fileName: fileToken === null ? null : projectName,
+        mode: "read", verified: attached.pairing !== null,
+      });
+    } catch (e) {
+      // A failed attach must not cost the user their session: this is
+      // an addition to an open project, not an open. Reported inline
+      // rather than through `phase: "error"`, which unmounts the
+      // workbench.
+      set({ attachError: describeError(e) });
+    }
+  },
+
+  dismissAttachError: () => set({ attachError: null }),
+
   setAssetPrefix: (assetPrefix) => set({ assetPrefix }),
 
   noteWrite: () => set({ revision: get().revision + 1 }),
@@ -481,9 +647,15 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   regrantRoot: async () => {
-    const root = get().projectRoot;
-    if (root === null) return;
-    set({ rootPermission: await adapter.requestRootPermission(root) });
+    const { projectRoot, rootMode } = get();
+    if (projectRoot === null) return;
+    // Re-asked in the mode it was granted under, and the environment
+    // counter is bumped either way: a folder that has just come back
+    // means every asset view is showing an answer from when it was
+    // gone.
+    set({ rootPermission:
+            await adapter.requestRootPermission(projectRoot, rootMode),
+          environmentRevision: get().environmentRevision + 1 });
   },
 
   newProject: async () => {
@@ -530,6 +702,7 @@ export const useStore = create<AppState>((set, get) => ({
   assetPrefix: "", openRow: null, draft: null,
           selectedSubject: null, projectRoot: null,
           rootPermission: "none", rootTraversal: "unknown",
+          rootMode: "readwrite", rootVerified: false, attachError: null,
           rootTraversalError: null, folderChoice: null });
     await client.close();
     // Closing is deliberate: forget the file so the next boot offers the

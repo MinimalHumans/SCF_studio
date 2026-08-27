@@ -380,7 +380,7 @@ const STATE_LABEL: Record<ResolutionState, string> = {
  */
 function Assets(): JSX.Element {
   const { resolveAssets, projectRoot, rootTraversalError,
-          openEntityRow } = useStore();
+          environmentRevision, openEntityRow } = useStore();
   const [report, setReport] = useState<ResolutionReport | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -392,7 +392,11 @@ function Assets(): JSX.Element {
     })();
   };
 
-  useEffect(run, []);
+  // Re-runs when the ENVIRONMENT changes, not just on mount: attaching
+  // a folder mid-session turns every `unaddressed` row into a real
+  // answer, and a panel still showing the old tally would be stating
+  // something that stopped being true one click ago.
+  useEffect(run, [environmentRevision]);
 
   const problems = (report?.assets ?? []).filter(
     (a) => a.state !== "resolved");

@@ -518,14 +518,63 @@ handle, so the rule holds without a browser. It carries `seen` — every
 root file the scan found — so "no .scf here" can show its evidence
 rather than being an unarguable assertion.
 
-The folder is granted **readwrite**, not read. SCF writes exactly one
-file, the `.scf` itself, and that handle comes out of the root, so a
-read-only grant produces a project that cannot be saved. The platform
-offers no unit narrower than the folder, which is why the read-only rule
-below is a discipline in the code rather than a sandbox around it.
+Folder-first is granted **readwrite**, not read. SCF writes exactly one
+file, the `.scf` itself, and on this route that handle comes out of the
+root, so a read-only grant produces a project that cannot be saved. The
+platform offers no unit narrower than the folder, which is why the
+read-only rule below is a discipline in the code rather than a sandbox
+around it — on this route.
+
+### The other order: the file first
 
 Opening a lone `.scf` still works, and `spec §0.3` makes that the
-normative case rather than a degraded one.
+normative case rather than a degraded one. What it used to be was a dead
+end for assets: the file was open, its folder was unreachable, and the
+only way to fix that was to close the project and open it again the
+other way.
+
+It is not a dead end. The platform will not walk from a file to its
+parent, but `FileSystemDirectoryHandle.resolve()` will say whether a
+folder the user *names* contains that file, and where. So the folder can
+be asked for second, from inside an open session, and the pairing
+**checked** rather than assumed:
+
+| `resolve()` | Meaning | What happens |
+| --- | --- | --- |
+| `["x.scf"]` | the folder holds the file directly | this is the project; `@project` is it |
+| `["sub", "x.scf"]` | the folder is an ancestor | refused: every asset would address one level too high |
+| `null` | the file is not below the folder | refused: wrong folder, or another copy of the same project |
+
+`classifyRootPairing()` is that rule, and like `chooseProjectFile()` it
+takes names rather than handles so it holds without a browser.
+
+**This order guesses at nothing.** Discovery has to work out which of
+several `.scf` files was meant, and cannot when listing returns nothing;
+file-first never asks that question, because the user has already
+answered it, and `resolve()` traverses rather than enumerates so it
+answers on the machines where the scan is blind. It costs two gestures
+always, where discovery costs one sometimes — but `startIn` opens the
+directory picker inside the file's own folder, so the second gesture is
+usually a single click on an already-highlighted folder.
+
+It also asks for the smaller grant. The write handle came from the file
+picker, so the folder is only ever read, and this route asks for `read`.
+Here the read-only rule *is* a sandbox rather than a discipline. The
+grant mode therefore has to be carried with the handle: querying a
+`read` grant for `readwrite` reports `prompt`, which would show a
+perfectly working folder as needing reconnection forever.
+
+A session with **no `.scf` on disk** — the demo, an unsaved new project
+— can still be given a folder, and nothing can check it: there is no
+file for the folder to contain. That session is marked unverified and
+says so, because an asset resolving from the wrong folder looks exactly
+like one resolving from the right one.
+
+Which folder belongs to which file is remembered as a *pairing*, keyed
+by `isSameEntry()`. A single remembered root was a latent defect: open
+project A as a folder, then open B's `.scf` on its own, and a resume
+paired B's file with A's folder. Nothing reported it, because a stale
+root resolves perfectly well — against another film's assets.
 
 ### Resolution states
 

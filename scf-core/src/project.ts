@@ -112,3 +112,85 @@ export function chooseProjectFile(names: readonly string[]): ProjectPick {
 
   return { file: candidates[0] ?? null, candidates, seen, findings };
 }
+
+/**
+ * The other order: the `.scf` first, its folder second.
+ *
+ * A file picker yields a handle with no route to its parent, so the
+ * folder has to be named separately. That sounds like the same trust
+ * problem as discovery, and it is not — it is strictly better, because
+ * the pairing can be CHECKED. `FileSystemDirectoryHandle.resolve()`
+ * answers "is this handle below this directory, and where", by
+ * traversal rather than enumeration, so it works on the machines where
+ * the root scan returns nothing.
+ *
+ * Discovery has to guess which of several `.scf` files was meant.
+ * This never guesses: the user has already said which file, and the
+ * only open question is whether the folder they then picked is the one
+ * that file lives at the root of. Three answers, all of them evidence:
+ *
+ *  - `at-root`      the folder holds the file directly. This is a
+ *                   project (conventions §9) and `@project` is it.
+ *  - `below-root`   the file is real but sits in a subfolder, so the
+ *                   picked folder is an ancestor rather than the
+ *                   project. Every asset identifier would be addressed
+ *                   from the wrong place.
+ *  - `outside-root` the file is not below the folder at all. Usually
+ *                   the wrong folder, occasionally two copies of the
+ *                   same project — and handle identity, not filename,
+ *                   is what tells those apart.
+ *
+ * Browser-free, like the rest of this module: it takes two names and a
+ * `resolve()` answer and returns a decision.
+ */
+export type RootPairingKind = "at-root" | "below-root" | "outside-root";
+
+export interface RootPairing {
+  kind: RootPairingKind;
+  /** Where the file sits inside the folder, or null when it does not. */
+  path: string | null;
+  /** Said to the user. Names both sides, because "wrong folder" with
+   *  neither name in it is not something anyone can act on. */
+  message: string;
+}
+
+/**
+ * @param folderName  the picked directory's own name.
+ * @param fileName    the open `.scf`'s name.
+ * @param segments    `resolve()`'s answer: path segments from the
+ *                    folder down to the file, or null when the file is
+ *                    not below it. An empty array means the handles are
+ *                    the same object, which for a file and a directory
+ *                    cannot happen — treated as not-below rather than
+ *                    trusted.
+ */
+export function classifyRootPairing(
+  folderName: string,
+  fileName: string,
+  segments: readonly string[] | null,
+): RootPairing {
+  if (segments === null || segments.length === 0) {
+    return {
+      kind: "outside-root", path: null,
+      message: `${fileName} is not inside ${folderName}. A project ` +
+               `folder is the folder that file sits in — pick that one, ` +
+               `and note that a second copy of the same project ` +
+               `elsewhere on disk is a different folder even under the ` +
+               `same name.`,
+    };
+  }
+  const path = segments.join("/");
+  if (segments.length > 1) {
+    return {
+      kind: "below-root", path,
+      message: `${fileName} is inside ${folderName}, but at ${path} ` +
+               `rather than at its root. A project is the folder ` +
+               `holding the .scf directly; assets addressed from here ` +
+               `would resolve one or more levels too high.`,
+    };
+  }
+  return {
+    kind: "at-root", path,
+    message: `${folderName} holds ${path} at its root.`,
+  };
+}

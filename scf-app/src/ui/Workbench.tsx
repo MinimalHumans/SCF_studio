@@ -256,28 +256,48 @@ export function Workbench(): JSX.Element {
 }
 
 /**
- * Whether this session can see the project folder.
+ * Whether this session can see the project folder — and the way to give
+ * it one.
  *
- * Silent when the root is granted — nothing to say. A reload keeps the
- * handle and drops the grant, so the re-grant lives here as one click
- * inside a user gesture; the browser rejects the request anywhere else,
- * and that restriction is the point of the prompt.
+ * Silent when the root is granted and checked; there is nothing to say.
+ * A reload keeps the handle and drops the grant, so the re-grant lives
+ * here as one click inside a user gesture; the browser rejects the
+ * request anywhere else, and that restriction is the point of the
+ * prompt.
  *
- * A single-file session says so plainly rather than pretending: its
- * assets cannot resolve, and the reason is the platform, not the file.
+ * "no folder" used to be a label describing a dead end. It is a button
+ * now, because the dead end was never real: the platform will not walk
+ * from a file to its parent, but it will happily confirm that a folder
+ * the user names contains that file. This is the same gesture the
+ * re-grant already is, and it sits in the same place for the same
+ * reason.
  */
 function RootStatus(): JSX.Element | null {
   const { projectRoot, rootPermission, rootTraversal, rootTraversalError,
-          regrantRoot } = useStore();
+          rootVerified, attachError, attachFolder, dismissAttachError,
+          folderSupported, regrantRoot } = useStore();
+
+  const refusal = attachError === null ? null : (
+    <button className="topbar-root-refusal"
+            onClick={dismissAttachError}
+            title="Click to dismiss">
+      {attachError}
+    </button>
+  );
 
   if (projectRoot === null) {
     return (
-      <span className="topbar-root muted"
-            title="Opened as a single .scf. Assets cannot resolve — the
-browser gives no route from a file to the folder around it. Reopen as a
-folder to resolve them.">
-        no folder
-      </span>
+      <>
+        <button className="ghost tiny topbar-root-attach"
+                onClick={() => void attachFolder()}
+                disabled={!folderSupported}
+                title="No project folder, so assets cannot resolve. Pick
+the folder this .scf lives in — the browser cannot find it from the file,
+but it can confirm the one you name is the right one.">
+          no folder
+        </button>
+        {refusal}
+      </>
     );
   }
   if (rootPermission === "granted" && rootTraversal === "blocked") {
@@ -290,14 +310,34 @@ through it on this machine, so assets will not resolve. ` +
       </span>
     );
   }
-  if (rootPermission === "granted") return null;
+  // Granted, readable, but nothing confirmed it is the right folder —
+  // the session had no file on disk to check against. Said out loud
+  // rather than left silent: an asset that resolves from the wrong
+  // folder looks exactly like one that resolves from the right one.
+  if (rootPermission === "granted" && !rootVerified) {
+    return (
+      <>
+        <span className="topbar-root muted"
+              title="Folder connected, but this session has no .scf on
+disk, so nothing could check that the folder is the right one. Assets
+resolve against whatever is in it.">
+          folder unverified
+        </span>
+        {refusal}
+      </>
+    );
+  }
+  if (rootPermission === "granted") return refusal;
   return (
-    <button className="ghost tiny topbar-root-regrant"
-            onClick={() => void regrantRoot()}
-            title="This session remembers the project folder but lost
+    <>
+      <button className="ghost tiny topbar-root-regrant"
+              onClick={() => void regrantRoot()}
+              title="This session remembers the project folder but lost
 permission to read it on reload.">
-      Reconnect folder
-    </button>
+        Reconnect folder
+      </button>
+      {refusal}
+    </>
   );
 }
 

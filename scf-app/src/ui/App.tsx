@@ -35,9 +35,10 @@ function StartScreen(): JSX.Element {
           <button className="ghost"
                   onClick={() => void openFromPicker()}
                   disabled={!fsAccessSupported}
-                  title="Opens the .scf alone. Its assets cannot be
-resolved, because the browser gives no route from a file to its folder.">
-            Open a single .scf…
+                  title="Opens the file. Its folder is attached
+afterwards, from the topbar — the browser cannot find the folder from
+the file, but it can confirm the one you name holds it.">
+            Open an .scf file…
           </button>
           <button onClick={() => void newProject()}>New project</button>
           <button onClick={() => void openDemo()}>
@@ -116,8 +117,9 @@ resolved, because the browser gives no route from a file to its folder.">
           Local-first. Your project stays on this machine — the file you
           open is copied into browser storage while you work, and written
           back when you save. A project is a folder holding one .scf and
-          the assets it points at; opening the folder is what lets those
-          assets resolve.
+          the assets it points at. Either order connects it: open the
+          folder and it finds the .scf, or open the .scf and attach its
+          folder afterwards.
         </p>
       </div>
     </div>

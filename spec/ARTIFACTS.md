@@ -63,7 +63,7 @@ Generated from `schema/`, which is the source of truth for all of them.
 | `spec/screenplay-tables.json` | `a0576704ff27b321…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
 | `spec/entity-reference.md` | `94fb8412d996c5e4…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
 | `spec/query-reference.md` | `1e38d588bb955044…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
-| `spec/api-surface.json` | `674c064902c458fc…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
+| `spec/api-surface.json` | `4f64360bef17777e…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `038b3a4ed0768105…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `85936a723770be83…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `ab4919482b3b7226…` | What Q14 assesses, per target query. Spec §12.9.1. |

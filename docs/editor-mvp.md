@@ -191,6 +191,74 @@ ships, and section 7 prose, which is now largely written
 
 ---
 
+## 7a. ✅ Attaching the folder to an open file
+
+The folder-first open (`openProject()`) is one gesture when directory
+listing works and a diagnostic panel when it does not. The awkwardness
+was never the UI; it was that the app had to *work out* which `.scf` in
+the folder was the project, and could not when the scan came back blind.
+
+The `.scf` can now be opened first and its folder attached afterwards,
+from the `no folder` indicator in the topbar. The reason this is better
+rather than merely different is that the pairing can be **checked**:
+`FileSystemDirectoryHandle.resolve()` reports whether a named folder
+holds a given file handle, and where. Discovery guesses; this does not.
+The full reasoning, including the three-row `resolve()` table, is in
+`docs/conventions.md` §9 under "The other order: the file first".
+
+What landed:
+
+- `classifyRootPairing()` in `scf-core/src/project.ts` — the rule, kept
+  browser-free like `chooseProjectFile()` so it is testable without a
+  directory handle. `at-root` accepts; `below-root` and `outside-root`
+  are refused with a message naming both the file and the folder.
+- `attachRoot()` on the adapter. Uses `startIn` so the picker opens
+  inside the file's own folder, and retries once without it rather than
+  costing the user the gesture if the option is rejected.
+- The attach path asks for a **`read`** grant, not `readwrite` — the
+  write handle came from the file picker. Grant mode is now carried with
+  the handle, because querying a `read` grant for `readwrite` reports
+  `prompt` and would show a working folder as needing reconnection.
+- `applyRoot()` and `probeTraversal()` extracted from
+  `finishFolderOpen()`, so both acquisition orders run the identical
+  tail. Conventions §9 already claimed the resulting sessions are
+  identical; now the code says it once instead of twice.
+- `environmentRevision`, bumped when the *environment* changes rather
+  than the data. Asset resolution and Q13 depend on the root and must
+  re-run; `revision` could not carry it, because
+  `revision !== lastSavedRevision` is what marks a project unsaved and
+  attaching a folder writes nothing.
+
+**Two defects found while doing it**, both live before this change and
+both invisible in use:
+
+1. `openFromPicker()` never cleared `projectRoot`. Opening a plain
+   `.scf` while a folder session was live left the new project holding
+   the old project's folder, addressing every asset against another
+   film's disk. A stale root resolves perfectly well, so nothing
+   reported it.
+2. `resumeLast()` recalled the file handle and the root independently,
+   reproducing (1) across a reload. Roots are now stored as
+   `{file, root, mode}` pairs and looked up by `isSameEntry()`, which
+   also means reopening a known project costs one re-grant click instead
+   of another trip through the folder picker.
+
+**Consequence for the demo, unplanned but useful.** A session with no
+`.scf` on disk cannot have its pairing checked — there is no file for
+the folder to contain. Rather than refuse, the root attaches and the
+session is marked `folder unverified` in the topbar. So the Hollow Creek
+demo can be pointed at a downloaded asset folder by hand, and the nine
+identifiers the fixture already carries resolve without a single change
+to the fixture, the manifest or any published result.
+
+**Not done, deliberately.** The start screen still lists
+"Open project folder…" above "Open an .scf file…", and `openProject()`,
+`chooseProjectFile()` and the "Why it could not find it itself" panel are
+all still there. If file-first becomes the front door, that ordering is
+wrong and roughly 150 lines of scan-fallback machinery become dead —
+but retiring the folder-first entry point is a product decision, not a
+cleanup.
+
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.
@@ -202,7 +270,9 @@ ships, and section 7 prose, which is now largely written
    per hour on the list: it converts three built-but-invisible features
    into features an independent reader can see, and it is data, not
    code.
-5. **§6** — whenever the proposals resolve.
+5. ✅ **§7a — the folder attach.** Done; two latent root-pairing
+   defects fixed with it.
+6. **§6** — whenever the proposals resolve.
 
 ## 9. What "MVP" is being taken to mean here
 

@@ -121,7 +121,8 @@ export {
 
 export {
   type ProjectFinding, type ProjectFindingKind, type ProjectPick,
-  chooseProjectFile, isProjectFile,
+  type RootPairing, type RootPairingKind,
+  chooseProjectFile, classifyRootPairing, isProjectFile,
 } from "./project.ts";
 
 // ── The queries ──────────────────────────────────────────────────

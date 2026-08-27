@@ -1575,6 +1575,17 @@ tr.prop-weak td { opacity: .6; }
 /* --- Project folder (P2) --------------------------------------------- */
 .topbar-root { font-size: 11px; }
 .topbar-root-regrant { color: var(--amber); border-color: var(--amber); }
+/* "no folder" is an invitation, not a verdict: dim until hovered, so it
+   reads as the same quiet status it replaced but answers to a click. */
+.topbar-root-attach { color: var(--paper-dim); }
+.topbar-root-attach:hover:not(:disabled) { color: var(--paper); }
+/* A refused folder. Wide enough to read the reason — the message names
+   both the file and the folder, and a truncated one would be useless. */
+.topbar-root-refusal {
+  max-width: 42ch; font-size: 11px; text-align: left; line-height: 1.35;
+  color: var(--amber); background: none; border: none; padding: 0;
+  cursor: pointer;
+}
 .start-choice {
   margin: 12px 0; padding: 10px; border: 1px solid var(--line);
   border-radius: 4px; display: flex; flex-direction: column; gap: 6px;
