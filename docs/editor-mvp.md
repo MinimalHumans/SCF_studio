@@ -3,7 +3,7 @@
 
 Consolidated from the second-implementation design doc
 (`20260715_SCF_Second_Implementation.md`, never in the repository) and
-checked against `SCF_studio@main`, 2026-08-26 — spec 0.50, schema 2.13.
+checked against `SCF_studio@main`, 2026-08-26 — spec 0.51, schema 2.13.
 
 It lives here rather than as an upload for the same reason rev 11 of the
 release checklist does: *rev 10 lived outside the repository and had

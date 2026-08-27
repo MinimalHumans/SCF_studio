@@ -2,7 +2,7 @@
 # What an "official" SCF release contains
 
 A checklist, with OpenUSD as the reference example. Status against
-`SCF_studio@main` as of 2026-08-26, **rev 13** — spec 0.50, schema 2.13.
+`SCF_studio@main` as of 2026-08-26, **rev 13** — spec 0.51, schema 2.13.
 The published tag is still `schema-2.12`; **2.13 shipped in 0.47 and has
 not been tagged.**
 
@@ -44,8 +44,14 @@ template: 0001 implemented, 0002 and 0003 open.
 ## Start here in the next session
 
 1. **Tag `schema-2.13`.** It shipped in 0.47 and the published tag is
-   still 2.12. Annotated, per §10's reasoning about steps nobody can
-   run.
+   still 2.12, so the URL `ARTIFACTS.md` quotes for its own registry
+   returns 404 today. `tools/verify.py` now fails on this until it is
+   pushed:
+
+       git tag -a schema-2.13 -m 'schema 2.13'
+       git push origin schema-2.13
+
+   Annotated, per §10's reasoning about steps nobody can run.
 2. **The editor MVP** — [`editor-mvp.md`](editor-mvp.md), new in this
    revision. Its live item is the three Part 3 features the fixture does
    not exercise: `performance_beat.line_ref` is null on all fourteen
@@ -229,7 +235,7 @@ starts from `what-is-scf.md` instead.
 | | Item | Notes |
 |---|---|---|
 | ✅ | **CI — green** | Three jobs. Every artifact in `--check` mode, SPDX coverage, the API surface, the packaging test, and the fixture rebuild |
-| ⚠️ | **A git tag** | `schema-2.12`, annotated. **`schema-2.13` shipped in 0.47 and is not tagged** — the one item on this list that regressed since rev 12. Signed tags need a key this project does not have, and a step nobody can run is a step that gets skipped |
+| ⚠️ | **A git tag** | `schema-2.12`, annotated. **`schema-2.13` shipped in 0.47 and is not tagged**, so every canonical artifact URL for this version 404s — the one item on this list that regressed since rev 12. `schema/check_pin.py` (0.51) now fails `verify.py` and CI-on-main until it is pushed. Signed tags need a key this project does not have, and a step nobody can run is a step that gets skipped |
 | ✅ | **Reproducible fixture build** | 0.35. Published DDL + `hollow_creek.data.json` + the screenplay, from nothing, **byte-identical across runs**, checked in CI |
 | ✅ | **`VERSION` in the app** | Topbar shows the app version beside the schema version, commit and build date in the tooltip |
 | ○ | A GitHub Release, release notes, downloadable artifacts | Describes a release. Worth doing at 1.0 and not before |

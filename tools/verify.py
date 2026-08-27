@@ -99,6 +99,20 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
     # --- site ---
     ("the docs site builds and its cross-references resolve",
      [NPM, "run", "check"], "site", False),
+
+    # Every step above this line verifies bytes that are already on
+    # disk. This one verifies the instruction ARTIFACTS.md gives to
+    # somebody who has none of them — that the tag it says to pin to is
+    # on the remote, serving the bytes SHA256SUMS claims.
+    #
+    # --strict, so it FAILS rather than warns. A first pass ran it
+    # non-strict and the step printed "ok" while the advertised URL was
+    # returning 404, because verify.py shows a step's output only when
+    # it fails. A green line asserting the opposite of the truth is the
+    # defect this check exists to catch, reproduced inside the check.
+    # Offline is handled by the script, which skips and exits 0.
+    ("the pinned schema tag resolves",
+     ["python3", "schema/check_pin.py", "--strict"], ".", False),
 ]
 
 

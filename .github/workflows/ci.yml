@@ -123,6 +123,19 @@ jobs:
       - name: published checksums verify
         run: sha256sum -c spec/SHA256SUMS
 
+      # Everything above verifies bytes in the checkout. This verifies
+      # the one thing ARTIFACTS.md asks of a consumer who has none of
+      # them: that the tag it says to pin to exists on the remote, and
+      # serves the bytes SHA256SUMS claims.
+      #
+      # main only. A tag cannot point at a commit that has not been
+      # pushed, so on a branch this would be red for a reason the author
+      # cannot fix — and a check that is unfixably red is a check people
+      # route around.
+      - name: the pinned schema tag resolves
+        if: github.ref == 'refs/heads/main'
+        run: python3 schema/check_pin.py --strict
+
   core:
     name: scf-core
     runs-on: ubuntu-latest

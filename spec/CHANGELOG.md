@@ -17,6 +17,56 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.51 — 2026-08-26
+
+*Describes schema 2.13.*
+
+**Editorial.** No normative change, and no fix — the repair is a `git
+push`. What lands here is the check that would have caught it.
+
+### The URL ARTIFACTS.md publishes for its own registry returns 404
+
+`ARTIFACTS.md` gives consumers one canonical way to fetch a normative
+artifact, pinned to `schema-<VERSION>`, and says — correctly — that
+`main` is a moving target and MUST NOT be used to pin a version.
+
+**Schema 2.13 shipped in 0.47 and was never tagged.** So for every
+revision since, the manifest's own quoted example returned 404:
+
+    .../schema-2.13/scf-core/registry/registry.json   → 404
+    .../schema-2.12/scf-core/registry/registry.json   → 200
+
+Through all of it `sha256sum -c` passed, `artifact_manifest.py --check`
+passed, and every step of `tools/verify.py` passed. All of them verify
+bytes in the checkout. **Nothing verified the one instruction the
+document gives to a reader who does not have the checkout.**
+
+That is the third instance of one pattern in three revisions — §12.13's
+leaf, `query-reference.md`'s empty tables, and now this. Each time an
+artifact agreed with its own generator while the thing an outsider
+needed was broken. Worth stating as a rule: **local agreement is not
+reachability.**
+
+### The check
+
+`schema/check_pin.py` asks the remote whether the advertised tag exists,
+and — when the tag is fetched locally — whether the artifact at that tag
+matches `SHA256SUMS`. A tag that resolves to the wrong commit is worse
+than a missing one: the URL works, the bytes differ, and the consumer
+concludes the artifact is corrupt.
+
+It runs in `tools/verify.py` (strict) and in CI on `main` only. Not on
+branches: a tag cannot point at a commit that has not been pushed, so on
+a branch it would be red for a reason the author cannot fix, and a check
+that is unfixably red is a check people route around.
+
+**Until `schema-2.13` is pushed, `tools/verify.py` fails on this step.**
+That is the check working. The first draft of it ran non-strict and
+printed `ok` while the URL 404'd, because `verify.py` shows a step's
+output only when it fails — the defect reproduced inside its own check.
+
+---
+
 ## 0.50 — 2026-08-26
 
 *Describes schema 2.13.*
