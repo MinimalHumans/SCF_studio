@@ -17,6 +17,51 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.50 — 2026-08-26
+
+*Describes schema 2.13.*
+
+**Editorial.** No normative change. `query-reference.md` is regenerated
+and now has content where it had blanks.
+
+### Every "What it needs" table was empty
+
+`query-reference.md` publishes, for each of the six walkable queries, the
+entities `readinessReport` walks to produce Q14. Every row of every one
+of those tables rendered as an empty cell:
+
+    | `` | required | something to resolve |
+
+`QueryStep.entity` became `entities: string[]` in **0.38**, when several
+steps turned out to be naming things the registry could not resolve —
+`costume + costume_scene` is two entities, `bundle + *_asset_binding` is
+a pattern, `media: voice_identity` is an asset intent and not an entity
+at all. `emit_normative_data.mjs` was updated and now refuses to publish
+a name the registry does not know. `emit_query_reference.mjs` was not,
+and kept reading the field that no longer existed.
+
+The generator now prints `QueryStep.label`, which is the field documented
+for the purpose and the only one that renders a multi-entity step, a
+filtered step and a media step correctly.
+
+### Why nothing caught it
+
+`check-query-reference` runs the generator and compares its output
+against the committed file. Generator and artifact agreed, so the check
+passed — for twelve revisions. **It verified consistency, and the defect
+was in correctness.**
+
+This is §12.13's shape again: an artifact recording an empty answer as
+the right answer, with a check confirming the emptiness was reproducible.
+
+A check that compares a generator against its own output cannot find
+this class, so the assertion went **inside the generator**: a step that
+renders an empty cell now throws and names the field to print. Confirmed
+against the regression itself — reintroducing `step.entity` fails at
+Q05 rather than publishing blanks.
+
+---
+
 ## 0.49 — 2026-08-26
 
 *Describes schema 2.13.*

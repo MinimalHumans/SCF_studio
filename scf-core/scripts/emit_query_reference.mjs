@@ -189,9 +189,34 @@ for (const q of queries) {
                "produce Q14. **Absence is not an error** — a missing",
                "`required` entity means the answer is impoverished and Q14",
                "says so (§12.9).", "",
-               "| Entity | | Why |", "|---|---|---|");
+               "Names are registry entities, except a media step, which",
+               "names the asset intent whose bundle must resolve.", "",
+               "| Step | | Why |", "|---|---|---|");
     for (const step of path.steps) {
-      lines.push(`| \`${esc(step.entity)}\` | ${esc(step.requirement)} | ` +
+      // `label` is QueryStep's derived display form, and the only field
+      // on it meant to be printed: it composes multi-entity steps
+      // (`costume + costume_scene`), carries the filter parenthetical
+      // (`performance_state (vocal)`) and renders a media step as
+      // `media: voice_identity`, which is an asset intent rather than
+      // an entity at all.
+      //
+      // This read `step.entity` until 0.50. That field was replaced by
+      // `entities: string[]` in 0.38 and the generator was not
+      // followed through, so every row of every one of these tables
+      // published an empty cell for two years of revisions. It was
+      // invisible because `check-query-reference` compares this
+      // script's output against the file — both were wrong the same
+      // way, which is consistency rather than correctness. Hence the
+      // assertion below: the check this document needed was never
+      // going to come from diffing it against its own generator.
+      const cell = step.label;
+      if (typeof cell !== "string" || cell.length === 0) {
+        throw new Error(
+          `[query-reference] ${q.id}: a step rendered an empty cell. ` +
+          `QueryStep.label is the field to print; if it moved, this ` +
+          `script moved with it.`);
+      }
+      lines.push(`| \`${esc(cell)}\` | ${esc(step.requirement)} | ` +
                  `${esc(step.purpose)} |`);
     }
     lines.push("");

@@ -2,7 +2,7 @@
 # What an "official" SCF release contains
 
 A checklist, with OpenUSD as the reference example. Status against
-`SCF_studio@main` as of 2026-08-26, **rev 13** — spec 0.49, schema 2.13.
+`SCF_studio@main` as of 2026-08-26, **rev 13** — spec 0.50, schema 2.13.
 The published tag is still `schema-2.12`; **2.13 shipped in 0.47 and has
 not been tagged.**
 
