@@ -259,6 +259,161 @@ wrong and roughly 150 lines of scan-fallback machinery become dead —
 but retiring the folder-first entry point is a product decision, not a
 cleanup.
 
+## 7b. ✅ Thumbnails, and the first reader of `region_box`
+
+Asset previews existed in exactly one place: the asset row's own form.
+Everywhere a file is *chosen* — a bundle's members, a binding, the asset
+browser, a character — it was a filename.
+
+**A thumbnail is not a small preview**, and the difference is the whole
+reason `AssetThumb` is a separate component from `AssetPreview`. A
+previewer is one of a kind on screen and can afford to read a file the
+moment it mounts. `AssetPreview`'s own header names the hazard —
+*"an asset browser walked through a few hundred plates would hold all of
+them"* — and thumbnails make that the normal case. Three consequences:
+
+- Nothing loads until the row is **on screen** (`IntersectionObserver`,
+  200px margin). A bundle of two hundred plates nobody scrolls costs two
+  hundred resolutions and zero reads.
+- Object URLs come from a **refcounted cache** keyed by root handle plus
+  path, with a grace period before revoking. The same plate can be in a
+  bundle list, on a binding, behind a subject's anchor and in the asset
+  browser at once; four URLs for one file is four things to revoke and
+  three chances to leak. The cache is flushed when the root changes or
+  the project closes — a URL into the *previous* folder returns bytes
+  from a project the user has left, which is worse than a blank
+  thumbnail because it looks like it worked.
+- **Images only**, and the fallback chip is the *same box* as an image.
+  A slot that collapses for a `.zip` makes every list reflow as it
+  loads, and three of the nine assets in Hollow Creek are not natively
+  viewable. `previewCapability`'s third tier is a real tier, not a
+  failure.
+
+Placed on: bundle members and the add-assets picker, the asset browser
+list, `*_asset_binding` rows (as a strip of what the bundle puts on
+screen — the binding names a bundle, and the bundle is a name), and
+character / prop / location, in both the entity form header and the
+subject view.
+
+### `region_box`
+
+The subject thumbnail is the **anchor**, not the cascade: a bundle is
+everything gathered for an intent, while an anchor is somebody pointing
+at one image and saying "that is her". Anchors are position-independent,
+so it needs no scene picker.
+
+Eleanor's anchor points at a reference *sheet*. Showing the sheet as her
+thumbnail is nearly useless; showing `region_box` is the actual answer —
+so the crop is the default, with a toggle back to the whole frame,
+because a crop with no way back hides the evidence that the box is
+wrong. `parseRegionBox` is the field's first reader anywhere in the
+repository, and the coordinate space it defines is written down in
+`docs/conventions.md` §9 rather than left living in TypeScript.
+
+**The fixture now exercises it.** `entity_anchor` 1 gained
+`region_box` and `region_label` — a two-line diff through the R85
+dump/rebuild loop, and it moved no published result. Third entry in the
+same class as §4.1's unscripted scene and §12.17's mismatches: a rule
+the format states that no artifact demonstrated. The locket anchor is
+deliberately left alone — it points at a `.glb`, which is preview tier 2,
+so it exercises "the anchor is correct and there is still nothing to
+show".
+
+### Why the second visit was slow
+
+Leaving the assets tab and coming back rebuilt every thumbnail, badly
+enough to be the highest-priority complaint about the feature. The
+object URL cache was only hiding a fifth of the cost. **Three things ran
+on every mount and only the third was cached at all:**
+
+1. **Resolution.** `resolveIdentifier` walks `getDirectoryHandle` /
+   `getFileHandle` from the root and calls `getFile()`, *once per
+   asset*. Forty rows is forty round trips through the browser's file
+   system layer every time the tab is opened, and on Windows with an
+   antivirus filter in the path none of them is cheap. This was the bulk
+   of the lag and it was cached nowhere.
+2. **Decode.** A full-size plate decoded to a bitmap so it could be
+   drawn into a 28-pixel box, then thrown away on unmount.
+3. The object URL, with a five-second grace period — right for a React
+   remount, far too short for "switch tabs and come back".
+
+`thumbnailCache` resolves once per session and decodes **once ever**. A
+generated thumbnail is a few KB of WebP at 176px (twice the largest
+display size, so one raster serves all three and stays sharp on HiDPI),
+which is small enough to hold hundreds of in memory and small enough to
+persist. It goes to IndexedDB keyed on **root name + path + mtime +
+size**, so a reload no longer pays for the decode either and a file
+edited outside the app regenerates rather than showing a stale picture.
+After the first visit the list touches no files at all.
+
+Two consequences worth recording:
+
+- **The crop moved out of CSS and into generation.** The first version
+  scaled and offset the full image inside a clipping box, which meant
+  holding a whole plate decoded to show 176 pixels of it. It also could
+  not distinguish "no region" from "a region that did not fit" — both
+  rendered as the whole frame. Generation returns `regionApplied`, so
+  `AnchorThumb` now says *region does not fit* for a box measured
+  against a different file, which is an authoring error that was
+  previously invisible.
+- **`AssetPreview` moved onto the shared URL cache.** Without that the
+  cache had no consumer left and would have been dead code with thirteen
+  tests attached to it. It is also the right home: stepping back and
+  forth between two assets used to re-read both every time, and the
+  component's own header had warned about holding hundreds of files at
+  once — a bound it could not enforce while each instance owned its URL.
+
+**A keying bug the tests found.** The first version keyed on path,
+mtime and size alone. `path` is *relative to the project root*, so
+`assets/hero.png` in two different projects is the same string. That
+triple is the standard file-identity heuristic and a collision would
+almost always be two copies of one file — but "almost always" is the
+wrong standard when being wrong means showing one film's frame under
+another film's asset. The root's name is in the key now; its *handle*
+is not, because persisted entries have to survive a reload where every
+handle is new.
+
+Mutation-tested like the URL cache: ignoring the environment epoch,
+dropping mtime and size from the key, and removing the in-flight dedup
+each fail a test. Three of the thirteen also passed for the wrong reason
+until a cache reset was added between them — module-level state outlives
+a test file.
+
+### A leak the tests did not catch until they were attacked
+
+`objectUrlCache` has 13 headless tests (no view imported, fake timers).
+All thirteen passed first run, which is not evidence of anything, so
+three deliberate defects were introduced to see whether they bite:
+trusting an in-flight read after its holder released (caught), revoking
+with no grace period (caught two tests), and **deleting the refcount
+guard in `release` (caught nothing)**.
+
+Tracing why exposed a real leak in the original code. The scheduled
+revoke returned early when something still held the URL, without
+clearing its own timer handle. Nothing could reach that state, because
+`acquire` always clears a pending timer — but the two guards were
+covering for each other, and with one removed the sequence is: release
+one of two holders, the timer fires and declines to revoke while leaving
+`timer` set, then the last release sees a non-null timer, takes the
+early exit, and schedules nothing. The URL lives for the rest of the
+session with nobody holding it.
+
+Fixed by having the callback clear its own handle before deciding, and
+pinned by a new test — verified against the *original* code plus the
+mutation, where it fails. The `release` guard is now honestly a fast
+path rather than a second line of defence, which is what it should have
+been all along.
+
+**One open decision, deferred on purpose.** The definition belongs in
+the registry's help text, not in `conventions.md` — §2.1 makes the
+registry the authority on fields, and help text is generated into
+`entity-reference.md` and checksummed. Writing it there changes
+`registry.json`, which is the one artifact pinned to the `schema-2.13`
+tag, so `check_pin` fails: the live tag would serve different bytes than
+`SHA256SUMS` claims. That needs a re-cut tag or a schema bump, which is
+a release decision. `check_pin` caught this immediately, which is the
+best argument for its existence so far.
+
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.
@@ -272,7 +427,9 @@ cleanup.
    code.
 5. ✅ **§7a — the folder attach.** Done; two latent root-pairing
    defects fixed with it.
-6. **§6** — whenever the proposals resolve.
+6. ✅ **§7b — thumbnails.** Done; `region_box` read for the first
+   time, and the fixture exercises it.
+7. **§6** — whenever the proposals resolve.
 
 ## 9. What "MVP" is being taken to mean here
 

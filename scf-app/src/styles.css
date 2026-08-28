@@ -1634,7 +1634,7 @@ tr.prop-weak td { opacity: .6; }
  * item and left the text nowhere. Flat is simpler and lets the
  * identifier be selectable text rather than button content. */
 .asset-row {
-  display: flex; gap: 10px; align-items: baseline;
+  display: flex; gap: 10px; align-items: center;
   padding: 5px 6px; font-size: 12px;
 }
 .asset-row:hover { background: var(--ink-1); }
@@ -1701,6 +1701,49 @@ tr.prop-weak td { opacity: .6; }
 .bundle-assets, .asset-bundles, .asset-facts {
   margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line);
 }
+
+/* ── Thumbnails ────────────────────────────────────────────────────
+   Three fixed sizes, and the chip is the SAME BOX as the image. A slot
+   that collapses for a .zip makes every list reflow as it loads, and a
+   third of a real project is not natively viewable. */
+.asset-thumb {
+  flex: none; position: relative; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 2px;
+  background: var(--ink-1);
+  display: flex; align-items: center; justify-content: center;
+}
+.asset-thumb-sm { width: 28px; height: 28px; }
+.asset-thumb-md { width: 56px; height: 56px; }
+.asset-thumb-lg { width: 88px; height: 88px; }
+/* Before it is on screen: a box, not a spinner. A list of forty
+   spinners reads as forty things going wrong. */
+.asset-thumb-idle { background: var(--ink-1); border-style: dashed; }
+.asset-thumb-chip {
+  font-size: 9.5px; color: var(--paper-dim); text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.asset-thumb-missing, .asset-thumb-out-of-root { color: var(--amber); }
+.asset-thumb-img {
+  position: absolute; width: 100%; height: 100%; object-fit: cover;
+  display: block;
+}
+.asset-thumb-btn { cursor: pointer; }
+.asset-thumb-btn:hover { border-color: var(--paper-dim); }
+
+.anchor-thumb { display: flex; gap: 8px; align-items: center;
+  flex: none; }
+.anchor-thumb-meta { display: flex; flex-direction: column; gap: 2px;
+  align-items: flex-start; }
+.anchor-thumb-name { font-size: 10.5px; max-width: 14ch;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.anchor-thumb-warn { font-size: 10px; color: var(--amber); }
+
+.bundle-strip { display: flex; gap: 4px; flex-wrap: wrap;
+  align-items: center; }
+.bundle-strip-more { font-size: 10.5px; }
+.bundle-strip-empty { font-size: 11.5px; margin: 4px 0; }
+.binding-strip { margin-top: 12px; }
+
 .bundle-member-list { list-style: none; margin: 0 0 8px; padding: 0; }
 .bundle-member-list li {
   display: flex; gap: 8px; align-items: center; font-size: 11.5px;

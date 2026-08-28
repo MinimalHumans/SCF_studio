@@ -68,7 +68,15 @@ export function makeLocator(
   };
 }
 
-async function fileAt(
+/**
+ * The File at a path, or null.
+ *
+ * Exported because thumbnail generation wants the bytes ONCE and does
+ * not want an object URL: it decodes straight from the File and caches
+ * a small raster, so routing it through `assetObjectUrl` would create a
+ * URL whose only purpose is to be revoked a moment later.
+ */
+export async function fileAt(
   root: FileSystemDirectoryHandle | null, path: string,
 ): Promise<File | null> {
   if (root === null) return null;

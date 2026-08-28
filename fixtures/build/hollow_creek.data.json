@@ -1154,6 +1154,8 @@
     "subject_id": 1,
     "anchor_type": "visual",
     "asset_id": 3,
+    "region_box": "{\"x\": 512, \"y\": 96, \"w\": 384, \"h\": 384}",
+    "region_label": "head, three-quarter",
     "canonical_status": "verified",
     "lifecycle_status": "active"
    },

@@ -18,6 +18,7 @@ import {
 } from "@scf-core/bundling.ts";
 import { listAssets, type AssetRow } from "@scf-core/assetIndex.ts";
 import { exec, useStore } from "../state/store.ts";
+import { AssetThumb } from "./AssetThumb.tsx";
 
 /** Membership list plus a searchable multi-select picker. */
 export function BundleAssets({ bundleId }: {
@@ -83,6 +84,11 @@ export function BundleAssets({ bundleId }: {
       <ul className="bundle-member-list">
         {members.map((m) => (
           <li key={m.linkId}>
+            <AssetThumb identifier={m.identifier} size="sm"
+                        alt={m.assetName ?? `#${m.assetId}`}
+                        onClick={() => {
+                          void openEntityRow("asset", m.assetId);
+                        }} />
             <button className="ghost tiny bundle-member-name"
                     onClick={() => { void openEntityRow("asset",
                                                         m.assetId); }}>
@@ -130,6 +136,8 @@ export function BundleAssets({ bundleId }: {
                 <label>
                   <input type="checkbox" checked={chosen.has(a.id)}
                          onChange={() => toggle(a.id)} />
+                  <AssetThumb identifier={a.identifier} size="sm"
+                              alt={a.name ?? `#${a.id}`} />
                   <span>{a.name ?? `#${a.id}`}</span>
                   <span className="mono muted">{a.identifier ?? ""}</span>
                 </label>

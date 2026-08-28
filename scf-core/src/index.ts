@@ -120,6 +120,11 @@ export {
 } from "./mediaReferences.ts";
 
 export {
+  type RegionBox, type SubjectAnchor,
+  parseRegionBox, regionFits, visualAnchorFor,
+} from "./anchors.ts";
+
+export {
   type ProjectFinding, type ProjectFindingKind, type ProjectPick,
   type RootPairing, type RootPairingKind,
   chooseProjectFile, classifyRootPairing, isProjectFile,

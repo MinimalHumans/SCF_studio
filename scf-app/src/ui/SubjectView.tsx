@@ -10,6 +10,7 @@ import {
   sceneLabel, sceneShort, shotLabel,
 } from "../state/displayName.ts";
 import { useRefNames } from "./useRefNames.ts";
+import { ANCHOR_SUBJECTS, AnchorThumb } from "./AnchorThumb.tsx";
 import { scopeRank } from "../state/registryGraph.ts";
 import { useQuery } from "./useQuery.ts";
 import { PositionPicker, ReadinessPanel } from "./ReadinessPanel.tsx";
@@ -61,6 +62,10 @@ export function SubjectView(): JSX.Element | null {
   return (
     <div className="subject-view">
       <header className="subject-header">
+        {ANCHOR_SUBJECTS.includes(subject.entity) && (
+          <AnchorThumb subjectType={subject.entity} subjectId={subject.id}
+                       size="lg" />
+        )}
         <span className="subject-kind">
           {registry.entities.get(subject.entity)?.label}
         </span>

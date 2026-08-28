@@ -32,6 +32,8 @@ import type { ProjectFinding } from "@scf-core/project.ts";
 import { resolveAllAssets, type ResolutionReport }
   from "@scf-core/assets.ts";
 import { makeLocator } from "../files/assetLocator.ts";
+import { revokeAll } from "../files/objectUrlCache.ts";
+import { clearResolutions } from "../files/thumbnailCache.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
 import type { RootMode, RootPermission } from "../files/fileAdapter.ts";
 import { renumberForScene } from "../editor/shootOps.ts";
@@ -337,6 +339,13 @@ async function applyRoot(
   opts: { fileToken: unknown; fileName: string | null; mode: RootMode;
           verified: boolean },
 ): Promise<void> {
+  // Anything held now describes the PREVIOUS root. Bytes from a project
+  // the user has left are worse than a blank thumbnail, because they
+  // look like they worked. Drawn thumbnails are keyed by path, mtime
+  // and size and are safe to keep — the resolutions that FOUND those
+  // paths are not.
+  revokeAll();
+  clearResolutions();
   const probe = await probeTraversal(root, opts.fileName);
   await rememberRoot(root);
   await rememberPair(opts.fileToken, root, opts.mode);
@@ -500,6 +509,8 @@ export const useStore = create<AppState>((set, get) => ({
       // addressed every asset against another film's disk. Nothing
       // reported it, because a stale root resolves perfectly well.
       setAssetLocator(null);
+      revokeAll();
+      clearResolutions();
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
             phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
@@ -693,6 +704,10 @@ export const useStore = create<AppState>((set, get) => ({
     // just left, and the reopen bumped the revision, so the SECOND
     // close warned about unsaved changes that were never made.
     localStorage.setItem("scf:auto-resume", "0");
+    // Thumbnails hold object URLs into the folder being left.
+    revokeAll();
+    clearResolutions();
+    setAssetLocator(null);
     // Leave the workbench FIRST. Closing the database out from under
     // mounted views left their in-flight queries — and the script
     // editor's blur-triggered commit — resolving against no database,

@@ -20,7 +20,8 @@ import {
 } from "@scf-core/preview.ts";
 import { parseIdentifier, resolveIdentifier, type Resolution }
   from "@scf-core/assets.ts";
-import { assetObjectUrl, makeLocator, readAssetText }
+import { acquire, release } from "../files/objectUrlCache.ts";
+import { makeLocator, readAssetText }
   from "../files/assetLocator.ts";
 import { useStore } from "../state/store.ts";
 
@@ -79,9 +80,15 @@ export function AssetPreview({ identifier }: {
   // Load only when it can be shown, and only when a large file has been
   // asked for: opening an asset row should never pull 200MB off disk on
   // its own.
+  // The URL comes from the shared refcounted cache rather than being
+  // created and revoked here. Two reasons: stepping back and forth
+  // between two assets used to re-read both every time, and this
+  // component's own header warned about holding hundreds of files at
+  // once — a bound it could not enforce while each instance owned its
+  // URL outright.
   useEffect(() => {
     let cancelled = false;
-    let created: string | null = null;
+    let held: string | null = null;
 
     void (async () => {
       if (resolution?.state !== "resolved") return;
@@ -94,18 +101,15 @@ export function AssetPreview({ identifier }: {
         if (!cancelled) setText(body);
         return;
       }
-      const objectUrl = await assetObjectUrl(root, parsed.path);
-      created = objectUrl;
-      if (cancelled) {
-        if (objectUrl !== null) URL.revokeObjectURL(objectUrl);
-        return;
-      }
+      held = parsed.path;
+      const objectUrl = await acquire(root, parsed.path);
+      if (cancelled) return;
       setUrl(objectUrl);
     })();
 
     return () => {
       cancelled = true;
-      if (created !== null) URL.revokeObjectURL(created);
+      if (held !== null) release(root, held);
     };
   }, [resolution, cap.tier, cap.kind, parsed?.path, root, big, asked]);
 

@@ -40,6 +40,7 @@ import {
   type BundleSummary,
 } from "@scf-core/bundling.ts";
 import { exec, registry, useStore } from "../state/store.ts";
+import { AssetThumb } from "./AssetThumb.tsx";
 
 function Folder({ node, depth, selected, onSelect }: {
   node: TreeNode; depth: number; selected: string;
@@ -477,6 +478,11 @@ no relationship. These are what rot at scale.">
                        else next.add(a.id);
                        return next;
                      })} />
+              <AssetThumb identifier={a.identifier} size="sm"
+                          alt={a.name ?? "unnamed"}
+                          onClick={() => {
+                            void openEntityRow("asset", a.id);
+                          }} />
               <button className="ghost tiny asset-row-name"
                       onClick={() => { void openEntityRow("asset", a.id); }}>
                 {a.name ?? "unnamed"}

@@ -525,6 +525,43 @@ platform offers no unit narrower than the folder, which is why the
 read-only rule below is a discipline in the code rather than a sandbox
 around it — on this route.
 
+### `entity_anchor.region_box`
+
+The editor is the **first reader** of this field. It has been writable
+for the whole life of the schema and nothing had ever parsed it back —
+it existed in `entity_registry.py` and in the generated entity
+reference, and nowhere else. Reading it is therefore a definition, not
+an implementation, so it is written down here rather than left implied
+by `scf-core/src/anchors.ts`:
+
+> `{"x": 420, "y": 180, "w": 480, "h": 600}` — a rectangle inside the
+> source asset, in **that asset's own pixels**, origin at top-left.
+
+Pixels rather than a normalised 0..1 box, because the field's
+long-standing placeholder is four integers in the hundreds and because
+an anchor is a measurement somebody took against a specific file. The
+cost of that choice is that a box means nothing against a different
+file, and nothing in the schema records which file it was measured on.
+So a consumer that **cannot confirm the box fits the image it actually
+loaded must show the whole asset**. A clamped crop is a confident wrong
+answer; the whole frame is an honest one.
+
+Reading is total, in the sense §2 uses everywhere else. Absent,
+malformed, negative, zero-sized or oversized is not an error — it is an
+anchor with no usable region, and the answer is the whole asset. A
+thumbnail that refused to draw because its box was wrong would be worse
+than one that showed too much.
+
+**This is not in the spec, and the registry would be a better home than
+this document.** §2.1 makes the registry the authority on fields, so the
+definition belongs in `region_box`'s help text, where it would be
+generated into `entity-reference.md` and checksummed. It is not there
+for one mechanical reason: `scf-core/registry/registry.json` is the
+artifact pinned to the `schema-2.13` tag, and changing its bytes makes
+`check_pin` fail — a live tag would serve a different file than
+`SHA256SUMS` claims. Moving it needs either a re-cut tag or a schema
+bump, and that is a release decision rather than an editor one.
+
 ### The other order: the file first
 
 Opening a lone `.scf` still works, and `spec §0.3` makes that the
