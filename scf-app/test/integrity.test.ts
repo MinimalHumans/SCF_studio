@@ -94,16 +94,83 @@ describe("script integrity", () => {
     await db.exec(
       "INSERT INTO scene_character (name, scene_id, character_id) " +
       "VALUES ('ALEXIS', 1, 1)");
+    // The scene keeps its action. That matters now: the report asks
+    // whether a WRITTEN scene shows this character, so the scene has to
+    // be written — see the slugline-only case below.
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "uuid) VALUES (2, 'action', 'The kettle boils. Nobody comes.', " +
+      "'L-act')");
     // The author deletes Alexis's dialogue. writeScreenplay rewrites the
     // line table; nothing has ever swept the junction.
     await db.exec("DELETE FROM screenplay_lines WHERE uuid = 'L-cue'");
-    const report = await scanIntegrity(db.exec, live("L-head"));
+    const report = await scanIntegrity(db.exec, live("L-head", "L-act"));
     expect(report.unjustifiedLinks).toHaveLength(1);
     expect(report.unjustifiedLinks[0]!.characterName).toBe("Alexis");
     expect(report.unjustifiedLinks[0]!.sceneNumber).toBe("1");
 
     await deleteSceneCharacter(db.exec, report.unjustifiedLinks[0]!.id);
-    expect((await scanIntegrity(db.exec, live("L-head"))).total).toBe(0);
+    expect((await scanIntegrity(db.exec, live("L-head", "L-act"))).total)
+      .toBe(0);
+  });
+
+  test("a slugline with nothing under it justifies nothing either way",
+       async () => {
+    // The behaviour that changed. A heading alone does not show the
+    // character — but it does not show ANYONE, and "not written yet" and
+    // "written without them" are the same file. The conformance fixture
+    // is mostly this shape on purpose (four scenes carry dialogue, the
+    // rest stay sluglines), and reporting it called twelve deliberate
+    // links leftovers.
+    await db.exec("DELETE FROM screenplay_lines WHERE uuid = 'L-cue'");
+    await db.exec(
+      "INSERT INTO scene_character (name, scene_id, character_id) " +
+      "VALUES ('ALEXIS', 1, 1)");
+    const report = await scanIntegrity(db.exec, live("L-head"));
+    expect(report.unjustifiedLinks).toHaveLength(0);
+  });
+
+  test("a cue justifies its link through the heading above it, not " +
+       "its own scene_id", async () => {
+    // Spec §3.4: a scene's text runs from its heading to the next one,
+    // and a reader MUST NOT rely on screenplay_lines.scene_id. Only
+    // headings carry it in a file this editor did not write — the
+    // fixture leaves it null on all eleven of its cue lines — so
+    // reading it here made the answer depend on who wrote the file.
+    await db.exec("UPDATE screenplay_lines SET scene_id = NULL " +
+                  "WHERE uuid = 'L-cue'");
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "uuid) VALUES (2, 'dialogue', 'Not tonight.', 'L-dlg')");
+    await db.exec(
+      "INSERT INTO scene_character (name, scene_id, character_id) " +
+      "VALUES ('ALEXIS', 1, 1)");
+    const report = await scanIntegrity(
+      db.exec, live("L-head", "L-cue", "L-dlg"));
+    expect(report.unjustifiedLinks).toHaveLength(0);
+  });
+
+  test("a cue in the PREVIOUS scene does not justify a link in this one",
+       async () => {
+    // The other half of the walk: agreeing that scene_id is the wrong
+    // column is worth nothing if the replacement matches every line in
+    // the file. Alexis speaks in scene 1 and is linked to scene 2.
+    await db.exec("INSERT INTO scene (name, scene_number) " +
+                  "VALUES ('RIDGE', 2)");
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "scene_id, uuid) VALUES " +
+      "(2, 'heading', 'EXT. RIDGE - NIGHT', 2, 'L-head2')");
+    await db.exec(
+      "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+      "uuid) VALUES (3, 'action', 'Rain on the shale.', 'L-act2')");
+    await db.exec(
+      "INSERT INTO scene_character (name, scene_id, character_id) " +
+      "VALUES ('ALEXIS', 2, 1)");
+    const report = await scanIntegrity(
+      db.exec, live("L-head", "L-cue", "L-head2", "L-act2"));
+    expect(report.unjustifiedLinks).toHaveLength(1);
+    expect(report.unjustifiedLinks[0]!.sceneNumber).toBe("2");
   });
 
   test("a scene with no heading in the script is never called unjustified",

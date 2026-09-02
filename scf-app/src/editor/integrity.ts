@@ -119,6 +119,29 @@ export async function scanIntegrity(
   // Only scenes that ARE in the script can have unjustified links: a
   // scene with no heading yet is being outlined, and its cast is
   // authored rather than derived.
+  //
+  // A line's scene is the scene of the nearest heading ABOVE it (spec
+  // §3.4), never `screenplay_lines.scene_id` — which §3.4 says a reader
+  // must not rely on, and which only headings carry in a file this
+  // editor did not write. Reading it here made the answer depend on who
+  // last wrote the file: the fixture leaves it null on every non-heading
+  // line, so the check reported all eighteen of its cast links, while
+  // the same file after one commit in this app reported twelve.
+  //
+  // The scene must also SHOW something. "No cue line for them survives"
+  // is evidence only where lines survive at all: under a heading with
+  // nothing below it, the script has not been written rather than
+  // written without them, and those two are indistinguishable here.
+  const SCENE_OF_LINE =
+    "(SELECT h.scene_id FROM screenplay_lines h " +
+    "  WHERE h.line_type = 'heading' AND h.scene_id IS NOT NULL " +
+    "    AND h.line_order <= l.line_order " +
+    "  ORDER BY h.line_order DESC LIMIT 1)";
+  // Content a scene shows. Structure and annotation are excluded:
+  // a section, synopsis or note is written ABOUT the script.
+  const BODY_TYPES =
+    "('action', 'character', 'dialogue', 'parenthetical', " +
+    " 'transition', 'centered', 'lyric')";
   const linkRows = await exec(
     "SELECT sc.id, sc.scene_id, s.scene_number, s.name AS scene_name, " +
     "sc.character_id, c.name AS character_name " +
@@ -129,10 +152,15 @@ export async function scanIntegrity(
     "WHERE sc.character_id IS NOT NULL AND EXISTS (" +
     "  SELECT 1 FROM screenplay_lines h " +
     "  WHERE h.line_type = 'heading' AND h.scene_id = sc.scene_id) " +
+    "AND EXISTS (" +
+    "  SELECT 1 FROM screenplay_lines l " +
+    `  WHERE l.line_type IN ${BODY_TYPES} ` +
+    `    AND ${SCENE_OF_LINE} = sc.scene_id) ` +
     "AND NOT EXISTS (" +
     "  SELECT 1 FROM screenplay_lines l " +
-    "  WHERE l.line_type = 'character' AND l.scene_id = sc.scene_id " +
-    "    AND l.character_id = sc.character_id) " +
+    "  WHERE l.line_type = 'character' " +
+    "    AND l.character_id = sc.character_id " +
+    `    AND ${SCENE_OF_LINE} = sc.scene_id) ` +
     `ORDER BY ${sceneNumberOrderTerms("sn")}, s.id, c.name`);
   const unjustifiedLinks: UnjustifiedLink[] = linkRows.map((r: Row) => ({
     id: r["id"] as number,

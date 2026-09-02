@@ -31,6 +31,7 @@ import { diffScreenplay, type ReimportDiff }
   from "@scf-core/screenplay/reimport.ts";
 import { commitStructure, planCommitStructure }
   from "./structureCommit.ts";
+import { cueMatchesEntity } from "./cueMatch.ts";
 import type { LineEvent } from "./lineState.ts";
 import type { Block } from "./screenplayDoc.ts";
 
@@ -442,7 +443,11 @@ export async function planCommitLinks(
       if (cue === "" || COMPOUND_CUE.test(cue)) continue;
       if (row.characterId !== null) {
         const entityName = charNameById.get(row.characterId);
-        if (entityName !== undefined && norm(entityName) !== norm(cue)) {
+        // Not equality: a cue is a short form by convention, and
+        // `ELEANOR` above `Eleanor Cade` is the normal state of every
+        // screenplay rather than a mismatch. See cueMatch.ts.
+        if (entityName !== undefined &&
+            !cueMatchesEntity(cue, entityName)) {
           info.conflicts.push({ uuid: row.uuid ?? "", cue,
                                 entityId: row.characterId, entityName });
         }

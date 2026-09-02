@@ -123,8 +123,11 @@ export function ScriptView(): JSX.Element {
     { locations: [], characters: [] });
   const [commitNote, setCommitNote] = useState("");
   const [review, setReview] = useState<CommitPlanInfo | null>(null);
+  // "keep" is the default and does nothing: a flagged cue is a QUESTION,
+  // and both other answers are destructive, so neither may be what the
+  // dialog does when the author just presses the confirm button.
   const [resolutions, setResolutions] =
-    useState<Map<string, "create" | "rename">>(new Map());
+    useState<Map<string, "keep" | "create" | "rename">>(new Map());
   const [pageInfo, setPageInfo] = useState({ page: 1, total: 1 });
   const [zoom, setZoom] = useState(() => {
     const v = Number(localStorage.getItem("scf:editor-zoom"));
@@ -426,9 +429,11 @@ export function ScriptView(): JSX.Element {
     const unlinkUuids = new Set<string>();
     const renames = new Map<number, string>();
     for (const c of review.conflicts) {
-      const choice = resolutions.get(c.uuid) ?? "create";
+      const choice = resolutions.get(c.uuid) ?? "keep";
       if (choice === "create") unlinkUuids.add(c.uuid);
-      else renames.set(c.entityId, smartTitleLocal(c.cue));
+      else if (choice === "rename") {
+        renames.set(c.entityId, smartTitleLocal(c.cue));
+      }
     }
     const created = await withTransaction(exec, async () => {
       const link = await linkAndCreateAtCommit(exec, plan.rows,
@@ -1155,7 +1160,15 @@ export function ScriptView(): JSX.Element {
                       <label>
                         <input type="radio" name={`res-${c.uuid}`}
                                checked={(resolutions.get(c.uuid) ??
-                                         "create") === "create"}
+                                         "keep") === "keep"}
+                               onChange={() => setResolutions((old) =>
+                                 new Map(old).set(c.uuid, "keep"))} />
+                        leave as is — the link is right
+                      </label>
+                      <label>
+                        <input type="radio" name={`res-${c.uuid}`}
+                               checked={resolutions.get(c.uuid) ===
+                                        "create"}
                                onChange={() => setResolutions((old) =>
                                  new Map(old).set(c.uuid, "create"))} />
                         break link; create/match “{c.cue}”

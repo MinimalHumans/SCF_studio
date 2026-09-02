@@ -414,6 +414,87 @@ tag, so `check_pin` fails: the live tag would serve different bytes than
 a release decision. `check_pin` caught this immediately, which is the
 best argument for its existence so far.
 
+## 7c. ✅ Two review surfaces that cried wolf
+
+Both found by opening the demo and reading what it said. Both were
+telling an author that correct data was wrong, on the fixture the
+project publishes as its example.
+
+### The commit review offered to break every correct link
+
+`planCommitLinks` compared a cue to its linked entity with string
+equality. A cue is a **short form** by convention, so `ELEANOR` above a
+line belonging to `Eleanor Cade` read as a mismatch — all eleven cue
+lines in the fixture, every one of them correctly linked.
+
+Worse than the false positive was the default. Each conflict offered
+`break link; create/match "ELEANOR"` or `rename entity to "Eleanor"`,
+with the first preselected and **no third option meaning "both are
+right"**. Confirming the dialog as presented would have created a
+duplicate `ELEANOR`, unlinked eleven lines from `Eleanor Cade` and
+`Marcus Cade`, and — if the file were then dumped — written all of it
+into the fixture.
+
+Fixed in two independent places, deliberately:
+
+- `editor/cueMatch.ts` — `cueMatchesEntity`, agreement by a contiguous
+  run of **whole words** in the entity's name. `ELEANOR`, `CADE` and
+  `ELEANOR CADE` agree with `Eleanor Cade`; `JORGE` does not agree with
+  `George Wells`, and `OLD ELEANOR` does not agree with `Eleanor Cade`
+  because it carries a word the name does not — a real question, not
+  noise. Whole words, never substrings: `ADA` is inside `Adam Shaw`.
+- A `keep` resolution, defaulted. The predicate change removes the
+  false positives that exist today; the default removes the *class* of
+  harm, because the next detector to be too eager will not be as
+  visible. A flagged cue is a question, and a dialog whose confirm
+  button acts destructively on an unanswered question is wrong however
+  good the detection gets.
+
+`cueMatchesEntity` is deliberately **not** used to choose an entity for
+an *unlinked* cue. There the evidence runs the other way — `CADE` is
+consistent with three characters in the fixture, and picking one would
+be a guess. Here a link already exists and is authored truth; the only
+question is whether the cue contradicts it. It is also not in the
+format: the spec says nothing about cue shorthand and nothing in a
+`.scf` depends on the answer, so it lives in the app.
+
+### The integrity panel read the column §3.4 forbids
+
+`scanIntegrity`'s unjustified-link query matched cue lines with
+`l.scene_id = sc.scene_id`. Only headings carry `scene_id` in a file
+this editor did not write — the fixture leaves it null on all eleven cue
+lines — so the `NOT EXISTS` was **always satisfied** and the check
+reported every cast link in a scene that had a heading. Spec §3.4 says a
+scene's text runs from its heading to the next one and a reader MUST NOT
+rely on `screenplay_lines.scene_id`; this was relying on it. The visible
+symptom was that the same file gave different answers depending on who
+wrote it last: eighteen findings on a freshly built fixture, twelve
+after one commit in this app, because `linkAndCreateAtCommit`
+back-fills the column.
+
+Same shape as Q04 reading `scene_sequence` in R88 — a query treating a
+permitted-to-be-stale shadow as truth. Fixed by deriving the scene from
+the nearest heading above the line, the walk `syncPropSceneLinks`
+already uses, defined once and used by both subqueries.
+
+Second change, a judgement rather than a defect: a link is only
+questioned where the scene **shows something**. Under a heading with
+nothing below it, "not written yet" and "written without them" are the
+same file, and the fixture is mostly that shape on purpose. Body types
+are the ones a scene shows — `action`, `character`, `dialogue`,
+`parenthetical`, `transition`, `centered`, `lyric` — excluding
+`section`, `synopsis` and `note`, which are written *about* the script.
+The existing deleted-dialogue test keeps its action line so the case it
+was written for still reports.
+
+**On the fixture: 11 conflicts → 0, and 12 unjustified links → 3.** The
+three are real content divergences, not noise, and are the subject of
+§3's fixture pass: `Marcus Cade` in sc 1, `Ada Cade` in sc 3, `Ada Cade`
+in sc 19. Marcus is named in sc 1's action but never cues, which is a
+legitimate silent presence and argues for a further rule — a name
+appearing in a scene's action justifies the link — deliberately left out
+here rather than guessed at.
+
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.
@@ -429,7 +510,9 @@ best argument for its existence so far.
    defects fixed with it.
 6. ✅ **§7b — thumbnails.** Done; `region_box` read for the first
    time, and the fixture exercises it.
-7. **§6** — whenever the proposals resolve.
+7. ✅ **§7c — the two review surfaces.** Done; and it narrowed §3's
+   fixture pass to three named divergences instead of twelve.
+8. **§6** — whenever the proposals resolve.
 
 ## 9. What "MVP" is being taken to mean here
 
