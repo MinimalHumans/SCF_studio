@@ -11,10 +11,18 @@ on `screenplay_lines.scene_id` — with no artifact behind it at all.
 There was no scene text to walk.
 
 An SCF should work as an outline AND as a finished screenplay, so the
-fixture now demonstrates both: four scenes carry action and dialogue, the
-rest stay sluglines. A conforming reader has to handle a file where some
-scenes have bodies and some do not, which is the normal state of a
-project in progress.
+fixture demonstrates both: every scene in the script carries action
+except scene 11, which stays a slugline on purpose. A conforming reader
+has to handle a file where some scenes have bodies and some do not,
+which is the normal state of a project in progress — and with every
+heading filled in, nothing here would demonstrate the outline half any
+more. Scene 11 is that demonstration; see conformance.md's list of
+fixture properties before filling it in.
+
+Nine scenes carry dialogue as well. Three do not, and each is a silent
+presence rather than an oversight: Marcus walks in alone in scene 1 and
+goes up the ridge alone in 21, and the reunion on the porch in 24 is
+wordless because the whole script is about what does not get said.
 
 THIS SCRIPT IS THE SOURCE. The screenplay lives here as data and the
 `.fountain` file beside it is GENERATED, not parsed. Parsing fountain
@@ -104,6 +112,12 @@ SCREENPLAY = [
     ("parenthetical", "(still not turning)", None),
     ("dialogue", "It isn't.", None),
     ("blank", "", None),
+    ("character", "MARCUS", "Marcus Cade"),
+    ("dialogue", "Is Ada's room still—", None),
+    ("blank", "", None),
+    ("action", "Eleanor turns the tap on. That is the whole answer.",
+     None),
+    ("blank", "", None),
     ("action", "She washes the same cup she has already washed. Behind her "
                "the door stands open on the yard, and neither of them "
                "closes it.", None),
@@ -111,7 +125,19 @@ SCREENPLAY = [
 
     ("heading", "EXT. GRAVESIDE - DUSK", "7"),
     ("blank", "", None),
-
+    ("action", "A short row of stones at the edge of the field. Eleanor "
+               "stands at the newest one. REVEREND SHAW keeps a pace "
+               "back with his hat in his hands.", None),
+    ("blank", "", None),
+    ("character", "SHAW", "Reverend Shaw"),
+    ("dialogue", "You don't have to come out here to see her.", None),
+    ("blank", "", None),
+    ("character", "ELEANOR", "Eleanor Cade"),
+    ("dialogue", "I know where she is. That's different.", None),
+    ("blank", "", None),
+    ("action", "Shaw waits to be asked for something. He is not asked.",
+     None),
+    ("blank", "", None),
     ("section", "# Act 2 — The Thaw", ("act", 2)),
     ("blank", "", None),
     ("section", "## The Thaw", ("sequence", 4)),
@@ -119,8 +145,39 @@ SCREENPLAY = [
 
     ("heading", "EXT. CREEK CROSSING - DAY", "9"),
     ("blank", "", None),
+    ("action", "The creek is running high and brown. Eleanor takes the "
+               "crossing on foot and the current takes her legs from "
+               "under her.", None),
+    ("blank", "", None),
+    ("action", "She goes down hard on her left side against the stones. "
+               "Marcus is in the water before he has decided to be.",
+     None),
+    ("blank", "", None),
+    ("character", "MARCUS", "Marcus Cade"),
+    ("dialogue", "Hold on to me.", None),
+    ("blank", "", None),
+    ("character", "ELEANOR", "Eleanor Cade"),
+    ("parenthetical", "(through her teeth)", None),
+    ("dialogue", "I am.", None),
+    ("blank", "", None),
+    ("action", "He carries her up the bank. Neither of them looks back "
+               "at the water.", None),
+    ("blank", "", None),
+
     ("heading", "INT. FARMHOUSE KITCHEN - NIGHT (AFTER)", "10"),
     ("blank", "", None),
+    ("action", "Eleanor sits with her left arm held against her. Ada's "
+               "shawl is folded over the back of the chair, where it "
+               "has been folded for eleven years.", None),
+    ("blank", "", None),
+    ("action", "She puts it around her shoulders.", None),
+    ("blank", "", None),
+
+    # Scene 11 is DELIBERATELY left as a slugline — see conformance.md's
+    # fixture properties. An SCF is legitimately an outline or a
+    # finished screenplay, and a conforming reader has to meet both in
+    # one file; with every heading carrying a body, nothing in the
+    # fixture demonstrates the first any more.
     ("heading", "EXT. FARMHOUSE PORCH - DAY", "11"),
     ("blank", "", None),
 
@@ -182,6 +239,12 @@ SCREENPLAY = [
     ("dialogue", "I know.", None),
     ("blank", "", None),
     ("character", "MARCUS", "Marcus Cade"),
+    ("dialogue", "Ada was already in the water.", None),
+    ("blank", "", None),
+    ("character", "ELEANOR", "Eleanor Cade"),
+    ("dialogue", "I know that too.", None),
+    ("blank", "", None),
+    ("character", "MARCUS", "Marcus Cade"),
     ("dialogue", "You know.", None),
     ("blank", "", None),
     ("character", "ELEANOR", "Eleanor Cade"),
@@ -191,15 +254,42 @@ SCREENPLAY = [
 
     ("heading", "INT. HOLLOW CREEK CHURCH - DAY", "16"),
     ("blank", "", None),
-
+    ("action", "Empty pews and one lit lamp. Eleanor sits near the "
+               "back. Shaw does not ask her to come further forward.",
+     None),
+    ("blank", "", None),
+    ("character", "SHAW", "Reverend Shaw"),
+    ("dialogue", "He's staying, then.", None),
+    ("blank", "", None),
+    ("character", "ELEANOR", "Eleanor Cade"),
+    ("dialogue", "He's stayed longer than I gave him.", None),
+    ("blank", "", None),
     ("section", "## The Storm", ("sequence", 2)),
     ("blank", "", None),
+    # Wordless on purpose. Marcus is alone on the ridge and there is
+    # nobody on the porch either of them is willing to talk to yet, so
+    # the cast links here stay unjustified by any cue line — which is
+    # what a silent presence looks like, and the integrity panel is
+    # right to keep asking about it.
     ("heading", "EXT. RIDGE FOREST - NIGHT (STORM)", "21"),
+    ("blank", "", None),
+    ("action", "Rain coming sideways through the pines. Marcus goes up "
+               "the ridge after the horses with a lamp that is no use "
+               "to him.", None),
+    ("blank", "", None),
+    ("action", "Ahead of him, hoofprints filling with water.", None),
     ("blank", "", None),
 
     ("section", "## The Open Door", ("sequence", 5)),
     ("blank", "", None),
     ("heading", "EXT. FARMHOUSE PORCH - DAWN", "24"),
+    ("blank", "", None),
+    ("action", "First light on the yard. The door stands open, as it "
+               "has stood since he came.", None),
+    ("blank", "", None),
+    ("action", "Eleanor is on the porch when Marcus comes up from the "
+               "barn. She holds on to him. It takes him a moment to "
+               "understand that is what is happening.", None),
     ("blank", "", None),
 ]
 

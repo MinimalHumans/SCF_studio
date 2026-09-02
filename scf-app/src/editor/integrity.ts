@@ -162,6 +162,7 @@ export async function scanIntegrity(
     "    AND l.character_id = sc.character_id " +
     `    AND ${SCENE_OF_LINE} = sc.scene_id) ` +
     `ORDER BY ${sceneNumberOrderTerms("sn")}, s.id, c.name`);
+
   const unjustifiedLinks: UnjustifiedLink[] = linkRows.map((r: Row) => ({
     id: r["id"] as number,
     sceneId: r["scene_id"] as number,

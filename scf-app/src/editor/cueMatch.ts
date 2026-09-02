@@ -31,16 +31,40 @@
  * It is also not part of the format. The spec says nothing about cue
  * shorthand and nothing in a `.scf` depends on this answer — it decides
  * what the editor asks the author about, so it lives in the app.
+ *
+ * The same word rules answer a second question for the integrity panel:
+ * does a scene's ACTION name a character? A cast link is justified by a
+ * character being written into the scene, not by their having a line —
+ * a screenplay is full of people who are present and silent, and
+ * requiring dialogue would mean writing dialogue to satisfy a checker.
  */
 
 /** Uppercased words, with the punctuation a cue picks up removed.
- * `MRS. CADE` and `Mrs Cade` are the same two words. */
+ * `MRS. CADE` and `Mrs Cade` are the same two words, and a possessive
+ * names its owner — action writes `Ada's shawl`. */
 function words(text: string): string[] {
   return text
+    .replace(/['\u2019]s\b/gi, "")
     .toUpperCase()
-    .replace(/[.,;:'\u2019"]/g, "")
-    .split(/[\s\-\u2013\u2014_]+/)
+    .replace(/[.,;:'\u2019"!?()\[\]]/g, "")
+    .split(/[\s\-\u2013\u2014_/]+/)
     .filter((w) => w !== "");
+}
+
+/** Does `haystack` contain `needle` as a contiguous run of whole words? */
+function containsRun(haystack: string[], needle: string[]): boolean {
+  if (needle.length === 0 || needle.length > haystack.length) return false;
+  for (let start = 0; start + needle.length <= haystack.length; start += 1) {
+    let all = true;
+    for (let i = 0; i < needle.length; i += 1) {
+      if (needle[i] !== haystack[start + i]) {
+        all = false;
+        break;
+      }
+    }
+    if (all) return true;
+  }
+  return false;
 }
 
 /**
@@ -51,16 +75,5 @@ export function cueMatchesEntity(cue: string, entityName: string): boolean {
   const c = words(cue);
   const e = words(entityName);
   if (c.length === 0 || e.length === 0) return false;
-  if (c.length > e.length) return false;
-  for (let start = 0; start + c.length <= e.length; start += 1) {
-    let all = true;
-    for (let i = 0; i < c.length; i += 1) {
-      if (c[i] !== e[start + i]) {
-        all = false;
-        break;
-      }
-    }
-    if (all) return true;
-  }
-  return false;
+  return containsRun(e, c);
 }

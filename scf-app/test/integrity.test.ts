@@ -150,7 +150,7 @@ describe("script integrity", () => {
     expect(report.unjustifiedLinks).toHaveLength(0);
   });
 
-  test("a cue in the PREVIOUS scene does not justify a link in this one",
+  test("a cue in the previous scene does not justify a link in this one",
        async () => {
     // The other half of the walk: agreeing that scene_id is the wrong
     // column is worth nothing if the replacement matches every line in

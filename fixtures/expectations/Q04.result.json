@@ -349,162 +349,162 @@
     ],
     "screenplay": [
       {
-        "uuid": "00000000-0000-4000-9000-000000000047",
+        "uuid": "00000000-0000-4000-9000-000000000079",
         "fields": {
           "content": "INT. FARMHOUSE KITCHEN - NIGHT",
-          "line_order": 47,
+          "line_order": 79,
           "line_type": "heading"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000048",
+        "uuid": "00000000-0000-4000-9000-000000000080",
         "fields": {
-          "line_order": 48,
+          "line_order": 80,
           "line_type": "blank"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000049",
+        "uuid": "00000000-0000-4000-9000-000000000081",
         "fields": {
           "content": "One lamp. Eleanor at the table with Ada's shawl around her shoulders. Marcus in the doorway, coat still on.",
-          "line_order": 49,
+          "line_order": 81,
           "line_type": "action"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000050",
+        "uuid": "00000000-0000-4000-9000-000000000082",
         "fields": {
-          "line_order": 50,
+          "line_order": 82,
           "line_type": "blank"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000051",
+        "uuid": "00000000-0000-4000-9000-000000000083",
         "fields": {
           "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
           "content": "ELEANOR",
-          "line_order": 51,
+          "line_order": 83,
           "line_type": "character",
           "metadata": "{\"character\": {\"name\": \"ELEANOR\", \"extensions\": [], \"dual\": false, \"forced\": false}}"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000052",
+        "uuid": "00000000-0000-4000-9000-000000000084",
         "fields": {
           "content": "You came back.",
-          "line_order": 52,
+          "line_order": 84,
           "line_type": "dialogue"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000053",
+        "uuid": "00000000-0000-4000-9000-000000000085",
         "fields": {
-          "line_order": 53,
+          "line_order": 85,
           "line_type": "blank"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000054",
+        "uuid": "00000000-0000-4000-9000-000000000086",
         "fields": {
           "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
           "content": "MARCUS",
-          "line_order": 54,
+          "line_order": 86,
           "line_type": "character",
           "metadata": "{\"character\": {\"name\": \"MARCUS\", \"extensions\": [], \"dual\": false, \"forced\": false}}"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000055",
+        "uuid": "00000000-0000-4000-9000-000000000087",
         "fields": {
           "content": "I came back.",
-          "line_order": 55,
+          "line_order": 87,
           "line_type": "dialogue"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000056",
+        "uuid": "00000000-0000-4000-9000-000000000088",
         "fields": {
-          "line_order": 56,
+          "line_order": 88,
           "line_type": "blank"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000057",
+        "uuid": "00000000-0000-4000-9000-000000000089",
         "fields": {
           "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
           "content": "ELEANOR",
-          "line_order": 57,
+          "line_order": 89,
           "line_type": "character",
           "metadata": "{\"character\": {\"name\": \"ELEANOR\", \"extensions\": [], \"dual\": false, \"forced\": false}}"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000058",
+        "uuid": "00000000-0000-4000-9000-000000000090",
         "fields": {
           "content": "Eleven years, and you come back for the part where there's nothing left to carry.",
-          "line_order": 58,
+          "line_order": 90,
           "line_type": "dialogue"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000059",
+        "uuid": "00000000-0000-4000-9000-000000000091",
         "fields": {
-          "line_order": 59,
+          "line_order": 91,
           "line_type": "blank"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000060",
+        "uuid": "00000000-0000-4000-9000-000000000092",
         "fields": {
           "content": "Marcus does not answer. His hand goes to his coat pocket and stops there.",
-          "line_order": 60,
+          "line_order": 92,
           "line_type": "action"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000061",
+        "uuid": "00000000-0000-4000-9000-000000000093",
         "fields": {
-          "line_order": 61,
+          "line_order": 93,
           "line_type": "blank"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000062",
+        "uuid": "00000000-0000-4000-9000-000000000094",
         "fields": {
           "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
           "content": "ELEANOR",
-          "line_order": 62,
+          "line_order": 94,
           "line_type": "character",
           "metadata": "{\"character\": {\"name\": \"ELEANOR\", \"extensions\": [], \"dual\": false, \"forced\": false}}"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000063",
+        "uuid": "00000000-0000-4000-9000-000000000095",
         "fields": {
           "content": "Say it or go to bed.",
-          "line_order": 63,
+          "line_order": 95,
           "line_type": "dialogue"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000064",
+        "uuid": "00000000-0000-4000-9000-000000000096",
         "fields": {
-          "line_order": 64,
+          "line_order": 96,
           "line_type": "blank"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000065",
+        "uuid": "00000000-0000-4000-9000-000000000097",
         "fields": {
           "content": "He goes to bed.",
-          "line_order": 65,
+          "line_order": 97,
           "line_type": "action"
         }
       },
       {
-        "uuid": "00000000-0000-4000-9000-000000000066",
+        "uuid": "00000000-0000-4000-9000-000000000098",
         "fields": {
-          "line_order": 66,
+          "line_order": 98,
           "line_type": "blank"
         }
       }

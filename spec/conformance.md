@@ -247,11 +247,14 @@ suites and MUST NOT change.
   (§6.6.1). Adding a cut row that nothing may notice is a stronger
   statement than having no cut rows at all — and it is why scene 12's
   pin below permits a cut row while permitting nothing else.
-- **Four scenes carry action and dialogue; the rest are sluglines
-  only.** An SCF is legitimately an outline or a finished screenplay,
-  and a conforming reader meets both in one file. Before 0.17 the
-  fixture had no body lines at all, which left §3.4 — read a scene's
-  text from its heading to the next — with no artifact behind it.
+- **Twelve scenes carry action; scene `11` is a slugline only.** An SCF
+  is legitimately an outline or a finished screenplay, and a conforming
+  reader meets both in one file. Before 0.17 the fixture had no body
+  lines at all, which left §3.4 — read a scene's text from its heading
+  to the next — with no artifact behind it. Scene `11` is now the whole
+  of the outline half, so filling it in removes a demonstrated property
+  and MUST update this list. Nine of those scenes carry dialogue as
+  well; the three that do not are silent presences, not omissions.
 - **Scene 12 is pinned** — its motif manifest, its single sound cue, its
   costume set and its direction chains are asserted exactly. Nothing
   ACTIVE may be added to it. A **cut** row may be, precisely because

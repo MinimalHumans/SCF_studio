@@ -48,7 +48,7 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf-spec.md` | `af02fb8afb71454c…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `2463b44b97a3c956…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/conformance.md` | `1a8faf057fbe7465…` | What a conforming implementation must do, per role, and how a claim is made. |
 | `spec/stability.md` | `20c0e18308efa8da…` | What is safe to build against and what is not, per subject. |
 | `spec/CHANGELOG.md` | `70db57ccc1fb401e…` | The specification changelog. Spec §11.5. |
 
@@ -79,7 +79,7 @@ One normative result per query, spec §12. Rows by uuid, no row ids, no timestam
 | `fixtures/expectations/Q03.result.json` | `db8c6119ab9b27fd…` | Q03's normative result. Spec §12.4. |
 | `fixtures/expectations/Q01.result.json` | `424d7d137bc7ee33…` | Q01's normative result. Spec §12.15. |
 | `fixtures/expectations/Q02.result.json` | `d466c8b6290b0fc0…` | Q02's normative result. Spec §12.16. |
-| `fixtures/expectations/Q04.result.json` | `a1e1e8407ef60073…` | Q04's normative result. Spec §12.17. |
+| `fixtures/expectations/Q04.result.json` | `45caf49243aaabbc…` | Q04's normative result. Spec §12.17. |
 | `fixtures/expectations/Q05.result.json` | `3bde08c480bc8860…` | Q05's normative result. Spec §12.2. |
 | `fixtures/expectations/Q07.result.json` | `8dfed2c71e82e801…` | Q07's normative result. Spec §12.3. |
 | `fixtures/expectations/Q06.result.json` | `38a8f977b9672b52…` | Q06's normative result. Spec §12.6. |
@@ -124,7 +124,7 @@ Eleven files that are wrong in a stated way, and the report each MUST produce. S
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `8938d41feccc47f6…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `17cd536969bfab66…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

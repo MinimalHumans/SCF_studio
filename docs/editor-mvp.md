@@ -487,13 +487,20 @@ are the ones a scene shows — `action`, `character`, `dialogue`,
 The existing deleted-dialogue test keeps its action line so the case it
 was written for still reports.
 
-**On the fixture: 11 conflicts → 0, and 12 unjustified links → 3.** The
-three are real content divergences, not noise, and are the subject of
-§3's fixture pass: `Marcus Cade` in sc 1, `Ada Cade` in sc 3, `Ada Cade`
-in sc 19. Marcus is named in sc 1's action but never cues, which is a
-legitimate silent presence and argues for a further rule — a name
-appearing in a scene's action justifies the link — deliberately left out
-here rather than guessed at.
+**On the fixture: 11 conflicts → 0, and 12 unjustified links → 6.** The
+six are all silent presences, and they are the state Chris asked for
+rather than a backlog: `Ada Cade` in sc 3 and sc 19 — dead before the
+film starts, so she can never carry a cue line — plus `Marcus Cade`
+alone on the road in sc 1 and on the ridge in sc 21, and `Eleanor` and
+`Marcus` on the porch in sc 24, where the reunion is wordless on
+purpose. A panel that shows six defensible questions demonstrates §9.2
+better than one showing none.
+
+An action-names-the-character rule was considered and NOT taken. It
+would clear four of the six, but it is a heuristic — action names absent
+characters too ("Ada's shawl" sits in a scene Ada is not in) — and the
+existing report is doing its job. Recorded here so the next person to
+notice sc 1 knows it was a decision.
 
 ## 8. Suggested order
 
@@ -511,7 +518,7 @@ here rather than guessed at.
 6. ✅ **§7b — thumbnails.** Done; `region_box` read for the first
    time, and the fixture exercises it.
 7. ✅ **§7c — the two review surfaces.** Done; and it narrowed §3's
-   fixture pass to three named divergences instead of twelve.
+   fixture pass to two named divergences instead of twelve.
 8. **§6** — whenever the proposals resolve.
 
 ## 9. What "MVP" is being taken to mean here
