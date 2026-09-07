@@ -4,17 +4,13 @@
  *
  * WHAT THIS IS FOR.
  *
- * `src/index.ts` re-exports eighteen modules with `export *`. That is
- * convenient and it means the package has no stated public surface:
- * every helper written for internal use is exported by accident, and
- * nothing distinguishes a name meant for consumers from a name that
- * happens to be reachable.
+ * `src/index.ts` names the package's public surface explicitly. This
+ * artifact records what that list actually resolves to.
  *
- * That costs nothing while the package is unpublished. It becomes a
- * compatibility obligation the moment somebody installs it, because a
- * name they can import is a name they will import, and removing it
- * afterwards is a breaking change whether or not it was ever intended
- * as API.
+ * A surface nobody has written down is a compatibility obligation the
+ * moment somebody installs the package: a name they can import is a
+ * name they will import, and removing it afterwards is a breaking
+ * change whether or not it was ever intended as API.
  *
  * WHAT THIS DOES AND DOES NOT DO.
  *

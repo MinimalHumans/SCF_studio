@@ -10,11 +10,10 @@
  *
  * What still needs handling is identity, because CodeMirror's mapping
  * does not know what a paste means. Its split rule gives the FIRST
- * fragment the original line's id — so pasting above a heading handed
- * the pasted text that heading's identity, and therefore its scene,
- * while the real heading was pushed down with a fresh id and committed
- * as a new scene. Two records, both wrong. That is the same identity
- * hijack as the scene-linking saga, arriving through the clipboard.
+ * fragment the original line's id, so pasting above a heading would
+ * hand the pasted text that heading's identity — and therefore its
+ * scene — while the real heading is pushed down with a fresh id and
+ * committed as a NEW scene. Two records, both wrong.
  *
  * So the whole entry array is stated rather than inferred. Pasted lines
  * are new lines; the line they landed on keeps what it had.
@@ -47,9 +46,8 @@ export interface PasteShape {
  *
  * This is stated rather than inferred on purpose. mapThroughTransaction
  * treats a paste as a split, and its split rule gives the pushed-down
- * text a fresh id while the pasted text inherits the original's — the
- * same identity hijack that caused the scene-linking saga, except here
- * it strands the line the author pasted ABOVE. Computing the array
+ * text a fresh id while the pasted text inherits the original's —
+ * stranding the line the author pasted ABOVE. Computing the array
  * outright removes the guess.
  *
  * A paste landing mid-line continues that line, so the line keeps its

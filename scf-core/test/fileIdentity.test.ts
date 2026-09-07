@@ -2,10 +2,9 @@
 /**
  * Spec §1.2 — header identification.
  *
- * The reader-tolerance test is the one that matters: every file written
- * before this existed carries no stamps, including the conformance
- * fixture until it was rebuilt. A reader that required them would
- * reject the format's own history.
+ * The reader-tolerance test is the one that matters: a file written
+ * before the stamps existed carries none, and a reader that REQUIRED
+ * them would reject the format's own history.
  */
 import { beforeAll, afterAll, describe, expect, test } from "vitest";
 import { initDatabase } from "../src/db.ts";

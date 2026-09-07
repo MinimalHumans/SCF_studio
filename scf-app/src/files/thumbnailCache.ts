@@ -1,28 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * thumbnailCache — why the asset list was slow the second time.
+ * thumbnailCache — resolve once per session, decode once EVER.
  *
- * Leaving the assets tab and coming back rebuilt everything, and the
- * object URL cache only hid a fifth of the cost. Three things run on
- * every mount, and only the third was cached at all:
+ * Mounting the asset list costs three things per row, and without this
+ * module all three repeat on every mount:
  *
  *  1. RESOLUTION. `resolveIdentifier` walks `getDirectoryHandle` /
- *     `getFileHandle` from the root and calls `getFile()`, once per
- *     asset. Forty rows is forty round trips through the browser's file
- *     system layer every time the tab is opened, and on Windows with an
- *     antivirus filter in the path each one is not cheap. This is most
- *     of the lag, and it was not cached anywhere.
- *  2. DECODE. A full-size plate is decoded to a bitmap so it can be
- *     drawn into a 28-pixel box. The bytes were being re-read and
- *     re-decoded, and the result thrown away on unmount.
- *  3. The object URL, which had a five-second grace period — tuned for
- *     a React remount, far too short for "switch tabs and come back".
+ *     `getFileHandle` from the root and calls `getFile()`. Forty rows
+ *     is forty round trips through the browser's file system layer, and
+ *     on Windows with an antivirus filter in the path each one is
+ *     expensive. This is most of the lag.
+ *  2. DECODE. A full-size plate decoded to a bitmap to be drawn into a
+ *     28-pixel box.
+ *  3. The object URL, whose grace period is tuned for a React remount
+ *     and is far too short for "switch tabs and come back".
  *
- * So: resolve once per session, and decode once EVER. A generated
- * thumbnail is a few kilobytes of WebP, which is small enough to keep
- * in memory by the hundred and small enough to persist, so a reload no
- * longer pays for the decode either. After the first visit the list
- * touches no files at all.
+ * A generated thumbnail is a few kilobytes of WebP — small enough to
+ * hold in memory by the hundred and to persist, so a reload does not
+ * pay for the decode either. After the first visit the list touches no
+ * files at all.
  *
  * Keyed on path + mtime + size, so a file edited outside the app
  * regenerates rather than showing a stale picture. Persisted to
@@ -195,17 +191,16 @@ function remember(key: string, value: Thumbnail): void {
  *
  * `path` is RELATIVE to the project root, so `assets/hero.png` in one
  * project and in another are the same string. Path plus mtime plus size
- * is the standard file-identity heuristic and a collision across two
- * projects would almost always be two copies of one file — but "almost
+ * is the standard file-identity heuristic, and a collision across two
+ * projects is almost always two copies of one file — but "almost
  * always" is the wrong standard when being wrong means showing one
  * film's frame under another film's asset.
  *
  * The root's NAME rather than its handle identity, because a handle is
- * an object and the persisted entries have to survive a reload, where
- * every handle is new. Two folders can share a name; combined with the
- * full relative path, mtime and size, that is a heuristic rather than a
- * proof, and it is the same class of heuristic the rest of asset
- * resolution already rests on.
+ * an object and persisted entries have to survive a reload, where every
+ * handle is new. Two folders can share a name; combined with the full
+ * relative path, mtime and size that is a heuristic rather than a
+ * proof — the same class the rest of asset resolution rests on.
  */
 function keyFor(root: FileSystemDirectoryHandle | null, path: string,
                 r: Resolution, region: RegionBox | null): string {
@@ -225,8 +220,8 @@ function keyFor(root: FileSystemDirectoryHandle | null, path: string,
  * When there is no region, `resizeWidth` lets the decoder downscale AS
  * it decodes, so an 8K plate never exists as a full bitmap. A region
  * has to be measured against the source, so that case decodes fully
- * once — and then never again, which is the whole point of persisting
- * the result.
+ * once — and then never again, which is what persisting the result is
+ * for.
  */
 async function draw(
   file: File, region: RegionBox | null,
@@ -284,9 +279,9 @@ async function draw(
  * A thumbnail for a resolved asset: memory, then IndexedDB, then the
  * file. Null when there is nothing drawable.
  *
- * Concurrent callers for the same key share one generation — without
- * that, a list of duplicates of one plate would decode it once per row
- * on the very first visit, which is the case this module exists for.
+ * Concurrent callers for the same key share one generation. Without
+ * that, a list of duplicates of one plate decodes it once per row on
+ * the first visit.
  */
 export async function thumbnailFor(
   root: FileSystemDirectoryHandle | null,

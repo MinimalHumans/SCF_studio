@@ -2,13 +2,12 @@
 /**
  * fileAdapter.ts — all file I/O goes through one adapter interface.
  *
- * The design doc's cheap insurance for the confirmed-future desktop
- * wrapper: `FileAdapter` with the File System Access implementation first
- * and a Tauri implementation later — packaging job, not refactor.
- * Chromium-only at launch is accepted.
+ * Cheap insurance for a future desktop wrapper: one `FileAdapter`
+ * interface, File System Access today and Tauri later — a packaging
+ * job, not a refactor. Chromium-only at launch is accepted.
  *
- * P2 of the assets plan makes a project a FOLDER, and there are two
- * orders in which to acquire one.
+ * A project is a FOLDER, and there are two orders in which to acquire
+ * one.
  *
  * `openProject()` is folder-first: one directory-picker gesture returns
  * the root handle, the `.scf` inside it, and its bytes. It costs one
@@ -18,14 +17,13 @@
  * `openScf()` + `attachRoot()` is file-first: the user names the file,
  * then names its folder, and `resolve()` CHECKS that the two belong
  * together. It always costs two gestures and never guesses at anything.
- * `openScf()` alone is no longer a dead end — it is a session whose
- * root has not been attached yet, and every asset in it is
- * `unaddressed` until it is.
+ * `openScf()` alone is not a dead end — it is a session whose root has
+ * not been attached yet, and every asset in it is `unaddressed` until
+ * it is.
  *
  * Neither order can be skipped: the platform gives no route from a file
- * handle to its parent directory. That is also why the old
- * `siblingFileUrl()` never worked and has been removed — it was written
- * against a capability that does not exist.
+ * handle to its parent directory. Anything that appears to offer one is
+ * written against a capability that does not exist.
  *
  * Nothing here writes to the filesystem beyond the .scf the user picked
  * (conventions §9): the root handle is requested read-only.
@@ -128,13 +126,12 @@ const SCF_TYPE: FilePickerAcceptType = {
 /**
  * The root listing, with its own account of what happened.
  *
- * A folder that scans as empty and a folder that IS empty look
- * identical from the result alone, and two rounds of guessing at the
- * difference produced two wrong answers. So this returns a report
- * alongside the names: which iterator ran, how many raw entries it
- * yielded, what it threw, and which names failed the file test. The
- * report is shown to the user, because the machine cannot tell which of
- * these is the real story and the person in front of the folder can.
+ * A folder that SCANS as empty and a folder that IS empty look
+ * identical from the result alone. So this returns a report alongside
+ * the names: which iterator ran, how many raw entries it yielded, what
+ * it threw, and which names failed the file test. The report is shown
+ * to the user, because the machine cannot tell which of these is the
+ * real story and the person in front of the folder can.
  */
 interface ScanResult {
   files: string[];
@@ -169,9 +166,9 @@ async function listRootFiles(
 
   // Third attempt: iterate the handle itself. Chromium defines the
   // handle as async-iterable and aliases it to entries(), so this is
-  // usually the same call — but it is a different code path, it costs
-  // six lines, and two rounds of this have already proved that the
-  // obvious explanation was not the true one.
+  // usually the same call — but it is a different code path and costs
+  // six lines, and the obvious explanation for an empty scan has not
+  // been the true one.
   if (names.length === 0 && Symbol.asyncIterator in Object(root)) {
     try {
       let raw = 0;
@@ -275,10 +272,10 @@ export class FsAccessAdapter implements FileAdapter {
    * where this particular picker was last used, separately from every
    * other picker in the app.
    *
-   * `startIn` is passed defensively. It is the newest of the three
-   * options here and the least load-bearing — losing it costs the user
-   * some navigation, while a picker that rejects the whole options bag
-   * would cost them the gesture. So a failure retries once, bare.
+   * `startIn` is passed defensively: it is the newest of the three
+   * options and the least load-bearing, so a failure retries once,
+   * bare. Losing it costs some navigation; a picker rejecting the whole
+   * options bag would cost the gesture.
    *
    * Nothing is trusted afterwards. `resolve()` decides whether this
    * folder and this file belong together, and it traverses rather than

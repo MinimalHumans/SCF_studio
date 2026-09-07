@@ -6,12 +6,11 @@
  * drawn from it and MUST take its severity from it rather than assigning
  * one at the point the finding is raised.
  *
- * It lived only in `findings.ts`, which made that requirement
- * unsatisfiable by anyone else. An independent Python reader invented 21
- * codes of its own and assigned severities locally — the one thing §9.4
- * forbids — and reported its own exit code as "arithmetically 0 and
- * semantically empty", because two implementations agreeing on "clean"
- * while disagreeing about what a finding IS have not agreed on anything.
+ * Held only in `findings.ts`, that requirement is unsatisfiable by
+ * anyone else: an independent reader can only invent codes and assign
+ * severities locally, which is the one thing §9.4 forbids. Two
+ * implementations agreeing on "clean" while disagreeing about what a
+ * finding IS have not agreed on anything.
  *
  * Emitted from the TypeScript rather than maintained beside it, for the
  * same reason `scf-schema.sql` is dumped rather than written: a second

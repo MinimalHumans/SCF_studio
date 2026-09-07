@@ -2,7 +2,7 @@
 /**
  * assets.ts — addressing, and what resolution says when it fails.
  *
- * P3 of the assets plan; the rules are conventions §9.
+ * The rules are conventions §9.
  *
  * An asset row stores an IDENTIFIER, not a location: a rooted,
  * relocatable address that gets committed and diffed. A RESOLVER maps

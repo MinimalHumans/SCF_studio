@@ -9,12 +9,11 @@
  * because wa-sqlite's OPFS VFS is async-facing; sync drivers wrap for free,
  * the reverse refactor would not.
  *
- * initDatabase() is re-implemented from the registry exactly as Python's
- * database.init_database does it for entity tables: CREATE TABLE IF NOT
- * EXISTS with framework columns + registry fields, then ALTER-add missing
- * columns, uuid unique indexes, and _scf_meta schema-version stamping
- * identical to migrations.maybe_migrate. (1.x data migrations do NOT port —
- * they are the Python editor's problem, per the design doc.)
+ * initDatabase() builds the entity tables from the registry: CREATE TABLE
+ * IF NOT EXISTS with framework columns plus registry fields, then
+ * ALTER-add for missing columns, uuid unique indexes, and _scf_meta
+ * schema-version stamping. It creates and stamps; it does not migrate
+ * data (§11.0 — pre-1.0 files are disposable).
  */
 
 import type { EntityDef, Registry } from "./registry.ts";

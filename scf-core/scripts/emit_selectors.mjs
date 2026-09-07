@@ -2,23 +2,15 @@
 /**
  * emit_selectors.mjs — write fixtures/expectations/selectors.json.
  *
- * WHAT §5.4 PROMISED, AND WHAT SHIPPED.
+ * `conformance.md` §5.4 says parameters resolve from selectors
+ * "recorded alongside the expectations, so another implementation can
+ * resolve them for itself". THIS IS THE FILE THAT SATISFIES THAT.
  *
- * `conformance.md` §5.4 has said since it was written that parameters
- * resolve from selectors "recorded alongside the expectations, so
- * another implementation can resolve them for itself". **No such file
- * existed.** The selectors lived in two test files, one of which covers
- * only the eight queries with rendered markdown.
- *
- * The fourth reader run recovered five selectors from prose in §5.4 and
- * §5.1 — someone had written those down deliberately, and they worked —
- * and then read **four more out of the `parameters` block of the
- * artifact it was about to be graded against**: Q10's theme, Q13's
- * intent, Q14's target, Q15's entityType.
- *
- * Q13's is the sharpest. `intent` is a literal that appears *in* the
- * result (§12.8), so the reader had to read the answer in order to
- * learn the question. That is not a conformance exercise.
+ * Held in test code instead, the selectors are unreachable, and a reader
+ * can only recover them from the `parameters` block of the artifact it
+ * is about to be graded against. Q13 is the sharpest case: `intent` is a
+ * literal that appears IN the result (§12.8), so reading it there means
+ * reading the answer to learn the question.
  *
  * WHY SELECTORS RATHER THAN VALUES.
  *

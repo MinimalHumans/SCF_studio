@@ -2,12 +2,11 @@
 /**
  * pack_test.mjs — prove a consumer can actually use this package.
  *
- * Every other check in this repository runs INSIDE the repository, where
- * the source is on disk, the tsconfig is ours, and Node is started with
- * type stripping enabled. None of that is true for a consumer, and the
- * gap between the two is where packaging bugs live: this repository has
- * already shipped a CI workflow that passed everywhere except on a
- * runner starting from nothing.
+ * Every other check in this repository runs INSIDE the repository,
+ * where the source is on disk, the tsconfig is ours, and Node is started
+ * with type stripping enabled. None of that is true for a consumer, and
+ * the gap between the two is where packaging bugs live — a check can
+ * pass everywhere except on a runner starting from nothing.
  *
  * So this builds a real tarball with `npm pack`, installs it into a
  * throwaway project, and checks three things that fail for different
@@ -15,11 +14,9 @@
  *
  *   1. A plain JavaScript consumer can import and call something.
  *   2. A TYPESCRIPT consumer that EMITS JAVASCRIPT can compile against
- *      it. This is the one that mattered: before this round the package
- *      exported `./src/index.ts` directly, whose internal imports carry
- *      `.ts` extensions, so any consumer whose tsc emits anything failed
- *      with TS5097 on every import. The only consumers who could use the
- *      package were ones that never compiled.
+ *      it. Exporting `./src/index.ts` directly passes every check here
+ *      and fails TS5097 on every import for a consumer whose tsc emits
+ *      anything, because the internal imports carry `.ts` extensions.
  *   3. `scf-check` runs from the installed bin, on a real .scf, with no
  *      flags — which is what `npx scf-check` would do.
  *
@@ -124,12 +121,10 @@ const report = run(join(sandbox, "node_modules", ".bin",
 // imports from the package, opens a real .scf, and reports on it. It is
 // not about what the fixture happens to contain.
 //
-// It asserted `no findings` until 0.43, which coupled a packaging test
-// to the fixture's contents — and broke the moment the fixture gained a
-// deliberate `info` finding in 0.42, exercising §4.1's fallback. Four
-// test files were updated for that change and this one was missed,
-// because it is a script rather than a test and does not run under
-// vitest.
+// Asserting `no findings` here would couple a packaging test to the
+// fixture's contents, and the fixture carries a deliberate `info`
+// finding. This file is a script rather than a test and does not run
+// under vitest, so it is easily missed when the fixture changes.
 const wanted = ["hollow_creek.scf", "(schema", "0 error", "0 warning"];
 const missing = wanted.filter((s) => !report.includes(s));
 if (missing.length > 0) {

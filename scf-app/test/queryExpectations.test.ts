@@ -2,30 +2,22 @@
 /**
  * queryExpectations.test.ts — the canonical query expectations, as data.
  *
- * `conformance.md` §5.4 has said since it was written that these live
- * inside test code, so a second implementation has to port TypeScript
- * rather than read a file. This moves them out.
+ * Expectations live in files rather than inside test code, so a second
+ * implementation can read them instead of porting TypeScript
+ * (conformance.md §5.4).
  *
- * WHAT THIS FILE BLESSES, and what it no longer does.
+ * WHAT THIS FILE BLESSES:
  *
  *   <Q>.expected.md   the rendered context markdown — what a consumer
  *                     of these queries actually receives. Names, not
  *                     ids. Diffs legibly. A CONVENIENCE, not a
  *                     contract: spec §12.0 says so for every query.
  *
- * It also blessed `shapes.json`, a structural sketch of each runner's
- * raw payload. That artifact was RETIRED in spec 0.29. It predated §12
- * and described the runners' own shape rather than the result structure
- * §12.1 defines — it recorded a flat row with a `<row-ref>` where a
- * result carries `{ uuid, fields }` with the reference resolved. Once
- * all sixteen queries had normative `.result.json` files, blessed by
- * `scf-core/test/canonicalQueries.test.ts`, it asserted a weaker version
- * of the same thing in a shape the specification does not describe. Two
- * artifacts for one property, disagreeing — the drift this repository is
- * built to avoid.
- *
- * The structural check now lives where the structure is defined:
- * `.result.json`, compared in full, in scf-core.
+ * NOT the result structure. That is defined by §12.1 and checked in full
+ * against the normative `.result.json` files by
+ * `scf-core/test/canonicalQueries.test.ts`. A second structural artifact
+ * here would be a weaker assertion of the same property in a shape the
+ * specification does not describe.
  *
  * Parameters resolve from stable SELECTORS — scene number 12, the
  * character named Eleanor — recorded alongside, for the same reason.

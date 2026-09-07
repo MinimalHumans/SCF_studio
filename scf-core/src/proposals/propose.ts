@@ -4,13 +4,12 @@
  * about it: this stage produces PROPOSALS, never rows. The user reviews a
  * staging screen (accept all / per-item / merge / rename) — or takes the
  * one-click "accept best guess" path — and only then does the application
- * create rows, all marked machine-created. v1's _find_or_create_*
- * auto-creation is the regret this design bans; silent entity creation
- * from a heuristic parser is how a project fills with THE and TWO MEN as
- * characters.
+ * create rows, all marked machine-created. Silent entity creation from a
+ * heuristic parser is banned here, because it is how a project fills
+ * with THE and TWO MEN as characters.
  *
- * Confidence scoring is designed from the golden corpus's documented
- * damage, not guesswork. The private tier showed, concretely:
+ * Confidence scoring is derived from the golden corpus's documented
+ * damage rather than guesswork. The private tier shows, concretely:
  *  - stray "@" force markers on mixed-case action sentences (Aliens) —
  *    so forced lowercase cues that read like prose score low
  *  - CSV-quote-wrapped lines ("RIPLEY) — so wrapping quotes are a
@@ -264,8 +263,8 @@ export function normalizeCue(raw: string): {
   return { name: t, steps, suspicions };
 }
 
-/** Single function words are never character names ("THE" is the
- * design doc's own example of the failure). */
+/** Single function words are never character names — "THE" is the
+ * canonical example of this failure. */
 const CUE_STOPWORDS = new Set([
   "THE", "A", "AN", "AND", "OR", "OF", "IN", "ON", "AT", "TO", "BY",
   "IT", "AS", "IS", "WE", "HE", "SHE", "ALL", "MORE", "END", "OUT",
@@ -297,11 +296,10 @@ function splitCue(name: string): string[] | null {
 /**
  * Capitalization is NOT a prop signal. In a screenplay, mid-line caps
  * mean "production, take note" — writers cap character introductions,
- * sound cues, and camera-worthy actions just as readily as objects. The
- * first version of this pass keyed off caps alone and produced 356
- * candidates from one feature, led by TWO OLD HUNTERS, SUN, HOWLING and
- * TOSSES THE MEN; scripts that don't use the convention produced almost
- * nothing, since nothing about being a prop makes a word capitalized.
+ * sound cues and camera-worthy actions just as readily as objects.
+ * Keying off caps alone yields 356 candidates from one feature, led by
+ * TWO OLD HUNTERS, SUN, HOWLING and TOSSES THE MEN, and yields almost
+ * nothing on scripts that do not use the convention.
  *
  * So two signals, both about the phrase's SYNTAX rather than its case:
  *

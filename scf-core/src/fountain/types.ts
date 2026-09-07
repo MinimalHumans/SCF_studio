@@ -14,16 +14,15 @@
  */
 
 /**
- * The fourteen line types from the design doc, plus title_page.
+ * The fourteen screenplay line types, plus title_page.
  *
- * THE ARRAY IS THE SOURCE, and the type is derived from it. It was the
- * other way round until 0.30, and the vocabulary was therefore visible
- * only to the TypeScript compiler: a value that exists at type-check
- * time and nowhere a generator, a test or a third-party reader can
- * look. A reader building against §1.3 guessed `scene_heading` for a
- * scene heading, produced a confidently wrong story order, and had
- * nothing raised against it, because `line_type` is a free TEXT column
- * that enforces nothing.
+ * THE ARRAY IS THE SOURCE, and the type is derived from it. Declared the
+ * other way round, the vocabulary is visible only to the TypeScript
+ * compiler — a value that exists at type-check time and nowhere a
+ * generator, a test or a third-party reader can look. A reader building
+ * against §1.3 then guesses `scene_heading` for a scene heading,
+ * produces a confidently wrong story order, and has nothing raised
+ * against it, because `line_type` is a free TEXT column.
  *
  * `scripts/emit_screenplay_tables.mjs` publishes this array as
  * `spec/screenplay-tables.json`, and `screenplayTables.test.ts` checks

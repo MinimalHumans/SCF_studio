@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * queryPaths.ts — machine-readable canonical query paths (G6, part 2).
- * Canonical query paths; see docs/conventions.md.
+ * queryPaths.ts — machine-readable canonical query paths.
+ * See docs/conventions.md.
  *
  * Each walkable query declares its parameters and the entities on its
  * resolution path with a requirement level. readiness.ts walks these to
@@ -25,23 +25,22 @@ export interface QueryStep {
    * The registry entities this step is about. ALWAYS registry entity
    * names, never prose.
    *
-   * This was a single free-text `entity` until 0.38, and several steps
-   * used it for things the registry could not resolve: `costume +
-   * costume_scene` (two entities), `bundle + *_asset_binding` (a
-   * pattern), `performance_state (vocal)` (a filtered subset),
-   * `media: voice_identity` (an asset intent, not an entity at all).
-   * A third party could reproduce Q14's severities but had to read the
-   * labels as a person would, which is not a specification.
+   * Free text here cannot be resolved by a third party: `costume +
+   * costume_scene` is two entities, `bundle + *_asset_binding` a
+   * pattern, `performance_state (vocal)` a filtered subset, and
+   * `media: voice_identity` an asset intent rather than an entity at
+   * all. Reading those as a person would is not a specification, which
+   * is what `filter` and `intent` below are for.
    *
-   * `emit_normative_data.mjs` now checks every name here against the
+   * `emit_normative_data.mjs` checks every name here against the
    * registry and refuses to publish an unknown one.
    */
   entities: string[];
   requirement: Requirement;
   purpose: string;
   /**
-   * Narrows the step to a subset of those entities' rows — the
-   * parenthetical the old label carried in prose. `values` is a
+   * Narrows the step to a subset of those entities' rows — what a label
+   * would otherwise carry as a prose parenthetical. `values` is a
    * disjunction: any one of them satisfies the step.
    */
   filter?: { field: string; values: string[] };

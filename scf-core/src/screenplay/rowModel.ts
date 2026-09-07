@@ -3,21 +3,19 @@
  * screenplay/rowModel.ts — Stage 2: the typed line stream becomes the row
  * model. Pure mapping, no heuristics, and — pointedly — NO entity
  * creation: entity ids (scene_id, character_id, location_id) are only
- * ever GIVEN to this layer (from accepted Stage-3 proposals or the
- * editor); v1's _find_or_create_* lived in its save path and is the
- * regret this design bans.
+ * ever GIVEN to this layer, from accepted Stage-3 proposals or from the
+ * editor. Find-or-create in a mapping layer is what propose.ts bans.
  *
- * Storage is v1's own tables ("same files, same tables"):
+ * Storage:
  *   screenplay_lines(line_order, line_type, content, scene_id,
  *                    character_id, location_id, metadata, uuid, …)
  *   screenplay_title_page(key, value, sort_order)
- * plus the version and prop-tag tables, created verbatim so Python and TS
- * produce the same schema. Title-page lines go to their own table (v1
- * convention); all other lines are rows.
+ * plus the version and prop-tag tables. Title-page lines go to their own
+ * table; all other lines are rows.
  *
- * The line-type vocabulary is v2's (Stage 1's): v1's set plus lyric,
- * note, boneyard, page_break — the column is TEXT, and down-mapping
- * would discard what Stage 1 worked to classify.
+ * The line-type vocabulary is Stage 1's, and the column is TEXT:
+ * down-mapping to a narrower set would discard what Stage 1 worked to
+ * classify.
  *
  * Byte fidelity survives the database: content is the raw line text; a
  * line's eol is stored in metadata only when it isn't "\n" (including ""
@@ -113,8 +111,8 @@ export function linesToRows(doc: FountainDocument): ScreenplayRows {
 }
 
 /**
- * Thread entity context through rows the way v1's save path did — but
- * deterministically from GIVEN assignments, creating nothing:
+ * Thread entity context through rows, deterministically from GIVEN
+ * assignments, creating nothing:
  *  - a heading row takes its assigned scene id; every following row
  *    inherits it until the next heading
  *  - a character row takes its assigned character id; dialogue and
@@ -187,7 +185,7 @@ export function rowsToText(sp: ScreenplayRows): string {
 }
 
 // ---------------------------------------------------------------------------
-// Database I/O (v1's tables, verbatim DDL)
+// Database I/O
 // ---------------------------------------------------------------------------
 
 /** DDL identical to Python's screenplay_db.init_screenplay_tables. */
@@ -240,12 +238,11 @@ export async function initScreenplayTables(exec: SqlExec): Promise<void> {
   )`);
   await exec(`CREATE INDEX IF NOT EXISTS idx_version_lines_version
     ON screenplay_version_lines(version_id)`);
-  // Added in 2.6. A snapshot row has its own uuid (v1's contract, and
-  // the unique index on version-line uuids depends on it), so it needed
-  // a SECOND column to record which LIVE line it was taken from.
-  // Without it a revert has no way to give a restored line back its
-  // original identity, and every beat and prop tag anchored to it would
-  // be orphaned by the act of reverting.
+  // Added in 2.6. A snapshot row has its own uuid — the unique index on
+  // version-line uuids depends on it — so a SECOND column is needed to
+  // record which LIVE line it was taken from. Without it a revert has
+  // no way to give a restored line back its original identity, and
+  // every beat and prop tag anchored to it is orphaned by the revert.
   const versionCols = await exec(
     `PRAGMA table_info("screenplay_version_lines")`);
   if (!versionCols.some((c) => String(c["name"]) === "source_uuid")) {

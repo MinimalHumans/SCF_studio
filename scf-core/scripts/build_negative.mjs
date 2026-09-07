@@ -2,11 +2,10 @@
 /**
  * build_negative.mjs — the negative fixtures.
  *
- * Hollow Creek contains authored ABSENCES: a thin vocal profile, a
- * missing voice bundle, gapped scene numbers. What it has never
- * contained is authored ERRORS, so nothing pinned what a conforming
- * implementation should SAY when a file is wrong. `conformance.md` §5.3
- * has named that gap since it was written.
+ * Hollow Creek contains authored ABSENCES — a thin vocal profile, a
+ * missing voice bundle, gapped scene numbers — but not authored ERRORS.
+ * These fixtures pin what a conforming implementation should SAY when a
+ * file is wrong (conformance.md §5.3).
  *
  * Each case is a minimal database plus exactly the damage its name
  * describes. Minimal on purpose: a case that trips three findings tells

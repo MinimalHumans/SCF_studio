@@ -8,15 +8,12 @@
  * lists they fall into and published the physical DDL, and stopped
  * there.
  *
- * That gap has a cost with a name. A third-party reader building
- * against §1.3 could see that `screenplay_lines.line_type` exists and
- * had nothing to tell it which values are legal, so it guessed
- * `scene_heading` for a scene heading. The real value is `heading`. Its
- * story order came out confidently wrong and NOTHING WAS RAISED —
- * `line_type` is a free TEXT column, so no finding fires on an
- * unrecognised value and no test could have caught it. A silent wrong
- * answer is worse than a refusal, and this file exists to prevent that
- * particular one.
+ * That gap costs a silent wrong answer. A reader building against §1.3
+ * can see that `screenplay_lines.line_type` exists with nothing to tell
+ * it which values are legal, and will guess `scene_heading` for a scene
+ * heading. The real value is `heading`, its story order comes out
+ * confidently wrong, and NOTHING IS RAISED — `line_type` is a free TEXT
+ * column, so no finding fires on an unrecognised value.
  *
  * WHAT IS DUMPED AND WHAT IS DECLARED.
  *

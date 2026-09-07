@@ -10,12 +10,10 @@
  *
  * ## region_box
  *
- * This module is the FIRST READER of `entity_anchor.region_box`.
- * Nothing in the repository had ever parsed it — the field existed in
- * `entity_registry.py` and in the generated entity reference, and
- * nowhere else. That makes reading it a definition, not an
- * implementation, so the shape is stated here and in the registry's
- * own help text rather than being implied by this code:
+ * This module is the FIRST READER of `entity_anchor.region_box`, which
+ * makes reading it a definition rather than an implementation. The
+ * shape is stated here and in the registry's own help text rather than
+ * being implied by this code:
  *
  *   `{"x": 420, "y": 180, "w": 480, "h": 600}` — PIXELS in the source
  *   asset's own coordinate space, origin at top-left.
@@ -116,8 +114,8 @@ export interface SubjectAnchor {
   anchor: Row;
   /** The asset the anchor points at, or null if the reference dangles.
    *  Resolved here for the same reason `resolveMedia` resolves it: an
-   *  `asset_id` looked up in the wrong table is how an anchor came to
-   *  be reported as an unrelated asset. */
+   *  `asset_id` looked up in the wrong table reports the anchor as an
+   *  unrelated asset. */
   asset: Row | null;
   region: RegionBox | null;
 }

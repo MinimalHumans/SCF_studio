@@ -2,11 +2,11 @@
 /**
  * fountain/tokenizer.ts — Stage 1: text → typed line stream.
  *
- * Deterministic and spec-faithful (Fountain 1.1), implementing the rules
- * v1 skipped or fudged: forced elements (. ! @ > ~), dual dialogue (^),
- * notes [[...]], boneyard slash-star comments, sections/synopses, title
- * page grammar, scene numbers (#1A#), and line-ending edge cases
- * (LF/CRLF/CR, BOM, whitespace-only lines).
+ * Deterministic and spec-faithful (Fountain 1.1), including the rules
+ * most implementations skip or fudge: forced elements (. ! @ > ~), dual
+ * dialogue (^), notes [[...]], boneyard slash-star comments,
+ * sections/synopses, title page grammar, scene numbers (#1A#), and
+ * line-ending edge cases (LF/CRLF/CR, BOM, whitespace-only lines).
  *
  * NO entity logic in this stage — cue normalization, dedup, and proposal
  * confidence all live in Stage 3.

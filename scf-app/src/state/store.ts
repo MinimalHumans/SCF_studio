@@ -2,10 +2,11 @@
 /**
  * store.ts — application state (Zustand).
  *
- * The SQLite client and file adapter are module singletons (non-reactive);
- * the store holds reactive state: project lifecycle, navigation, and the
- * form draft (dirty-state + undo at the form level, per the design doc).
- * `revision` is bumped after any write so lists and panels re-query.
+ * The SQLite client and file adapter are module singletons
+ * (non-reactive); the store holds reactive state: project lifecycle,
+ * navigation, and the form draft — dirty-state and undo at the form
+ * level. `revision` is bumped after any write so lists and panels
+ * re-query.
  */
 
 import { create } from "zustand";
@@ -291,11 +292,10 @@ async function probeTraversal(
 
 /**
  * The second probe, with a name that cannot exist. The two failures
- * look nothing alike and mean opposite things: NotFoundError proves
- * traversal WORKS and the first failure was about that particular name,
- * while a repeat of the first error means the capability itself is
- * unavailable. Guessing between them from one sample is what went wrong
- * the last three times.
+ * mean opposite things: NotFoundError proves traversal WORKS and the
+ * first failure was about that particular name, while a repeat of the
+ * first error means the capability itself is unavailable. One sample
+ * cannot tell them apart.
  */
 async function syntheticProbe(
   root: FileSystemDirectoryHandle, first: string | null,
@@ -327,10 +327,10 @@ async function syntheticProbe(
  * Put a root into the session: probe it, wire the locator, remember it
  * against the file it belongs to, and tell the views to re-resolve.
  *
- * Shared by both acquisition orders. Whichever way the folder arrived,
- * everything downstream of it is identical — which is the claim
- * conventions §9 already makes ("the resulting session is identical in
- * every respect") and now the code says it once instead of twice.
+ * Shared by both acquisition orders, in one place rather than two:
+ * whichever way the folder arrived, everything downstream is identical,
+ * which is what conventions §9 claims ("the resulting session is
+ * identical in every respect").
  */
 async function applyRoot(
   set: (partial: Partial<AppState>) => void,
@@ -466,11 +466,11 @@ export const useStore = create<AppState>((set, get) => ({
       // state rather than prompting — a prompt outside a click is
       // rejected by the browser anyway, and the topbar offers the
       // re-grant.
-      // The root is recalled BY THE FILE, not on its own. The old
-      // single-root key paired whatever folder was last opened with
-      // whatever file was last opened, which are not always the same
-      // project; `recallRoot()` remains only as the fallback for a
-      // session that has no file handle to key on.
+      // The root is recalled BY THE FILE, not on its own: a single-root
+      // key pairs whatever folder was last opened with whatever file
+      // was last opened, which are not always the same project.
+      // `recallRoot()` is only the fallback for a session with no file
+      // handle to key on.
       const pair = await recallPairFor(fileToken);
       const projectRoot = pair?.root ?? await recallRoot();
       const rootMode = pair?.mode ?? "readwrite";
@@ -504,10 +504,10 @@ export const useStore = create<AppState>((set, get) => ({
       await rememberHandle(opened.token);
       const rev = get().revision + 1;
       // Clear the root EXPLICITLY. Opening a file while a folder
-      // session was live used to leave `projectRoot` untouched, so the
-      // new project silently inherited the old one's folder and
-      // addressed every asset against another film's disk. Nothing
-      // reported it, because a stale root resolves perfectly well.
+      // session is live otherwise leaves `projectRoot` untouched, and
+      // the new project inherits the old one's folder — addressing
+      // every asset against another film's disk. Nothing reports it,
+      // because a stale root resolves perfectly well.
       setAssetLocator(null);
       revokeAll();
       clearResolutions();
@@ -672,9 +672,8 @@ export const useStore = create<AppState>((set, get) => ({
   newProject: async () => {
     // "loading" first, and awaited into the next task, so mounted views
     // unmount before the file is wiped. Wiping under a live workbench
-    // left its queries hitting a half-built database — that is where
-    // "no such table: screenplay_version_lines" came from, not from the
-    // version code itself.
+    // leaves its queries hitting a half-built database, which surfaces
+    // as "no such table: …" from whichever table is created last.
     set({ phase: "loading", errorMessage: null, openRow: null,
           draft: null, selectedSubject: null });
     await new Promise((r) => setTimeout(r, 0));
@@ -697,21 +696,17 @@ export const useStore = create<AppState>((set, get) => ({
    * still works — but only the .scf file is durable. */
   closeProject: async () => {
     // Disarm auto-resume BEFORE the phase change, not after the awaits
-    // below. App's resume effect fires the moment phase becomes
-    // "start", reads this flag synchronously, and finds whatever is
-    // there — so writing "0" four awaits later meant the first close of
-    // a session always bounced straight back into the project it had
-    // just left, and the reopen bumped the revision, so the SECOND
-    // close warned about unsaved changes that were never made.
+    // below. App's resume effect fires the moment phase becomes "start"
+    // and reads this flag synchronously, so writing it later means a
+    // close bounces straight back into the project it just left.
     localStorage.setItem("scf:auto-resume", "0");
     // Thumbnails hold object URLs into the folder being left.
     revokeAll();
     clearResolutions();
     setAssetLocator(null);
-    // Leave the workbench FIRST. Closing the database out from under
-    // mounted views left their in-flight queries — and the script
-    // editor's blur-triggered commit — resolving against no database,
-    // which is where the "no database open" rejections came from.
+    // Leave the workbench FIRST. Closing the database under mounted
+    // views leaves their in-flight queries — and the script editor's
+    // blur-triggered commit — resolving against no database.
     set({ phase: "start", fileToken: null, errorMessage: null,
           navMode: "script",
   assetPrefix: "", openRow: null, draft: null,
@@ -889,8 +884,8 @@ export const useStore = create<AppState>((set, get) => ({
       }
     }
 
-    // Whole-row UPDATE, same as v1; updated_at written faithfully
-    // (collaboration prep, decision 10).
+    // Whole-row UPDATE; updated_at written faithfully, for the
+    // collaboration case.
     const sets = fieldNames.map((f) => `${q(f)} = ?`).join(", ");
     const vals: SqlValue[] =
       fieldNames.map((f) => draft.values[f] ?? null);
@@ -919,12 +914,11 @@ export const useStore = create<AppState>((set, get) => ({
           ? entity : rowLabel(registry.entities.get(entity), entity,
                               existing[0]));
       // An act or sequence is anchored to a START SCENE, so deleting
-      // that scene leaves the span pointing at nothing — it stops
-      // appearing in the structure entirely, and every scene it held
-      // falls out of any act, taking the Shoot tab's grouping with it.
-      // The row was never actually deleted; it just became invisible.
-      // Same answer as moving the anchor scene: hand the boundary to
-      // whatever now sits where the old one did.
+      // that scene leaves the span pointing at nothing: the row is not
+      // deleted, it just stops appearing in the structure, and every
+      // scene it held falls out of any act. Same answer as moving the
+      // anchor scene — hand the boundary to whatever now sits where the
+      // old one did.
       if (entity === "scene") {
         const headings = await exec(
           "SELECT scene_id FROM screenplay_lines " +

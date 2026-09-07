@@ -2,11 +2,11 @@
 /**
  * project.ts — what makes a folder a project.
  *
- * P2 of the assets plan. A project is a folder, not a file: the File
- * System Access API cannot return a parent directory from a file handle,
- * so a `.scf` opened on its own can never see what sits beside it. One
- * directory-picker gesture yields the root, the `.scf` inside it, and
- * the asset tree, under a single permission grant.
+ * A project is a folder, not a file: the File System Access API cannot
+ * return a parent directory from a file handle, so a `.scf` opened on
+ * its own can never see what sits beside it. One directory-picker
+ * gesture yields the root, the `.scf` inside it, and the asset tree,
+ * under a single permission grant.
  *
  * The rule (conventions §9): scan the root only, non-recursive, for
  * `*.scf`. Exactly one is a valid project. Zero or several is malformed
@@ -14,14 +14,13 @@
  * subfolder is not a project candidate; those are layer candidates and
  * nothing here looks at them.
  *
- * Discovery is an OPTIMISATION, not the mechanism. Directory listing
- * turned out not to be reliably available: a locked-down Windows
- * machine returned zero entries for an ordinary Desktop folder, through
- * three separate iterators, with permission granted and nothing thrown —
- * and did the same in a bare DevTools console, so no application code
- * was involved. What a project needs is the root handle plus the
- * `.scf`; when listing cannot supply the second, the user names it, and
- * the resulting session is identical in every respect.
+ * Discovery is an OPTIMISATION, not the mechanism. Directory listing is
+ * not reliably available — a locked-down Windows machine can return
+ * zero entries for an ordinary folder, through every iterator, with
+ * permission granted and nothing thrown. What a project needs is the
+ * root handle plus the `.scf`; when listing cannot supply the second,
+ * the user names it, and the resulting session is identical in every
+ * respect.
  *
  * This module is deliberately free of any browser type. It takes a list
  * of names and returns a decision, so the rule is testable without a
@@ -45,9 +44,8 @@ export interface ProjectPick {
   /** Every root-level `.scf`, sorted. Length 1 on a healthy project. */
   candidates: string[];
   /** Everything the scan actually saw, sorted. Carried so a "no .scf
-   *  here" report can show its evidence — a finding that only says what
-   *  is absent cannot be argued with, and the first time this rule was
-   *  wrong there was nothing in the message to diagnose it from. */
+   *  here" report can show its evidence: a finding that only says what
+   *  is absent cannot be argued with or diagnosed from. */
   seen: string[];
   findings: ProjectFinding[];
 }
@@ -117,17 +115,15 @@ export function chooseProjectFile(names: readonly string[]): ProjectPick {
  * The other order: the `.scf` first, its folder second.
  *
  * A file picker yields a handle with no route to its parent, so the
- * folder has to be named separately. That sounds like the same trust
- * problem as discovery, and it is not — it is strictly better, because
- * the pairing can be CHECKED. `FileSystemDirectoryHandle.resolve()`
- * answers "is this handle below this directory, and where", by
- * traversal rather than enumeration, so it works on the machines where
- * the root scan returns nothing.
+ * folder has to be named separately. Unlike discovery, the pairing can
+ * be CHECKED: `FileSystemDirectoryHandle.resolve()` answers "is this
+ * handle below this directory, and where", by traversal rather than
+ * enumeration, so it works on the machines where the root scan returns
+ * nothing.
  *
- * Discovery has to guess which of several `.scf` files was meant.
- * This never guesses: the user has already said which file, and the
- * only open question is whether the folder they then picked is the one
- * that file lives at the root of. Three answers, all of them evidence:
+ * Nothing here guesses. The user has already said which file; the only
+ * open question is whether the folder they then picked is the one that
+ * file lives at the root of. Three answers, all of them evidence:
  *
  *  - `at-root`      the folder holds the file directly. This is a
  *                   project (conventions §9) and `@project` is it.

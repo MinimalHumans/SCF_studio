@@ -82,10 +82,9 @@ export function AssetPreview({ identifier }: {
   // its own.
   // The URL comes from the shared refcounted cache rather than being
   // created and revoked here. Two reasons: stepping back and forth
-  // between two assets used to re-read both every time, and this
-  // component's own header warned about holding hundreds of files at
-  // once — a bound it could not enforce while each instance owned its
-  // URL outright.
+  // between two assets otherwise re-reads both every time, and an
+  // instance owning its URL outright cannot bound how many files an
+  // asset browser holds at once.
   useEffect(() => {
     let cancelled = false;
     let held: string | null = null;

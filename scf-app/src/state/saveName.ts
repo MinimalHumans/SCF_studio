@@ -34,11 +34,10 @@ export function suggestSaveAsName(
 /**
  * Filename an exported .fountain lands under.
  *
- * It used to be the constant "screenplay.fountain" for every project,
- * which is how an export can end up sitting next to — or on top of — the
- * file you imported from. Naming it after the project makes the
- * relationship obvious and stops two projects' exports colliding in a
- * downloads folder.
+ * A constant "screenplay.fountain" for every project is how an export
+ * ends up sitting next to — or on top of — the file it was imported
+ * from. Naming it after the project makes the relationship obvious and
+ * stops two projects' exports colliding in a downloads folder.
  *
  * The import itself never writes anywhere: it reads through a plain file
  * input, which hands the page a read-only snapshot and no way back to

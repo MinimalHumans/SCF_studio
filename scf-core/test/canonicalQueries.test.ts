@@ -3,11 +3,9 @@
  * Spec §12 — the canonical queries' normative results.
  *
  * The blessed `.result.json` files are the artifact a second
- * implementation compares against. They exist because the previous
- * artifact — rendered markdown — turned out to be a demonstration
- * rather than a specification: an implementer had to infer each query
- * from one example of its output, and reproduce punctuation no document
- * stated.
+ * implementation compares against. Rendered markdown cannot serve that
+ * purpose: an implementer would have to infer each query from one
+ * example of its output and reproduce punctuation no document states.
  *
  * What is tested here is not "does the result match itself". It is the
  * three properties that make a result portable, each asserted
@@ -66,8 +64,8 @@ beforeAll(async () => {
     "SELECT id, uuid FROM shot WHERE name LIKE '%12-04%'");
   // Deliberately off scene 12, and deliberately the pair whose script
   // order and scene-number order disagree: 19 comes BEFORE 16 in the
-  // script. An implementation ordering by scene_number would diff them
-  // backwards, which is the bug that hid under 540 passing tests.
+  // script. An implementation ordering by scene_number diffs them
+  // backwards.
   scene19 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '19'");
   scene16 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '16'");
   theme = await pick("SELECT id, uuid FROM theme ORDER BY id LIMIT 1");
@@ -137,17 +135,16 @@ describe("§12.1.2 row projection", () => {
   });
 
   test("keeps a column ending _id that is NOT a reference", () => {
-    // INVERTED IN 0.40, and this is the whole point of the change.
-    // The rule was "any remaining column ending `_id` is dropped",
-    // which is true of the four polymorphic columns and ALSO true of
-    // `external_id` — a declared, authored field on ten entities
-    // (§6.3) — and of clip.screenplay_line_start_id/_end_id, which are
+    // Drop by DECLARATION, not by name. "Any remaining column ending
+    // `_id` is dropped" is true of the four polymorphic columns and
+    // ALSO of `external_id` — a declared, authored field on ten
+    // entities (§6.3) — and of clip.screenplay_line_start_id/_end_id,
     // ordinary references into a screenplay table.
     //
-    // Twelve legitimate columns were deleted from every projected row,
-    // and no published artifact could catch it: the fixture authors no
+    // That rule deletes twelve legitimate columns from every projected
+    // row, and no published artifact catches it: the fixture authors no
     // external_id and its clip table is empty, so §12.1.2's
-    // omit-empties rule made a correct implementation and a
+    // omit-empties rule makes a correct implementation and a
     // data-losing one byte-identical on all sixteen results.
     const p = projectRow({ uuid: "u", external_id: "OMC:12345" });
     expect(p.fields["external_id"]).toBe("OMC:12345");
@@ -246,9 +243,9 @@ describe("§12.3 Q07 — look resolution", () => {
 
   test("the chain is the refines closure, not a scope ordering",
        async () => {
-    // The defect an independent implementation caught: §7 used to
-    // describe project → sequence → scene → shot. `look_development` is
-    // scope:global and sits fifth, which no scope ordering produces.
+    // The cascade order is the registry's `refines` graph, NOT a scope
+    // ordering: `look_development` is scope:global and sits fifth,
+    // which project → sequence → scene → shot cannot produce.
     const r = await q07Result(fx.ctx, scene12.uuid, scene12.id,
                               shot1204.uuid, shot1204.id);
     const names = r.result.layers.map((l) => l.entity);
@@ -367,11 +364,10 @@ describe("§12.8 Q13 — media resolution", () => {
 
   test("an anchor contributes the asset it anchors, not itself",
        async () => {
-    // The defect an independent implementation found: the anchor row was
-    // reported as the reference, so it had no identifier and could never
-    // resolve — and a caller looking its row id up in `asset` got an
-    // unrelated asset that happened to share the id. It produced a
-    // well-formed uuid, so every portability test passed.
+    // The ASSET is the reference, not the anchor row. Report the anchor
+    // and it has no identifier and can never resolve — and a caller
+    // looking its row id up in `asset` gets an unrelated asset sharing
+    // that id, plus a well-formed uuid, so portability tests pass.
     const r = await q13Result(
       fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
       scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
@@ -419,8 +415,8 @@ describe("§12.8 Q13 — media resolution", () => {
     expect(r.result.rootMapped).toBe(false);
     expect(r.result.counts["unaddressed"])
       .toBe(r.result.references.length);
-    // And NOT out-of-root, which is what it used to say — that is a
-    // property of an identifier, not of a session.
+    // NOT out-of-root: that is a property of an identifier, not of a
+    // session.
     expect(r.result.counts["out-of-root"]).toBe(0);
   });
 });

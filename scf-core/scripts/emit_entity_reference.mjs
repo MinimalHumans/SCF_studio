@@ -8,12 +8,11 @@
  *
  * WHY THIS IS GENERATED.
  *
- * The release checklist has wanted an entity reference for a long time,
- * and the obvious way to produce one is to write it. That would be a
- * second description of the registry: ninety-nine entities' worth of
- * prose, correct on the day it was written and drifting from the
- * schema by the following week. Every recurring defect this project has
- * found has that shape — one rule described in two places, disagreeing.
+ * A hand-written entity reference would be a second description of the
+ * registry: ninety-nine entities' worth of prose, correct on the day it
+ * was written and drifting from the schema by the following week. Every
+ * recurring defect this project has found has that shape — one rule
+ * described in two places, disagreeing.
  *
  * So this is derived, checked in CI, and carries nothing a reader could
  * not get from `registry.json`. What it adds is legibility: the JSON is

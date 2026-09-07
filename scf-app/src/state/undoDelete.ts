@@ -2,11 +2,11 @@
 /**
  * undoDelete.ts — make a delete recoverable.
  *
- * Deleting a sequence used to be final and silent, and it takes its
- * scene_sequence rows with it. So a delete first captures the row AND
- * the rows that point at it, and the toast puts them back with their
- * original ids and uuids — the ids matter, because anything else
- * pointing at the row would otherwise be restored into a dangling
+ * A delete is otherwise final and silent, and it takes dependent rows
+ * with it — a sequence's scene_sequence rows, say. So a delete first
+ * captures the row AND the rows that point at it, and the toast puts
+ * them back with their original ids and uuids. The IDS matter: anything
+ * else pointing at the row would otherwise be restored into a dangling
  * reference.
  *
  * Two limits, stated in the UI rather than hidden:

@@ -35,12 +35,11 @@ type FilterKind = "character" | "prop" | "location";
  * The list is every subject of that kind, not only the ones already
  * placed in a scene.
  *
- * It used to INNER JOIN the junction, which meant a prop you had just
- * created — in the Schema tab, or from the script's right-click menu —
- * was missing from the filter it was created for, with no way to tell
- * whether it had been made at all. A subject with no scenes is a real
- * subject and a useful thing to notice; the rail says so rather than
- * pretending it does not exist.
+ * An INNER JOIN on the junction would drop a prop just created — in
+ * the Schema tab, or from the script's right-click menu — from the very
+ * filter it was created for, with no way to tell whether it had been
+ * made at all. A subject with no scenes is a real subject and a useful
+ * thing to notice.
  */
 const FILTER_SQL: Record<FilterKind, { list: string; scenes: string }> = {
   character: {

@@ -149,13 +149,11 @@ describe("the published readiness rubrics (§12.9.1)", () => {
   });
 
   test("every step resolves against the registry", () => {
-    // INVERTED IN 0.38. This test used to assert the opposite — that
-    // some labels were NOT registry entity names, and that the artifact
-    // admitted as much. That was honest while it was true: the labels
-    // were prose ("sound_cue / music_cue", "bundle + *_asset_binding",
-    // "performance_state (vocal)") and a test claiming otherwise would
-    // have been the lie. Now `entities` carries registry names and the
-    // label is derived from them, so the assertion flips.
+    // `entities` carries REGISTRY NAMES and the label is derived from
+    // them. Where a step's entities are prose instead
+    // ("sound_cue / music_cue", "bundle + *_asset_binding",
+    // "performance_state (vocal)") a third party cannot resolve them,
+    // which is what §12.9.1 exists to prevent.
     const unresolvable = rubrics.queries.flatMap(
       (q) => q.steps.flatMap((s) => s.entities))
       .filter((name) => !registry.entities.has(name));

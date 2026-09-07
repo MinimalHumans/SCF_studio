@@ -3,11 +3,8 @@
  * objectUrlCache — one object URL per file, however many thumbnails
  * are looking at it.
  *
- * `AssetPreview` creates a URL and revokes it on unmount, which is
- * exactly right for one previewer and wrong for a list. Its own header
- * says so: "an asset browser walked through a few hundred plates would
- * hold all of them." Thumbnails make that the normal case rather than
- * the pathological one — the same plate can be in a bundle list, on a
+ * Creating a URL and revoking it on unmount is right for one previewer
+ * and wrong for a list: the same plate can be in a bundle list, on a
  * binding, behind a subject's anchor and in the asset browser at the
  * same moment, and four URLs for one file is four things to revoke and
  * three chances to leak.
@@ -38,8 +35,8 @@ interface Entry {
   refs: number;
   /** `ReturnType<typeof setTimeout>` rather than `number`: this package
    *  compiles with node types in scope, where the bare timer functions
-   *  return a `Timeout` object. Vitest ran happily on `number`; tsc
-   *  caught it. */
+   *  return a `Timeout` object. Vitest is happy with `number`; tsc is
+   *  not. */
   timer: ReturnType<typeof setTimeout> | null;
 }
 
@@ -126,14 +123,12 @@ export function release(
     if (still === undefined) return;
     // Clear the handle FIRST, before deciding whether to revoke.
     //
-    // The early return below used to leave `timer` set on an entry it
-    // had decided not to revoke. Nothing reaches that state in this
-    // version — `acquire` always clears a pending timer — but the next
-    // release would then see a non-null timer, take the early exit
-    // above, and never schedule one. The URL would live for the rest of
-    // the session with nothing holding it. Found by deleting the
-    // refcount guard in `release` and watching the tests still pass:
-    // the two guards were covering for each other.
+    // Leaving `timer` set on an entry this call decides NOT to revoke
+    // makes the next release see a non-null timer, take the early exit
+    // above, and never schedule one — the URL then lives for the rest
+    // of the session with nothing holding it. `acquire` also clears a
+    // pending timer, so the two guards can cover for each other and
+    // hide the loss of either.
     still.timer = null;
     if (still.refs > 0) return;
     if (still.url !== null) URL.revokeObjectURL(still.url);

@@ -10,10 +10,9 @@
  * keeps the id, so anchored beats stay with it by construction — no
  * work to do, which is the point).
  *
- * VERSIONS: v1's snapshot model ported as-is — publish copies the
- * current lines and title page into the version tables with summary
- * counts; the diff view reuses the re-import differ (versions are just
- * rows).
+ * VERSIONS: a snapshot model — publish copies the current lines and
+ * title page into the version tables with summary counts, and the diff
+ * view reuses the re-import differ (versions are just rows).
  *
  * PROP TAGS: block-anchored ranges — line uuid + offsets, never text
  * match. Edits can invalidate offsets; revalidation is honest about it:
@@ -141,17 +140,15 @@ async function publishVersionInner(
      counts.character_count, counts.location_count, counts.word_count]);
   const idRow = await exec("SELECT last_insert_rowid() AS id");
   const versionId = idRow[0]!["id"] as number;
-  // v1-faithful: snapshot rows do NOT copy the live line's uuid into
-  // `uuid` — they are their own rows and receive fresh identity from the
-  // open-time backfill (v1's publish omits uuid for exactly this reason;
-  // the unique index on version-line uuids depends on it).
+  // Snapshot rows do NOT copy the live line's uuid into `uuid` — they
+  // are their own rows and receive fresh identity from the open-time
+  // backfill. The unique index on version-line uuids depends on this.
   //
-  // `source_uuid` (2.6) is the SECOND column that records which live
-  // line the row was taken from. It is what lets a revert give a
-  // restored line back its original identity — and therefore lets the
-  // performance beats and prop tags anchored to it survive the trip.
-  // Without it, reverting the script silently orphaned everything
-  // attached to it.
+  // `source_uuid` (2.6) is the SECOND column, recording which live line
+  // the row was taken from. It is what lets a revert give a restored
+  // line back its original identity, and therefore lets the performance
+  // beats and prop tags anchored to it survive the trip. Without it,
+  // reverting the script orphans everything attached to it.
   for (const line of sp.lines) {
     await exec(
       `INSERT INTO screenplay_version_lines
@@ -210,13 +207,12 @@ export async function diffVersionAgainstCurrent(
 /**
  * Tag a prop on a line — and record that the prop is in that SCENE.
  *
- * The tag alone was not enough. Every query that asks "which props are
- * in this scene" reads `scene_prop`, including the Scene Rail's prop
- * filter — so a prop created by tagging appeared nowhere in it while
- * imported props did, because the importer writes the junction and
- * tagging did not. The tag is the evidence; the junction is what the
- * evidence means, and one without the other is a fact the app knows and
- * cannot answer with.
+ * The tag alone is not enough. Every query asking "which props are in
+ * this scene" reads `scene_prop`, including the Scene Rail's prop
+ * filter, and the importer writes that junction — so a prop created by
+ * tagging would appear nowhere while an imported one did. The tag is
+ * the evidence; the junction is what the evidence means, and one
+ * without the other is a fact the app knows and cannot answer with.
  *
  * The line's scene comes from the heading that governs it, matching how
  * a scene's extent is defined everywhere else. Nothing is written when
@@ -360,7 +356,7 @@ export async function validateTags(
 
 
 // ---------------------------------------------------------------------------
-// Commit-time linking and creation (v1's save-path semantics, done right)
+// Commit-time linking and creation
 // ---------------------------------------------------------------------------
 
 export interface CommitLinkResult {
@@ -477,11 +473,10 @@ export interface CommitLinkOptions {
 }
 
 /**
- * v1 created entities on save; the import regret was HEURISTIC creation
- * from a parser, not this: here the author literally typed the heading
- * or cue, so creating what they named is the feature (and what v1's
- * editor did — its save summary reported "2 chars, 1 loc"). Everything
- * created is marked external_id_namespace='scf:editor'.
+ * Entities are created on save. What propose.ts bans is HEURISTIC
+ * creation from a parser; this is not that — the author literally typed
+ * the heading or cue, so creating what they named is the feature.
+ * Everything created is marked external_id_namespace='scf:editor'.
  *
  * Also re-threads inheritance over the blank-free block rows: headings
  * set the current scene for everything below; a cue sets the speaker

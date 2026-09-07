@@ -116,16 +116,14 @@ SKIP_DIR_PARTS = {
     "corpus",  # never touch corpus material
 }
 
-# `build` is NOT in the set above, and was until 0.31. As a bare name it
-# matched at any depth, so it silently swallowed `fixtures/build/` —
-# which is not build output but the three scripts that BUILD the
-# conformance fixture, the closest thing this repository has to a
-# reproducible-fixture path. They went unstamped through a full run and
-# nothing reported it, because a skip is not a failure.
+# `build` is deliberately NOT in the set above. As a bare name it matches
+# at any depth and silently swallows `fixtures/build/` — not build output
+# but the scripts that BUILD the conformance fixture — which then goes
+# unstamped through a full run with nothing reported, because a skip is
+# not a failure.
 #
-# Build output that actually needs skipping is named by full relative
-# path instead, so a directory called `build` cannot be excluded by
-# accident again.
+# Build output that needs skipping is named by full relative path
+# instead, so a directory called `build` cannot be excluded by accident.
 SKIP_REL_PATHS = {
     "fixtures/negative/build",
     # Blessed output, not prose. The .expected.md files are RENDERED by

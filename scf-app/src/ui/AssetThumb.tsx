@@ -12,9 +12,8 @@
  *     A bundle of two hundred plates that the user never scrolls costs
  *     two hundred resolutions and zero reads.
  *  2. Resolution and the drawn raster both come from `thumbnailCache`,
- *     which survives unmount, tab switches and reload. Leaving the
- *     assets tab and coming back used to rebuild everything; the second
- *     visit now touches no files at all.
+ *     which survives unmount, tab switches and reload, so the second
+ *     visit to the assets tab touches no files at all.
  *  3. Images only. Video would need a poster frame, which means
  *     decoding to a canvas; audio and text have no small form at all.
  *     Everything else gets a format chip — the SAME SIZE as an image,
@@ -26,11 +25,10 @@
  * a real tier: a LoRA is not media, and there is no image of it to fail
  * to render.
  *
- * The CROP lives in the cache, not in CSS. The first version scaled and
- * offset the full image inside a clipping box, which meant holding a
- * whole plate decoded in order to show 176 pixels of it — and it could
- * not tell "no region" from "a region that did not fit", because both
- * render as the whole frame.
+ * The CROP lives in the cache, not in CSS. Scaling and offsetting the
+ * full image inside a clipping box means holding a whole plate decoded
+ * to show 176 pixels of it, and cannot distinguish "no region" from "a
+ * region that did not fit" — both render as the whole frame.
  */
 
 import { useEffect, useRef, useState } from "react";

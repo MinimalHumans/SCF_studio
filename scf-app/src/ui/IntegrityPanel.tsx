@@ -2,9 +2,9 @@
 /**
  * IntegrityPanel — what the script left behind.
  *
- * The toolbar used to show "3 detached tags" and offer nothing, which is
- * a warning the author cannot act on. This lists every link whose text
- * is gone and gives each one a verb.
+ * A toolbar count — "3 detached tags" — is a warning the author cannot
+ * act on. This lists every link whose text is gone and gives each one a
+ * verb.
  *
  * Nothing here happens automatically. Removal is always the author's
  * click — particularly for scene/character links, where a row may have

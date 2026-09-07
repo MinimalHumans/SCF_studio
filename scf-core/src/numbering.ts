@@ -3,19 +3,12 @@
  * numbering.ts — resolving the numbering policy. Spec §4.3.
  *
  * `project.numbering_policy` governs whether act, sequence and scene
- * numbers and shot codes are recomputed at commit. It was called
- * `scene_numbering` until schema 2.11 — a name that described one of the
- * four things it governs — and 2.12 removed the old column outright.
+ * numbers and shot codes are recomputed at commit. (It carried the
+ * narrower name `scene_numbering` before schema 2.12; §11.0 makes
+ * pre-1.0 files disposable, so no mirrored column survives.)
  *
- * 2.11 had carried both columns with the writer mirroring into the old
- * one, which is what §11.4's deprecation window prescribes. That window
- * existed solely to protect files written before 2.11, and pre-1.0 there
- * are no such files worth protecting: the deprecation machinery is
- * specified and becomes binding at 1.0, when it earns its cost. Carrying
- * it early bought nothing and left the format storing one fact twice.
- *
- * So this module is now small. It exists to keep the resolution rule —
- * including what an absent or unrecognised value means — in one place
+ * This module is small on purpose. It exists to keep the resolution rule
+ * — including what an absent or unrecognised value means — in one place
  * rather than in every reader that happens to need it.
  */
 

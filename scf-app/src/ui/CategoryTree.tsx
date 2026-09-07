@@ -5,7 +5,7 @@ import { entitiesByCategory } from "../state/registryGraph.ts";
 import { registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 
-/** Tier/category tree — v1's browser, kept for schema-oriented work. */
+/** Tier/category tree — the schema-oriented way to browse entities. */
 export function CategoryTree(): JSX.Element {
   const { selectedEntityType, selectEntityType, schemaCollapsed,
           setSchemaCollapsed } = useStore();

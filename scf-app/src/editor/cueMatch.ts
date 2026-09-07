@@ -3,13 +3,12 @@
  * Does a cue as written agree with the character it is linked to?
  *
  * The commit review flags a cue whose text disagrees with its linked
- * entity — the George→Jorge case, where a line was edited but kept its
- * old link. That check was string equality, and string equality is the
- * wrong test: a cue is a SHORT FORM by convention. Every screenplay
- * writes `ELEANOR` above dialogue spoken by a character the file knows
- * as `Eleanor Cade`, so the equality test reported eleven conflicts on
- * the conformance fixture — every cue line it has — and offered to
- * break eleven correct links.
+ * entity — a line edited from George to Jorge but keeping its old link.
+ * STRING EQUALITY IS THE WRONG TEST: a cue is a SHORT FORM by
+ * convention. Every screenplay writes `ELEANOR` above dialogue spoken
+ * by a character the file knows as `Eleanor Cade`, so equality flags
+ * every cue line in the conformance fixture and offers to break eleven
+ * correct links.
  *
  * The rule here: a cue agrees when its words are a contiguous run of
  * whole words in the entity's name. `ELEANOR`, `CADE` and

@@ -10,8 +10,8 @@ import { useQuery } from "./useQuery.ts";
 import { useRefNames } from "./useRefNames.ts";
 
 /**
- * "What points here" — computed generically from the registry's reference
- * graph, the way v1's _get_relationship_data was per-case.
+ * "What points here" — computed generically from the registry's
+ * reference graph rather than case by case per entity.
  */
 export function ReverseLinks({ entity, id }: {
   entity: string; id: number;

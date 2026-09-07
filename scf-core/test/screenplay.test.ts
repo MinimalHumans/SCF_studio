@@ -3,8 +3,8 @@
  * screenplay.test.ts — Stages 2 and 3.
  *
  * Stage 2: the row model round-trips text byte-stable through rows AND
- * through the database (v1's tables, now created by initDatabase);
- * applyAssignments threads context deterministically and creates nothing.
+ * through the database; applyAssignments threads context
+ * deterministically and creates nothing.
  *
  * Stage 3: proposals against the corpus. Alexis Nexus (public) pins the
  * clean-input behavior; Aliens (private, when present) pins the payoff —

@@ -3,10 +3,9 @@
 """
 generate_registry_json.py — emit registry.json for scf-core.
 
-The second-implementation design (docs/design/20260715_SCF_Second_Implementation.md)
-makes Python the registry's source of truth and registry.json a checked-in
+Python is the registry's source of truth; registry.json is a checked-in
 build artifact the TypeScript implementation consumes. The TS app never
-hand-defines an entity; everything it knows about the format's shape comes
+hand-defines an entity — everything it knows about the format's shape comes
 from this file.
 
 Emitted per entity: every EntityDef attribute including the Phase A ontology
@@ -133,8 +132,7 @@ def main() -> int:
     payload = build()
     rendered = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     if check:
-        # CI mode: a stale checked-in registry.json fails the build
-        # (design doc, Risks: "registry.json staleness").
+        # CI mode: a stale checked-in registry.json fails the build.
         current = (out_path.read_text(encoding="utf-8")
                    if out_path.exists() else "")
         if current != rendered:

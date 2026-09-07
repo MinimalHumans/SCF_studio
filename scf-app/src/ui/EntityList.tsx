@@ -104,12 +104,11 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
    * A link's A-Z is sorted here, not in SQL.
    *
    * Its visible label is composed from the names of the rows it joins,
-   * which live in other tables — `ORDER BY` on this one cannot reach
-   * them, which is why link lists used to come back in insertion order
-   * with no way to change it. Sorting on the same string that renders
-   * guarantees the order matches what is on screen, and the row id
-   * breaks ties so the result is stable rather than reshuffling as
-   * names load.
+   * which live in other tables, so `ORDER BY` on this one cannot reach
+   * them — the alternative is insertion order with no way to change it.
+   * Sorting on the same string that renders guarantees the order matches
+   * what is on screen, and the row id breaks ties so the result is
+   * stable rather than reshuffling as names load.
    */
   const shown = useMemo(() => {
     if (edef === undefined || !composed || byStory) return rows;

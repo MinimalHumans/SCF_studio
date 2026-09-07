@@ -2,11 +2,11 @@
 /**
  * runnersComposed.ts — the composed and analytic canonical queries.
  *
- * These are assemblies over scf-core resolution and straightforward SQL —
- * per the design doc, "none requires machinery that doesn't already exist
- * in scf-core." Q02 in particular is the flagship: Q01 dossier ⊕
- * position-keyed state ⊕ scene modulation ⊕ moment beats ⊕ media, as an
- * ordered context stack, most specific last.
+ * These are assemblies over scf-core resolution and straightforward
+ * SQL; none needs machinery scf-core does not already have. Q02 is the
+ * flagship: Q01 dossier ⊕ position-keyed state ⊕ scene modulation ⊕
+ * moment beats ⊕ media, as an ordered context stack, most specific
+ * last.
  *
  * Known absences stated in output rather than hidden:
  *  - Q04 carries the scene's text since spec 0.49 (§12.17.1), located

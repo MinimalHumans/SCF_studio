@@ -7,10 +7,10 @@
  * answer to "is there something at this path".
  *
  * Traversal, never enumeration. Resolution walks `getDirectoryHandle`
- * and `getFileHandle` from the root, which matters because directory
- * LISTING turned out not to be available everywhere (conventions §9) —
- * a managed machine returned zero entries for an ordinary folder while
- * traversal through the same handle worked. Nothing here lists.
+ * and `getFileHandle` from the root, because directory LISTING is not
+ * available everywhere (conventions §9) — a managed machine can return
+ * zero entries for an ordinary folder while traversal through the same
+ * handle works. Nothing here lists.
  *
  * A root that is not configured returns `undefined` rather than `null`,
  * so "no such root" and "no such file" stay different answers. Named

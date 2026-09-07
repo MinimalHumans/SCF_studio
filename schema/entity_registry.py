@@ -96,16 +96,15 @@ class FieldDef:
     #: For a POLYMORPHIC reference: the sibling column naming which table
     #: this one points into.
     #:
-    #: Declared rather than pattern-matched. Spec §12.1.2 used to say
-    #: "any remaining column whose name ends `_id` MUST be dropped",
-    #: which is true of the four polymorphic columns and also true of
-    #: `external_id` on ten entities and of `clip.screenplay_line_*_id`,
-    #: which are an ordinary value and two real references. The rule
-    #: silently deleted twelve legitimate columns from every projected
-    #: row, and no published artifact could catch it: the fixture
-    #: authors no `external_id` and its `clip` table is empty, so a
-    #: correct implementation and a data-losing one produce identical
-    #: output on all sixteen.
+    #: Declared rather than pattern-matched. "Any remaining column whose
+    #: name ends `_id` is dropped" is true of the four polymorphic
+    #: columns and ALSO of `external_id` on ten entities and of
+    #: `clip.screenplay_line_*_id` — an ordinary value and two real
+    #: references. That rule deletes twelve legitimate columns from
+    #: every projected row, and no published artifact catches it: the
+    #: fixture authors no `external_id` and its `clip` table is empty,
+    #: so a correct implementation and a data-losing one produce
+    #: identical output on all sixteen. Spec §12.1.2.
     polymorphic_type: str | None = None
 
     def get_sql_type(self) -> str:
@@ -164,7 +163,7 @@ class EntityDef:
     # refines: entities one layer up this entity's direction cascade (may be
     #   multiple; the resolver concatenates parents in declared order).
     # queries: canonical query IDs this entity serves (the Rule: must be
-    #   non-empty; see docs/design/20260713_SCF_Canonical_Queries.md).
+    #   non-empty).
     subject: str | None = None
     scope: str | None = None
     paired: bool = False
@@ -2017,12 +2016,10 @@ register(EntityDef(
         # rather than one of the 99 entities — it carries uuid identity
         # on §6.1's terms, so §12.1.2 can resolve these.
         #
-        # Declared as references since 2.13. They were plain integers,
-        # so §12.1.2's resolution rule did not reach them and both
-        # survived projection as bare row ids, in the section that
-        # forbids exactly that. The drop-everything-ending-`_id` rule
-        # had been catching them by accident; 0.40 fixed that rule and
-        # uncovered this.
+        # Declared as references since 2.13. As plain integers §12.1.2's
+        # resolution rule does not reach them, and both survive
+        # projection as bare row ids — which is what that section
+        # forbids.
         FieldDef("screenplay_line_start_id", "Screenplay Line Start",
                  "reference", reference_entity="screenplay_lines",
                  tab="Screenplay"),
@@ -3477,8 +3474,7 @@ def get_junction_entities() -> list[EntityDef]:
 # Kept as one table (rather than inline per-block) so the whole classification
 # is reviewable at a glance. Applied post-registration; lint_ontology()
 # enforces completeness and the Rule (every entity serves >= 1 canonical
-# query). See conventions.md "Ontology metadata" and
-# docs/design/20260713_SCF_Canonical_Queries.md.
+# query). See conventions.md "Ontology metadata".
 #
 # Format: name: (subject, scope, queries) — plus PAIRED and REFINES below.
 # =============================================================================
@@ -3617,7 +3613,7 @@ POSITION_PATTERN_VALUES = {"none", "explicit", "sparse_persistence",
                            "latest_wins"}
 
 # Direction-cascade parents (most-specific entity lists what it refines;
-# resolver walks upward). See docs/design/20260714_SCF_Gap_Roadmap.md G3.
+# resolver walks upward). Spec §7 states the cascade.
 REFINES: dict[str, list[str]] = {
     "color_script":            ["project_color_palette"],
     "color_script_entry":      ["color_script"],

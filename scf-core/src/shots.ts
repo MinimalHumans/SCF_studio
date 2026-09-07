@@ -86,7 +86,6 @@ export function nextShotNumber(sceneNumber: number | string | null,
  *   shot "12AB" in scene "12A"  →  prefix "12A", letters "B",  index 1
  *   trailing-run reading        →  prefix "12",  letters "AB", index 27
  *
- * The second is wrong, and was what this module did until spec 0.10.
  * Returns null when the code does not belong to this scheme for that
  * scene — an authored code, a prefix that does not match, letters that
  * are not a letter run. Null is never an error (§9.1): it means leave
@@ -114,14 +113,13 @@ export function parseShotCode(
  * against the old number, the new scene has no number, or the result
  * matches what is already there.
  *
- * This is NOT a contradiction of the stored-number rule above, but it
- * does narrow it. That rule protects a code a crew already holds on
- * paper, and nobody holds paper on an unlocked script: before locking,
- * a shot list that says 42A for a scene now numbered 43 is not a stable
- * identifier, it is a stale one. So the same `project.numbering_policy`
- * flag governs both — `derived` keeps shot codes tracking their scene,
- * `fixed` freezes them along with the scene numbers, which is the state
- * a distributed shot list needs.
+ * This narrows the stored-number rule above rather than contradicting
+ * it. That rule protects a code a crew already holds on paper, and
+ * nobody holds paper on an unlocked script: before locking, `42A` in a
+ * scene now numbered 43 is stale rather than stable. So the same
+ * `project.numbering_policy` flag governs both — `derived` keeps shot
+ * codes tracking their scene, `fixed` freezes them along with the scene
+ * numbers, which is the state a distributed shot list needs.
  */
 export function restampShotNumber(
     code: string | null,

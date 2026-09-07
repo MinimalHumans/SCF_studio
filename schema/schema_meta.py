@@ -45,12 +45,10 @@ UUID_EXTRA_TABLES = [
     "screenplay_prop_tags",
 ]
 
-# SCF's own tables that carry NO row identity. Spec §1.3 used to define
-# the known table set as the registry plus UUID_EXTRA_TABLES, which
-# conflated two questions: is this table ours, and does it carry row
-# identity. They are not the same question, and the gap showed the first
-# time a validator enumerated a real file — SCF reported two of its own
-# tables as third-party content.
+# SCF's own tables that carry NO row identity. "Is this table ours" and
+# "does it carry row identity" are two questions, and defining the known
+# table set as the registry plus UUID_EXTRA_TABLES conflates them: SCF
+# then reports two of its own tables as third-party content. Spec §1.3.
 #
 # A title page is a PROPERTY of the screenplay rather than a row in its
 # own right, so these do not gain uuids. They are simply ours.
@@ -63,5 +61,5 @@ OWNED_TABLES = [
 # means by "unknown content" (spec §10.1) is: not in here.
 KNOWN_EXTRA_TABLES = UUID_EXTRA_TABLES + OWNED_TABLES
 
-# Backwards-compatible alias for the name the v1 migrations used.
+# Backwards-compatible alias for the earlier name.
 _UUID_EXTRA_TABLES = UUID_EXTRA_TABLES

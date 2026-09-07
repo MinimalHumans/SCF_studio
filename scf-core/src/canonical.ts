@@ -2,13 +2,12 @@
 /**
  * canonical.ts — the canonical dump. Spec §11.6.
  *
- * `conformance.md` §3 named this as an open question: the Writer role
- * rests on "open, save, lose nothing", and nobody had said what the
- * comparison is performed ON. It cannot be the bytes. SQLite is free to
- * reorder pages, reuse freelist space and change its file size without
- * any row changing, so two byte-different files routinely say exactly
- * the same thing. A byte comparison would fail constantly and mean
- * nothing when it passed.
+ * The Writer role rests on "open, save, lose nothing", and the
+ * comparison cannot be performed on the BYTES: SQLite is free to
+ * reorder pages, reuse freelist space and change file size without any
+ * row changing, so two byte-different files routinely say exactly the
+ * same thing. A byte comparison would fail constantly and mean nothing
+ * when it passed.
  *
  * So the comparison is performed on a canonical dump: every table, every
  * row, in an order that depends only on content.

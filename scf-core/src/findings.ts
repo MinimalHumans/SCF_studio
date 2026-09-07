@@ -3,18 +3,15 @@
  * findings.ts — the finding vocabulary. Spec §9.5.
  *
  * SCF describes and does not enforce (§9.1), so every problem in a file
- * is a FINDING: reported, never a reason to refuse the data. Six modules
- * already produced findings, each with its own shape, its own severity
- * words or none, and its own idea of what identifies the thing at fault.
- * That is fine inside one application and useless outside it — a
- * validator whose output cannot be compared between two runs, let alone
- * between two implementations, is a demonstration rather than a tool.
+ * is a FINDING: reported, never a reason to refuse the data.
  *
- * This module does not replace those producers. Each one keeps its own
- * richly-typed result, because the panels that consume them need the
- * detail. What this adds is a NORMAL FORM: one shape, one code space,
- * one severity scale, that every producer can be projected into and that
- * a third party can depend on.
+ * Six modules produce findings, each with its own richly-typed result,
+ * because the panels that consume them need the detail. This module does
+ * not replace them. It adds a NORMAL FORM — one shape, one code space,
+ * one severity scale — that every producer projects into and that a
+ * third party can depend on. A validator whose output cannot be compared
+ * between two runs, let alone two implementations, is a demonstration
+ * rather than a tool.
  *
  * Three properties are deliberate:
  *
@@ -496,11 +493,10 @@ export async function collectFindings(
 
   // --- shadow rows (§5.4) ---
   //
-  // §5.4 requires these to be counted and reported as a finding, and
-  // until 0.26 the catalog had no code for it — so §5.4 and §9.4 could
-  // not both be obeyed. The detection existed only inside the editor's
-  // commit path as a count on a result object, which means the one tool
-  // a third party actually runs never mentioned them.
+  // §5.4 requires these to be counted and reported as a finding, which
+  // means the code has to exist in the catalog and the detection has to
+  // live here rather than inside the editor's commit path — otherwise
+  // the one tool a third party runs never mentions them.
   //
   // Reported, never deleted: silently dropping someone's authored links
   // to satisfy a derivation is not a migration.

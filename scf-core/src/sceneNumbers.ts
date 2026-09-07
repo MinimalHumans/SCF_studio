@@ -119,10 +119,10 @@ export function compareSceneNumbers(
  * ordering by (length, text) is equivalent within one alphabet and far
  * cheaper to read.
  *
- * The parse must agree with `parseSceneNumber` exactly — a list ordered
- * by SQL and the same list ordered in TypeScript disagreeing is the
- * class of bug §4.1 already cost us once. `sceneNumbers.test.ts` runs
- * both engines over the same labels and compares the orders.
+ * The parse must agree with `parseSceneNumber` exactly: a list ordered
+ * by SQL and the same list ordered in TypeScript must not disagree.
+ * `sceneNumbers.test.ts` runs both engines over the same labels and
+ * compares the orders.
  */
 export function sceneNumberOrderJoin(
     on: string, alias = "sn", table = "scene"): string {
