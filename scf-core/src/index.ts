@@ -168,12 +168,16 @@ export {
 // convenience for a caller that starts from a typed label rather than a
 // uuid, and a composite of existing queries for one common request.
 export {
-  type KeyHit, resolveNaturalKey,
+  type KeyHit, labelFieldOf, resolveNaturalKey,
 } from "./naturalKey.ts";
 
 export {
   type ShotContext, shotContext,
 } from "./shotContext.ts";
+
+export {
+  type ListFilter, type ListedRow, listEntities,
+} from "./listEntities.ts";
 
 // ── Writer: identity and numbering ───────────────────────────────
 // Spec §6.1–6.4, §3.3, §4.3, §4.4.

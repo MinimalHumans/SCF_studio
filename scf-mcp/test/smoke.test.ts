@@ -57,11 +57,29 @@ beforeAll(async () => {
 afterAll(() => { child.kill(); });
 
 describe("scf-mcp server", () => {
-  test("lists exactly the four documented tools", async () => {
+  test("lists exactly the five documented tools", async () => {
     const result = await send("tools/list") as
       { tools: Array<{ name: string }> };
     expect(result.tools.map((t) => t.name).sort())
-      .toEqual(["find", "query", "readiness", "shot_context"]);
+      .toEqual(["find", "list", "query", "readiness", "shot_context"]);
+  });
+
+  test("list enumerates every shot in a scene by uuid, no label guessing",
+      async () => {
+    const result = await send("tools/call", {
+      name: "list",
+      arguments: {
+        entityType: "shot",
+        filter: { field: "scene_id",
+                  uuid: "06857531-3e91-41a9-95dd-3262407d8132" },
+      },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    const shots = JSON.parse(result.content[0]?.text ?? "[]");
+    expect(Array.isArray(shots)).toBe(true);
+    expect(shots.length).toBeGreaterThan(0);
+    expect(shots.some((s: { uuid: string }) =>
+      s.uuid === "404e480d-dde6-4b4f-9cd4-daec42d5bfa0")).toBe(true);
   });
 
   test("find resolves a known scene label against the fixture", async () => {

@@ -34,16 +34,20 @@ export interface KeyHit {
   label: string;
 }
 
-function labelField(ctx: ScfContext, entityType: string): string {
+/**
+ * Which field is entityType's natural-key label. Exported so
+ * `listEntities` (and any other caller with the same "what's the label
+ * field" question) states this rule once rather than re-deriving it.
+ */
+export function labelFieldOf(ctx: ScfContext, entityType: string): string {
   const edef = ctx.registry.entities.get(entityType);
   if (edef === undefined) {
-    throw new Error(`resolveNaturalKey: unknown entity type "${entityType}"`);
+    throw new Error(`unknown entity type "${entityType}"`);
   }
   if (edef.subject === "link") {
     throw new Error(
-      `resolveNaturalKey: "${entityType}" is a junction entity (§6.3) ` +
-      "with no typed label — resolve it through the rows it links " +
-      "instead.");
+      `"${entityType}" is a junction entity (§6.3) with no typed label ` +
+      "— resolve it through the rows it links instead.");
   }
   const numberField = `${entityType}_number`;
   return edef.fields.some((f) => f.name === numberField)
@@ -64,7 +68,7 @@ export async function resolveNaturalKey(
   const needle = label.trim();
   if (needle === "") return [];
 
-  const field = labelField(ctx, entityType);
+  const field = labelFieldOf(ctx, entityType);
   const found = await rows(ctx.exec, entityType,
     `${q(field)} = ? COLLATE NOCASE`, [needle as SqlValue]);
 

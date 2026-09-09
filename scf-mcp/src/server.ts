@@ -4,8 +4,10 @@
  * server.ts — scf-mcp, a stdio MCP server over one `.scf` file
  * (spec/scf-mcp-design.md §5).
  *
- * Four tools:
+ * Five tools:
  *   find          label -> uuid (resolveNaturalKey)
+ *   list          every row of an entity type, optionally filtered
+ *                 (listEntities) — for a caller with nothing in hand
  *   shot_context  the "prompt for shot X" composite (shotContext)
  *   query         any of the sixteen canonical queries, unwrapped
  *   readiness     Q14 directly, for pre-flight
@@ -25,7 +27,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import {
-  loadRegistry, resolveNaturalKey, shotContext,
+  listEntities, loadRegistry, resolveNaturalKey, shotContext,
   type RegistryJson, type ScfContext,
 } from "@minimalhumans/scf-core";
 import { openNodeDatabase } from "@minimalhumans/scf-core/node";
@@ -70,6 +72,33 @@ server.registerTool("find", {
 }, async ({ entityType, label }) => {
   try {
     return ok(await resolveNaturalKey(ctx, entityType, label));
+  } catch (e) {
+    return err(e);
+  }
+});
+
+server.registerTool("list", {
+  description: "Every row of an entity type, optionally filtered to " +
+    "rows one reference field points at (e.g. every shot in a scene). " +
+    "For a question with no starting uuid or label — \"how many shots " +
+    "are there\" — rather than guessing labels through find one at a " +
+    "time.",
+  inputSchema: {
+    entityType: z.string().describe(
+      "Registry entity name, e.g. \"scene\", \"shot\", \"character\"."),
+    filter: z.object({
+      field: z.string().describe(
+        "A reference field entityType declares, e.g. \"scene_id\" on " +
+        "\"shot\"."),
+      uuid: z.string().describe("The uuid the field must point at."),
+    }).optional().describe(
+      "Narrow to rows pointing at one uuid, e.g. { field: \"scene_id\", " +
+      "uuid: \"<scene uuid>\" } for every shot in one scene. Omit to " +
+      "list every row of entityType."),
+  },
+}, async ({ entityType, filter }) => {
+  try {
+    return ok(await listEntities(ctx, entityType, filter));
   } catch (e) {
     return err(e);
   }
