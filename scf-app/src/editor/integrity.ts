@@ -4,15 +4,15 @@
  *
  * writeScreenplay replaces the whole line table on every commit, so a
  * deleted line's uuid simply stops existing. Three things point at line
- * uuids or at script-derived context and need sweeping:
+ * uuids or at script-derived context and none of them were being swept:
  *
- *  - screenplay_prop_tags.line_uuid — validateTags marks these
- *    "detached"; without this panel there is no way to see or act on
- *    them.
- *  - performance_beat.line_ref — a beat whose line is gone is otherwise
- *    invisible: no gutter dot, no warning.
- *  - scene_character — linkAndCreateAtCommit only ever INSERTs, so
- *    deleting every line a character speaks leaves the junction.
+ *  - screenplay_prop_tags.line_uuid — validateTags already marked these
+ *    "detached" and the toolbar showed a count, with no way to see or
+ *    act on them.
+ *  - performance_beat.line_ref — nothing reported these at all. A beat
+ *    whose line is gone is invisible: no gutter dot, no warning.
+ *  - scene_character — linkAndCreateAtCommit only ever INSERTs. Delete
+ *    every line a character speaks in a scene and the junction stays.
  *
  * The last one is REPORTED, never swept automatically. A scene_character
  * row can legitimately be authored by hand for someone present and
@@ -123,9 +123,10 @@ export async function scanIntegrity(
   // A line's scene is the scene of the nearest heading ABOVE it (spec
   // §3.4), never `screenplay_lines.scene_id` — which §3.4 says a reader
   // must not rely on, and which only headings carry in a file this
-  // editor did not write. Reading it here makes the answer depend on
-  // who last wrote the file: null on every non-heading line of the
-  // fixture, back-filled after one commit in this app.
+  // editor did not write. Reading it here made the answer depend on who
+  // last wrote the file: the fixture leaves it null on every non-heading
+  // line, so the check reported all eighteen of its cast links, while
+  // the same file after one commit in this app reported twelve.
   //
   // The scene must also SHOW something. "No cue line for them survives"
   // is evidence only where lines survive at all: under a heading with

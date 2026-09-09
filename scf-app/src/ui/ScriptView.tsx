@@ -251,16 +251,18 @@ export function ScriptView(): JSX.Element {
   /**
    * Every commit runs alone.
    *
-   * A QUEUE, not an in-flight flag. A flag only coalesces the DEBOUNCED
-   * commit against itself; an explicit commit still calls `commit()`,
-   * returns immediately because one is in flight, and carries on
+   * The old scheme coalesced the DEBOUNCED commit against itself, but
+   * `explicitCommit` bypassed it — it called `commit()`, which returned
+   * immediately when one was already in flight, and then carried on
    * writing. Two `writeScreenplay` passes and two `withTransaction`
-   * blocks then overlap — "cannot rollback — no transaction is active",
-   * and a swallowed Commit press where one pass creates the scene and
-   * the other overwrites the rows pointing at it, leaving a record with
-   * nothing linked to it.
+   * blocks overlapped, which is where "cannot rollback — no transaction
+   * is active" came from, and why a Commit press could be swallowed: one
+   * pass created the scene and the other overwrote the rows that pointed
+   * at it, leaving the record behind with nothing linked to it. That is
+   * the ghost scene.
    *
-   * Redundant passes are cheap; overlapping ones corrupt.
+   * A queue instead of a flag. Redundant passes are cheap; overlapping
+   * ones corrupt.
    */
   const serialize = <T,>(work: () => Promise<T>): Promise<T> => {
     const run = commitQueue.current.then(work, work);
@@ -898,9 +900,9 @@ export function ScriptView(): JSX.Element {
     const blob = new Blob([text], { type: "text/plain" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    // Named for the project, not a constant: a fixed
-    // "screenplay.fountain" is how an export ends up beside — or over —
-    // the file it was imported from.
+    // Named for the project, not a constant. Every export used to land
+    // as "screenplay.fountain", which is how one can end up beside — or
+    // over — the file it was imported from.
     a.download = suggestExportName(useStore.getState().projectName);
     a.click();
     URL.revokeObjectURL(a.href);
