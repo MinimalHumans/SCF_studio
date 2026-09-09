@@ -16,6 +16,7 @@
           "fields": {
             "instrumentation_palette": "fiddle, pump organ",
             "lifecycle_status": "active",
+            "musical_tone": "neutral/ambient",
             "name": "Sonic Identity",
             "score_approach": "acoustic/intimate",
             "score_density": "selective",

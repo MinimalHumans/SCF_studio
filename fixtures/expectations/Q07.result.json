@@ -71,8 +71,13 @@
           "uuid": "5061f05b-7c24-4290-96f8-41f1c0ee163e",
           "fields": {
             "color_bias": "warm bias grows per act",
+            "contrast": "flat",
+            "grain_texture": "subtle grain",
+            "highlight_handling": "preserved",
             "lifecycle_status": "active",
-            "name": "Look Development"
+            "name": "Look Development",
+            "saturation": "desaturated",
+            "shadow_handling": "lifted"
           }
         }
       },

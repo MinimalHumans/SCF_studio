@@ -260,10 +260,19 @@ suites and MUST NOT change.
   ACTIVE may be added to it. A **cut** row may be, precisely because
   §6.6.1 requires it to change nothing: the pin and the cut row test
   each other.
+- **Five assets have no file behind them, on purpose.** The costume
+  `.zip`, two `.wav`s, the `.exr` plate and the locket `.glb` are the
+  only non-`png`/`mp4` entries in an otherwise real folder tree, and
+  they are what keeps `zip`, `exr` and `glb` in the derived format set,
+  the `sound/` folder in the path tree, and something in the file that
+  a browser cannot show. Tidying them away as fictional breaks three
+  suites and removes the demonstration that a real project is not all
+  previewable.
 - **Marcus's vocal profile is deliberately thin and his voice bundle
   deliberately absent** — the readiness suite asserts Q05 warns about
   exactly those gaps. The absence is part of what the fixture
-  demonstrates.
+  demonstrates, and it only reads as deliberate because Eleanor's voice
+  bundle is present beside it.
 - **Shot 12-04 keeps a production numbering scheme** the derived code
   disagrees with, demonstrating §3.3.
 - **A second, narrowly carried theme** exists so Q10's gap reporting has

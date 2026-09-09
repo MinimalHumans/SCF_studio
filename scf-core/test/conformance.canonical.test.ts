@@ -203,8 +203,8 @@ describe("Q13: media resolution", () => {
                                    "visual_identity", sc[12]!, shot1204);
     const firsts = q13.assets_most_specific_first.map((a) => str(a["name"]));
     expect(firsts.length).toBeGreaterThan(0);
-    expect(firsts[0]!.startsWith("eleanor_1204")).toBe(true);
-    expect(firsts).toContain("eleanor_turnaround_v3.png");
+    expect(firsts[0]!.startsWith("eleanor_lamplit")).toBe(true);
+    expect(firsts).toContain("eleanor_fullbody_turnaround.png");
     expect(q13.anchors).toHaveLength(1);
     expect(q13.anchors[0]!["canonical_status"]).toBe("verified");
   });

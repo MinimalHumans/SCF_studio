@@ -48,7 +48,7 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf-spec.md` | `af02fb8afb71454c…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `1a8faf057fbe7465…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/conformance.md` | `6bb5684cd71699c6…` | What a conforming implementation must do, per role, and how a claim is made. |
 | `spec/stability.md` | `20c0e18308efa8da…` | What is safe to build against and what is not, per subject. |
 | `spec/CHANGELOG.md` | `70db57ccc1fb401e…` | The specification changelog. Spec §11.5. |
 
@@ -75,20 +75,20 @@ One normative result per query, spec §12. Rows by uuid, no row ids, no timestam
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `fixtures/expectations/Q00.result.json` | `bf3095b2da999850…` | Q00's normative result. Spec §12.12. |
+| `fixtures/expectations/Q00.result.json` | `962f6721deb61e9b…` | Q00's normative result. Spec §12.12. |
 | `fixtures/expectations/Q03.result.json` | `db8c6119ab9b27fd…` | Q03's normative result. Spec §12.4. |
-| `fixtures/expectations/Q01.result.json` | `424d7d137bc7ee33…` | Q01's normative result. Spec §12.15. |
-| `fixtures/expectations/Q02.result.json` | `d466c8b6290b0fc0…` | Q02's normative result. Spec §12.16. |
-| `fixtures/expectations/Q04.result.json` | `45caf49243aaabbc…` | Q04's normative result. Spec §12.17. |
+| `fixtures/expectations/Q01.result.json` | `930769f97867fcd3…` | Q01's normative result. Spec §12.15. |
+| `fixtures/expectations/Q02.result.json` | `a75353c6ae14e35e…` | Q02's normative result. Spec §12.16. |
+| `fixtures/expectations/Q04.result.json` | `69b9bab637083b9f…` | Q04's normative result. Spec §12.17. |
 | `fixtures/expectations/Q05.result.json` | `3bde08c480bc8860…` | Q05's normative result. Spec §12.2. |
-| `fixtures/expectations/Q07.result.json` | `8dfed2c71e82e801…` | Q07's normative result. Spec §12.3. |
+| `fixtures/expectations/Q07.result.json` | `6cb0350b7dce5285…` | Q07's normative result. Spec §12.3. |
 | `fixtures/expectations/Q06.result.json` | `38a8f977b9672b52…` | Q06's normative result. Spec §12.6. |
-| `fixtures/expectations/Q08.result.json` | `4651d3e0dac0ef28…` | Q08's normative result. Spec §12.7. |
+| `fixtures/expectations/Q08.result.json` | `41bb497f17dfafa3…` | Q08's normative result. Spec §12.7. |
 | `fixtures/expectations/Q09.result.json` | `1fe2db9e7b0c26a6…` | Q09's normative result. Spec §12.10. |
-| `fixtures/expectations/Q10.result.json` | `19c589a9a5055fed…` | Q10's normative result. Spec §12.11. |
-| `fixtures/expectations/Q11.result.json` | `e4e83f283ef31f2a…` | Q11's normative result. Spec §12.13. |
-| `fixtures/expectations/Q12.result.json` | `676cfd21f37b5d40…` | Q12's normative result. Spec §12.5. |
-| `fixtures/expectations/Q13.result.json` | `6cf05bd0ba285324…` | Q13's normative result. Spec §12.8. |
+| `fixtures/expectations/Q10.result.json` | `62fcafec9b5febe8…` | Q10's normative result. Spec §12.11. |
+| `fixtures/expectations/Q11.result.json` | `929224683ee47d74…` | Q11's normative result. Spec §12.13. |
+| `fixtures/expectations/Q12.result.json` | `05030d7fa5a4199a…` | Q12's normative result. Spec §12.5. |
+| `fixtures/expectations/Q13.result.json` | `3fa0ca82d6c70122…` | Q13's normative result. Spec §12.8. |
 | `fixtures/expectations/Q14.result.json` | `9caf32897d613e0f…` | Q14's normative result. Spec §12.9. |
 | `fixtures/expectations/Q15.result.json` | `b6e33aabf556ebad…` | Q15's normative result. Spec §12.14. |
 
@@ -124,7 +124,7 @@ Eleven files that are wrong in a stated way, and the report each MUST produce. S
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `17cd536969bfab66…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `1c1b585d59d1a0bd…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

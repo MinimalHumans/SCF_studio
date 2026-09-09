@@ -171,7 +171,7 @@
           "associated_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
           "first_appearance": "sc 3",
           "lifecycle_status": "active",
-          "name": "The kettle",
+          "name": "The Kettle",
           "narrative_significance": "Eleanor's answer to every question she will not take.",
           "prop_type": "hand prop",
           "realization_status": "sourced",
@@ -299,7 +299,7 @@
             "fields": {
               "acoustic_environment": "minimal room",
               "lifecycle_status": "active",
-              "name": "Sc 12 dialogue",
+              "name": "Minimal Room",
               "recording_aesthetic": "close, dry",
               "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
             }
@@ -342,7 +342,7 @@
           "camera_note": "low, static",
           "description": "Eleanor circles the table.",
           "lifecycle_status": "active",
-          "name": "circle",
+          "name": "Eleanor circles the table.",
           "scene_blocking_uuid": "6cfdb881-8743-43f4-ac6e-60d1ad0604fc"
         }
       }

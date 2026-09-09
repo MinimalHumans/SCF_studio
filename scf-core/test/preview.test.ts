@@ -80,10 +80,12 @@ describe("the fixture's mix", () => {
     async () => {
       const assets = await listAssets(fixture.exec);
       const tiers = assets.map((a) => previewCapability(a.format).tier);
-      // Six native since schema 2.13, which added a concept painting
-      // reachable only through a polymorphic asset_relationship (§8.6).
-      // The point of the test is the MIX, not the total.
-      expect(tiers.filter((t) => t === "native").length).toBe(6);
+      // The point of the test is the MIX, not the total, and the total
+      // moved a long way when the fixture's placeholder assets were
+      // replaced with a real folder tree. What has to survive is that
+      // some of a real project cannot be shown in a browser: three of
+      // these still cannot, and no count of png files changes that.
+      expect(tiers.filter((t) => t === "native").length).toBe(43);
       expect(tiers.filter((t) => t === "decoded").length).toBe(2); // exr, glb
       expect(tiers.filter((t) => t === "named").length).toBe(1);   // zip
       expect(tiers.filter((t) => t !== "native").length)

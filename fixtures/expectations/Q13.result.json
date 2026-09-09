@@ -13,18 +13,18 @@
     "subjectKind": "character",
     "intent": "visual_identity",
     "trail": [
-      "binding Eleanor visual baseline -> bundle eleanor_visual_core_v3",
-      "anchor Eleanor face anchor",
+      "binding Eleanor visual baseline -> bundle Eleanor Visual Core",
+      "anchor Eleanor Face Anchor",
       "shot override 12-04 Eleanor override"
     ],
     "references": [
       {
-        "uuid": "5911b396-58e0-455b-8bf2-57287b325889",
+        "uuid": "411baaa7-f4dc-474b-b536-e8d2f7f46acc",
         "anchorName": null,
-        "name": "eleanor_1204_lamplit_crop.png",
-        "identifier": "@project/assets/eleanor_1204_lamplit_crop.png",
+        "name": "eleanor_lamplit.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_lamplit.png",
         "format": "png",
-        "role": "override ref",
+        "role": "lighting ref",
         "intent": "visual_identity",
         "provenance": "shot override",
         "state": "unaddressed",
@@ -32,10 +32,10 @@
         "sizeBytes": null
       },
       {
-        "uuid": "93f32769-76c1-4985-9313-bf6c689907b6",
-        "anchorName": "Eleanor face anchor",
-        "name": "eleanor_face_ref.png",
-        "identifier": "@project/assets/eleanor_face_ref.png",
+        "uuid": "67528eda-078f-4ee7-8fe5-eb11aeb8a7a3",
+        "anchorName": "Eleanor Face Anchor",
+        "name": "eleanor_face_anchor.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_face_anchor.png",
         "format": "png",
         "role": null,
         "intent": "visual_identity",
@@ -45,12 +45,38 @@
         "sizeBytes": null
       },
       {
-        "uuid": "f2fd8fc9-4b32-4a33-8535-3e7ead4ce88c",
+        "uuid": "4116dcba-af7a-4a7d-a29e-51268203694f",
         "anchorName": null,
-        "name": "eleanor_turnaround_v3.png",
-        "identifier": "@project/assets/eleanor_turnaround_v3.png",
+        "name": "eleanor_fullbody_anchor.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_fullbody_anchor.png",
         "format": "png",
-        "role": "turnaround",
+        "role": "full body ref",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "2489457c-54c5-4525-9568-7bbd3cf631f8",
+        "anchorName": null,
+        "name": "eleanor_fullbody_turnaround.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_fullbody_turnaround.png",
+        "format": "png",
+        "role": "full body ref",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "e721a245-f8c5-40b0-b52f-f6c3767105c5",
+        "anchorName": null,
+        "name": "eleanor_face_video.mp4",
+        "identifier": "@project/assets/characters/eleanor/eleanor_face_video.mp4",
+        "format": "mp4",
+        "role": "facial expression",
         "intent": "visual_identity",
         "provenance": "bundle",
         "state": "unaddressed",
@@ -69,6 +95,19 @@
         "state": "unaddressed",
         "detail": "no root named @project is configured in this session",
         "sizeBytes": null
+      },
+      {
+        "uuid": "5ff2fb8f-be4b-4114-b0d0-1d16820d0ac5",
+        "anchorName": null,
+        "name": "eleanor_lighting_variations.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_lighting_variations.png",
+        "format": "png",
+        "role": "lighting ref",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
       }
     ],
     "counts": {
@@ -76,7 +115,7 @@
       "missing": 0,
       "unmaterialised": 0,
       "out-of-root": 0,
-      "unaddressed": 4
+      "unaddressed": 7
     },
     "rootMapped": false
   }

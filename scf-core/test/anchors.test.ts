@@ -102,9 +102,9 @@ describe("visualAnchorFor", () => {
   test("finds Eleanor's anchor and the asset it points at", async () => {
     const found = await visualAnchorFor(ctx, "character", 1);
     expect(found).not.toBeNull();
-    expect(found?.anchor["name"]).toBe("Eleanor face anchor");
+    expect(found?.anchor["name"]).toBe("Eleanor Face Anchor");
     expect(found?.asset?.["identifier"])
-      .toBe("@project/assets/eleanor_face_ref.png");
+      .toBe("@project/assets/characters/eleanor/eleanor_face_anchor.png");
   });
 
   test("the fixture's anchor carries a readable region", async () => {
@@ -118,14 +118,18 @@ describe("visualAnchorFor", () => {
   test("the prop anchor resolves to an asset with no thumbnail",
        async () => {
     const found = await visualAnchorFor(ctx, "prop", 1);
-    expect(found?.anchor["name"]).toBe("Locket, canonical");
+    expect(found?.anchor["name"]).toBe("Locket");
     // A .glb is preview tier 2. The anchor is correct and there is
     // still nothing to show, which is a state the UI has to have.
     expect(String(found?.asset?.["identifier"])).toMatch(/\.glb$/);
   });
 
   test("a subject with no anchor is null, not a finding", async () => {
-    expect(await visualAnchorFor(ctx, "character", 2)).toBeNull();
+    // Was Marcus, who has a face anchor now. The absence moved rather
+    // than went away: the oil lamp and Ada's chair are dressing nobody
+    // has photographed, which is what most of a real project looks
+    // like and why the null case has to stay demonstrated.
+    expect(await visualAnchorFor(ctx, "prop", 5)).toBeNull();
   });
 
   test("an unknown subject type finds nothing", async () => {

@@ -378,12 +378,12 @@ describe("§12.8 Q13 — media resolution", () => {
 
     const anchor = r.result.references.find((x) => x.provenance === "anchor");
     expect(anchor).toBeDefined();
-    expect(anchor?.anchorName).toBe("Eleanor face anchor");
+    expect(anchor?.anchorName).toBe("Eleanor Face Anchor");
     // The asset, with its own identity and its own identifier.
     expect(anchor?.identifier).not.toBeNull();
     const asset = await fx.ctx.exec(
       "SELECT a.uuid FROM entity_anchor e JOIN asset a ON a.id = e.asset_id " +
-      "WHERE e.name = 'Eleanor face anchor'");
+      "WHERE e.name = 'Eleanor Face Anchor'");
     expect(anchor?.uuid).toBe(String(asset[0]?.["uuid"]));
   });
 

@@ -20,6 +20,7 @@
           "fields": {
             "entity_type": "character",
             "lifecycle_status": "active",
+            "name": "Eleanor is the film's argument about forgiveness.",
             "nature_of_connection": "embodies",
             "subtlety_level": "clear",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
@@ -44,6 +45,7 @@
           "fields": {
             "entity_type": "motif",
             "lifecycle_status": "active",
+            "name": "The open door is forgiveness offered before it is spoken.",
             "nature_of_connection": "embodies",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
           }
@@ -65,6 +67,7 @@
           "fields": {
             "entity_type": "motif",
             "lifecycle_status": "active",
+            "name": "The locket is the thing he could not put down.",
             "nature_of_connection": "represents",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
           }
@@ -84,6 +87,7 @@
           "fields": {
             "entity_type": "scene",
             "lifecycle_status": "active",
+            "name": "Sc 19 asks whether knowing is the same as forgiving.",
             "nature_of_connection": "challenges",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
           }
@@ -102,6 +106,7 @@
             "entity_type": "character",
             "intended_perception": "must recognize",
             "lifecycle_status": "active",
+            "name": "Marcus asks for forgiveness eleven years too late.",
             "nature_of_connection": "explores",
             "subtlety_level": "clear",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
@@ -127,6 +132,7 @@
             "entity_type": "character",
             "intended_perception": "reward for careful viewing",
             "lifecycle_status": "active",
+            "name": "Ada is the debt neither of them can settle with her.",
             "nature_of_connection": "represents",
             "subtlety_level": "subtle",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
@@ -147,6 +153,7 @@
             "entity_type": "prop",
             "intended_perception": "must recognize",
             "lifecycle_status": "active",
+            "name": "The locket puts the withheld truth on the table.",
             "nature_of_connection": "represents",
             "subtlety_level": "clear",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
@@ -164,6 +171,7 @@
             "entity_type": "scene",
             "intended_perception": "enhances if recognized",
             "lifecycle_status": "active",
+            "name": "Sc 24 resolves it without ever using the word.",
             "nature_of_connection": "resolves",
             "subtlety_level": "subtle",
             "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"

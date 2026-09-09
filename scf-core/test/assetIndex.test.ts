@@ -70,7 +70,7 @@ describe("the fixture's assets", () => {
       const assetsNode = tree.children.find((c) => c.name === "assets");
       expect(assetsNode).toBeDefined();
       const names = (assetsNode?.children ?? []).map((c) => c.name);
-      expect(names).toEqual(["locations", "props", "sound"]);
+      expect(names).toEqual(["characters", "locations", "props", "sound"]);
       expect(assetsNode?.prefix).toBe("@project/assets/");
     });
 

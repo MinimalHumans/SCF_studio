@@ -104,9 +104,11 @@
           {
             "uuid": "bf84756e-01e2-4fd0-89bd-a065952438d0",
             "fields": {
+              "age_appearance": "60's",
               "body_type": "slim",
               "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
               "distinguishing_features": "Hands that have done everything twice; scar through the left brow.",
+              "eyes": "Grey",
               "hair": "grey braid",
               "height_proportions": "5ft 6in",
               "lifecycle_status": "active",
@@ -160,15 +162,6 @@
         "entity": "physical_habit",
         "rows": [
           {
-            "uuid": "39290fb8-1b63-4261-b6ae-2af388d6cb24",
-            "fields": {
-              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
-              "description": "Touches the doorframe when entering any room.",
-              "lifecycle_status": "active",
-              "name": "Doorframe touch"
-            }
-          },
-          {
             "uuid": "92ee559e-5187-42fa-a258-418597c8a1cb",
             "fields": {
               "body_parts_involved": "right hand",
@@ -218,6 +211,7 @@
         "fields": {
           "entity_type": "character",
           "lifecycle_status": "active",
+          "name": "Eleanor is the film's argument about forgiveness.",
           "nature_of_connection": "embodies",
           "subtlety_level": "clear",
           "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"

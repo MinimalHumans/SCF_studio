@@ -5,7 +5,7 @@
   "_scf_meta": [
    {
     "key": "editor_version",
-    "value": "0.2.0"
+    "value": "scf-app 0.1.0"
    },
    {
     "key": "schema_version",
@@ -13,7 +13,7 @@
    },
    {
     "key": "updated_at",
-    "value": "2026-07-16T06:01:30.753348"
+    "value": "2026-09-09T10:23:57.146Z"
    }
   ],
   "act": [
@@ -24,13 +24,13 @@
     "updated_at": "2026-07-16 06:01:31",
     "name": "Act 1 — Arrival",
     "act_number": 1,
+    "start_scene_id": 1,
     "function": "Establish the silence and what it costs to keep it.",
     "dramatic_question": "Will she let him back in the house?",
     "shift": "From a closed house to a door left ajar.",
     "summary": "Marcus returns unannounced; Eleanor absorbs him into the work of the day rather than acknowledge him.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 1
+    "lifecycle_status": "active"
    },
    {
     "id": 2,
@@ -39,13 +39,13 @@
     "updated_at": "2026-07-16 06:01:31",
     "name": "Act 2 — The Thaw",
     "act_number": 2,
+    "start_scene_id": 4,
     "function": "Force proximity until speech becomes possible.",
     "dramatic_question": "Can they be in the same room without the truth?",
     "shift": "From arm's length to a thaw neither will name.",
     "summary": "The accident at the crossing puts her in his arms; the locket moves from saddlebag to pocket.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 4
+    "lifecycle_status": "active"
    },
    {
     "id": 3,
@@ -54,13 +54,13 @@
     "updated_at": "2026-07-16 06:01:31",
     "name": "Act 3 — The Truth",
     "act_number": 3,
+    "start_scene_id": 9,
     "function": "Say it, survive it, choose each other after.",
     "dramatic_question": "Is forgiveness possible once it is deserved?",
     "shift": "From rupture to an embrace at an open door.",
     "summary": "Marcus confesses. The storm takes the horses and he goes after them; she is afraid for him, which is the answer.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 9
+    "lifecycle_status": "active"
    }
   ],
   "action_sequence": [
@@ -88,15 +88,6 @@
   ],
   "asset": [
    {
-    "id": 1,
-    "uuid": "f2fd8fc9-4b32-4a33-8535-3e7ead4ce88c",
-    "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "eleanor_turnaround_v3.png",
-    "lifecycle_status": "active",
-    "identifier": "@project/assets/eleanor_turnaround_v3.png"
-   },
-   {
     "id": 2,
     "uuid": "f9dfae2d-2cc7-42af-b2ac-d9089025a444",
     "created_at": "2026-07-16 06:01:31",
@@ -104,24 +95,6 @@
     "name": "eleanor_costume_textures.zip",
     "lifecycle_status": "active",
     "identifier": "@project/assets/eleanor_costume_textures.zip"
-   },
-   {
-    "id": 3,
-    "uuid": "93f32769-76c1-4985-9313-bf6c689907b6",
-    "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "eleanor_face_ref.png",
-    "lifecycle_status": "active",
-    "identifier": "@project/assets/eleanor_face_ref.png"
-   },
-   {
-    "id": 4,
-    "uuid": "5911b396-58e0-455b-8bf2-57287b325889",
-    "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "eleanor_1204_lamplit_crop.png",
-    "lifecycle_status": "active",
-    "identifier": "@project/assets/eleanor_1204_lamplit_crop.png"
    },
    {
     "id": 5,
@@ -169,13 +142,549 @@
     "identifier": "@project/assets/sound/chime_hero_takes.wav"
    },
    {
-    "id": 9,
-    "uuid": "00000000-0000-4000-8000-00000000a009",
+    "id": 12,
+    "uuid": "a0504edf-a33d-4e86-86fd-5e20b604cb19",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:34:27",
+    "name": "demo_greenscreen_day_01.png",
+    "identifier": "@project/shots/demo_greenscreen_day_01.png",
+    "size_bytes": 19214730,
+    "source_mtime": "2026-08-20T11:41:08.468Z",
+    "description": "Staging example for greenscreen shoot and picture actors.",
+    "source": "Blckbox via Nano Banana Prop",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 13,
+    "uuid": "e039b55e-72c6-4e99-a3b0-fc18796eb001",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:35:03",
+    "name": "demo_greenscreen_standins_day_01.png",
+    "identifier": "@project/shots/demo_greenscreen_standins_day_01.png",
+    "size_bytes": 19928608,
+    "source_mtime": "2026-08-20T11:45:33.699Z",
+    "description": "Staging example with Stand-In actors.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 14,
+    "uuid": "00175086-17fb-4b76-a7de-a139962d85bd",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:35:43",
+    "name": "demo_kitchen_day_01.png",
+    "identifier": "@project/shots/demo_kitchen_day_01.png",
+    "size_bytes": 19881321,
+    "source_mtime": "2026-08-20T11:25:42.355Z",
+    "description": "Staging reference for Scene 03 Kitchen - Day",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 15,
+    "uuid": "692629e8-95ad-43c3-8128-d9fc43094197",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:36:29",
+    "name": "demo_kitchen_day_02.png",
+    "identifier": "@project/shots/demo_kitchen_day_02.png",
+    "size_bytes": 18503256,
+    "source_mtime": "2026-08-20T12:01:45.962Z",
+    "description": "Alternate View and layout of Kitchen for Scene 03",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 16,
+    "uuid": "8b7cbb25-5820-4a7f-a9be-6c672db80cf9",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 13:56:37",
+    "name": "demo_kitchen_night_01.png",
+    "identifier": "@project/shots/demo_kitchen_night_01.png",
+    "size_bytes": 19877602,
+    "source_mtime": "2026-08-20T11:37:44.411Z",
+    "description": "Example blocking for Scene 19 - Kitchen - Night",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 17,
+    "uuid": "d091098e-03db-4e1f-a16c-5c5c50fd09f0",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:37:30",
+    "name": "marcus_in_the_kitchen.png",
+    "identifier": "@project/shots/marcus_in_the_kitchen.png",
+    "size_bytes": 10096967,
+    "source_mtime": "2026-08-28T11:18:06.308Z",
+    "description": "DOP's color, lighting an framing reference for Scene 03",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 18,
+    "uuid": "afce0294-39bb-4b94-bdbd-23eb00727e4b",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:38:12",
+    "name": "marcus_in_the_woods.png",
+    "identifier": "@project/shots/marcus_in_the_woods.png",
+    "size_bytes": 22843486,
+    "source_mtime": "2026-08-28T10:08:25.126Z",
+    "description": "DOP's framing, lighting and color reference for Scene 01, Hollow Creek Road",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 19,
+    "uuid": "27880bf4-cfd1-4334-abca-db68ed7b8e12",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:38:49",
+    "name": "wind_chime_in_mud.png",
+    "identifier": "@project/assets/props/wind_chime/wind_chime_in_mud.png",
+    "size_bytes": 7006696,
+    "source_mtime": "2026-08-13T13:38:56.293Z",
+    "description": "After the storm, Ada's wind chime is in the mud.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 20,
+    "uuid": "03bec771-4b26-4627-bd4c-f8d07bf461ae",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:39:16",
+    "name": "kettle_baseline.png",
+    "identifier": "@project/assets/props/kettle/kettle_baseline.png",
+    "size_bytes": 6886794,
+    "source_mtime": "2026-08-13T13:33:11.945Z",
+    "description": "Kettle prop anchor image.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 21,
+    "uuid": "b318fc49-566c-42fd-b37d-406265de83f3",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:39:49",
+    "name": "kettle_table.png",
+    "identifier": "@project/assets/props/kettle/kettle_table.png",
+    "size_bytes": 6608849,
+    "source_mtime": "2026-08-13T13:36:47.743Z",
+    "description": "Eleanor placing the kettle on the table.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 22,
+    "uuid": "2ed29664-fb95-414f-9fc1-b93e8d553ca3",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 13:51:42",
+    "name": "ada_locket_closed.png",
+    "identifier": "@project/assets/props/ada_locket/ada_locket_closed.png",
+    "size_bytes": 7386400,
+    "source_mtime": "2026-08-13T13:19:32.565Z",
+    "description": "Anchor view of Ada's locket, closed. ",
+    "source": "Blckbox via Midjourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 23,
+    "uuid": "44f2249b-114e-4b6b-9e07-82fa6cd0f0f1",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 13:48:14",
+    "name": "ada_locket_coat_pocket.png",
+    "identifier": "@project/assets/props/ada_locket/ada_locket_coat_pocket.png",
+    "size_bytes": 6405456,
+    "source_mtime": "2026-08-13T13:26:58.498Z",
+    "description": "Ada's locket in Marcus' coat pocket.",
+    "source": "Blckbox via Nano Banana Prop",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 24,
+    "uuid": "ae574d0f-2627-4ec4-9e2b-b5d8e2fcd9a5",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 13:47:33",
+    "name": "ada_locket_reveal.png",
+    "identifier": "@project/assets/props/ada_locket/ada_locket_reveal.png",
+    "size_bytes": 6101861,
+    "source_mtime": "2026-08-13T13:30:49.082Z",
+    "description": "Ada's locket, opened, spilled onto the floor in the house.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 25,
+    "uuid": "1869343e-d6b5-4a4e-9460-535b4724766c",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 13:46:54",
+    "name": "ada_locket_saddlebag.png",
+    "identifier": "@project/assets/props/ada_locket/ada_locket_saddlebag.png",
+    "size_bytes": 5445718,
+    "source_mtime": "2026-08-13T13:24:27.502Z",
+    "description": "Ada's locket as seen in Marcus' saddlebag.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 26,
+    "uuid": "5e09b78f-e2f9-4e65-b8c3-f0df8d623733",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:40:29",
+    "name": "ridge_forest_day.png",
+    "identifier": "@project/assets/locations/ridge_forest/ridge_forest_day.png",
+    "size_bytes": 9285857,
+    "source_mtime": "2026-08-13T13:10:25.483Z",
+    "description": "Ridge forest mood reference.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 27,
+    "uuid": "9b2ed24a-0005-488b-8b97-a1158ae0e98c",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:40:59",
+    "name": "ridge_forest_night.png",
+    "identifier": "@project/assets/locations/ridge_forest/ridge_forest_night.png",
+    "size_bytes": 6648231,
+    "source_mtime": "2026-08-13T13:12:02.987Z",
+    "description": "Ridge Forest night variation with lamp light in the distance.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 28,
+    "uuid": "e538a95e-393a-46ce-87f0-b14cff59aee9",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:41:25",
+    "name": "porch_after_storm.png",
+    "identifier": "@project/assets/locations/porch/porch_after_storm.png",
+    "size_bytes": 6317901,
+    "source_mtime": "2026-08-13T13:02:53.887Z",
+    "description": "Porch staging after the storm.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 29,
+    "uuid": "925b9fbf-1aae-48b2-89a2-78813e33198a",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:41:52",
+    "name": "porch_baseline.png",
+    "identifier": "@project/assets/locations/porch/porch_baseline.png",
+    "size_bytes": 6708405,
+    "source_mtime": "2026-08-13T13:01:04.659Z",
+    "description": "Porch Baseline Anchor image.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 30,
+    "uuid": "afd620bc-7470-4da1-a0d8-70e97a57efef",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:42:15",
+    "name": "kitchen_day.png",
+    "identifier": "@project/assets/locations/kitchen/kitchen_day.png",
+    "size_bytes": 7421772,
+    "source_mtime": "2026-08-13T12:46:25.400Z",
+    "description": "Kitchen Anchor Image",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 31,
+    "uuid": "6935d3ca-5423-404e-8ba0-6c4af99799cd",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 13:50:58",
+    "name": "kitchen_night.png",
+    "identifier": "@project/assets/locations/kitchen/kitchen_night.png",
+    "size_bytes": 18452623,
+    "source_mtime": "2026-08-13T12:49:56.542Z",
+    "description": "Staging reference for the kitchen at night.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 32,
+    "uuid": "91c11206-b672-4014-ba49-967521cf7251",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:42:47",
+    "name": "kitchen_no_table_day.png",
+    "identifier": "@project/assets/locations/kitchen/kitchen_no_table_day.png",
+    "size_bytes": 21645151,
+    "source_mtime": "2026-09-01T10:17:55.532Z",
+    "description": "Kitchen without table as it will be part of the shoot.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 33,
+    "uuid": "f293d9b4-fb66-4b43-8320-e6c39ea2f2a9",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:43:10",
+    "name": "kitchen_no_table_night.png",
+    "identifier": "@project/assets/locations/kitchen/kitchen_no_table_night.png",
+    "size_bytes": 18754388,
+    "source_mtime": "2026-09-01T10:19:33.654Z",
+    "description": "Kitchen without table as it will be part of the shoot, night variation.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 34,
+    "uuid": "85187885-6897-48bd-81ee-0dd83a86f278",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:43:31",
+    "name": "church_interior_baseline.png",
+    "identifier": "@project/assets/locations/hollow_creek_church/church_interior_baseline.png",
+    "size_bytes": 1609806,
+    "source_mtime": "2026-08-13T13:07:52.090Z",
+    "description": "Shaw's church interior anchor image.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 35,
+    "uuid": "e9f47025-b100-4244-9b7f-935c2a00d7ce",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:44:01",
+    "name": "creek_baseline.png",
+    "identifier": "@project/assets/locations/creek/creek_baseline.png",
+    "size_bytes": 9146832,
+    "source_mtime": "2026-08-13T12:53:37.990Z",
+    "description": "Hollow Creek baseline anchor.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 36,
+    "uuid": "6dd0e7f4-bbab-4777-b921-bd7ca3ab44de",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:44:30",
+    "name": "creek_winter_flood.png",
+    "identifier": "@project/assets/locations/creek/creek_winter_flood.png",
+    "size_bytes": 9162231,
+    "source_mtime": "2026-08-13T12:56:17.615Z",
+    "description": "Hollow Creek flooding reference. ",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 37,
+    "uuid": "7cdc66be-9722-4629-a022-b8d8aa7b3658",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:44:49",
+    "name": "shaw_face_anchor.png",
+    "identifier": "@project/assets/characters/shaw/shaw_face_anchor.png",
+    "size_bytes": 6998888,
+    "source_mtime": "2026-08-13T12:30:00.356Z",
+    "description": "Shaw's face anchor image.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 38,
+    "uuid": "110822f2-dce8-4728-8ba2-adc7e9169163",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:45:26",
+    "name": "shaw_face_video.mp4",
+    "identifier": "@project/assets/characters/shaw/shaw_face_video.mp4",
+    "size_bytes": 2500601,
+    "source_mtime": "2026-08-13T12:35:54.049Z",
+    "description": "Moving Anchor for Shaw's face.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 39,
+    "uuid": "8decdb4b-c054-4c3e-87bb-081f221b20b0",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:45:59",
+    "name": "shaw_fullbody_turnaround.png",
+    "identifier": "@project/assets/characters/shaw/shaw_fullbody_turnaround.png",
+    "size_bytes": 17729471,
+    "source_mtime": "2026-08-13T12:38:13.865Z",
+    "description": "Shaw's fully body turnaround reference.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 40,
+    "uuid": "17dde1ce-8ca9-4a0c-a977-09e140e9a233",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:46:25",
+    "name": "marcus_face_anchor.png",
+    "identifier": "@project/assets/characters/marcus/marcus_face_anchor.png",
+    "size_bytes": 7732097,
+    "source_mtime": "2026-08-13T09:55:06.625Z",
+    "description": "Marcus' face anchor image.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 41,
+    "uuid": "8f1ad8da-af5b-44aa-9d7a-9ae9df316fa6",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:46:45",
+    "name": "marcus_face_movie.mp4",
+    "identifier": "@project/assets/characters/marcus/marcus_face_movie.mp4",
+    "size_bytes": 6812907,
+    "source_mtime": "2026-08-13T11:05:38.608Z",
+    "description": "Moving Face Anchor reference for Marcus.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 42,
+    "uuid": "2729c43d-f0b4-4eff-817d-0b23bc253271",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:47:30",
+    "name": "marcus_fullbody_turnaround.png",
+    "identifier": "@project/assets/characters/marcus/marcus_fullbody_turnaround.png",
+    "size_bytes": 18990217,
+    "source_mtime": "2026-08-13T10:02:12.979Z",
+    "description": "Marcus Full Body Turnaround.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 43,
+    "uuid": "67528eda-078f-4ee7-8fe5-eb11aeb8a7a3",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:53:10",
+    "name": "eleanor_face_anchor.png",
+    "identifier": "@project/assets/characters/eleanor/eleanor_face_anchor.png",
+    "size_bytes": 7835673,
+    "source_mtime": "2026-08-12T17:18:15.499Z",
+    "description": "Eleanor Face Anchor image",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 44,
+    "uuid": "e721a245-f8c5-40b0-b52f-f6c3767105c5",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:53:38",
+    "name": "eleanor_face_video.mp4",
+    "identifier": "@project/assets/characters/eleanor/eleanor_face_video.mp4",
+    "size_bytes": 6594789,
+    "source_mtime": "2026-08-13T11:06:26.258Z",
+    "description": "Moving facial reference",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 45,
+    "uuid": "4116dcba-af7a-4a7d-a29e-51268203694f",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:54:14",
+    "name": "eleanor_fullbody_anchor.png",
+    "identifier": "@project/assets/characters/eleanor/eleanor_fullbody_anchor.png",
+    "size_bytes": 15572687,
+    "source_mtime": "2026-08-12T17:28:24.782Z",
+    "description": "Eleanor Costume reference.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 46,
+    "uuid": "2489457c-54c5-4525-9568-7bbd3cf631f8",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:54:36",
+    "name": "eleanor_fullbody_turnaround.png",
+    "identifier": "@project/assets/characters/eleanor/eleanor_fullbody_turnaround.png",
+    "size_bytes": 19566419,
+    "source_mtime": "2026-08-12T17:29:43.048Z",
+    "description": "Eleanor turnaround reference.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 47,
+    "uuid": "411baaa7-f4dc-474b-b536-e8d2f7f46acc",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:55:11",
+    "name": "eleanor_lamplit.png",
+    "identifier": "@project/assets/characters/eleanor/eleanor_lamplit.png",
+    "size_bytes": 1545023,
+    "source_mtime": "2026-08-13T14:06:24.181Z",
+    "description": "Scene 12 Lighting override reference for Eleanor.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 48,
+    "uuid": "5ff2fb8f-be4b-4114-b0d0-1d16820d0ac5",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:55:51",
+    "name": "eleanor_lighting_variations.png",
+    "identifier": "@project/assets/characters/eleanor/eleanor_lighting_variations.png",
+    "size_bytes": 14888452,
+    "source_mtime": "2026-08-13T14:04:49.421Z",
+    "description": "A range of lighting tests for Eleanor to see how she reads in various lighting conditions.",
+    "source": "Blckbox via Nano Banana Pro",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 49,
+    "uuid": "0005849f-fb80-468b-9c93-2bf3ad18dda8",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:56:16",
+    "name": "ada_locket_photo.png",
+    "identifier": "@project/assets/characters/ada/ada_locket_photo.png",
+    "size_bytes": 7554028,
+    "source_mtime": "2026-08-13T10:56:21.901Z",
+    "description": "The photo of Ada in the locket.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 50,
+    "uuid": "251479d3-f7b8-409f-ae2f-5e43bfdfa728",
+    "created_at": "2026-09-02 16:43:58",
+    "updated_at": "2026-09-08 16:56:43",
+    "name": "ada_shawl.png",
+    "identifier": "@project/assets/characters/ada/ada_shawl.png",
+    "size_bytes": 7709392,
+    "source_mtime": "2026-08-13T12:24:03.265Z",
+    "description": "Ada's shawl, still hangin in Eleanor's house, years later.",
+    "source": "Blckbox via MidJourney",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 51,
+    "uuid": "0475bde7-b22d-4fd0-8ee8-eebcf6619960",
+    "created_at": "2026-09-08 16:57:41",
+    "updated_at": "2026-09-08 16:58:09",
+    "name": "poster01.png",
+    "identifier": "@project/promotional/poster01.png",
+    "size_bytes": 28980776,
+    "source_mtime": "2026-09-02T17:07:05.663Z",
+    "description": "Promotional Poster with Text",
+    "source": "Blckbox via Photoshop",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 52,
+    "uuid": "03184ce7-5f31-4526-ab5c-5732470e91a2",
+    "created_at": "2026-09-08 16:57:41",
+    "updated_at": "2026-09-08 16:58:45",
+    "name": "poster01_noText.png",
+    "identifier": "@project/promotional/poster01_noText.png",
+    "size_bytes": 29338315,
+    "source_mtime": "2026-09-02T17:07:30.069Z",
+    "description": "Promotional Poster without Text",
+    "source": "Blckbox via Photoshop",
+    "lifecycle_status": "active"
+   }
+  ],
+  "asset_relationship": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000ae01",
     "created_at": "2026-08-25 12:00:00",
     "updated_at": "2026-08-25 12:00:00",
-    "name": "eleanor_kitchen_concept.png",
-    "lifecycle_status": "active",
-    "identifier": "@project/assets/eleanor_kitchen_concept.png"
+    "name": "turnaround derives from concept",
+    "asset_id": 1,
+    "entity_type": "asset",
+    "entity_id": 9,
+    "relationship_type": "derived_from",
+    "notes": "The turnaround was painted over this concept. The concept is referenced by nothing else, so §8.6 reports it as an orphan unless a polymorphic reference counts as a use."
    }
   ],
   "bundle": [
@@ -183,10 +692,11 @@
     "id": 1,
     "uuid": "90496d86-456f-4293-b149-4cfeea6e26c3",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "eleanor_visual_core_v3",
+    "updated_at": "2026-09-08 17:00:09",
+    "name": "Eleanor Visual Core",
     "intent": "visual_identity",
     "description": "Hero turnaround + texture refs.",
+    "coverage_summary": "Baseline visual identity for Eleanor",
     "lifecycle_status": "active"
    },
    {
@@ -194,16 +704,17 @@
     "uuid": "97797ca1-caac-4b2d-97ff-6b72f4d2c9f7",
     "created_at": "2026-07-16 06:01:31",
     "updated_at": "2026-07-16 06:01:31",
-    "name": "eleanor_voice_ref_v2",
+    "name": "Eleanor Voice Core",
     "intent": "voice_identity",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "description": "Reference takes. No file behind them yet."
    },
    {
     "id": 3,
     "uuid": "bb841029-c354-46b2-bc99-b8568949f480",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "eleanor_1204_set",
+    "updated_at": "2026-09-08 16:59:50",
+    "name": "Scene 12 - Eleanor Lighting Ref",
     "intent": "visual_identity",
     "description": "Closer-crop, lamp-lit reference set for shot 12-04.",
     "lifecycle_status": "active"
@@ -212,37 +723,156 @@
     "id": 4,
     "uuid": "f59c8129-4255-4289-b489-e5bf5aa9fdb1",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "Farmhouse kitchen — night",
+    "updated_at": "2026-09-08 13:56:56",
+    "name": "Scene 19 - Kitchen - Night",
     "intent": "visual_identity",
     "description": "Reference for the kitchen after dark.",
     "coverage_summary": "Plate, lighting stills, chime audio",
     "intended_consumers": "Lighting, comp, sound",
     "provenance": "Shot on location, Nov unit",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 5,
+    "uuid": "1548b09e-22fd-4241-8dc8-8e1d9e412587",
+    "created_at": "2026-09-08 13:02:56",
+    "updated_at": "2026-09-09 09:43:19",
+    "name": "Kitchen - Day Ref",
+    "intent": "visual_identity",
+    "description": "Kitchen references during the day.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 6,
+    "uuid": "0c726aa8-edef-4e80-a2cd-07e682adaa30",
+    "created_at": "2026-09-08 13:03:52",
+    "updated_at": "2026-09-08 13:45:33",
+    "name": "Ada's Locket",
+    "intent": "visual_identity",
+    "description": "Images that demonstrate the locations that Ada's locket ends up throughout the story and how it looks in each context.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 7,
+    "uuid": "6dd8c09c-c656-43da-878b-57658b49c18d",
+    "created_at": "2026-09-08 13:04:50",
+    "updated_at": "2026-09-08 17:04:05",
+    "name": "Porch State References",
+    "intent": "visual_identity",
+    "description": "References for the Porch before and after the storm.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 8,
+    "uuid": "f28ef49b-c01e-4be7-b149-f6098f2522f7",
+    "created_at": "2026-09-08 13:12:57",
+    "updated_at": "2026-09-09 09:43:07",
+    "name": "Creek Crossing",
+    "intent": "visual_identity",
+    "description": "Two states of the creek, baseline and flooding.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 9,
+    "uuid": "419669dd-535a-46ac-9e66-a4e882f90e9c",
+    "created_at": "2026-09-08 13:13:13",
+    "updated_at": "2026-09-08 17:05:31",
+    "name": "Shaw Visual Core",
+    "intent": "visual_identity",
+    "description": "Shaw' baseline references",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 10,
+    "uuid": "8c4417d0-e653-4f48-8fe3-c903107a7d18",
+    "created_at": "2026-09-08 13:13:27",
+    "updated_at": "2026-09-08 17:03:19",
+    "name": "Marcus Visual Core",
+    "intent": "visual_identity",
+    "description": "The baseline references of Marcus",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 11,
+    "uuid": "5d93639a-ccaf-4a39-8d74-b878fc724115",
+    "created_at": "2026-09-08 13:14:00",
+    "updated_at": "2026-09-08 17:00:51",
+    "name": "Kettle",
+    "intent": "visual_identity",
+    "description": "The kettle used in kitchen scenes.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 12,
+    "uuid": "802f816b-407e-46a6-95e0-e750c4ef4517",
+    "created_at": "2026-09-08 13:14:26",
+    "updated_at": "2026-09-08 17:06:00",
+    "name": "Ada's Windchime",
+    "intent": "visual_identity",
+    "description": "Falls during the storm.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 13,
+    "uuid": "1fa9ae4b-8e89-4cc6-9881-7df6dad4391f",
+    "created_at": "2026-09-08 13:14:44",
+    "updated_at": "2026-09-08 17:04:52",
+    "name": "Ridge Forest Reference",
+    "intent": "visual_identity",
+    "description": "Day and Night reference for the Ridge Forest",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 14,
+    "uuid": "ecd3a4c0-5598-45fc-8f74-313a1782d018",
+    "created_at": "2026-09-08 13:15:17",
+    "updated_at": "2026-09-09 09:42:50",
+    "name": "Hollow Creek Church",
+    "intent": "visual_identity",
+    "description": "The interior of Shaw's church.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 15,
+    "uuid": "631379de-3862-4523-8ec9-80b350e35c5b",
+    "created_at": "2026-09-08 13:22:43",
+    "updated_at": "2026-09-08 13:59:09",
+    "name": "Scene 03 - Kitchen - Day",
+    "intent": "visual_identity",
+    "description": "Actor Blocking, DOP framing and Scene staging for Kitchen in the Daylight",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 16,
+    "uuid": "c99fd69e-7d95-44da-b5c5-685e4b7e4e57",
+    "created_at": "2026-09-08 13:23:51",
+    "updated_at": "2026-09-08 14:18:02",
+    "name": "Scene 01 - Hollow Creek Road",
+    "intent": "visual_identity",
+    "description": "Marcus returning home on Hollow Creek Road next to the woods. ",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 17,
+    "uuid": "01c92266-2278-4cc2-b9b4-13f4f7e56c72",
+    "created_at": "2026-09-08 13:24:04",
+    "updated_at": "2026-09-08 17:02:21",
+    "name": "Kitchen - Night Ref",
+    "intent": "visual_identity",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 18,
+    "uuid": "06478aaf-b0ea-4e29-a4ce-ef9de156c1a4",
+    "created_at": "2026-09-08 13:24:23",
+    "updated_at": "2026-09-08 13:50:07",
+    "name": "Ada's Shawl",
+    "intent": "visual_identity",
+    "description": "Ada's shawl, a painful reminder that Eleanor can't move beyond.",
+    "lifecycle_status": "active"
    }
   ],
   "bundle_asset": [
-   {
-    "id": 1,
-    "uuid": "f1f67d06-0f2f-41da-b712-f436f2042a1c",
-    "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "bundle_id": 1,
-    "asset_id": 1,
-    "role_in_bundle": "turnaround",
-    "order": 1
-   },
-   {
-    "id": 2,
-    "uuid": "ceef31c4-4278-44d4-aeb1-bc250c6ebd36",
-    "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "bundle_id": 1,
-    "asset_id": 2,
-    "role_in_bundle": "textures",
-    "order": 2
-   },
    {
     "id": 3,
     "uuid": "0c6177c0-3be1-40ec-8fbd-7b0d7e857133",
@@ -254,33 +884,444 @@
     "order": 1
    },
    {
-    "id": 4,
-    "uuid": "53f565a4-d151-4a65-ba12-8e7142ec1647",
-    "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "id": 7,
+    "uuid": "802b62f5-e601-4a16-bdc1-8e20246a3d5e",
+    "created_at": "2026-09-02 16:46:17",
+    "updated_at": "2026-09-02 16:46:17",
+    "bundle_id": 4,
+    "asset_id": 31,
+    "role_in_bundle": "staging",
+    "order": 3
+   },
+   {
+    "id": 8,
+    "uuid": "b6d2a601-bbdd-45af-bac8-a862d155aa60",
+    "created_at": "2026-09-02 16:46:17",
+    "updated_at": "2026-09-02 16:46:17",
+    "bundle_id": 4,
+    "asset_id": 16,
+    "role_in_bundle": "staging",
+    "order": 4
+   },
+   {
+    "id": 10,
+    "uuid": "a312b6ac-7bda-4dda-92e3-5fa344958083",
+    "created_at": "2026-09-02 16:47:15",
+    "updated_at": "2026-09-02 16:47:15",
     "bundle_id": 3,
-    "asset_id": 4,
-    "role_in_bundle": "override ref",
+    "asset_id": 47,
+    "role_in_bundle": "lighting ref",
+    "order": 3
+   },
+   {
+    "id": 11,
+    "uuid": "8a90ced3-762c-4c85-9979-5df4e53bc3ff",
+    "created_at": "2026-09-02 16:47:36",
+    "updated_at": "2026-09-02 16:47:36",
+    "bundle_id": 1,
+    "asset_id": 43,
+    "role_in_bundle": "face",
+    "order": 3
+   },
+   {
+    "id": 12,
+    "uuid": "764e904e-c2c0-4891-b48d-17cb0435ef8b",
+    "created_at": "2026-09-02 16:47:52",
+    "updated_at": "2026-09-02 16:47:52",
+    "bundle_id": 1,
+    "asset_id": 45,
+    "role_in_bundle": "full body ref",
+    "order": 4
+   },
+   {
+    "id": 13,
+    "uuid": "18ddf614-d8e7-4d0a-8d9d-6f7318726666",
+    "created_at": "2026-09-02 16:47:52",
+    "updated_at": "2026-09-02 16:47:52",
+    "bundle_id": 1,
+    "asset_id": 46,
+    "role_in_bundle": "full body ref",
+    "order": 5
+   },
+   {
+    "id": 14,
+    "uuid": "ca1035b7-c2ea-44e7-a848-9e037eaa8e97",
+    "created_at": "2026-09-02 16:48:30",
+    "updated_at": "2026-09-02 16:48:30",
+    "bundle_id": 1,
+    "asset_id": 44,
+    "role_in_bundle": "facial expression",
+    "order": 6
+   },
+   {
+    "id": 15,
+    "uuid": "44f951a2-061f-483e-8f9e-d2774043a742",
+    "created_at": "2026-09-08 13:02:56",
+    "updated_at": "2026-09-08 13:02:56",
+    "bundle_id": 5,
+    "asset_id": 14,
+    "role_in_bundle": "layout",
     "order": 1
    },
    {
-    "id": 5,
-    "uuid": "1bf179f9-ea63-41b5-ae98-1b2b7cd9180d",
-    "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "bundle_id": 4,
+    "id": 16,
+    "uuid": "ab0b1bd1-433a-42ce-bf9e-a0318c0fef70",
+    "created_at": "2026-09-08 13:02:56",
+    "updated_at": "2026-09-08 13:02:56",
+    "bundle_id": 5,
+    "asset_id": 15,
+    "role_in_bundle": "layout",
+    "order": 2
+   },
+   {
+    "id": 17,
+    "uuid": "9f4abbcd-10ee-475f-a0a8-e04eaaa36a59",
+    "created_at": "2026-09-08 13:02:56",
+    "updated_at": "2026-09-08 13:02:56",
+    "bundle_id": 5,
+    "asset_id": 17,
+    "role_in_bundle": "layout",
+    "order": 3
+   },
+   {
+    "id": 18,
+    "uuid": "ff3038b8-1b3e-4eb4-8b64-117ae56116a6",
+    "created_at": "2026-09-08 13:03:52",
+    "updated_at": "2026-09-08 13:03:52",
+    "bundle_id": 6,
+    "asset_id": 25,
+    "role_in_bundle": "design in context",
+    "order": 1
+   },
+   {
+    "id": 19,
+    "uuid": "39132074-dbea-4659-9152-a19a6a2425f1",
+    "created_at": "2026-09-08 13:03:52",
+    "updated_at": "2026-09-08 13:03:52",
+    "bundle_id": 6,
+    "asset_id": 24,
+    "role_in_bundle": "design in context",
+    "order": 2
+   },
+   {
+    "id": 20,
+    "uuid": "802baa86-2642-44bf-8e8e-bd1ab1918f66",
+    "created_at": "2026-09-08 13:03:52",
+    "updated_at": "2026-09-08 13:03:52",
+    "bundle_id": 6,
+    "asset_id": 23,
+    "role_in_bundle": "design in context",
+    "order": 3
+   },
+   {
+    "id": 21,
+    "uuid": "989fba7f-2a9c-4679-8742-dc8a38100f6f",
+    "created_at": "2026-09-08 13:03:52",
+    "updated_at": "2026-09-08 13:03:52",
+    "bundle_id": 6,
+    "asset_id": 22,
+    "role_in_bundle": "design in context",
+    "order": 4
+   },
+   {
+    "id": 22,
+    "uuid": "9158a99e-2456-495e-9ec9-b9b4081d2bd1",
+    "created_at": "2026-09-08 13:04:23",
+    "updated_at": "2026-09-08 13:04:23",
+    "bundle_id": 5,
+    "asset_id": 30,
+    "order": 4
+   },
+   {
+    "id": 23,
+    "uuid": "1b0ad567-15ac-4a8e-b1f4-69ae8d6a14c9",
+    "created_at": "2026-09-08 13:04:23",
+    "updated_at": "2026-09-08 13:04:23",
+    "bundle_id": 5,
+    "asset_id": 32,
+    "order": 5
+   },
+   {
+    "id": 24,
+    "uuid": "5df59752-e361-4fe1-9c59-776035ea96d2",
+    "created_at": "2026-09-08 13:04:50",
+    "updated_at": "2026-09-08 13:04:50",
+    "bundle_id": 7,
+    "asset_id": 28,
+    "role_in_bundle": "staging",
+    "order": 1
+   },
+   {
+    "id": 25,
+    "uuid": "f9c3f591-ea69-40c4-b56c-7c06f6444e65",
+    "created_at": "2026-09-08 13:04:50",
+    "updated_at": "2026-09-08 13:04:50",
+    "bundle_id": 7,
+    "asset_id": 29,
+    "role_in_bundle": "staging",
+    "order": 2
+   },
+   {
+    "id": 26,
+    "uuid": "f18b8822-1342-42d5-bc6c-3a59739516df",
+    "created_at": "2026-09-08 13:12:57",
+    "updated_at": "2026-09-08 13:12:57",
+    "bundle_id": 8,
+    "asset_id": 36,
+    "order": 1
+   },
+   {
+    "id": 27,
+    "uuid": "c66f6839-f241-40ef-a376-d8506ddfd536",
+    "created_at": "2026-09-08 13:12:57",
+    "updated_at": "2026-09-08 13:12:57",
+    "bundle_id": 8,
+    "asset_id": 35,
+    "order": 2
+   },
+   {
+    "id": 28,
+    "uuid": "d3c7061f-e748-46d2-8c2b-52b20fae92f8",
+    "created_at": "2026-09-08 13:13:13",
+    "updated_at": "2026-09-08 13:13:13",
+    "bundle_id": 9,
+    "asset_id": 37,
+    "role_in_bundle": "face anchor",
+    "order": 1
+   },
+   {
+    "id": 29,
+    "uuid": "b0969228-4018-4d13-aae0-f905480ae3c5",
+    "created_at": "2026-09-08 13:13:13",
+    "updated_at": "2026-09-08 13:13:13",
+    "bundle_id": 9,
+    "asset_id": 38,
+    "role_in_bundle": "video ref",
+    "order": 2
+   },
+   {
+    "id": 30,
+    "uuid": "5a66bf39-aef0-4a4b-8edb-6eb9b07ff2c1",
+    "created_at": "2026-09-08 13:13:27",
+    "updated_at": "2026-09-08 13:13:27",
+    "bundle_id": 10,
+    "asset_id": 42,
+    "order": 1
+   },
+   {
+    "id": 31,
+    "uuid": "f13d2b86-2ddd-423e-88d8-abd424136900",
+    "created_at": "2026-09-08 13:13:27",
+    "updated_at": "2026-09-08 13:13:27",
+    "bundle_id": 10,
+    "asset_id": 40,
+    "order": 2
+   },
+   {
+    "id": 32,
+    "uuid": "da69f02b-f47e-4fd0-96ff-debb8afb4b85",
+    "created_at": "2026-09-08 13:13:27",
+    "updated_at": "2026-09-08 13:13:27",
+    "bundle_id": 10,
+    "asset_id": 41,
+    "order": 3
+   },
+   {
+    "id": 33,
+    "uuid": "6368273f-9365-448a-acbb-f7c3d97844f4",
+    "created_at": "2026-09-08 13:13:36",
+    "updated_at": "2026-09-08 13:13:36",
+    "bundle_id": 9,
+    "asset_id": 39,
+    "role_in_bundle": "turnaround",
+    "order": 3
+   },
+   {
+    "id": 34,
+    "uuid": "044dea51-39ee-43a8-b1a7-c8e0aed43c86",
+    "created_at": "2026-09-08 13:14:00",
+    "updated_at": "2026-09-08 13:14:00",
+    "bundle_id": 11,
+    "asset_id": 21,
+    "role_in_bundle": "reference",
+    "order": 1
+   },
+   {
+    "id": 35,
+    "uuid": "fab6b4ab-76f3-4dbb-83a4-0cf03d7fa4c3",
+    "created_at": "2026-09-08 13:14:00",
+    "updated_at": "2026-09-08 13:14:00",
+    "bundle_id": 11,
+    "asset_id": 20,
+    "role_in_bundle": "reference",
+    "order": 2
+   },
+   {
+    "id": 36,
+    "uuid": "655a0a86-702d-4be8-a067-4b9ab048a9e8",
+    "created_at": "2026-09-08 13:14:26",
+    "updated_at": "2026-09-08 13:14:26",
+    "bundle_id": 12,
+    "asset_id": 19,
+    "role_in_bundle": "Reference",
+    "order": 1
+   },
+   {
+    "id": 37,
+    "uuid": "886e5ae8-0955-459e-98a2-6e3ccc9ed336",
+    "created_at": "2026-09-08 13:14:44",
+    "updated_at": "2026-09-08 13:14:44",
+    "bundle_id": 13,
+    "asset_id": 26,
+    "role_in_bundle": "Reference",
+    "order": 1
+   },
+   {
+    "id": 38,
+    "uuid": "15a66a61-00ea-4fbe-8406-b105149a4ad4",
+    "created_at": "2026-09-08 13:14:44",
+    "updated_at": "2026-09-08 13:14:44",
+    "bundle_id": 13,
+    "asset_id": 27,
+    "role_in_bundle": "Reference",
+    "order": 2
+   },
+   {
+    "id": 39,
+    "uuid": "4a596304-5134-4683-9127-a01dcf6f3439",
+    "created_at": "2026-09-08 13:14:59",
+    "updated_at": "2026-09-08 13:14:59",
+    "bundle_id": 1,
+    "asset_id": 48,
+    "role_in_bundle": "lighting ref",
+    "order": 7
+   },
+   {
+    "id": 40,
+    "uuid": "36bebb73-6bf4-400d-ad0c-1d0a366cac8e",
+    "created_at": "2026-09-08 13:15:17",
+    "updated_at": "2026-09-08 13:15:17",
+    "bundle_id": 14,
+    "asset_id": 34,
+    "order": 1
+   },
+   {
+    "id": 41,
+    "uuid": "c3d97121-073a-4d53-b81f-2c19d5110b50",
+    "created_at": "2026-09-08 13:22:43",
+    "updated_at": "2026-09-08 13:22:43",
+    "bundle_id": 15,
+    "asset_id": 12,
+    "role_in_bundle": "Actor Blocking",
+    "order": 1
+   },
+   {
+    "id": 42,
+    "uuid": "5b11d0fb-e10e-4b7f-8112-bc3f34a646e7",
+    "created_at": "2026-09-08 13:22:43",
+    "updated_at": "2026-09-08 13:22:43",
+    "bundle_id": 15,
+    "asset_id": 13,
+    "role_in_bundle": "Actor Blocking",
+    "order": 2
+   },
+   {
+    "id": 43,
+    "uuid": "a56d42e4-d332-4935-9887-e9d16df7e3e2",
+    "created_at": "2026-09-08 13:23:51",
+    "updated_at": "2026-09-08 13:23:51",
+    "bundle_id": 16,
+    "asset_id": 18,
+    "order": 1
+   },
+   {
+    "id": 44,
+    "uuid": "0ec4213e-ce25-4a59-b4ed-02c6b2396fce",
+    "created_at": "2026-09-08 13:24:04",
+    "updated_at": "2026-09-08 13:24:04",
+    "bundle_id": 17,
+    "asset_id": 33,
+    "role_in_bundle": "Reference",
+    "order": 1
+   },
+   {
+    "id": 45,
+    "uuid": "13f303ed-e427-428d-94a4-d26704dad771",
+    "created_at": "2026-09-08 13:24:23",
+    "updated_at": "2026-09-08 13:24:23",
+    "bundle_id": 18,
+    "asset_id": 50,
+    "role_in_bundle": "set dressing",
+    "order": 1
+   },
+   {
+    "id": 46,
+    "uuid": "2b890363-6f1a-4712-a3be-39f2c1eb3ba8",
+    "created_at": "2026-09-08 13:57:24",
+    "updated_at": "2026-09-08 13:57:24",
+    "bundle_id": 15,
+    "asset_id": 14,
+    "role_in_bundle": "Staging",
+    "order": 3
+   },
+   {
+    "id": 47,
+    "uuid": "c654e8b9-ba5d-435c-a14f-4a744825661c",
+    "created_at": "2026-09-08 13:57:24",
+    "updated_at": "2026-09-08 13:57:24",
+    "bundle_id": 15,
+    "asset_id": 15,
+    "role_in_bundle": "Staging",
+    "order": 4
+   },
+   {
+    "id": 48,
+    "uuid": "e20e9a1c-a2da-498e-ba9f-40f74d1e865e",
+    "created_at": "2026-09-08 13:57:24",
+    "updated_at": "2026-09-08 13:57:24",
+    "bundle_id": 15,
+    "asset_id": 17,
+    "role_in_bundle": "DOP Framing",
+    "order": 5
+   },
+   {
+    "id": 49,
+    "uuid": "3f6c1d94-58ab-4e02-9c17-2d5a08b41e63",
+    "created_at": "2026-09-09 10:00:00",
+    "updated_at": "2026-09-09 10:00:00",
+    "bundle_id": 1,
+    "asset_id": 2,
+    "role_in_bundle": "textures",
+    "order": 6
+   },
+   {
+    "id": 50,
+    "uuid": "9d41b8a7-2e05-4c93-b6f1-58a0c37de914",
+    "created_at": "2026-09-09 10:00:00",
+    "updated_at": "2026-09-09 10:00:00",
+    "bundle_id": 17,
     "asset_id": 6,
-    "role_in_bundle": "reference",
-    "order": 1
+    "role_in_bundle": "plate",
+    "order": 2
    },
    {
-    "id": 6,
-    "uuid": "2ba60899-2653-4247-8fb7-dfaa24edbd0e",
-    "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "bundle_id": 4,
+    "id": 51,
+    "uuid": "b2c9f4a1-6d3e-4f18-9a52-7c0e5d84b311",
+    "created_at": "2026-09-09 10:00:00",
+    "updated_at": "2026-09-09 10:00:00",
+    "bundle_id": 6,
+    "asset_id": 7,
+    "role_in_bundle": "scan",
+    "order": 5
+   },
+   {
+    "id": 52,
+    "uuid": "7e58d0c3-1f42-4a86-93bd-0c67e5a1d29f",
+    "created_at": "2026-09-09 10:00:00",
+    "updated_at": "2026-09-09 10:00:00",
+    "bundle_id": 12,
     "asset_id": 8,
-    "role_in_bundle": "reference",
+    "role_in_bundle": "hero takes",
     "order": 2
    }
   ],
@@ -374,12 +1415,14 @@
     "id": 1,
     "uuid": "bf84756e-01e2-4fd0-89bd-a065952438d0",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:50:47",
     "name": "Eleanor appearance",
     "character_id": 1,
     "body_type": "slim",
     "height_proportions": "5ft 6in",
+    "age_appearance": "60's",
     "hair": "grey braid",
+    "eyes": "Grey",
     "distinguishing_features": "Hands that have done everything twice; scar through the left brow.",
     "lifecycle_status": "active"
    }
@@ -407,6 +1450,42 @@
     "bundle_id": 2,
     "is_baseline": 1,
     "precedence": 10,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 3,
+    "uuid": "5b792d71-97cd-466a-a1f8-68e9293b16a0",
+    "created_at": "2026-09-08 17:06:37",
+    "updated_at": "2026-09-08 17:06:54",
+    "name": "Marcus visual baseline",
+    "character_id": 2,
+    "bundle_id": 10,
+    "is_baseline": 1,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 4,
+    "uuid": "a00cba50-1829-46ed-a15d-8be71feffeab",
+    "created_at": "2026-09-08 17:07:21",
+    "updated_at": "2026-09-08 17:07:21",
+    "name": "Shaw visual baseline",
+    "character_id": 4,
+    "bundle_id": 9,
+    "is_baseline": 1,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 5,
+    "uuid": "584ec581-0250-4298-ab8b-d1d02d15d1d4",
+    "created_at": "2026-09-08 17:07:59",
+    "updated_at": "2026-09-08 17:07:59",
+    "name": "Ada's visual baseline",
+    "character_id": 3,
+    "bundle_id": 6,
+    "is_baseline": 0,
+    "precedence": 0,
     "lifecycle_status": "active"
    }
   ],
@@ -472,13 +1551,13 @@
     "character_a_id": 1,
     "character_b_id": 2,
     "relationship_type": "family",
+    "directionality": "mutual",
     "emotional_valence": "complex",
     "power_dynamic": "Power held by silence.",
     "touch_comfort": "reserved",
     "eye_contact_pattern": "She looks away first.",
     "physical_evolution": "Arm's length -> post-accident thaw (sc 10) -> ruptured by the truth (sc 19) -> the embrace at the door (sc 24).",
-    "lifecycle_status": "active",
-    "directionality": "mutual"
+    "lifecycle_status": "active"
    },
    {
     "id": 2,
@@ -489,13 +1568,13 @@
     "character_a_id": 1,
     "character_b_id": 3,
     "relationship_type": "family",
+    "directionality": "a_to_b",
     "specific_relationship": "mother and daughter",
     "emotional_valence": "complex",
     "power_dynamic": "none — memory only",
     "history": "Nineteen years, ended at the creek.",
     "current_status": "Unspoken. Eleanor keeps her chair at the table.",
-    "lifecycle_status": "active",
-    "directionality": "a_to_b"
+    "lifecycle_status": "active"
    },
    {
     "id": 3,
@@ -506,12 +1585,12 @@
     "character_a_id": 2,
     "character_b_id": 3,
     "relationship_type": "family",
+    "directionality": "a_to_b",
     "specific_relationship": "brother and sister",
     "emotional_valence": "complex",
     "history": "He was meant to be watching her.",
     "current_status": "The locket he has not been able to put down.",
-    "lifecycle_status": "active",
-    "directionality": "a_to_b"
+    "lifecycle_status": "active"
    },
    {
     "id": 4,
@@ -522,11 +1601,11 @@
     "character_a_id": 1,
     "character_b_id": 4,
     "relationship_type": "colleague",
+    "directionality": "mutual",
     "specific_relationship": "parishioner and minister, lapsed",
     "emotional_valence": "neutral",
     "current_status": "He calls; she is always busy.",
-    "lifecycle_status": "active",
-    "directionality": "mutual"
+    "lifecycle_status": "active"
    }
   ],
   "character_shot_override": [
@@ -548,13 +1627,44 @@
     "id": 1,
     "uuid": "32e3eccb-aaa8-4429-8f24-1571c8abf08d",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:47:33",
     "name": "Cinematographic Philosophy",
     "camera_personality": "objective observer",
     "movement_philosophy": "motivated",
     "framing_philosophy": "classical",
+    "visual_consistency": "evolving",
     "coverage_style": "single camera",
     "coverage_priorities": "Faces first.",
+    "lifecycle_status": "active"
+   }
+  ],
+  "clip": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000cf01",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "You came back",
+    "take_id": 1,
+    "scene_id": 7,
+    "clip_type": "dialogue",
+    "screenplay_line_start_id": 51,
+    "screenplay_line_end_id": 52,
+    "notes": "Eleanor's line and the cue above it.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 2,
+    "uuid": "00000000-0000-4000-8000-00000000cf02",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "I came back",
+    "take_id": 1,
+    "scene_id": 7,
+    "clip_type": "dialogue",
+    "screenplay_line_start_id": 54,
+    "screenplay_line_end_id": 55,
+    "notes": "Marcus's answer.",
     "lifecycle_status": "active"
    }
   ],
@@ -611,8 +1721,8 @@
     "id": 4,
     "uuid": "04959cfa-7fe6-449a-9823-20101c91af14",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 1",
+    "updated_at": "2026-09-09 09:59:49",
+    "name": "slate, bark, bone",
     "scene_id": 1,
     "temperature": "cool",
     "key_colors": "slate, bark, bone",
@@ -623,8 +1733,8 @@
     "id": 5,
     "uuid": "a4207336-d716-4281-8b3e-59e835a91e1d",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 9",
+    "updated_at": "2026-09-09 09:59:58",
+    "name": "white water, wet shale",
     "scene_id": 4,
     "temperature": "cool",
     "key_colors": "white water, wet shale",
@@ -635,8 +1745,8 @@
     "id": 6,
     "uuid": "1cd537f3-b5fe-48dc-b006-e69faf0ba568",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 19",
+    "updated_at": "2026-09-09 10:00:05",
+    "name": "lamp amber against black",
     "scene_id": 9,
     "temperature": "warm",
     "key_colors": "lamp amber against black",
@@ -647,8 +1757,8 @@
     "id": 7,
     "uuid": "7d105e75-f30d-4f9b-b478-e342d098ad6a",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 21",
+    "updated_at": "2026-09-09 10:00:20",
+    "name": "blue-black, lantern gold",
     "scene_id": 10,
     "temperature": "cool",
     "key_colors": "blue-black, lantern gold",
@@ -659,8 +1769,8 @@
     "id": 8,
     "uuid": "95d28fec-6c60-4750-96ed-6523125f8e28",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 24",
+    "updated_at": "2026-09-09 10:00:30",
+    "name": "grey warming to straw",
     "scene_id": 11,
     "temperature": "transitional",
     "key_colors": "grey warming to straw",
@@ -760,7 +1870,7 @@
     "id": 1,
     "uuid": "387c30ab-6093-4dad-871b-ac1dc9724655",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:49:23",
     "name": "Costume Design Philosophy",
     "design_approach": "Work-worn wool and calico; nothing new-bought except what Marcus arrives in.",
     "condition_philosophy": "Everything mended, nothing replaced.",
@@ -1029,8 +2139,8 @@
     "id": 1,
     "uuid": "44a9d232-41aa-45cb-94ae-c6ff41b0ee6e",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "Sc 12 dialogue",
+    "updated_at": "2026-09-09 09:55:32",
+    "name": "Minimal Room",
     "scene_id": 7,
     "recording_aesthetic": "close, dry",
     "acoustic_environment": "minimal room",
@@ -1068,7 +2178,8 @@
     "id": 2,
     "uuid": "4862964f-aa17-48dd-ae1b-7732c3361ce2",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:01:08",
+    "name": "Anticipation",
     "emotional_arc_id": 1,
     "scene_id": 1,
     "beat_order": 2,
@@ -1081,7 +2192,8 @@
     "id": 3,
     "uuid": "0ca2f784-c71c-4978-8d4e-4f796bcca9b3",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:01:02",
+    "name": "Unease",
     "emotional_arc_id": 1,
     "scene_id": 2,
     "beat_order": 3,
@@ -1094,7 +2206,8 @@
     "id": 4,
     "uuid": "c424a129-32f6-419d-9311-d5051b024494",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:01:14",
+    "name": "Terror",
     "emotional_arc_id": 1,
     "scene_id": 4,
     "beat_order": 4,
@@ -1107,7 +2220,8 @@
     "id": 5,
     "uuid": "209252ff-b3c3-4d5f-bcb3-2c69dbf133b0",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:01:25",
+    "name": "Devastation",
     "emotional_arc_id": 1,
     "scene_id": 9,
     "beat_order": 5,
@@ -1120,7 +2234,8 @@
     "id": 6,
     "uuid": "e35802bd-9572-430b-9fb3-e2e5afab967a",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:01:43",
+    "name": "Dread",
     "emotional_arc_id": 1,
     "scene_id": 10,
     "beat_order": 6,
@@ -1133,7 +2248,8 @@
     "id": 7,
     "uuid": "52cc78b3-f59e-4302-96b6-29c1976484e5",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:01:49",
+    "name": "Release",
     "emotional_arc_id": 1,
     "scene_id": 11,
     "beat_order": 7,
@@ -1148,12 +2264,12 @@
     "id": 1,
     "uuid": "770f365a-62aa-4831-99d7-3d248710cc0c",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "Eleanor face anchor",
+    "updated_at": "2026-09-08 14:06:39",
+    "name": "Eleanor Face Anchor",
     "subject_type": "character",
     "subject_id": 1,
     "anchor_type": "visual",
-    "asset_id": 3,
+    "asset_id": 43,
     "region_box": "{\"x\": 512, \"y\": 96, \"w\": 384, \"h\": 384}",
     "region_label": "head, three-quarter",
     "canonical_status": "verified",
@@ -1163,14 +2279,144 @@
     "id": 2,
     "uuid": "41a1741c-d99f-4154-bd8f-fcbfd8e316ae",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "Locket, canonical",
+    "updated_at": "2026-09-08 17:09:42",
+    "name": "Locket",
     "subject_type": "prop",
     "subject_id": 1,
     "anchor_type": "visual",
     "asset_id": 7,
     "condition_description": "Hero condition, before the creek.",
     "canonical_status": "verified",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 3,
+    "uuid": "68d30189-9bbd-49bf-b001-71bea6064f24",
+    "created_at": "2026-09-08 14:07:23",
+    "updated_at": "2026-09-08 17:18:36",
+    "name": "Marcus Face Anchor",
+    "subject_type": "character",
+    "subject_id": 2,
+    "anchor_type": "visual",
+    "asset_id": 40,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 4,
+    "uuid": "1f040ec2-8824-4a0e-9903-18b668ebc290",
+    "created_at": "2026-09-08 17:08:54",
+    "updated_at": "2026-09-08 17:19:13",
+    "name": "Shaw Face Anchor",
+    "subject_type": "character",
+    "subject_id": 4,
+    "anchor_type": "visual",
+    "asset_id": 37,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 5,
+    "uuid": "32394ba4-7209-40d9-8b01-0ff23a569f6b",
+    "created_at": "2026-09-08 17:09:24",
+    "updated_at": "2026-09-08 17:20:08",
+    "name": "Kettle",
+    "subject_type": "prop",
+    "subject_id": 2,
+    "anchor_type": "visual",
+    "asset_id": 20,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 6,
+    "uuid": "beb200e0-d494-48b9-96d1-f7662593176f",
+    "created_at": "2026-09-08 17:19:04",
+    "updated_at": "2026-09-08 17:19:04",
+    "name": "Ada's Face Anchor",
+    "subject_type": "character",
+    "subject_id": 3,
+    "anchor_type": "visual",
+    "asset_id": 49,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 7,
+    "uuid": "96b6abbc-df6a-48de-bc2d-0bc75f11b29f",
+    "created_at": "2026-09-09 09:36:28",
+    "updated_at": "2026-09-09 09:36:43",
+    "name": "Ada's Windchime",
+    "subject_type": "prop",
+    "subject_id": 3,
+    "anchor_type": "visual",
+    "asset_id": 19,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 8,
+    "uuid": "25136927-9c59-43df-abf4-4fd094f7a8c5",
+    "created_at": "2026-09-09 09:38:18",
+    "updated_at": "2026-09-09 09:41:30",
+    "name": "Creek Crossing",
+    "subject_type": "location",
+    "subject_id": 2,
+    "anchor_type": "visual",
+    "asset_id": 35,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 9,
+    "uuid": "60213e83-fbad-4ebb-aa09-171bb75471e9",
+    "created_at": "2026-09-09 09:38:59",
+    "updated_at": "2026-09-09 09:38:59",
+    "name": "Farmhouse Kitchen",
+    "subject_type": "location",
+    "subject_id": 1,
+    "anchor_type": "visual",
+    "asset_id": 30,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 10,
+    "uuid": "410426f7-07df-491f-a9fe-4b1e4fd0fd66",
+    "created_at": "2026-09-09 09:39:37",
+    "updated_at": "2026-09-09 09:39:43",
+    "name": "Farmhouse Porch",
+    "subject_type": "location",
+    "subject_id": 3,
+    "anchor_type": "visual",
+    "asset_id": 29,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 11,
+    "uuid": "699e6d00-1414-442e-9bb7-b928cb0fcf16",
+    "created_at": "2026-09-09 09:40:16",
+    "updated_at": "2026-09-09 09:40:36",
+    "name": "Hollow Creek Church",
+    "subject_type": "location",
+    "subject_id": 4,
+    "anchor_type": "visual",
+    "asset_id": 34,
+    "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 12,
+    "uuid": "1666157a-6184-4a1f-aa75-2833da85fc25",
+    "created_at": "2026-09-09 09:41:06",
+    "updated_at": "2026-09-09 09:41:06",
+    "name": "Ridge Forest",
+    "subject_type": "location",
+    "subject_id": 5,
+    "anchor_type": "visual",
+    "asset_id": 26,
+    "canonical_status": "candidate",
     "lifecycle_status": "active"
    }
   ],
@@ -1191,7 +2437,8 @@
     "id": 2,
     "uuid": "3b0985fc-ee6e-4c2d-91bd-c727dfbcabca",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:02:47",
+    "name": "Single POV, no cutaways.",
     "scene_id": 1,
     "primary_character_id": 2,
     "audience_position": "with character",
@@ -1202,7 +2449,8 @@
     "id": 3,
     "uuid": "1e1260d0-396c-45ce-b362-17a9e18a5c37",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:02:56",
+    "name": "Handheld inside her panic; his rescue seen from her level.",
     "scene_id": 4,
     "primary_character_id": 1,
     "secondary_character_id": 2,
@@ -1214,7 +2462,8 @@
     "id": 4,
     "uuid": "8319b6db-b117-4b5e-9f02-03969cc53230",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:03:08",
+    "name": "The confession played in one unbroken close-up.",
     "scene_id": 9,
     "primary_character_id": 2,
     "secondary_character_id": 1,
@@ -1226,7 +2475,8 @@
     "id": 5,
     "uuid": "c8e12955-0d65-4e50-9151-0624bdec6062",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:03:15",
+    "name": "She sees him first.",
     "scene_id": 11,
     "primary_character_id": 1,
     "secondary_character_id": 2,
@@ -1240,8 +2490,8 @@
     "id": 1,
     "uuid": "8f8acab2-1781-472a-b653-f94f49f5984e",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "Sc 12 knowledge",
+    "updated_at": "2026-09-09 10:02:25",
+    "name": "Marcus was at the creek the day Ada drowned (withheld until sc 19).",
     "scene_id": 7,
     "knowledge_asymmetry": "mystery",
     "information_withheld": "Marcus was at the creek the day Ada drowned (withheld until sc 19).",
@@ -1252,7 +2502,8 @@
     "id": 2,
     "uuid": "ec40a0b0-fb0e-46d4-9d71-2b41ad0744a6",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:02:07",
+    "name": "Why he left, and why she has not asked.",
     "scene_id": 2,
     "knowledge_asymmetry": "mystery",
     "information_withheld": "Why he left, and why she has not asked.",
@@ -1263,7 +2514,8 @@
     "id": 3,
     "uuid": "6acdafab-ffc2-4420-9988-6b6af96928a7",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:02:15",
+    "name": "The locket's meaning.",
     "scene_id": 6,
     "knowledge_asymmetry": "dramatic irony",
     "information_withheld": "The locket's meaning.",
@@ -1274,7 +2526,8 @@
     "id": 4,
     "uuid": "ae668155-cf8c-4736-aa4d-73f5898d77f1",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:02:31",
+    "name": "Nothing — this is the scene that pays it out.",
     "scene_id": 9,
     "knowledge_asymmetry": "shifting",
     "information_withheld": "Nothing — this is the scene that pays it out.",
@@ -1456,6 +2709,80 @@
     "lifecycle_status": "active"
    }
   ],
+  "location_asset_binding": [
+   {
+    "id": 1,
+    "uuid": "54a275da-590d-4e48-b37a-5addf332b291",
+    "created_at": "2026-09-08 14:00:08",
+    "updated_at": "2026-09-08 14:00:08",
+    "name": "Kitchen Day",
+    "location_id": 1,
+    "bundle_id": 15,
+    "is_baseline": 0,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 2,
+    "uuid": "53b9d088-5221-4527-b1fa-7540655d2746",
+    "created_at": "2026-09-08 17:11:38",
+    "updated_at": "2026-09-08 17:11:38",
+    "name": "Hollow Creek Church",
+    "location_id": 4,
+    "bundle_id": 14,
+    "is_baseline": 1,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 3,
+    "uuid": "a765acb6-77f9-43b9-bfd5-f9253a2434e8",
+    "created_at": "2026-09-08 17:12:09",
+    "updated_at": "2026-09-08 17:12:09",
+    "name": "Farmhouse Porch",
+    "location_id": 3,
+    "bundle_id": 7,
+    "is_baseline": 1,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 4,
+    "uuid": "4a9247fb-8f46-438b-beaa-0033258f3669",
+    "created_at": "2026-09-08 17:12:39",
+    "updated_at": "2026-09-08 17:12:39",
+    "name": "Creek Crossing",
+    "location_id": 2,
+    "bundle_id": 8,
+    "is_baseline": 1,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 5,
+    "uuid": "5694ab0b-ef1c-4823-bcd1-f01c74c02618",
+    "created_at": "2026-09-08 17:13:03",
+    "updated_at": "2026-09-08 17:13:03",
+    "name": "Ridge Forest",
+    "location_id": 5,
+    "bundle_id": 13,
+    "is_baseline": 0,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 6,
+    "uuid": "25127b64-d2be-4224-9a4a-fbbf5841c4d3",
+    "created_at": "2026-09-08 17:13:47",
+    "updated_at": "2026-09-08 17:13:51",
+    "name": "Farmhouse Kitchen",
+    "location_id": 1,
+    "bundle_id": 15,
+    "is_baseline": 1,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   }
+  ],
   "location_sound_profile": [
    {
     "id": 1,
@@ -1536,9 +2863,14 @@
     "id": 1,
     "uuid": "5061f05b-7c24-4290-96f8-41f1c0ee163e",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:48:40",
     "name": "Look Development",
+    "contrast": "flat",
+    "saturation": "desaturated",
     "color_bias": "warm bias grows per act",
+    "highlight_handling": "preserved",
+    "shadow_handling": "lifted",
+    "grain_texture": "subtle grain",
     "lifecycle_status": "active"
    }
   ],
@@ -1790,7 +3122,8 @@
     "id": 2,
     "uuid": "5c5cb351-94cc-4f4b-a2f6-070b060559bc",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:56:16",
+    "name": "Doors: held open",
     "motif_id": 1,
     "scene_id": 9,
     "stage_description": "Now unmistakably a choice.",
@@ -1802,7 +3135,8 @@
     "id": 3,
     "uuid": "f8c0c1aa-535c-44a9-be30-da5448b5b08d",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:56:32",
+    "name": "Doors: held open",
     "motif_id": 1,
     "scene_id": 11,
     "stage_description": "Stated by the image alone.",
@@ -1814,7 +3148,8 @@
     "id": 4,
     "uuid": "0295b4b9-2d10-4762-a967-de82212c3bab",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:57:19",
+    "name": "Wind Chime: Damaged",
     "motif_id": 2,
     "scene_id": 11,
     "stage_description": "Broken and still sounding.",
@@ -2051,6 +3386,18 @@
     "lifecycle_status": "cut"
    }
   ],
+  "performance_corpus": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000c001",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "Hollow Creek — scene 12 reference session",
+    "coverage_completeness": "planned",
+    "corpus_notes": "Reference recordings of the kitchen confrontation, used to hold Eleanor's and Marcus's delivery steady across the shoot.",
+    "lifecycle_status": "active"
+   }
+  ],
   "performance_state": [
    {
     "id": 1,
@@ -2169,16 +3516,6 @@
   ],
   "physical_habit": [
    {
-    "id": 1,
-    "uuid": "39290fb8-1b63-4261-b6ae-2af388d6cb24",
-    "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "Doorframe touch",
-    "character_id": 1,
-    "description": "Touches the doorframe when entering any room.",
-    "lifecycle_status": "active"
-   },
-   {
     "id": 2,
     "uuid": "92ee559e-5187-42fa-a258-418597c8a1cb",
     "created_at": "2026-08-05 13:24:02",
@@ -2241,9 +3578,10 @@
     "id": 1,
     "uuid": "d12d2ecc-f5d6-4352-bcf4-d7d9472db4d3",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:48:02",
     "name": "Project Tone",
     "primary_tone": "melancholic, warming",
+    "tonal_consistency": "unified",
     "overall_pacing": "slow/contemplative",
     "pacing_inflection_points": "Acceleration: the act-3 storm.",
     "lifecycle_status": "active"
@@ -2285,8 +3623,8 @@
     "id": 2,
     "uuid": "a63ce1c6-17e5-448b-8abb-9956cf2b4fcb",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "The kettle",
+    "updated_at": "2026-09-08 17:16:27",
+    "name": "The Kettle",
     "prop_type": "hand prop",
     "realization_status": "sourced",
     "narrative_significance": "Eleanor's answer to every question she will not take.",
@@ -2336,6 +3674,44 @@
     "story_function": "symbol",
     "associated_character_id": 3,
     "symbolism": "The place still set.",
+    "lifecycle_status": "active"
+   }
+  ],
+  "prop_asset_binding": [
+   {
+    "id": 1,
+    "uuid": "ed88c302-b25a-4bd6-b5fb-bb2ab83f7c8c",
+    "created_at": "2026-09-08 14:03:36",
+    "updated_at": "2026-09-08 14:03:36",
+    "name": "Ada's Locket",
+    "prop_id": 1,
+    "bundle_id": 6,
+    "is_baseline": 0,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 2,
+    "uuid": "9434228e-c77e-4225-b1d0-61e343336ab1",
+    "created_at": "2026-09-08 17:10:20",
+    "updated_at": "2026-09-08 17:10:20",
+    "name": "Kettle",
+    "prop_id": 2,
+    "bundle_id": 11,
+    "is_baseline": 1,
+    "precedence": 0,
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 3,
+    "uuid": "26e9f375-f77d-4862-bf64-6af0ee3ed64d",
+    "created_at": "2026-09-08 17:10:55",
+    "updated_at": "2026-09-08 17:10:55",
+    "name": "Ada's Windchime",
+    "prop_id": 3,
+    "bundle_id": 12,
+    "is_baseline": 1,
+    "precedence": 0,
     "lifecycle_status": "active"
    }
   ],
@@ -2737,7 +4113,7 @@
     "id": 15,
     "uuid": "00000000-0000-4000-8000-00000000c13a",
     "created_at": "2026-08-23 12:00:00",
-    "updated_at": "2026-08-23 12:00:00",
+    "updated_at": "2026-09-09 10:16:52",
     "name": "INT. HOLLOW CREEK CHURCH - VESTRY - DAY",
     "scene_number": "17",
     "int_ext": "interior",
@@ -2996,7 +4372,8 @@
     "id": 2,
     "uuid": "c9e3217f-f130-4db0-b051-8c43c6d77376",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:53:12",
+    "name": "Anticipation",
     "scene_id": 1,
     "primary_emotion": "anticipation",
     "primary_intensity": "moderate",
@@ -3008,7 +4385,8 @@
     "id": 3,
     "uuid": "ecd74740-ea65-43e8-a9c6-b7797c703a2c",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:53:28",
+    "name": "Held Breath",
     "scene_id": 2,
     "primary_emotion": "held breath",
     "primary_intensity": "moderate",
@@ -3020,7 +4398,8 @@
     "id": 4,
     "uuid": "3e8ec5c2-5212-4291-b5dc-0c9fce064f61",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:53:36",
+    "name": "Fear",
     "scene_id": 4,
     "primary_emotion": "fear",
     "primary_intensity": "high",
@@ -3032,7 +4411,8 @@
     "id": 5,
     "uuid": "b85c4b4c-a1da-4f1a-a04e-3798a6ecfbee",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:53:47",
+    "name": "Devastation",
     "scene_id": 9,
     "primary_emotion": "devastation",
     "primary_intensity": "high",
@@ -3044,7 +4424,8 @@
     "id": 6,
     "uuid": "43a3eaf6-c0e5-4746-a1fc-82a538e15bd4",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:53:54",
+    "name": "Dread",
     "scene_id": 10,
     "primary_emotion": "dread",
     "primary_intensity": "high",
@@ -3056,7 +4437,8 @@
     "id": 7,
     "uuid": "dd58fa0f-47c8-44b7-add4-1818d3fe0627",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:54:01",
+    "name": "Relief",
     "scene_id": 11,
     "primary_emotion": "relief",
     "primary_intensity": "moderate",
@@ -3265,7 +4647,7 @@
     "updated_at": "2026-08-05 13:24:02",
     "scene_id": 8,
     "sequence_id": 1,
-    "order_in_sequence": 2
+    "order_in_sequence": 5
    },
    {
     "id": 11,
@@ -3274,7 +4656,7 @@
     "updated_at": "2026-08-05 13:24:02",
     "scene_id": 9,
     "sequence_id": 1,
-    "order_in_sequence": 3
+    "order_in_sequence": 4
    },
    {
     "id": 12,
@@ -3293,35 +4675,62 @@
     "scene_id": 11,
     "sequence_id": 5,
     "order_in_sequence": 1
+   },
+   {
+    "id": 14,
+    "uuid": "1a89a7e2-64c9-43c2-9eb9-2989824259bf",
+    "created_at": "2026-09-02 16:40:53",
+    "updated_at": "2026-09-02 16:40:53",
+    "scene_id": 14,
+    "sequence_id": 1,
+    "order_in_sequence": 2
+   },
+   {
+    "id": 15,
+    "uuid": "d7273d76-c7d1-41ce-a662-9d7dbf2094c6",
+    "created_at": "2026-09-02 16:40:53",
+    "updated_at": "2026-09-02 16:40:53",
+    "scene_id": 12,
+    "sequence_id": 1,
+    "order_in_sequence": 3
+   },
+   {
+    "id": 16,
+    "uuid": "740734a1-96eb-48d6-bec7-6d3a577c67a3",
+    "created_at": "2026-09-02 16:40:53",
+    "updated_at": "2026-09-02 16:40:53",
+    "scene_id": 15,
+    "sequence_id": 5,
+    "order_in_sequence": 2
    }
   ],
   "screenplay_title_page": [
    {
-    "id": 1,
+    "id": 96,
     "key": "title",
     "value": "HOLLOW CREEK",
     "sort_order": 1
    },
    {
-    "id": 2,
+    "id": 97,
     "key": "credit",
     "value": "Written by",
     "sort_order": 2
    },
    {
-    "id": 3,
+    "id": 98,
     "key": "author",
     "value": "Minimal Humans",
     "sort_order": 3
    },
    {
-    "id": 4,
+    "id": 99,
     "key": "draft date",
     "value": "1889 / development",
     "sort_order": 4
    },
    {
-    "id": 5,
+    "id": 100,
     "key": "contact",
     "value": "hollowcreek@example.com",
     "sort_order": 5
@@ -3336,14 +4745,14 @@
     "name": "The Reckoning",
     "sequence_number": 3,
     "act_id": 2,
+    "start_scene_id": 7,
     "goal": "Get through one evening in the same room.",
     "conflict": "Neither will speak first; the storm keeps them there.",
     "outcome": "Eleanor speaks first — 'You came back.'",
     "purpose": "The film's held breath.",
     "turning_point": "The kettle set down.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 7
+    "lifecycle_status": "active"
    },
    {
     "id": 2,
@@ -3353,14 +4762,14 @@
     "name": "The Storm",
     "sequence_number": 4,
     "act_id": 3,
+    "start_scene_id": 10,
     "goal": "Bring the horses in before the ridge floods.",
     "conflict": "The weather, and what he is trying to work off.",
     "outcome": "He comes back down at dawn with two of the three.",
     "purpose": "Penance as action.",
     "turning_point": "She is waiting on the porch.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 10
+    "lifecycle_status": "active"
    },
    {
     "id": 3,
@@ -3370,14 +4779,14 @@
     "name": "The Return",
     "sequence_number": 1,
     "act_id": 1,
+    "start_scene_id": 1,
     "goal": "Cross the last mile and get through the door.",
     "conflict": "Seven years of not writing.",
     "outcome": "He is given a task instead of a welcome.",
     "purpose": "Establish the distance.",
     "turning_point": "The door left ajar behind him.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 1
+    "lifecycle_status": "active"
    },
    {
     "id": 4,
@@ -3387,14 +4796,14 @@
     "name": "The Thaw",
     "sequence_number": 2,
     "act_id": 2,
+    "start_scene_id": 4,
     "goal": "Survive the crossing.",
     "conflict": "Her body fails at the worst moment.",
     "outcome": "He carries her home; the shawl comes out.",
     "purpose": "Force contact.",
     "turning_point": "The touch neither can refuse.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 4
+    "lifecycle_status": "active"
    },
    {
     "id": 5,
@@ -3404,14 +4813,14 @@
     "name": "The Open Door",
     "sequence_number": 5,
     "act_id": 3,
+    "start_scene_id": 11,
     "goal": "Say the thing that has no task attached to it.",
     "conflict": "Habit.",
     "outcome": "The embrace.",
     "purpose": "Release.",
     "turning_point": "She does not go inside first.",
     "status": "outline",
-    "lifecycle_status": "active",
-    "start_scene_id": 11
+    "lifecycle_status": "active"
    }
   ],
   "shot": [
@@ -3424,14 +4833,14 @@
     "scene_id": 7,
     "shot_number": "12-04",
     "shot_order": 4,
+    "story_beat_id": 14,
     "shot_size": "medium",
     "camera_angle": "eye level",
     "camera_movement": "push in",
     "lens_choice": "40mm",
     "description": "Slow push toward Eleanor at the stove; Marcus soft in right background.",
     "notes": "Numbered 12-04 under the production's own scheme; the app shows the derived code beside it rather than renumbering.",
-    "lifecycle_status": "active",
-    "story_beat_id": 14
+    "lifecycle_status": "active"
    },
    {
     "id": 2,
@@ -3442,13 +4851,13 @@
     "scene_id": 1,
     "shot_number": "1A",
     "shot_order": 1,
+    "story_beat_id": 2,
     "shot_size": "extreme wide",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "35mm",
     "description": "The ridge road, a figure a third of the way in.",
-    "lifecycle_status": "active",
-    "story_beat_id": 2
+    "lifecycle_status": "active"
    },
    {
     "id": 3,
@@ -3459,13 +4868,13 @@
     "scene_id": 1,
     "shot_number": "1B",
     "shot_order": 2,
+    "story_beat_id": 2,
     "shot_size": "medium",
     "camera_angle": "low angle",
     "camera_movement": "tracking",
     "lens_choice": "40mm",
     "description": "Walking with him, boots and road.",
-    "lifecycle_status": "active",
-    "story_beat_id": 2
+    "lifecycle_status": "active"
    },
    {
     "id": 4,
@@ -3476,13 +4885,13 @@
     "scene_id": 1,
     "shot_number": "1C",
     "shot_order": 3,
+    "story_beat_id": 3,
     "shot_size": "medium close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "He stops. The house over his shoulder, soft.",
-    "lifecycle_status": "active",
-    "story_beat_id": 3
+    "lifecycle_status": "active"
    },
    {
     "id": 5,
@@ -3493,13 +4902,13 @@
     "scene_id": 2,
     "shot_number": "3A",
     "shot_order": 1,
+    "story_beat_id": 4,
     "shot_size": "wide",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "27mm",
     "description": "Kitchen; she is at the stove, back to the door.",
-    "lifecycle_status": "active",
-    "story_beat_id": 4
+    "lifecycle_status": "active"
    },
    {
     "id": 6,
@@ -3510,13 +4919,13 @@
     "scene_id": 2,
     "shot_number": "3B",
     "shot_order": 2,
+    "story_beat_id": 4,
     "shot_size": "medium",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "40mm",
     "description": "He fills the doorway. Held long.",
-    "lifecycle_status": "active",
-    "story_beat_id": 4
+    "lifecycle_status": "active"
    },
    {
     "id": 7,
@@ -3527,13 +4936,13 @@
     "scene_id": 2,
     "shot_number": "3C",
     "shot_order": 3,
+    "story_beat_id": 5,
     "shot_size": "close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "Her hands stop, then keep going.",
-    "lifecycle_status": "active",
-    "story_beat_id": 5
+    "lifecycle_status": "active"
    },
    {
     "id": 8,
@@ -3544,13 +4953,13 @@
     "scene_id": 2,
     "shot_number": "3D",
     "shot_order": 4,
+    "story_beat_id": 6,
     "shot_size": "medium wide",
     "camera_angle": "low angle",
     "camera_movement": "static",
     "lens_choice": "35mm",
     "description": "The door, ajar, behind him.",
-    "lifecycle_status": "active",
-    "story_beat_id": 6
+    "lifecycle_status": "active"
    },
    {
     "id": 9,
@@ -3561,13 +4970,13 @@
     "scene_id": 4,
     "shot_number": "9A",
     "shot_order": 1,
+    "story_beat_id": 9,
     "shot_size": "wide",
     "camera_angle": "high angle",
     "camera_movement": "static",
     "lens_choice": "27mm",
     "description": "The ford from the bank; water higher than it looks.",
-    "lifecycle_status": "active",
-    "story_beat_id": 9
+    "lifecycle_status": "active"
    },
    {
     "id": 10,
@@ -3578,13 +4987,13 @@
     "scene_id": 4,
     "shot_number": "9B",
     "shot_order": 2,
+    "story_beat_id": 9,
     "shot_size": "medium",
     "camera_angle": "eye level",
     "camera_movement": "pan",
     "lens_choice": "40mm",
     "description": "The horse balks.",
-    "lifecycle_status": "active",
-    "story_beat_id": 9
+    "lifecycle_status": "active"
    },
    {
     "id": 11,
@@ -3595,13 +5004,13 @@
     "scene_id": 4,
     "shot_number": "9C",
     "shot_order": 3,
+    "story_beat_id": 9,
     "shot_size": "medium close-up",
     "camera_angle": "dutch",
     "camera_movement": "tracking",
     "lens_choice": "50mm",
     "description": "She goes down; the water takes her sideways.",
-    "lifecycle_status": "active",
-    "story_beat_id": 9
+    "lifecycle_status": "active"
    },
    {
     "id": 12,
@@ -3612,13 +5021,13 @@
     "scene_id": 4,
     "shot_number": "9D",
     "shot_order": 4,
+    "story_beat_id": 10,
     "shot_size": "medium wide",
     "camera_angle": "eye level",
     "camera_movement": "tracking",
     "lens_choice": "35mm",
     "description": "He carries her up the bank, neither speaking.",
-    "lifecycle_status": "active",
-    "story_beat_id": 10
+    "lifecycle_status": "active"
    },
    {
     "id": 13,
@@ -3629,13 +5038,13 @@
     "scene_id": 5,
     "shot_number": "10A",
     "shot_order": 1,
+    "story_beat_id": 11,
     "shot_size": "close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "The shawl on its hook.",
-    "lifecycle_status": "active",
-    "story_beat_id": 11
+    "lifecycle_status": "active"
    },
    {
     "id": 14,
@@ -3646,13 +5055,13 @@
     "scene_id": 5,
     "shot_number": "10B",
     "shot_order": 2,
+    "story_beat_id": 11,
     "shot_size": "medium",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "40mm",
     "description": "She puts it on like a coat, not a keepsake.",
-    "lifecycle_status": "active",
-    "story_beat_id": 11
+    "lifecycle_status": "active"
    },
    {
     "id": 15,
@@ -3663,13 +5072,13 @@
     "scene_id": 6,
     "shot_number": "11A",
     "shot_order": 1,
+    "story_beat_id": 12,
     "shot_size": "close-up",
     "camera_angle": "high angle",
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "Locket in the saddlebag.",
-    "lifecycle_status": "active",
-    "story_beat_id": 12
+    "lifecycle_status": "active"
    },
    {
     "id": 16,
@@ -3680,13 +5089,13 @@
     "scene_id": 6,
     "shot_number": "11B",
     "shot_order": 2,
+    "story_beat_id": 12,
     "shot_size": "medium close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "50mm",
     "description": "Into the coat pocket; a glance at the house.",
-    "lifecycle_status": "active",
-    "story_beat_id": 12
+    "lifecycle_status": "active"
    },
    {
     "id": 17,
@@ -3697,13 +5106,13 @@
     "scene_id": 7,
     "shot_number": "12A",
     "shot_order": 1,
+    "story_beat_id": 13,
     "shot_size": "wide",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "27mm",
     "description": "The kitchen, both of them in it, storm on the glass.",
-    "lifecycle_status": "active",
-    "story_beat_id": 13
+    "lifecycle_status": "active"
    },
    {
     "id": 18,
@@ -3714,13 +5123,13 @@
     "scene_id": 7,
     "shot_number": "12B",
     "shot_order": 2,
+    "story_beat_id": 13,
     "shot_size": "medium close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "50mm",
     "description": "Marcus at the table, not looking up.",
-    "lifecycle_status": "active",
-    "story_beat_id": 13
+    "lifecycle_status": "active"
    },
    {
     "id": 19,
@@ -3731,13 +5140,13 @@
     "scene_id": 7,
     "shot_number": "12C",
     "shot_order": 3,
+    "story_beat_id": 13,
     "shot_size": "close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "The kettle set down.",
-    "lifecycle_status": "active",
-    "story_beat_id": 13
+    "lifecycle_status": "active"
    },
    {
     "id": 20,
@@ -3748,13 +5157,13 @@
     "scene_id": 7,
     "shot_number": "12E",
     "shot_order": 5,
+    "story_beat_id": 14,
     "shot_size": "close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "Marcus, after. The flicker.",
-    "lifecycle_status": "active",
-    "story_beat_id": 14
+    "lifecycle_status": "active"
    },
    {
     "id": 21,
@@ -3765,13 +5174,13 @@
     "scene_id": 9,
     "shot_number": "19A",
     "shot_order": 1,
+    "story_beat_id": 17,
     "shot_size": "medium wide",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "35mm",
     "description": "Both, table between them.",
-    "lifecycle_status": "active",
-    "story_beat_id": 17
+    "lifecycle_status": "active"
    },
    {
     "id": 22,
@@ -3782,13 +5191,13 @@
     "scene_id": 9,
     "shot_number": "19B",
     "shot_order": 2,
+    "story_beat_id": 18,
     "shot_size": "close-up",
     "camera_angle": "eye level",
     "camera_movement": "push in",
     "lens_choice": "75mm",
     "description": "Marcus. The whole confession in one take.",
-    "lifecycle_status": "active",
-    "story_beat_id": 18
+    "lifecycle_status": "active"
    },
    {
     "id": 23,
@@ -3799,13 +5208,13 @@
     "scene_id": 9,
     "shot_number": "19C",
     "shot_order": 3,
+    "story_beat_id": 18,
     "shot_size": "close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "Eleanor, not moving.",
-    "lifecycle_status": "active",
-    "story_beat_id": 18
+    "lifecycle_status": "active"
    },
    {
     "id": 24,
@@ -3816,13 +5225,13 @@
     "scene_id": 9,
     "shot_number": "19D",
     "shot_order": 4,
+    "story_beat_id": 19,
     "shot_size": "close-up",
     "camera_angle": "overhead",
     "camera_movement": "static",
     "lens_choice": "50mm",
     "description": "The locket on the boards.",
-    "lifecycle_status": "active",
-    "story_beat_id": 19
+    "lifecycle_status": "active"
    },
    {
     "id": 25,
@@ -3833,13 +5242,13 @@
     "scene_id": 10,
     "shot_number": "21A",
     "shot_order": 1,
+    "story_beat_id": 20,
     "shot_size": "wide",
     "camera_angle": "low angle",
     "camera_movement": "static",
     "lens_choice": "27mm",
     "description": "Timber and rain; a lantern a long way in.",
-    "lifecycle_status": "active",
-    "story_beat_id": 20
+    "lifecycle_status": "active"
    },
    {
     "id": 26,
@@ -3850,13 +5259,13 @@
     "scene_id": 10,
     "shot_number": "21B",
     "shot_order": 2,
+    "story_beat_id": 21,
     "shot_size": "medium",
     "camera_angle": "eye level",
     "camera_movement": "tracking",
     "lens_choice": "35mm",
     "description": "Running with him, handheld.",
-    "lifecycle_status": "active",
-    "story_beat_id": 21
+    "lifecycle_status": "active"
    },
    {
     "id": 27,
@@ -3867,13 +5276,13 @@
     "scene_id": 10,
     "shot_number": "21C",
     "shot_order": 3,
+    "story_beat_id": 21,
     "shot_size": "extreme wide",
     "camera_angle": "high angle",
     "camera_movement": "crane",
     "lens_choice": "27mm",
     "description": "The ridge, the storm, one light.",
-    "lifecycle_status": "active",
-    "story_beat_id": 21
+    "lifecycle_status": "active"
    },
    {
     "id": 28,
@@ -3884,13 +5293,13 @@
     "scene_id": 11,
     "shot_number": "24A",
     "shot_order": 1,
+    "story_beat_id": 22,
     "shot_size": "medium wide",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "35mm",
     "description": "Porch, first light, chime down in the mud.",
-    "lifecycle_status": "active",
-    "story_beat_id": 22
+    "lifecycle_status": "active"
    },
    {
     "id": 29,
@@ -3901,13 +5310,13 @@
     "scene_id": 11,
     "shot_number": "24B",
     "shot_order": 2,
+    "story_beat_id": 22,
     "shot_size": "medium close-up",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "50mm",
     "description": "She sees him on the track.",
-    "lifecycle_status": "active",
-    "story_beat_id": 22
+    "lifecycle_status": "active"
    },
    {
     "id": 30,
@@ -3918,13 +5327,13 @@
     "scene_id": 11,
     "shot_number": "24C",
     "shot_order": 3,
+    "story_beat_id": 23,
     "shot_size": "medium",
     "camera_angle": "eye level",
     "camera_movement": "static",
     "lens_choice": "40mm",
     "description": "The embrace. The door open behind them.",
-    "lifecycle_status": "active",
-    "story_beat_id": 23
+    "lifecycle_status": "active"
    }
   ],
   "shot_design": [
@@ -3983,12 +5392,13 @@
     "id": 1,
     "uuid": "dd9d0071-1dca-4940-a834-299c341fa558",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:49:00",
     "name": "Sonic Identity",
     "sound_aesthetic": "naturalistic",
     "sonic_density": "sparse",
     "silence_philosophy": "Silence before confession.",
     "score_approach": "acoustic/intimate",
+    "musical_tone": "neutral/ambient",
     "instrumentation_palette": "fiddle, pump organ",
     "score_density": "selective",
     "lifecycle_status": "active"
@@ -3999,8 +5409,8 @@
     "id": 1,
     "uuid": "6716a754-13a4-4815-9927-c2b54a62b5eb",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "Chime",
+    "updated_at": "2026-09-09 10:08:12",
+    "name": "sc 12 — chime",
     "scene_id": 7,
     "sound_type": "design",
     "description": "Wind chime, once, when the door swings.",
@@ -4097,8 +5507,8 @@
     "id": 1,
     "uuid": "2b6746cc-c275-41dc-8dc3-27a5b1a3c0f1",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "Sc 12 perspective",
+    "updated_at": "2026-09-09 10:08:24",
+    "name": "sc 12 perspective",
     "scene_id": 7,
     "perspective_type": "character POV",
     "pov_character_id": 1,
@@ -4146,8 +5556,8 @@
     "id": 1,
     "uuid": "79e6dd5f-7bed-48dc-97aa-45437a49b6cb",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "circle",
+    "updated_at": "2026-09-09 10:24:52",
+    "name": "Eleanor circles the table.",
     "scene_blocking_id": 1,
     "beat_order": 1,
     "description": "Eleanor circles the table.",
@@ -4158,8 +5568,8 @@
     "id": 2,
     "uuid": "c354d618-36f5-429d-9ab8-6078c25cba0c",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "vault",
+    "updated_at": "2026-09-09 10:25:06",
+    "name": "Vaults the fallen log.",
     "action_sequence_id": 1,
     "beat_order": 1,
     "description": "Vaults the fallen log.",
@@ -4171,8 +5581,8 @@
     "id": 3,
     "uuid": "aa27d889-722b-49d8-9c0c-4e0c2aac027d",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "stop-at-crossing",
+    "updated_at": "2026-09-09 10:24:59",
+    "name": "Stops dead at the creek crossing — the hesitation, held.",
     "action_sequence_id": 1,
     "beat_order": 2,
     "description": "Stops dead at the creek crossing — the hesitation, held.",
@@ -4182,7 +5592,8 @@
     "id": 4,
     "uuid": "1fd803a2-b8d0-44bc-953f-058da21b46a9",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:03:54",
+    "name": "Positions established.",
     "scene_blocking_id": 2,
     "beat_order": 1,
     "description": "Positions established.",
@@ -4192,7 +5603,8 @@
     "id": 5,
     "uuid": "e22f8f78-0a48-4628-bc30-d2f19d6a0220",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:04:01",
+    "name": "The move that costs something.",
     "scene_blocking_id": 2,
     "beat_order": 2,
     "description": "The move that costs something.",
@@ -4202,7 +5614,8 @@
     "id": 6,
     "uuid": "22e2653b-38cf-46e2-bd3a-2174f12ae5e7",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:04:16",
+    "name": "New positions held to the end.",
     "scene_blocking_id": 2,
     "beat_order": 3,
     "description": "New positions held to the end.",
@@ -4212,7 +5625,8 @@
     "id": 7,
     "uuid": "fa4f5916-14cc-4e1f-a16e-6e3974cd64c5",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:04:24",
+    "name": "Positions established.",
     "scene_blocking_id": 3,
     "beat_order": 1,
     "description": "Positions established.",
@@ -4222,7 +5636,8 @@
     "id": 8,
     "uuid": "1a1f2600-2302-4884-af7e-60531c5325e7",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:24:15",
+    "name": "The move that costs something.",
     "scene_blocking_id": 3,
     "beat_order": 2,
     "description": "The move that costs something.",
@@ -4232,7 +5647,8 @@
     "id": 9,
     "uuid": "8da9bb13-831e-40da-9eb2-01e509beabb5",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:24:22",
+    "name": "New positions held to the end.",
     "scene_blocking_id": 3,
     "beat_order": 3,
     "description": "New positions held to the end.",
@@ -4242,7 +5658,8 @@
     "id": 10,
     "uuid": "032b72d2-6936-4548-b5e3-2081fc4fd37b",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:24:29",
+    "name": "Positions established.",
     "scene_blocking_id": 4,
     "beat_order": 1,
     "description": "Positions established.",
@@ -4252,7 +5669,8 @@
     "id": 11,
     "uuid": "2e267aaa-9c4a-4780-a8ec-01e31bad3d9d",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:24:36",
+    "name": "The move that costs something.",
     "scene_blocking_id": 4,
     "beat_order": 2,
     "description": "The move that costs something.",
@@ -4262,7 +5680,8 @@
     "id": 12,
     "uuid": "39a55fc8-5615-4cf6-a0a4-03dceac6d002",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 10:24:43",
+    "name": "New positions held to the end.",
     "scene_blocking_id": 4,
     "beat_order": 3,
     "description": "New positions held to the end.",
@@ -4573,8 +5992,8 @@
     "id": 1,
     "uuid": "50c52272-c225-4e33-aec8-0f7ff1f9f09c",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
-    "name": "Sc 12 subtext",
+    "updated_at": "2026-09-09 09:57:46",
+    "name": "The entire scene means the opposite of its words.",
     "scene_id": 7,
     "surface_level": "Small talk about the kettle and the storm.",
     "subtext_level": "The entire scene means the opposite of its words.",
@@ -4586,7 +6005,8 @@
     "id": 2,
     "uuid": "9e9c068d-e200-4658-aab4-1578abbccbbc",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:57:38",
+    "name": "Do not make me ask why you came.",
     "scene_id": 2,
     "surface_level": "Where do you want the water?",
     "subtext_level": "Do not make me ask why you came.",
@@ -4600,7 +6020,8 @@
     "id": 3,
     "uuid": "bfd2bfb7-d3dd-4160-8f21-edf8de4ec1a6",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:58:04",
+    "name": "You have no idea what you are asking me to forgive.",
     "scene_id": 8,
     "surface_level": "Thank you, Reverend.",
     "subtext_level": "You have no idea what you are asking me to forgive.",
@@ -4614,7 +6035,8 @@
     "id": 4,
     "uuid": "59384c4e-5956-4136-92ef-97fb72a03b10",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:57:55",
+    "name": "I have been carrying this for seven years and I am putting it down whatever it costs.",
     "scene_id": 9,
     "surface_level": "I was at the creek.",
     "subtext_level": "I have been carrying this for seven years and I am putting it down whatever it costs.",
@@ -4628,7 +6050,8 @@
     "id": 5,
     "uuid": "de7d3747-2153-4d40-a790-dfb2bca67388",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-09 09:58:12",
+    "name": "Stay.",
     "scene_id": 11,
     "surface_level": "You'll want breakfast.",
     "subtext_level": "Stay.",
@@ -4639,16 +6062,30 @@
     "lifecycle_status": "active"
    }
   ],
+  "take": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00000000da01",
+    "created_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-08-25 12:00:00",
+    "name": "12-04 take 3",
+    "corpus_id": 1,
+    "take_number": 3,
+    "preferred": 1,
+    "camera_designation": "A",
+    "lifecycle_status": "active"
+   }
+  ],
   "technical_specs": [
    {
     "id": 1,
     "uuid": "1f653575-c667-4fa9-94b4-dd7e0d37dd23",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:47:11",
     "name": "Technical Specs",
-    "aspect_ratio": "1.85:1",
-    "resolution": "4K DCI",
-    "frame_rate": "24",
+    "aspect_ratio": "2.35:1 (scope)",
+    "resolution": "4K (4096x2160)",
+    "frame_rate": "24 fps",
     "lifecycle_status": "active"
    }
   ],
@@ -4663,7 +6100,8 @@
     "entity_id": 1,
     "nature_of_connection": "embodies",
     "subtlety_level": "clear",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "Eleanor is the film's argument about forgiveness."
    },
    {
     "id": 2,
@@ -4674,7 +6112,8 @@
     "entity_type": "motif",
     "entity_id": 1,
     "nature_of_connection": "embodies",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "The open door is forgiveness offered before it is spoken."
    },
    {
     "id": 3,
@@ -4685,7 +6124,8 @@
     "entity_type": "motif",
     "entity_id": 4,
     "nature_of_connection": "represents",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "The locket is the thing he could not put down."
    },
    {
     "id": 4,
@@ -4696,7 +6136,8 @@
     "entity_type": "scene",
     "entity_id": 9,
     "nature_of_connection": "challenges",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "Sc 19 asks whether knowing is the same as forgiving."
    },
    {
     "id": 5,
@@ -4709,7 +6150,8 @@
     "nature_of_connection": "explores",
     "subtlety_level": "clear",
     "intended_perception": "must recognize",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "Marcus asks for forgiveness eleven years too late."
    },
    {
     "id": 6,
@@ -4722,7 +6164,8 @@
     "nature_of_connection": "represents",
     "subtlety_level": "subtle",
     "intended_perception": "reward for careful viewing",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "Ada is the debt neither of them can settle with her."
    },
    {
     "id": 7,
@@ -4735,7 +6178,8 @@
     "nature_of_connection": "represents",
     "subtlety_level": "clear",
     "intended_perception": "must recognize",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "The locket puts the withheld truth on the table."
    },
    {
     "id": 8,
@@ -4748,7 +6192,8 @@
     "nature_of_connection": "resolves",
     "subtlety_level": "subtle",
     "intended_perception": "enhances if recognized",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "Sc 24 resolves it without ever using the word."
    },
    {
     "id": 9,
@@ -4761,7 +6206,8 @@
     "nature_of_connection": "represents",
     "subtlety_level": "subtle",
     "intended_perception": "reward for careful viewing",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "The locket is what the water gave back."
    },
    {
     "id": 10,
@@ -4774,7 +6220,8 @@
     "nature_of_connection": "explores",
     "subtlety_level": "clear",
     "intended_perception": "must recognize",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "Sc 9 puts Eleanor in the water that took Ada."
    },
    {
     "id": 11,
@@ -4787,7 +6234,8 @@
     "nature_of_connection": "resolves",
     "subtlety_level": "clear",
     "intended_perception": "must recognize",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "name": "Sc 19 says out loud what the creek has been holding."
    }
   ],
   "theme": [
@@ -4824,8 +6272,8 @@
     "id": 2,
     "uuid": "a7f073f0-90bb-4bab-bf4d-2fceeca96c66",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 1 tone",
+    "updated_at": "2026-09-09 09:54:53",
+    "name": "Withheld",
     "scene_id": 1,
     "tone_descriptor": "withheld",
     "intensity": "moderate",
@@ -4836,8 +6284,8 @@
     "id": 3,
     "uuid": "ac435c6c-2fe6-47ae-b049-63b162aabe91",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 9 tone",
+    "updated_at": "2026-09-09 09:55:01",
+    "name": "Sudden",
     "scene_id": 4,
     "tone_descriptor": "sudden",
     "intensity": "heavy",
@@ -4848,8 +6296,8 @@
     "id": 4,
     "uuid": "944fe55f-2cee-42ef-bc14-4af4e299b5a7",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 19 tone",
+    "updated_at": "2026-09-09 09:55:09",
+    "name": "Rupture",
     "scene_id": 9,
     "tone_descriptor": "rupture",
     "intensity": "heavy",
@@ -4860,8 +6308,8 @@
     "id": 5,
     "uuid": "cda6176d-2c07-46c4-ac95-a958b2d7944b",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
-    "name": "sc 24 tone",
+    "updated_at": "2026-09-09 09:55:18",
+    "name": "Earned Quiet",
     "scene_id": 11,
     "tone_descriptor": "earned quiet",
     "intensity": "light",
@@ -4874,11 +6322,12 @@
     "id": 1,
     "uuid": "7ba90d49-247e-4af7-b960-95d7243edd7f",
     "created_at": "2026-07-16 06:01:31",
-    "updated_at": "2026-07-16 06:01:31",
+    "updated_at": "2026-09-09 09:47:22",
     "name": "Visual Identity",
     "visual_statement": "Naturalistic, lived-in; everything aged thirty years.",
     "aesthetic_genre": "naturalistic",
     "design_era": "1889 Oregon frontier",
+    "visual_density": "minimalist",
     "primary_materials": "[\"oak\", \"brass\", \"iron\", \"wool\"]",
     "forbidden_materials": "[\"plastic\", \"chrome\"]",
     "textural_philosophy": "weathered",
@@ -4925,76 +6374,7 @@
     "delivery_style": "theatrical",
     "lifecycle_status": "active"
    }
-  ],
-  "performance_corpus": [
-   {
-    "id": 1,
-    "uuid": "00000000-0000-4000-8000-00000000c001",
-    "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
-    "name": "Hollow Creek — scene 12 reference session",
-    "corpus_notes": "Reference recordings of the kitchen confrontation, used to hold Eleanor's and Marcus's delivery steady across the shoot.",
-    "lifecycle_status": "active"
-   }
-  ],
-  "take": [
-   {
-    "id": 1,
-    "uuid": "00000000-0000-4000-8000-00000000da01",
-    "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
-    "name": "12-04 take 3",
-    "corpus_id": 1,
-    "take_number": 3,
-    "preferred": 1,
-    "camera_designation": "A",
-    "lifecycle_status": "active"
-   }
-  ],
-  "clip": [
-   {
-    "id": 1,
-    "uuid": "00000000-0000-4000-8000-00000000cf01",
-    "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
-    "name": "You came back",
-    "take_id": 1,
-    "scene_id": 7,
-    "clip_type": "dialogue",
-    "screenplay_line_start_id": 51,
-    "screenplay_line_end_id": 52,
-    "notes": "Eleanor's line and the cue above it.",
-    "lifecycle_status": "active"
-   },
-   {
-    "id": 2,
-    "uuid": "00000000-0000-4000-8000-00000000cf02",
-    "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
-    "name": "I came back",
-    "take_id": 1,
-    "scene_id": 7,
-    "clip_type": "dialogue",
-    "screenplay_line_start_id": 54,
-    "screenplay_line_end_id": 55,
-    "notes": "Marcus's answer.",
-    "lifecycle_status": "active"
-   }
-  ],
-  "asset_relationship": [
-   {
-    "id": 1,
-    "uuid": "00000000-0000-4000-8000-00000000ae01",
-    "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
-    "name": "turnaround derives from concept",
-    "asset_id": 1,
-    "entity_type": "asset",
-    "entity_id": 9,
-    "relationship_type": "derived_from",
-    "notes": "The turnaround was painted over this concept. The concept is referenced by nothing else, so §8.6 reports it as an orphan unless a polymorphic reference counts as a use."
-   }
   ]
  },
- "rowCount": 382
+ "rowCount": 497
 }
