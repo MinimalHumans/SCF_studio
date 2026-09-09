@@ -5,10 +5,15 @@ import { fileURLToPath } from "node:url";
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { isComposedLink } from "../src/state/displayName.ts";
-import { sceneRefFor } from "../src/state/listOrder.ts";
+import { STORY_ORDERED, listTable, sceneRefFor }
+  from "../src/state/listOrder.ts";
+import { storyOrder } from "@scf-core/structure.ts";
+import { openNodeDatabase } from "@scf-core/node.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../../scf-core/registry/registry.json", import.meta.url));
+const FIXTURE = fileURLToPath(new URL(
+  "../../fixtures/hollow_creek.scf", import.meta.url));
 
 let registry: Registry;
 const load = async (): Promise<Registry> => {
@@ -85,5 +90,58 @@ describe("which link entities get the story control", () => {
        async () => {
     expect(sceneRefFor(await def("clip_character"))).toBeUndefined();
     expect(sceneRefFor(await def("clip_prop"))).toBeUndefined();
+  });
+});
+
+/**
+ * A staging beat is the one row that sits in a scene without holding a
+ * reference to one — the scene is on whichever parent it hangs off. It
+ * listed A-Z, which is unreadable when the names repeat by design.
+ */
+describe("staging beats reach their scene through a parent", () => {
+  const query = (): string => {
+    const spec = STORY_ORDERED["staging_beat"]!;
+    const order = storyOrder({
+      alias: "t", sceneRef: spec.sceneRef, fallbacks: spec.fallbacks,
+    });
+    return "SELECT t.id, t.scene_id, (SELECT s.scene_number FROM scene s " +
+      "WHERE s.id = t.scene_id) AS n " +
+      `FROM ${listTable("staging_beat")} t ` +
+      `${order.join} ${order.orderBy}`;
+  };
+
+  test("every beat resolves to the scene of its parent", async () => {
+    const db = openNodeDatabase(FIXTURE, { readOnly: true });
+    try {
+      const rows = await db.exec(query());
+      expect(rows.length).toBeGreaterThan(0);
+      // Both hops: ten beats hang off a scene_blocking, two off an
+      // action_sequence, and neither kind may come back without a scene.
+      for (const r of rows) expect(r["scene_id"]).not.toBeNull();
+    } finally {
+      db.close();
+    }
+  });
+
+  test("and they come back in story order, not alphabetical",
+       async () => {
+    const db = openNodeDatabase(FIXTURE, { readOnly: true });
+    try {
+      // Read the ordered query directly: wrapping it in a join lets
+      // SQLite discard the ORDER BY, which is exactly the bug a test
+      // about ordering must not have.
+      const rows = await db.exec(query());
+      const numbers = rows.map((r) => String(r["n"]));
+      // Scene order is the SCRIPT's, so sc 3 leads and sc 24 closes.
+      // A-Z on the names gives "New positions held to the end." three
+      // times before "Positions established." three times, which is
+      // three scenes shuffled together.
+      expect(numbers).toEqual([
+        "3", "3", "3", "12", "19", "19", "19",
+        "21", "21", "24", "24", "24",
+      ]);
+    } finally {
+      db.close();
+    }
   });
 });

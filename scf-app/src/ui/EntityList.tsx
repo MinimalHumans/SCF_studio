@@ -10,7 +10,7 @@ import { useQuery } from "./useQuery.ts";
 import { useRefNames } from "./useRefNames.ts";
 import { storyOrder } from "@scf-core/structure.ts";
 import {
-  ORDER_FALLBACKS, STORY_ORDERED, sceneRefFor,
+  ORDER_FALLBACKS, STORY_ORDERED, listTable, sceneRefFor,
 } from "../state/listOrder.ts";
 
 /**
@@ -31,8 +31,12 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
   const { openEntityRow, listSort, setListSort } = useStore();
   const nameField = edef?.nameField ?? "name";
   const composedEntity = edef !== undefined && isComposedLink(edef);
+  // A staging beat holds no scene reference of its own; STORY_ORDERED
+  // derives one from its parent. Either way the row sits in a scene and
+  // has to say which one.
+  const derivedScene = STORY_ORDERED[entity]?.from !== undefined;
   const scenePlacedEntity = edef !== undefined && !composedEntity &&
-    edef.fields.some((f) => f.name === "scene_id");
+    (edef.fields.some((f) => f.name === "scene_id") || derivedScene);
   // A link entity has a place in the film too — a costume in a scene, a
   // motif appearance — so it gets the same control. Six of the twelve
   // hold a scene reference; the rest (an actor's role, a bundle's
@@ -48,6 +52,10 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
   const canSortByStory = orderSpec !== undefined;
   const byStory = canSortByStory && listSort === "story";
 
+  // Where a scene is derived, every branch reads from the subquery that
+  // derives it — the A-Z list needs the column too, to show the scene.
+  const table = listTable(entity);
+
   // A sequence shows the act it starts in, so the join comes along.
   const extraSelect = entity === "sequence"
     ? ", (SELECT act_number FROM act WHERE act.id = t.act_id) " +
@@ -61,12 +69,12 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
             alias: "t", sceneRef: orderSpec!.sceneRef,
             fallbacks: orderSpec!.fallbacks,
           });
-          return `SELECT t.*${extraSelect} FROM ${q(entity)} t ` +
+          return `SELECT t.*${extraSelect} FROM ${table} t ` +
             `${order.join} ${order.orderBy} LIMIT 500`;
         })()
     : composedEntity
       ? `SELECT * FROM ${q(entity)} ORDER BY id LIMIT 500`
-      : `SELECT t.*${extraSelect} FROM ${q(entity)} t ` +
+      : `SELECT t.*${extraSelect} FROM ${table} t ` +
         `ORDER BY t.${q(nameField)} LIMIT 500`);
 
   /**
@@ -104,11 +112,12 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
    * A link's A-Z is sorted here, not in SQL.
    *
    * Its visible label is composed from the names of the rows it joins,
-   * which live in other tables, so `ORDER BY` on this one cannot reach
-   * them — the alternative is insertion order with no way to change it.
-   * Sorting on the same string that renders guarantees the order matches
-   * what is on screen, and the row id breaks ties so the result is
-   * stable rather than reshuffling as names load.
+   * which live in other tables — `ORDER BY` on this one cannot reach
+   * them, which is why link lists used to come back in insertion order
+   * with no way to change it. Sorting on the same string that renders
+   * guarantees the order matches what is on screen, and the row id
+   * breaks ties so the result is stable rather than reshuffling as
+   * names load.
    */
   const shown = useMemo(() => {
     if (edef === undefined || !composed || byStory) return rows;

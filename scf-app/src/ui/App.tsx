@@ -4,11 +4,8 @@ import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";
 
 function StartScreen(): JSX.Element {
-  const { openDemo, openFromPicker, openProjectFolder, newProject,
-          resumeLast, lastSession, fsAccessSupported, folderSupported,
-          folderChoice, openFromFolderChoice, dismissFolderChoice,
-          pickScfInRoot, phase,
-          errorMessage } = useStore();
+  const { openDemo, openFromPicker, newProject, fsAccessSupported,
+          phase, errorMessage } = useStore();
   return (
     <div className="start">
       <div className="start-card">
@@ -22,88 +19,20 @@ function StartScreen(): JSX.Element {
           </p>
         )}
         <div className="start-actions">
-          {lastSession !== null && (
-            <button className="primary" onClick={() => void resumeLast()}>
-              Resume — {lastSession}
-            </button>
-          )}
-          <button className={lastSession === null ? "primary" : ""}
-                  onClick={() => void openProjectFolder()}
-                  disabled={!folderSupported}>
-            Open project folder…
+          <button className="primary" onClick={() => void newProject()}>
+            New Project
           </button>
-          <button className="ghost"
-                  onClick={() => void openFromPicker()}
+          <button onClick={() => void openFromPicker()}
                   disabled={!fsAccessSupported}
                   title="Opens the file. Its folder is attached
 afterwards, from the topbar — the browser cannot find the folder from
 the file, but it can confirm the one you name holds it.">
-            Open an .scf file…
+            Open an SCF File
           </button>
-          <button onClick={() => void newProject()}>New project</button>
           <button onClick={() => void openDemo()}>
-            Open Hollow Creek demo
+            Open Hollow Creek Demo
           </button>
         </div>
-        {folderChoice !== null && (
-          <div className="start-choice">
-            {folderChoice.candidates.length > 0 &&
-              folderChoice.findings.map((f, i) => (
-                <p key={i} className="start-warn">{f.message}</p>
-              ))}
-            {folderChoice.candidates.length > 0 && (
-              <>
-                <p className="start-status">Which one is the project?</p>
-                {folderChoice.candidates.map((name) => (
-                  <button key={name}
-                          onClick={() => void openFromFolderChoice(name)}>
-                    {name}
-                  </button>
-                ))}
-              </>
-            )}
-            {folderChoice.candidates.length === 0 && (
-              <>
-                <p className="start-status">
-                  {folderChoice.seen.length === 0
-                    ? "Folder connected. Which .scf is the project?"
-                    : "No .scf found at the root — name it directly?"}
-                </p>
-                <button className="primary"
-                        onClick={() => void pickScfInRoot()}>
-                  Choose the .scf inside this folder…
-                </button>
-                <p className="start-foot">
-                  The folder and its permission are already in hand. This
-                  only asks which file; the project opens as a full
-                  folder session either way, with its assets reachable.
-                </p>
-                {folderChoice.seen.length > 0 && (
-                  <p className="start-foot">
-                    Files seen at the root: {folderChoice.seen.join(", ")}
-                  </p>
-                )}
-                <details className="start-report">
-                  <summary>Why it could not find it itself</summary>
-                  <p>
-                    Directory listing is not available on every machine —
-                    enterprise policy is the usual reason, and it is not
-                    something this app can work around or detect in
-                    advance.
-                  </p>
-                  <ul>
-                    {folderChoice.report.map((line, i) => (
-                      <li key={i} className="mono">{line}</li>
-                    ))}
-                  </ul>
-                </details>
-              </>
-            )}
-            <button className="ghost" onClick={dismissFolderChoice}>
-              Pick another folder
-            </button>
-          </div>
-        )}
         {phase === "loading" && <p className="start-status">Opening…</p>}
         {phase === "error" && (
           <>
@@ -117,9 +46,8 @@ the file, but it can confirm the one you name holds it.">
           Local-first. Your project stays on this machine — the file you
           open is copied into browser storage while you work, and written
           back when you save. A project is a folder holding one .scf and
-          the assets it points at. Either order connects it: open the
-          folder and it finds the .scf, or open the .scf and attach its
-          folder afterwards.
+          the assets it points at; open the .scf here and attach its
+          folder from the topbar.
         </p>
       </div>
     </div>

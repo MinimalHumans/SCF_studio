@@ -502,6 +502,59 @@ characters too ("Ada's shawl" sits in a scene Ada is not in) — and the
 existing report is doing its job. Recorded here so the next person to
 notice sc 1 knows it was a decision.
 
+## 7d. ✅ Two lists that read badly
+
+### Staging beats sorted alphabetically
+
+A staging beat is the only row in the schema that sits in a scene
+without holding a reference to one: it hangs off a `scene_blocking` OR
+an `action_sequence` — one or the other, never both — and the scene is
+on the parent. `sceneRefFor` looks for a scene reference among the
+entity's own fields, found none, and the list fell through to A-Z.
+
+Alphabetical is unreadable here because the names repeat BY DESIGN.
+Hollow Creek has "Positions established.", "The move that costs
+something." and "New positions held to the end." three times each, once
+per blocking, so A-Z printed three scenes shuffled together with nothing
+to tell one row from another — and no scene shown beside them either,
+since that label is also driven by holding a `scene_id`.
+
+Fixed in `state/listOrder.ts` rather than in the view. `STORY_ORDERED`
+gains an optional `from`: a subquery deriving the scene through
+whichever parent the row has, so `storyOrder` still sees an ordinary
+`scene_id` column and ONE ordering rule covers every list. `listTable`
+is the table expression both list branches read from — the A-Z branch
+needs the derived column too, to show the scene. Within a scene the
+fallbacks put the parent before `beat_order`, because two blockings in
+one scene both start at beat 1 and would otherwise interleave.
+
+`listSort` already defaults to `story`, so the beats are in scene order
+the moment they are story-orderable; nothing in the view changed.
+
+### The start screen offered five things and meant three
+
+Now three buttons: New Project, Open an SCF File, Open Hollow Creek
+Demo. Resume and the folder-first open are gone, along with the
+folder-choice panel that only `openProjectFolder` could raise.
+
+Worth knowing what that costs. A refresh still walks straight back into
+the working database — `App`'s resume effect does that, and it is
+untouched. What no longer has a route back is an explicit **Close
+project**: `closeProject` disarms auto-resume and forgets the file
+handle but does NOT wipe `working.scf`, so the OPFS database survives
+with nothing in the UI able to reach it. Close now means close, which
+is defensible, but the state it leaves behind is dead rather than gone —
+holding storage and holding the multi-tab lock's exclusive handle.
+Wiping on close would make the behaviour match what the screen now
+says.
+
+`openProjectFolder`, `openFromFolderChoice`, `pickScfInRoot` and
+`dismissFolderChoice` are unreferenced from the UI as of this change.
+They are left in the store: folder-first opening is a reasonable thing
+to want back, and removing the flow is a bigger change than removing
+the button. Folders still attach from the topbar, which is the path the
+remaining button's tooltip describes.
+
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.
@@ -519,7 +572,7 @@ notice sc 1 knows it was a decision.
    time, and the fixture exercises it.
 7. ✅ **§7c — the two review surfaces.** Done; and it narrowed §3's
    fixture pass to two named divergences instead of twelve.
-8. **§6** — whenever the proposals resolve.
+9. **§6** — whenever the proposals resolve.
 
 ## 9. What "MVP" is being taken to mean here
 
