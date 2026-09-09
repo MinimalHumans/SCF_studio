@@ -2,10 +2,8 @@
 /**
  * resolution.ts — SCF resolution semantics, executable.
  *
- * Originally a mechanical port of the retired v1 Python editor, held to
- * conformance parity. That implementation is gone; these rules are now
- * stated in docs/conventions.md and pinned by the conformance suites
- * against the Hollow Creek fixture, which outlive any one consumer.
+ * The rules are stated in docs/conventions.md and pinned by the
+ * conformance suites against the Hollow Creek fixture.
  *
  * Implements the walks the canonical queries are built from:
  *   - the DESCRIPTION cascade: profile -> states-in-force -> beats, per
@@ -15,17 +13,18 @@
  *     most specific last (Q07 / Q08 / Q11)
  *   - the MEDIA cascade: bundle -> binding -> anchor -> shot override ->
  *     assets (Q13)
- *   - location-variant selection for a scene (G4, resolver-first)
+ *   - location-variant selection for a scene (resolver-first)
  *
- * Conventions honored throughout (as in Python):
- *   - story position order = scene.scene_number (fallback: id order)
+ * Conventions honoured throughout:
+ *   - story position order is derived from the SCRIPT (spec §4.1), via
+ *     sceneOrder() below — never from scene_number alone
  *   - most-specific-wins; everything above the winner is returned as
  *     context, ordered root-first
  *   - absence is well-defined: a missing layer is skipped, never an error
  *
- * Python-truthiness note: the reference implementation leans on Python's
- * falsiness of None/""/0 in several predicates; pyTruthy() reproduces that
- * exactly so the two implementations cannot drift on edge values.
+ * pyTruthy() treats null, undefined, "", 0 and false as absent in the
+ * predicates that need it. The conformance fixture pins those edge
+ * values, so the behaviour cannot be relaxed silently.
  */
 
 import { q, type Row, type SqlExec, type SqlValue } from "./db.ts";
@@ -57,14 +56,13 @@ function asNum(v: SqlValue | undefined): number | null {
 /**
  * Fetch rows for RESOLUTION, excluding anything cut (spec §6.6).
  *
- * A cut row is not in the film. The whole point of marking something cut
- * rather than deleting it is that it stops being considered while
- * remaining inspectable, so every resolver — and therefore every
- * canonical query — must not see it. Cut rows are read back through
- * `rowsIncludingCut`, by tools built to show history.
+ * A cut row is not in the film. Marking something cut rather than
+ * deleting it means it stops being considered while staying
+ * inspectable, so every resolver — and therefore every canonical query
+ * — must not see it. Cut rows are read back through `rowsIncludingCut`.
  *
  * The filter is applied in JS rather than in SQL on purpose: 88 of 99
- * entities declare `lifecycle_status` and eleven do not, and a SQL
+ * entities declare `lifecycle_status` and eleven do not, so a SQL
  * predicate would have to probe for the column on every table it
  * touched. A missing column reads as undefined and keeps the row, which
  * is the correct answer for an entity that has no notion of being cut.
@@ -80,15 +78,15 @@ export async function rows(
  *
  * `rows()` covers everything fetched a table at a time. It does not
  * cover a query that reaches an entity THROUGH a junction in one SQL
- * statement — and five did: Q04's cast and props, Q03's costumes and
- * motifs, Q02's costumes. All five joined a junction that cannot be cut
- * to an entity that can, and filtered neither.
+ * statement — Q04's cast and props, Q03's costumes and motifs, Q02's
+ * costumes each join a junction that cannot be cut to an entity that
+ * can.
  *
- * The visible consequence was that marking a character cut did not
- * remove them from Q04's cast. §6.6.1 states its test as "adding a cut
- * row changes no answer", and that has a mirror nobody had written
- * down: **cutting an existing row MUST change the answer.** These
- * queries failed the mirror while passing the test as stated.
+ * §6.6.1 states its test as "adding a cut row changes no answer". That
+ * has a mirror: **cutting an existing row MUST change the answer.** A
+ * join filtering neither side passes the test as stated and fails the
+ * mirror — marking a character cut would not remove them from Q04's
+ * cast.
  *
  * One predicate, two call shapes. A second definition of "cut" would
  * eventually disagree with this one.
@@ -120,16 +118,11 @@ async function cols(exec: SqlExec, table: string): Promise<Set<string>> {
  * Story-position index per scene: scene id → 0-based position.
  *
  * Derived from the SCREENPLAY (spec §4.1), by delegating to
- * `scenePositions`. It must not be derived any other way, and this
- * function used to be the counter-example: it sorted by `scene_number`
- * and then by row id, which §4.1 forbids in as many words.
- *
- * Nothing caught it for a long time because the conformance fixture's
- * three orders coincided — screenplay order, scene-number order and
- * row-id order were the same list, so the forbidden derivation and the
- * required one agreed on every scene. Rebuilding the fixture so they
- * differ made this function disagree with the specification on its
- * first run, which is what the rebuild was for.
+ * `scenePositions`. It must not be derived any other way: sorting by
+ * `scene_number` then row id is what §4.1 forbids in as many words. The
+ * conformance fixture is built so screenplay order, scene-number order
+ * and row-id order differ, which is what makes the wrong derivation
+ * visible.
  *
  * Every position-dependent answer runs through here: states in force,
  * latest-wins lookups, the continuity diff. Deriving it twice is how
@@ -515,9 +508,9 @@ export interface ResolvedMedia {
    *
    * An anchor NAMES a place in an asset; it is not an asset itself and
    * has no identifier. Consumers asking which assets are in force want
-   * these, and resolving `anchors[i].asset_id` outside this function is
-   * how an anchor came to be reported as an unrelated asset — a row id
-   * looked up in the wrong table.
+   * these. Resolve `anchors[i].asset_id` here and nowhere else —
+   * resolved outside, a row id gets looked up in the wrong table and the
+   * anchor is reported as an unrelated asset.
    */
   anchor_assets: Array<Row | null>;
   base_assets: Row[];

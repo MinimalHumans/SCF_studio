@@ -447,9 +447,9 @@ const typeGutter = gutter({
     update.state.field(lineState) !== update.startState.field(lineState),
 });
 
-/** v1 parity: heading and character lines uppercase AS YOU TYPE — the
- * enforcement lives in the data, so every surface (rail, entities,
- * export) agrees, not just a CSS transform. */
+/** Heading and character lines uppercase AS YOU TYPE. The enforcement
+ * lives in the data, not in a CSS transform, so every surface — rail,
+ * entities, export — agrees. */
 const HEADING_START =
   /^(?:INT|EXT|EST|I\/E)[./ ]/i;
 
@@ -458,10 +458,10 @@ const uppercaseInput = EditorView.inputHandler.of(
     const line = view.state.doc.lineAt(from);
     const entry = view.state.field(lineState).entries[line.number - 1];
     if (entry === undefined) return false;
-    // v1 parity: an action line whose text starts INT./EXT./EST./I/E
-    // becomes a heading the moment the prefix appears — this is why
-    // typed scenes (and therefore new locations) exist at all when a
-    // fresh line inferred "action". One-way; Tab can always re-type.
+    // An action line whose text starts INT./EXT./EST./I/E becomes a
+    // heading the moment the prefix appears. This is how a typed scene
+    // — and therefore a new location — comes into being on a fresh line
+    // that inferred "action". One-way; Tab can always re-type.
     if (entry.type === "action") {
       const would = line.text.slice(0, from - line.from) + text +
                     line.text.slice(to - line.from);
@@ -510,17 +510,16 @@ function sameTypeNewline(view: EditorView): boolean {
 
 /**
  * Line TYPE and line IDENTITY live in state effects, not in the text, so
- * the history has no idea they changed. Undo reverted the DOCUMENT and
- * left the entry array where it was — which for a scene move meant the
- * pre-move text carrying the post-move entries, i.e. every line rendering
- * as the wrong type. That is the "whole screenplay loses its formatting"
- * failure, and the same trap as the R33 import-undo bug: an effect the
- * history cannot see.
+ * the history cannot see them change. Left unregistered, undo reverts
+ * the DOCUMENT and leaves the entry array where it was: after a scene
+ * move that is the pre-move text carrying the post-move entries, and
+ * every line renders as the wrong type.
  *
  * invertedEffects registers the UNDO of each effect against the history
- * event, so text and state travel together in both directions. This
- * covers scene moves and pastes (loadLines) and Tab type cycling
- * (setLineType), which was never undoable either.
+ * event, so text and state travel together in both directions. Covers
+ * scene moves and pastes (loadLines) and Tab type cycling (setLineType).
+ *
+ * ANY new lineState effect needs an inverse registered here.
  */
 const undoableLineState = invertedEffects.of((tr) => {
   const out = [];
@@ -546,9 +545,9 @@ const undoableLineState = invertedEffects.of((tr) => {
  *
  * The blank-free document model means there is no blank line to press
  * Enter on twice in the Final Draft sense — blanks are derived spacing,
- * never text (screenplayDoc.ts). What the author's hands actually do is
- * Enter (new empty line), Enter (make it a slug), and that is what this
- * binds. Applies from any line type, per Chris.
+ * never text (screenplayDoc.ts). What the author's hands do is Enter
+ * (new empty line), Enter (make it a slug), and that is what this
+ * binds. Applies from any line type.
  *
  * A THIRD Enter falls through to the normal insert, so an empty heading
  * is never a trap: you can always keep going, and Tab re-types it.
@@ -645,10 +644,10 @@ export interface ScriptCallbacks {
   getCharacters: () => string[];
 }
 
-// v1's lists and triggers, ported: prefixes on an empty/short heading
-// line; location names after the prefix (accepting appends " - ");
-// time-of-day after " - "; character names on cue lines (>=2 chars,
-// extensions excluded from the query).
+// Completion lists and their triggers: prefixes on an empty/short
+// heading line; location names after the prefix (accepting appends
+// " - "); time-of-day after " - "; character names on cue lines
+// (>=2 chars, extensions excluded from the query).
 const HEADING_PREFIXES = ["INT. ", "EXT. ", "INT./EXT. ", "EST. "];
 const TIME_OF_DAY = [
   "DAY", "NIGHT", "MORNING", "AFTERNOON", "EVENING", "DAWN", "DUSK",

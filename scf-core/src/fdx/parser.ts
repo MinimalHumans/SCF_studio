@@ -3,9 +3,8 @@
  * fdx/parser.ts — FDX import: XML → the same typed line stream Fountain
  * produces, so Stages 2–3 are shared.
  *
- * "Genuinely the easier half": FDX paragraph types are explicit, so there
- * are no classification heuristics here — only mapping. Handled per the
- * design doc:
+ * FDX paragraph types are explicit, so there are no classification
+ * heuristics here — only mapping:
  *  - paragraph types (Scene Heading, Action, Character, Dialogue,
  *    Parenthetical, Transition) → line types; unknown types map to
  *    action with the original type recorded

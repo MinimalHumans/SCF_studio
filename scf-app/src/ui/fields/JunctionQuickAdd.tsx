@@ -9,8 +9,8 @@ import {
 } from "@scf-core/structure.ts";
 
 /**
- * Junction quick-add — v1's link panel pattern, generalized. Any
- * link-subject entity (scene_character, motif_appearance, costume_scene…)
+ * Junction quick-add, generalised over the registry. Any link-subject
+ * entity (scene_character, motif_appearance, costume_scene…)
  * gets an inline add/remove editor from *either* end: the anchored side is
  * prefilled from the subject being viewed, the other side is a picker.
  * Junctions with extra reference ends or authored fields open the full

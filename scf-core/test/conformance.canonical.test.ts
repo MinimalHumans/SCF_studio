@@ -3,11 +3,9 @@
  * conformance.canonical.test.ts — the executable statement of SCF's
  * resolution semantics, run against the checked-in Hollow Creek fixture.
  *
- * Began as an assertion-for-assertion port of the v1 Python suite, which
- * was the correctness gate while two implementations existed. With v1
- * retired this suite IS the gate: every assertion here encodes a rule
- * from docs/conventions.md, and the fixture is built to exercise it.
- * Changing an assertion means changing the format — do it in the
+ * This suite IS the correctness gate: every assertion here encodes a
+ * rule from docs/conventions.md, and the fixture is built to exercise
+ * it. Changing an assertion means changing the format — do it in the
  * conventions document first.
  */
 
@@ -218,10 +216,9 @@ describe("Q13: media resolution", () => {
 describe("G4: location variant selection", () => {
   test("selects the night/storm kitchen variant, and reports what it "
      + "is wrong about", async () => {
-    // INVERTED IN 0.42, and the inversion is the point. This asserted
-    // an EMPTY mismatches list, which meant §12.17's `mismatches` shape
-    // was demonstrated by no artifact and no test — and the fourth
-    // reader run guessed a different shape and could not have known.
+    // A NON-EMPTY mismatches list, deliberately. An empty one leaves
+    // §12.17's `mismatches` SHAPE demonstrated by no artifact and no
+    // test, so a third party can only guess at it.
     //
     // Scene 12's kitchen dressing is now built for an autumn night and
     // reused in winter. It still wins on time of day and weather, so it
@@ -382,11 +379,9 @@ describe("fixture invariants", () => {
   });
 
   test("resolution agrees with §4.1, not with scene_number", async () => {
-    // The test that was missing. `resolution.sceneOrder` — which every
-    // position-dependent answer runs through — sorted by scene_number
-    // and then row id, the derivation §4.1 forbids in as many words.
-    // Nothing caught it because the fixture's three orders coincided;
-    // once they differed it disagreed on its first run.
+    // `resolution.sceneOrder` is what every position-dependent answer
+    // runs through, so this is where sorting by scene_number then row id
+    // — the derivation §4.1 forbids in as many words — has to be caught.
     const script = (await fx.ctx.exec(
       "SELECT s.id FROM scene s " +
       "LEFT JOIN (SELECT scene_id, MIN(line_order) p FROM screenplay_lines " +
@@ -401,12 +396,11 @@ describe("fixture invariants", () => {
   });
 
   test("the three orders are three DIFFERENT orders", async () => {
-    // The invariant that makes this fixture able to certify anything
-    // about §4.1. Until 0.17 screenplay order, scene-number order and
-    // row-id order coincided, so a reader doing the one thing §4.1
-    // explicitly forbids — ordering by scene_number alone — passed
-    // every blessed expectation. An independent implementation found
-    // that; nothing in this repository could have.
+    // The invariant that lets this fixture certify anything about §4.1.
+    // Where screenplay order, scene-number order and row-id order
+    // coincide, a reader doing the one thing §4.1 explicitly forbids —
+    // ordering by scene_number alone — passes every blessed
+    // expectation.
     const script = (await fx.ctx.exec(
       "SELECT s.id FROM scene s " +
       "LEFT JOIN (SELECT scene_id, MIN(line_order) p FROM screenplay_lines " +
@@ -450,8 +444,8 @@ describe("fixture invariants", () => {
   });
 
   test("scene numbers are stored as text (spec §4.2)", async () => {
-    // The column was INTEGER until 0.17, which left §4.2's grammar
-    // unexercised by the artifact that is supposed to demonstrate it.
+    // An INTEGER column leaves §4.2's grammar unexercised by the very
+    // artifact that is supposed to demonstrate it.
     const types = await fx.ctx.exec(
       "SELECT DISTINCT typeof(scene_number) AS t FROM scene");
     expect(types.map((r) => r["t"])).toEqual(["text"]);

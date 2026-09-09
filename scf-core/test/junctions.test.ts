@@ -46,8 +46,8 @@ describe("a junction's natural key is the rows it joins", () => {
 
 describe("the fixture", () => {
   test("ships with no duplicate links", async () => {
-    // It did not, when this check was written: two thematic connections
-    // had been added over pairs the fixture already carried.
+    // The fixture has carried duplicate thematic connections before —
+    // two added over pairs it already had.
     const registry = loadRegistry(JSON.parse(
       await readFile(REGISTRY_PATH, "utf8")) as RegistryJson);
     const db = openNodeDatabase(fileURLToPath(new URL(

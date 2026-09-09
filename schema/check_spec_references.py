@@ -90,9 +90,8 @@ REMOVED = {
     "asset_type",                #   ...
     "asset.file_path",           # removed in 2.8
     "file_path",                 #   ...
-    # Never existed at all: §12.13's cascade leaf until 0.44, and the
-    # reason this check learned to read bare names. The notes recording
-    # that name it, which is correct and must not fail the check.
+    # Never a registry entity: a cascade leaf §12.13 once named. The
+    # changelog records that, correctly, and must not fail the check.
     "scene_emotional_design",
     # The check's own subject, written in prose about the check.
     "entity.column",
@@ -138,12 +137,10 @@ def main() -> int:
         legal.update(c["name"] for c in table["columns"])
     legal.update(v["value"] for v in screenplay["lineTypeColumn"]["values"])
 
-    # A document in DOCS that is not on disk used to raise
-    # FileNotFoundError and print a traceback, which tells a reader of
-    # the CI log that the checker is broken rather than that a file is
-    # missing. It is a real failure — a document listed here and absent
-    # means either the list or the repository is wrong — so it fails,
-    # but it says which.
+    # A document in DOCS that is not on disk is a real failure — either
+    # the list or the repository is wrong — so it fails, but it SAYS
+    # which. An unhandled FileNotFoundError would tell a reader of the CI
+    # log that the checker is broken rather than that a file is missing.
     absent = [rel for rel in DOCS if not (ROOT / rel).exists()]
     if absent:
         print("[spec-refs] listed for checking and not in the repository:\n",

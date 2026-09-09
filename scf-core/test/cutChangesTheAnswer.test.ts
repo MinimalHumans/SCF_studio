@@ -7,16 +7,16 @@
  * it — a cut scene with a heading, a cut beat in the most heavily
  * asserted scene — and it passes.
  *
- * It has a mirror that nobody had written down: **cutting an existing
- * row MUST change the answer.** A rule that only ever adds rows nothing
- * looks at is satisfied by an implementation that ignores
- * `lifecycle_status` entirely.
+ * It has a mirror: **cutting an existing row MUST change the answer.**
+ * Stated alone, a rule that only ever adds rows nothing looks at is
+ * satisfied by an implementation that ignores `lifecycle_status`
+ * entirely.
  *
- * Five queries failed the mirror while passing the test as stated. Each
- * reached an entity THROUGH a junction in one SQL statement — Q04's cast
- * and props, Q03's costumes and motifs, Q02's costumes — and `rows()`,
- * which applies §6.6.1's filter, only covers what is fetched a table at
- * a time. Marking a character cut left them in Q04's cast.
+ * The queries at risk are the five reaching an entity THROUGH a junction
+ * in one SQL statement — Q04's cast and props, Q03's costumes and
+ * motifs, Q02's costumes. `rows()` applies §6.6.1's filter only to what
+ * is fetched a table at a time, so a join has to filter for itself or a
+ * cut character stays in Q04's cast.
  *
  * These tests mutate a COPY of the fixture in a temp file. The fixture
  * itself is a checksummed artifact and is opened read-only everywhere

@@ -265,12 +265,10 @@ export function Workbench(): JSX.Element {
  * request anywhere else, and that restriction is the point of the
  * prompt.
  *
- * "no folder" used to be a label describing a dead end. It is a button
- * now, because the dead end was never real: the platform will not walk
- * from a file to its parent, but it will happily confirm that a folder
- * the user names contains that file. This is the same gesture the
- * re-grant already is, and it sits in the same place for the same
- * reason.
+ * "no folder" is a BUTTON, not a label. The platform will not walk from
+ * a file to its parent, but it will confirm that a folder the user names
+ * contains that file — the same gesture as the re-grant, in the same
+ * place, for the same reason.
  */
 function RootStatus(): JSX.Element | null {
   const { projectRoot, rootPermission, rootTraversal, rootTraversalError,

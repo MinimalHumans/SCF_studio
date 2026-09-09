@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Spec §4.3 — the numbering policy, across schema 2.11's rename.
+ * Spec §4.3 — the numbering policy.
  *
- * `scene_numbering` governed act, sequence and scene numbers and shot
- * codes while being named after one of the four. 2.11 renamed it to
- * `numbering_policy`; 2.12 removed the old column.
+ * `numbering_policy` governs act, sequence and scene numbers and shot
+ * codes. (It carried the narrower name `scene_numbering` before 2.12.)
  *
  * What is worth testing here is the resolution of ABSENCE. The policy
  * decides whether a shot list already on paper gets renumbered, so a
@@ -98,9 +97,8 @@ describe("writing", () => {
   });
 
   test("writes one column, not two", async () => {
-    // 2.11 mirrored into the deprecated column. 2.12 removed both the
-    // column and the mirroring, so the format no longer stores this
-    // fact twice anywhere.
+    // The old column and its mirroring are gone as of 2.12, so the
+    // format does not store this fact twice anywhere.
     db = await fresh();
     const cols = (await db.exec("PRAGMA table_info(project)"))
       .map((r) => String(r["name"]));

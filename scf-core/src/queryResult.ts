@@ -12,13 +12,12 @@
  * This module lives in scf-core rather than beside the runners in the
  * app for that reason. The app renders; the core answers.
  *
- * THREE RULES MAKE A RESULT PORTABLE, and all three exist because an
- * independent implementation tripped over their absence:
+ * THREE RULES MAKE A RESULT PORTABLE:
  *
  *   Rows are referenced by `uuid`, never by row id. Row ids are local to
  *   a file (§6.2) and a writer may renumber them; a uuid survives export
- *   and re-import (§6.1). An expectation carrying `character #1` — as
- *   one blessed artifact did — is pinned to one file's accidents.
+ *   and re-import (§6.1). An expectation carrying `character #1` is
+ *   pinned to one file's accidents.
  *
  *   Volatile and framework columns are dropped: `id`, `created_at`,
  *   `updated_at`. They differ between two files that say the same thing,
@@ -60,17 +59,13 @@ export interface UuidLookup {
 /**
  * Every reference column an entity declares, as column → target entity.
  *
- * DERIVED FROM THE REGISTRY, never written by hand. The first version of
- * this module took a hand-written map per query and a hand-written list
- * of entities to index, and an independent implementation found the
- * result: `scene.location_id` was resolved in one query and silently
- * dropped in another, and two reference columns on the same motif row
- * were treated differently — because the maps disagreed and nothing
- * could notice.
+ * DERIVED FROM THE REGISTRY, never written by hand. A hand-written map
+ * per query drifts silently: `scene.location_id` resolved in one query
+ * and dropped in another, two reference columns on the same motif row
+ * treated differently, and nothing able to notice.
  *
- * §2.3 already says to prefer rules the registry implies over
- * hand-maintained lists. This is that rule applied to the module that
- * implements §12.1.2.
+ * §2.3 says to prefer rules the registry implies over hand-maintained
+ * lists. This is that rule applied to §12.1.2.
  */
 /**
  * Marks a column as a POLYMORPHIC reference in a reference map.
@@ -113,11 +108,10 @@ export async function uuidLookupForAll(
   for (const entity of registry.order) {
     targets.add(entity);
     for (const target of Object.values(referencesOf(registry, entity))) {
-      // POLYMORPHIC is a marker, not a table. It reached this set when
-      // the sentinel was introduced in 0.40, and every query since has
-      // issued a SELECT against a table named after a NUL byte and
-      // swallowed the error in the catch below. Harmless and wasteful,
-      // and it made the catch cover a case it was not written for.
+      // POLYMORPHIC is a marker, not a table. Left in this set it
+      // becomes a SELECT against a table named after a NUL byte, whose
+      // error the catch below swallows — wasteful, and it makes the
+      // catch cover a case it was not written for.
       if (target !== POLYMORPHIC) targets.add(target);
     }
   }
@@ -163,18 +157,16 @@ const empty = (v: unknown): boolean =>
  * in the reference map by `POLYMORPHIC`. The query lifts the resolved
  * target alongside the projected row (§12.11).
  *
- * THIS USED TO DROP EVERY COLUMN ENDING `_id` that carried no
- * reference, which is a different and much larger set. It deleted
- * `external_id` — a declared, authored field on ten entities — and
- * `clip.screenplay_line_start_id` and `_end_id`, which are ordinary
- * references whose target is a screenplay table rather than a registry
- * entity. Twelve legitimate columns, gone from every projected row.
+ * DROP BY DECLARATION, NEVER BY NAME. Dropping every column ending
+ * `_id` is a much larger set: it takes `external_id`, a declared and
+ * authored field on ten entities, and `clip.screenplay_line_start_id`
+ * and `_end_id`, ordinary references whose target is a screenplay table
+ * rather than a registry entity.
  *
- * No artifact could catch it. The fixture authors no `external_id` and
- * its `clip` table is empty, and §12.1.2 omits empty fields, so a
- * correct implementation and a data-losing one produce byte-identical
- * output on all sixteen published results. It took a reader
- * implementing from the specification to see it.
+ * No artifact catches that. The fixture authors no `external_id` and its
+ * `clip` table is empty, and §12.1.2 omits empty fields, so a correct
+ * implementation and a data-losing one produce byte-identical output on
+ * all sixteen published results.
  */
 export function projectRow(
     row: Row,

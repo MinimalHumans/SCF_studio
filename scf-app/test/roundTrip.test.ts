@@ -276,15 +276,14 @@ describe("the file stays valid across the cycle", () => {
     const after = await collectFindings(db.exec, registry);
     db.close();
 
-    // CHANGED IN 0.42. This asserted NO findings at all. The fixture
-    // now carries one — scene 17 has no screenplay heading, so §4.1's
-    // fallback is exercised by something — and what this test is
-    // actually about is that the ROUND TRIP changes nothing.
+    // The SAME finding set before and after, not "no findings": the
+    // fixture deliberately carries one (scene 17 has no screenplay
+    // heading, exercising §4.1's fallback), and what this test is about
+    // is that the ROUND TRIP changes nothing.
     //
-    // Asserting the same set before and after is the stronger check:
-    // it would catch an edit that introduced a finding AND one that
-    // silenced an existing one, and the old form could only catch the
-    // first.
+    // It is also the stronger check — it catches an edit that
+    // INTRODUCED a finding and one that SILENCED an existing one, where
+    // asserting zero catches only the first.
     expect(before.findings.map((f) => f.code))
       .toEqual(after.findings.map((f) => f.code));
     expect(before.findings.filter((f) => f.severity !== "info"))

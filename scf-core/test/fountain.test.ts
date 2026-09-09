@@ -2,7 +2,7 @@
 /**
  * fountain.test.ts — Stage 1 test suite.
  *
- * Three tiers, per the design doc's testing strategy:
+ * Three tiers:
  *  1. Spec unit tests — hand-verified behavior of the classifier's rules
  *     and meta extraction (cues, scene numbers, title page).
  *  2. Golden corpus harness — every corpus script's classification is
@@ -11,7 +11,8 @@
  *     private tier (gitignored, local-only) is tested when present.
  *  3. Property tests — round-trip byte stability, and classification
  *     invariance under BOM prepending and LF→CRLF conversion, on every
- *     corpus script (v1's _normalize_encoding wounds, made properties).
+ *     corpus script. Encoding normalisation is where this class of bug
+ *     lives, so it is asserted as a property rather than by example.
  */
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";

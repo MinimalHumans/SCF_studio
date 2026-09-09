@@ -16,8 +16,8 @@ const REGISTRY = fileURLToPath(new URL(
 describe("what a collapsed scene row says", () => {
   test("beats count as work, so a broken-down scene is not 'nothing'",
        () => {
-    // The row used to read "no coverage" whether or not the scene had
-    // been broken into beats, and the visibility toggle hid both alike.
+    // "no coverage" must distinguish a scene with no beats from one
+    // broken into beats, or the visibility toggle hides both alike.
     expect(summarize(2, 0)).toBe("2 beats, no coverage");
     expect(summarize(0, 0)).toBe("nothing yet");
   });

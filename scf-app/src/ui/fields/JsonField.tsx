@@ -4,7 +4,7 @@ import type { FieldDef } from "@scf-core/registry.ts";
 import type { SqlValue } from "@scf-core/db.ts";
 
 /**
- * JSON fields have known shapes documented in help_text (design doc):
+ * JSON fields have known shapes, documented in each field's help text:
  * string arrays (palette / material lists) get a chips editor, flat
  * objects of scalars (modulations / emotional_manifestations) get a
  * key-value grid, and anything else — or on demand — the raw-JSON escape

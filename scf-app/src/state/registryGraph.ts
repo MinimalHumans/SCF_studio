@@ -2,10 +2,10 @@
 /**
  * registryGraph.ts — derived views over registry.json.
  *
- * The reference graph (which entity fields point at which entities) drives
- * reverse links ("what points here") and subject-oriented navigation —
- * generically, the way v1's _get_relationship_data was per-case. Nothing
- * here hand-defines an entity.
+ * The reference graph (which entity fields point at which entities)
+ * drives reverse links ("what points here") and subject-oriented
+ * navigation, generically rather than case by case. Nothing here
+ * hand-defines an entity.
  */
 
 import type { EntityDef, Registry } from "@scf-core/registry.ts";

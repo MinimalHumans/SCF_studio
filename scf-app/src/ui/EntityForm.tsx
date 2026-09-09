@@ -16,14 +16,15 @@ import { Field } from "./fields/Field.tsx";
 /**
  * The form generator — one component tree driven entirely by the registry.
  * Nothing here is hand-built per entity: tabs come from FieldDef.tab,
- * inputs from the field-type -> component map, help text rendered inline
- * (v1 buried it in tooltips; it is a third of the format's documentation).
+ * inputs from the field-type -> component map, and help text is rendered
+ * INLINE rather than buried in a tooltip — it is a third of the format's
+ * documentation.
  *
  * The footer shows the row's identity. `uuid` is a framework column on
  * all 99 entities (conventions §5) and is what survives export and
- * re-import, but it is hidden from the field list, so until now the only
- * way to see one was to open the file in a SQL client. It is read-only
- * here — identity is minted, never typed — and one click copies it.
+ * re-import, but it is hidden from the field list, so this is the only
+ * place to see one short of a SQL client. Read-only — identity is
+ * minted, never typed — and one click copies it.
  */
 export function EntityForm(): JSX.Element | null {
   const { openRow, draft, setDraftValue, undoDraft, saveDraft, closeRow,

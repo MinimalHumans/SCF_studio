@@ -1,29 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * emit_normative_data.mjs — publish the two remaining normative facts
- * that lived only in TypeScript.
+ * emit_normative_data.mjs — publish the junction keys and the Q14
+ * rubrics as files.
  *
- * The second independent implementation could not comply with two MUSTs
- * for the same reason: the specification cited something that was never
- * published.
+ * Both are cited by MUSTs that a third party cannot otherwise satisfy:
  *
- *   §6.3  "The natural key for each of the thirteen link entities is
- *          stated by `junctionKeyFields()`" — a function, not an
- *          artifact. A third party cannot compute a natural key, so it
- *          cannot de-duplicate, merge or validate a junction.
+ *   §6.3  the natural key for each of the thirteen link entities. Cited
+ *         as `junctionKeyFields()` — a function, not an artifact — a
+ *         third party cannot compute a natural key, so it cannot
+ *         de-duplicate, merge or validate a junction.
  *
- *   §12.9  Q14 assesses a target query against a rubric. The section
- *          defined the envelope and the severity scale and nothing
- *          about what is assessed, so the reader implemented an
- *          invented rubric and correctly refused to claim anything for
- *          it.
+ *   §12.9 Q14 assesses a target query against a rubric. The section
+ *         defines the envelope and the severity scale; without the
+ *         rubric a reader can only invent one, and correctly refuse to
+ *         claim anything for it.
  *
  * Both are DERIVED facts, so both are emitted rather than written: the
  * junction keys from the registry's own reference declarations, the
- * rubrics from `QUERY_PATHS`. This is the third time this move has been
- * needed — after `finding-catalog.json` and `CASES.json` — and it is the
- * same lesson each time. If a MUST cites something, that something has
- * to be a file.
+ * rubrics from `QUERY_PATHS`. IF A MUST CITES SOMETHING, THAT SOMETHING
+ * HAS TO BE A FILE.
  *
  *   node --experimental-strip-types scripts/emit_normative_data.mjs
  *   node --experimental-strip-types scripts/emit_normative_data.mjs --check

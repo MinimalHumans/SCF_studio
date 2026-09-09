@@ -200,15 +200,12 @@ for (const q of queries) {
       // `media: voice_identity`, which is an asset intent rather than
       // an entity at all.
       //
-      // This read `step.entity` until 0.50. That field was replaced by
-      // `entities: string[]` in 0.38 and the generator was not
-      // followed through, so every row of every one of these tables
-      // published an empty cell for two years of revisions. It was
-      // invisible because `check-query-reference` compares this
-      // script's output against the file — both were wrong the same
-      // way, which is consistency rather than correctness. Hence the
-      // assertion below: the check this document needed was never
-      // going to come from diffing it against its own generator.
+      // Read `label`, never a field that may have been renamed out
+      // from under this script. `check-query-reference` compares this
+      // generator's output against the published file, so a generator
+      // reading a field that no longer exists publishes empty cells and
+      // the check still passes — consistency rather than correctness.
+      // Hence the assertion below.
       const cell = step.label;
       if (typeof cell !== "string" || cell.length === 0) {
         throw new Error(

@@ -44,9 +44,8 @@ import { fileURLToPath } from "node:url";
 //
 // Node REFUSES to strip types for files under node_modules
 // (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING). Importing "../src/*.ts"
-// works when this script is run from a checkout and fails the moment the
-// package is installed, which is the only way anyone else will ever run
-// it. `npx scf-check` was broken by exactly this.
+// works from a checkout and fails the moment the package is installed,
+// which is the only way anyone else will run it.
 //
 // Second, resolving through the package's own `exports` means this CLI
 // consumes the library the way a stranger does. If it ever needs

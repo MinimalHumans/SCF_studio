@@ -119,7 +119,7 @@ describe("versions: snapshot and diff", () => {
     expect(clean.added).toBe(0);
     expect(clean.removed).toBe(0);
 
-    // Edit one line, add one line — diff reports it against v1.
+    // Edit one line, add one line — the diff must report both.
     await db.exec(
       "UPDATE screenplay_lines SET content = 'You actually came back.' " +
       "WHERE uuid = 'line-4'");

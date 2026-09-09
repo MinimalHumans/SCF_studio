@@ -452,6 +452,66 @@ Hollow Creek on first commit and silently changed the subject of every
 
 ---
 
+## 8A. Source comments
+
+A comment is read by someone who has never seen this repository before.
+It should tell them what the code guarantees and what would go wrong
+without it — not what the code once did.
+
+**The shape of a module header.** What the module is, what it
+guarantees, and the one or two non-obvious constraints a reader would
+otherwise trip over. Ten lines is a reasonable ceiling. Where the format
+already states a rule, cite it (`spec §6.6.1`, or a numbered section of
+this document by name) rather than restating it: a restatement is a
+second description, and this document exists because those drift.
+
+**State rules, not history.** The reasoning behind a decision is worth
+keeping; the narrative of arriving at it is not. Prefer the standing
+form:
+
+> An INNER JOIN on the junction would drop a prop just created from the
+> very filter it was created for.
+
+over the retrospective one:
+
+> It used to INNER JOIN the junction, which meant a prop you had just
+> created was missing from the filter, with no way to tell whether it
+> had been made at all.
+
+Both carry the same warning. Only the first still reads correctly to
+someone who never saw the earlier version, and only the first survives
+the next change to the surrounding code.
+
+**Keep the trap, drop the postmortem.** Where a failure is genuinely
+non-obvious — a substring that silently matches a shorter name, a
+projection rule that deletes declared fields, an effect the undo history
+cannot see — say so in a clause. That is the part a reader needs. What
+they do not need is which release it was found in, which reader run
+reported it, or how many tests passed while it was wrong.
+
+**Do not cite what is not in the repository.** A reference to a design
+document, a round number, or a retired implementation sends a reader
+looking for something they cannot open. Cite a spec section, a file in
+`docs/`, or nothing.
+
+**Comments are not versioned in the source.** Git holds the history, the
+schema changelog holds format changes, and `docs/` holds the design
+record. A comment that says "changed in 0.44" is duplicating one of the
+three, and will be wrong before they are.
+
+**In tests**, the comment says what property is being pinned and why it
+is worth pinning — including where a weaker or inverted assertion would
+still pass. That is the rationale a future reader needs before touching
+the assertion. It does not need the incident that prompted it.
+
+**Never touched by a comment pass:** the SPDX header on line 1 of every
+file; pragma comments (`eslint-disable-next-line`, `# noqa`), which are
+code; and comment-shaped text inside string literals — the `--` header
+in `emit_schema_sql.mjs` and the markdown in the `emit_*_reference.mjs`
+generators become published, checksummed artifacts.
+
+---
+
 ## 9. Assets and addressing
 
 `spec §8`. Implemented as of schema 2.8, except layers.

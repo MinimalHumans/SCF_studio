@@ -269,7 +269,7 @@ describe("scene renumbering", () => {
   test("fixed: an imported production's numbering is never touched",
        async () => {
     // "12A" is the case the widening exists for: an A-page in an
-    // imported locked script, which parseInt used to truncate to 12.
+    // imported locked script, which parseInt truncates to 12.
     await db.exec(
       "UPDATE scene SET scene_number = '12' WHERE id = 1");
     await db.exec(
@@ -507,10 +507,10 @@ describe("SCENE_ORDER_BY matches scenePositions", () => {
 /**
  * Deleting the scene an act starts at must not take the act with it.
  *
- * The act row was never deleted — it pointed at a scene that no longer
- * existed, so it stopped appearing in the derived structure entirely and
- * every scene it held fell out of any act, taking the Shoot tab's
- * grouping with it. Indistinguishable from deletion, from the outside.
+ * The act row survives, but pointing at a scene that no longer exists it
+ * stops appearing in the derived structure entirely, and every scene it
+ * held falls out of any act. Indistinguishable from deletion, from the
+ * outside.
  */
 describe("deleting a boundary scene", () => {
   let db: ReturnType<typeof openNodeDatabase>;

@@ -9,11 +9,9 @@
  * NOT rely on it. To read a scene's text: find the heading line linked
  * to that scene, and take every line up to the next heading.
  *
- * This lived only in `scf-app/src/editor/shootOps.ts` until 0.49, where
- * it served the Shoot tab's read-only scene spine. §12.17 now gives Q04
- * a `screenplay` member, which needs the same derivation — so it moves
- * here and the app imports it. One rule described in two places drifts;
- * this one describes a MUST.
+ * It lives in scf-core, not the app: the Shoot tab's scene spine and
+ * §12.17's `screenplay` member on Q04 need the same derivation, and one
+ * rule described in two places drifts. This one describes a MUST.
  */
 
 import type { Row, SqlExec } from "../db.ts";

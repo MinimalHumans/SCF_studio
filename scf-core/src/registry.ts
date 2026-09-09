@@ -6,7 +6,7 @@
  * registry.json is a checked-in build artifact emitted by
  * scripts/generate_registry_json.py. This module defines the types and the
  * lookup helpers the semantics layer needs. Nothing here hand-defines an
- * entity (design doc, "scf-core as its own package", point 1).
+ * entity.
  */
 
 export type FieldType =

@@ -1,20 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * canonicalQueries.ts — normative result builders. Spec §12.2, §12.3.
+ * canonicalQueries.ts — normative result builders for all sixteen
+ * canonical queries. Spec §12.
  *
- * Two queries so far, chosen because they stress different machinery: if
- * one envelope and one projection rule serve both, they will probably
- * serve the other fourteen.
+ * One envelope (§12.1.1) and one projection rule (§12.1.2) serve every
+ * query, which is what makes a result portable between them.
  *
- *   Q05 Voice direction — position pattern 2 (persistence, §4.5), a
- *       baseline that may be absent, and a merge over a JSON column.
- *   Q07 Look resolution — the direction cascade (§7): a `refines`
- *       closure, one row per entity, and a leaf that changes when a
- *       shot is supplied.
- *
- * These wrap the resolvers rather than reimplementing them. A second
- * description of "what is in force at scene 12" is a second answer, and
- * the format has already paid for that mistake once.
+ * These WRAP the resolvers rather than reimplementing them. A second
+ * description of "what is in force at scene 12" is a second answer.
  */
 
 import type { ScfContext } from "./resolution.ts";
@@ -57,8 +50,7 @@ export interface Q05Result {
 // No hand-written reference maps. `referencesOf(registry, entity)`
 // derives them from the registry's own `referenceEntity` declarations,
 // and `uuidLookupForAll` indexes every entity any of them can point at.
-// The previous version maintained both by hand per query, and the maps
-// disagreed — see referencesOf's comment.
+// Hand-maintained per-query maps drift apart — see referencesOf.
 const refs = (ctx: ScfContext, entity: string): Record<string, string> =>
   referencesOf(ctx.registry, entity);
 
@@ -184,14 +176,12 @@ async function directionResult(
 // ---------------------------------------------------------------------------
 // Composition — Q03 and Q12
 //
-// Q05 and Q07 could wrap `resolveDescription` and `resolveDirection`
-// because the composing already lived in the core. Q03 and Q12 composed
-// in the app's runner, which meant a normative result would have had to
-// re-derive "who is present at a position and what is true of them" a
-// second time. That is the failure this project keeps designing against,
-// so the composition moved here instead: the core composes ROWS, the
-// runner renders them, and the result projects them. One derivation,
-// two consumers.
+// Q05 and Q07 wrap `resolveDescription` and `resolveDirection`, which
+// already compose in the core. Q03 and Q12 compose HERE rather than in
+// the app's runner, so that "who is present at a position and what is
+// true of them" is derived once: the core composes ROWS, the runner
+// renders them, the result projects them. One derivation, two
+// consumers.
 // ---------------------------------------------------------------------------
 
 import { q } from "./db.ts";
@@ -441,11 +431,8 @@ export interface Q13Reference {
 export interface Q13Result {
   /**
    * The subject's KIND — "character", "location", "prop" — not its uuid.
-   *
-   * Named `subject` until 0.41, four lines from an envelope whose
-   * `subject` is a uuid (§12.1.1). One key, two meanings, in one
-   * document: a reader implementing from §12.8 read it as the uuid,
-   * caught it, and said `subjectKind` would have cost nothing.
+   * Named `subjectKind` and not `subject` because the envelope's
+   * `subject` IS a uuid (§12.1.1), four lines away.
    *
    * It stays in the body rather than moving wholly to the envelope
    * because §12.16 nests this result WITHOUT its envelope, and the
@@ -485,11 +472,10 @@ export async function q13Result(
   const refs = await mediaReferences(media, locate);
 
   // `subjectType` and `intent` belong in the ENVELOPE, not only in the
-  // body. §12.1.1 says parameters record what was asked so a result is
-  // self-describing, and both were asked and both change the answer.
-  // Omitting `intent` was the sharper of the two: it is a literal that
-  // also appears in the RESULT, so a third party reproducing this
-  // artifact had to read the answer in order to learn the question.
+  // body: §12.1.1 says parameters record what was asked, and both were
+  // asked and both change the answer. `intent` especially — it is a
+  // literal that also appears in the RESULT, so leaving it out of the
+  // envelope means reading the answer to learn the question.
   return envelope("Q13", ctx.registry, {
     subjectType: subject, subject: subjectUuid,
     intent, scene: sceneUuid, shot: shotUuid,
@@ -498,11 +484,10 @@ export async function q13Result(
     intent,
     trail: media.trail,
     references: refs.references.map((r) => ({
-      // The uuid comes from the reference itself, never from looking its
-      // row id up in a table. That lookup was the defect: an anchor's
-      // row id resolved against `asset` returned an unrelated asset that
-      // happened to share it, and produced a well-formed uuid, so every
-      // portability test passed.
+      // The uuid comes from the reference itself, never from looking
+      // its row id up in a table. An anchor's row id resolved against
+      // `asset` returns an unrelated asset sharing that id — and a
+      // well-formed uuid, so portability tests pass anyway.
       uuid: r.uuid,
       anchorName: r.anchorName,
       name: r.name,
@@ -878,19 +863,15 @@ export async function q11Result(
 /**
  * The leaf of Q11's emotional cascade.
  *
- * This was `scene_emotional_design` until 0.44 — a name that is not a
- * registry entity and never was. The string occurred exactly twice in
- * the whole project, here and in §12.13, and matched nothing in the
- * registry, the DDL, the generated references or the fixture.
+ * MUST BE A REGISTRY ENTITY NAME. A leaf naming nothing — as
+ * `scene_emotional_design` did, in this file and in §12.13 and nowhere
+ * else — makes `emotionalCascade` `[]` for every SCF file that could
+ * ever exist, and the blessed result then pins the empty array as
+ * correct. The specification and the artifact agree with each other and
+ * neither agrees with the schema.
  *
- * So `emotionalCascade` was `[]` for every SCF file that could ever
- * exist, and `Q11.result.json` blessed the empty array — which made the
- * test pinning §12.13 assert that the empty answer was correct. The
- * specification and the artifact agreed with each other and neither
- * agreed with the schema.
- *
- * `scene_emotional_target` is the entity, and it declares
- * `refines: ["project_tone"]`, which is the cascade §12.13 describes.
+ * `scene_emotional_target` declares `refines: ["project_tone"]`, which
+ * is the cascade §12.13 describes.
  */
 export const Q11_LEAF = "scene_emotional_target";
 
@@ -907,7 +888,7 @@ export const Q11_LEAF = "scene_emotional_target";
  * describes, and a provenance trail that silently omitted a note would
  * be worse than one that included a doubtful one.
  *
- * Moved into the core in 0.27: Q15 is normative, so its matcher is too.
+ * It lives in the core because Q15 is normative, so its matcher is too.
  * It had lived in the app, which meant an independent implementation had
  * no way to know which conventions counted.
  */
@@ -1282,12 +1263,12 @@ export async function q04Result(
   // Lineage is DERIVED from span boundaries, not read from
   // `scene_sequence`.
   //
-  // It was read from `scene_sequence` until 0.38, which made this
-  // normative query answer from a table §5.4 explicitly permits to be
-  // STALE — "the boundary is the truth and those rows are its shadow;
-  // they MAY be stale between commits". A query that reads the shadow
-  // can return a lineage the file's own boundaries contradict, and §3.1
-  // forbids treating a stored derived fact as truth everywhere else.
+  // Reading `scene_sequence` would answer a NORMATIVE query from a table
+  // §5.4 explicitly permits to be STALE — "the boundary is the truth and
+  // those rows are its shadow; they MAY be stale between commits". A
+  // query reading the shadow can return a lineage the file's own
+  // boundaries contradict, and §3.1 forbids treating a stored derived
+  // fact as truth everywhere else.
   //
   // The shadow rows stay: an editor materialises them at commit and
   // `structure.shadow_row_unexplained` reports the ones no boundary

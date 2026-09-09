@@ -55,10 +55,10 @@ export function StructureView(): JSX.Element {
     await exec(
       `UPDATE ${table} SET start_scene_id = ?, ` +
       "updated_at = datetime('now') WHERE id = ?", [sceneId, id]);
-    // Moving a boundary changes the derived order, so the numbers change
-    // with it. This used to wait for the next SCRIPT commit, which meant
-    // the tab you moved the boundary in showed stale numbers until you
-    // went and typed something.
+    // Moving a boundary changes the derived order, so the numbers are
+    // recomputed here rather than at the next SCRIPT commit — otherwise
+    // the tab the boundary was moved in shows stale numbers until
+    // someone goes and types something.
     await renumberSpans(exec);
     useStore.setState((s) => ({ revision: s.revision + 1 }));
   };

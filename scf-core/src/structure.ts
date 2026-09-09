@@ -4,18 +4,16 @@
  * order, derived from a single anchor each.
  *
  * An act BEGINS at a scene and runs until the next act begins. Nothing
- * stores an end. That one choice is what makes the model safe:
- * overlaps and gaps are impossible to express, a scene inserted mid-act
- * joins it automatically, and there is no end anchor to drift out of
- * sync when scenes move. The stored fact is the boundary; membership is
- * a view over it, so a file carrying `act.start_scene_id` plus the
- * scene order is complete — nothing here needs writing back.
+ * stores an end, which is what makes the model safe: overlaps and gaps
+ * are inexpressible, a scene inserted mid-act joins it automatically,
+ * and there is no end anchor to drift. The boundary is the stored fact;
+ * membership is a view over it, so `act.start_scene_id` plus the scene
+ * order is a complete description — nothing here writes back.
  *
- * The price, accepted deliberately: a span cannot be non-contiguous, so
- * a cross-cut sequence interleaved with another cannot be expressed. If
- * that requirement ever arrives, enumerated membership is the only
- * model that supports it and this one has to be replaced rather than
- * patched.
+ * Accepted limitation: a span cannot be non-contiguous, so an
+ * interleaved cross-cut sequence is inexpressible. Supporting one needs
+ * enumerated membership, which means replacing this model rather than
+ * patching it.
  *
  * Everything here is pure: rows in, structure out, no SQL.
  */
@@ -83,9 +81,8 @@ const num = (v: unknown): number | null =>
   v === null || v === undefined || v === "" ? null : Number(v);
 
 /**
- * A scene number is a LABEL (spec §4.2), so it is carried as written.
- * Coercing it with Number() was correct only while the grammar was bare
- * integers; `12A` came through as NaN.
+ * A scene number is a LABEL (spec §4.2), carried as written. Not
+ * coerced with Number(): `12A` is a valid label and would become NaN.
  */
 const label = (v: unknown): string | null =>
   v === null || v === undefined || String(v).trim() === ""
@@ -95,13 +92,11 @@ const label = (v: unknown): string | null =>
  * Story order.
  *
  * When a screenplay exists, the SCRIPT is the order — `orderHint` maps a
- * scene id to the position of the heading that carries it. Falling back
- * to scene_number-then-id is only right for a project that has not been
- * written yet, and relying on it alone was actively wrong: a blank-written
- * project numbers nothing, so order became INSERTION order, and a scene
- * added in the middle of act one sorted to the end of the film. Moving a
- * scene had the same effect in reverse — the script changed and every
- * derived view kept the old order, because nothing it read had moved.
+ * scene id to the position of the heading that carries it. The
+ * scene_number-then-id fallback is only correct for a project not yet
+ * written: a blank-written project numbers nothing, so that path
+ * degrades to insertion order, and moving a scene changes no derived
+ * view because nothing it reads has moved.
  *
  * Scenes with no heading (outlined, not yet written) keep the fallback
  * and sort after everything the script places, which is where an
@@ -135,11 +130,10 @@ export function scenePositions(
  * straight from a query rather than through the derivation.
  *
  * Same precedence, deliberately: script position first, then stored
- * number, then id. Ordering by `scene_number` alone was wrong in both
- * directions — a blank-written project has no numbers and fell back to
- * insertion order, and a project with `numbering_policy = 'fixed'` keeps
- * numbers that no longer track the page, so a picker sorted by them
- * showed a different film from the one in the editor.
+ * number, then id. `scene_number` alone is wrong in both directions — a
+ * blank-written project has no numbers, and under
+ * `numbering_policy = 'fixed'` the numbers stop tracking the page, so a
+ * picker sorted by them shows a different film from the editor.
  *
  * Use as: `SELECT s.* FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`.
  * `storyOrder` below is the general form: anything holding a scene
@@ -292,10 +286,9 @@ export interface OutlineGroup {
  * Acts and sequences are INDEPENDENT spans, not a hierarchy: a sequence
  * may begin in one act and end in another, which is legal and
  * deliberately unrestricted. Rendering them as nested therefore needs
- * care — a naive "sequences whose start falls in this act" grouping
- * draws a crossing sequence's later scenes under the wrong act AND
- * again under the right one, which is how the demo came to show scene
- * 19 twice.
+ * care — grouping by "sequences whose start falls in this act" draws a
+ * crossing sequence's later scenes under the wrong act AND again under
+ * the right one, so a scene appears twice.
  *
  * Grouping by run instead means a crossing sequence appears in both
  * acts, as the part of it that belongs there, flagged so a renderer can
@@ -348,14 +341,12 @@ export function sequenceOf(structure: Structure,
 /**
  * Scenes the screenplay does not contain.
  *
- * The entity survives being cut from the script by design, but it then
+ * The entity survives being cut from the script by design, but then
  * holds no position — no number, no act, no place in any outline. That
- * is a state worth SEEING rather than a state worth writing: `status` is
- * authored (outline / draft / revised / locked / cut), and stamping
- * "cut" over it on a commit would destroy what the author put there,
- * with nowhere to remember it for the trip back. So orphanhood is
- * derived here and badged, and marking a scene `cut` stays the author's
- * own act.
+ * is a state worth SEEING rather than writing: `status` is authored
+ * (outline / draft / revised / locked / cut), and stamping "cut" over it
+ * on commit would destroy what the author put there. So orphanhood is
+ * derived here and badged; marking a scene `cut` stays the author's act.
  *
  * Only meaningful once a screenplay exists: in a project being outlined,
  * every scene is "not in the script" and saying so is noise. An empty
@@ -381,12 +372,9 @@ export function structureFindings(
       if (orderHint.has(id)) continue;
       out.push({ level: "info", code: "not-in-script", entity: "scene",
         rowId: id,
-        // "no number" was wrong: a scene not in the script can carry a
-        // scene_number perfectly well — the fixture's scene 17 does.
-        // What it has no STORY POSITION, which is a different thing and
-        // is what §4.1's fallback exists for. The message went four
-        // years without being read because nothing in the fixture
-        // produced it until 0.42.
+        // A scene absent from the script can still carry a scene_number
+        // — the fixture's scene 17 does. What it lacks is a STORY
+        // POSITION, which is what §4.1's fallback exists for.
         message: `${nameById.get(id) ?? "scene"} has no heading in the ` +
                  "screenplay, so it has no story position and belongs " +
                  "to no act. It sorts after every scene that does " +
@@ -432,18 +420,13 @@ export function structureFindings(
 
   // A sequence whose SPAN crosses an act boundary.
   //
-  // This tested the start scene only until 0.44 — whether the stored
-  // `act_id` matched the act derived for the sequence's first scene —
-  // which is a different condition from the one the catalog declares
-  // ("Sequence crosses an act boundary") and, worse, is the comparison
-  // §5.3 explicitly calls incorrect: "Grouping by 'sequences whose
-  // start falls in this act' is incorrect."
-  //
-  // So the code never fired on the conformance fixture even though the
-  // fixture contains a crossing. "The Reckoning" is filed under act 2,
-  // starts in act 2 — matching, so the old check said nothing — and
-  // runs on into act 3. The fifth reader run found it by deriving span
-  // membership per §5.1 rather than by trusting the start.
+  // Membership is derived per §5.1 and every scene in the span tested.
+  // Testing the START SCENE alone — whether the stored `act_id` matches
+  // the act derived for the sequence's first scene — is a different
+  // condition, and is the comparison §5.3 explicitly calls incorrect:
+  // "Grouping by 'sequences whose start falls in this act' is
+  // incorrect." It also misses the fixture's own crossing, which is
+  // filed under act 2, starts in act 2, and runs on into act 3.
   //
   // §5.3 says a crossing is LEGAL and MUST NOT be rejected, which is
   // why the catalog rates it `info`: it is a note to whoever presents

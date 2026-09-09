@@ -10,9 +10,9 @@ interface Hit {
 }
 
 /**
- * Client-side search over every entity's name field (v1's server-rendered
- * search does not port). LIKE per table is plenty at this scale; FTS is
- * the upgrade path if a real project ever makes it slow.
+ * Client-side search over every entity's name field. LIKE per table is
+ * plenty at this scale; FTS is the upgrade path if a real project ever
+ * makes it slow.
  */
 export function SearchBox(): JSX.Element {
   const [query, setQuery] = useState("");

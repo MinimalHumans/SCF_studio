@@ -78,8 +78,7 @@ describe("acts and sequences are independent", () => {
     [seq(10, "Sequence 1", 100), seq(11, "The Siege", 105)]);
 
   test("a scene can be in an act with no sequence at all", () => {
-    // The original complaint: an act used to be unreachable without
-    // first inventing a sequence.
+    // An act must be reachable without first inventing a sequence.
     expect(actOf(structure, 104)?.name).toBe("Act II");
     expect(sequenceOf(structure, 104)?.name).toBe("Sequence 1");
     const noSeq = deriveStructure(scenes, [act(1, "Act I", 100)], []);
@@ -135,17 +134,13 @@ describe("findings", () => {
   });
 
   test("a sequence whose span crosses an act boundary is reported", () => {
-    // REWRITTEN IN 0.44. This asserted something else entirely: that a
-    // stored `act_id` disagreeing with the act derived for the
-    // sequence's FIRST scene was reported. That is not what the catalog
-    // declares ("Sequence crosses an act boundary"), and comparing on
-    // the start is the very thing §5.3 calls incorrect.
+    // The property is the one the catalog declares — "Sequence crosses
+    // an act boundary" — derived from span membership per §5.1.
     //
-    // The old check never fired on the conformance fixture even though
-    // the fixture contains a crossing, because the crossing sequence's
-    // start does agree with its stored act. A reader deriving span
-    // membership per §5.1 found it; this repository's own test suite
-    // had been asserting the wrong property for four revisions.
+    // NOT "a stored `act_id` disagrees with the act derived for the
+    // sequence's FIRST scene": comparing on the start is the very thing
+    // §5.3 calls incorrect, and it never fires on this fixture, whose
+    // crossing sequence starts in the act it is filed under.
     const acts = [act(1, "Act I", 100), act(2, "Act II", 105)];
     const seqs = [seq(10, "The Siege", 103, 1)];   // starts in I, runs into II
     const structure = deriveStructure(scenes, acts, seqs);
@@ -238,11 +233,11 @@ describe("acts and sequences are independent spans, not a hierarchy", () => {
 /**
  * Story order comes from the SCRIPT when one exists.
  *
- * Relying on scene_number-then-id alone was actively wrong twice over:
- * a blank-written project numbers nothing, so order collapsed to
- * INSERTION order and a scene added mid-act sorted to the end of the
- * film; and moving a scene changed the script while every derived view
- * kept the old order, because nothing it read had moved.
+ * scene_number-then-id alone is wrong twice over: a blank-written
+ * project numbers nothing, so order collapses to INSERTION order and a
+ * scene added mid-act sorts to the end of the film; and moving a scene
+ * changes the script while every derived view keeps the old order,
+ * because nothing it reads has moved.
  */
 describe("scene order from the screenplay", () => {
   const scenes = [

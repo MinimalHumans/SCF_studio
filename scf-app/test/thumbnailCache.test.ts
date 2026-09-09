@@ -7,8 +7,8 @@
  * are silent: a resolution held across a folder being attached leaves
  * every asset reading `unaddressed` forever, and a thumbnail held
  * across a file being edited shows the old picture indefinitely. Or it
- * can be too shy, and rebuild work it already has — which is the bug
- * this module was written to fix.
+ * can be too shy, and rebuild work it already has, which is what the
+ * module exists to avoid.
  *
  * No view is imported (the app rule: anything under ui/ spawns the SQL
  * worker). `indexedDB` is absent here, so every persistence path throws

@@ -85,7 +85,7 @@ function SelectField({ def, value, onChange }: FieldProps): JSX.Element {
   );
 }
 
-/** Stored as comma-separated text, as in v1. */
+/** Stored as comma-separated text. */
 function MultiselectField({ def, value, onChange }: FieldProps):
     JSX.Element {
   const selected = new Set(

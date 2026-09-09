@@ -5,13 +5,13 @@
  * THIS IS THE PUBLIC SURFACE, and it is an explicit list rather than a
  * barrel of `export *`.
  *
- * It was twenty-six `export *` lines until 0.34, which meant the package
- * had no stated surface at all: every helper written for internal use
- * was exported by accident, and nothing distinguished a name meant for
- * consumers from one that happened to be reachable. That costs nothing
- * while the package is unpublished and becomes a compatibility
- * obligation the moment somebody installs it, because a name a consumer
- * CAN import is a name they WILL import.
+ * A barrel of `export *` gives the package no stated surface at all:
+ * every helper written for internal use is exported by accident, and
+ * nothing distinguishes a name meant for consumers from one that
+ * happens to be reachable. That costs nothing while the package is
+ * unpublished and becomes a compatibility obligation the moment
+ * somebody installs it, because a name a consumer CAN import is a name
+ * they WILL import.
  *
  * WHAT IS HERE, AND WHY THESE.
  *
@@ -27,8 +27,8 @@
  * Four modules are editor tooling rather than the format, and appear in
  * no conformance role, no query result and no published artifact:
  *
- *   assetIndex   browsing, facets and the derived path tree (P4)
- *   preview      display tiers for the editor's preview pane (P5)
+ *   assetIndex   browsing, facets and the derived path tree
+ *   preview      display tiers for the editor's preview pane
  *   assetImport  import candidate plans and relink plans
  *   bundling     bundle mutation helpers
  *

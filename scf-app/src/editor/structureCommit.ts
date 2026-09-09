@@ -2,10 +2,10 @@
 /**
  * structureCommit.ts — Fountain sections become acts and sequences.
  *
- * `# ACT II` and `## SEQUENCE 6 — The Siege` are already tokenized,
- * stored, and round-tripped byte-stable; they simply never became
- * entities. This is the same deal headings have with scenes: the author
- * literally typed it, so creating what they named is the feature.
+ * `# ACT II` and `## SEQUENCE 6 — The Siege` are tokenized, stored and
+ * round-tripped byte-stable, and here they become entities. Same deal
+ * headings have with scenes: the author literally typed it, so creating
+ * what they named is the feature.
  *
  * A section anchors the span to THE NEXT SCENE HEADING BELOW IT. That is
  * the only fact stored — no end, no per-scene rows — so acts cannot
@@ -78,10 +78,9 @@ function writeRef(row: ScreenplayRow, ref: StructureRef): void {
 /**
  * Act and sequence numbers follow their boundaries.
  *
- * Exported because the Structure tab moves boundaries too, and used to
- * write `start_scene_id` and stop — so dragging a boundary there left
- * every number stale until the next SCRIPT commit, which is a strange
- * thing to have to know. Both callers run the same pass now.
+ * Exported because the Structure tab moves boundaries too: writing
+ * `start_scene_id` and stopping there would leave every number stale
+ * until the next SCRIPT commit. Both callers run the same pass.
  *
  * Unlike scene numbers these are not gated on the numbering mode: an act
  * number is a structural label the app has always owned, and no crew
@@ -116,13 +115,12 @@ export async function renumberSpans(
   }
 
   /*
-   * `sequence.act_id` was READ at commit and never written, so it sat
-   * null on every sequence the app has ever made — a stored field that
-   * consumers would reasonably trust and that has been empty all along.
-   * Act membership is derived from the boundaries, so it can simply be
-   * written down: a sequence belongs to the act its START scene falls
-   * in, which is also how a sequence crossing a boundary is attributed
-   * everywhere else.
+   * `sequence.act_id` is WRITTEN here, not merely read. Left unwritten
+   * it sits null on every sequence the app makes — a stored field a
+   * consumer would reasonably trust, empty. Act membership is derived
+   * from the boundaries, so it can simply be recorded: a sequence
+   * belongs to the act its START scene falls in, which is how a
+   * sequence crossing a boundary is attributed everywhere else.
    */
   for (const span of derived.sequences) {
     const actId = derived.actOfScene.get(span.startSceneId) ?? null;
@@ -136,12 +134,11 @@ export async function renumberSpans(
  * Move an act or sequence boundary off a scene that is leaving.
  *
  * Acts and sequences are anchored to a START SCENE, so moving the scene
- * that anchors one drags the whole span with it: dropping the first
- * scene of act one into act two made act one start there too, put act
- * two ahead of it, and left every scene in between belonging to no act.
- * The model was behaving correctly and the result was nonsense, because
- * moving a scene BETWEEN acts should change the scene's act, not the
- * act's position.
+ * that anchors one would otherwise drag the whole span with it —
+ * dropping act one's first scene into act two makes act one start
+ * there, puts act two ahead of it, and leaves everything between
+ * belonging to no act. Moving a scene BETWEEN acts must change the
+ * scene's act, not the act's position.
  *
  * So a span whose anchor moves re-anchors to the scene that now sits
  * where the old one did — the scene that follows it in the order BEFORE
@@ -374,19 +371,18 @@ export async function commitStructure(
   /*
    * SCENE numbers follow the script's order.
    *
-   * They are labels for a position, not the position itself — which is
-   * why they can be recomputed at all. Before this, a scene moved in the
-   * script kept its old number, so the rail, the outlines and every
-   * "sc 12 — …" label disagreed with the page.
+   * They are labels for a position, not the position itself, which is
+   * why they can be recomputed at all. Left alone, a scene moved in the
+   * script keeps its old number and every "sc 12 — …" label disagrees
+   * with the page.
    *
    * NUMBERING MODE is the gate. `derived` keeps them true while the
    * script is live; `fixed` never touches them, which is what an
-   * imported script needs — a production's own numbering is data, may be
-   * gapped or out of sequence, and renumbering it on the first commit
-   * would destroy it silently. Imports set `fixed`; a blank screenplay
-   * gets `derived`. This is the smallest piece of production LOCKING and
-   * it could not be deferred, because scene renumbering is meaningless
-   * without it.
+   * imported script needs — a production's own numbering is data, may
+   * be gapped or out of sequence, and renumbering it on the first
+   * commit would destroy it silently. Imports set `fixed`; a blank
+   * screenplay gets `derived`. This is the smallest piece of production
+   * LOCKING, and scene renumbering is meaningless without it.
    *
    * A scene with no heading in the script has no position, so its number
    * is cleared rather than left pointing at a place it no longer holds.
@@ -417,10 +413,9 @@ export async function commitStructure(
      *
      * shots.ts protects a stored code because `42A` is an identifier a
      * crew holds on paper — but nobody holds paper on an unlocked
-     * script, and `42A` sitting in a scene now numbered 43 is not a
-     * stable identifier, it is a stale one. The same flag governs both:
-     * `fixed` freezes scene numbers and shot codes together, which is
-     * exactly the state a distributed shot list needs.
+     * script, and `42A` in a scene now numbered 43 is stale rather than
+     * stable. One flag governs both: `fixed` freezes scene numbers and
+     * shot codes together, which is what a distributed shot list needs.
      */
     for (const [i, scene] of positioned.entries()) {
       const shots = await exec(

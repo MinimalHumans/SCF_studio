@@ -48,11 +48,10 @@ describe("suggestSaveAsName", () => {
 });
 
 /**
- * Every export used to land as the constant "screenplay.fountain",
- * regardless of project — which is how an export can end up beside, or
- * on top of, the file it was imported from. (The import itself cannot
- * write: it reads through a plain file input, which hands the page a
- * read-only snapshot and no handle back to the disk.)
+ * A constant "screenplay.fountain" for every project is how an export
+ * ends up beside, or on top of, the file it was imported from. (The
+ * import itself cannot write: it reads through a plain file input, which
+ * hands the page a read-only snapshot and no handle back to the disk.)
  */
 describe("suggestExportName", () => {
   it("names the export after the project", () => {
