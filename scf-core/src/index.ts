@@ -163,6 +163,18 @@ export {
   type Severity, SEVERITY_ORDER, readinessReport,
 } from "./readiness.ts";
 
+// ── Reader: label lookup and the shot-context composite ──────────
+// Not part of the sixteen (§12.0, §4.5 of spec/scf-mcp-design.md) —
+// convenience for a caller that starts from a typed label rather than a
+// uuid, and a composite of existing queries for one common request.
+export {
+  type KeyHit, resolveNaturalKey,
+} from "./naturalKey.ts";
+
+export {
+  type ShotContext, shotContext,
+} from "./shotContext.ts";
+
 // ── Writer: identity and numbering ───────────────────────────────
 // Spec §6.1–6.4, §3.3, §4.3, §4.4.
 export {
