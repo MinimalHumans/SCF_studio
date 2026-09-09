@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: Apache-2.0
 /**
- * server.ts — scf-mcp, a stdio MCP server over one `.scf` file
+ * server.ts — scf-mcp, a stdio MCP server over `.scf` files
  * (spec/scf-mcp-design.md §5).
  *
- * Five tools:
+ * Six tools:
+ *   open          open (or switch to) a film, with optional root
+ *                 mappings — returns a quick summary
  *   find          label -> uuid (resolveNaturalKey)
  *   list          every row of an entity type, optionally filtered
  *                 (listEntities) — for a caller with nothing in hand
@@ -16,10 +18,10 @@
  * boundary: SCF is the ground truth of the film, not the workflow for
  * making it.
  *
- * Local process, no hosting: the `.scf` path and any root mappings come
- * from the command line (or an optional --config file), the same way
- * any locally-run stdio MCP server is pointed at its target by the
- * client that spawns it.
+ * Every tool but `open` takes an optional `scfPath` — see
+ * projectCache.ts for why. `--scf`/`--root` set a default project at
+ * startup so a single-film setup needs neither `open` nor a `scfPath`
+ * argument anywhere; both stay fully optional.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -27,25 +29,14 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import {
-  listEntities, loadRegistry, resolveNaturalKey, shotContext,
-  type RegistryJson, type ScfContext,
+  listEntities, q00Result, resolveNaturalKey, shotContext,
 } from "@minimalhumans/scf-core";
-import { openNodeDatabase } from "@minimalhumans/scf-core/node";
-import registryJson from "@minimalhumans/scf-core/registry.json" with { type: "json" };
 import { parseConfig } from "./config.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
-import { makeNodeLocator } from "./nodeLocator.ts";
+import { currentProject, openProject } from "./projectCache.ts";
 
 const config = parseConfig(process.argv.slice(2));
-const db = openNodeDatabase(config.scfPath, { readOnly: true });
-const registry = loadRegistry(registryJson as unknown as RegistryJson);
-const ctx: ScfContext = { exec: db.exec, registry };
-
-const locate = makeNodeLocator(config.roots);
-const rootMapped = Object.keys(config.roots).length > 0;
-const dispatch = buildDispatch(locate, rootMapped);
-const q14 = dispatch["Q14"];
-if (q14 === undefined) throw new Error("internal: Q14 dispatch missing");
+if (config.scfPath !== undefined) openProject(config.scfPath, config.roots);
 
 function ok(value: unknown): CallToolResult {
   return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
@@ -56,7 +47,49 @@ function err(e: unknown): CallToolResult {
   return { content: [{ type: "text", text: message }], isError: true };
 }
 
+const scfPathArg = z.string().optional().describe(
+  "Which film — omit to use whichever project was opened or used " +
+  "most recently in this server. An absolute path is safest; a " +
+  "relative one resolves against the server process's own working " +
+  "directory, not the caller's.");
+
 const server = new McpServer({ name: "scf-mcp", version: "0.1.0" });
+
+server.registerTool("open", {
+  description: "Open (or switch to) a film, optionally mapping asset " +
+    "roots. Every other tool defaults to whichever film was opened or " +
+    "used most recently, so call this once per film per conversation " +
+    "— then omit scfPath elsewhere. Calling it again for a film " +
+    "already open adds any new roots without dropping the ones " +
+    "already set. Returns a quick summary so you can confirm you " +
+    "opened the right file.",
+  inputSchema: {
+    scfPath: z.string().describe("Path to the .scf file."),
+    roots: z.record(z.string(), z.string()).optional().describe(
+      "Root name -> absolute directory, e.g. " +
+      "{ \"project\": \"/path/to/project\" }. Matches the `@root/...` " +
+      "prefix asset identifiers use inside the file."),
+  },
+}, async ({ scfPath, roots }) => {
+  try {
+    const project = openProject(scfPath, roots ?? {});
+    const brief = await q00Result(project.ctx);
+    const scenes = await listEntities(project.ctx, "scene");
+    const shots = await listEntities(project.ctx, "shot");
+    const name = brief.result.layers.find((l) => l.entity === "project")
+      ?.row.fields["name"] ?? null;
+    return ok({
+      opened: project.scfPath,
+      project: name,
+      sceneCount: scenes.length,
+      shotCount: shots.length,
+      rootMapped: project.rootMapped,
+      roots: project.roots,
+    });
+  } catch (e) {
+    return err(e);
+  }
+});
 
 server.registerTool("find", {
   description: "Resolve a natural-key label (a scene number, shot " +
@@ -68,10 +101,12 @@ server.registerTool("find", {
       "Registry entity name, e.g. \"scene\", \"shot\", \"character\"."),
     label: z.string().describe(
       "The label as written, e.g. \"10A\", \"12-04\", \"Eleanor\"."),
+    scfPath: scfPathArg,
   },
-}, async ({ entityType, label }) => {
+}, async ({ entityType, label, scfPath }) => {
   try {
-    return ok(await resolveNaturalKey(ctx, entityType, label));
+    const project = currentProject(scfPath);
+    return ok(await resolveNaturalKey(project.ctx, entityType, label));
   } catch (e) {
     return err(e);
   }
@@ -95,10 +130,12 @@ server.registerTool("list", {
       "Narrow to rows pointing at one uuid, e.g. { field: \"scene_id\", " +
       "uuid: \"<scene uuid>\" } for every shot in one scene. Omit to " +
       "list every row of entityType."),
+    scfPath: scfPathArg,
   },
-}, async ({ entityType, filter }) => {
+}, async ({ entityType, filter, scfPath }) => {
   try {
-    return ok(await listEntities(ctx, entityType, filter));
+    const project = currentProject(scfPath);
+    return ok(await listEntities(project.ctx, entityType, filter));
   } catch (e) {
     return err(e);
   }
@@ -113,10 +150,13 @@ server.registerTool("shot_context", {
   inputSchema: {
     shotUuid: z.string().describe(
       "A shot's uuid, e.g. from find(\"shot\", \"10A\")."),
+    scfPath: scfPathArg,
   },
-}, async ({ shotUuid }) => {
+}, async ({ shotUuid, scfPath }) => {
   try {
-    return ok(await shotContext(ctx, shotUuid, locate, rootMapped));
+    const project = currentProject(scfPath);
+    return ok(await shotContext(
+      project.ctx, shotUuid, project.locate, project.rootMapped));
   } catch (e) {
     return err(e);
   }
@@ -134,16 +174,19 @@ server.registerTool("query", {
   inputSchema: {
     id: z.string().describe("A query id, e.g. \"Q04\"."),
     params: paramsSchema,
+    scfPath: scfPathArg,
   },
-}, async ({ id, params }) => {
-  const run = dispatch[id];
-  if (run === undefined) {
-    return err(new Error(
-      `unknown query id "${id}" — expected one of ` +
-      `${Object.keys(dispatch).sort().join(", ")}`));
-  }
+}, async ({ id, params, scfPath }) => {
   try {
-    return ok(await run(ctx, (params ?? {}) as QueryParams));
+    const project = currentProject(scfPath);
+    const dispatch = buildDispatch(project.locate, project.rootMapped);
+    const run = dispatch[id];
+    if (run === undefined) {
+      return err(new Error(
+        `unknown query id "${id}" — expected one of ` +
+        `${Object.keys(dispatch).sort().join(", ")}`));
+    }
+    return ok(await run(project.ctx, (params ?? {}) as QueryParams));
   } catch (e) {
     return err(e);
   }
@@ -156,11 +199,16 @@ server.registerTool("readiness", {
     queryId: z.string().describe(
       "The target query to assess, e.g. \"Q05\", \"Q07\"."),
     params: paramsSchema,
+    scfPath: scfPathArg,
   },
-}, async ({ queryId, params }) => {
+}, async ({ queryId, params, scfPath }) => {
   try {
+    const project = currentProject(scfPath);
+    const dispatch = buildDispatch(project.locate, project.rootMapped);
+    const q14 = dispatch["Q14"];
+    if (q14 === undefined) throw new Error("internal: Q14 dispatch missing");
     const merged: QueryParams = { ...(params ?? {}), target: queryId };
-    return ok(await q14(ctx, merged));
+    return ok(await q14(project.ctx, merged));
   } catch (e) {
     return err(e);
   }

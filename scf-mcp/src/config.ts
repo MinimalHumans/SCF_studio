@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * config.ts — where the `.scf` and its root mappings come from.
+ * config.ts — where the `.scf` and its root mappings come from, at
+ * startup.
  *
- * CLI flags are primary: every MCP client configures a stdio server as
- * a command plus an args array, so `--scf`/`--root` need no file the
- * user has to author and keep in sync with that config by hand. A
- * `--config` file is optional, for a project with several roots that
+ * `--scf`/`--root` are now a DEFAULT, not a requirement — projectCache.ts
+ * lets every tool call name its own `.scf` and be cached, so one server
+ * process can serve any number of films without a client config edit
+ * and restart per project. These flags still matter for the common
+ * case: point them at the film you work with most, and every tool
+ * works with no `scfPath` argument at all, exactly as before.
+ *
+ * A `--config` file is optional, for a project with several roots that
  * would be tedious to repeat as flags every time. Root mapping is
  * intentionally not part of the `.scf` itself (spec/scf-mcp-design.md
  * §5.1, spec §0.3/§8.2): the file is portable, where its bytes live on
@@ -17,7 +22,7 @@ import { readFileSync } from "node:fs";
 export type RootMap = Record<string, string>;
 
 export interface ServerConfig {
-  scfPath: string;
+  scfPath: string | undefined;
   roots: RootMap;
 }
 
@@ -29,7 +34,10 @@ interface ConfigFile {
 function usage(message?: string): never {
   if (message !== undefined) process.stderr.write(`${message}\n`);
   process.stderr.write(
-    "usage: scf-mcp --scf <path> [--root name=path ...] [--config <path>]\n");
+    "usage: scf-mcp [--scf <path>] [--root name=path ...] " +
+    "[--config <path>]\n" +
+    "  --scf/--root set the default project; every tool also accepts " +
+    "its own scfPath.\n");
   process.exit(1);
 }
 
@@ -64,6 +72,5 @@ export function parseConfig(argv: readonly string[]): ServerConfig {
     }
   }
 
-  if (scfPath === undefined) usage("--scf is required");
   return { scfPath, roots };
 }
