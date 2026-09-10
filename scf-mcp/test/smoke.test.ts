@@ -8,6 +8,8 @@
  */
 
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -26,9 +28,20 @@ interface Server {
   kill: () => void;
 }
 
-function startServer(args: string[]): Promise<Server> {
-  const child: ChildProcessWithoutNullStreams =
-    spawn(process.execPath, [SERVER, ...args]);
+/**
+ * Every spawned server gets its own SCF_CONFIG_DIR — otherwise the
+ * persisted recent-files list (nodeConfigStore.ts) would read and write
+ * the real user's OS config directory during tests, and tests would
+ * leak state into each other across runs. Pass `configDir` explicitly
+ * to share one across two spawns, e.g. to prove persistence survives a
+ * restart.
+ */
+function startServer(
+    args: string[], configDir: string = mkdtempSync(
+      join(tmpdir(), "scf-mcp-test-"))): Promise<Server> {
+  const child: ChildProcessWithoutNullStreams = spawn(
+    process.execPath, [SERVER, ...args],
+    { env: { ...process.env, SCF_CONFIG_DIR: configDir } });
   let nextId = 1;
   const pending = new Map<number, (result: unknown) => void>();
   let buffer = "";
@@ -77,15 +90,25 @@ describe("scf-mcp server — a default project set at startup", () => {
   beforeAll(async () => { server = await startServer(["--scf", FIXTURE]); });
   afterAll(() => { server.kill(); });
 
-  test("lists open/set_root/find/list/shot_context/readiness plus one " +
-      "semantically-named tool per canonical query (Q00-Q13, Q15 — Q14 " +
-      "is `readiness`)", async () => {
+  test("lists open/recent_files/set_root/find/list/shot_context/" +
+      "readiness plus one semantically-named tool per canonical query " +
+      "(Q00-Q13, Q15 — Q14 is `readiness`)", async () => {
     const result = await server.send("tools/list") as
       { tools: Array<{ name: string }> };
     expect(result.tools.map((t) => t.name).sort()).toEqual([
       ...QUERY_TOOL_NAMES,
-      "find", "list", "open", "readiness", "set_root", "shot_context",
+      "find", "list", "open", "readiness", "recent_files", "set_root",
+      "shot_context",
     ].sort());
+  });
+
+  test("recent_files reflects the film --scf opened at startup, as " +
+      "plain text", async () => {
+    const result = await server.send("tools/call", {
+      name: "recent_files", arguments: {},
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text.split("\n")).toContain(FIXTURE);
   });
 
   test("scene_package (Q04) with just a scene matches the blessed " +
@@ -206,6 +229,15 @@ describe("scf-mcp server — no default project", () => {
     expect(result.content[0]?.text).toMatch(/no film open/);
   });
 
+  test("recent_files says so when nothing has been opened yet",
+      async () => {
+    const result = await server.send("tools/call", {
+      name: "recent_files", arguments: {},
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toBe("(no films opened yet)");
+  });
+
   test("open reports a real summary of the fixture", async () => {
     const result = await server.send("tools/call", {
       name: "open", arguments: { scfPath: FIXTURE },
@@ -218,6 +250,14 @@ describe("scf-mcp server — no default project", () => {
     expect(summary.rootMapped).toBe(false);
   });
 
+  test("recent_files lists it once opened", async () => {
+    const result = await server.send("tools/call", {
+      name: "recent_files", arguments: {},
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toBe(FIXTURE);
+  });
+
   test("after open, other tools default to it with no scfPath",
       async () => {
     const result = await server.send("tools/call", {
@@ -226,5 +266,36 @@ describe("scf-mcp server — no default project", () => {
     expect(result.isError).toBeUndefined();
     const hits = JSON.parse(result.content[0]?.text ?? "[]");
     expect(hits).toEqual([{ uuid: SCENE12, entity: "scene", label: "12" }]);
+  });
+});
+
+describe("scf-mcp server — recent_files persists across restarts", () => {
+  test("a brand new process, given the same SCF_CONFIG_DIR, remembers " +
+      "what an earlier process opened", async () => {
+    const configDir = mkdtempSync(join(tmpdir(), "scf-mcp-test-"));
+    try {
+      const first = await startServer([], configDir);
+      await first.send("tools/call", {
+        name: "open", arguments: { scfPath: FIXTURE },
+      });
+      // The config write is fire-and-forget (projectCache.ts) so a
+      // failed or slow write never blocks a tool call — give it a
+      // moment to land on disk before killing the process outright.
+      await new Promise((r) => { setTimeout(r, 200); });
+      first.kill();
+
+      const second = await startServer([], configDir);
+      try {
+        const result = await second.send("tools/call", {
+          name: "recent_files", arguments: {},
+        }) as { content: Array<{ text: string }>; isError?: boolean };
+        expect(result.isError).toBeUndefined();
+        expect(result.content[0]?.text).toBe(FIXTURE);
+      } finally {
+        second.kill();
+      }
+    } finally {
+      rmSync(configDir, { recursive: true, force: true });
+    }
   });
 });

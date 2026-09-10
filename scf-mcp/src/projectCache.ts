@@ -16,6 +16,13 @@
  * recently opened project out of this module's cache instead of taking
  * `scfPath` itself — there is exactly one film active at a time, and
  * `open`/`set_root` are how it changes.
+ *
+ * The recent-files list below is process state too, but it optionally
+ * persists past this process: `setConfigStore` wires in an
+ * AppConfigStore (appConfig.ts) and every change is written through
+ * it, fire-and-forget. Without a store — tests, or a caller that never
+ * wires one in — this module behaves exactly as it did before
+ * persistence existed: an in-process list, gone at exit.
  */
 
 import { resolve } from "node:path";
@@ -24,6 +31,7 @@ import {
 } from "@minimalhumans/scf-core";
 import { openNodeDatabase, type NodeDatabase } from "@minimalhumans/scf-core/node";
 import registryJson from "@minimalhumans/scf-core/registry.json" with { type: "json" };
+import type { AppConfigStore } from "./appConfig.ts";
 import type { RootMap } from "./config.ts";
 import { makeNodeLocator } from "./nodeLocator.ts";
 
@@ -60,6 +68,56 @@ function evictLeastRecentlyUsed(): void {
   }
 }
 
+/**
+ * Paths this session has opened, independent of `cache` above: unlike
+ * the live-handle cache (bounded to MAX_OPEN for file descriptors),
+ * there is no resource cost to remembering more paths than that, so
+ * this list is longer and never holds an open handle itself.
+ */
+const RECENT_MAX = 20;
+const recent: string[] = [];
+let configStore: AppConfigStore | null = null;
+
+function touchRecent(scfPath: string): void {
+  const idx = recent.indexOf(scfPath);
+  if (idx !== -1) recent.splice(idx, 1);
+  recent.unshift(scfPath);
+  recent.length = Math.min(recent.length, RECENT_MAX);
+
+  // Fire-and-forget: a failed or out-of-order write loses at most the
+  // convenience of the most recent entry, never a tool call.
+  configStore?.write({ recentFiles: [...recent] }).catch((e: unknown) => {
+    process.stderr.write(
+      `[projectCache] failed to persist recent files: ${String(e)}\n`);
+  });
+}
+
+/**
+ * Wire in persistence for the recent-files list. Optional — without it,
+ * `recentProjects()` stays in-process only, as before persistence
+ * existed.
+ */
+export function setConfigStore(store: AppConfigStore): void {
+  configStore = store;
+}
+
+/**
+ * Restore a previously-persisted recent-files list (most recently
+ * opened first) at startup, without writing it straight back to the
+ * store that just handed it to us.
+ */
+export function loadRecent(paths: readonly string[]): void {
+  recent.length = 0;
+  recent.push(...paths.slice(0, RECENT_MAX));
+}
+
+/** Paths this session (and, once persisted, past ones) has opened,
+ *  most recently opened first — a hint for `open` when the caller
+ *  doesn't have a full path in hand. */
+export function recentProjects(): readonly string[] {
+  return recent;
+}
+
 /** Merge `roots` into `project` in place. No-op when `roots` is empty. */
 function applyRoots(project: Project, roots: RootMap): void {
   if (Object.keys(roots).length === 0) return;
@@ -82,6 +140,7 @@ export function openProject(
     touch(scfPath);
     lastUsed = scfPath;
     applyRoots(existing.project, roots);
+    touchRecent(scfPath);
     return existing.project;
   }
 
@@ -96,6 +155,7 @@ export function openProject(
   cache.set(scfPath, { project, db });
   lastUsed = scfPath;
   evictLeastRecentlyUsed();
+  touchRecent(scfPath);
   return project;
 }
 

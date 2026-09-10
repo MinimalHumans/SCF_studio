@@ -7,6 +7,8 @@
  * Tools:
  *   open          open (or switch to) a film, with optional root
  *                 mappings — returns a quick summary
+ *   recent_files  paths this or a past session has opened, most recent
+ *                 first — a hint for `open` with no full path in hand
  *   find          label -> uuid (resolveNaturalKey)
  *   list          every row of an entity type, optionally filtered
  *                 (listEntities) — for a caller with nothing in hand
@@ -47,14 +49,26 @@ import {
 } from "@minimalhumans/scf-core";
 import { parseConfig } from "./config.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
-import { currentProject, openProject, setRoots } from "./projectCache.ts";
+import { makeNodeConfigStore } from "./nodeConfigStore.ts";
+import {
+  currentProject, loadRecent, openProject, recentProjects, setConfigStore,
+  setRoots,
+} from "./projectCache.ts";
 import { registerQueryTools } from "./queryTools.ts";
+
+const configStore = makeNodeConfigStore();
+setConfigStore(configStore);
+loadRecent((await configStore.read()).recentFiles);
 
 const config = parseConfig(process.argv.slice(2));
 if (config.scfPath !== undefined) openProject(config.scfPath, config.roots);
 
 function ok(value: unknown): CallToolResult {
   return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
+}
+
+function text(value: string): CallToolResult {
+  return { content: [{ type: "text", text: value }] };
 }
 
 function err(e: unknown): CallToolResult {
@@ -98,6 +112,17 @@ server.registerTool("open", {
   } catch (e) {
     return err(e);
   }
+});
+
+server.registerTool("recent_files", {
+  description: "Paths opened in this or a past session, most recently " +
+    "opened first, one per line — a hint for `open` when you don't " +
+    "already have the full path.",
+  inputSchema: {},
+}, () => {
+  const paths = recentProjects();
+  return text(paths.length === 0
+    ? "(no films opened yet)" : paths.join("\n"));
 });
 
 server.registerTool("set_root", {
