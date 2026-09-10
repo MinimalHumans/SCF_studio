@@ -18,6 +18,23 @@
  * parameter is rejected by schema validation before it reaches the
  * server at all, not discovered by a failed call.
  *
+ * "Copied here as data" is checked, not trusted: id/title/section/
+ * summary are the same facts spec/query-reference.md already generates
+ * (scf-core/scripts/emit_query_reference.mjs) and CI already keeps
+ * honest against §12 (`check-query-reference`). Without a second check
+ * tying THIS copy to that one, CATALOG could retitle a query or drop a
+ * param and nothing would notice — see
+ * test/queryCatalog.consistency.test.ts, which fails the build if the
+ * two ever disagree.
+ *
+ * Each tool is registered under a semantic name derived from its title
+ * (`toolNameFor`, e.g. "Voice direction" -> "voice_direction") rather
+ * than the bare id: a tool named "Q05" tells an agent skimming
+ * `tools/list` nothing, where "voice_direction" does. The id stays in
+ * the description (spec cross-reference) and in every result's own
+ * `query` envelope field (spec §12.1.1) — nothing about the id is lost,
+ * it just isn't what selects the tool anymore.
+ *
  * Q14 is deliberately not here — the friendlier, separately-named
  * `readiness` tool in server.ts already is Q14, and a "Q14" tool
  * alongside it would be the same capability under two names.
@@ -29,15 +46,34 @@ import { z, type ZodRawShape } from "zod";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
 import { currentProject } from "./projectCache.ts";
 
-interface QueryToolSpec {
+export interface QueryToolSpec {
   id: string;
   /** spec/scf-spec.md §12 title, e.g. "Subject in context". */
   title: string;
   section: string;
-  /** The spec's own bolded one-line summary. */
+  /**
+   * The spec's own bolded one-line summary, VERBATIM — checked against
+   * spec/query-reference.md by test/queryCatalog.consistency.test.ts.
+   * Hand-added context belongs in `note`, not blended in here, or the
+   * check has nothing exact left to compare.
+   */
   summary: string;
+  /** Extra hand-authored context beyond the spec's summary, if any —
+   *  not spec-derived, so not checked against it. */
+  note?: string;
   /** This query's own params — nothing else is added. */
   shape: ZodRawShape;
+}
+
+/**
+ * The MCP tool name for a query: its title, lowercased and
+ * underscored. Derived rather than hand-assigned so there is only one
+ * place a name could go stale relative to `title` — this function —
+ * instead of sixteen.
+ */
+export function toolNameFor(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 const uuid = (of: string): z.ZodString =>
@@ -50,7 +86,7 @@ const subjectFields: ZodRawShape = {
   subject: uuid("subject"),
 };
 
-const CATALOG: QueryToolSpec[] = [
+export const CATALOG: QueryToolSpec[] = [
   { id: "Q00", title: "Brief", section: "§12.12",
     summary: "What film is this, and what are its rules.",
     shape: {} },
@@ -79,8 +115,8 @@ const CATALOG: QueryToolSpec[] = [
       "like.",
     shape: { scene: uuid("scene"), shot: uuid("shot").optional() } },
   { id: "Q08", title: "Soundscape", section: "§12.7",
-    summary: "What this scene sounds like. No shot — sound is " +
-      "authored at the scene.",
+    summary: "What this scene sounds like.",
+    note: "No shot — sound is authored at the scene.",
     shape: { scene: uuid("scene") } },
   { id: "Q09", title: "Motif manifest", section: "§12.10",
     summary: "Which motifs should be perceivable in this scene, and " +
@@ -94,8 +130,8 @@ const CATALOG: QueryToolSpec[] = [
     summary: "What the audience knows and should feel at a position.",
     shape: { scene: uuid("scene") } },
   { id: "Q12", title: "Continuity", section: "§12.5",
-    summary: "What changed between two positions, in story order " +
-      "(never by scene number).",
+    summary: "What changed between two positions.",
+    note: "In story order — never by scene number.",
     shape: { from: uuid("first scene"), to: uuid("second scene") } },
   { id: "Q13", title: "Media resolution", section: "§12.8",
     summary: "Which assets are in force for a subject and an intent.",
@@ -123,8 +159,10 @@ function err(e: unknown): CallToolResult {
 
 export function registerQueryTools(server: McpServer): void {
   for (const spec of CATALOG) {
-    server.registerTool(spec.id, {
-      description: `${spec.title} (spec ${spec.section}). ${spec.summary}`,
+    const note = spec.note === undefined ? "" : ` ${spec.note}`;
+    server.registerTool(toolNameFor(spec.title), {
+      description: `${spec.title} (${spec.id}, spec ${spec.section}). ` +
+        `${spec.summary}${note}`,
       inputSchema: { ...spec.shape },
     }, async (args) => {
       try {

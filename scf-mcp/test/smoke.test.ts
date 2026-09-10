@@ -11,6 +11,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { CATALOG, toolNameFor } from "../src/queryTools.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SERVER = join(HERE, "..", "dist", "server.js");
@@ -18,6 +19,7 @@ const FIXTURE = join(HERE, "..", "..", "fixtures", "hollow_creek.scf");
 const SCENE12 = "06857531-3e91-41a9-95dd-3262407d8132";
 const SHOT1204 = "404e480d-dde6-4b4f-9cd4-daec42d5bfa0";
 const ELEANOR = "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64";
+const QUERY_TOOL_NAMES = CATALOG.map((spec) => toolNameFor(spec.title));
 
 interface Server {
   send: (method: string, params?: unknown) => Promise<unknown>;
@@ -76,21 +78,20 @@ describe("scf-mcp server — a default project set at startup", () => {
   afterAll(() => { server.kill(); });
 
   test("lists open/set_root/find/list/shot_context/readiness plus one " +
-      "tool per canonical query (Q00-Q13, Q15 — Q14 is `readiness`)",
-      async () => {
+      "semantically-named tool per canonical query (Q00-Q13, Q15 — Q14 " +
+      "is `readiness`)", async () => {
     const result = await server.send("tools/list") as
       { tools: Array<{ name: string }> };
     expect(result.tools.map((t) => t.name).sort()).toEqual([
-      "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08",
-      "Q09", "Q10", "Q11", "Q12", "Q13", "Q15",
+      ...QUERY_TOOL_NAMES,
       "find", "list", "open", "readiness", "set_root", "shot_context",
     ].sort());
   });
 
-  test("Q04 with just a scene matches the blessed result byte-for-byte",
-      async () => {
+  test("scene_package (Q04) with just a scene matches the blessed " +
+      "result byte-for-byte", async () => {
     const result = await server.send("tools/call", {
-      name: "Q04", arguments: { scene: SCENE12 },
+      name: "scene_package", arguments: { scene: SCENE12 },
     }) as { content: Array<{ text: string }>; isError?: boolean };
     expect(result.isError).toBeUndefined();
     const envelope = JSON.parse(result.content[0]?.text ?? "{}");
@@ -98,10 +99,10 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(envelope.result.scene.fields.scene_number).toBe("12");
   });
 
-  test("Q02 resolves subjectType/subject/scene by name, not a generic bag",
-      async () => {
+  test("subject_in_context (Q02) resolves subjectType/subject/scene by " +
+      "name, not a generic bag", async () => {
     const result = await server.send("tools/call", {
-      name: "Q02",
+      name: "subject_in_context",
       arguments: { subjectType: "character", subject: ELEANOR,
                    scene: SCENE12 },
     }) as { content: Array<{ text: string }>; isError?: boolean };
@@ -111,10 +112,11 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(envelope.parameters.subject).toBe(ELEANOR);
   });
 
-  test("Q02 missing its required scene is rejected before it reaches " +
-      "the server, not as a runtime error", async () => {
+  test("subject_in_context missing its required scene is rejected " +
+      "before it reaches the server, not as a runtime error", async () => {
     const result = await server.send("tools/call", {
-      name: "Q02", arguments: { subjectType: "character", subject: ELEANOR },
+      name: "subject_in_context",
+      arguments: { subjectType: "character", subject: ELEANOR },
     }) as { isError?: boolean; rpcError?: unknown };
     // A schema-invalid call is refused at the protocol layer (a
     // JSON-RPC error) rather than reaching the handler and coming back
