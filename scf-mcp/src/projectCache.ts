@@ -10,16 +10,12 @@
  * state on. Requiring `--scf` at launch made "point this at a
  * different film" mean editing the client's config and restarting it.
  *
- * The fix doesn't need a conversation id: the calling agent already
- * remembers, within one conversation, which film it opened. So
- * `scfPath` becomes a tool ARGUMENT, and this module is just a small
- * cache from resolved path to an open `NodeDatabase` + `ScfContext`, so
- * repeating it doesn't reopen the file every call. Omitting it falls
- * back to whichever project was used most recently in this process —
- * convenient for the overwhelmingly common case (one film at a time),
- * but that fallback IS process-wide state: two conversations juggling
- * two different films through the same running server will stomp on
- * each other unless each passes its own `scfPath` explicitly.
+ * The fix doesn't need a conversation id: a stdio server is one process
+ * per session, so "the film this session has open" is just process-wide
+ * state. `open` takes `scfPath`; every other tool reads the most
+ * recently opened project out of this module's cache instead of taking
+ * `scfPath` itself — there is exactly one film active at a time, and
+ * `open`/`set_root` are how it changes.
  */
 
 import { resolve } from "node:path";
@@ -64,6 +60,14 @@ function evictLeastRecentlyUsed(): void {
   }
 }
 
+/** Merge `roots` into `project` in place. No-op when `roots` is empty. */
+function applyRoots(project: Project, roots: RootMap): void {
+  if (Object.keys(roots).length === 0) return;
+  project.roots = { ...project.roots, ...roots };
+  project.locate = makeNodeLocator(project.roots);
+  project.rootMapped = true;
+}
+
 /**
  * Open (or reuse) the project at `scfPathInput`. Given `roots`, they
  * merge into whatever this path already had — so calling `open` again
@@ -77,12 +81,7 @@ export function openProject(
   if (existing !== undefined) {
     touch(scfPath);
     lastUsed = scfPath;
-    if (Object.keys(roots).length > 0) {
-      const merged = { ...existing.project.roots, ...roots };
-      existing.project.roots = merged;
-      existing.project.locate = makeNodeLocator(merged);
-      existing.project.rootMapped = true;
-    }
+    applyRoots(existing.project, roots);
     return existing.project;
   }
 
@@ -101,12 +100,11 @@ export function openProject(
 }
 
 /**
- * The project a tool call means: `scfPathInput` if given, else whatever
- * was used most recently in this process. Throws a clear, actionable
- * error rather than guessing when neither is available.
+ * The film this session has open — whatever `open` loaded most
+ * recently. Throws a clear, actionable error rather than guessing when
+ * nothing has been opened yet.
  */
-export function currentProject(scfPathInput?: string): Project {
-  if (scfPathInput !== undefined) return openProject(scfPathInput);
+export function currentProject(): Project {
   if (lastUsed !== null) {
     const entry = cache.get(lastUsed);
     if (entry !== undefined) {
@@ -115,6 +113,16 @@ export function currentProject(scfPathInput?: string): Project {
     }
   }
   throw new Error(
-    "no project open — call open(scfPath) first, or pass scfPath " +
-    "directly on this call");
+    "no film open in this session — call `open` with a path to a " +
+    ".scf file first");
+}
+
+/**
+ * Merge `roots` into the currently open project without reopening it.
+ * Same "no film open" error as `currentProject` when nothing is open.
+ */
+export function setRoots(roots: RootMap): Project {
+  const project = currentProject();
+  applyRoots(project, roots);
+  return project;
 }

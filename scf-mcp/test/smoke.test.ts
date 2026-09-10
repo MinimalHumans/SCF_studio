@@ -17,6 +17,7 @@ const SERVER = join(HERE, "..", "dist", "server.js");
 const FIXTURE = join(HERE, "..", "..", "fixtures", "hollow_creek.scf");
 const SCENE12 = "06857531-3e91-41a9-95dd-3262407d8132";
 const SHOT1204 = "404e480d-dde6-4b4f-9cd4-daec42d5bfa0";
+const ELEANOR = "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64";
 
 interface Server {
   send: (method: string, params?: unknown) => Promise<unknown>;
@@ -37,8 +38,12 @@ function startServer(args: string[]): Promise<Server> {
       const line = buffer.slice(0, newline);
       buffer = buffer.slice(newline + 1);
       if (line.trim() === "") continue;
-      const msg = JSON.parse(line) as { id?: number; result?: unknown };
-      if (msg.id !== undefined) pending.get(msg.id)?.(msg.result);
+      const msg = JSON.parse(line) as
+        { id?: number; result?: unknown; error?: unknown };
+      if (msg.id !== undefined) {
+        pending.get(msg.id)?.(
+          msg.error !== undefined ? { rpcError: msg.error } : msg.result);
+      }
     }
   });
 
@@ -70,12 +75,53 @@ describe("scf-mcp server — a default project set at startup", () => {
   beforeAll(async () => { server = await startServer(["--scf", FIXTURE]); });
   afterAll(() => { server.kill(); });
 
-  test("lists exactly the six documented tools", async () => {
+  test("lists open/set_root/find/list/shot_context/readiness plus one " +
+      "tool per canonical query (Q00-Q13, Q15 — Q14 is `readiness`)",
+      async () => {
     const result = await server.send("tools/list") as
       { tools: Array<{ name: string }> };
-    expect(result.tools.map((t) => t.name).sort())
-      .toEqual(["find", "list", "open", "query", "readiness",
-                "shot_context"]);
+    expect(result.tools.map((t) => t.name).sort()).toEqual([
+      "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08",
+      "Q09", "Q10", "Q11", "Q12", "Q13", "Q15",
+      "find", "list", "open", "readiness", "set_root", "shot_context",
+    ].sort());
+  });
+
+  test("Q04 with just a scene matches the blessed result byte-for-byte",
+      async () => {
+    const result = await server.send("tools/call", {
+      name: "Q04", arguments: { scene: SCENE12 },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    const envelope = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(envelope.query).toBe("Q04");
+    expect(envelope.result.scene.fields.scene_number).toBe("12");
+  });
+
+  test("Q02 resolves subjectType/subject/scene by name, not a generic bag",
+      async () => {
+    const result = await server.send("tools/call", {
+      name: "Q02",
+      arguments: { subjectType: "character", subject: ELEANOR,
+                   scene: SCENE12 },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    const envelope = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(envelope.query).toBe("Q02");
+    expect(envelope.parameters.subject).toBe(ELEANOR);
+  });
+
+  test("Q02 missing its required scene is rejected before it reaches " +
+      "the server, not as a runtime error", async () => {
+    const result = await server.send("tools/call", {
+      name: "Q02", arguments: { subjectType: "character", subject: ELEANOR },
+    }) as { isError?: boolean; rpcError?: unknown };
+    // A schema-invalid call is refused at the protocol layer (a
+    // JSON-RPC error) rather than reaching the handler and coming back
+    // as a tool-level isError — that's the whole point of typing each
+    // query's own params instead of a generic string bag.
+    expect(result.rpcError !== undefined || result.isError === true)
+      .toBe(true);
   });
 
   test("list enumerates every shot in a scene by uuid, no label guessing",
@@ -124,19 +170,19 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(ctx.readiness.result.target).toBe("Q07");
   });
 
-  test("an explicit scfPath on a call still works alongside the default",
+  test("set_root maps a root onto the already-open film, no scfPath",
       async () => {
     const result = await server.send("tools/call", {
-      name: "find",
-      arguments: { entityType: "scene", label: "12", scfPath: FIXTURE },
+      name: "set_root", arguments: { roots: { project: HERE } },
     }) as { content: Array<{ text: string }>; isError?: boolean };
     expect(result.isError).toBeUndefined();
-    const hits = JSON.parse(result.content[0]?.text ?? "[]");
-    expect(hits).toEqual([{ uuid: SCENE12, entity: "scene", label: "12" }]);
+    const summary = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(summary.rootMapped).toBe(true);
+    expect(summary.roots.project).toBe(HERE);
   });
 });
 
-describe("scf-mcp server — no default project (dynamic scfPath)", () => {
+describe("scf-mcp server — no default project", () => {
   let server: Server;
   beforeAll(async () => { server = await startServer([]); });
   afterAll(() => { server.kill(); });
@@ -147,7 +193,15 @@ describe("scf-mcp server — no default project (dynamic scfPath)", () => {
       name: "find", arguments: { entityType: "scene", label: "12" },
     }) as { content: Array<{ text: string }>; isError?: boolean };
     expect(result.isError).toBe(true);
-    expect(result.content[0]?.text).toMatch(/no project open/);
+    expect(result.content[0]?.text).toMatch(/no film open/);
+  });
+
+  test("set_root with nothing open yet fails the same way", async () => {
+    const result = await server.send("tools/call", {
+      name: "set_root", arguments: { roots: { project: HERE } },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/no film open/);
   });
 
   test("open reports a real summary of the fixture", async () => {

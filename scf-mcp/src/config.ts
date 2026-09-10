@@ -3,12 +3,11 @@
  * config.ts — where the `.scf` and its root mappings come from, at
  * startup.
  *
- * `--scf`/`--root` are now a DEFAULT, not a requirement — projectCache.ts
- * lets every tool call name its own `.scf` and be cached, so one server
- * process can serve any number of films without a client config edit
- * and restart per project. These flags still matter for the common
- * case: point them at the film you work with most, and every tool
- * works with no `scfPath` argument at all, exactly as before.
+ * `--scf`/`--root` are optional, not required — the `open` tool can
+ * load a film at runtime instead, so a client isn't stuck editing its
+ * MCP config and restarting to point at a different file. Passing them
+ * just opens that film before the client asks for anything, so a
+ * single-film setup needs no tool call at all before querying.
  *
  * A `--config` file is optional, for a project with several roots that
  * would be tedious to repeat as flags every time. Root mapping is
