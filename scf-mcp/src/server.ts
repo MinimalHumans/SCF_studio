@@ -76,7 +76,37 @@ function err(e: unknown): CallToolResult {
   return { content: [{ type: "text", text: message }], isError: true };
 }
 
-const server = new McpServer({ name: "scf-mcp", version: "0.1.0" });
+const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
+  instructions:
+    "Read-only access to a film's Story Context Format (`.scf`) file. " +
+    "Call `open` once per film, with the path to its `.scf` file, before " +
+    "anything else — every other tool reads whichever film was opened " +
+    "most recently and errors if nothing has been opened yet. Don't " +
+    "have the path? Check `recent_files` first. If the film uses " +
+    "`@root/...` asset identifiers, map them to real directories with " +
+    "`set_root`, at any time, before or after `open`.\n\n" +
+    "Once a film is open:\n" +
+    "- `find` resolves a natural-key label (scene/shot number, name) to " +
+    "uuid(s); `list` enumerates every row of an entity type, optionally " +
+    "filtered to rows pointing at a given uuid — use these when you " +
+    "don't already have a uuid in hand.\n" +
+    "- `shot_context` is the one-call composite for writing a shot " +
+    "prompt: brief, scene, cast, look, physical direction, media, and " +
+    "a pre-flight readiness check.\n" +
+    "- The `brief`, `subject_dossier`, `subject_in_context`, " +
+    "`world_state`, `scene_package`, `voice_direction`, " +
+    "`physical_direction`, `look_resolution`, `soundscape`, " +
+    "`motif_manifest`, `thematic_accounting`, `audience_state`, " +
+    "`continuity`, `media_resolution`, and `provenance` tools each " +
+    "answer one canonical query (spec/scf-spec.md §12) — reach for one " +
+    "of these directly when `shot_context` doesn't cover what's asked.\n" +
+    "- `readiness` is pre-flight: what's thin for a target query " +
+    "(voice_direction, physical_direction, look_resolution, soundscape, " +
+    "media_resolution, or subject_in_context) at a given position, " +
+    "before you write a prompt that depends on it.\n\n" +
+    "This server has no write tools by design — SCF is the ground truth " +
+    "of the film, not the workflow for making it.",
+});
 
 server.registerTool("open", {
   description: "Open (or switch to) a film, optionally mapping asset " +
