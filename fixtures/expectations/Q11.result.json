@@ -9,7 +9,7 @@
     "scene": {
       "uuid": "06857531-3e91-41a9-95dd-3262407d8132",
       "fields": {
-        "characters_present": "Eleanor, Marcus",
+        "characters_present": "[\"Eleanor\",\"Marcus\"]",
         "estimated_duration": "3:40",
         "int_ext": "interior",
         "lifecycle_status": "active",

@@ -19,7 +19,9 @@
  *   one nobody will run on a thousand rows.
  *
  * The authored structure remains the bundle graph, which lives in the
- * bundles themselves and is deliberately not duplicated here.
+ * bundles themselves and is deliberately not duplicated here. What IS
+ * shown here is where that graph fails to reach anything — the media
+ * checks toggle (MediaChecksPanel).
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -41,6 +43,8 @@ import {
 } from "@scf-core/bundling.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { AssetThumb } from "./AssetThumb.tsx";
+import { mediaFindingCount } from "../editor/mediaChecks.ts";
+import { MediaChecksPanel, useMediaReport } from "./MediaChecksPanel.tsx";
 
 function Folder({ node, depth, selected, onSelect }: {
   node: TreeNode; depth: number; selected: string;
@@ -373,6 +377,9 @@ export function AssetBrowser(): JSX.Element {
   const [filter, setFilter] = useState<AssetFilter>({});
   const [shownCount, setShownCount] = useState(PAGE);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [showChecks, setShowChecks] = useState(false);
+  const mediaReport = useMediaReport();
+  const mediaCount = mediaFindingCount(mediaReport);
 
   const facets = useMemo(() => facetsOf(assets, orphans),
                          [assets, orphans]);
@@ -420,6 +427,13 @@ no relationship. These are what rot at scale.">
                   onClick={() => toggle("unaddressedOnly")}>
             no identifier {facets.unaddressed}
           </button>
+          <button className={`tiny${showChecks ? " primary" : ""}`}
+                  onClick={() => setShowChecks((v) => !v)}
+                  title="Bundles bound to nothing, bindings in force at every
+scene, audio filed as picture, one value spelled several ways, JSON
+fields that hold no JSON.">
+            media checks {mediaCount}
+          </button>
           {assetPrefix !== "" && (
             <button className="ghost tiny"
                     onClick={() => setAssetPrefix("")}>
@@ -427,6 +441,8 @@ no relationship. These are what rot at scale.">
             </button>
           )}
         </div>
+
+        {showChecks && <MediaChecksPanel report={mediaReport} />}
 
         <div className="asset-facets">
           {facets.formats.slice(0, 12).map((f) => (

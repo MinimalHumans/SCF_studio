@@ -9,7 +9,7 @@
     "scene": {
       "uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
       "fields": {
-        "characters_present": "Eleanor, Marcus",
+        "characters_present": "[\"Eleanor\",\"Marcus\"]",
         "emotional_beat": "The worst thing said aloud",
         "estimated_duration": "4:20",
         "int_ext": "interior",
