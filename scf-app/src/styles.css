@@ -1777,3 +1777,19 @@ tr.prop-weak td { opacity: .6; }
   background: var(--ink-0); border: 1px solid var(--line);
   border-radius: 3px; padding: 6px; user-select: text;
 }
+
+/* Media reach: bundles, bindings, and the checks panel. */
+.bundle-reach { margin-bottom: 12px; }
+.bundle-unbound { color: var(--amber); font-size: 12px; margin: 4px 0 8px; }
+.bundle-reach-wide { color: var(--amber); font-size: 11px; }
+.bundle-member-conflict { color: var(--amber); font-size: 11px; flex: none; }
+.bundle-bind-form { display: flex; flex-wrap: wrap; gap: 6px;
+  align-items: center; margin: 6px 0; }
+.bundle-bind-form .help { flex-basis: 100%; margin: 2px 0 0; }
+.media-checks { border: 1px solid var(--line); border-radius: 4px;
+  padding: 8px 10px; margin: 8px 0; max-height: 45vh; overflow: auto; }
+.media-checks section + section { margin-top: 10px; }
+.media-checks h4 { margin: 0 0 4px; font-size: 12px; }
+.media-checks ul { list-style: none; margin: 0; padding: 0; }
+.media-checks li { display: flex; flex-wrap: wrap; gap: 6px;
+  align-items: baseline; font-size: 12px; padding: 2px 0; }

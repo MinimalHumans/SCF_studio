@@ -11,12 +11,13 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { initDatabase, newUuid } from "../src/db.ts";
 import {
-  applyBundleAdd, bindBundleToCharacter, bundleMembers, bundlesForAsset,
-  createBundle, listBundles, planBundleAdd, removeBundleMember,
-  setMemberRole,
+  applyBundleAdd, bindBundle, bindBundleToCharacter, bundleMembers,
+  bundleReach, bundleReachColumns, bundlesForAsset, createBundle,
+  listBundles, planBundleAdd, removeBundleMember, setMemberRole,
+  unboundBundleIds,
 } from "../src/bundling.ts";
 import { openNodeDatabase, type NodeDatabase } from "../src/node.ts";
-import { registry } from "./setup.ts";
+import { openFixture, registry } from "./setup.ts";
 
 let db: NodeDatabase;
 let eleanor = 0;
@@ -162,5 +163,104 @@ describe("membership maintenance", () => {
     const id = Number((await db.exec(
       "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
     expect(await bundlesForAsset(db.exec, id)).toEqual([]);
+  });
+});
+
+describe("binding any subject, and seeing what reaches a bundle", () => {
+  let prop = 0;
+  let scene = 0;
+  let bundleId = 0;
+
+  beforeAll(async () => {
+    await db.exec("INSERT INTO prop (name, uuid) VALUES ('Chime', ?)",
+                  [newUuid()]);
+    prop = Number((await db.exec(
+      "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
+    await db.exec(
+      "INSERT INTO scene (name, scene_number, uuid) VALUES ('Storm', '24', ?)",
+      [newUuid()]);
+    scene = Number((await db.exec(
+      "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
+    bundleId = await createBundle(db.exec, "Chime — after", "visual_identity");
+  });
+
+  test("the reach columns come from the registry, not a list", () => {
+    const found = bundleReachColumns(registry)
+      .map((c) => `${c.entity}.${c.column}`).sort();
+    expect(found).toEqual([
+      "character_asset_binding.bundle_id",
+      "character_shot_override.bundle_override_id",
+      "location_asset_binding.bundle_id",
+      "location_shot_override.bundle_override_id",
+      "prop_asset_binding.bundle_id",
+      "prop_shot_override.bundle_override_id",
+    ]);
+  });
+
+  test("a new bundle is unbound until something binds it", async () => {
+    expect((await unboundBundleIds(db.exec, registry)).has(bundleId))
+      .toBe(true);
+    expect(await bundleReach(db.exec, registry, bundleId)).toEqual([]);
+  });
+
+  test("a prop binding carries its scene range", async () => {
+    const id = await bindBundle(db.exec, "prop", prop, bundleId, {
+      isBaseline: false, sceneRangeStartId: scene, precedence: 2,
+      name: "after the storm",
+    });
+    expect(id).not.toBeNull();
+    const reach = await bundleReach(db.exec, registry, bundleId);
+    expect(reach).toHaveLength(1);
+    expect(reach[0]).toMatchObject({
+      entity: "prop_asset_binding", subjectType: "prop", subjectId: prop,
+      subjectName: "Chime", isBaseline: false, precedence: 2,
+      sceneRangeStartId: scene, sceneRangeEndId: null, shotId: null,
+      rowName: "after the storm",
+    });
+    expect((await unboundBundleIds(db.exec, registry)).has(bundleId))
+      .toBe(false);
+  });
+
+  test("the same pair over the same range is a duplicate", async () => {
+    expect(await bindBundle(db.exec, "prop", prop, bundleId,
+                            { sceneRangeStartId: scene })).toBeNull();
+  });
+
+  test("the same pair over a different range is a second fact", async () => {
+    expect(await bindBundle(db.exec, "prop", prop, bundleId))
+      .not.toBeNull();
+    expect(await bundleReach(db.exec, registry, bundleId)).toHaveLength(2);
+  });
+
+  test("a cut binding reaches nothing (§6.6.1)", async () => {
+    await db.exec(
+      "UPDATE prop_asset_binding SET lifecycle_status = 'cut' " +
+      "WHERE bundle_id = ?", [bundleId]);
+    expect(await bundleReach(db.exec, registry, bundleId)).toEqual([]);
+    expect((await unboundBundleIds(db.exec, registry)).has(bundleId))
+      .toBe(true);
+  });
+
+  test("a subject kind without a binding table is refused", async () => {
+    await expect(bindBundle(db.exec, "costume" as "prop", 1, bundleId))
+      .rejects.toThrow(/no binding table/);
+  });
+});
+
+describe("the fixture's media is reachable", () => {
+  test("the only bundle nothing binds is the costume's", async () => {
+    // costume has no asset binding entity, so a bundle of costume
+    // references has nowhere to be bound. Every other bundle reaches a
+    // subject — the check the editor now shows on every bundle.
+    const fx = openFixture();
+    try {
+      const unbound = await unboundBundleIds(fx.ctx.exec, registry);
+      const names = (await fx.ctx.exec("SELECT id, name FROM bundle"))
+        .filter((r) => unbound.has(Number(r["id"])))
+        .map((r) => r["name"]);
+      expect(names).toEqual(["Ada's Shawl"]);
+    } finally {
+      fx.close();
+    }
   });
 });

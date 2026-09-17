@@ -555,6 +555,71 @@ to want back, and removing the flow is a bigger change than removing
 the button. Folders still attach from the topbar, which is the path the
 remaining button's tooltip describes.
 
+## 7e. ✅ Media that looked authored and reached nobody
+
+Found by the first `scf-mcp` session, which wrote a shot prompt for 3B
+and missed the DOP's framing plate for that scene. Its findings split
+four ways: what an author does, what the editor does, what the format
+does, what the MCP does. This section is the first two. Nothing here
+changes the format or the MCP.
+
+### What the fixture said
+
+Every problem was authoring, and none of it was visible in the editor:
+
+- Both kitchen bindings pointed at the scene 3 bundle. The baseline
+  bundle — the kitchen anchor, and the only record that the table is
+  struck for the shoot — was bound to nothing, and the scene 3 binding
+  had no range, so the scene 3 plate also answered for scene 19.
+- Five bundles reached no subject. Ada's baseline bound her to the
+  locket's bundle. The chime-in-the-mud image, a scene 24 state, was
+  the chime's baseline. A `.wav` sat in a `visual_identity` bundle.
+- Roles in twelve spellings (`reference` / `Reference`), sources with
+  a typo and a case split, and 23 values in `json` columns that were
+  comma lists, not JSON.
+- §8.6's polymorphic case pointed at two assets deleted during
+  re-authoring. Nothing noticed.
+
+All fixed in `hollow_creek.data.json`. Published results moved by
+value only (roles, JSON lists); no shape changed.
+
+### What the editor now shows
+
+- **On a bundle:** "Resolves for" — every binding and shot override
+  that reaches it, with its scope read in story order, and an amber
+  warning when nothing does. "Bind to…" binds any character, prop or
+  location, optionally over a scene range; a ranged binding is never
+  offered as a baseline. Only the range is offered, because it is the
+  only binding filter the media cascade reads.
+- **On a bundle's members:** a marker when the media kind contradicts
+  the intent (audio in a picture bundle, a picture in a sound bundle —
+  never video). Roles suggest the file's existing roles and adopt an
+  existing spelling that differs only in case or spacing.
+- **On an asset:** "bound to nothing" beside each such bundle, and a
+  warning when every bundle holding the asset is unbound — referenced,
+  so not a §8.6 orphan, and still unreachable.
+- **Assets tab → media checks:** unbound bundles, bindings in force at
+  every scene without being baselines, duplicate bindings, kind/intent
+  contradictions, lookalike spellings in `role_in_bundle` and `source`
+  (with a one-click "use X"), and `json` fields holding non-JSON (with
+  "make it a list"). The same button sits in `JsonField`.
+
+The checks live in `editor/mediaChecks.ts`, headless and tested. The
+reach derivation is `scf-core/bundling.ts` (`bundleReach`,
+`unboundBundleIds`, `bindBundle`), reading binding tables from the
+registry's `subject` field rather than a list. `bundling.ts` is a deep
+import, not the public surface, so `api-surface.json` did not move.
+
+### Deliberately left
+
+- **Ada's Shawl stays unbound.** It is a costume, and costume has no
+  asset binding entity. The fixture's only media-checks finding is that
+  format gap; an `asset_relationship` records what the image shows.
+- **Both locket rows keep the theme.** Removing the prop's connection
+  would hide Q10's prop-carrier defect from the published artifact.
+- **Nothing is enforced.** An unbound bundle can be assembled before
+  anyone decides what it is for; these are findings, not errors.
+
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.

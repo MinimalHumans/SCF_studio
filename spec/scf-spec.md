@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.51 (draft) — not a release.**
+**Version 0.52 (draft) — not a release.**
 Describes schema version **2.13**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -1090,7 +1090,7 @@ resolves to `asset`.
 Until schema 2.13 the fixture's `asset_relationship` table was empty, so
 an implementation that got this right and one that did not produced
 identical `asset.orphan` findings on every published case. It now
-carries a concept painting reachable only through that column.
+carries a textless poster master reachable only through that column.
 
 ### 8.7 Content metadata is read, never stored
 

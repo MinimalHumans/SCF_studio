@@ -17,6 +17,33 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.52 — 2026-09-16
+
+*Describes schema 2.13.*
+
+**Editorial.** No normative change. One sentence about the fixture was
+no longer true of it.
+
+### §8.6's polymorphic case pointed at two assets that no longer existed
+
+§8.6 says the fixture carries an asset reachable only through
+`asset_relationship.entity_id`, so that an implementation which ignores
+polymorphic references reports an orphan the file plainly references.
+
+When the fixture's assets were re-authored in the app, the two assets
+that row named were deleted and the row was not. It pointed from
+nothing to nothing. `scf-check` stayed clean, every published result
+stayed byte-identical, and the case §8.6 relies on silently stopped
+existing — the same invisible class as the empty `asset_relationship`
+table this sentence was written to close.
+
+The row now relates the lettered poster to its textless master, which
+nothing else references. The sentence names what the fixture carries.
+A new test resolves every polymorphic reference in the fixture, so a
+dangling one fails rather than passing unnoticed.
+
+---
+
 ## 0.51 — 2026-08-26
 
 *Describes schema 2.13.*

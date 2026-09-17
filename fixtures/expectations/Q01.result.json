@@ -128,7 +128,7 @@
               "continuity_notes": "Creek-soaked from sc 9; dried and stiff after",
               "description": "Grey wool work dress, sleeves pushed back.",
               "fabrics": "Wool, cotton apron",
-              "key_garments": "Dress, apron",
+              "key_garments": "[\"Dress\",\"apron\"]",
               "lifecycle_status": "active",
               "name": "Work dress",
               "primary_color_hex": "#6E6B64",

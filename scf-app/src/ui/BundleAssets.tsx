@@ -9,16 +9,27 @@
  * Order is `bundle_asset."order"`, continued rather than restarted when
  * a batch is appended (see scf-core/bundling.ts). Removing a membership
  * deletes the link and never the asset.
+ *
+ * Roles are free text on purpose — what an asset is for varies by
+ * production — so the input suggests the file's existing roles and
+ * adopts an existing spelling when the typed one differs only in case
+ * or spacing. A member whose media kind contradicts the bundle's intent
+ * is marked, because retrieval is by intent and the miss is silent.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import {
   applyBundleAdd, bundleMembers, bundlesForAsset, planBundleAdd,
-  removeBundleMember, setMemberRole, type BundleMember,
+  removeBundleMember, setMemberRole, unboundBundleIds, type BundleMember,
 } from "@scf-core/bundling.ts";
 import { listAssets, type AssetRow } from "@scf-core/assetIndex.ts";
-import { exec, useStore } from "../state/store.ts";
+import { q } from "@scf-core/db.ts";
+import {
+  adoptSpelling, columnValues, intentConflict, mediaKindOf,
+} from "../editor/mediaChecks.ts";
+import { exec, registry, useStore } from "../state/store.ts";
 import { AssetThumb } from "./AssetThumb.tsx";
+import { BundleReachSection } from "./BundleReach.tsx";
 
 /** Membership list plus a searchable multi-select picker. */
 export function BundleAssets({ bundleId }: {
@@ -31,13 +42,22 @@ export function BundleAssets({ bundleId }: {
   const [chosen, setChosen] = useState<Set<number>>(new Set());
   const [role, setRole] = useState("");
   const [filter, setFilter] = useState("");
+  const [intent, setIntent] = useState<string | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
 
   useEffect(() => {
     void (async () => {
       setMembers(await bundleMembers(exec, bundleId));
       setAll(await listAssets(exec));
+      const [row] = await exec(
+        `SELECT intent FROM ${q("bundle")} WHERE id = ?`, [bundleId]);
+      setIntent(row?.["intent"] === null || row?.["intent"] === undefined
+        ? null : String(row["intent"]));
+      setRoles(await columnValues(exec, "bundle_asset", "role_in_bundle"));
     })();
   }, [bundleId, revision]);
+
+  const roleListId = `bundle-roles-${bundleId}`;
 
   const inBundle = useMemo(
     () => new Set(members.map((m) => m.assetId)), [members]);
@@ -55,8 +75,9 @@ export function BundleAssets({ bundleId }: {
   const add = (): void => {
     void (async () => {
       const plan = await planBundleAdd(exec, bundleId, [...chosen]);
+      const typed = adoptSpelling(role, roles);
       await applyBundleAdd(exec, bundleId, plan.add,
-                           role.trim() === "" ? null : role.trim());
+                           typed === "" ? null : typed);
       setChosen(new Set());
       setPicking(false);
       setRole("");
@@ -73,6 +94,10 @@ export function BundleAssets({ bundleId }: {
 
   return (
     <section className="bundle-assets">
+      <datalist id={roleListId}>
+        {roles.map((r) => <option key={r} value={r} />)}
+      </datalist>
+      <BundleReachSection bundleId={bundleId} />
       <h4>Assets in this bundle</h4>
 
       {members.length === 0 && (
@@ -97,12 +122,23 @@ export function BundleAssets({ bundleId }: {
             <span className="mono muted bundle-member-id">
               {m.identifier ?? "no identifier"}
             </span>
+            {intentConflict(intent, mediaKindOf(m.identifier)) !== null && (
+              <span className="bundle-member-conflict"
+                    title={intentConflict(intent,
+                                          mediaKindOf(m.identifier)) ?? ""}>
+                wrong kind for {intent}
+              </span>
+            )}
             <input className="bundle-member-role"
                    placeholder="role"
+                   list={roleListId}
                    defaultValue={m.role ?? ""}
+                   key={`${m.linkId}-${m.role ?? ""}`}
                    onBlur={(e) => {
                      void (async () => {
-                       await setMemberRole(exec, m.linkId, e.target.value);
+                       const typed = adoptSpelling(e.target.value, roles);
+                       if (typed === (m.role ?? "")) return;
+                       await setMemberRole(exec, m.linkId, typed);
                        setMembers(await bundleMembers(exec, bundleId));
                        noteWrite();
                      })();
@@ -153,6 +189,7 @@ export function BundleAssets({ bundleId }: {
           </ul>
           <div className="bundle-picker-actions">
             <input placeholder="role for all (optional)" value={role}
+                   list={roleListId}
                    onChange={(e) => setRole(e.target.value)} />
             <button className="tiny primary" disabled={chosen.size === 0}
                     onClick={add}>
@@ -175,10 +212,19 @@ export function AssetBundles({ assetId }: { assetId: number }): JSX.Element {
   const { openEntityRow, revision } = useStore();
   const [rows, setRows] = useState<Awaited<
     ReturnType<typeof bundlesForAsset>>>([]);
+  const [unbound, setUnbound] = useState<ReadonlySet<number>>(new Set());
 
   useEffect(() => {
-    void (async () => setRows(await bundlesForAsset(exec, assetId)))();
+    void (async () => {
+      setRows(await bundlesForAsset(exec, assetId));
+      setUnbound(await unboundBundleIds(exec, registry));
+    })();
   }, [assetId, revision]);
+
+  // In bundles, and every one of them bound to nothing: referenced, so
+  // not an orphan (§8.6), and still reachable by no media query.
+  const unreachable = rows.length > 0
+    && rows.every((b) => unbound.has(b.bundleId));
 
   return (
     <section className="asset-bundles">
@@ -191,6 +237,13 @@ export function AssetBundles({ assetId }: { assetId: number }): JSX.Element {
           </p>
         )
         : (
+          <>
+          {unreachable && (
+            <p className="bundle-unbound">
+              Every bundle holding this asset is bound to nothing, so no
+              subject resolves to it.
+            </p>
+          )}
           <ul className="bundle-member-list">
             {rows.map((b) => (
               <li key={b.bundleId}>
@@ -203,9 +256,15 @@ export function AssetBundles({ assetId }: { assetId: number }): JSX.Element {
                 {b.role !== null && (
                   <span className="muted">{b.role}</span>
                 )}
+                {unbound.has(b.bundleId) && (
+                  <span className="bundle-member-conflict">
+                    bound to nothing
+                  </span>
+                )}
               </li>
             ))}
           </ul>
+          </>
         )}
     </section>
   );

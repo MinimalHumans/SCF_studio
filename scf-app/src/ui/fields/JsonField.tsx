@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { FieldDef } from "@scf-core/registry.ts";
 import type { SqlValue } from "@scf-core/db.ts";
+import { commaListToJson } from "../../editor/mediaChecks.ts";
 
 /**
  * JSON fields have known shapes, documented in each field's help text:
@@ -64,6 +65,16 @@ export function JsonField({ def, value, onChange }: {
       )}
       <div className="json-meta">
         {!valid && <span className="invalid-note">not valid JSON yet</span>}
+        {!valid && commaListToJson(text) !== null && (
+          // A comma list typed where a JSON array belongs is the common
+          // way this field goes wrong; offer the array rather than make
+          // the author write brackets and quotes by hand.
+          <button type="button" className="ghost tiny"
+                  title={commaListToJson(text) ?? ""}
+                  onClick={() => onChange(commaListToJson(text))}>
+            make it a list
+          </button>
+        )}
         <button type="button" className="ghost tiny"
                 onClick={() => setForceRaw((r) => !r)}>
           {editor === "raw" && valid && !forceRaw
