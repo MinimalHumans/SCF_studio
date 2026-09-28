@@ -6,6 +6,52 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.14
+
+Fifteen proposals' worth of registry change, from mapping Scriptyard's
+`.scf` export against the schema. Every file in the repository is
+rebuilt from source, and no `.scf` outside it needs converting — spec
+§11.0 still applies and nothing external has written one.
+
+**Fields added.** `scene.goal`, `scene.conflict`, `scene.outcome`
+(0010), named to match `sequence`'s: the standard scene unit was
+recordable for a sequence and not for a scene. `theme.statement` and
+`theme.opposition` (0011): a theme was a topic with no way to say what
+the story argues about it. `thematic_connection.notes` (0020): the link
+§6.6 calls a claim had typed fields for the kind of connection and none
+for the reasoning. `notes` on 22 entities (0023) under one rule — an
+entity a person authors as a unit gets one, tiers 0 to 2; `character`
+was the only tier-0 story entity without one and all nine tier-1 vision
+documents lacked it.
+
+**Fields removed.** `scene.characters_present` (0021) stored the cast as
+a JSON list of NAMES beside the `scene_character` links, went stale
+unnoticed on three of fourteen scenes, and was read by nothing.
+`project.themes`, `theme.motifs`, `staging_beat.characters_involved` and
+`scene_music_design.themes_used` (0025) are the same defect, all empty.
+The three `conditions_json` columns go too: labelled "Additional
+Conditions", with no help text, no specification text, no reader and no
+writer.
+
+**Vocabularies.** `cut` removed from `status` on scene, act and sequence
+(0004) — see spec §6.6. `day` added to `scene.time_of_day` and
+`location_variant.time_of_day` and `continuous` removed from the former
+(0012). `act` and `sequence` added to
+`thematic_connection.entity_type` (0013). `functional` added to
+`prop.story_function` (0018) — deliberately not "practical", which on
+set means a working prop. Sixteen vocabularies lost `other` and gained
+`open: true` (0022), a new per-field flag: the options are the known
+values and any other string is the value rather than an error.
+
+**`external_id`** on `act`, `sequence`, `story_beat`, `theme` and
+`motif` (0017). It was on ten entities chosen for production systems,
+which identify scenes, shots and assets; a story tool re-syncing acts,
+beats and themes had to match them by name.
+
+**Two fields are now stated once rather than three times.** The three
+`status` fields inlined the same option list; `WRITING_STATUS_OPTIONS`
+existed, unused, and they now share it.
+
 ## 2.13
 
 **`clip.screenplay_line_start_id` and `clip.screenplay_line_end_id`

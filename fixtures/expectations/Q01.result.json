@@ -1,7 +1,7 @@
 {
   "query": "Q01",
   "resultFormat": "1.0",
-  "schemaVersion": "2.13",
+  "schemaVersion": "2.14",
   "parameters": {
     "subjectType": "character",
     "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64"
@@ -25,6 +25,7 @@
         "lifecycle_status": "active",
         "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
         "name": "Eleanor Cade",
+        "notes": "Written older than most leads on purpose. If casting pushes younger the drowning has to move with her.",
         "occupation": "Homesteader; midwife to the valley",
         "pronouns": "she/her",
         "role": "protagonist",

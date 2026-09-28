@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.13",
+  "schemaVersion": "2.14",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -107,9 +107,9 @@
             "romance",
             "documentary",
             "animation",
-            "western",
-            "other"
-          ]
+            "western"
+          ],
+          "open": true
         },
         {
           "name": "tone",
@@ -152,9 +152,9 @@
             "feature",
             "series",
             "short",
-            "commercial",
-            "other"
-          ]
+            "commercial"
+          ],
+          "open": true
         },
         {
           "name": "production_status",
@@ -231,16 +231,6 @@
           "required": false,
           "tab": "Vision",
           "autoInjected": false
-        },
-        {
-          "name": "themes",
-          "label": "Core Themes",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Vision",
-          "autoInjected": false,
-          "placeholder": "[\"redemption\", \"identity\", \"power\"]"
         },
         {
           "name": "lifecycle_status",
@@ -504,6 +494,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -759,9 +758,9 @@
             "document",
             "technology",
             "clothing item",
-            "food/drink",
-            "other"
-          ]
+            "food/drink"
+          ],
+          "open": true
         },
         {
           "name": "description",
@@ -811,13 +810,14 @@
           "tab": "General",
           "autoInjected": false,
           "options": [
+            "functional",
             "macguffin",
             "character extension",
             "plot device",
             "symbol",
-            "atmosphere",
-            "other"
-          ]
+            "atmosphere"
+          ],
+          "open": true
         },
         {
           "name": "associated_character_id",
@@ -922,7 +922,7 @@
       "parentField": null,
       "versionable": false,
       "hasLifecycleStatus": true,
-      "hasExternalId": false,
+      "hasExternalId": true,
       "subject": "story",
       "scope": "act",
       "paired": false,
@@ -1011,8 +1011,7 @@
             "outline",
             "draft",
             "revised",
-            "locked",
-            "cut"
+            "locked"
           ],
           "helpText": "Writing-process status. Distinct from lifecycle_status."
         },
@@ -1043,6 +1042,28 @@
             "archived"
           ],
           "helpText": "Cross-cutting record state. See spec §6.6."
+        },
+        {
+          "name": "external_id",
+          "label": "External ID",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "identifier in external system",
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
+        },
+        {
+          "name": "external_id_namespace",
+          "label": "External ID Namespace",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "e.g. \"omc\", \"eidr\", \"shotgrid:project_42\"",
+          "helpText": "Which external system the identifier belongs to."
         }
       ]
     },
@@ -1060,7 +1081,7 @@
       "parentField": null,
       "versionable": false,
       "hasLifecycleStatus": true,
-      "hasExternalId": false,
+      "hasExternalId": true,
       "subject": "story",
       "scope": "sequence",
       "paired": false,
@@ -1177,9 +1198,9 @@
             "outline",
             "draft",
             "revised",
-            "locked",
-            "cut"
-          ]
+            "locked"
+          ],
+          "helpText": "Writing-process status. Distinct from lifecycle_status."
         },
         {
           "name": "notes",
@@ -1208,6 +1229,28 @@
             "archived"
           ],
           "helpText": "Cross-cutting record state. See spec §6.6."
+        },
+        {
+          "name": "external_id",
+          "label": "External ID",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "identifier in external system",
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
+        },
+        {
+          "name": "external_id_namespace",
+          "label": "External ID Namespace",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "e.g. \"omc\", \"eidr\", \"shotgrid:project_42\"",
+          "helpText": "Which external system the identifier belongs to."
         }
       ]
     },
@@ -1288,14 +1331,15 @@
           "tab": "General",
           "autoInjected": false,
           "options": [
+            "day",
             "dawn",
             "morning",
             "midday",
             "afternoon",
             "dusk",
-            "night",
-            "continuous"
-          ]
+            "night"
+          ],
+          "helpText": "A LIGHT axis: what the camera sees. `day` is unrefined daylight — the value a heading-only import writes. CONTINUOUS, LATER and the rest are continuity relations to the previous scene, not times; they stay in the heading text. Spec §12.17 matches this against location_variant.time_of_day."
         },
         {
           "name": "weather_conditions",
@@ -1341,6 +1385,33 @@
           "autoInjected": false
         },
         {
+          "name": "goal",
+          "label": "Goal",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "conflict",
+          "label": "Conflict",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "outcome",
+          "label": "Outcome / Resolution",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
           "name": "status",
           "label": "Status",
           "fieldType": "select",
@@ -1353,19 +1424,9 @@
             "outline",
             "draft",
             "revised",
-            "locked",
-            "cut"
-          ]
-        },
-        {
-          "name": "characters_present",
-          "label": "Characters Present",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Characters",
-          "autoInjected": false,
-          "hidden": true
+            "locked"
+          ],
+          "helpText": "Writing-process status. Distinct from lifecycle_status."
         },
         {
           "name": "character_dynamics",
@@ -1514,7 +1575,7 @@
       "parentField": null,
       "versionable": false,
       "hasLifecycleStatus": true,
-      "hasExternalId": false,
+      "hasExternalId": true,
       "subject": "story",
       "scope": "scene",
       "paired": false,
@@ -1569,9 +1630,9 @@
             "discovery",
             "revelation",
             "reversal",
-            "payoff",
-            "other"
-          ]
+            "payoff"
+          ],
+          "open": true
         },
         {
           "name": "description",
@@ -1637,6 +1698,28 @@
             "archived"
           ],
           "helpText": "Cross-cutting record state. See spec §6.6."
+        },
+        {
+          "name": "external_id",
+          "label": "External ID",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "identifier in external system",
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
+        },
+        {
+          "name": "external_id_namespace",
+          "label": "External ID Namespace",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "e.g. \"omc\", \"eidr\", \"shotgrid:project_42\"",
+          "helpText": "Which external system the identifier belongs to."
         }
       ]
     },
@@ -1654,7 +1737,7 @@
       "parentField": null,
       "versionable": false,
       "hasLifecycleStatus": true,
-      "hasExternalId": false,
+      "hasExternalId": true,
       "subject": "theme",
       "scope": "global",
       "paired": false,
@@ -1685,13 +1768,24 @@
           "autoInjected": false
         },
         {
-          "name": "motifs",
-          "label": "Associated Motifs",
-          "fieldType": "json",
+          "name": "statement",
+          "label": "Thematic Statement",
+          "fieldType": "textarea",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
-          "autoInjected": false
+          "autoInjected": false,
+          "helpText": "The claim the story makes about this theme."
+        },
+        {
+          "name": "opposition",
+          "label": "Counter-argument",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "helpText": "The position the story tests the statement against."
         },
         {
           "name": "character_connections",
@@ -1747,6 +1841,28 @@
             "archived"
           ],
           "helpText": "Cross-cutting record state. See spec §6.6."
+        },
+        {
+          "name": "external_id",
+          "label": "External ID",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "identifier in external system",
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
+        },
+        {
+          "name": "external_id_namespace",
+          "label": "External ID Namespace",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "e.g. \"omc\", \"eidr\", \"shotgrid:project_42\"",
+          "helpText": "Which external system the identifier belongs to."
         }
       ]
     },
@@ -2172,6 +2288,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -2245,9 +2370,9 @@
             "2.35:1 (scope)",
             "2.39:1 (anamorphic)",
             "2.76:1 (ultra panavision)",
-            "variable",
-            "other"
-          ]
+            "variable"
+          ],
+          "open": true
         },
         {
           "name": "resolution",
@@ -2266,9 +2391,9 @@
             "5.7K",
             "6K",
             "6.5K",
-            "8K",
-            "other"
-          ]
+            "8K"
+          ],
+          "open": true
         },
         {
           "name": "frame_rate",
@@ -2286,9 +2411,9 @@
             "30 fps",
             "48 fps",
             "60 fps",
-            "variable",
-            "other"
-          ]
+            "variable"
+          ],
+          "open": true
         },
         {
           "name": "color_space",
@@ -2324,6 +2449,15 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
           "autoInjected": false
         },
         {
@@ -2594,6 +2728,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -2746,6 +2889,15 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "Coverage",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
           "autoInjected": false
         },
         {
@@ -2941,6 +3093,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -3097,6 +3258,15 @@
           "tab": "Pacing",
           "autoInjected": false,
           "helpText": "Key acceleration and deceleration points across the story."
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
         },
         {
           "name": "lifecycle_status",
@@ -3272,6 +3442,15 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "Music",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
           "autoInjected": false
         },
         {
@@ -3452,6 +3631,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -3566,6 +3754,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -3658,9 +3855,9 @@
             "colleague",
             "mentor/mentee",
             "rival",
-            "authority",
-            "other"
-          ]
+            "authority"
+          ],
+          "open": true
         },
         {
           "name": "directionality",
@@ -3799,6 +3996,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -3892,6 +4098,15 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
           "autoInjected": false
         },
         {
@@ -4587,6 +4802,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -4758,6 +4982,15 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "Evolution",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
           "autoInjected": false
         },
         {
@@ -5170,6 +5403,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -5415,6 +5657,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -5543,6 +5794,15 @@
             "unaware",
             "sometimes aware"
           ]
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
         },
         {
           "name": "lifecycle_status",
@@ -5841,6 +6101,15 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
           "autoInjected": false
         },
         {
@@ -6193,6 +6462,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -6278,6 +6556,7 @@
           "tab": "State",
           "autoInjected": false,
           "options": [
+            "day",
             "dawn",
             "morning",
             "midday",
@@ -6356,6 +6635,15 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
           "autoInjected": false
         },
         {
@@ -6492,6 +6780,15 @@
           ]
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -6621,6 +6918,15 @@
           "autoInjected": false
         },
         {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
           "name": "lifecycle_status",
           "label": "Lifecycle Status",
           "fieldType": "select",
@@ -6690,10 +6996,10 @@
             "performance",
             "surface",
             "environment",
-            "acoustic",
-            "other"
+            "acoustic"
           ],
-          "helpText": "Hard enum. Tools switch on this to determine compatibility. acoustic added in Phase 1D for location ambience."
+          "helpText": "Hard enum. Tools switch on this to determine compatibility. acoustic added in Phase 1D for location ambience.",
+          "open": true
         },
         {
           "name": "description",
@@ -7030,15 +7336,6 @@
           "referenceEntity": "act"
         },
         {
-          "name": "conditions_json",
-          "label": "Additional Conditions",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Conditions",
-          "autoInjected": false
-        },
-        {
           "name": "notes",
           "label": "Notes",
           "fieldType": "textarea",
@@ -7180,15 +7477,6 @@
           "tab": "Conditions",
           "autoInjected": false,
           "referenceEntity": "act"
-        },
-        {
-          "name": "conditions_json",
-          "label": "Additional Conditions",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Conditions",
-          "autoInjected": false
         },
         {
           "name": "notes",
@@ -7342,15 +7630,6 @@
           "tab": "Conditions",
           "autoInjected": false,
           "helpText": "Matches scene.time_of_day for bindings scoped to specific times."
-        },
-        {
-          "name": "conditions_json",
-          "label": "Additional Conditions",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Conditions",
-          "autoInjected": false
         },
         {
           "name": "notes",
@@ -7898,9 +8177,9 @@
             "voice_double",
             "adr",
             "motion_capture",
-            "reference_only",
-            "other"
-          ]
+            "reference_only"
+          ],
+          "open": true
         },
         {
           "name": "scope",
@@ -8791,9 +9070,9 @@
             "voice_change",
             "motion_change",
             "identity_swap",
-            "transformation",
-            "other"
-          ]
+            "transformation"
+          ],
+          "open": true
         },
         {
           "name": "bundle_override_id",
@@ -8999,9 +9278,9 @@
             "state_change",
             "damage",
             "transformation",
-            "vfx_enhancement",
-            "other"
-          ]
+            "vfx_enhancement"
+          ],
+          "open": true
         },
         {
           "name": "bundle_override_id",
@@ -9209,9 +9488,9 @@
             "extension_change",
             "lighting_change",
             "weather_change",
-            "vfx_addition",
-            "other"
-          ]
+            "vfx_addition"
+          ],
+          "open": true
         },
         {
           "name": "bundle_override_id",
@@ -9962,15 +10241,6 @@
           "autoInjected": false
         },
         {
-          "name": "themes_used",
-          "label": "Themes Used",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "General",
-          "autoInjected": false
-        },
-        {
           "name": "source_music_description",
           "label": "Source Music Description",
           "fieldType": "textarea",
@@ -10583,7 +10853,7 @@
       "parentField": null,
       "versionable": false,
       "hasLifecycleStatus": true,
-      "hasExternalId": false,
+      "hasExternalId": true,
       "subject": "theme",
       "scope": "global",
       "paired": false,
@@ -10762,6 +11032,28 @@
             "archived"
           ],
           "helpText": "Cross-cutting record state. See spec §6.6."
+        },
+        {
+          "name": "external_id",
+          "label": "External ID",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "identifier in external system",
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
+        },
+        {
+          "name": "external_id_namespace",
+          "label": "External ID Namespace",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "e.g. \"omc\", \"eidr\", \"shotgrid:project_42\"",
+          "helpText": "Which external system the identifier belongs to."
         }
       ]
     },
@@ -11183,7 +11475,9 @@
             "location",
             "prop",
             "costume",
-            "motif"
+            "motif",
+            "act",
+            "sequence"
           ]
         },
         {
@@ -11240,6 +11534,15 @@
             "enhances if recognized",
             "reward for careful viewing"
           ]
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
         },
         {
           "name": "lifecycle_status",
@@ -12725,15 +13028,6 @@
           "name": "description",
           "label": "Description",
           "fieldType": "textarea",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "General",
-          "autoInjected": false
-        },
-        {
-          "name": "characters_involved",
-          "label": "Characters Involved",
-          "fieldType": "json",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -14493,9 +14787,9 @@
             "technical",
             "audio",
             "design",
-            "structural",
-            "other"
-          ]
+            "structural"
+          ],
+          "open": true
         },
         {
           "name": "description",
@@ -14970,9 +15264,9 @@
             "documentation",
             "concept",
             "inspiration",
-            "final",
-            "other"
-          ]
+            "final"
+          ],
+          "open": true
         },
         {
           "name": "notes",

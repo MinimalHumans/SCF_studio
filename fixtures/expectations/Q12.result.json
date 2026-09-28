@@ -1,7 +1,7 @@
 {
   "query": "Q12",
   "resultFormat": "1.0",
-  "schemaVersion": "2.13",
+  "schemaVersion": "2.14",
   "parameters": {
     "from": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
     "to": "e4fa4c60-5f66-4b81-942f-6a026ab56c62"
@@ -10,7 +10,6 @@
     "from": {
       "uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
       "fields": {
-        "characters_present": "[\"Eleanor\",\"Marcus\"]",
         "emotional_beat": "The worst thing said aloud",
         "estimated_duration": "4:20",
         "int_ext": "interior",
@@ -30,7 +29,6 @@
     "to": {
       "uuid": "e4fa4c60-5f66-4b81-942f-6a026ab56c62",
       "fields": {
-        "characters_present": "[\"Eleanor\",\"Reverend Shaw\"]",
         "emotional_beat": "Eleanor's refusal hardens",
         "estimated_duration": "2:10",
         "int_ext": "interior",
@@ -65,6 +63,7 @@
             "lifecycle_status": "active",
             "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
             "name": "Eleanor Cade",
+            "notes": "Written older than most leads on purpose. If casting pushes younger the drowning has to move with her.",
             "occupation": "Homesteader; midwife to the valley",
             "pronouns": "she/her",
             "role": "protagonist",

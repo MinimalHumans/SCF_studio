@@ -1,7 +1,7 @@
 {
   "query": "Q09",
   "resultFormat": "1.0",
-  "schemaVersion": "2.13",
+  "schemaVersion": "2.14",
   "parameters": {
     "scene": "06857531-3e91-41a9-95dd-3262407d8132"
   },
@@ -9,12 +9,14 @@
     "scene": {
       "uuid": "06857531-3e91-41a9-95dd-3262407d8132",
       "fields": {
-        "characters_present": "[\"Eleanor\",\"Marcus\"]",
+        "conflict": "She will not lie to comfort him, and cannot say the true thing either.",
         "estimated_duration": "3:40",
+        "goal": "Marcus wants Eleanor to say the drowning was not his fault.",
         "int_ext": "interior",
         "lifecycle_status": "active",
         "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
         "name": "INT. FARMHOUSE KITCHEN - NIGHT",
+        "outcome": "He gets a confession instead of absolution, and it is worse.",
         "scene_number": "12",
         "season": "winter",
         "status": "outline",

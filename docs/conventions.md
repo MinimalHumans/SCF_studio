@@ -898,18 +898,14 @@ the term and specifies nothing else, deliberately.
 Each is marked **schema** (the format has to change), **editor** (only
 this application), or **both**.
 
-- **Filtering on `lifecycle_status`.** *(both)* Every non-link entity
-  carries it, nothing in `scf-core` reads it, and the fixture has no
-  non-active row — so "cut" is currently decorative. Deciding it means
-  answering whether resolvers should exclude cut rows by default, which
-  would change the answer to every canonical query, and whether a
-  consumer can still ask for history. **This is now a 1.0 blocker**, not
-  merely an open question: `spec §6.6` carries a normative gap that
-  cannot ship unfilled, since a specification saying "do what you like"
-  means every consumer answers the canonical queries differently and all
-  of them conform. Deciding it also needs a fixture containing cut rows.
-  Until then, treat a `cut` row as present unless you filter it
-  yourself.
+- **Filtering on `lifecycle_status`.** *(both)* **Settled in spec 0.39
+  and no longer open** — this entry outlived its question. §6.6.1
+  excludes `cut` rows from every resolver, §6.6 states why only `cut` of
+  the six is excluded, `cutChangesTheAnswer.test.ts` pins the mirror
+  rule, and the fixture carries a cut scene WITH a heading in the
+  screenplay so that a reader rebuilding story order from headings
+  resurrects it and fails. What remains is `status`, the second cut
+  column, which 2.14 removed (spec §6.6, proposal 0004).
 - **Locking, beyond numbering.** *(editor)* The numbering half is built
   — see Resolved. What is not: revision colours, A-pages, locked page
   breaks, and a stored record of codes that once existed so a reissued
@@ -1011,9 +1007,10 @@ this application), or **both**.
 - **A scene cut from the screenplay** *(editor)* — derived and badged,
   never written. The entity survives by design; what it loses is a
   position, so it has no number and belongs to no act. `orphanedScenes`
-  reports it and the rail badges it. Nothing stamps `status = 'cut'`,
-  because `status` is authored (outline / draft / revised / locked / cut)
-  and overwriting it on a commit would destroy what the author put there
-  with nowhere to remember it for the trip back. Marking a scene cut
-  stays the author's own act. This is deliberately NOT an answer to the
-  `lifecycle_status` question above, which is still open.
+  reports it and the rail badges it. Nothing stamps a cut status of any
+  kind. `status` is the author's writing stage (outline / draft /
+  revised / locked) and overwriting it on a commit would destroy what
+  the author put there with nowhere to remember it for the trip back —
+  and since schema 2.14 it could not say `cut` anyway: a row leaves the
+  film through `lifecycle_status = cut` and in no other way (spec §6.6,
+  proposal 0004). Marking a scene cut stays the author's own act.

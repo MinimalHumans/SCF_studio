@@ -38,6 +38,14 @@ export interface FieldDef {
   polymorphicType?: string;
   helpText?: string;
   hidden?: boolean;
+  /**
+   * An OPEN vocabulary (spec §2.4): `options` are the KNOWN values and a
+   * writer may store any other string, which is the value rather than an
+   * error. Absent means closed — and the closed ones are load-bearing:
+   * §12.17's axis scoring and §6.6.1's cut rule only work over finite
+   * sets.
+   */
+  open?: boolean;
 }
 
 export interface EntityDef {

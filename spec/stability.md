@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.28 / schema 2.12. This document is expected
+Current as of specification 0.53 / schema 2.14. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -56,6 +56,7 @@ about it is ceremonial.
 | `unmaterialised` detection | §8.3 | Provisional | **n/a** | Stated in 0.39 as a property of the ENVIRONMENT, like §0.3's root mapping. No conformance check asks for it and there can be no fixture, since a placeholder is a filesystem state rather than a file. An implementation that never produces the state is conforming; one that reports a placeholder as `missing` is not. |
 | Polymorphic references declared | §12.1.2 | Provisional | Yes | `polymorphicType` since 0.40. The rule was "any column ending `_id`", which deleted `external_id` from ten entities and two ordinary references besides, and no artifact could catch it. A rule that pattern-matches a name eventually matches something the name did not mean. |
 | The full `lifecycle_status` vocabulary | §6.6 | Provisional | Yes | Six values, stated in 0.40; the section had named two. Only `cut` is excluded from resolution and §6.6 now says why. |
+| `status` is a writing stage | §6.6 | Provisional | **No** | Stated in 0.53 (proposal 0004), and 2.14 removed `cut` from the vocabulary that carried it. Not exercised: every scene, act and sequence in the fixture is `outline`, and nothing in `scf-core` reads the column — which is exactly how the two-column ambiguity survived. A file whose `status` disagrees with its `lifecycle_status` is the case to author. |
 | The carrier record's row member | §12.1.4 | Provisional | Yes | Named for the entity unless the section says otherwise, stated in 0.40. Five of sixteen sections could not be shaped correctly from the document before it. |
 | Published query selectors | §5.4 | Provisional | Yes | `fixtures/expectations/selectors.json` since 0.40, generated and cross-checked against every published `parameters` block. `conformance.md` promised them from the start and nothing shipped. |
 | Spec prose resolves against the registry | — | Provisional | Yes | `schema/check_spec_references.py` since 0.40, in CI. 0.29 wrote two entity names that do not exist; 0.38 made the RUBRIC's names checkable and left the prose unchecked. |
@@ -65,6 +66,8 @@ about it is ceremonial.
 | Rubric steps scoped to the query's position | §12.9.1 | Provisional | Yes | Stated in 0.41. A step asks about the position the query was asked about, not the file. |
 | Q04 carries the scene's text | §12.17.1 | Provisional | Yes | Added in 0.49. `screenplay_lines` is a `uuidExtraTable`, so the section declares its own reference columns and its own bounds; the empty case is exercised by fixture scene 17, which has no heading line. Provisional until a second implementation has produced the member from the text alone. |
 | Location variant selection | §12.17 | Provisional | Yes | Stated in 0.41 and **exercised since 0.42**: scene 12's kitchen dressing was built for autumn and reused in winter, so it still wins on two axes and the published Q04 result carries a non-empty `mismatches`. The zero-score baseline fallback remains unexercised. |
+| `time_of_day` is a light axis | §12.17 | Provisional | Partly | Stated in 0.53 (proposal 0012). `day` added, `continuous` removed — it could never match a variant. Partly: the fixture authors refined times against DAY headings, which is the case the rule exists for, but no fixture scene carries `day` itself. |
+| `varies` is a wildcard on the time axis | §12.17 | Provisional | **No** | Stated in 0.53. `varies` scored as an ordinary value could never agree, making the one value meaning "holds at any hour" the one that never won. No fixture variant uses it. |
 | Dossier group reference column | §12.15 | Provisional | Yes | `<subject>_id`, stated in 0.41. |
 | Q11's emotional cascade | §12.13 | Provisional | Yes | Fixed in 0.44. The leaf was `scene_emotional_design`, which is not a registry entity, so the member was `[]` for every file that could exist — and the blessed artifact recorded the empty array. Now `scene_emotional_target`, which declares `refines: ["project_tone"]`. |
 | Sequences crossing an act boundary | §5.3 | Provisional | Yes | Fixed in 0.44. `structure.sequence_act_mismatch` tested the start scene, which is the comparison §5.3 calls incorrect, and so never fired on a fixture that contains a crossing. It now tests the span. |
@@ -104,6 +107,8 @@ about it is ceremonial.
 | The `{uuid, fields}` projected row | §12.1.2 | Provisional | Yes | Stated in 0.29. It had been demonstrated by the blessed artifacts and never defined, which was the third reader run's central finding. Provisional until a second implementation has produced one from the text alone. |
 | Polymorphic `_id` columns dropped | §12.1.2 | Provisional | Yes | `projectRow()` drops any `_id` with no `referenceEntity`. Stated in 0.29; Q10 and Q15 both depend on it. |
 | Derived records carry nulls | §12.1.4 | Provisional | Yes | Stated in 0.29. The opposite of §12.1.2's omit-empties rule, and the two were indistinguishable in the artifacts. |
+| Open vocabularies | §2.4 | Provisional | Yes | Stated in 0.53 (proposal 0022). Sixteen fields lost `other` and gained `open: true`; `vocabulary.unlisted_value` reports the tail. Exercised by the fixture's `creative_decision` row carrying `decision_type = "sound"`, which had never been a member and which nothing had ever checked. |
+| Theme carriers on spans | §12.11 | Provisional | Yes | Stated in 0.53 (proposal 0013). An act or sequence carries a theme at every scene of its derived membership, so a scene moved across a boundary moves its count with it. The fixture connects Forgiveness to Act 2. |
 | §12's closed vocabularies | §12.1.5 | Provisional | Partly | Stated in 0.29: §8.3's states, §12.9's severities, §12.8's `provenance`. `provenance` is the only one §12 introduces, and 0.29 states its three members in §12.8 rather than leaving them in `mediaReferences.ts`. Partly, because unlike the other two it has no published artifact behind it — a fourth layer would be a spec edit with nothing to check it against. |
 | Label lists | §12.1.5 | Provisional | Yes | Stated in 0.29, with the source column named per query. Q12 only. |
 | Q09 relatedness is one hop | §12.10 | Provisional | Yes | Stated in 0.29. Non-transitive, deliberately. |

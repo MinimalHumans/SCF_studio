@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.13** — **99 entities**.
+Schema **2.14** — **99 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -55,7 +55,7 @@ A major structural division of the story.
 | Name field | `name` |
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
-| `external_id` | no |
+| `external_id` | yes (§6.3) |
 | Referenced by (4) | `sequence.act_id`, `character_asset_binding.act_id`, `prop_asset_binding.act_id`, `location_asset_binding.act_id` |
 
 | Field | Type | Req | |
@@ -67,9 +67,11 @@ A major structural division of the story.
 | `dramatic_question` | textarea |  |  |
 | `shift` | textarea |  |  |
 | `summary` | textarea |  |  |
-| `status` | select |  | one of `outline`, `draft`, `revised`, `locked`, `cut`. default `outline`. Writing-process status. Distinct from lifecycle_status. |
+| `status` | select |  | one of `outline`, `draft`, `revised`, `locked`. default `outline`. Writing-process status. Distinct from lifecycle_status. |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+| `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
+| `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
 
 ### `action_sequence_character`
 
@@ -116,7 +118,7 @@ Junction: actor + character + role type.
 |---|---|---|---|
 | `actor_id` | reference | **yes** | → `actor` (resolves to `actor_uuid` in a result, §12.1.2) |
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
-| `role_type` | select | **yes** | one of `principal`, `body_double`, `stunt_double`, `voice_double`, `adr`, `motion_capture`, `reference_only`, `other` |
+| `role_type` | select | **yes** | one of `principal`, `body_double`, `stunt_double`, `voice_double`, `adr`, `motion_capture`, `reference_only` |
 | `scope` | select |  | one of `whole_project`, `specific_scenes`, `specific_takes`. default `whole_project` |
 | `scope_details` | textarea |  |  |
 | `notes` | textarea |  |  |
@@ -181,7 +183,7 @@ Links an asset to an entity it documents or references. Open polymorphism — en
 | `asset_id` | reference | **yes** | → `asset` (resolves to `asset_uuid` in a result, §12.1.2) |
 | `entity_type` | text | **yes** | Open-ended — any entity name. |
 | `entity_id` | integer | **yes** |  |
-| `relationship_type` | select |  | one of `reference`, `documentation`, `concept`, `inspiration`, `final`, `other` |
+| `relationship_type` | select |  | one of `reference`, `documentation`, `concept`, `inspiration`, `final` |
 | `notes` | textarea |  |  |
 
 *1 hidden field(s) omitted — present in the table, not offered for authoring.*
@@ -250,6 +252,7 @@ A character in the story. Identity and narrative function only — physical/voca
 | `core_belief` | textarea |  |  |
 | `education_level` | text |  |  |
 | `skills_abilities` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 | `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
 | `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
@@ -375,7 +378,7 @@ A recorded creative decision with rationale.
 | Field | Type | Req | |
 |---|---|---|---|
 | `name` | text | **yes** |  |
-| `decision_type` | select |  | one of `casting`, `visual`, `narrative`, `technical`, `audio`, `design`, `structural`, `other` |
+| `decision_type` | select |  | one of `casting`, `visual`, `narrative`, `technical`, `audio`, `design`, `structural` |
 | `description` | textarea |  |  |
 | `rationale` | textarea |  |  |
 | `alternatives_considered` | textarea |  |  |
@@ -462,18 +465,17 @@ The root container for an SCF story project.
 |---|---|---|---|
 | `name` | text | **yes** |  |
 | `logline` | textarea |  |  |
-| `genre` | select |  | one of `drama`, `comedy`, `thriller`, `sci-fi`, `fantasy`, `horror`, `action`, `romance`, `documentary`, `animation`, `western`, `other` |
+| `genre` | select |  | one of `drama`, `comedy`, `thriller`, `sci-fi`, `fantasy`, `horror`, `action`, `romance`, `documentary`, `animation`, `western` |
 | `tone` | text |  |  |
 | `setting_period` | text |  |  |
 | `target_runtime` | integer |  |  |
-| `project_format` | select |  | one of `feature`, `series`, `short`, `commercial`, `other` |
+| `project_format` | select |  | one of `feature`, `series`, `short`, `commercial` |
 | `production_status` | select |  | one of `development`, `pre_production`, `production`, `post_production`, `complete`. default `development`. Project-level production phase axis. |
 | `workflow_mode` | select |  | one of `performance_first`, `generation_first`, `hybrid`. default `generation_first`. Dominant production workflow stance. |
 | `numbering_policy` | select |  | one of `derived`, `fixed`. default `derived`. Governs ALL FOUR authored numbers — act, sequence, scene and shot. derived: recomputed from the script's order at every commit, which is what a writer still moving the story wants. fixed: never touched. Once a production is greenlit the numbers leave the building on schedules and call sheets and become identifiers, and a scene numbered 12 that plays after scene 45 is correct. See spec §4.3. |
 | `notes` | textarea |  |  |
 | `vision_statement` | textarea |  |  |
 | `creative_philosophy` | textarea |  |  |
-| `themes` | json |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 | `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
 | `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
@@ -498,11 +500,11 @@ A significant object in the story. Identity, narrative function, and story momen
 | Field | Type | Req | |
 |---|---|---|---|
 | `name` | text | **yes** |  |
-| `prop_type` | select |  | one of `hand prop`, `set dressing`, `vehicle`, `weapon`, `document`, `technology`, `clothing item`, `food/drink`, `other` |
+| `prop_type` | select |  | one of `hand prop`, `set dressing`, `vehicle`, `weapon`, `document`, `technology`, `clothing item`, `food/drink` |
 | `description` | textarea |  |  |
 | `realization_status` | select |  | one of `tbd`, `sourced`, `built`, `scanned`, `hybrid`, `generated_only`. default `tbd`. How this prop is realized in production. sourced = found / purchased real object; built = fabricated; scanned = real object digitally captured; hybrid = combined methods (practical + VFX, sourced + CG damage, plate replacement, miniature, etc.); generated_only = fully synthetic. |
 | `narrative_significance` | textarea |  |  |
-| `story_function` | select |  | one of `macguffin`, `character extension`, `plot device`, `symbol`, `atmosphere`, `other` |
+| `story_function` | select |  | one of `functional`, `macguffin`, `character extension`, `plot device`, `symbol`, `atmosphere` |
 | `associated_character_id` | reference |  | → `character` (resolves to `associated_character_uuid` in a result, §12.1.2) |
 | `first_appearance` | textarea |  |  |
 | `key_moments` | textarea |  |  |
@@ -535,12 +537,15 @@ A single scene in the story.
 | `scene_number` | text |  | A label, not the position: 12, 12A (inserted after 12), A12 (inserted before it). Ordering comes from the script. See spec/scf-spec.md §4.2. |
 | `int_ext` | select |  | one of `interior`, `exterior`, `int/ext` |
 | `location_id` | reference |  | → `location` (resolves to `location_uuid` in a result, §12.1.2) |
-| `time_of_day` | select |  | one of `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`, `continuous` |
+| `time_of_day` | select |  | one of `day`, `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`. A LIGHT axis: what the camera sees. `day` is unrefined daylight — the value a heading-only import writes. CONTINUOUS, LATER and the rest are continuity relations to the previous scene, not times; they stay in the heading text. Spec §12.17 matches this against location_variant.time_of_day. |
 | `weather_conditions` | text |  |  |
 | `season` | select |  | one of `spring`, `summer`, `autumn`, `winter`, `unspecified` |
 | `summary` | textarea |  |  |
 | `purpose` | textarea |  |  |
-| `status` | select |  | one of `outline`, `draft`, `revised`, `locked`, `cut`. default `outline` |
+| `goal` | textarea |  |  |
+| `conflict` | textarea |  |  |
+| `outcome` | textarea |  |  |
+| `status` | select |  | one of `outline`, `draft`, `revised`, `locked`. default `outline`. Writing-process status. Distinct from lifecycle_status. |
 | `character_dynamics` | textarea |  |  |
 | `emotional_beat` | textarea |  |  |
 | `tone` | text |  |  |
@@ -554,8 +559,6 @@ A single scene in the story.
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 | `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
 | `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
-
-*1 hidden field(s) omitted — present in the table, not offered for authoring.*
 
 ### `scene_character`
 
@@ -645,7 +648,7 @@ A group of related scenes forming a narrative unit.
 | Name field | `name` |
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
-| `external_id` | no |
+| `external_id` | yes (§6.3) |
 | Referenced by (3) | `scene_sequence.sequence_id`, `tone_marker.sequence_id`, `emotional_beat.sequence_id` |
 
 | Field | Type | Req | |
@@ -660,9 +663,11 @@ A group of related scenes forming a narrative unit.
 | `outcome` | textarea |  |  |
 | `purpose` | textarea |  |  |
 | `turning_point` | textarea |  |  |
-| `status` | select |  | one of `outline`, `draft`, `revised`, `locked`, `cut`. default `outline` |
+| `status` | select |  | one of `outline`, `draft`, `revised`, `locked`. default `outline`. Writing-process status. Distinct from lifecycle_status. |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+| `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
+| `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
 
 ### `story_beat`
 
@@ -678,7 +683,7 @@ A discrete narrative unit within a scene — a moment of change.
 | Name field | `name` |
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
-| `external_id` | no |
+| `external_id` | yes (§6.3) |
 | Referenced by (2) | `clip.beat_id`, `shot.story_beat_id` |
 
 | Field | Type | Req | |
@@ -686,13 +691,15 @@ A discrete narrative unit within a scene — a moment of change.
 | `name` | text | **yes** |  |
 | `scene_id` | reference |  | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
 | `beat_order` | integer |  |  |
-| `beat_type` | select |  | one of `setup`, `action`, `reaction`, `decision`, `discovery`, `revelation`, `reversal`, `payoff`, `other` |
+| `beat_type` | select |  | one of `setup`, `action`, `reaction`, `decision`, `discovery`, `revelation`, `reversal`, `payoff` |
 | `description` | textarea |  |  |
 | `purpose` | textarea |  |  |
 | `value_shift` | text |  |  |
 | `pov_character_id` | reference |  | → `character` (resolves to `pov_character_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+| `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
+| `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
 
 ### `take_scene`
 
@@ -734,19 +741,22 @@ A thematic element that runs through the story.
 | Name field | `name` |
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
-| `external_id` | no |
+| `external_id` | yes (§6.3) |
 | Referenced by (1) | `thematic_connection.theme_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
 | `name` | text | **yes** |  |
 | `description` | textarea |  |  |
-| `motifs` | json |  |  |
+| `statement` | textarea |  | The claim the story makes about this theme. |
+| `opposition` | textarea |  | The position the story tests the statement against. |
 | `character_connections` | textarea |  |  |
 | `scene_connections` | textarea |  |  |
 | `evolution` | textarea |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+| `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
+| `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
 
 ---
 
@@ -780,6 +790,7 @@ Overall approach to camera, movement, visual storytelling, and coverage (absorbe
 | `coverage_style` | select |  | one of `master + coverage`, `single camera`, `multi-camera`, `oner/long take`, `run-and-gun`, `shot-list driven` |
 | `editorial_approach` | select |  | one of `cut-friendly`, `in-camera editing`, `improvised` |
 | `coverage_priorities` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `costume_design_philosophy`
@@ -806,6 +817,7 @@ Overall approach to wardrobe and costume design.
 | `fabric_philosophy` | select |  | one of `natural`, `synthetic`, `mixed` |
 | `formality_spectrum` | textarea |  |  |
 | `condition_philosophy` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `look_development`
@@ -837,6 +849,7 @@ Target visual look for the final image — grading and post direction.
 | `editorial_lut` | text |  |  |
 | `final_grade_foundation` | textarea |  |  |
 | `reference_images` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `project_color_palette`
@@ -871,6 +884,7 @@ Overall color scheme, color rules, and warm/cool temperature strategy for the en
 | `night_scene_temperature` | text |  |  |
 | `color_evolution` | textarea |  |  |
 | `color_relationships` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `project_tone`
@@ -902,6 +916,7 @@ Overall tonal identity and story-level rhythm — the emotional temperature and 
 | `pacing_philosophy` | textarea |  |  |
 | `breathing_room_strategy` | textarea |  |  |
 | `pacing_inflection_points` | textarea |  | Key acceleration and deceleration points across the story. |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `project_vision`
@@ -938,6 +953,7 @@ Overarching creative intent and the director's approach to realizing it. Absorbe
 | `personal_resonance` | textarea |  |  |
 | `emotional_stakes` | textarea |  |  |
 | `artistic_growth_goals` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `sonic_identity`
@@ -969,6 +985,7 @@ Overall approach to the film's sound and music world (absorbed musical_identity 
 | `instrumentation_palette` | textarea |  |  |
 | `score_density` | select |  | one of `wall-to-wall`, `selective`, `sparse` |
 | `source_music_approach` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `technical_specs`
@@ -990,13 +1007,14 @@ Technical format specifications for the project.
 | Field | Type | Req | |
 |---|---|---|---|
 | `name` | text |  | default `Technical Specs` |
-| `aspect_ratio` | select |  | one of `1.33:1 (academy)`, `1.66:1`, `1.78:1 (16:9)`, `1.85:1 (flat)`, `2.00:1 (univisium)`, `2.20:1 (70mm)`, `2.35:1 (scope)`, `2.39:1 (anamorphic)`, `2.76:1 (ultra panavision)`, `variable`, `other` |
-| `resolution` | select |  | one of `2K (2048x1080)`, `2.8K`, `3.4K`, `4K (4096x2160)`, `4.6K`, `5.7K`, `6K`, `6.5K`, `8K`, `other` |
-| `frame_rate` | select |  | one of `23.976 fps`, `24 fps`, `25 fps`, `29.97 fps`, `30 fps`, `48 fps`, `60 fps`, `variable`, `other` |
+| `aspect_ratio` | select |  | one of `1.33:1 (academy)`, `1.66:1`, `1.78:1 (16:9)`, `1.85:1 (flat)`, `2.00:1 (univisium)`, `2.20:1 (70mm)`, `2.35:1 (scope)`, `2.39:1 (anamorphic)`, `2.76:1 (ultra panavision)`, `variable` |
+| `resolution` | select |  | one of `2K (2048x1080)`, `2.8K`, `3.4K`, `4K (4096x2160)`, `4.6K`, `5.7K`, `6K`, `6.5K`, `8K` |
+| `frame_rate` | select |  | one of `23.976 fps`, `24 fps`, `25 fps`, `29.97 fps`, `30 fps`, `48 fps`, `60 fps`, `variable` |
 | `color_space` | text |  |  |
 | `recording_codec` | text |  |  |
 | `delivery_format` | text |  |  |
 | `audio_format` | text |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `visual_identity`
@@ -1038,6 +1056,7 @@ Overarching aesthetic vision — the film's visual DNA. Single home for the proj
 | `geometric_language` | select |  | one of `organic`, `angular`, `mixed` |
 | `lighting_constraints` | textarea |  |  |
 | `visual_influences` | json |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ---
@@ -1091,7 +1110,7 @@ Named, intent-typed collection of assets. Tool-agnostic media reference primitiv
 | Field | Type | Req | |
 |---|---|---|---|
 | `name` | text | **yes** |  |
-| `intent` | select | **yes** | one of `visual_identity`, `voice_identity`, `motion`, `behavior`, `performance`, `surface`, `environment`, `acoustic`, `other`. Hard enum. Tools switch on this to determine compatibility. acoustic added in Phase 1D for location ambience. |
+| `intent` | select | **yes** | one of `visual_identity`, `voice_identity`, `motion`, `behavior`, `performance`, `surface`, `environment`, `acoustic`. Hard enum. Tools switch on this to determine compatibility. acoustic added in Phase 1D for location ambience. |
 | `description` | textarea |  |  |
 | `coverage_summary` | textarea |  |  |
 | `format_hints` | json |  |  |
@@ -1137,6 +1156,7 @@ Complete visual design — silhouette, distinction, evolution.
 | `silhouette_description` | textarea |  |  |
 | `visual_shorthand` | textarea |  |  |
 | `appearance_evolution` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `character_asset_binding`
@@ -1168,7 +1188,6 @@ Applies a bundle to a character under specific conditions.
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `act_id` | reference |  | → `act` (resolves to `act_uuid` in a result, §12.1.2) |
-| `conditions_json` | json |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1194,7 +1213,7 @@ Relationship between two characters with dynamics, evolution, and its physical d
 | `name` | text |  |  |
 | `character_a_id` | reference | **yes** | → `character` (resolves to `character_a_uuid` in a result, §12.1.2) |
 | `character_b_id` | reference | **yes** | → `character` (resolves to `character_b_uuid` in a result, §12.1.2) |
-| `relationship_type` | select |  | one of `family`, `friend`, `enemy`, `lover`, `colleague`, `mentor/mentee`, `rival`, `authority`, `other` |
+| `relationship_type` | select |  | one of `family`, `friend`, `enemy`, `lover`, `colleague`, `mentor/mentee`, `rival`, `authority` |
 | `directionality` | select |  | one of `mutual`, `a_to_b`. default `mutual`. Whether the order of the two characters carries meaning. 'mutual' — siblings, colleagues — reads the same either way, so the same pair entered twice is a duplicate. 'a_to_b' is directed and reads A -> B (A is B's mentor), so the reverse pair is a different fact, not a duplicate. Tooling cannot tell these apart without being told. |
 | `specific_relationship` | text |  |  |
 | `emotional_valence` | select |  | one of `positive`, `negative`, `complex`, `neutral` |
@@ -1208,6 +1227,7 @@ Relationship between two characters with dynamics, evolution, and its physical d
 | `physical_evolution` | textarea |  | Narrative summary of how the physical dimension changes across the story. The queryable stages live in relationship_state rows (pattern 3). |
 | `history` | textarea |  |  |
 | `current_status` | text |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `character_shot_override`
@@ -1232,7 +1252,7 @@ Per-character deviation from the cascade for a specific shot. Versionable: only 
 | `name` | text |  |  |
 | `shot_id` | reference | **yes** | → `shot` (resolves to `shot_uuid` in a result, §12.1.2) |
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
-| `override_types` | multiselect |  | one of `aging`, `de_aging`, `prosthetic`, `body_change`, `voice_change`, `motion_change`, `identity_swap`, `transformation`, `other` |
+| `override_types` | multiselect |  | one of `aging`, `de_aging`, `prosthetic`, `body_change`, `voice_change`, `motion_change`, `identity_swap`, `transformation` |
 | `bundle_override_id` | reference |  | → `bundle` (resolves to `bundle_override_uuid` in a result, §12.1.2) |
 | `variant_target_id` | reference |  | → `character_variant` (resolves to `variant_target_uuid` in a result, §12.1.2) |
 | `visual_delta` | textarea |  |  |
@@ -1272,6 +1292,7 @@ Specific state or version of a character (e.g. Young Eleanor, Angry Marcus).
 | `physical_differences` | textarea |  |  |
 | `emotional_state` | textarea |  |  |
 | `context` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `clip`
@@ -1375,6 +1396,7 @@ How wardrobe evolves through the story arc.
 | `formality_evolution` | textarea |  |  |
 | `condition_evolution` | textarea |  |  |
 | `symbolic_meaning` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `entity_anchor`
@@ -1443,7 +1465,6 @@ Applies a bundle to a location under specific conditions (variant, scene range, 
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `act_id` | reference |  | → `act` (resolves to `act_uuid` in a result, §12.1.2) |
 | `time_of_day_filter` | text |  | Matches scene.time_of_day for bindings scoped to specific times. |
-| `conditions_json` | json |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1474,6 +1495,7 @@ Color palette and atmosphere for a specific location.
 | `color_atmosphere` | select |  | one of `warm`, `cool`, `neutral`, `colorful` |
 | `color_intensity` | select |  | one of `saturated`, `desaturated`, `mixed` |
 | `character_location_interaction` | select |  | one of `match`, `contrast`, `transform` |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `location_design`
@@ -1514,6 +1536,7 @@ Detailed visual design — architecture, materials, spatial layout.
 | `natural_light_sources` | textarea |  |  |
 | `practical_light_sources` | textarea |  |  |
 | `light_quality` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `location_shot_override`
@@ -1538,7 +1561,7 @@ Per-location deviation from the cascade for a specific shot. Versionable: only o
 | `name` | text |  |  |
 | `shot_id` | reference | **yes** | → `shot` (resolves to `shot_uuid` in a result, §12.1.2) |
 | `location_id` | reference | **yes** | → `location` (resolves to `location_uuid` in a result, §12.1.2) |
-| `override_types` | multiselect |  | one of `extension_change`, `lighting_change`, `weather_change`, `vfx_addition`, `other` |
+| `override_types` | multiselect |  | one of `extension_change`, `lighting_change`, `weather_change`, `vfx_addition` |
 | `bundle_override_id` | reference |  | → `bundle` (resolves to `bundle_override_uuid` in a result, §12.1.2) |
 | `variant_target_id` | reference |  | → `location_variant` (resolves to `variant_target_uuid` in a result, §12.1.2) |
 | `visual_delta` | textarea |  |  |
@@ -1582,6 +1605,7 @@ Acoustic identity of a place — room tone, ambience, character.
 | `variable_sounds` | textarea |  |  |
 | `characteristic_sounds` | textarea |  |  |
 | `sonic_perspective` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `location_variant`
@@ -1607,7 +1631,7 @@ Modified state of a location (e.g. Night version, After fire). Includes structur
 | `name` | text | **yes** |  |
 | `location_id` | reference | **yes** | → `location` (resolves to `location_uuid` in a result, §12.1.2) |
 | `is_baseline` | boolean |  | default `false`. True for the unconditional default variant for this location. |
-| `time_of_day` | select |  | one of `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`, `varies` |
+| `time_of_day` | select |  | one of `day`, `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`, `varies` |
 | `weather` | text |  |  |
 | `season` | select |  | one of `spring`, `summer`, `autumn`, `winter`, `unspecified` |
 | `post_event_state` | text |  |  |
@@ -1615,6 +1639,7 @@ Modified state of a location (e.g. Night version, After fire). Includes structur
 | `lighting_differences` | textarea |  |  |
 | `emotional_shift` | textarea |  |  |
 | `time_context` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `makeup_hair_design`
@@ -1752,6 +1777,7 @@ Recurring physical behavior — gesture, tic, comfort behavior.
 | `frequency` | select |  | one of `constant`, `frequent`, `occasional`, `rare/situational` |
 | `meaning` | textarea |  |  |
 | `character_awareness` | select |  | one of `aware`, `unaware`, `sometimes aware` |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `prop_asset_binding`
@@ -1781,7 +1807,6 @@ Applies a bundle to a prop under specific conditions (variant, scene range, act)
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `act_id` | reference |  | → `act` (resolves to `act_uuid` in a result, §12.1.2) |
-| `conditions_json` | json |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1807,7 +1832,7 @@ Per-prop deviation from the cascade for a specific shot. Versionable: only one a
 | `name` | text |  |  |
 | `shot_id` | reference | **yes** | → `shot` (resolves to `shot_uuid` in a result, §12.1.2) |
 | `prop_id` | reference | **yes** | → `prop` (resolves to `prop_uuid` in a result, §12.1.2) |
-| `override_types` | multiselect |  | one of `state_change`, `damage`, `transformation`, `vfx_enhancement`, `other` |
+| `override_types` | multiselect |  | one of `state_change`, `damage`, `transformation`, `vfx_enhancement` |
 | `bundle_override_id` | reference |  | → `bundle` (resolves to `bundle_override_uuid` in a result, §12.1.2) |
 | `variant_target_id` | reference |  | → `prop_variant` (resolves to `variant_target_uuid` in a result, §12.1.2) |
 | `visual_delta` | textarea |  |  |
@@ -1911,6 +1936,7 @@ Specific state or version of a prop (e.g. Locket open, Gun blood-spattered, Lett
 | `physical_differences` | textarea |  |  |
 | `state_trigger` | textarea |  |  |
 | `context` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `relationship_state`
@@ -1936,6 +1962,7 @@ The stage a relationship is in as of a story position. Latest-wins position keyi
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2). The position this stage begins. In force until a later row supersedes it. |
 | `stage_label` | text |  | Short handle, e.g. "arm's length", "post-accident thaw". |
 | `description` | textarea |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `shot_coverage`
@@ -2049,6 +2076,7 @@ Baseline vocal identity — how a character sounds and how they deliver lines (a
 | `filler_words` | json |  |  |
 | `catch_phrases` | json |  |  |
 | `verbal_tics` | json |  |  |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ---
@@ -2213,7 +2241,6 @@ Music approach for a specific scene.
 | `build_evolution` | textarea |  |  |
 | `peak` | text |  |  |
 | `exit_point` | text |  |  |
-| `themes_used` | json |  |  |
 | `source_music_description` | textarea |  |  |
 | `lyrics_relevance` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
@@ -2413,7 +2440,7 @@ A meaning-carrying element in any modality — visual, sonic, verbal, behavioral
 | Name field | `name` |
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
-| `external_id` | no |
+| `external_id` | yes (§6.3) |
 | Referenced by (3) | `motif.related_motif_id`, `motif_state.motif_id`, `motif_appearance.motif_id` |
 
 | Field | Type | Req | |
@@ -2433,6 +2460,8 @@ A meaning-carrying element in any modality — visual, sonic, verbal, behavioral
 | `evolution_description` | textarea |  | Narrative summary. The queryable stages live in motif_state rows (pattern 3). |
 | `related_motif_id` | reference |  | → `motif` (resolves to `related_motif_uuid` in a result, §12.1.2). A motif in another modality this one echoes — e.g. a sonic motif tied to a visual one. |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+| `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
+| `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
 
 ### `motif_state`
 
@@ -2508,11 +2537,12 @@ How a specific element connects to a theme. Open polymorphism — entity_type is
 |---|---|---|---|
 | `name` | text |  |  |
 | `theme_id` | reference | **yes** | → `theme` (resolves to `theme_uuid` in a result, §12.1.2) |
-| `entity_type` | select |  | one of `character`, `scene`, `location`, `prop`, `costume`, `motif` |
+| `entity_type` | select |  | one of `character`, `scene`, `location`, `prop`, `costume`, `motif`, `act`, `sequence` |
 | `entity_id` | integer | **yes** |  |
 | `nature_of_connection` | select |  | one of `embodies`, `explores`, `represents`, `challenges`, `resolves` |
 | `subtlety_level` | select |  | one of `on-the-nose`, `clear`, `subtle`, `hidden` |
 | `intended_perception` | select |  | one of `must recognize`, `enhances if recognized`, `reward for careful viewing` |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ---
@@ -3094,7 +3124,6 @@ Ordered physical staging moment within a scene container — either a scene_bloc
 | `action_sequence_id` | reference |  | → `action_sequence` (resolves to `action_sequence_uuid` in a result, §12.1.2). Parent for choreographed action beats. Mutually exclusive with scene_blocking_id. |
 | `beat_order` | integer | **yes** |  |
 | `description` | textarea |  |  |
-| `characters_involved` | json |  |  |
 | `character_positions` | json |  |  |
 | `movement_description` | textarea |  |  |
 | `camera_note` | text |  |  |

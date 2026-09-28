@@ -694,6 +694,16 @@ export async function q10Result(
           const sid = asId(link["scene_id"]);
           if (sid !== null) sceneIds.push(sid);
         }
+      } else if (targetEntity === "act" || targetEntity === "sequence") {
+        // A span carries the theme at every scene of its DERIVED
+        // membership (§5.1), so a scene moved between acts moves its
+        // count with it and nothing is stored twice.
+        const structure = await spanMembership(ctx);
+        const of = targetEntity === "act"
+          ? structure.actOfScene : structure.sequenceOfScene;
+        for (const [sid, spanId] of of) {
+          if (spanId === targetId) sceneIds.push(sid);
+        }
       }
     }
 
@@ -874,6 +884,20 @@ export async function q11Result(
  * is the cascade §12.13 describes.
  */
 export const Q11_LEAF = "scene_emotional_target";
+
+/**
+ * Scene-to-span membership, derived (§5.1). Used by Q10, where a theme
+ * connected to an act reaches every scene the act covers.
+ */
+async function spanMembership(ctx: ScfContext) {
+  const scenes = await ctx.exec("SELECT * FROM scene");
+  const acts = await ctx.exec("SELECT * FROM act");
+  const sequences = await ctx.exec("SELECT * FROM sequence");
+  const headings = await ctx.exec(
+    "SELECT scene_id, line_order FROM screenplay_lines " +
+    "WHERE line_type = 'heading'");
+  return deriveStructure(scenes, acts, sequences, sceneOrderHint(headings));
+}
 
 // ---------------------------------------------------------------------------
 // Q15 — Provenance (§12.14)

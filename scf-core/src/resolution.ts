@@ -410,12 +410,23 @@ export async function selectLocationVariant(
 
   const norm = (v: SqlValue | undefined): string =>
     String(v).trim().toLowerCase();
+  /**
+   * `varies` on a variant's time_of_day is a WILDCARD, not a time: it
+   * says the dressing holds at any hour (§12.17). Scored as an ordinary
+   * value it could never agree with a scene, which made the one value
+   * meaning "always applies" the one value that never won.
+   */
+  const agrees = (sceneAxis: string, variantAxis: string, v: Row): boolean => {
+    const sv = scene[sceneAxis];
+    const vv = v[variantAxis];
+    if (!pyTruthy(sv) || !pyTruthy(vv)) return false;
+    if (variantAxis === "time_of_day" && norm(vv) === "varies") return true;
+    return norm(sv) === norm(vv);
+  };
   const score = (v: Row): number => {
     let s = 0;
     for (const [sceneAxis, variantAxis] of VARIANT_AXES) {
-      const sv = scene[sceneAxis];
-      const vv = v[variantAxis];
-      if (pyTruthy(sv) && pyTruthy(vv) && norm(sv) === norm(vv)) s += 1;
+      if (agrees(sceneAxis, variantAxis, v)) s += 1;
     }
     return s;
   };
@@ -442,7 +453,8 @@ export async function selectLocationVariant(
   for (const [sceneAxis, variantAxis] of VARIANT_AXES) {
     const sv = scene[sceneAxis];
     const vv = best[variantAxis];
-    if (pyTruthy(sv) && pyTruthy(vv) && norm(sv) !== norm(vv)) {
+    if (pyTruthy(sv) && pyTruthy(vv) &&
+        !agrees(sceneAxis, variantAxis, best)) {
       mismatches.push(
         `${sceneAxis}: scene=${JSON.stringify(sv)} ` +
         `variant=${JSON.stringify(vv)}`);
