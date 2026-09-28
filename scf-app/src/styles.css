@@ -275,7 +275,19 @@ ul { list-style: none; margin: 0; padding: 0; }
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
 }
+/* Stages hanging off one row: an arc's, a progression's, a
+   relationship's. Full-width under their parent, indented so the
+   hierarchy reads without a disclosure control. */
+.state-children {
+  flex-basis: 100%;
+  margin: 2px 0 6px 16px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+}
+.state-children .spine { margin: 4px 0; }
+.state-children .subject-rows li { border-bottom: 0; }
 .row-link {
   background: none;
   border: 0;

@@ -259,6 +259,8 @@ function SubjectSection({ entity, field, subjectId, scenes,
                 ×
               </button>
             )}
+            <StateChildren parent={entity} parentId={r["id"] as number}
+                           scenes={scenes} currentSceneId={currentSceneId} />
           </li>
         ))}
       </ul>
@@ -267,6 +269,88 @@ function SubjectSection({ entity, field, subjectId, scenes,
                           anchorId={subjectId} />
       )}
     </section>
+  );
+}
+
+/**
+ * The position-keyed rows that hang off ONE row of a section.
+ *
+ * A character's arc is a row that points at the character, and its
+ * STAGES point at the arc — one hop further out than this page reaches.
+ * Same shape for a wardrobe progression and its stages, and for a
+ * relationship and its states, which is why this is derived from the
+ * registry rather than written for arcs: any entity that is
+ * position-keyed and references the row above it renders here, and the
+ * next one added needs no edit.
+ *
+ * It stops at one hop. A page showing states of states would be a tree,
+ * and the row it hangs under is already a link away from its own page.
+ */
+function StateChildren({ parent, parentId, scenes, currentSceneId }: {
+  parent: string; parentId: number; scenes: Row[];
+  currentSceneId: number | null;
+}): JSX.Element | null {
+  const children = useMemo(() => {
+    const found: Array<{ def: EntityDef; field: string }> = [];
+    for (const e of registry.entities.values()) {
+      if (e.positionPattern === "none") continue;
+      if (!e.fields.some((f) => f.name === "scene_id")) continue;
+      const ref = e.fields.find((f) => f.fieldType === "reference" &&
+                                       f.referenceEntity === parent);
+      if (ref !== undefined) found.push({ def: e, field: ref.name });
+    }
+    return found;
+  }, [parent]);
+  if (children.length === 0) return null;
+  return (
+    <>
+      {children.map((c) => (
+        <StateChildRows key={c.def.name} edef={c.def} field={c.field}
+                        parentId={parentId} scenes={scenes}
+                        currentSceneId={currentSceneId} />
+      ))}
+    </>
+  );
+}
+
+function StateChildRows({ edef, field, parentId, scenes, currentSceneId }: {
+  edef: EntityDef; field: string; parentId: number; scenes: Row[];
+  currentSceneId: number | null;
+}): JSX.Element | null {
+  const { openEntityRow } = useStore();
+  const rows = useQuery(
+    `SELECT * FROM ${q(edef.name)} WHERE ${q(field)} = ?`, [parentId]);
+  const pos = useMemo(
+    () => new Map(scenes.map((s, i) => [s["id"], i])), [scenes]);
+  const ordered = useMemo(() => [...rows].sort((a, b) =>
+    (pos.get(a["scene_id"]) as number ?? 1e9) -
+    (pos.get(b["scene_id"]) as number ?? 1e9)), [rows, pos]);
+  const spans = useMemo<Span[]>(
+    () => computeSpans(edef, ordered, pos, scenes.length, "scene_id"),
+    [edef, ordered, pos, scenes.length]);
+  if (rows.length === 0) return null;
+  return (
+    <div className="state-children">
+      {scenes.length > 0 && (
+        <SceneSpine scenes={scenes} spans={spans}
+                    currentSceneId={currentSceneId} />
+      )}
+      <ul className="subject-rows">
+        {ordered.map((r) => (
+          <li key={String(r["id"])}>
+            <button className="row-link"
+                    onClick={() =>
+                      void openEntityRow(edef.name, r["id"] as number)}>
+              {String(r["stage_label"] ?? "") !== ""
+                ? String(r["stage_label"]) : rowName(edef.name, r)}
+            </button>
+            <span className="row-scene">
+              {sceneShort(scenes.find((s) => s["id"] === r["scene_id"]))}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
