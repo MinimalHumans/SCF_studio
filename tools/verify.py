@@ -96,6 +96,17 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
     ("scf-app tests", [NPM, "test"], "scf-app", False),
     ("scf-app builds", [NPM, "run", "build"], "scf-app", True),
 
+    # --- scf-mcp ---
+    #
+    # It was in no step at all until now, which meant the one package a
+    # stranger runs against their own file was checked only when
+    # somebody remembered to. Its tests SPAWN the built server, so the
+    # build comes first: without `dist/` the suite skips sixteen of its
+    # twenty-two tests and still reads like a run.
+    ("scf-mcp typechecks", [NPM, "run", "typecheck"], "scf-mcp", False),
+    ("scf-mcp builds", [NPM, "run", "build"], "scf-mcp", False),
+    ("scf-mcp tests", [NPM, "test"], "scf-mcp", True),
+
     # --- site ---
     ("the docs site builds and its cross-references resolve",
      [NPM, "run", "check"], "site", False),
@@ -161,7 +172,7 @@ def main() -> int:
     # errors like "cannot find type definition file for 'node'", which
     # reads as seven problems rather than one missing install. Say the
     # one thing instead.
-    uninstalled = [pkg for pkg in ("scf-core", "scf-app", "site")
+    uninstalled = [pkg for pkg in ("scf-core", "scf-app", "scf-mcp", "site")
                    if not (ROOT / pkg / "node_modules").is_dir()]
     if uninstalled:
         print("error: dependencies are not installed in "
