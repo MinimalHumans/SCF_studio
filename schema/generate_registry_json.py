@@ -68,6 +68,8 @@ def field_to_json(f: FieldDef) -> dict:
         out["helpText"] = f.help_text
     if f.hidden:
         out["hidden"] = True
+    if f.open_values:
+        out["open"] = True
     return out
 
 

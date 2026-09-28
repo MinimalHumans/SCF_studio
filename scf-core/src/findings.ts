@@ -30,7 +30,7 @@
  */
 
 import type { Registry } from "./registry.ts";
-import type { SqlExec } from "./db.ts";
+import type { Row, SqlExec } from "./db.ts";
 import { auditIdentity } from "./identity.ts";
 import { duplicateJunctions } from "./junctions.ts";
 import { relationshipFindings } from "./relationships.ts";
@@ -85,6 +85,7 @@ export type FindingCode =
   | "identity.successor_without_timestamp"
   | "identity.self_parent"
   | "identity.external_id_without_namespace"
+  | "vocabulary.unlisted_value"
   // Link natural keys — spec §6.3, §6.4
   | "junction.duplicate_key"
   | "junction.duplicate_key_conflicting"
@@ -205,6 +206,12 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     severity: "warning",
     title: "External id carries no namespace",
     spec: "§6.1",
+  },
+
+  "vocabulary.unlisted_value": {
+    severity: "info",
+    title: "Value outside an open vocabulary's known set",
+    spec: "§2.4",
   },
 
   "junction.duplicate_key": {
@@ -455,6 +462,52 @@ export async function collectFindings(
       rowIds: f.id === null ? [] : [f.id],
       count: f.count,
     }));
+  }
+
+  // --- open vocabularies (§2.4) ---
+  //
+  // An unlisted value on an open field is the value, not an error — but
+  // it is worth seeing, because the tail of one is how a maintainer
+  // learns which value to promote into the known set. Derived from the
+  // registry's `open` flag, so a field opened later needs no code here.
+  for (const entity of registry.entities.values()) {
+    const openFields = entity.fields.filter(
+      (f) => f.open === true && f.options !== undefined);
+    if (openFields.length === 0) continue;
+    let rowsOf: Row[];
+    try {
+      rowsOf = await exec(`SELECT * FROM "${entity.name}"`);
+    } catch { continue; }
+    for (const f of openFields) {
+      const known = new Set(f.options ?? []);
+      const seen = new Map<string, number[]>();
+      for (const row of rowsOf) {
+        const raw = row[f.name];
+        if (raw === null || raw === undefined || String(raw).trim() === "") {
+          continue;
+        }
+        // A multiselect holds several values in one column. The storage
+        // shape is not specified, so this splits on commas and reports
+        // what it finds rather than guessing harder.
+        const values = f.fieldType === "multiselect"
+          ? String(raw).split(",").map((v) => v.trim()).filter((v) => v !== "")
+          : [String(raw).trim()];
+        const id = row["id"];
+        for (const v of values) {
+          if (known.has(v)) continue;
+          const ids = seen.get(v) ?? [];
+          if (typeof id === "number") ids.push(id);
+          seen.set(v, ids);
+        }
+      }
+      for (const [value, ids] of [...seen].sort(
+          (a, b) => a[0].localeCompare(b[0]))) {
+        out.push(make("vocabulary.unlisted_value",
+          `${entity.name}.${f.name} carries "${value}", which is not among ` +
+          `its known values. Open vocabulary: this is the value, not an ` +
+          `error.`, { table: entity.name, rowIds: ids, count: ids.length }));
+      }
+    }
   }
 
   // --- link natural keys (§6.4) ---

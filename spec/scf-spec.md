@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.52 (draft) — not a release.**
-Describes schema version **2.13**.
+**Version 0.53 (draft) — not a release.**
+Describes schema version **2.14**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -104,10 +104,10 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.48` (draft).
+- **Specification version** — this document. Currently `0.53` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.12`. Increments on any
+  `schema/schema_meta.py`. Currently `2.14`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
@@ -311,7 +311,7 @@ The digests are over raw bytes. A checkout whose working tree converts
 line endings will not match, which is a property of the checkout rather
 than of the artifacts.
 
-Version 2.12 defines **99 entities** across tiers 0–6.
+Version 2.14 defines **99 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -348,6 +348,35 @@ them the same way, so that adding an entity requires no code change:
   registry and carries this meaning alone.
 
 ---
+
+### 2.4 Open and closed vocabularies
+
+A `select` or `multiselect` field's `options` are its vocabulary. Most
+are **closed**: the listed values are the only ones the field may hold.
+
+A field the registry marks **`open: true`** is different. Its options
+are the **known** values, and:
+
+- a writer MAY store any other string;
+- **a reader MUST accept an unlisted value, treat it as the value, and
+  MUST NOT map it onto a listed one or blank it**;
+- an implementation SHOULD report it as `vocabulary.unlisted_value`
+  (§9.4), which is `info`: nothing is wrong, and the tail of unlisted
+  values is how a maintainer learns which one to promote into the list.
+
+Sixteen fields are open as of 2.14, among them `prop.story_function`,
+`project.genre` and `technical_specs.resolution`. Each of them ended in
+`other` until 2.14, and `other` recorded that the vocabulary had failed
+while discarding the value that would have said how. A production
+shooting 12K stored `other` and lost the number.
+
+**The closed vocabularies are closed for a reason, and it is the same
+reason in every case: something resolves over them.** §12.17 scores a
+location variant by counting agreements on `time_of_day`, `weather` and
+`season`; §6.6.1 excludes a row on `lifecycle_status`; §9.4's severities
+and §12's own vocabularies decide result shapes. A finite set is what
+makes those answers the same in two implementations. An open vocabulary
+is for values a human reads, not values a resolver branches on.
 
 ## 3. Derived versus stored
 
@@ -780,6 +809,20 @@ the registry declares. A reader implementing from it had to decide for
 itself what an `archived` scene's story position was, and §2.1 already
 said the registry wins — so the specification and the artifact it
 defers to disagreed in the one place a reader could not tell.
+
+`scene`, `act` and `sequence` also carry **`status`**, which is a
+**writing stage** — how far the author has taken the row, from
+`outline` to `locked`. It makes no claim about whether the row is in the
+film and **MUST NOT affect resolution**. A row leaves the film through
+`lifecycle_status = cut` and in no other way.
+
+`status` listed `cut` among its values until 2.14, and that value did
+nothing: §6.6.1 excludes on `lifecycle_status` alone, so a scene an
+author had marked cut in the field labelled Status stayed in the film,
+kept its position, and appeared in every query. Nothing reported it
+either, because nothing had a reason to look. The value was removed
+rather than honoured, because two columns saying the same thing can
+disagree and one of them then has to win.
 
 Where the registry declares it, an implementation MUST preserve it. Of
 the thirteen link entities only `actor_character_role` and
@@ -2024,9 +2067,18 @@ is not a registry entity, or whose row is absent, carries a null
 
 How a carrier reaches scenes depends on what it points at: a scene
 carries the theme at itself; a motif carries it wherever it appears; a
-character carries it wherever they are present. A carrier pointing at
-anything else reaches no scenes, which is a legitimate answer and not a
-finding.
+character carries it wherever they are present; **an act or a sequence
+carries it at every scene of its derived membership** (§5.1). A carrier
+pointing at anything else reaches no scenes, which is a legitimate
+answer and not a finding.
+
+**The span case is derived, never stored.** "Act 2 is where the story
+argues about forgiveness" is a claim an author makes about the act, and
+a scene moved across an act boundary — which happens by editing the
+script, with no write to any link (§5.1) — moves its count with it. A
+writer that instead fanned the claim out to one connection per scene
+would be storing a derivation (§3.1) and would be wrong the moment the
+boundary moved.
 
 ### 12.12 Q00 — Brief
 
@@ -2180,11 +2232,28 @@ best describes this scene*:
    `weather`, and `scene.season` against `season`. An axis counts only
    where **both** sides carry a value, compared case-insensitively and
    trimmed. An absent value on either side is not a disagreement.
+   **A variant whose `time_of_day` is `varies` agrees with any scene on
+   that axis**: it is a wildcard, not a time, and scoring it as a
+   mismatch made the only value that says "this dressing holds at any
+   hour" the one value that could never win.
 2. Take the highest score, breaking a tie in favour of `is_baseline`
    and then in favour of the first such row.
 3. **If the best score is zero, take the first `is_baseline` variant.**
    Nothing agreed, so agreement is not what chose it, and the baseline
    is the honest answer.
+
+**`time_of_day` is a light axis** — what the camera sees: `day`,
+`dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`. It is not the
+heading's grammar. CONTINUOUS, LATER and MOMENTS LATER are continuity
+relations to the preceding scene rather than times, and they stay in the
+heading text where a screenplay puts them; `scene.time_of_day` carried
+`continuous` until 2.14, where it could never match a variant, because
+no variant can be continuous with anything. `day` is unrefined
+daylight — the value a heading-only import writes, and the one an author
+then refines to `morning` or `midday` if they care to. The fixture shows
+that refinement: half its headings read DAY and the records say
+otherwise, which is the record being more precise than the script rather
+than disagreeing with it.
 
 `mismatches` lists the axes where the CHOSEN variant disagrees with the
 scene — both carry a value and the values differ. It is an **array of

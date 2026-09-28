@@ -61,12 +61,15 @@ PRODUCTION_STATUS_OPTIONS = [
     "complete",
 ]
 
+#: Writing stage. NOT a claim about whether the row is in the film — that
+#: is `lifecycle_status` alone (spec §6.6, proposal 0004). `cut` was a
+#: member until schema 2.14 and meant nothing: §6.6.1 excludes only
+#: `lifecycle_status = cut`, so a scene marked cut here stayed in the film.
 WRITING_STATUS_OPTIONS = [
     "outline",
     "draft",
     "revised",
     "locked",
-    "cut",
 ]
 
 LIFECYCLE_TAB = "Lifecycle"
@@ -91,6 +94,12 @@ class FieldDef:
     tab: str = "General"
     help_text: str = ""
     hidden: bool = False
+    #: An OPEN vocabulary: `options` are the KNOWN values, and a writer may
+    #: store any other string, which is the value rather than an error.
+    #: Spec §2.2. Closed vocabularies — the matching axes (`time_of_day`,
+    #: `season`), `lifecycle_status`, `status`, and everything §12 defines —
+    #: leave this False, because resolution depends on their being finite.
+    open_values: bool = False
     sql_type: str | None = None
     auto_injected: bool = False
     #: For a POLYMORPHIC reference: the sibling column naming which table
@@ -309,15 +318,15 @@ register(EntityDef(
         FieldDef("logline", "Logline", "textarea", placeholder="A one-sentence summary of the story"),
         FieldDef("genre", "Genre", "select", options=[
             "drama", "comedy", "thriller", "sci-fi", "fantasy", "horror",
-            "action", "romance", "documentary", "animation", "western", "other"
-        ]),
+            "action", "romance", "documentary", "animation", "western"
+        ], open_values=True),
         FieldDef("tone", "Tone", "text", placeholder="e.g. Dark, whimsical, gritty"),
         FieldDef("setting_period", "Setting / Time Period", "text",
                  placeholder="e.g. Victorian England, Near-future Tokyo"),
         FieldDef("target_runtime", "Target Runtime (minutes)", "integer"),
         FieldDef("project_format", "Format", "select", options=[
-            "feature", "series", "short", "commercial", "other"
-        ]),
+            "feature", "series", "short", "commercial"
+        ], open_values=True),
         FieldDef("production_status", "Production Status", "select", options=[
             "development", "pre_production", "production",
             "post_production", "complete"
@@ -342,8 +351,6 @@ register(EntityDef(
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
         FieldDef("vision_statement", "Vision Statement", "textarea", tab="Vision"),
         FieldDef("creative_philosophy", "Creative Philosophy", "textarea", tab="Vision"),
-        FieldDef("themes", "Core Themes", "json", tab="Vision",
-                 placeholder='["redemption", "identity", "power"]'),
     ],
 ))
 
@@ -385,6 +392,7 @@ register(EntityDef(
         FieldDef("core_belief", "Core Belief", "textarea", tab="Backstory"),
         FieldDef("education_level", "Education Level", "text", tab="Backstory"),
         FieldDef("skills_abilities", "Skills & Abilities", "textarea", tab="Backstory"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -462,8 +470,8 @@ register(EntityDef(
         FieldDef("name", "Prop Name", required=True, placeholder="e.g. The Silver Compass"),
         FieldDef("prop_type", "Type", "select", options=[
             "hand prop", "set dressing", "vehicle", "weapon", "document",
-            "technology", "clothing item", "food/drink", "other"
-        ]),
+            "technology", "clothing item", "food/drink"
+        ], open_values=True),
         FieldDef("description", "Description", "textarea",
                  placeholder="What does this prop look like?"),
         FieldDef("realization_status", "Realization Status", "select", options=[
@@ -477,8 +485,9 @@ register(EntityDef(
         FieldDef("narrative_significance", "Narrative Significance", "textarea",
                  placeholder="Why does this prop matter to the story?"),
         FieldDef("story_function", "Story Function", "select", options=[
-            "macguffin", "character extension", "plot device", "symbol", "atmosphere", "other"
-        ]),
+            "functional",
+            "macguffin", "character extension", "plot device", "symbol", "atmosphere"
+        ], open_values=True),
         FieldDef("associated_character_id", "Primary Character", "reference",
                  reference_entity="character"),
         FieldDef("first_appearance", "First Appearance", "textarea", tab="Story"),
@@ -497,6 +506,7 @@ register(EntityDef(
     sort_order=30,
     tier=0,
     description="A major structural division of the story.",
+    has_external_id=True,
     fields=[
         FieldDef("name", "Act Name", required=True),
         FieldDef("act_number", "Act Number", "integer"),
@@ -509,9 +519,8 @@ register(EntityDef(
         FieldDef("dramatic_question", "Dramatic Question", "textarea"),
         FieldDef("shift", "Shift", "textarea"),
         FieldDef("summary", "Summary", "textarea"),
-        FieldDef("status", "Status", "select", options=[
-            "outline", "draft", "revised", "locked", "cut"
-        ], default="outline",
+        FieldDef("status", "Status", "select",
+                 options=WRITING_STATUS_OPTIONS, default="outline",
                  help_text="Writing-process status. Distinct from lifecycle_status."),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
@@ -526,6 +535,7 @@ register(EntityDef(
     sort_order=35,
     tier=0,
     description="A group of related scenes forming a narrative unit.",
+    has_external_id=True,
     fields=[
         FieldDef("name", "Sequence Name", required=True),
         FieldDef("sequence_number", "Sequence Number", "integer"),
@@ -540,9 +550,9 @@ register(EntityDef(
         FieldDef("outcome", "Outcome / Resolution", "textarea"),
         FieldDef("purpose", "Dramatic Purpose", "textarea"),
         FieldDef("turning_point", "Turning Point", "textarea"),
-        FieldDef("status", "Status", "select", options=[
-            "outline", "draft", "revised", "locked", "cut"
-        ], default="outline"),
+        FieldDef("status", "Status", "select",
+                 options=WRITING_STATUS_OPTIONS, default="outline",
+                 help_text="Writing-process status. Distinct from lifecycle_status."),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -569,19 +579,25 @@ register(EntityDef(
         ]),
         FieldDef("location_id", "Location", "reference", reference_entity="location"),
         FieldDef("time_of_day", "Time of Day", "select", options=[
-            "dawn", "morning", "midday", "afternoon", "dusk", "night", "continuous"
-        ]),
+            "day", "dawn", "morning", "midday", "afternoon", "dusk", "night"
+        ], help_text="A LIGHT axis: what the camera sees. `day` is unrefined "
+                     "daylight — the value a heading-only import writes. "
+                     "CONTINUOUS, LATER and the rest are continuity relations "
+                     "to the previous scene, not times; they stay in the "
+                     "heading text. Spec §12.17 matches this against "
+                     "location_variant.time_of_day."),
         FieldDef("weather_conditions", "Weather", "text"),
         FieldDef("season", "Season", "select", options=[
             "spring", "summer", "autumn", "winter", "unspecified"
         ]),
         FieldDef("summary", "Scene Summary", "textarea"),
         FieldDef("purpose", "Dramatic Purpose", "textarea"),
-        FieldDef("status", "Status", "select", options=[
-            "outline", "draft", "revised", "locked", "cut"
-        ], default="outline"),
-        FieldDef("characters_present", "Characters Present", "json", tab="Characters",
-                 hidden=True),
+        FieldDef("goal", "Goal", "textarea"),
+        FieldDef("conflict", "Conflict", "textarea"),
+        FieldDef("outcome", "Outcome / Resolution", "textarea"),
+        FieldDef("status", "Status", "select",
+                 options=WRITING_STATUS_OPTIONS, default="outline",
+                 help_text="Writing-process status. Distinct from lifecycle_status."),
         FieldDef("character_dynamics", "Character Dynamics", "textarea", tab="Characters"),
         FieldDef("emotional_beat", "Emotional Beat", "textarea", tab="Emotional"),
         FieldDef("tone", "Tone", "text", tab="Emotional"),
@@ -604,14 +620,15 @@ register(EntityDef(
     sort_order=42,
     tier=0,
     description="A discrete narrative unit within a scene — a moment of change.",
+    has_external_id=True,
     fields=[
         FieldDef("name", "Beat Name", required=True),
         FieldDef("scene_id", "Scene", "reference", reference_entity="scene"),
         FieldDef("beat_order", "Order in Scene", "integer"),
         FieldDef("beat_type", "Beat Type", "select", options=[
             "setup", "action", "reaction", "decision",
-            "discovery", "revelation", "reversal", "payoff", "other"
-        ]),
+            "discovery", "revelation", "reversal", "payoff"
+        ], open_values=True),
         FieldDef("description", "Description", "textarea"),
         FieldDef("purpose", "Purpose", "textarea"),
         FieldDef("value_shift", "Value Shift", "text"),
@@ -630,10 +647,14 @@ register(EntityDef(
     sort_order=50,
     tier=0,
     description="A thematic element that runs through the story.",
+    has_external_id=True,
     fields=[
         FieldDef("name", "Theme Name", required=True, placeholder="e.g. Redemption"),
         FieldDef("description", "Description", "textarea"),
-        FieldDef("motifs", "Associated Motifs", "json"),
+        FieldDef("statement", "Thematic Statement", "textarea",
+                 help_text="The claim the story makes about this theme."),
+        FieldDef("opposition", "Counter-argument", "textarea",
+                 help_text="The position the story tests the statement against."),
         FieldDef("character_connections", "Character Connections", "textarea"),
         FieldDef("scene_connections", "Key Scenes", "textarea"),
         FieldDef("evolution", "Thematic Evolution", "textarea"),
@@ -745,6 +766,7 @@ register(EntityDef(
         FieldDef("personal_resonance", "Personal Resonance", "textarea", tab="Personal"),
         FieldDef("emotional_stakes", "Emotional Stakes for Director", "textarea", tab="Personal"),
         FieldDef("artistic_growth_goals", "Artistic Growth Goals", "textarea", tab="Personal"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -762,20 +784,21 @@ register(EntityDef(
         FieldDef("aspect_ratio", "Aspect Ratio", "select", options=[
             "1.33:1 (academy)", "1.66:1", "1.78:1 (16:9)", "1.85:1 (flat)",
             "2.00:1 (univisium)", "2.20:1 (70mm)", "2.35:1 (scope)",
-            "2.39:1 (anamorphic)", "2.76:1 (ultra panavision)", "variable", "other"
-        ]),
+            "2.39:1 (anamorphic)", "2.76:1 (ultra panavision)", "variable"
+        ], open_values=True),
         FieldDef("resolution", "Resolution", "select", options=[
             "2K (2048x1080)", "2.8K", "3.4K", "4K (4096x2160)",
-            "4.6K", "5.7K", "6K", "6.5K", "8K", "other"
-        ]),
+            "4.6K", "5.7K", "6K", "6.5K", "8K"
+        ], open_values=True),
         FieldDef("frame_rate", "Frame Rate", "select", options=[
             "23.976 fps", "24 fps", "25 fps", "29.97 fps", "30 fps",
-            "48 fps", "60 fps", "variable", "other"
-        ]),
+            "48 fps", "60 fps", "variable"
+        ], open_values=True),
         FieldDef("color_space", "Color Space / Gamut", "text"),
         FieldDef("recording_codec", "Recording Codec", "text"),
         FieldDef("delivery_format", "Delivery Format", "text"),
         FieldDef("audio_format", "Audio Format", "text"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -824,6 +847,7 @@ register(EntityDef(
                  options=["organic", "angular", "mixed"]),
         FieldDef("lighting_constraints", "Lighting Constraints", "textarea", tab="Constraints"),
         FieldDef("visual_influences", "Visual Influences", "json", tab="Influences"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -859,6 +883,7 @@ register(EntityDef(
         FieldDef("editorial_approach", "Editorial Approach", "select", tab="Coverage",
                  options=["cut-friendly", "in-camera editing", "improvised"]),
         FieldDef("coverage_priorities", "Coverage Priorities", "textarea", tab="Coverage"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -896,6 +921,7 @@ register(EntityDef(
         FieldDef("night_scene_temperature", "Night Scene Temperature", "text", tab="Temperature"),
         FieldDef("color_evolution", "Color Evolution by Act", "textarea", tab="Evolution"),
         FieldDef("color_relationships", "Color Relationships", "textarea", tab="Evolution"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -928,6 +954,7 @@ register(EntityDef(
         FieldDef("pacing_inflection_points", "Pacing Inflection Points", "textarea",
                  tab="Pacing",
                  help_text="Key acceleration and deceleration points across the story."),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -963,6 +990,7 @@ register(EntityDef(
         FieldDef("score_density", "Score Density", "select", tab="Music",
                  options=["wall-to-wall", "selective", "sparse"]),
         FieldDef("source_music_approach", "Source Music Approach", "textarea", tab="Music"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -992,6 +1020,7 @@ register(EntityDef(
         FieldDef("editorial_lut", "Editorial LUT", "text", tab="LUTs"),
         FieldDef("final_grade_foundation", "Final Grade Foundation", "textarea", tab="LUTs"),
         FieldDef("reference_images", "Reference Images / Notes", "textarea", tab="References"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1015,6 +1044,7 @@ register(EntityDef(
                  options=["natural", "synthetic", "mixed"]),
         FieldDef("formality_spectrum", "Formality Spectrum", "textarea"),
         FieldDef("condition_philosophy", "Condition Philosophy", "textarea"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1041,8 +1071,8 @@ register(EntityDef(
                  reference_entity="character", required=True),
         FieldDef("relationship_type", "Type", "select", options=[
             "family", "friend", "enemy", "lover", "colleague",
-            "mentor/mentee", "rival", "authority", "other"
-        ]),
+            "mentor/mentee", "rival", "authority"
+        ], open_values=True),
         FieldDef("directionality", "Directionality", "select",
                  options=["mutual", "a_to_b"], default="mutual",
                  help_text="Whether the order of the two characters "
@@ -1070,6 +1100,7 @@ register(EntityDef(
                            "live in relationship_state rows (pattern 3)."),
         FieldDef("history", "History", "textarea", tab="Background"),
         FieldDef("current_status", "Current Status", "text", tab="Background"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1099,6 +1130,7 @@ register(EntityDef(
                  help_text="Short handle, e.g. \"arm's length\", "
                            "\"post-accident thaw\"."),
         FieldDef("description", "Description", "textarea"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1223,6 +1255,7 @@ register(EntityDef(
         FieldDef("filler_words", "Filler Words", "json", tab="Habits"),
         FieldDef("catch_phrases", "Catch Phrases", "json", tab="Habits"),
         FieldDef("verbal_tics", "Verbal Tics", "json", tab="Habits"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1253,6 +1286,7 @@ register(EntityDef(
         FieldDef("silhouette_description", "Silhouette Description", "textarea", tab="Identity"),
         FieldDef("visual_shorthand", "Visual Shorthand", "textarea", tab="Identity"),
         FieldDef("appearance_evolution", "Appearance Evolution", "textarea", tab="Evolution"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1334,6 +1368,7 @@ register(EntityDef(
         FieldDef("formality_evolution", "Formality Evolution", "textarea"),
         FieldDef("condition_evolution", "Condition Evolution", "textarea"),
         FieldDef("symbolic_meaning", "Symbolic Meaning", "textarea"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1385,6 +1420,7 @@ register(EntityDef(
         FieldDef("physical_differences", "Physical Differences", "textarea"),
         FieldDef("emotional_state", "Emotional State", "textarea"),
         FieldDef("context", "Context", "textarea"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1411,6 +1447,7 @@ register(EntityDef(
         FieldDef("meaning", "Meaning", "textarea"),
         FieldDef("character_awareness", "Character Awareness", "select",
                  options=["aware", "unaware", "sometimes aware"]),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1481,6 +1518,7 @@ register(EntityDef(
         FieldDef("state_trigger", "State Trigger", "textarea",
                  placeholder="What causes this variant to appear"),
         FieldDef("context", "Context", "textarea"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1552,6 +1590,7 @@ register(EntityDef(
         FieldDef("practical_light_sources", "Practical Light Sources", "textarea",
                  tab="Lighting"),
         FieldDef("light_quality", "Light Quality", "textarea", tab="Lighting"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1579,7 +1618,8 @@ register(EntityDef(
         FieldDef("is_baseline", "Is Baseline", "boolean", default=False,
                  help_text="True for the unconditional default variant for this location."),
         FieldDef("time_of_day", "Time of Day", "select", tab="State", options=[
-            "dawn", "morning", "midday", "afternoon", "dusk", "night", "varies"
+            "day", "dawn", "morning", "midday", "afternoon", "dusk", "night",
+            "varies"
         ]),
         FieldDef("weather", "Weather", "text", tab="State"),
         FieldDef("season", "Season", "select", tab="State", options=[
@@ -1591,6 +1631,7 @@ register(EntityDef(
         FieldDef("lighting_differences", "Lighting Differences", "textarea"),
         FieldDef("emotional_shift", "Emotional Shift", "textarea"),
         FieldDef("time_context", "Time / Story Context", "textarea"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1618,6 +1659,7 @@ register(EntityDef(
                  options=["saturated", "desaturated", "mixed"]),
         FieldDef("character_location_interaction", "Character-Location Color Interaction",
                  "select", options=["match", "contrast", "transform"]),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1643,6 +1685,7 @@ register(EntityDef(
         FieldDef("variable_sounds", "Variable Sounds", "textarea", tab="Ambience"),
         FieldDef("characteristic_sounds", "Characteristic Sounds", "textarea", tab="Ambience"),
         FieldDef("sonic_perspective", "Sonic Perspective", "textarea", tab="Ambience"),
+            FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
 
@@ -1675,10 +1718,9 @@ register(EntityDef(
             "surface",
             "environment",
             "acoustic",
-            "other",
         ],
                  help_text="Hard enum. Tools switch on this to determine compatibility. "
-                           "acoustic added in Phase 1D for location ambience."),
+                           "acoustic added in Phase 1D for location ambience.", open_values=True),
         FieldDef("description", "Description", "textarea"),
         FieldDef("coverage_summary", "Coverage Summary", "textarea"),
         FieldDef("format_hints", "Format Hints", "json", tab="Technical",
@@ -1736,7 +1778,6 @@ register(EntityDef(
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("act_id", "Act", "reference", reference_entity="act", tab="Conditions"),
-        FieldDef("conditions_json", "Additional Conditions", "json", tab="Conditions"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -1768,7 +1809,6 @@ register(EntityDef(
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("act_id", "Act", "reference", reference_entity="act", tab="Conditions"),
-        FieldDef("conditions_json", "Additional Conditions", "json", tab="Conditions"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -1802,7 +1842,6 @@ register(EntityDef(
         FieldDef("act_id", "Act", "reference", reference_entity="act", tab="Conditions"),
         FieldDef("time_of_day_filter", "Time of Day Filter", "text", tab="Conditions",
                  help_text="Matches scene.time_of_day for bindings scoped to specific times."),
-        FieldDef("conditions_json", "Additional Conditions", "json", tab="Conditions"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -1931,8 +1970,8 @@ register(EntityDef(
                  reference_entity="character", required=True),
         FieldDef("role_type", "Role Type", "select", required=True, options=[
             "principal", "body_double", "stunt_double", "voice_double",
-            "adr", "motion_capture", "reference_only", "other"
-        ]),
+            "adr", "motion_capture", "reference_only"
+        ], open_values=True),
         FieldDef("scope", "Scope", "select", options=[
             "whole_project", "specific_scenes", "specific_takes"
         ], default="whole_project"),
@@ -2134,8 +2173,8 @@ register(EntityDef(
         FieldDef("override_types", "Override Types", "multiselect", options=[
             "aging", "de_aging", "prosthetic", "body_change",
             "voice_change", "motion_change", "identity_swap",
-            "transformation", "other"
-        ]),
+            "transformation"
+        ], open_values=True),
         FieldDef("bundle_override_id", "Bundle Override", "reference",
                  reference_entity="bundle"),
         FieldDef("variant_target_id", "Variant Target", "reference",
@@ -2170,8 +2209,8 @@ register(EntityDef(
         FieldDef("prop_id", "Prop", "reference", reference_entity="prop", required=True),
         FieldDef("override_types", "Override Types", "multiselect", options=[
             "state_change", "damage", "transformation",
-            "vfx_enhancement", "other"
-        ]),
+            "vfx_enhancement"
+        ], open_values=True),
         FieldDef("bundle_override_id", "Bundle Override", "reference",
                  reference_entity="bundle"),
         FieldDef("variant_target_id", "Variant Target", "reference",
@@ -2210,8 +2249,8 @@ register(EntityDef(
                  reference_entity="location", required=True),
         FieldDef("override_types", "Override Types", "multiselect", options=[
             "extension_change", "lighting_change", "weather_change",
-            "vfx_addition", "other"
-        ]),
+            "vfx_addition"
+        ], open_values=True),
         FieldDef("bundle_override_id", "Bundle Override", "reference",
                  reference_entity="bundle"),
         FieldDef("variant_target_id", "Variant Target", "reference",
@@ -2350,7 +2389,6 @@ register(EntityDef(
         FieldDef("build_evolution", "Build / Evolution", "textarea"),
         FieldDef("peak", "Peak", "text"),
         FieldDef("exit_point", "Exit Point", "text"),
-        FieldDef("themes_used", "Themes Used", "json"),
         FieldDef("source_music_description", "Source Music Description", "textarea",
                  tab="Source Music"),
         FieldDef("lyrics_relevance", "Lyrics Relevance", "textarea", tab="Source Music"),
@@ -2477,6 +2515,7 @@ register(EntityDef(
                 "charged symbols share this table, distinguished by the recurrence field. "
                 "Replaces visual_motif, sonic_motif, conceptual_motif, and symbol "
                 "(2.0 consolidation).",
+    has_external_id=True,
     fields=[
         FieldDef("name", "Motif Name", required=True),
         FieldDef("modality", "Modality", "select", required=True, options=[
@@ -2614,7 +2653,8 @@ register(EntityDef(
         FieldDef("theme_id", "Theme", "reference",
                  reference_entity="theme", required=True),
         FieldDef("entity_type", "Connected Entity Type", "select", options=[
-            "character", "scene", "location", "prop", "costume", "motif"
+            "character", "scene", "location", "prop", "costume", "motif",
+            "act", "sequence"
         ]),
         FieldDef("entity_id", "Connected Entity ID", "integer", required=True,
                  polymorphic_type="entity_type"),
@@ -2626,6 +2666,7 @@ register(EntityDef(
         FieldDef("intended_perception", "Intended Perception", "select", options=[
             "must recognize", "enhances if recognized", "reward for careful viewing"
         ]),
+            FieldDef("notes", "Notes", "textarea"),
     ],
 ))
 
@@ -2940,7 +2981,6 @@ register(EntityDef(
                            "with scene_blocking_id."),
         FieldDef("beat_order", "Beat Order", "integer", required=True),
         FieldDef("description", "Description", "textarea"),
-        FieldDef("characters_involved", "Characters Involved", "json"),
         FieldDef("character_positions", "Character Positions", "json"),
         FieldDef("movement_description", "Movement / Physical Action", "textarea"),
         FieldDef("camera_note", "Camera Note", "text"),
@@ -3309,8 +3349,8 @@ register(EntityDef(
         FieldDef("name", "Decision Name", required=True),
         FieldDef("decision_type", "Decision Type", "select", options=[
             "casting", "visual", "narrative", "technical",
-            "audio", "design", "structural", "other"
-        ]),
+            "audio", "design", "structural"
+        ], open_values=True),
         FieldDef("description", "Description", "textarea"),
         FieldDef("rationale", "Rationale", "textarea"),
         FieldDef("alternatives_considered", "Alternatives Considered", "textarea"),
@@ -3409,8 +3449,8 @@ register(EntityDef(
         FieldDef("entity_id", "Entity ID", "integer", required=True,
                  polymorphic_type="entity_type"),
         FieldDef("relationship_type", "Relationship Type", "select", options=[
-            "reference", "documentation", "concept", "inspiration", "final", "other"
-        ]),
+            "reference", "documentation", "concept", "inspiration", "final"
+        ], open_values=True),
         FieldDef("notes", "Notes", "textarea"),
     ],
 ))

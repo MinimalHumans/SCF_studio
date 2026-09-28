@@ -1,7 +1,7 @@
 {
   "query": "Q10",
   "resultFormat": "1.0",
-  "schemaVersion": "2.13",
+  "schemaVersion": "2.14",
   "parameters": {
     "theme": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
   },
@@ -10,7 +10,9 @@
       "uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d",
       "fields": {
         "lifecycle_status": "active",
-        "name": "Forgiveness"
+        "name": "Forgiveness",
+        "opposition": "That some things should not be forgiven, and naming them is the only honesty left.",
+        "statement": "Forgiveness is something you give yourself first, or not at all."
       }
     },
     "carriers": [
@@ -183,6 +185,30 @@
         "sceneUuids": [
           "774518cf-1a5e-4129-8830-eff14222a770"
         ]
+      },
+      {
+        "connection": {
+          "uuid": "05cf0013-ac70-0000-0000-000000000001",
+          "fields": {
+            "entity_type": "act",
+            "lifecycle_status": "active",
+            "name": "Act 2 is where the argument about forgiveness is actually held.",
+            "nature_of_connection": "explores",
+            "notes": "The act carries it; no single scene in it states the theme outright.",
+            "subtlety_level": "clear",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        },
+        "targetEntity": "act",
+        "targetUuid": "17528f38-4fcd-428f-853d-38a57291f6a4",
+        "targetName": "Act 2 — The Thaw",
+        "sceneUuids": [
+          "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
+          "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+          "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+          "06857531-3e91-41a9-95dd-3262407d8132",
+          "00000000-0000-4000-8000-00000000c12a"
+        ]
       }
     ],
     "spine": [
@@ -204,27 +230,27 @@
       {
         "sceneUuid": "2696b27b-48ff-4914-b4f0-f52dd57bafb6",
         "sceneNumber": "9",
-        "carriers": 2
+        "carriers": 3
       },
       {
         "sceneUuid": "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
         "sceneNumber": "10",
-        "carriers": 1
+        "carriers": 2
       },
       {
         "sceneUuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
         "sceneNumber": "11",
-        "carriers": 1
+        "carriers": 2
       },
       {
         "sceneUuid": "06857531-3e91-41a9-95dd-3262407d8132",
         "sceneNumber": "12",
-        "carriers": 3
+        "carriers": 4
       },
       {
         "sceneUuid": "00000000-0000-4000-8000-00000000c12a",
         "sceneNumber": "12A",
-        "carriers": 0
+        "carriers": 1
       },
       {
         "sceneUuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",

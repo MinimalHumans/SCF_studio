@@ -1,7 +1,7 @@
 {
   "query": "Q00",
   "resultFormat": "1.0",
-  "schemaVersion": "2.13",
+  "schemaVersion": "2.14",
   "parameters": {},
   "result": {
     "layers": [
@@ -158,7 +158,9 @@
         "uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d",
         "fields": {
           "lifecycle_status": "active",
-          "name": "Forgiveness"
+          "name": "Forgiveness",
+          "opposition": "That some things should not be forgiven, and naming them is the only honesty left.",
+          "statement": "Forgiveness is something you give yourself first, or not at all."
         }
       },
       {

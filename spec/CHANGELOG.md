@@ -17,6 +17,79 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.53 — 2026-09-20
+
+*Describes schema 2.14.*
+
+**Minor.** Four normative changes, from proposals 0004, 0012, 0013 and
+0022. All four came out of mapping a second writer — Scriptyard's `.scf`
+export — against the format, which is the first time anything outside
+this repository has tried to produce a file.
+
+### §6.6 — `status` is a writing stage and cuts nothing
+
+`scene`, `act` and `sequence` carry both `status` and
+`lifecycle_status`, and `status` listed `cut` among its values. §6.6.1
+excludes on `lifecycle_status` alone, so an author who set the field
+labelled Status to `cut` got a scene that kept its position, its act and
+its place in every query, with nothing reporting the disagreement.
+
+No artifact could show it: all 22 of the fixture's scene, act and
+sequence rows carry `status = outline`, and nothing in `scf-core` reads
+the column at all. §6.6 now says a writing stage makes no claim about
+the film and MUST NOT affect resolution, and 2.14 removes `cut` from the
+vocabulary rather than honouring it — two columns for one fact can
+disagree, and then one of them has to win.
+
+### §12.11 — an act or a sequence can carry a theme
+
+`thematic_connection.entity_type` gained `act` and `sequence`. A carrier
+pointing at a span reaches **every scene of its derived membership**
+(§5.1), so a scene moved across a boundary moves its count with it and
+nothing is stored twice. "Act 2 is where the story argues about
+forgiveness" is a claim an author makes and no scene-level connection
+implies.
+
+### §12.17 — `time_of_day` is a light axis, and `varies` is a wildcard
+
+The column mixed two axes and lacked the commonest word in a heading.
+Six of its values were lighting states; `continuous` was a continuity
+relation to the preceding scene, which no location variant can ever
+agree with; and `day` was absent, so a Fountain import — whose parser
+recognises DAY — wrote null for most day scenes.
+
+2.14 adds `day` (unrefined daylight, what a heading-only import writes)
+and removes `continuous`, which stays in the heading text where a
+screenplay puts it. §12.17 also states that a variant whose
+`time_of_day` is `varies` agrees with any scene on that axis: scored as
+an ordinary value, the one value meaning "this dressing holds at any
+hour" was the one value that could never win.
+
+### §2.4 — open and closed vocabularies
+
+Sixteen `select` and `multiselect` fields ended in `other`, which
+records that the vocabulary failed and discards the value that would
+have said how. A production shooting 12K stored `other` and lost the
+number.
+
+Those sixteen are now **open**: the options are the known values, a
+writer may store any other string, and a reader MUST keep it as the
+value rather than mapping it onto a listed one. `other` is gone from all
+sixteen. A new finding, `vocabulary.unlisted_value` (info), reports the
+tail so a maintainer can promote a common value into the list.
+
+The section also states why the other vocabularies stay closed, which is
+the more important half: §12.17's axis scoring, §6.6.1's cut rule and
+§9.4's severities all resolve over finite sets. An open vocabulary is
+for values a human reads, not values a resolver branches on.
+
+The fixture proved the finding immediately. One `creative_decision` row
+has carried `decision_type = "sound"` — never a member of that
+vocabulary, where every other row says `audio` — since it was authored,
+and nothing had ever looked.
+
+---
+
 ## 0.52 — 2026-09-16
 
 *Describes schema 2.13.*
