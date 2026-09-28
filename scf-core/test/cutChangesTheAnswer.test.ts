@@ -162,7 +162,7 @@ describe("cutting a row through a junction changes the answer", () => {
   });
 
   test("a relationship whose endpoint is cut joins nothing", async () => {
-    // §6.6 says eleven of thirteen link entities MUST NOT carry
+    // §6.6 says twelve of fourteen link entities MUST NOT carry
     // lifecycle_status. That is not an oversight — a junction is a
     // connection, and a connection to a cut thing is already gone
     // because the thing is. But only if something checks the endpoint.

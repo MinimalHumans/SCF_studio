@@ -11,7 +11,7 @@
 
 export type FieldType =
   | "text" | "textarea" | "integer" | "float" | "select" | "multiselect"
-  | "boolean" | "json" | "reference" | "timestamp";
+  | "boolean" | "json" | "string_list" | "reference" | "timestamp";
 
 export type PositionPattern =
   | "none" | "explicit" | "sparse_persistence" | "latest_wins";

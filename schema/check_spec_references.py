@@ -59,7 +59,8 @@ EXTENSIONS = {
 
 #: Report and result members that share the `a.b` shape.
 #: Small, and each one is a member this specification defines itself.
-MEMBERS = {"counts.error", "counts.warning", "counts.info", "area.condition"}
+MEMBERS = {"counts.error", "counts.warning", "counts.info", "area.condition",
+           "dossier.groups"}
 
 #: Names that are not registry identifiers and legitimately appear in
 #: backticks. Everything else on the legal side is DERIVED — entity
@@ -127,6 +128,10 @@ def main() -> int:
     for entity in registry["entities"]:
         legal.add(entity["positionPattern"])
         for field in entity["fields"]:
+            # Field TYPES are registry identifiers too: §2.5 names
+            # `string_list`, and a hand-kept exception list is how the
+            # next type added goes unchecked.
+            legal.add(field["fieldType"])
             legal.update(str(o) for o in (field.get("options") or []))
             # §12.1.2 projects `scene_id` as `scene_uuid`.
             if field["name"].endswith("_id"):

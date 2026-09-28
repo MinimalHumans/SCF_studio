@@ -32,7 +32,7 @@
 import type { Registry } from "./registry.ts";
 import type { Row, SqlExec } from "./db.ts";
 import { auditIdentity } from "./identity.ts";
-import { duplicateJunctions } from "./junctions.ts";
+import { duplicateJunctions, junctionEntities } from "./junctions.ts";
 import { relationshipFindings } from "./relationships.ts";
 import {
   deriveStructure, sceneOrderHint, structureFindings,
@@ -86,6 +86,9 @@ export type FindingCode =
   | "identity.self_parent"
   | "identity.external_id_without_namespace"
   | "vocabulary.unlisted_value"
+  | "field.required_absent"
+  | "junction.endpoint_absent"
+  | "structure.section_mismatch"
   // Link natural keys — spec §6.3, §6.4
   | "junction.duplicate_key"
   | "junction.duplicate_key_conflicting"
@@ -206,6 +209,23 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     severity: "warning",
     title: "External id carries no namespace",
     spec: "§6.1",
+  },
+
+  "field.required_absent": {
+    severity: "info",
+    title: "Required value absent",
+    spec: "§9.1",
+  },
+  "junction.endpoint_absent": {
+    severity: "warning",
+    title: "Link row missing a required endpoint",
+    spec: "§9.1",
+  },
+
+  "structure.section_mismatch": {
+    severity: "info",
+    title: "Section line disagrees with the span it names",
+    spec: "§1.3.1",
   },
 
   "vocabulary.unlisted_value": {
@@ -464,6 +484,51 @@ export async function collectFindings(
     }));
   }
 
+  // --- required values (§9.1) ---
+  //
+  // `required` means a row is INCOMPLETE without the value, never that
+  // a writer may refuse it (§9.1, §5.5). Two codes because §9.4 takes a
+  // severity from the catalog, so one code cannot carry both: a link
+  // with a missing endpoint connects nothing, which is worse than an
+  // unfinished row.
+  const junctionNames = new Set(junctionEntities(registry).map((e) => e.name));
+  for (const entity of registry.entities.values()) {
+    const required = entity.fields.filter(
+      (f) => f.required && !f.autoInjected);
+    if (required.length === 0) continue;
+    let rowsOf: Row[];
+    try {
+      rowsOf = await exec(`SELECT * FROM "${entity.name}"`);
+    } catch { continue; }
+    const isLink = junctionNames.has(entity.name);
+    for (const f of required) {
+      // `character_relationship`'s endpoints have their own, more
+      // specific finding (§6.5). Reported twice is reported wrong.
+      if (entity.name === "character_relationship" &&
+          (f.name === "character_a_id" || f.name === "character_b_id")) {
+        continue;
+      }
+      const ids: number[] = [];
+      for (const row of rowsOf) {
+        const v = row[f.name];
+        if (v === null || v === undefined || String(v).trim() === "") {
+          const id = row["id"];
+          if (typeof id === "number") ids.push(id);
+        }
+      }
+      if (ids.length === 0) continue;
+      out.push(make(
+        isLink ? "junction.endpoint_absent" : "field.required_absent",
+        isLink
+          ? `${entity.name}.${f.name} is absent on ${ids.length} row(s): ` +
+            `a link with a missing end connects nothing.`
+          : `${entity.name}.${f.name} is absent on ${ids.length} row(s). ` +
+            `The row is incomplete, not invalid — nothing is rejected on ` +
+            `write (§9.1).`,
+        { table: entity.name, rowIds: ids, count: ids.length }));
+    }
+  }
+
   // --- open vocabularies (§2.4) ---
   //
   // An unlisted value on an open field is the value, not an error — but
@@ -542,6 +607,65 @@ export async function collectFindings(
     out.push(make(code, f.message, {
       table: f.entity, rowIds: f.rowId === null ? [] : [f.rowId],
     }));
+  }
+
+  // --- bound section lines (§1.3.1) ---
+  //
+  // A section line MAY bind to the span it names. The RECORD answers
+  // queries; the line is the authoring handle. Between commits the two
+  // legitimately differ, so this is info rather than an error — but a
+  // line that has drifted from its entity is how an editor renames the
+  // wrong act, and nothing said so before schema 2.15.
+  const sections = await exec(
+    "SELECT id, line_order, content, metadata FROM screenplay_lines " +
+    "WHERE line_type = 'section' ORDER BY line_order");
+  const headingRows = await exec(
+    "SELECT scene_id, line_order FROM screenplay_lines " +
+    "WHERE line_type = 'heading' ORDER BY line_order");
+  const spanRows: Record<string, Row[]> = { act: acts, sequence: sequences };
+  for (const line of sections) {
+    let meta: unknown = line["metadata"];
+    if (typeof meta === "string") {
+      try { meta = JSON.parse(meta); } catch { meta = null; }
+    }
+    if (meta === null || typeof meta !== "object") continue;
+    const ref = (meta as Record<string, unknown>)["structureRef"];
+    if (ref === null || typeof ref !== "object") continue;
+    const { kind, uuid, id } = ref as Record<string, unknown>;
+    if (kind !== "act" && kind !== "sequence") continue;
+    const candidates = spanRows[kind] ?? [];
+    const target = typeof uuid === "string" && uuid !== ""
+      ? candidates.find((r) => String(r["uuid"] ?? "").toLowerCase() ===
+                               uuid.toLowerCase())
+      : candidates.find((r) => Number(r["id"]) === Number(id));
+    const lineId = typeof line["id"] === "number" ? [line["id"]] : [];
+    if (target === undefined) {
+      out.push(make("structure.section_mismatch",
+        `A section line binds to a ${kind} that is not in the file.`,
+        { table: "screenplay_lines", rowIds: lineId }));
+      continue;
+    }
+    const label = /^\s*#+\s*(.*)$/.exec(String(line["content"] ?? ""))?.[1]
+      ?.trim() ?? "";
+    const name = String(target["name"] ?? "").trim();
+    if (label !== "" && name !== "" && label !== name) {
+      out.push(make("structure.section_mismatch",
+        `The section line reads "${label}" and the ${kind} it names is ` +
+        `"${name}". The record answers queries (§1.3.1).`,
+        { table: "screenplay_lines", rowIds: lineId }));
+    }
+    const order = Number(line["line_order"] ?? 0);
+    const below = headingRows.find((h) => Number(h["line_order"] ?? 0) > order
+                                          && h["scene_id"] !== null);
+    const boundary = target["start_scene_id"];
+    if (below !== undefined && boundary !== null && boundary !== undefined &&
+        Number(below["scene_id"]) !== Number(boundary)) {
+      out.push(make("structure.section_mismatch",
+        `The section line for "${name}" sits above a different scene ` +
+        `than its start_scene_id names. The record is the boundary ` +
+        `(§5.1); the line is the handle.`,
+        { table: "screenplay_lines", rowIds: lineId }));
+    }
   }
 
   // --- shadow rows (§5.4) ---

@@ -1,8 +1,8 @@
 {
   "about": "A uuid that is not uuid-shaped.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.14",
-  "fileSchemaVersion": "2.14",
+  "toolSchemaVersion": "2.15",
+  "fileSchemaVersion": "2.15",
   "source": "fixtures/negative/build/uuid-malformed.scf",
   "counts": {
     "error": 1,

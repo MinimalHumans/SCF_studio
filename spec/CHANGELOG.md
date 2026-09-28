@@ -17,6 +17,85 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.54 — 2026-09-21
+
+*Describes schema 2.15.*
+
+**Minor.** Four normative changes, from proposals 0005, 0007, 0016 and
+0024. Like 0.53's, all four came out of mapping a second writer against
+the format, and three of them are cases where a rule existed in one
+implementation's source and nowhere else.
+
+### §9.1 — what `required` means
+
+The registry marks 132 fields on 84 entities `required`, and nothing
+said what that meant. The DDL declares no `NOT NULL`, no finding
+existed, and the only consumer anywhere was a form drawing an asterisk.
+So one implementation could refuse a row that another wrote and both
+could claim to conform — and `shot.scene_id` is `required`, which made
+an unplaced shot idea either conforming or corrupting depending on who
+read it.
+
+`required` now means the row is **incomplete** without the value: never
+refused on write, always reported. Two codes carry it, because §9.4
+takes severity from the catalog and one code cannot hold both cases:
+`field.required_absent` (`info`) for an unfinished row, and
+`junction.endpoint_absent` (`warning`) for a link entity missing an
+endpoint, which connects nothing. Where a more specific finding already
+covers the column — `relationship.endpoint_absent` — that one is raised
+instead, not as well.
+
+The fixture now carries an unplaced shot, so the finding fires on
+something. No row in it had a missing required value before, which is
+why neither reading could be told from the artifacts.
+
+### §1.3.1 — a section line may name the span it declares
+
+scf-app has bound section lines to acts and sequences since the editor
+existed, through `metadata.structureRef`, and the specification had
+never heard of it. A second writer could not produce the binding, so
+every file it wrote would have grown a duplicate act at the first
+commit.
+
+The binding is now specified, **by uuid rather than row id**: ids are
+file-local and renumberable (§6.2, §12.1.2), and the fixture's own
+build renumbers. The record answers queries and the line is the
+authoring handle; an editor may update one from the other at commit,
+and a disagreement between them is `structure.section_mismatch`
+(`info`), not an error. What a section MEANS — whether `### Midpoint`
+is an act, a sequence or neither — stays an editor convention, stated
+as such.
+
+### §12.14 — how to write `affected_entities`
+
+Q15's attachment column told a reader four ways to read it and a writer
+nothing, and all four identified a row by its id. A writer SHOULD now
+record `"<entity>:<uuid>"` and MUST NOT write a row id. Reading stays
+permissive, legacy spellings included.
+
+**Prose is matched on uuids alone.** The old matcher looked for a row
+id or a bare type name as substrings, so `scene:1` matched `scene:12`
+and any note containing "appropriate" attached itself to every prop.
+
+The fixture attaches a decision and a note to scene 12 in the new form.
+Q15's published `attached` member had been `{"decisions": [], "notes":
+[]}` since it was blessed: an implementation that ignored attachment
+entirely matched the artifact byte for byte.
+
+### §2.5 — a list is not a blob
+
+Twenty-nine fields hold a list of short strings, and the registry called
+them `json` — the same type as a keyed map and as the attachment column
+above. So the editor rendered a raw JSON textarea, which no designer
+will type into, and §12.1.2 projected the *text*, leaving a consumer to
+parse JSON out of a JSON document.
+
+`string_list` is now its own field type: a JSON array of strings,
+projected as an array. A malformed value is carried as the text it holds
+rather than dropped (§9.2).
+
+---
+
 ## 0.53 — 2026-09-20
 
 *Describes schema 2.14.*

@@ -48,7 +48,7 @@ describe("the fetch layer", () => {
 
   test("an entity with no lifecycle_status column keeps its rows",
        async () => {
-    // Eleven of 99 entities have no notion of being cut. A filter that
+    // Twelve of 103 entities have no notion of being cut. A filter that
     // assumed the column would empty those tables.
     db = await fresh();
     const withoutColumn = registry.order.find((name) => {

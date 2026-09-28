@@ -134,8 +134,8 @@ export {
 // Spec §12. Sixteen queries, each with a published normative result.
 export {
   type ProjectedRow, type QueryResult, type UuidLookup,
-  POLYMORPHIC, QUERY_RESULT_FORMAT,
-  envelope, projectRow, referencesOf, uuidLookupFor, uuidLookupForAll,
+  POLYMORPHIC, STRING_LIST, QUERY_RESULT_FORMAT,
+  columnRoles, envelope, projectRow, uuidLookupFor, uuidLookupForAll,
 } from "./queryResult.ts";
 
 export {

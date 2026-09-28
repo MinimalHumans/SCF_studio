@@ -157,10 +157,10 @@
         "name": { "$ref": "#/$defs/identifier" },
         "label": { "type": "string" },
         "fieldType": {
-          "description": "Editing type. `reference` requires `referenceEntity`; `select` and `multiselect` require `options`.",
+          "description": "Editing type. `reference` requires `referenceEntity`; `select` and `multiselect` require `options`. `string_list` holds a JSON array of strings (spec \u00a72.5) and is projected as an array, not as text.",
           "enum": [
             "text", "textarea", "integer", "float", "boolean", "select",
-            "multiselect", "reference", "json", "timestamp"
+            "multiselect", "reference", "json", "string_list", "timestamp"
           ]
         },
         "sqlType": { "enum": ["TEXT", "INTEGER", "REAL"] },

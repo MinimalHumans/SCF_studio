@@ -1,7 +1,7 @@
 {
   "query": "Q15",
   "resultFormat": "1.0",
-  "schemaVersion": "2.14",
+  "schemaVersion": "2.15",
   "parameters": {
     "entityType": "scene",
     "row": "06857531-3e91-41a9-95dd-3262407d8132"
@@ -31,8 +31,36 @@
     },
     "versionChain": [],
     "attached": {
-      "decisions": [],
-      "notes": []
+      "decisions": [
+        {
+          "uuid": "329d36f0-6816-434a-8854-cdabeaa3f755",
+          "fields": {
+            "affected_entities": "[\"scene:06857531-3e91-41a9-95dd-3262407d8132\"]",
+            "alternatives_considered": "Firelight — rejected as too warm for a rupture.",
+            "decided_by": "Direction",
+            "decision_type": "visual",
+            "description": "sc 19 lit by a single practical.",
+            "lifecycle_status": "active",
+            "name": "One lamp for the confession",
+            "rationale": "The scene is about what can be said in the dark."
+          }
+        }
+      ],
+      "notes": [
+        {
+          "uuid": "0d5cf215-0000-4000-8000-000000000002",
+          "fields": {
+            "affected_entities": "[\"scene:06857531-3e91-41a9-95dd-3262407d8132\"]",
+            "author": "director",
+            "content": "One practical only in sc 12 — the stove lamp. If we add a second the room stops being a place she hides in.",
+            "lifecycle_status": "active",
+            "name": "Kitchen practicals for the confession",
+            "note_date": "2026-09-21",
+            "note_type": "for cinematographer",
+            "priority": "normal"
+          }
+        }
+      ]
     }
   }
 }

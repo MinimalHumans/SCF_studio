@@ -1,7 +1,7 @@
 {
   "query": "Q01",
   "resultFormat": "1.0",
-  "schemaVersion": "2.14",
+  "schemaVersion": "2.15",
   "parameters": {
     "subjectType": "character",
     "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64"
@@ -34,6 +34,22 @@
       }
     },
     "groups": [
+      {
+        "entity": "character_arc",
+        "rows": [
+          {
+            "uuid": "0d5cf215-0000-4000-8000-000000000003",
+            "fields": {
+              "axis": "self-protection → admission",
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "description": "Competence is how she holds the grief at arm's length. The arc is the distance closing.",
+              "direction": "positive",
+              "lifecycle_status": "active",
+              "name": "Eleanor — competence to admission"
+            }
+          }
+        ]
+      },
       {
         "entity": "physical_character_profile",
         "rows": [
@@ -91,7 +107,9 @@
               "speech_pattern": "Answers a question with an instruction",
               "subtext_playing": "hides",
               "timbre": "warm",
-              "verbal_tics": "[\"answers questions with tasks\"]",
+              "verbal_tics": [
+                "answers questions with tasks"
+              ],
               "vocal_habits": "Drops the ends of sentences she does not want to finish",
               "voice_quality": "Low and unhurried; the voice of someone used to being obeyed by animals",
               "volume_tendency": "soft"
@@ -129,7 +147,10 @@
               "continuity_notes": "Creek-soaked from sc 9; dried and stiff after",
               "description": "Grey wool work dress, sleeves pushed back.",
               "fabrics": "Wool, cotton apron",
-              "key_garments": "[\"Dress\",\"apron\"]",
+              "key_garments": [
+                "Dress",
+                "apron"
+              ],
               "lifecycle_status": "active",
               "name": "Work dress",
               "primary_color_hex": "#6E6B64",
@@ -155,6 +176,21 @@
               "primary_color_name": "faded indigo",
               "silhouette": "Draped, too fine for the dress",
               "what_reveals": "That she kept it"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "costume_progression",
+        "rows": [
+          {
+            "uuid": "0d5cf215-0000-4000-8000-000000000020",
+            "fields": {
+              "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+              "lifecycle_status": "active",
+              "name": "Eleanor — the coat",
+              "starting_meaning": "Borrowed competence. It is two sizes too big and she has never had it taken in.",
+              "starting_wardrobe": "Her husband's work coat, worn indoors as often as out."
             }
           }
         ]

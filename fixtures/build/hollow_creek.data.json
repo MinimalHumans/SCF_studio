@@ -1,6 +1,6 @@
 {
   "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
-  "schemaVersion": "2.14",
+  "schemaVersion": "2.15",
   "tables": {
     "_scf_meta": [
       {
@@ -9,7 +9,7 @@
       },
       {
         "key": "schema_version",
-        "value": "2.14"
+        "value": "2.15"
       },
       {
         "key": "updated_at",
@@ -2072,14 +2072,15 @@
         "id": 3,
         "uuid": "329d36f0-6816-434a-8854-cdabeaa3f755",
         "created_at": "2026-08-05 13:24:02",
-        "updated_at": "2026-08-05 13:24:02",
+        "updated_at": "2026-09-21 12:00:00",
         "name": "One lamp for the confession",
         "decision_type": "visual",
         "description": "sc 19 lit by a single practical.",
         "rationale": "The scene is about what can be said in the dark.",
         "alternatives_considered": "Firelight — rejected as too warm for a rupture.",
         "decided_by": "Direction",
-        "lifecycle_status": "active"
+        "lifecycle_status": "active",
+        "affected_entities": "[\"scene:06857531-3e91-41a9-95dd-3262407d8132\"]"
       },
       {
         "id": 4,
@@ -5406,6 +5407,17 @@
         "lens_choice": "40mm",
         "description": "The embrace. The door open behind them.",
         "lifecycle_status": "active"
+      },
+      {
+        "id": 31,
+        "uuid": "0d5cf215-0000-4000-8000-000000000001",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Locket in the silt (unplaced)",
+        "shot_size": "extreme close-up",
+        "description": "Underwater: the locket half-buried, current moving the chain. No scene yet — it may belong to the drowning or to the dredging.",
+        "notes": "Deliberately unplaced. A shot idea without a scene is half-placed data, which the format keeps and reports (spec §5.5, §9.1).",
+        "lifecycle_status": "active"
       }
     ],
     "shot_design": [
@@ -6462,7 +6474,140 @@
         "delivery_style": "theatrical",
         "lifecycle_status": "active"
       }
+    ],
+    "collaboration_note": [
+      {
+        "id": 1,
+        "uuid": "0d5cf215-0000-4000-8000-000000000002",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Kitchen practicals for the confession",
+        "note_type": "for cinematographer",
+        "content": "One practical only in sc 12 — the stove lamp. If we add a second the room stops being a place she hides in.",
+        "priority": "normal",
+        "affected_entities": "[\"scene:06857531-3e91-41a9-95dd-3262407d8132\"]",
+        "author": "director",
+        "note_date": "2026-09-21",
+        "lifecycle_status": "active"
+      }
+    ],
+    "character_arc": [
+      {
+        "id": 1,
+        "uuid": "0d5cf215-0000-4000-8000-000000000003",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Eleanor — competence to admission",
+        "character_id": 1,
+        "axis": "self-protection → admission",
+        "direction": "positive",
+        "description": "Competence is how she holds the grief at arm's length. The arc is the distance closing.",
+        "lifecycle_status": "active"
+      }
+    ],
+    "character_arc_state": [
+      {
+        "id": 1,
+        "uuid": "0d5cf215-0000-4000-8000-000000000011",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Eleanor — walls up",
+        "character_arc_id": 1,
+        "scene_id": 1,
+        "stage_label": "walls up",
+        "description": "Every answer is a task. Nothing she says is about herself.",
+        "lifecycle_status": "active"
+      },
+      {
+        "id": 2,
+        "uuid": "0d5cf215-0000-4000-8000-000000000012",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Eleanor — the crack",
+        "character_arc_id": 1,
+        "scene_id": 7,
+        "stage_label": "the crack",
+        "description": "She tells Marcus the true thing instead of the kind one.",
+        "lifecycle_status": "active"
+      },
+      {
+        "id": 3,
+        "uuid": "0d5cf215-0000-4000-8000-000000000013",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Eleanor — admission",
+        "character_arc_id": 1,
+        "scene_id": 11,
+        "stage_label": "admission",
+        "description": "She says it plainly, to no one's benefit but her own.",
+        "lifecycle_status": "active"
+      }
+    ],
+    "costume_progression": [
+      {
+        "id": 1,
+        "uuid": "0d5cf215-0000-4000-8000-000000000020",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Eleanor — the coat",
+        "character_id": 1,
+        "starting_wardrobe": "Her husband's work coat, worn indoors as often as out.",
+        "starting_meaning": "Borrowed competence. It is two sizes too big and she has never had it taken in.",
+        "lifecycle_status": "active"
+      }
+    ],
+    "costume_progression_state": [
+      {
+        "id": 1,
+        "uuid": "0d5cf215-0000-4000-8000-000000000021",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Coat — buttoned",
+        "costume_progression_id": 1,
+        "scene_id": 1,
+        "stage_label": "buttoned",
+        "wardrobe": "Coat buttoned to the throat, indoors and out.",
+        "meaning": "Armour she does not call armour.",
+        "lifecycle_status": "active"
+      },
+      {
+        "id": 2,
+        "uuid": "0d5cf215-0000-4000-8000-000000000022",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "Coat — open",
+        "costume_progression_id": 1,
+        "scene_id": 7,
+        "stage_label": "open",
+        "wardrobe": "Open over the same shirt she slept in.",
+        "meaning": "She stopped noticing it, which is the first thing she has stopped controlling.",
+        "lifecycle_status": "active"
+      }
+    ],
+    "staging_beat_character": [
+      {
+        "id": 1,
+        "uuid": "0d5cf215-0000-4000-8000-000000000030",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "",
+        "staging_beat_id": 1,
+        "character_id": 1,
+        "position": "table, far side",
+        "movement": "Circles left to right, keeping the table between them."
+      },
+      {
+        "id": 2,
+        "uuid": "0d5cf215-0000-4000-8000-000000000031",
+        "created_at": "2026-09-21 12:00:00",
+        "updated_at": "2026-09-21 12:00:00",
+        "name": "",
+        "staging_beat_id": 1,
+        "character_id": 2,
+        "position": "doorway",
+        "movement": "Holds the frame; does not come in."
+      }
     ]
   },
-  "rowCount": 503
+  "rowCount": 514
 }

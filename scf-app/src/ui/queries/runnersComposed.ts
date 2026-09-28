@@ -793,7 +793,8 @@ export const q15: QuerySpec = {
     const notes = await rows(ctx.exec, "collaboration_note");
     const split = <T extends Row>(items: T[]): [T[], T[]] => {
       const attached = items.filter((d) =>
-        mentionsRow(d["affected_entities"], entityType, rowId));
+        mentionsRow(d["affected_entities"], entityType, rowId,
+                    row === null ? null : String(row["uuid"] ?? "")));
       return [attached,
               items.filter((d) => !attached.includes(d) &&
                 (d["affected_entities"] === null ||

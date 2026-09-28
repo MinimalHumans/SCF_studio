@@ -1,7 +1,7 @@
 {
   "query": "Q00",
   "resultFormat": "1.0",
-  "schemaVersion": "2.14",
+  "schemaVersion": "2.15",
   "parameters": {},
   "result": {
     "layers": [
@@ -54,10 +54,18 @@
           "fields": {
             "aesthetic_genre": "naturalistic",
             "design_era": "1889 Oregon frontier",
-            "forbidden_materials": "[\"plastic\", \"chrome\"]",
+            "forbidden_materials": [
+              "plastic",
+              "chrome"
+            ],
             "lifecycle_status": "active",
             "name": "Visual Identity",
-            "primary_materials": "[\"oak\", \"brass\", \"iron\", \"wool\"]",
+            "primary_materials": [
+              "oak",
+              "brass",
+              "iron",
+              "wool"
+            ],
             "textural_philosophy": "weathered",
             "visual_density": "minimalist",
             "visual_statement": "Naturalistic, lived-in; everything aged thirty years."
@@ -71,7 +79,11 @@
           "fields": {
             "lifecycle_status": "active",
             "name": "Project Color Palette",
-            "primary_colors": "[\"desaturated earth\", \"hearth amber\", \"creek slate\"]",
+            "primary_colors": [
+              "desaturated earth",
+              "hearth amber",
+              "creek slate"
+            ],
             "saturation_philosophy": "desaturated",
             "temperature_approach": "journey",
             "temperature_associations": "Warm: hearth, forgiveness. Cool: the creek, the unsaid."

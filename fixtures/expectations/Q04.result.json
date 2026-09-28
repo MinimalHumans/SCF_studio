@@ -1,7 +1,7 @@
 {
   "query": "Q04",
   "resultFormat": "1.0",
-  "schemaVersion": "2.14",
+  "schemaVersion": "2.15",
   "parameters": {
     "scene": "06857531-3e91-41a9-95dd-3262407d8132"
   },
@@ -240,7 +240,10 @@
             "uuid": "0c1b2c32-4594-4e6e-a966-1ef60b3de479",
             "fields": {
               "color_contrast_level": "high",
-              "dominant_colors": "[\"#C88A3C amber\", \"#5A6B7A slate\"]",
+              "dominant_colors": [
+                "#C88A3C amber",
+                "#5A6B7A slate"
+              ],
               "focal_color": "hearth amber",
               "lifecycle_status": "active",
               "name": "Sc 12 palette",

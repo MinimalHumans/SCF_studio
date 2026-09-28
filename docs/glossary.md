@@ -29,14 +29,14 @@ inside.
 holds it. `character` is an entity. `scene` is an entity. There are 99 of
 them, listed in the [entity reference](../spec/entity-reference.md).
 
-**Registry** — the single declaration of all 99 entities and their
+**Registry** — the single declaration of all 103 entities and their
 fields. Everything else — the database schema, the JSON Schema, the
 documentation — is generated from it, so there is one place where the
 field set is decided and no second place to disagree with it.
 
 **Link entity**, or **junction** — a row whose whole job is to connect
 two other rows. "This character is in this scene" is a link. Thirteen of
-the 99 entities are links.
+the 103 entities are links.
 
 **Tier** — a rough depth band from 0 to 6, grouping entities by how far
 they sit from the basic nouns. `scene` is tier 0; `emotional architecture`

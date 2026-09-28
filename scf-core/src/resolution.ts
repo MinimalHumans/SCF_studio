@@ -296,6 +296,13 @@ export function relationshipStateAt(
                      relationshipId, sceneId, order);
 }
 
+export function characterArcStateAt(
+    ctx: ScfContext, arcId: number, sceneId: number,
+    order: SceneOrder | null = null): Promise<Row | null> {
+  return latestState(ctx, "character_arc_state", "character_arc_id",
+                     arcId, sceneId, order);
+}
+
 export function propStateAt(
     ctx: ScfContext, propId: number, sceneId: number,
     order: SceneOrder | null = null): Promise<Row | null> {

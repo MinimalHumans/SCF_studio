@@ -20,7 +20,7 @@ import { projectScreenplayLines, sceneScriptLines }
 import { readinessReport } from "./readiness.ts";
 import type { FileLocator } from "./assets.ts";
 import {
-  envelope, projectRow, referencesOf, uuidLookupForAll,
+  columnRoles, envelope, projectRow, uuidLookupForAll,
   type ProjectedRow, type QueryResult, type UuidLookup,
 } from "./queryResult.ts";
 
@@ -47,12 +47,12 @@ export interface Q05Result {
   beats: ProjectedRow[];
 }
 
-// No hand-written reference maps. `referencesOf(registry, entity)`
+// No hand-written reference maps. `columnRoles(registry, entity)`
 // derives them from the registry's own `referenceEntity` declarations,
 // and `uuidLookupForAll` indexes every entity any of them can point at.
-// Hand-maintained per-query maps drift apart — see referencesOf.
+// Hand-maintained per-query maps drift apart — see columnRoles.
 const refs = (ctx: ScfContext, entity: string): Record<string, string> =>
-  referencesOf(ctx.registry, entity);
+  columnRoles(ctx.registry, entity);
 
 export async function q05Result(
     ctx: ScfContext, characterUuid: string, sceneUuid: string,
@@ -187,7 +187,8 @@ async function directionResult(
 import { q } from "./db.ts";
 import type { Row, SqlValue } from "./db.ts";
 import {
-  excludeCut, motifStateAt, propStateAt, relationshipStateAt, rows,
+  characterArcStateAt, excludeCut, motifStateAt, propStateAt,
+  relationshipStateAt, rows,
   sceneOrder, selectLocationVariant, statesInForce,
 } from "./resolution.ts";
 import { actOf, deriveStructure, sceneOrderHint, sequenceOf } from
@@ -916,31 +917,49 @@ async function spanMembership(ctx: ScfContext) {
  * It had lived in the app, which meant an independent implementation had
  * no way to know which conventions counted.
  */
-export function mentionsRow(affected: unknown,
-                            entityType: string, id: number): boolean {
+export function mentionsRow(affected: unknown, entityType: string,
+                            id: number, uuid?: string | null): boolean {
   if (affected === null || affected === undefined || affected === "") {
     return false;
   }
+  const handle = uuid === null || uuid === undefined || uuid === ""
+    ? null : uuid;
+  const matchesId = (v: unknown): boolean => {
+    if (v === undefined || v === null) return true;      // bare entity
+    const s = String(v).trim();
+    if (handle !== null && s.toLowerCase() === handle.toLowerCase()) {
+      return true;
+    }
+    return Number(s) === id;                              // legacy row id
+  };
   try {
     const parsed: unknown = JSON.parse(String(affected));
     const items = Array.isArray(parsed) ? parsed : [parsed];
     return items.some((item) => {
       if (typeof item === "string") {
-        return item === `${entityType}:${String(id)}` ||
-               item === `${entityType}#${String(id)}` || item === entityType;
+        if (item === entityType) return true;
+        const cut = item.indexOf(":") >= 0 ? item.indexOf(":")
+                                           : item.indexOf("#");
+        if (cut < 0) return false;
+        return item.slice(0, cut) === entityType &&
+               matchesId(item.slice(cut + 1));
       }
       if (item !== null && typeof item === "object") {
         const o = item as Record<string, unknown>;
         const t = o["entity"] ?? o["type"] ?? o["entity_type"];
-        const i = o["id"] ?? o["entity_id"];
-        return t === entityType && (i === undefined || Number(i) === id);
+        const i = o["uuid"] ?? o["id"] ?? o["entity_id"];
+        return t === entityType && matchesId(i);
       }
       return false;
     });
   } catch {
+    // Prose. Matching a row id inside prose is what the written
+    // convention (§12.14) exists to replace: `scene:1` is a substring
+    // of `scene:12`, and a bare type name is a substring of ordinary
+    // words. A uuid is unambiguous, so prose is matched on that alone.
     const text = String(affected);
-    return text.includes(`${entityType}:${String(id)}`) ||
-           text.includes(entityType);
+    return handle !== null &&
+           text.toLowerCase().includes(handle.toLowerCase());
   }
 }
 
@@ -954,7 +973,8 @@ export interface Q15Result {
 
 export async function q15Result(
     ctx: ScfContext, entityType: string, rowUuid: string, rowId: number,
-    mentions: (affected: unknown, entityType: string, id: number) => boolean,
+    mentions: (affected: unknown, entityType: string, id: number,
+               uuid?: string | null) => boolean,
 ): Promise<QueryResult<Q15Result>> {
   const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
   const row = (await rows(ctx.exec, entityType, "id = ?", [rowId]))[0]
@@ -987,7 +1007,7 @@ export async function q15Result(
 
   const attach = async (table: string): Promise<Row[]> =>
     (await rows(ctx.exec, table))
-      .filter((r) => mentions(r["affected_entities"], entityType, rowId));
+      .filter((r) => mentions(r["affected_entities"], entityType, rowId, rowUuid));
 
   return envelope("Q15", ctx.registry,
     { entityType, row: rowUuid }, {
@@ -1143,6 +1163,12 @@ export interface Q02Result {
   /** Present for a character subject; empty otherwise. */
   costumes: ProjectedRow[];
   relationshipStates: ProjectedRow[];
+  /**
+   * The stage in force on each of the character's arcs (§4.5). The arcs
+   * THEMSELVES are already in `dossier.groups` — a standing fact about
+   * the character — so only what the scene changes is repeated here.
+   */
+  arcStates: ProjectedRow[];
   performanceStates: ProjectedRow[];
   beats: ProjectedRow[];
   /** Present for a location subject. */
@@ -1171,6 +1197,7 @@ export async function q02Result(
 
   let costumes: Row[] = [];
   const relationshipStates: Row[] = [];
+  const arcStates: Row[] = [];
   let performanceStates: Row[] = [];
   let beats: Row[] = [];
   let locationVariant: Q02Result["locationVariant"] = null;
@@ -1189,6 +1216,13 @@ export async function q02Result(
       if (relId === null) continue;
       const state = await relationshipStateAt(ctx, relId, sceneId, order);
       if (state !== null) relationshipStates.push(state);
+    }
+    for (const arc of await rows(ctx.exec, "character_arc",
+                                 "character_id = ?", [subjectId])) {
+      const arcId = asId(arc["id"]);
+      if (arcId === null) continue;
+      const state = await characterArcStateAt(ctx, arcId, sceneId, order);
+      if (state !== null) arcStates.push(state);
     }
     performanceStates = await statesInForce(ctx, subjectId, sceneId, null,
                                             order);
@@ -1230,6 +1264,8 @@ export async function q02Result(
                                              lookup)),
     relationshipStates: relationshipStates.map(
       (r) => projectRow(r, refs(ctx, "relationship_state"), lookup)),
+    arcStates: arcStates.map(
+      (r) => projectRow(r, refs(ctx, "character_arc_state"), lookup)),
     performanceStates: performanceStates.map(
       (r) => projectRow(r, refs(ctx, "performance_state"), lookup)),
     beats: beats.map((b) => projectRow(b, refs(ctx, "performance_beat"),

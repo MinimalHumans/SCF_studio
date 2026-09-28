@@ -316,7 +316,7 @@ Specified in **§12.16**. Normative result: [`fixtures/expectations/Q02.result.j
 
 Parameters: `subjectType`, `subject`, `scene`, `shot`.
 
-Result members: `subjectType`, `subject`, `scene`, `dossier`, `costumes`, `relationshipStates`, `performanceStates`, `beats`, `locationVariant`, `propState`, `media`.
+Result members: `subjectType`, `subject`, `scene`, `dossier`, `costumes`, `relationshipStates`, `arcStates`, `performanceStates`, `beats`, `locationVariant`, `propState`, `media`.
 
 ### What it needs
 

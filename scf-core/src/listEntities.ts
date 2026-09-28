@@ -16,7 +16,7 @@
 import { q, type SqlValue } from "./db.ts";
 import { rows, type ScfContext } from "./resolution.ts";
 import {
-  projectRow, referencesOf, uuidLookupForAll, POLYMORPHIC,
+  projectRow, columnRoles, uuidLookupForAll, POLYMORPHIC,
 } from "./queryResult.ts";
 import { labelFieldOf } from "./naturalKey.ts";
 
@@ -40,7 +40,7 @@ export interface ListFilter {
  * whose `filter.field` points at `filter.uuid`.
  *
  * `filter.field` must be one of the reference columns the registry
- * declares for this entity — derived via `referencesOf`, never a
+ * declares for this entity — derived via `columnRoles`, never a
  * hand-typed map, for the same reason every other reference resolution
  * in this module reads from the registry.
  */
@@ -51,7 +51,7 @@ export async function listEntities(
     throw new Error(`listEntities: unknown entity type "${entityType}"`);
   }
   const labelField = labelFieldOf(ctx, entityType);
-  const refs = referencesOf(ctx.registry, entityType);
+  const refs = columnRoles(ctx.registry, entityType);
 
   let where = "";
   let params: SqlValue[] = [];

@@ -440,9 +440,15 @@ def main(db_path: str) -> int:
         elif kind == "section":
             depth = 1 if ref[0] == "act" else 2
             text = content.lstrip("#").strip()
+            # Bound BY UUID (spec §1.3.1). It was the row id until
+            # schema 2.15, and this build renumbers — which is exactly
+            # the case a file-local id cannot survive.
+            span_uuid = con.execute(
+                f'SELECT uuid FROM "{ref[0]}" WHERE id = ?',
+                (ref[1],)).fetchone()
             metadata = json.dumps({
                 "section": {"depth": depth, "text": text},
-                "structureRef": {"kind": ref[0], "id": ref[1]},
+                "structureRef": {"kind": ref[0], "uuid": span_uuid[0]},
             })
         elif kind == "character":
             character_id = char_by_name[ref]

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.53 (draft) — not a release.**
-Describes schema version **2.14**.
+**Version 0.54 (draft) — not a release.**
+Describes schema version **2.15**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -104,10 +104,10 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.53` (draft).
+- **Specification version** — this document. Currently `0.54` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.14`. Increments on any
+  `schema/schema_meta.py`. Currently `2.15`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
@@ -268,6 +268,31 @@ derived from this table (§4.1), so a reader that guesses wrong produces
 a wrong answer confidently and in silence. That is not hypothetical — it
 is how this subsection came to exist.
 
+**A `section` line MAY name the span it declares.** It does so in its
+`metadata`, as
+
+```json
+{"structureRef": {"kind": "act", "uuid": "<the act's uuid>"}}
+```
+
+where `kind` is `act` or `sequence`. **By uuid, not by row id**: row ids
+are file-local and a writer may renumber them (§6.2, §12.1.2), and a
+binding that survives a rebuild has to be keyed to something that does.
+A reader MUST accept the legacy form `{"kind": …, "id": <row id>}`,
+which is what schema 2.14 and earlier wrote.
+
+**The record answers; the line is the handle.** `start_scene_id` and
+`name` on the `act` or `sequence` row are the stored facts (§5.1), and a
+reader MUST answer from them. An editor MAY update the record from the
+line at commit — renaming a section renames the span it names, which is
+how a writer expects an outline to behave. Between commits the two
+legitimately differ, so a disagreement is `structure.section_mismatch`
+(`info`), not an error.
+
+What a section line MEANS — whether `### Midpoint` is an act, a sequence
+or neither — is an editor convention and is deliberately not specified.
+A writer that binds its own lines never depends on it.
+
 ### 1.4 Missing columns
 
 A reader that intends to write MUST tolerate a file lacking columns the
@@ -311,7 +336,7 @@ The digests are over raw bytes. A checkout whose working tree converts
 line endings will not match, which is a property of the checkout rather
 than of the artifacts.
 
-Version 2.14 defines **99 entities** across tiers 0–6.
+Version 2.15 defines **103 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -377,6 +402,20 @@ location variant by counting agreements on `time_of_day`, `weather` and
 and §12's own vocabularies decide result shapes. A finite set is what
 makes those answers the same in two implementations. An open vocabulary
 is for values a human reads, not values a resolver branches on.
+
+### 2.5 Lists of strings
+
+A field whose `fieldType` is **`string_list`** holds a **JSON array of
+strings**. Null and `[]` mean the same thing: nothing. Twenty-nine
+fields carry one — `visual_identity.primary_materials`, `asset.tags`,
+`color_script_entry.key_colors` and the rest.
+
+**§12.1.2 projects a `string_list` as an array**, not as the text that
+holds it. A consumer parsing JSON out of a JSON document was the old
+behaviour, and a reader could not tell a list from a paragraph that
+happened to start with a bracket: the type said `json`, which is also
+what a keyed map and an attachment column said. A malformed value is
+carried as the text it holds rather than dropped (§9.2).
 
 ## 3. Derived versus stored
 
@@ -609,7 +648,7 @@ and `latest_wins`:
 
 | Registry value | | |
 |---|---|---|
-| `none` | Not positioned | 93 of 99 entities. The row is not keyed to a scene, so nothing below applies to it. |
+| `none` | Not positioned | 95 of 103 entities. The row is not keyed to a scene, so nothing below applies to it. |
 | `explicit` | Pattern 1 | One row per scene. |
 | `sparse_persistence` | Pattern 2 | Keyed at a scene, in force onward per its `persistence` field. |
 | `latest_wins` | Pattern 3 | The most recent row at or before a position is in force. |
@@ -769,7 +808,7 @@ and no convention about ordering.
 **Consumers MUST read relationships from both character columns** and
 MUST NOT assume the character of interest occupies `character_a_id`.
 
-`character_relationship` is not one of the thirteen link entities — its
+`character_relationship` is not one of the fourteen link entities — its
 `subject` is `character` — so junction tooling does not cover it.
 Implementations MUST report, separately:
 
@@ -825,7 +864,7 @@ rather than honoured, because two columns saying the same thing can
 disagree and one of them then has to win.
 
 Where the registry declares it, an implementation MUST preserve it. Of
-the thirteen link entities only `actor_character_role` and
+the fourteen link entities only `actor_character_role` and
 `thematic_connection` carry it; the others MUST NOT.
 
 **A link inherits its endpoints' lifecycle.** That is why eleven of the
@@ -922,7 +961,7 @@ MUST take the leaf as an input.
 ### 7.2 The chain is the `refines` closure
 
 Each entity declares `refines`: a list of the entities it adds detail
-to. Twelve of the 99 entities declare a non-empty one.
+to. Twelve of the 103 entities declare a non-empty one.
 
 The chain for a leaf is produced by walking `refines` **depth-first,
 post-order**, so that an entity's parents precede it and the leaf is
@@ -1162,9 +1201,28 @@ is specified.
 
 ### 9.1 SCF describes; it does not enforce
 
-The schema constrains almost nothing beyond required fields and
-reference columns. Duplicates, contradictions, and gaps are **findings**
-— reported, never rejected on write.
+The schema constrains almost nothing. A field the registry marks
+`required` is one a row is **incomplete** without: a writer MUST NOT
+refuse a row for lacking it, and a reader MUST report the absence
+(§9.4). A value is absent when it is null, or text that is empty after
+trimming. Duplicates, contradictions, and gaps are likewise
+**findings** — reported, never rejected on write.
+
+Two codes carry it, because §9.4 takes a severity from the catalog and
+the two cases do not share one. `field.required_absent` (`info`) is an
+unfinished row. `junction.endpoint_absent` (`warning`) is a link entity
+missing a required reference: a connection with a missing end connects
+nothing. Where a more specific finding already covers the same column —
+`relationship.endpoint_absent` for `character_relationship`'s endpoints
+(§6.5) — that one is raised instead, not as well.
+
+The flag said nothing at all until 2.15. The DDL declares no `NOT
+NULL`, no finding existed, and the only consumer anywhere was a form
+drawing an asterisk, so one implementation could refuse a row that
+another wrote — and `shot.scene_id` is `required`, which made an
+unplaced shot idea either conforming or corrupting depending on who
+read it. §5.5 already says half-placed structure is valid and reported.
+This says the same thing about a missing value.
 
 A half-entered document is a normal state of work, not an error.
 
@@ -1517,7 +1575,7 @@ sibling itself — `entity_type`, `subject_type` — is an ordinary stored
 value and is kept.
 
 A reference MAY target a table in `uuidExtraTables` (§1.3.1) rather than
-one of the 99 entities — `clip.screenplay_line_start_id` and `_end_id`
+one of the 103 entities — `clip.screenplay_line_start_id` and `_end_id`
 point at `screenplay_lines`, which carries uuid identity on §6.1's terms,
 and resolve to `screenplay_line_start_uuid` and `_end_uuid` like any
 other reference.
@@ -2138,12 +2196,29 @@ Walking the chain MUST terminate on a cycle rather than following it
 (§9.2). A cycle is a finding (`identity.chain_cycle`), not a reason to
 hang.
 
-**Attachment is matched permissively.** `affected_entities` is
-free-form and may hold a JSON array, a JSON object, or prose, so an
-implementation MUST accept the conventions `entity:id`, `entity#id`, a
-bare `entity`, and an object carrying an entity kind with an optional
-id. A provenance trail that silently omitted a note would be worse than
-one that included a doubtful one — §9.1, SCF describes.
+**A writer SHOULD record `affected_entities` as a JSON array of strings
+`"<entity>:<uuid>"`**, one per attached row, where `<entity>` is a
+registry entity name and `<uuid>` is the row's uuid (§6.1). **A writer
+MUST NOT write a row id**: row ids are file-local and renumberable
+(§6.2, §12.1.2), so an attachment keyed to one is re-pointed at a
+different row by any rebuild that renumbers — and the fixture's own
+build is such a rebuild.
+
+**Reading stays permissive**, because the column is free-form and may
+hold a JSON array, a JSON object, or prose. An implementation MUST
+accept `entity:<uuid>`, `entity#<uuid>`, an object carrying an entity
+kind with a `uuid` member, a bare `entity` meaning the kind in general,
+and the legacy row-id spellings of the first three. The two string forms
+are told apart by the value's shape: a canonical uuid is a uuid and an
+integer is a row id, and they cannot collide. A provenance trail that
+silently omitted a note would be worse than one that included a doubtful
+one — §9.1, SCF describes.
+
+**Prose is matched on uuids alone.** A row id inside prose is not a
+reference: `scene:1` is a substring of `scene:12`, and a bare entity
+name is a substring of ordinary words — `prop` is inside "appropriate".
+A matcher permissive enough to read prose has to key on something that
+cannot be a coincidence.
 
 ### 12.15 Q01 — Subject dossier
 
@@ -2185,9 +2260,15 @@ Parameters: `subjectType`, `subject`, `scene`, and `shot` — optional.
 | `subjectType` | Which kind of subject was asked about. Echoes the parameter, as §12.15 does. |
 | `subject`, `scene` | Projected. |
 | `dossier` | Q01's result body — what is true of the subject before this scene. |
-| `costumes`, `relationshipStates`, `performanceStates`, `beats` | For a character subject. |
+| `costumes`, `relationshipStates`, `arcStates`, `performanceStates`, `beats` | For a character subject. |
 | `locationVariant` | For a location subject: the variant in force and any mismatches. |
 | `propState` | For a prop subject. |
+
+`arcStates` carries the stage in force on each of the character's arcs
+(§4.5), and **not the arcs themselves**: a `character_arc` is a standing
+fact about the character, so it is already in `dossier.groups`, and
+§3.1 asks for it in one place rather than two. What the scene changes is
+which stage is in force.
 | `media` | **Q13's result body**, with `fromQuery: "Q13"`. |
 
 **Fields that do not apply to a subject's kind are null or empty, never
