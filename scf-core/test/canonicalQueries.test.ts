@@ -29,7 +29,7 @@ import {
   q12Result, q13Result, q14Result,
 } from "../src/canonicalQueries.ts";
 import {
-  POLYMORPHIC, QUERY_RESULT_FORMAT, projectRow, referencesOf,
+  POLYMORPHIC, QUERY_RESULT_FORMAT, projectRow, columnRoles,
 } from "../src/queryResult.ts";
 import { sceneOrder } from "../src/resolution.ts";
 import { openFixture, registry, type Fixture } from "./setup.ts";
@@ -90,15 +90,15 @@ describe("§12.1.2 reference maps come from the registry", () => {
     // Hand-written maps disagreed between queries: `scene.location_id`
     // was resolved in one result and dropped in another. Deriving them
     // makes that impossible rather than unlikely.
-    const sceneRefs = referencesOf(registry, "scene");
+    const sceneRefs = columnRoles(registry, "scene");
     expect(sceneRefs["location_id"]).toBe("location");
-    const motifRefs = referencesOf(registry, "motif");
+    const motifRefs = columnRoles(registry, "motif");
     expect(Object.keys(motifRefs).sort())
       .toEqual(["first_appearance_scene_id", "related_motif_id"]);
   });
 
   test("an entity with no references yields an empty map", () => {
-    expect(referencesOf(registry, "nonexistent_entity")).toEqual({});
+    expect(columnRoles(registry, "nonexistent_entity")).toEqual({});
   });
 });
 
@@ -154,9 +154,9 @@ describe("§12.1.2 row projection", () => {
   });
 
   test("external_id survives on a real entity's reference map", () => {
-    // Through referencesOf rather than a hand-built map, because the
-    // bug was in what referencesOf did NOT say about the column.
-    const refs = referencesOf(fx.ctx.registry, "character");
+    // Through columnRoles rather than a hand-built map, because the
+    // bug was in what columnRoles did NOT say about the column.
+    const refs = columnRoles(fx.ctx.registry, "character");
     expect(refs["external_id"]).toBeUndefined();
     const p = projectRow({ uuid: "u", external_id: "tt0000001" }, refs);
     expect(p.fields["external_id"]).toBe("tt0000001");

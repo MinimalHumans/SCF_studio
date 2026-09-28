@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.53 / schema 2.14. This document is expected
+Current as of specification 0.54 / schema 2.15. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -56,6 +56,11 @@ about it is ceremonial.
 | `unmaterialised` detection | §8.3 | Provisional | **n/a** | Stated in 0.39 as a property of the ENVIRONMENT, like §0.3's root mapping. No conformance check asks for it and there can be no fixture, since a placeholder is a filesystem state rather than a file. An implementation that never produces the state is conforming; one that reports a placeholder as `missing` is not. |
 | Polymorphic references declared | §12.1.2 | Provisional | Yes | `polymorphicType` since 0.40. The rule was "any column ending `_id`", which deleted `external_id` from ten entities and two ordinary references besides, and no artifact could catch it. A rule that pattern-matches a name eventually matches something the name did not mean. |
 | The full `lifecycle_status` vocabulary | §6.6 | Provisional | Yes | Six values, stated in 0.40; the section had named two. Only `cut` is excluded from resolution and §6.6 now says why. |
+| `required` means incomplete | §9.1 | Provisional | Yes | Stated in 0.54 (proposal 0005). The flag had no meaning anywhere: no `NOT NULL`, no finding, one asterisk in a form. Exercised by the fixture's unplaced shot, which raises `field.required_absent`. `junction.endpoint_absent` is unexercised — no fixture link is missing an endpoint. |
+| Bound section lines | §1.3.1 | Provisional | Yes | Stated in 0.54 (proposal 0016) after living in scf-app's source since the editor existed. The fixture's eight section lines bind by uuid. `structure.section_mismatch` is unexercised: the fixture's lines agree with their spans, which is the state a committed file should be in. |
+| `affected_entities` write convention | §12.14 | Provisional | Yes | Stated in 0.54 (proposal 0007). Exercised since the fixture attached a decision and a note to scene 12 by uuid — Q15's `attached` member had been empty in every published result until then. |
+| `string_list` | §2.5 | Provisional | Yes | Stated in 0.54 (proposal 0024). 29 fields; Q00's `visual_identity` and `project_color_palette` layers carry arrays in the published result. |
+| Character arcs | §12.16 | Provisional | Yes | Schema 2.15 (proposal 0008). `arcStates` on Q02, the arcs themselves through the dossier. Eleanor's three stages are in the fixture. |
 | `status` is a writing stage | §6.6 | Provisional | **No** | Stated in 0.53 (proposal 0004), and 2.14 removed `cut` from the vocabulary that carried it. Not exercised: every scene, act and sequence in the fixture is `outline`, and nothing in `scf-core` reads the column — which is exactly how the two-column ambiguity survived. A file whose `status` disagrees with its `lifecycle_status` is the case to author. |
 | The carrier record's row member | §12.1.4 | Provisional | Yes | Named for the entity unless the section says otherwise, stated in 0.40. Five of sixteen sections could not be shaped correctly from the document before it. |
 | Published query selectors | §5.4 | Provisional | Yes | `fixtures/expectations/selectors.json` since 0.40, generated and cross-checked against every published `parameters` block. `conformance.md` promised them from the start and nothing shipped. |

@@ -21,7 +21,7 @@ import { Field } from "./fields/Field.tsx";
  * documentation.
  *
  * The footer shows the row's identity. `uuid` is a framework column on
- * all 99 entities (conventions §5) and is what survives export and
+ * all 103 entities (conventions §5) and is what survives export and
  * re-import, but it is hidden from the field list, so this is the only
  * place to see one short of a SQL client. Read-only — identity is
  * minted, never typed — and one click copies it.

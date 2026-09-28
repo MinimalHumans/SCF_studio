@@ -60,8 +60,17 @@ function AutoGrowTextArea({ def, value, onChange }: FieldProps):
 
 function SelectField({ def, value, onChange }: FieldProps): JSX.Element {
   const options = def.options ?? [];
-  // Long option lists get a datalist combobox; short ones a plain select.
-  if (options.length > 12) {
+  // An OPEN vocabulary (spec §2.4) is a combobox whatever its length:
+  // the options are the known values and any other string is the value.
+  // A plain <select> cannot say that, and a plain text box would give
+  // us "Animal", "animal" and "live animal" where a list was offered —
+  // so the control shows the known values, narrows as you type, and
+  // takes what you type when nothing matches.
+  //
+  // Long CLOSED lists get the same control for a different reason: a
+  // <select> of forty is unusable. Short closed ones stay a select,
+  // because there the list really is all there is.
+  if (def.open === true || options.length > 12) {
     return (
       <>
         <input id={`f-${def.name}`} list={`dl-${def.name}`}

@@ -56,7 +56,7 @@ The scene label case is the clearest: store `sc 12 — The Kitchen` and a
 rename strands every copy, with nothing to detect it.
 
 The link-label case cost real user-visible damage before it was
-understood. Twelve of thirteen link entities declare their `nameField`
+understood. Thirteen of fourteen link entities declare their `nameField`
 `hidden`, because the importer parks cue text in that column. Displaying
 it made a character's entire scene list read as that character's own
 name. The fix was not to stop parking text there — the column is useful
@@ -199,7 +199,7 @@ same link. That question needs a **natural key** — the rows joined, plus
 the polymorphic target, plus `domain` where present, since a motif may
 legitimately appear in one scene both visually and sonically.
 
-`junctionKeyFields()` states the key for all thirteen link entities in
+`junctionKeyFields()` states the key for all fourteen link entities in
 one place, so that merging, de-duplicating and validating cannot
 disagree about it. Merge does not exist yet; when it does, this is the
 thing it will stand on.
@@ -229,7 +229,7 @@ Schema 2.4 added `directionality` for exactly that, and the seven
 reported cases in `spec §6.5` are the complete enumeration of what the
 two columns plus that flag can mean.
 
-`character_relationship` is not one of the thirteen link entities — its
+`character_relationship` is not one of the fourteen link entities — its
 `subject` is `character` — so junction tooling skips it entirely and
 `relationshipFindings()` covers it separately. That asymmetry surprises
 people, including its author, twice.

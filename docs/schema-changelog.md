@@ -6,6 +6,42 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## 2.15
+
+Four entities added, two JSON columns retired, and one new field type.
+Proposals 0008, 0024 and 0026.
+
+**Character arcs (0008).** `character_arc` and `character_arc_state`,
+the latter `latest_wins` (spec §4.5). SCF could say how a relationship
+changed across the story and how a motif did, and not how a character
+did: `character.arc_description` is prose and `emotional_arc` is the
+audience's. The prose field stays as the narrative summary — the same
+division `motif.evolution_description` and `motif_state` already make.
+
+Q02 carries `arcStates`, the stage in force at the scene. It does NOT
+carry the arcs themselves: `character_arc` has `subject: character` and
+`scope: global` and declares `character_id`, so the dossier picks it up
+from the registry without a line of code, and §3.1 wants it in one
+place.
+
+**Rows instead of blobs (0026).** `costume_progression_state` replaces
+`costume_progression.progression_stages`, a JSON blob holding what the
+rest of the schema holds as positioned rows.
+`staging_beat_character` replaces `staging_beat.character_positions`, a
+map keyed by character NAME in a schema where a character is a row with
+a uuid. Link entities go from thirteen to fourteen, and §6.6's count
+moves with them.
+
+**`string_list` (0024).** A new `fieldType` on 29 fields that had been
+`json`. No column moves and no value changes — the type is a
+declaration, and it is what lets an editor render a chip input and
+§12.1.2 project an array instead of the text holding it.
+
+**`structureRef` binds by uuid (0016).** Not a registry change: the
+fixture's screenplay builder now writes
+`{"kind": …, "uuid": …}` on its eight section lines, and scf-app reads
+and writes that form. The legacy `{"kind": …, "id": …}` is still read.
+
 ## 2.14
 
 Fifteen proposals' worth of registry change, from mapping Scriptyard's

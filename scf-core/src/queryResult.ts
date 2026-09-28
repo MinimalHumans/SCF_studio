@@ -81,7 +81,22 @@ export interface UuidLookup {
  */
 export const POLYMORPHIC = "\u0000polymorphic";
 
-export function referencesOf(registry: Registry, entity: string):
+/**
+ * Marks a `string_list` column (spec §2.5): a JSON array of strings,
+ * projected AS an array rather than as the text that holds it. A
+ * consumer parsing JSON out of a JSON document was the old behaviour
+ * and nobody wanted it.
+ */
+export const STRING_LIST = "\u0000string_list";
+
+/**
+ * Per-column projection roles, derived from the registry: an entity
+ * name for a reference, `POLYMORPHIC` for a polymorphic reference, and
+ * `STRING_LIST` for a list column. Called `referencesOf` until schema
+ * 2.15, when a second role joined it and the old name stopped saying
+ * what the map held.
+ */
+export function columnRoles(registry: Registry, entity: string):
     Record<string, string> {
   const def = registry.entities.get(entity);
   if (def === undefined) return {};
@@ -92,6 +107,8 @@ export function referencesOf(registry: Registry, entity: string):
     } else if (field.referenceEntity !== undefined
                && field.referenceEntity !== "") {
       out[field.name] = field.referenceEntity;
+    } else if (field.fieldType === "string_list") {
+      out[field.name] = STRING_LIST;
     }
   }
   return out;
@@ -107,12 +124,14 @@ export async function uuidLookupForAll(
   const targets = new Set<string>();
   for (const entity of registry.order) {
     targets.add(entity);
-    for (const target of Object.values(referencesOf(registry, entity))) {
+    for (const target of Object.values(columnRoles(registry, entity))) {
       // POLYMORPHIC is a marker, not a table. Left in this set it
       // becomes a SELECT against a table named after a NUL byte, whose
       // error the catch below swallows — wasteful, and it makes the
       // catch cover a case it was not written for.
-      if (target !== POLYMORPHIC) targets.add(target);
+      if (target !== POLYMORPHIC && target !== STRING_LIST) {
+        targets.add(target);
+      }
     }
   }
   return uuidLookupFor(exec, [...targets].sort());
@@ -179,6 +198,20 @@ export function projectRow(
 
     const entity = references[key];
     if (entity === POLYMORPHIC) continue;
+    if (entity === STRING_LIST) {
+      if (empty(value)) continue;
+      // A malformed list is CONTENT, not a crash: carried as the text
+      // it holds rather than dropped (§9.2).
+      let parsed: unknown = null;
+      try { parsed = JSON.parse(String(value)); } catch { parsed = null; }
+      if (Array.isArray(parsed)) {
+        if (parsed.length === 0) continue;
+        fields[key] = parsed;
+      } else {
+        fields[key] = value;
+      }
+      continue;
+    }
     if (entity !== undefined) {
       const target = empty(value) ? null : Number(value);
       const uuid = lookup(entity, Number.isFinite(target) ? target : null);

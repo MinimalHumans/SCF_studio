@@ -57,22 +57,40 @@ export function classifySection(content: string): SectionInfo | null {
   return { kind, label, depth };
 }
 
-/** The entity a section line is bound to, carried in its line metadata. */
-interface StructureRef { kind: StructureKind; id: number }
+/**
+ * The entity a section line is bound to, carried in its line metadata
+ * (spec §1.3.1).
+ *
+ * BY UUID. It was a row id until schema 2.15, and row ids are
+ * file-local and renumberable (§6.2, §12.1.2) — a rebuild that
+ * renumbered acts left every section line pointing at its neighbour,
+ * and the next commit renamed the wrong entity. The legacy `id` form is
+ * still read, because a file written last week is still a file.
+ */
+interface StructureRef { kind: StructureKind; uuid: string | null;
+                         id: number | null }
 
 function readRef(row: ScreenplayRow): StructureRef | null {
   const meta = row.metadata;
   if (meta === null || typeof meta !== "object") return null;
   const ref = (meta as Record<string, unknown>)["structureRef"];
   if (ref === null || typeof ref !== "object") return null;
-  const { kind, id } = ref as Record<string, unknown>;
-  if ((kind !== "act" && kind !== "sequence") ||
-      typeof id !== "number") return null;
-  return { kind, id };
+  const { kind, uuid, id } = ref as Record<string, unknown>;
+  if (kind !== "act" && kind !== "sequence") return null;
+  const handle = typeof uuid === "string" && uuid !== "" ? uuid : null;
+  const legacy = typeof id === "number" ? id : null;
+  if (handle === null && legacy === null) return null;
+  return { kind, uuid: handle, id: legacy };
 }
 
-function writeRef(row: ScreenplayRow, ref: StructureRef): void {
-  row.metadata = { ...(row.metadata ?? {}), structureRef: ref };
+function writeRef(row: ScreenplayRow, kind: StructureKind,
+                  uuid: string | null, id: number): void {
+  // A row with no uuid is a file identity problem the report already
+  // names (§6.1); binding by id keeps the section working meanwhile.
+  row.metadata = {
+    ...(row.metadata ?? {}),
+    structureRef: uuid === null ? { kind, id } : { kind, uuid },
+  };
 }
 
 /**
@@ -250,8 +268,8 @@ function sectionAnchors(rows: ScreenplayRow[]):
 /** Read-only preview for the commit review modal. */
 export async function planCommitStructure(
     exec: SqlExec, rows: ScreenplayRow[]): Promise<CommitStructurePlan> {
-  const acts = await exec("SELECT id, name FROM act");
-  const sequences = await exec("SELECT id, name FROM sequence");
+  const acts = await exec("SELECT id, uuid, name FROM act");
+  const sequences = await exec("SELECT id, uuid, name FROM sequence");
   const byName = (list: Row[]): Set<string> =>
     new Set(list.map((r) => norm(String(r["name"] ?? ""))));
   const known = { act: byName(acts), sequence: byName(sequences) };
@@ -259,6 +277,16 @@ export async function planCommitStructure(
     act: new Set(acts.map((r) => Number(r["id"]))),
     sequence: new Set(sequences.map((r) => Number(r["id"]))),
   };
+  const knownUuids = {
+    act: new Set(acts.map((r) => String(r["uuid"] ?? "").toLowerCase())),
+    sequence: new Set(
+      sequences.map((r) => String(r["uuid"] ?? "").toLowerCase())),
+  };
+  /** Does this ref name a row that exists? uuid first, legacy id after. */
+  const boundRow = (ref: StructureRef): boolean =>
+    ref.uuid !== null
+      ? knownUuids[ref.kind].has(ref.uuid.toLowerCase())
+      : ref.id !== null && knownIds[ref.kind].has(ref.id);
 
   const plan: CommitStructurePlan = {
     newActs: [], newSequences: [], danglingSections: [],
@@ -270,8 +298,7 @@ export async function planCommitStructure(
     }
     const ref = readRef(row);
     // A bound section renames its entity rather than making a new one.
-    if (ref !== null && ref.kind === info.kind &&
-        knownIds[info.kind].has(ref.id)) continue;
+    if (ref !== null && ref.kind === info.kind && boundRow(ref)) continue;
     if (known[info.kind].has(norm(info.label))) continue;
     known[info.kind].add(norm(info.label));
     if (info.kind === "act") plan.newActs.push(info.label);
@@ -294,8 +321,9 @@ export async function commitStructure(
   };
 
   const load = async (): Promise<{ act: Row[]; sequence: Row[] }> => ({
-    act: await exec("SELECT id, name, start_scene_id FROM act"),
-    sequence: await exec("SELECT id, name, start_scene_id FROM sequence"),
+    act: await exec("SELECT id, uuid, name, start_scene_id FROM act"),
+    sequence: await exec(
+      "SELECT id, uuid, name, start_scene_id FROM sequence"),
   });
   let existing = await load();
   const index = (list: Row[]): Map<string, number> => new Map(
@@ -308,6 +336,29 @@ export async function commitStructure(
   const known = {
     act: idsOf(existing.act), sequence: idsOf(existing.sequence),
   };
+  const uuidIndex = (list: Row[]): Map<string, number> => new Map(
+    list.filter((r) => typeof r["uuid"] === "string" && r["uuid"] !== "")
+        .map((r) => [String(r["uuid"]).toLowerCase(), Number(r["id"])]));
+  const byUuid = {
+    act: uuidIndex(existing.act), sequence: uuidIndex(existing.sequence),
+  };
+  const uuidOf = async (table: StructureKind,
+                        id: number): Promise<string | null> => {
+    const found = existing[table].find((r) => Number(r["id"]) === id);
+    const cached = found?.["uuid"];
+    if (typeof cached === "string" && cached !== "") return cached;
+    const fresh = (await exec(
+      `SELECT uuid FROM ${table} WHERE id = ?`, [id]))[0];
+    const value = fresh?.["uuid"];
+    return typeof value === "string" && value !== "" ? value : null;
+  };
+  /** The row a ref names: by uuid where it has one, else its legacy id. */
+  const resolveRef = (ref: StructureRef): number | null => {
+    if (ref.uuid !== null) {
+      return byUuid[ref.kind].get(ref.uuid.toLowerCase()) ?? null;
+    }
+    return ref.id !== null && known[ref.kind].has(ref.id) ? ref.id : null;
+  };
 
   for (const { row, info, sceneId } of sectionAnchors(rows)) {
     if (sceneId === null) {
@@ -317,10 +368,12 @@ export async function commitStructure(
     const table = info.kind;
     const ref = readRef(row);
     let id: number | null = null;
+    const bound = ref === null || ref.kind !== info.kind
+      ? null : resolveRef(ref);
 
-    if (ref !== null && ref.kind === info.kind && known[table].has(ref.id)) {
+    if (bound !== null) {
       // Bound already: the entity follows the line, including renames.
-      id = ref.id;
+      id = bound;
       const current = existing[table].find((r) => Number(r["id"]) === id);
       if (current !== undefined &&
           String(current["name"] ?? "") !== info.label) {
@@ -342,12 +395,12 @@ export async function commitStructure(
         if (table === "act") result.actsCreated += 1;
         else result.sequencesCreated += 1;
         result.boundariesSet += 1;
-        writeRef(row, { kind: info.kind, id });
+        writeRef(row, info.kind, await uuidOf(table, id), id);
         continue;
       }
     }
     if (id === null) continue;
-    writeRef(row, { kind: info.kind, id });
+    writeRef(row, info.kind, await uuidOf(table, id), id);
     await exec(
       `UPDATE ${table} SET start_scene_id = ?, ` +
       "updated_at = datetime('now') WHERE id = ? AND " +

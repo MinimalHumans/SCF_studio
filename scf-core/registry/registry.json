@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.14",
+  "schemaVersion": "2.15",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -42,7 +42,7 @@
     "screenplay_title_page",
     "screenplay_version_title_page"
   ],
-  "entityCount": 99,
+  "entityCount": 103,
   "entities": [
     {
       "name": "project",
@@ -2226,7 +2226,7 @@
         {
           "name": "aesthetic_priorities",
           "label": "Aesthetic Priorities",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Approach",
@@ -2569,7 +2569,7 @@
         {
           "name": "primary_materials",
           "label": "Primary Materials",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Materials",
@@ -2578,7 +2578,7 @@
         {
           "name": "secondary_materials",
           "label": "Secondary Materials",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Materials",
@@ -2587,7 +2587,7 @@
         {
           "name": "accent_materials",
           "label": "Accent Materials",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Materials",
@@ -2596,7 +2596,7 @@
         {
           "name": "forbidden_materials",
           "label": "Forbidden Materials",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Materials",
@@ -2721,7 +2721,7 @@
         {
           "name": "visual_influences",
           "label": "Visual Influences",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Influences",
@@ -2959,7 +2959,7 @@
         {
           "name": "primary_colors",
           "label": "Primary Colors (3-5)",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -2968,7 +2968,7 @@
         {
           "name": "secondary_colors",
           "label": "Secondary Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -2977,7 +2977,7 @@
         {
           "name": "accent_colors",
           "label": "Accent Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -2986,7 +2986,7 @@
         {
           "name": "restricted_colors",
           "label": "Restricted Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -3169,7 +3169,7 @@
         {
           "name": "tone_blend",
           "label": "Tone Blend",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -4131,6 +4131,241 @@
       ]
     },
     {
+      "name": "character_arc",
+      "label": "Character Arc",
+      "labelPlural": "Character Arcs",
+      "icon": "🏹",
+      "nameField": "name",
+      "category": "Character Depth",
+      "description": "A dimension along which a character changes across the story. The narrative summary stays on character.arc_description; the queryable stages live in character_arc_state rows, the same division motif and motif_state already make (proposal 0008).",
+      "sortOrder": 202,
+      "tier": 2,
+      "parentEntity": null,
+      "parentField": null,
+      "versionable": false,
+      "hasLifecycleStatus": true,
+      "hasExternalId": true,
+      "subject": "character",
+      "scope": "global",
+      "paired": false,
+      "positionPattern": "none",
+      "refines": [],
+      "queries": [
+        "Q02"
+      ],
+      "fields": [
+        {
+          "name": "name",
+          "label": "Name",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "character_id",
+          "label": "Character",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "character",
+          "helpText": "Whose arc. Named <subject>_id, so the arc is owned by the character and deleted with them (spec §2.3)."
+        },
+        {
+          "name": "axis",
+          "label": "Axis",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "helpText": "The dimension of change, e.g. \"trust → betrayal\"."
+        },
+        {
+          "name": "direction",
+          "label": "Direction",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "options": [
+            "positive",
+            "negative",
+            "flat",
+            "cyclical"
+          ],
+          "open": true
+        },
+        {
+          "name": "description",
+          "label": "Description",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "helpText": "Narrative summary. The stages live in character_arc_state."
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
+          "name": "lifecycle_status",
+          "label": "Lifecycle Status",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Lifecycle",
+          "autoInjected": true,
+          "default": "active",
+          "options": [
+            "active",
+            "draft",
+            "superseded",
+            "deprecated",
+            "cut",
+            "archived"
+          ],
+          "helpText": "Cross-cutting record state. See spec §6.6."
+        },
+        {
+          "name": "external_id",
+          "label": "External ID",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "identifier in external system",
+          "helpText": "Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3."
+        },
+        {
+          "name": "external_id_namespace",
+          "label": "External ID Namespace",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "External",
+          "autoInjected": true,
+          "placeholder": "e.g. \"omc\", \"eidr\", \"shotgrid:project_42\"",
+          "helpText": "Which external system the identifier belongs to."
+        }
+      ]
+    },
+    {
+      "name": "character_arc_state",
+      "label": "Character Arc State",
+      "labelPlural": "Character Arc States",
+      "icon": "📈",
+      "nameField": "name",
+      "category": "Character Depth",
+      "description": "The stage an arc is in as of a story position. Latest-wins position keying (pattern 3, spec §4.5): the state in force at position P is the latest row keyed at-or-before P.",
+      "sortOrder": 203,
+      "tier": 2,
+      "parentEntity": null,
+      "parentField": null,
+      "versionable": false,
+      "hasLifecycleStatus": true,
+      "hasExternalId": false,
+      "subject": "character",
+      "scope": "scene",
+      "paired": false,
+      "positionPattern": "latest_wins",
+      "refines": [],
+      "queries": [
+        "Q02"
+      ],
+      "fields": [
+        {
+          "name": "name",
+          "label": "Name",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "character_arc_id",
+          "label": "Arc",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "character_arc"
+        },
+        {
+          "name": "scene_id",
+          "label": "As Of Scene",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "scene",
+          "helpText": "The position this stage begins. In force until a later row supersedes it."
+        },
+        {
+          "name": "stage_label",
+          "label": "Stage Label",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "helpText": "Short handle, e.g. \"walls up\"."
+        },
+        {
+          "name": "description",
+          "label": "Description",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
+          "name": "lifecycle_status",
+          "label": "Lifecycle Status",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Lifecycle",
+          "autoInjected": true,
+          "default": "active",
+          "options": [
+            "active",
+            "draft",
+            "superseded",
+            "deprecated",
+            "cut",
+            "archived"
+          ],
+          "helpText": "Cross-cutting record state. See spec §6.6."
+        }
+      ]
+    },
+    {
       "name": "physical_character_profile",
       "label": "Physical Character Profile",
       "labelPlural": "Physical Character Profiles",
@@ -4777,7 +5012,7 @@
         {
           "name": "filler_words",
           "label": "Filler Words",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Habits",
@@ -4786,7 +5021,7 @@
         {
           "name": "catch_phrases",
           "label": "Catch Phrases",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Habits",
@@ -4795,7 +5030,7 @@
         {
           "name": "verbal_tics",
           "label": "Verbal Tics",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Habits",
@@ -5080,7 +5315,7 @@
         {
           "name": "key_garments",
           "label": "Key Garments",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -5098,7 +5333,7 @@
         {
           "name": "accessories",
           "label": "Accessories",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -5125,7 +5360,7 @@
         {
           "name": "secondary_colors",
           "label": "Secondary Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Color",
@@ -5358,15 +5593,6 @@
           "autoInjected": false
         },
         {
-          "name": "progression_stages",
-          "label": "Progression Stages",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "General",
-          "autoInjected": false
-        },
-        {
           "name": "color_evolution",
           "label": "Color Evolution",
           "fieldType": "textarea",
@@ -5396,6 +5622,118 @@
         {
           "name": "symbolic_meaning",
           "label": "Symbolic Meaning",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
+          "name": "lifecycle_status",
+          "label": "Lifecycle Status",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Lifecycle",
+          "autoInjected": true,
+          "default": "active",
+          "options": [
+            "active",
+            "draft",
+            "superseded",
+            "deprecated",
+            "cut",
+            "archived"
+          ],
+          "helpText": "Cross-cutting record state. See spec §6.6."
+        }
+      ]
+    },
+    {
+      "name": "costume_progression_state",
+      "label": "Costume Progression State",
+      "labelPlural": "Costume Progression States",
+      "icon": "📈",
+      "nameField": "name",
+      "category": "Character Depth",
+      "description": "A stage of a wardrobe progression, keyed to the scene it begins at. Latest-wins (spec §4.5). Replaces the progression_stages JSON blob, which could not be positioned, queried at a scene, or cut individually (proposal 0026).",
+      "sortOrder": 222,
+      "tier": 2,
+      "parentEntity": null,
+      "parentField": null,
+      "versionable": false,
+      "hasLifecycleStatus": true,
+      "hasExternalId": false,
+      "subject": "character",
+      "scope": "scene",
+      "paired": false,
+      "positionPattern": "latest_wins",
+      "refines": [],
+      "queries": [
+        "Q02",
+        "Q12"
+      ],
+      "fields": [
+        {
+          "name": "name",
+          "label": "Name",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "costume_progression_id",
+          "label": "Progression",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "costume_progression"
+        },
+        {
+          "name": "scene_id",
+          "label": "As Of Scene",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "scene",
+          "helpText": "The position this stage begins. In force until a later row supersedes it."
+        },
+        {
+          "name": "stage_label",
+          "label": "Stage Label",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "wardrobe",
+          "label": "Wardrobe",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "meaning",
+          "label": "Meaning",
           "fieldType": "textarea",
           "sqlType": "TEXT",
           "required": false,
@@ -5929,7 +6267,7 @@
         {
           "name": "secondary_colors",
           "label": "Secondary Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Color",
@@ -6715,7 +7053,7 @@
         {
           "name": "dominant_colors",
           "label": "Dominant Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -6884,7 +7222,7 @@
         {
           "name": "constant_sounds",
           "label": "Constant Sounds",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Ambience",
@@ -7022,7 +7360,7 @@
         {
           "name": "format_hints",
           "label": "Format Hints",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Technical",
@@ -7032,7 +7370,7 @@
         {
           "name": "intended_consumers",
           "label": "Intended Consumers",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Technical",
@@ -9700,7 +10038,7 @@
         {
           "name": "secondary_emotions",
           "label": "Secondary Emotions",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -9816,7 +10154,7 @@
         {
           "name": "dominant_colors",
           "label": "Dominant Colors (1-3)",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -10471,7 +10809,7 @@
         {
           "name": "hero_objects",
           "label": "Hero Objects",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -10731,7 +11069,7 @@
         {
           "name": "secondary_colors",
           "label": "Secondary Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -11873,7 +12211,7 @@
         {
           "name": "key_colors",
           "label": "Key Colors",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",
@@ -13034,15 +13372,6 @@
           "autoInjected": false
         },
         {
-          "name": "character_positions",
-          "label": "Character Positions",
-          "fieldType": "json",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "General",
-          "autoInjected": false
-        },
-        {
           "name": "movement_description",
           "label": "Movement / Physical Action",
           "fieldType": "textarea",
@@ -13078,6 +13407,89 @@
             "archived"
           ],
           "helpText": "Cross-cutting record state. See spec §6.6."
+        }
+      ]
+    },
+    {
+      "name": "staging_beat_character",
+      "label": "Staging Beat-Character",
+      "labelPlural": "Staging Beat-Characters",
+      "icon": "🔗",
+      "nameField": "name",
+      "category": "Connections",
+      "description": "Where a character stands in a staging beat. Replaces the character_positions JSON map, which was keyed by NAME in a schema where a character is a row with a uuid (proposal 0026).",
+      "sortOrder": 64,
+      "tier": 6,
+      "parentEntity": null,
+      "parentField": null,
+      "versionable": false,
+      "hasLifecycleStatus": false,
+      "hasExternalId": false,
+      "subject": "link",
+      "scope": "moment",
+      "paired": false,
+      "positionPattern": "none",
+      "refines": [],
+      "queries": [
+        "Q06"
+      ],
+      "fields": [
+        {
+          "name": "name",
+          "label": "Display Name",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "hidden": true
+        },
+        {
+          "name": "staging_beat_id",
+          "label": "Staging Beat",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "staging_beat"
+        },
+        {
+          "name": "character_id",
+          "label": "Character",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "character"
+        },
+        {
+          "name": "position",
+          "label": "Position",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "movement",
+          "label": "Movement",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
         }
       ]
     },
@@ -13577,7 +13989,7 @@
         {
           "name": "emphasis_words",
           "label": "Emphasis Words",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Delivery",
@@ -15076,7 +15488,7 @@
         {
           "name": "tags",
           "label": "Tags",
-          "fieldType": "json",
+          "fieldType": "string_list",
           "sqlType": "TEXT",
           "required": false,
           "tab": "General",

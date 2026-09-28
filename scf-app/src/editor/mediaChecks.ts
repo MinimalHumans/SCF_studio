@@ -317,12 +317,17 @@ export async function scanMedia(
     if (groups.length > 0) report.lookalikes.push({ entity, field, groups });
   }
 
-  // --- json columns that do not hold JSON --------------------------------
+  // --- list and json columns that do not hold JSON -----------------------
+  //
+  // `string_list` counts (spec §2.5). It was `json` until schema 2.15,
+  // and a scan that only looked at `json` would have stopped seeing the
+  // 29 columns most likely to hold a hand-typed comma list — which is
+  // the shape this check exists for.
   for (const entity of registry.order) {
     const def = registry.entities.get(entity);
     if (def === undefined || !tables.has(entity)) continue;
     for (const f of def.fields) {
-      if (f.fieldType !== "json") continue;
+      if (f.fieldType !== "json" && f.fieldType !== "string_list") continue;
       for (const row of await exec(
         `SELECT id, ${q(f.name)} AS v FROM ${q(entity)} ` +
         `WHERE ${q(f.name)} IS NOT NULL AND TRIM(${q(f.name)}) <> ''`)) {

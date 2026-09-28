@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.14** — **99 entities**.
+Schema **2.15** — **103 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -29,11 +29,11 @@ registry's own, and are as good as what is written there.
 
 - **Tier 0** (24) — Structural foundation
 - **Tier 1** (9) — Project-level creative direction
-- **Tier 2** (30) — Depth — character, prop and location
+- **Tier 2** (33) — Depth — character, prop and location
 - **Tier 3** (7) — Scene detail
 - **Tier 4** (8) — Thematic tracking
 - **Tier 5** (4) — Emotional architecture
-- **Tier 6** (17) — Production
+- **Tier 6** (18) — Production
 
 ---
 
@@ -151,7 +151,7 @@ A REFERENCE to something outside the file — image, audio, 3D model, model weig
 | `source_mtime` | timestamp |  | Cached hint for staleness detection. |
 | `content_hash` | text |  | Optional and opportunistic. Never computed on open — hashing a project's assets would stall on unmaterialised cloud files. |
 | `description` | textarea |  |  |
-| `tags` | json |  | Freeform and user-controlled. There is deliberately no intrinsic-purpose field: what an asset is FOR is a property of the link that reaches it, not of the row. |
+| `tags` | string_list |  | Freeform and user-controlled. There is deliberately no intrinsic-purpose field: what an asset is FOR is a property of the link that reaches it, not of the row. |
 | `source` | text |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
@@ -229,7 +229,7 @@ A character in the story. Identity and narrative function only — physical/voca
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (27) | `prop.associated_character_id`, `story_beat.pov_character_id`, `scene_character.character_id`, `character_relationship.character_a_id`, `character_relationship.character_b_id`, `physical_character_profile.character_id`, `vocal_profile.character_id`, `character_appearance_profile.character_id`, `costume.character_id`, `costume_progression.character_id`, `makeup_hair_design.character_id`, `character_variant.character_id`, `physical_habit.character_id`, `prop_state.custody_character_id`, `character_asset_binding.character_id`, `actor_character_role.character_id`, `clip_character.character_id`, `character_shot_override.character_id`, `character_color_identity.character_id`, `identification_strategy.primary_character_id`, `identification_strategy.secondary_character_id`, `action_sequence_character.character_id`, `performance_state.character_id`, `performance_beat.character_id`, `character_environment_physicality.character_id`, `sound_perspective.pov_character_id`, `voiceover_design.character_id` |
+| Referenced by (29) | `prop.associated_character_id`, `story_beat.pov_character_id`, `scene_character.character_id`, `character_relationship.character_a_id`, `character_relationship.character_b_id`, `character_arc.character_id`, `physical_character_profile.character_id`, `vocal_profile.character_id`, `character_appearance_profile.character_id`, `costume.character_id`, `costume_progression.character_id`, `makeup_hair_design.character_id`, `character_variant.character_id`, `physical_habit.character_id`, `prop_state.custody_character_id`, `character_asset_binding.character_id`, `actor_character_role.character_id`, `clip_character.character_id`, `character_shot_override.character_id`, `character_color_identity.character_id`, `identification_strategy.primary_character_id`, `identification_strategy.secondary_character_id`, `staging_beat_character.character_id`, `action_sequence_character.character_id`, `performance_state.character_id`, `performance_beat.character_id`, `character_environment_physicality.character_id`, `sound_perspective.pov_character_id`, `voiceover_design.character_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -529,7 +529,7 @@ A single scene in the story.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (47) | `act.start_scene_id`, `sequence.start_scene_id`, `story_beat.scene_id`, `scene_character.scene_id`, `scene_prop.scene_id`, `scene_sequence.scene_id`, `relationship_state.scene_id`, `costume_scene.scene_id`, `makeup_hair_design.scene_id`, `prop_state.scene_id`, `character_asset_binding.scene_range_start_id`, `character_asset_binding.scene_range_end_id`, `prop_asset_binding.scene_range_start_id`, `prop_asset_binding.scene_range_end_id`, `location_asset_binding.scene_range_start_id`, `location_asset_binding.scene_range_end_id`, `take_scene.scene_id`, `clip.scene_id`, `scene_emotional_target.scene_id`, `scene_color_palette.scene_id`, `lighting_design.scene_id`, `scene_music_design.scene_id`, `tone_marker.scene_id`, `set_dressing.scene_id`, `dialogue_sound_design.scene_id`, `motif.first_appearance_scene_id`, `motif_state.scene_id`, `motif_appearance.scene_id`, `subtext.scene_id`, `color_script_entry.scene_id`, `emotional_beat.scene_id`, `information_strategy.scene_id`, `identification_strategy.scene_id`, `shot.scene_id`, `shot_language.scene_id`, `scene_blocking.scene_id`, `action_sequence.scene_id`, `performance_state.scene_id`, `performance_state.resolved_at_scene_id`, `performance_beat.scene_id`, `dialogue_rhythm.scene_id`, `movement_choreography.scene_id`, `sound_cue.scene_id`, `music_cue.scene_id`, `sound_perspective.scene_id`, `voiceover_design.scene_id`, `music_sound_relationship.scene_id` |
+| Referenced by (49) | `act.start_scene_id`, `sequence.start_scene_id`, `story_beat.scene_id`, `scene_character.scene_id`, `scene_prop.scene_id`, `scene_sequence.scene_id`, `relationship_state.scene_id`, `character_arc_state.scene_id`, `costume_scene.scene_id`, `costume_progression_state.scene_id`, `makeup_hair_design.scene_id`, `prop_state.scene_id`, `character_asset_binding.scene_range_start_id`, `character_asset_binding.scene_range_end_id`, `prop_asset_binding.scene_range_start_id`, `prop_asset_binding.scene_range_end_id`, `location_asset_binding.scene_range_start_id`, `location_asset_binding.scene_range_end_id`, `take_scene.scene_id`, `clip.scene_id`, `scene_emotional_target.scene_id`, `scene_color_palette.scene_id`, `lighting_design.scene_id`, `scene_music_design.scene_id`, `tone_marker.scene_id`, `set_dressing.scene_id`, `dialogue_sound_design.scene_id`, `motif.first_appearance_scene_id`, `motif_state.scene_id`, `motif_appearance.scene_id`, `subtext.scene_id`, `color_script_entry.scene_id`, `emotional_beat.scene_id`, `information_strategy.scene_id`, `identification_strategy.scene_id`, `shot.scene_id`, `shot_language.scene_id`, `scene_blocking.scene_id`, `action_sequence.scene_id`, `performance_state.scene_id`, `performance_state.resolved_at_scene_id`, `performance_beat.scene_id`, `dialogue_rhythm.scene_id`, `movement_choreography.scene_id`, `sound_cue.scene_id`, `music_cue.scene_id`, `sound_perspective.scene_id`, `voiceover_design.scene_id`, `music_sound_relationship.scene_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -871,10 +871,10 @@ Overall color scheme, color rules, and warm/cool temperature strategy for the en
 | Field | Type | Req | |
 |---|---|---|---|
 | `name` | text |  | default `Project Color Palette` |
-| `primary_colors` | json |  |  |
-| `secondary_colors` | json |  |  |
-| `accent_colors` | json |  |  |
-| `restricted_colors` | json |  |  |
+| `primary_colors` | string_list |  |  |
+| `secondary_colors` | string_list |  |  |
+| `accent_colors` | string_list |  |  |
+| `restricted_colors` | string_list |  |  |
 | `saturation_philosophy` | select |  | one of `highly saturated`, `desaturated`, `mixed`, `neutral-heavy` |
 | `value_structure` | select |  | one of `high key`, `low key`, `full range`, `compressed` |
 | `temperature_approach` | select |  | one of `warm`, `cool`, `balanced`, `journey` |
@@ -907,7 +907,7 @@ Overall tonal identity and story-level rhythm — the emotional temperature and 
 |---|---|---|---|
 | `name` | text |  | default `Project Tone` |
 | `primary_tone` | text |  |  |
-| `tone_blend` | json |  |  |
+| `tone_blend` | string_list |  |  |
 | `lightest_moment` | textarea |  |  |
 | `darkest_moment` | textarea |  |  |
 | `tonal_consistency` | select |  | one of `unified`, `varied`, `shifting` |
@@ -947,7 +947,7 @@ Overarching creative intent and the director's approach to realizing it. Absorbe
 | `success_criteria` | textarea |  |  |
 | `filmmaking_philosophy` | select |  | one of `auteur`, `collaborative`, `actor-focused`, `visual-first`, `story-first`, `experiential` |
 | `technical_approach` | select |  | one of `naturalistic`, `stylized`, `mixed` |
-| `aesthetic_priorities` | json |  |  |
+| `aesthetic_priorities` | string_list |  |  |
 | `risk_tolerance` | select |  | one of `safe/commercial`, `experimental`, `balanced` |
 | `audience_relationship` | select |  | one of `accessible`, `challenging`, `hybrid` |
 | `personal_resonance` | textarea |  |  |
@@ -1040,10 +1040,10 @@ Overarching aesthetic vision — the film's visual DNA. Single home for the proj
 | `aesthetic_genre` | select |  | one of `naturalistic`, `stylized`, `hyperreal`, `expressionistic`, `fantastical`, `hybrid` |
 | `design_era` | text |  |  |
 | `visual_density` | select |  | one of `minimalist`, `moderate`, `dense`, `maximalist` |
-| `primary_materials` | json |  |  |
-| `secondary_materials` | json |  |  |
-| `accent_materials` | json |  |  |
-| `forbidden_materials` | json |  |  |
+| `primary_materials` | string_list |  |  |
+| `secondary_materials` | string_list |  |  |
+| `accent_materials` | string_list |  |  |
+| `forbidden_materials` | string_list |  |  |
 | `material_storytelling` | textarea |  |  |
 | `textural_philosophy` | select |  | one of `clean/pristine`, `lived-in`, `weathered`, `decayed` |
 | `texture_contrast_strategy` | textarea |  |  |
@@ -1055,7 +1055,7 @@ Overarching aesthetic vision — the film's visual DNA. Single home for the proj
 | `scale_rules` | select |  | one of `human scale`, `intimate`, `monumental`, `mixed` |
 | `geometric_language` | select |  | one of `organic`, `angular`, `mixed` |
 | `lighting_constraints` | textarea |  |  |
-| `visual_influences` | json |  |  |
+| `visual_influences` | string_list |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1113,8 +1113,8 @@ Named, intent-typed collection of assets. Tool-agnostic media reference primitiv
 | `intent` | select | **yes** | one of `visual_identity`, `voice_identity`, `motion`, `behavior`, `performance`, `surface`, `environment`, `acoustic`. Hard enum. Tools switch on this to determine compatibility. acoustic added in Phase 1D for location ambience. |
 | `description` | textarea |  |  |
 | `coverage_summary` | textarea |  |  |
-| `format_hints` | json |  |  |
-| `intended_consumers` | json |  |  |
+| `format_hints` | string_list |  |  |
+| `intended_consumers` | string_list |  |  |
 | `provenance` | textarea |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
@@ -1156,6 +1156,61 @@ Complete visual design — silhouette, distinction, evolution.
 | `silhouette_description` | textarea |  |  |
 | `visual_shorthand` | textarea |  |  |
 | `appearance_evolution` | textarea |  |  |
+| `notes` | textarea |  |  |
+| `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+
+### `character_arc`
+
+A dimension along which a character changes across the story. The narrative summary stays on character.arc_description; the queryable stages live in character_arc_state rows, the same division motif and motif_state already make (proposal 0008).
+
+| | |
+|---|---|
+| Label | Character Arc / Character Arcs |
+| Category | Character Depth |
+| Subject | character |
+| Scope | global |
+| Position | Not positioned — one row, not keyed to a scene. |
+| Name field | `name` |
+| Versionable | no |
+| `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
+| `external_id` | yes (§6.3) |
+| Referenced by (1) | `character_arc_state.character_arc_id` |
+
+| Field | Type | Req | |
+|---|---|---|---|
+| `name` | text |  |  |
+| `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2). Whose arc. Named <subject>_id, so the arc is owned by the character and deleted with them (spec §2.3). |
+| `axis` | text |  | The dimension of change, e.g. "trust → betrayal". |
+| `direction` | select |  | one of `positive`, `negative`, `flat`, `cyclical` |
+| `description` | textarea |  | Narrative summary. The stages live in character_arc_state. |
+| `notes` | textarea |  |  |
+| `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+| `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
+| `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
+
+### `character_arc_state`
+
+The stage an arc is in as of a story position. Latest-wins position keying (pattern 3, spec §4.5): the state in force at position P is the latest row keyed at-or-before P.
+
+| | |
+|---|---|
+| Label | Character Arc State / Character Arc States |
+| Category | Character Depth |
+| Subject | character |
+| Scope | scene |
+| Position | Latest-wins (pattern 3) — the most recent row at or before a position is in force. |
+| Name field | `name` |
+| Versionable | no |
+| `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
+| `external_id` | no |
+
+| Field | Type | Req | |
+|---|---|---|---|
+| `name` | text |  |  |
+| `character_arc_id` | reference | **yes** | → `character_arc` (resolves to `character_arc_uuid` in a result, §12.1.2) |
+| `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2). The position this stage begins. In force until a later row supersedes it. |
+| `stage_label` | text |  | Short handle, e.g. "walls up". |
+| `description` | textarea |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1353,12 +1408,12 @@ A specific wardrobe look for a character.
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
 | `description` | textarea |  |  |
 | `silhouette` | text |  |  |
-| `key_garments` | json |  |  |
+| `key_garments` | string_list |  |  |
 | `layers` | textarea |  |  |
-| `accessories` | json |  |  |
+| `accessories` | string_list |  |  |
 | `primary_color_hex` | text |  |  |
 | `primary_color_name` | text |  |  |
-| `secondary_colors` | json |  |  |
+| `secondary_colors` | string_list |  |  |
 | `fabrics` | textarea |  |  |
 | `texture_qualities` | textarea |  |  |
 | `condition` | select |  | one of `new`, `worn`, `distressed` |
@@ -1384,6 +1439,7 @@ How wardrobe evolves through the story arc.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
+| Referenced by (1) | `costume_progression_state.costume_progression_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -1391,11 +1447,37 @@ How wardrobe evolves through the story arc.
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
 | `starting_wardrobe` | textarea |  |  |
 | `starting_meaning` | textarea |  |  |
-| `progression_stages` | json |  |  |
 | `color_evolution` | textarea |  |  |
 | `formality_evolution` | textarea |  |  |
 | `condition_evolution` | textarea |  |  |
 | `symbolic_meaning` | textarea |  |  |
+| `notes` | textarea |  |  |
+| `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+
+### `costume_progression_state`
+
+A stage of a wardrobe progression, keyed to the scene it begins at. Latest-wins (spec §4.5). Replaces the progression_stages JSON blob, which could not be positioned, queried at a scene, or cut individually (proposal 0026).
+
+| | |
+|---|---|
+| Label | Costume Progression State / Costume Progression States |
+| Category | Character Depth |
+| Subject | character |
+| Scope | scene |
+| Position | Latest-wins (pattern 3) — the most recent row at or before a position is in force. |
+| Name field | `name` |
+| Versionable | no |
+| `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
+| `external_id` | no |
+
+| Field | Type | Req | |
+|---|---|---|---|
+| `name` | text |  |  |
+| `costume_progression_id` | reference | **yes** | → `costume_progression` (resolves to `costume_progression_uuid` in a result, §12.1.2) |
+| `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2). The position this stage begins. In force until a later row supersedes it. |
+| `stage_label` | text |  |  |
+| `wardrobe` | textarea |  |  |
+| `meaning` | textarea |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1490,7 +1572,7 @@ Color palette and atmosphere for a specific location.
 |---|---|---|---|
 | `name` | text |  |  |
 | `location_id` | reference | **yes** | → `location` (resolves to `location_uuid` in a result, §12.1.2) |
-| `dominant_colors` | json |  |  |
+| `dominant_colors` | string_list |  |  |
 | `color_motivation` | select |  | one of `period`, `character`, `symbolic`, `practical` |
 | `color_atmosphere` | select |  | one of `warm`, `cool`, `neutral`, `colorful` |
 | `color_intensity` | select |  | one of `saturated`, `desaturated`, `mixed` |
@@ -1601,7 +1683,7 @@ Acoustic identity of a place — room tone, ambience, character.
 | `room_tone` | textarea |  |  |
 | `reverb_quality` | textarea |  |  |
 | `resonance` | textarea |  |  |
-| `constant_sounds` | json |  |  |
+| `constant_sounds` | string_list |  |  |
 | `variable_sounds` | textarea |  |  |
 | `characteristic_sounds` | textarea |  |  |
 | `sonic_perspective` | textarea |  |  |
@@ -1901,7 +1983,7 @@ Surface, material, and physical-presence detail for a prop. Holds the descriptiv
 | `weight_impression` | text |  |  |
 | `primary_color_hex` | text |  |  |
 | `primary_color_name` | text |  |  |
-| `secondary_colors` | json |  |  |
+| `secondary_colors` | string_list |  |  |
 | `surface_finish` | select |  | one of `matte`, `satin`, `gloss`, `worn`, `polished`, `pitted` |
 | `texture_quality` | textarea |  |  |
 | `baseline_condition` | text |  | The prop's default state. State changes belong in prop_variant. |
@@ -2073,9 +2155,9 @@ Baseline vocal identity — how a character sounds and how they deliver lines (a
 | `listening_behavior` | textarea |  |  |
 | `interruption_tendencies` | textarea |  |  |
 | `vocal_habits` | textarea |  |  |
-| `filler_words` | json |  |  |
-| `catch_phrases` | json |  |  |
-| `verbal_tics` | json |  |  |
+| `filler_words` | string_list |  |  |
+| `catch_phrases` | string_list |  |  |
+| `verbal_tics` | string_list |  |  |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -2175,7 +2257,7 @@ Specific color design for a scene.
 |---|---|---|---|
 | `name` | text |  |  |
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
-| `dominant_colors` | json |  |  |
+| `dominant_colors` | string_list |  |  |
 | `color_harmony_type` | select |  | one of `monochromatic`, `analogous`, `complementary`, `triadic`, `split-complementary` |
 | `color_source_distribution` | textarea |  |  |
 | `color_contrast_level` | select |  | one of `low`, `medium`, `high` |
@@ -2207,7 +2289,7 @@ Specific emotional goal and function for a scene.
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
 | `primary_emotion` | text | **yes** |  |
 | `primary_intensity` | integer |  |  |
-| `secondary_emotions` | json |  |  |
+| `secondary_emotions` | string_list |  |  |
 | `emotional_function` | select |  | one of `setup`, `build`, `release`, `shift`, `sustain` |
 | `audience_character_relationship` | select |  | one of `empathy`, `sympathy`, `antipathy`, `observation` |
 | `contrast_with_previous` | textarea |  |  |
@@ -2266,7 +2348,7 @@ Objects and arrangement populating a scene's location.
 | `name` | text |  |  |
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
 | `location_id` | reference |  | → `location` (resolves to `location_uuid` in a result, §12.1.2) |
-| `hero_objects` | json |  |  |
+| `hero_objects` | string_list |  |  |
 | `atmospheric_objects` | textarea |  |  |
 | `practical_objects` | textarea |  |  |
 | `background_fill` | textarea |  |  |
@@ -2333,7 +2415,7 @@ Signature color language for a character. A directorial choice about how the cha
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
 | `primary_color_hex` | text |  |  |
 | `primary_color_name` | text |  |  |
-| `secondary_colors` | json |  |  |
+| `secondary_colors` | string_list |  |  |
 | `how_manifests` | select |  | one of `wardrobe`, `accessories`, `environment`, `lighting`, `multiple` |
 | `why_these_colors` | textarea |  |  |
 | `consistency_level` | select |  | one of `always`, `usually`, `accent only`, `metaphor only` |
@@ -2393,7 +2475,7 @@ Position-keyed color intent — the row form of the color script (Phase B found 
 | `name` | text |  |  |
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
 | `temperature` | select |  | one of `warm`, `cool`, `neutral`, `transitional` |
-| `key_colors` | json |  |  |
+| `key_colors` | string_list |  |  |
 | `palette_shift` | textarea |  | What changes about the palette from this position, and why. |
 | `emotional_intent` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
@@ -2885,7 +2967,7 @@ A specific performance moment for a character within a scene, in one modality �
 | `emotional_subtext` | textarea |  |  |
 | `line_text` | textarea |  | For vocal beats tied to a specific line. Interim matching contract — superseded by line_ref where a screenplay is present. |
 | `line_ref` | text |  | uuid of the anchored screenplay line (G5). Authored from the script editor; re-anchors deterministically through split/merge. |
-| `emphasis_words` | json |  |  |
+| `emphasis_words` | string_list |  |  |
 | `pace` | select |  | one of `fast`, `slow`, `measured`, `varying` |
 | `volume` | select |  | one of `whisper`, `soft`, `normal`, `loud`, `shout` |
 | `delivery_notes` | textarea |  |  |
@@ -3116,6 +3198,7 @@ Ordered physical staging moment within a scene container — either a scene_bloc
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
+| Referenced by (1) | `staging_beat_character.staging_beat_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -3124,10 +3207,35 @@ Ordered physical staging moment within a scene container — either a scene_bloc
 | `action_sequence_id` | reference |  | → `action_sequence` (resolves to `action_sequence_uuid` in a result, §12.1.2). Parent for choreographed action beats. Mutually exclusive with scene_blocking_id. |
 | `beat_order` | integer | **yes** |  |
 | `description` | textarea |  |  |
-| `character_positions` | json |  |  |
 | `movement_description` | textarea |  |  |
 | `camera_note` | text |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+
+### `staging_beat_character`
+
+Where a character stands in a staging beat. Replaces the character_positions JSON map, which was keyed by NAME in a schema where a character is a row with a uuid (proposal 0026).
+
+| | |
+|---|---|
+| Label | Staging Beat-Character / Staging Beat-Characters |
+| Category | Connections |
+| Subject | link |
+| Scope | moment |
+| Position | Not positioned — one row, not keyed to a scene. |
+| Name field | `name` |
+| Versionable | no |
+| `lifecycle_status` | **no** — this entity cannot be marked cut |
+| `external_id` | no |
+
+| Field | Type | Req | |
+|---|---|---|---|
+| `staging_beat_id` | reference | **yes** | → `staging_beat` (resolves to `staging_beat_uuid` in a result, §12.1.2) |
+| `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
+| `position` | text |  |  |
+| `movement` | textarea |  |  |
+| `notes` | textarea |  |  |
+
+*1 hidden field(s) omitted — present in the table, not offered for authoring.*
 
 ### `voiceover_design`
 
