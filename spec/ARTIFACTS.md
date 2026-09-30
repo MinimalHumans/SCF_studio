@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `341802d16015bb83…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/scf-spec.md` | `4ea81a835e722929…` | The specification. Everything normative about the format is here or cited from here. |
 | `spec/conformance.md` | `6bb5684cd71699c6…` | What a conforming implementation must do, per role, and how a claim is made. |
 | `spec/stability.md` | `53438317e98b6cd2…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `4f016765b81e7528…` | The specification changelog. Spec §11.5. |
+| `spec/CHANGELOG.md` | `d2a29fdea238129a…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -63,11 +63,11 @@ Generated from `schema/`, which is the source of truth for all of them.
 | `spec/screenplay-tables.json` | `cd4b34045921c374…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
 | `spec/entity-reference.md` | `3db5b7d6a8c3501e…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
 | `spec/query-reference.md` | `b5a540dd89532a6c…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
-| `spec/api-surface.json` | `d7f56477f087b001…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
+| `spec/api-surface.json` | `5cf0c0b7f6a2172a…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `a554722a77ad98d5…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `85033f7afbe0a135…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `12a4dbe51723950e…` | What Q14 assesses, per target query. Spec §12.9.1. |
-| `spec/finding-catalog.json` | `5fa4969ba9563e95…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
+| `spec/finding-catalog.json` | `18356e26965d6d0f…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
 
 ### The canonical query results
 
@@ -85,7 +85,7 @@ One normative result per query, spec §12. Rows by uuid, no row ids, no timestam
 | `fixtures/expectations/Q06.result.json` | `4eeabc3fab71d274…` | Q06's normative result. Spec §12.6. |
 | `fixtures/expectations/Q08.result.json` | `c99c06e4856f3b39…` | Q08's normative result. Spec §12.7. |
 | `fixtures/expectations/Q09.result.json` | `01fb6214accb4425…` | Q09's normative result. Spec §12.10. |
-| `fixtures/expectations/Q10.result.json` | `b445c39fe35d60e6…` | Q10's normative result. Spec §12.11. |
+| `fixtures/expectations/Q10.result.json` | `422715ea6ec22803…` | Q10's normative result. Spec §12.11. |
 | `fixtures/expectations/Q11.result.json` | `f64d40f733e85330…` | Q11's normative result. Spec §12.13. |
 | `fixtures/expectations/Q12.result.json` | `e36a42c14b2d52f9…` | Q12's normative result. Spec §12.5. |
 | `fixtures/expectations/Q13.result.json` | `3f6546b8736055b5…` | Q13's normative result. Spec §12.8. |

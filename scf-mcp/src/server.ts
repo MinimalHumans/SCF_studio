@@ -11,7 +11,11 @@
  *                 first — a hint for `open` with no full path in hand
  *   find          label -> uuid (resolveNaturalKey)
  *   list          every row of an entity type, optionally filtered
- *                 (listEntities) — for a caller with nothing in hand
+ *                 (listEntities) — for a caller with nothing in hand,
+ *                 in story order where the rows have one
+ *   where_used    the reverse of every other tool: which rows point at
+ *                 this one (whereUsed) — "which bundles hold this
+ *                 asset", "what binds this bundle to anybody"
  *   shot_context  the "prompt for shot X" composite (shotContext)
  *   Q00..Q13, Q15 one tool per canonical query, precisely typed
  *                 (queryTools.ts) — each id's own params, not a
@@ -45,7 +49,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import {
-  listEntities, q00Result, resolveNaturalKey, shotContext,
+  listEntities, q00Result, resolveNaturalKey, shotContext, whereUsed,
 } from "@minimalhumans/scf-core";
 import { parseConfig } from "./config.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
@@ -89,7 +93,14 @@ const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
     "- `find` resolves a natural-key label (scene/shot number, name) to " +
     "uuid(s); `list` enumerates every row of an entity type, optionally " +
     "filtered to rows pointing at a given uuid — use these when you " +
-    "don't already have a uuid in hand.\n" +
+    "don't already have a uuid in hand. Scenes and anything belonging " +
+    "to a scene come back in STORY order, each carrying its " +
+    "`storyPosition`; a scene's number is a label and never an " +
+    "order.\n" +
+    "- `where_used` runs backwards: which rows point at this one. Use " +
+    "it when an asset or a bundle appears in `list` and in no answer — " +
+    "a bundle no binding reaches resolves for nobody, and nothing else " +
+    "will tell you that.\n" +
     "- `shot_context` is the one-call composite for writing a shot " +
     "prompt: brief, scene, cast, look, physical direction, media, and " +
     "a pre-flight readiness check.\n" +
@@ -208,7 +219,8 @@ server.registerTool("list", {
     filter: z.object({
       field: z.string().describe(
         "A reference field entityType declares, e.g. \"scene_id\" on " +
-        "\"shot\"."),
+        "\"shot\". The projected spelling a result hands back " +
+        "(\"scene_uuid\") is accepted too."),
       uuid: z.string().describe("The uuid the field must point at."),
     }).optional().describe(
       "Narrow to rows pointing at one uuid, e.g. { field: \"scene_id\", " +
@@ -224,11 +236,39 @@ server.registerTool("list", {
   }
 });
 
+server.registerTool("where_used", {
+  description: "Which rows point at this one, with the column each " +
+    "points with — the reverse of every other tool here. Answers " +
+    "\"which bundles is this asset in\", \"what binds this bundle to " +
+    "anybody\", \"which scenes place this prop\". A row nothing " +
+    "references is not necessarily wrong, but it resolves for no " +
+    "query, and this is the only way to see that.",
+  inputSchema: {
+    entityType: z.string().describe(
+      "Registry entity name of the row asked about, e.g. \"asset\", " +
+      "\"bundle\", \"prop\"."),
+    uuid: z.string().describe("That row's uuid, e.g. from find() or list()."),
+  },
+}, async ({ entityType, uuid }) => {
+  try {
+    const project = currentProject();
+    return ok({
+      entityType, uuid,
+      usedBy: await whereUsed(project.ctx, entityType, uuid),
+    });
+  } catch (e) {
+    return err(e);
+  }
+});
+
 server.registerTool("shot_context", {
   description: "Everything needed to write a shot prompt: project " +
     "brief, the scene and its cast, the resolved look, physical " +
-    "direction per character, media in force per subject, and a " +
-    "pre-flight readiness check. One call in place of the dozen it " +
+    "direction per character, media in force per subject — every " +
+    "subject in the scene, characters AND props AND the location — " +
+    "and a pre-flight readiness check. `swept` lists each subject and " +
+    "the intents asked for, so a subject the file binds nothing to is " +
+    "visible rather than missing. One call in place of the dozen it " +
     "replaces.",
   inputSchema: {
     shotUuid: z.string().describe(

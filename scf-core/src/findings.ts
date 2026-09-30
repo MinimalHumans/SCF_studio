@@ -38,6 +38,7 @@ import {
   deriveStructure, sceneOrderHint, structureFindings,
 } from "./structure.ts";
 import { listAssets, orphanIds } from "./assetIndex.ts";
+import { unboundBundleIds } from "./bundling.ts";
 import { fileIdentity } from "./fileIdentity.ts";
 import { escapesRoot, parseIdentifier } from "./assets.ts";
 
@@ -112,6 +113,7 @@ export type FindingCode =
   | "asset.identifier_escapes_root"
   | "asset.identifier_absolute"
   | "asset.orphan"
+  | "asset.bundle_unbound"
   // Extension content — spec §10.1
   | "extension.unknown_table";
 
@@ -330,6 +332,11 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
   "asset.orphan": {
     severity: "info",
     title: "Asset referenced by nothing",
+    spec: "§8.6",
+  },
+  "asset.bundle_unbound": {
+    severity: "info",
+    title: "Bundle reaches no subject",
     spec: "§8.6",
   },
 
@@ -729,6 +736,28 @@ export async function collectFindings(
     out.push(make("asset.orphan",
       `Asset ${String(id)} is referenced by nothing.`,
       { table: "asset", rowIds: [id] }));
+  }
+
+  // --- bundles nothing binds (§8.6) ---
+  // One level above an orphan, and invisible to it: every asset in
+  // such a bundle IS referenced, and none of them resolves for any
+  // subject at any position. Info, not a warning — a bundle can be
+  // assembled before anyone decides what it is for, and SCF reports
+  // rather than enforces (§9.2).
+  try {
+    const unbound = await unboundBundleIds(exec, registry);
+    for (const row of await exec("SELECT id, name FROM \"bundle\"")) {
+      const id = Number(row["id"]);
+      if (!unbound.has(id)) continue;
+      const name = row["name"] === null || row["name"] === undefined
+        ? String(id) : String(row["name"]);
+      out.push(make("asset.bundle_unbound",
+        `Bundle "${name}" is bound to no character, prop or location, ` +
+        "so no query returns its assets.",
+        { table: "bundle", rowIds: [id] }));
+    }
+  } catch {
+    // A file without the bundle tables has no such finding to make.
   }
 
   // --- unknown tables (§10.1) ---

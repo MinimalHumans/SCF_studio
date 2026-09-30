@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.53 |
 | **Author** | Raised from 0018's discussion; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | 16 `select` and `multiselect` fields across 14 entities; `schema/entity_registry.py`; possibly the finding catalog; the editor's select control |

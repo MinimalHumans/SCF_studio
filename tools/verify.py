@@ -57,6 +57,8 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
      [PY, "schema/lint_registry.py"], ".", False),
     ("every entity.column in the prose resolves",
      [PY, "schema/check_spec_references.py"], ".", False),
+    ("no proposal the changelogs say landed still says draft",
+     [PY, "schema/check_proposal_status.py"], ".", False),
     ("every source file carries an SPDX header",
      [PY, "tools/add_spdx_headers.py", "--check"], ".", False),
     ("scf-schema.sql matches initDatabase",
@@ -96,15 +98,12 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
     ("scf-app tests", [NPM, "test"], "scf-app", False),
     ("scf-app builds", [NPM, "run", "build"], "scf-app", True),
 
-    # --- scf-mcp ---
-    #
-    # It was in no step at all until now, which meant the one package a
-    # stranger runs against their own file was checked only when
-    # somebody remembered to. Its tests SPAWN the built server, so the
-    # build comes first: without `dist/` the suite skips sixteen of its
-    # twenty-two tests and still reads like a run.
+    # scf-mcp's smoke tests spawn the BUILT server, so the build is a
+    # dependency of the tests rather than a separate proof. Both were
+    # outside this list and outside CI until 0.55: the package was
+    # merged into main with nothing running its tests anywhere.
     ("scf-mcp typechecks", [NPM, "run", "typecheck"], "scf-mcp", False),
-    ("scf-mcp builds", [NPM, "run", "build"], "scf-mcp", False),
+    ("scf-mcp builds", [NPM, "run", "build"], "scf-mcp", True),
     ("scf-mcp tests", [NPM, "test"], "scf-mcp", True),
 
     # --- site ---

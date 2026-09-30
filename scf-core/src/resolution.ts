@@ -474,7 +474,12 @@ export async function selectLocationVariant(
 // Media cascade (Q13)
 // ---------------------------------------------------------------------------
 
-const ANCHOR_TYPE_FOR_INTENT: Record<string, string> = {
+/**
+ * Which anchor kind an intent is answered by (§12.8). Exported because
+ * a second copy of this map is a second answer: `shotContext` reads it
+ * to know what a subject's anchors could satisfy.
+ */
+export const ANCHOR_TYPE_FOR_INTENT: Record<string, string> = {
   visual_identity: "visual", surface: "visual", environment: "visual",
   voice_identity: "audio", acoustic: "audio", motion: "motion",
   performance: "motion",

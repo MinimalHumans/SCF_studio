@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.54, schema 2.15 |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | 29 fields change `fieldType`; `registry.schema.json`; spec §2 and §12.1.2; scf-app's field renderer |

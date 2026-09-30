@@ -83,6 +83,9 @@ jobs:
       - name: every entity.column in the spec resolves
         run: python3 schema/check_spec_references.py
 
+      - name: proposal statuses agree with the changelogs
+        run: python3 schema/check_proposal_status.py
+
       - name: selectors.json matches every published result's parameters
         run: npm run check-selectors
         working-directory: scf-core
@@ -239,3 +242,41 @@ jobs:
       - name: production build
         run: npm run build
         working-directory: scf-app
+
+  mcp:
+    name: scf-mcp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scf-mcp/package-lock.json
+
+      # scf-mcp depends on scf-core by file path, so core is built
+      # first or the import resolves to nothing.
+      - run: npm ci
+        working-directory: scf-core
+
+      - run: npm run build
+        working-directory: scf-core
+
+      - run: npm ci
+        working-directory: scf-mcp
+
+      - name: typecheck
+        run: npm run typecheck
+        working-directory: scf-mcp
+
+      # The smoke tests spawn dist/server.js. Without this build they
+      # do not fail — they skip, silently, and the suite reports
+      # nothing at all. test/smoke.test.ts now throws instead.
+      - name: build
+        run: npm run build
+        working-directory: scf-mcp
+
+      - name: test
+        run: npm test
+        working-directory: scf-mcp

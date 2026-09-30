@@ -116,6 +116,30 @@ describe("shotContext — composes without deriving (§4.1)", () => {
       .toEqual(["motion", "visual_identity", "voice_identity"].sort());
   });
 
+  test("every subject kind is swept, not characters alone", async () => {
+    // The first MCP session lost the scene's framing plate here: the
+    // location and props were in the subject set and asked for
+    // nothing, and no member of the result said so.
+    const ctx = await shotContext(fx.ctx, shot1204.uuid);
+    const kinds = new Set(ctx.swept.map((s) => s.subjectType));
+    expect([...kinds].sort()).toEqual(["character", "location", "prop"]);
+    const location = ctx.swept.find((s) => s.subjectType === "location");
+    expect(location?.intents).toContain("visual_identity");
+    expect(ctx.media.some((m) => m.result.subjectKind === "location"))
+      .toBe(true);
+  });
+
+  test("a subject with nothing bound is reported, not dropped", async () => {
+    const ctx = await shotContext(fx.ctx, shot1204.uuid);
+    const empty = ctx.swept.filter((s) => s.intents.length === 0);
+    for (const s of empty) {
+      expect(s.note, `${s.subjectType} ${s.name ?? "?"}`).toBeDefined();
+    }
+    // Every intent asked for is asked of Q13 exactly once.
+    const asked = ctx.swept.reduce((n, s) => n + s.intents.length, 0);
+    expect(ctx.media).toHaveLength(asked);
+  });
+
   test("readiness is Q14 scoped to the shot's own look (Q07)", async () => {
     const ctx = await shotContext(fx.ctx, shot1204.uuid);
     expect(ctx.readiness.result.target).toBe("Q07");

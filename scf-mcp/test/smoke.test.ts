@@ -8,7 +8,7 @@
  */
 
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,6 +22,20 @@ const SCENE12 = "06857531-3e91-41a9-95dd-3262407d8132";
 const SHOT1204 = "404e480d-dde6-4b4f-9cd4-daec42d5bfa0";
 const ELEANOR = "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64";
 const QUERY_TOOL_NAMES = CATALOG.map((spec) => toolNameFor(spec.title));
+
+/**
+ * These tests spawn the BUILT server, so `dist/` has to exist. Without
+ * it every spawn fails on module resolution, each `send` waits out its
+ * timeout, and vitest reports the whole file as skipped — a suite that
+ * covers nothing and says nothing, which is how a tool-list change sat
+ * unnoticed. Fail here instead, naming the command.
+ */
+if (!existsSync(SERVER)) {
+  throw new Error(
+    `scf-mcp smoke tests need the built server at ${SERVER}. ` +
+    "Run `npm run build` in scf-mcp first (CI does; `npm test` alone " +
+    "does not).");
+}
 
 interface Server {
   send: (method: string, params?: unknown) => Promise<unknown>;
@@ -98,7 +112,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(result.tools.map((t) => t.name).sort()).toEqual([
       ...QUERY_TOOL_NAMES,
       "find", "list", "open", "readiness", "recent_files", "set_root",
-      "shot_context",
+      "shot_context", "where_used",
     ].sort());
   });
 
@@ -182,7 +196,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(result.isError).toBe(true);
   });
 
-  test("shot_context returns all six members with no scfPath given",
+  test("shot_context returns all seven members with no scfPath given",
       async () => {
     const result = await server.send("tools/call", {
       name: "shot_context", arguments: { shotUuid: SHOT1204 },
@@ -191,8 +205,75 @@ describe("scf-mcp server — a default project set at startup", () => {
     const ctx = JSON.parse(result.content[0]?.text ?? "{}");
     expect(Object.keys(ctx).sort()).toEqual(
       ["brief", "contextFormat", "look", "media", "physical", "readiness",
-       "scene"].sort());
+       "scene", "swept"].sort());
     expect(ctx.readiness.result.target).toBe("Q07");
+  });
+
+  test("the media sweep covers the location and says what it asked for",
+      async () => {
+    // The composite once swept characters alone, silently: the scene's
+    // framing plate is bound to the LOCATION and never came back.
+    const result = await server.send("tools/call", {
+      name: "shot_context", arguments: { shotUuid: SHOT1204 },
+    }) as { content: Array<{ text: string }> };
+    const ctx = JSON.parse(result.content[0]?.text ?? "{}") as {
+      swept: Array<{ subjectType: string; intents: string[];
+                     note?: string }>;
+      media: Array<{ result: { subjectKind: string } }>;
+    };
+    expect(new Set(ctx.swept.map((s) => s.subjectType)))
+      .toEqual(new Set(["character", "prop", "location"]));
+    expect(ctx.media.some((m) => m.result.subjectKind === "location"))
+      .toBe(true);
+    for (const s of ctx.swept) {
+      if (s.intents.length === 0) expect(s.note).toBeDefined();
+    }
+  });
+
+  test("where_used runs backwards: a bundle nothing binds", async () => {
+    const listed = await server.send("tools/call", {
+      name: "list", arguments: { entityType: "bundle" },
+    }) as { content: Array<{ text: string }> };
+    const uuid = (JSON.parse(listed.content[0]?.text ?? "[]") as
+      Array<{ uuid: string; label: string }>)
+      .find((b) => b.label.includes("Shawl"))?.uuid;
+    const result = await server.send("tools/call", {
+      name: "where_used",
+      arguments: { entityType: "bundle", uuid: uuid ?? "" },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    const usage = JSON.parse(result.content[0]?.text ?? "{}") as {
+      usedBy: Array<{ entity: string }>;
+    };
+    expect(usage.usedBy.every((u) => !u.entity.endsWith("_asset_binding")))
+      .toBe(true);
+    expect(usage.usedBy.some((u) => u.entity === "bundle_asset")).toBe(true);
+  });
+
+  test("list returns scenes in story order, with the position", async () => {
+    const result = await server.send("tools/call", {
+      name: "list", arguments: { entityType: "scene" },
+    }) as { content: Array<{ text: string }> };
+    const scenes = JSON.parse(result.content[0]?.text ?? "[]") as
+      Array<{ label: string; storyPosition: number }>;
+    expect(scenes.map((s) => s.label).slice(-3)).toEqual(["21", "24", "17"]);
+    expect(scenes.map((s) => s.storyPosition))
+      .toEqual(scenes.map((_, i) => i));
+  });
+
+  test("a filter takes the projected spelling list itself returns",
+      async () => {
+    const scenes = JSON.parse((await server.send("tools/call", {
+      name: "list", arguments: { entityType: "scene" },
+    }) as { content: Array<{ text: string }> }).content[0]?.text ?? "[]") as
+      Array<{ uuid: string }>;
+    const result = await server.send("tools/call", {
+      name: "list",
+      arguments: { entityType: "shot",
+                   filter: { field: "scene_uuid",
+                             uuid: scenes[0]?.uuid ?? "" } },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
   });
 
   test("set_root maps a root onto the already-open film, no scfPath",

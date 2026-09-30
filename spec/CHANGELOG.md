@@ -17,6 +17,117 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.55 — 2026-09-28
+
+*Describes schema 2.15.*
+
+**Minor.** One normative rule changed meaning and one published result
+moved with it (proposal 0028); one finding was added; and the tooling
+around media gained the reverse lookup it never had. Most of this round
+came from the first `scf-mcp` session, which wrote a shot prompt against
+the fixture and came back with what the format could not tell it.
+
+### §12.11 named four kinds of carrier and meant "wherever it is placed"
+
+Q10 reached scenes through a hand-written list: a scene, a motif, a
+character, an act or a sequence, and nothing else. A prop carrying a
+theme therefore returned `sceneUuids: []` while `scene_prop` placed it
+in three scenes, and the published Q10 result recorded that emptiness as
+correct. Costumes and locations were in the same position.
+
+The list was the defect. §12.11 now states the rule the registry already
+implies: a carrier is reached through a **link** entity declaring
+`scene_id` and the subject's column, or through `scene`'s own reference
+to it. What the four kinds had in common was never their kind, it was
+that something placed them.
+
+The distinction the new wording insists on is placement versus
+description. `performance_beat` names a character and a scene and does
+not place the character there — the character is placed by
+`scene_character` — so a blanket "any table naming both" rule would have
+changed what a character carrier means. The registry's `subject: link`
+is what separates the two, and it is declared rather than inferred.
+
+**Q10's published result changes.** Ada's locket, connected to
+Forgiveness as a prop, now reaches the three scenes `scene_prop` places
+it in, and the spine's counts rise at those three. No other carrier in
+the fixture moves — which is the check that the rule generalises the old
+behaviour instead of replacing it.
+
+### §8.6 — `asset.bundle_unbound`, the orphan one level up
+
+An asset in a bundle that no binding reaches is referenced by something,
+so `asset.orphan` stays silent, and the cascade starts at a subject and
+never arrives — the assets resolve for nobody at any position. The
+fixture carried five such bundles for months, including the kitchen's
+own anchor images, and the only way to find them was to diff a full
+asset list against a resolution per subject per intent by hand.
+
+`asset.bundle_unbound` is `info`: a bundle assembled before anyone has
+decided what it is for is an ordinary state of an unfinished film. The
+catalog is 41 codes. The fixture raises it once, deliberately — Ada's
+shawl is a costume, and `costume` has no binding entity, so the bundle
+holding its reference has nowhere to be bound. That finding is the
+format gap, visible in the one place a reader will meet it.
+
+### `whereUsed` — every query ran forwards
+
+The sixteen queries all ask "given a subject and a position, what is in
+force". Nothing asked the reverse, and the absence has now cost two
+readers real time. `whereUsed(ctx, entityType, uuid)` returns the rows
+that point at one row, each projected, derived from the registry
+including polymorphic pairs. It is in the API surface (246 exports) and
+behind `scf-mcp`'s `where_used`.
+
+### `list` — story order, and the spelling it hands back
+
+`listEntities` returned rows in row order, which §12.1.6 says means
+nothing, for an entity whose order is the one thing a reader most wants.
+An agent read the row order of a thirteen-scene film as the story and
+reported a published spine as misordered. Scenes, and rows belonging to
+a scene, now come back in story order (§4.1) carrying `storyPosition`.
+
+The same call rejected `scene_uuid` as a filter field while every result
+it returns spells that column `scene_uuid` (§12.1.2). Round-tripping a
+value from an answer into the next question failed on a rule the caller
+had followed. The projected spelling is now accepted on the way in.
+
+### `scf-mcp` was merged with nothing running its tests
+
+Neither `tools/verify.py` nor `.github/workflows/ci.yml` mentioned the
+package, so its suite ran only when someone ran it by hand. And by
+hand it ran empty: the smoke tests spawn `dist/server.js`, and without
+a build every spawn fails, every call waits out its timeout, and vitest
+reports seventeen tests as skipped rather than failed. A suite that
+covers nothing and says nothing.
+
+Both are fixed — a `mcp` job in CI and three steps in `verify.py`, with
+the build ahead of the tests because it is a dependency of them rather
+than a separate proof — and `test/smoke.test.ts` now throws if `dist`
+is missing, naming the command. The build-then-skip shape is the same
+class as `npx scf-check` being broken because it was tested outside
+`node_modules`: verified where it was written rather than where it
+runs.
+
+### `shotContext` swept characters and nothing else
+
+The composite derived its intents from `QUERY_PATHS`, which keys on
+`<subjectType>_id`; only `character` has such a path, so the scene's
+location and props were collected into the subject set and asked for
+nothing. Writing a prompt for shot 3B, that hid the DOP's framing plate
+for the scene — the single most useful asset for the job — while the
+response looked complete.
+
+Intents are now the union of what a query path declares for the kind and
+**what the file actually binds to that subject**, with anchors as a last
+resort for a subject that has neither. A new `swept` member lists every
+subject and the intents asked for, so a subject nothing binds media to
+is visible rather than missing. A composite that quietly returns a
+partial answer is worse than one that refuses.
+
+---
+
+
 ## 0.54 — 2026-09-21
 
 *Describes schema 2.15.*

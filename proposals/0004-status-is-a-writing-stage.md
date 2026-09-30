@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.53 |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Spec §6.6; `schema/entity_registry.py` (`scene`, `act`, `sequence`); `registry.json`, `entity-reference.md`; `docs/conventions.md` ("A scene cut from the screenplay") |

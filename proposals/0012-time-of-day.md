@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.53, schema 2.14 |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `scene.time_of_day`, `location_variant.time_of_day`, `location_asset_binding.time_of_day_filter`; spec §12.17; scf-app's two heading-time maps; the fixture |

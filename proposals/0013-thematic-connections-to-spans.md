@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.53 |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `thematic_connection.entity_type`; spec §12.11 (Q10); the fixture |

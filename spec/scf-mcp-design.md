@@ -164,10 +164,27 @@ Q13's parameters are `subjectType`, `subject`, `intent`, `scene`, `shot`
 location and two props is a dozen calls. Left to the agent that is a
 dozen round trips it has to plan; done here it is a loop.
 
-The subject list comes from `scene` (Q04's cast, props, location). The
-intents come from `readiness-rubrics.json`, which publishes each media
-step's `intent` in machine-readable form — do not hard-code
-`visual_identity`.
+The subject list comes from `scene` (Q04's cast, props, location).
+
+**The intents are per subject, not per subject KIND.** The first
+implementation took them from the declared query paths, which key on
+`<subjectType>_id`; only `character` has one, so the location and the
+props were collected into the subject list and asked for nothing, and
+the payload came back looking complete. Writing a prompt for shot 3B
+that hid the DOP's framing plate for the scene, which is bound to the
+location.
+
+So: what a query path declares for the kind, UNION what the file binds
+to that subject — every intent a live binding or shot override puts in
+force for it — with the subject's anchors as a last resort where it has
+neither. Both halves, because a declared path asking for `motion` on a
+character with no motion bundle returns an empty answer, and an empty
+answer is the difference between "there is no motion reference" and
+"nobody asked".
+
+`swept` records every subject and the intents asked for. A composite
+that quietly returns a partial answer is worse than one that refuses,
+and the only way a caller can see a partial answer is if it says so.
 
 ### 4.3 The test is the point
 
@@ -201,20 +218,31 @@ it, this is one tool's convenience.
 
 ## 5. The server
 
-Four tools. Two are the ones above; two exist so the agent is not stuck
-when they do not fit.
+The shipped server is wider than this section first planned; where the
+two disagree, `scf-mcp/src/server.ts` is what runs.
 
 | Tool | | |
 |---|---|---|
+| `open`, `recent_files`, `set_root` | | which film, and where its assets are |
 | `find` | `(entityType, label)` | → `resolveNaturalKey` |
+| `list` | `(entityType, filter?)` | → `listEntities` |
+| `where_used` | `(entityType, uuid)` | → `whereUsed` |
 | `shot_context` | `(shotUuid)` | → `shotContext` |
-| `query` | `(id, params)` | any of the sixteen, unwrapped |
+| one tool per query | each query's own params | Q00–Q13, Q15 |
 | `readiness` | `(queryId, params)` | Q14 directly, for pre-flight |
 
-`query` matters more than it looks. Every `qNNResult` is already in
-`index.ts`, so this is a dispatch table — and it means an agent asked
-something `shot_context` does not cover can still answer it instead of
-inventing SQL.
+**`query(id, params)` is gone.** With `params` a loose string map, an
+agent had no way to know which keys an id needed short of guessing.
+The sixteen dedicated tools replace it, each with its own schema, so a
+wrong parameter is rejected before the call is sent.
+
+**`list` and `where_used` are the two directions of navigation.** `list`
+enumerates forwards, in story order where the rows have one; `where_used`
+runs backwards, which nothing else here does. Every canonical query
+answers "given a subject and a position, what is in force", so a row
+that appears in a listing and in no answer — a bundle no binding
+reaches — was invisible: finding one meant diffing a full asset list
+against a resolution per subject per intent, by hand.
 
 Transport is **stdio**. `scf-core/node` supplies `openNodeDatabase`,
 which is what conformance CI and the scripts already use.
