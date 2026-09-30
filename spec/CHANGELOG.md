@@ -17,6 +17,42 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.58 — 2026-09-30
+
+*Describes schema 2.18.*
+
+**Minor.** Proposal 0031. What happens when several bindings are in
+force for one subject and intent was never stated, and the one number
+that could have ordered them meant nothing.
+
+### §12.8.2 — precedence, and add or replace (new)
+
+§12.8 defined the layers and §12.8.1 when one binding applies. Nothing
+said how two bundles in force together combine. The implementation took
+all of them, ordered by `precedence`, and `precedence` had no help text
+anywhere. The fixture used it both ways: higher meant more specific for
+the kitchen and less specific for Eleanor, whose baseline sat at 10
+above her wounded state at 1. At scene 12, a night storm, the kitchen
+resolved its night references and its day plates together.
+
+`precedence` is now the author's ranking, higher being the more specific
+opinion, and a baseline SHOULD sit at 0. It orders and never excludes on
+its own. A new `combine` field says whether a binding adds to the others
+in force or replaces those below it. `add` is the default and is what
+every binding did before. Replacing never reaches anchors or shot
+overrides, and never an equal precedence. Two findings report a baseline
+that replaces and a `replace` binding caught in a tie.
+
+### §12.8 — the trail runs broadest first, as it said
+
+The trail listed bindings highest precedence first, which for the
+kitchen was most specific first, against §12.8's own table. It now lists
+them lowest first. Eleanor's published trail looked right only because
+her precedence was inverted; with the fixture corrected and the order
+fixed, it reads exactly as before.
+
+---
+
 ## 0.57 — 2026-09-30
 
 *Describes schema 2.17.*

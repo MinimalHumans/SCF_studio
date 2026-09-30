@@ -12,7 +12,7 @@ Changing SCHEMA_VERSION is a deliberate act: record what changed in
 docs/schema-changelog.md in the same commit.
 """
 
-SCHEMA_VERSION = "2.17"
+SCHEMA_VERSION = "2.18"
 
 # What each tier band is called.
 #

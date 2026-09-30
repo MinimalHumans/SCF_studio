@@ -20,6 +20,25 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.18
+
+How bindings combine, proposal 0031. Additive: `combine` defaults to
+`add`, which is what every binding did before.
+
+**Added:**
+
+- `combine` on `character_asset_binding`, `prop_asset_binding`,
+  `location_asset_binding` and `costume_asset_binding`: `add` (default)
+  or `replace`. A binding in force that replaces excludes every binding
+  for the same subject and intent with lower precedence (§12.8.2).
+
+**Changed:**
+
+- `precedence` and `is_baseline` gain help text on all four binding
+  entities. Neither had any, and the fixture used `precedence` both ways
+  round. It is now the author's ranking, higher being the more specific
+  opinion, and a baseline SHOULD sit at 0.
+
 ## 2.17
 
 Presence, proposal 0030: whether a subject is seen, heard or only

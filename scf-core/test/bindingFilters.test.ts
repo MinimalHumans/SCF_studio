@@ -226,14 +226,16 @@ describe("a binding filter excludes where it fails and applies where it passes",
 // ---------------------------------------------------------------------------
 
 /**
- * A binding's own structure: what it binds, to what, and how strongly.
- * Everything else on a binding entity is a condition and gets probed.
- * This fails closed: a new column is treated as a filter until it is
- * listed here, so the list can only ever be too short, never hide one.
+ * A binding's own structure: what it binds, to what, how strongly, and
+ * how it combines with the others in force (§12.8.2's `combine`, which
+ * decides what a binding does to OTHER bindings, never whether it applies
+ * itself). Everything else on a binding entity is a condition and gets
+ * probed. This fails closed: a new column is treated as a filter until it
+ * is listed here, so the list can only ever be too short, never hide one.
  */
 function structural(subject: string): Set<string> {
   return new Set(["name", `${subject}_id`, "bundle_id", "is_baseline",
-                  "precedence", "notes"]);
+                  "precedence", "combine", "notes"]);
 }
 
 const NEVER = "__scf_guard_never_matches__";
@@ -268,12 +270,15 @@ describe("guard: every filter column the registry declares is evaluated", () => 
           "SELECT id, intent FROM bundle ORDER BY id LIMIT 1"))[0];
         const intent = String(bundle?.["intent"]);
 
+        // Ranked above every binding in the file, so that no `replace`
+        // binding (§12.8.2) can exclude it: the only thing that may
+        // exclude the probe is the filter being probed.
         const probe = "__guard_probe__";
         await ctx.exec(
           `INSERT INTO "${entity}"
              (uuid, name, "${subject}_id", bundle_id, is_baseline,
               precedence, lifecycle_status)
-           VALUES (?, ?, ?, ?, 1, 0, 'active')`,
+           VALUES (?, ?, ?, ?, 1, 1000000, 'active')`,
           [randomUUID(), probe, subjectId, Number(bundle?.["id"])]);
 
         const positions = (await ctx.exec(

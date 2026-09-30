@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.17** — **106 entities**.
+Schema **2.18** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -1288,8 +1288,9 @@ Applies a bundle to a character under specific conditions.
 | `name` | text |  |  |
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
 | `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
-| `is_baseline` | boolean |  | default `false` |
-| `precedence` | integer |  | default `0` |
+| `is_baseline` | boolean |  | default `false`. Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2). |
+| `precedence` | integer |  | default `0`. Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own. |
+| `combine` | select |  | one of `add`, `replace`. default `add`. Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides. |
 | `physical_state_filter` | text |  | Spec §12.8: the binding applies where a physical performance_state is in force at the position (§4.5) whose NAME matches this, compared trimmed and case-insensitively — the state's label, not its sentence. Empty means no condition, not 'no state'. |
 | `vocal_state_filter` | text |  | Spec §12.8: as physical_state_filter, against a vocal performance_state. |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
@@ -1495,8 +1496,9 @@ Applies a bundle to a costume under specific conditions (scene range). Tools wal
 | `name` | text |  |  |
 | `costume_id` | reference | **yes** | → `costume` (resolves to `costume_uuid` in a result, §12.1.2) |
 | `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
-| `is_baseline` | boolean |  | default `false` |
-| `precedence` | integer |  | default `0` |
+| `is_baseline` | boolean |  | default `false`. Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2). |
+| `precedence` | integer |  | default `0`. Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own. |
+| `combine` | select |  | one of `add`, `replace`. default `add`. Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides. |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
@@ -1619,8 +1621,9 @@ Applies a bundle to a location under specific conditions (variant, scene range, 
 | `name` | text |  |  |
 | `location_id` | reference | **yes** | → `location` (resolves to `location_uuid` in a result, §12.1.2) |
 | `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
-| `is_baseline` | boolean |  | default `false` |
-| `precedence` | integer |  | default `0` |
+| `is_baseline` | boolean |  | default `false`. Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2). |
+| `precedence` | integer |  | default `0`. Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own. |
+| `combine` | select |  | one of `add`, `replace`. default `add`. Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides. |
 | `variant_id` | reference |  | → `location_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §12.8: the binding applies where §12.17 picks this variant as the one in force at the position. The only variant filter that survives 0027 — character and prop variants have no in-force rule for a filter to test. |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
@@ -1961,8 +1964,9 @@ Applies a bundle to a prop under specific conditions (scene range). Tools walk t
 | `name` | text |  |  |
 | `prop_id` | reference | **yes** | → `prop` (resolves to `prop_uuid` in a result, §12.1.2) |
 | `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
-| `is_baseline` | boolean |  | default `false` |
-| `precedence` | integer |  | default `0` |
+| `is_baseline` | boolean |  | default `false`. Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2). |
+| `precedence` | integer |  | default `0`. Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own. |
+| `combine` | select |  | one of `add`, `replace`. default `add`. Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides. |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |

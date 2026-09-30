@@ -38,7 +38,7 @@ import {
   deriveStructure, sceneOrderHint, structureFindings,
 } from "./structure.ts";
 import { listAssets, orphanIds } from "./assetIndex.ts";
-import { unboundBundleIds } from "./bundling.ts";
+import { bindingCombinationProblems, unboundBundleIds } from "./bundling.ts";
 import { fileIdentity } from "./fileIdentity.ts";
 import { escapesRoot, parseIdentifier } from "./assets.ts";
 import { presenceProblems } from "./presence.ts";
@@ -115,6 +115,9 @@ export type FindingCode =
   | "asset.identifier_absolute"
   | "asset.orphan"
   | "asset.bundle_unbound"
+  // How bindings combine — spec §12.8.2
+  | "binding.baseline_replaces"
+  | "binding.replace_tie"
   // Presence at a shot — spec §4.6
   | "presence.shot_subject_not_in_scene"
   | "presence.named_but_on_screen"
@@ -344,6 +347,17 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     severity: "info",
     title: "Bundle reaches no subject",
     spec: "§8.6",
+  },
+
+  "binding.baseline_replaces": {
+    severity: "warning",
+    title: "Baseline binding replaces, excluding every lower binding",
+    spec: "§12.8.2",
+  },
+  "binding.replace_tie": {
+    severity: "info",
+    title: "Replacing binding tied on precedence; the tie is not replaced",
+    spec: "§12.8.2",
   },
 
   "presence.shot_subject_not_in_scene": {
@@ -785,6 +799,12 @@ export async function collectFindings(
     }
   } catch {
     // A file without the bundle tables has no such finding to make.
+  }
+
+  // --- how bindings combine (§12.8.2) ---
+  for (const p of await bindingCombinationProblems(exec, registry)) {
+    out.push(make(p.code, p.message,
+                  { table: p.table, rowIds: [p.rowId] }));
   }
 
   // --- presence at a shot (§4.6) ---

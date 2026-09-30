@@ -439,3 +439,66 @@ export async function unboundBundleIds(
   }
   return out;
 }
+
+/** A binding written in a way §12.8.2 reports rather than refuses. */
+export interface BindingCombinationProblem {
+  code: "binding.baseline_replaces" | "binding.replace_tie";
+  table: string;
+  rowId: number;
+  message: string;
+}
+
+/**
+ * Spec §12.8.2's two findings, checked on the bindings as written rather
+ * than at a position, so a file reports the same however it is queried.
+ *
+ * - A baseline that replaces excludes every lower binding everywhere.
+ * - A `replace` binding tied on subject, intent and precedence with
+ *   another does nothing against it: equal precedence is ordered, never
+ *   replaced, and the order then comes from row ids.
+ */
+export async function bindingCombinationProblems(
+    exec: SqlExec, registry: Registry): Promise<BindingCombinationProblem[]> {
+  const out: BindingCombinationProblem[] = [];
+  const text = (v: unknown) => String(v ?? "").trim().toLowerCase();
+  const intents = new Map<number, string>();
+  for (const b of await exec(`SELECT id, intent FROM ${q("bundle")}`)) {
+    intents.set(Number(b["id"]), text(b["intent"]));
+  }
+  for (const subject of bindingSubjects(registry)) {
+    const table = `${subject}_asset_binding`;
+    const column = `${subject}_id`;
+    let bindings: Array<Record<string, unknown>>;
+    try {
+      bindings = await exec(`SELECT * FROM ${q(table)}`);
+    } catch {
+      continue; // a file without this table has nothing to report
+    }
+    const label = (b: Record<string, unknown>) =>
+      b["name"] === null || b["name"] === undefined || b["name"] === ""
+        ? `#${String(b["id"])}` : `"${String(b["name"])}"`;
+    for (const b of bindings) {
+      if (text(b["combine"]) !== "replace") continue;
+      const rowId = Number(b["id"]);
+      if (Number(b["is_baseline"]) === 1 || b["is_baseline"] === true) {
+        out.push({ code: "binding.baseline_replaces", table, rowId,
+          message: `Binding ${label(b)} is a baseline and replaces, so ` +
+            `it excludes every lower binding for its subject at every ` +
+            `position.` });
+      }
+      const intent = intents.get(Number(b["bundle_id"]));
+      const tied = bindings.filter((o) =>
+        Number(o["id"]) !== rowId &&
+        String(o[column]) === String(b[column]) &&
+        intents.get(Number(o["bundle_id"])) === intent &&
+        Number(o["precedence"] ?? 0) === Number(b["precedence"] ?? 0));
+      if (tied.length > 0) {
+        out.push({ code: "binding.replace_tie", table, rowId,
+          message: `Binding ${label(b)} replaces, and shares its subject, ` +
+            `intent and precedence with ${tied.map(label).join(", ")}; ` +
+            `equal precedence is never replaced.` });
+      }
+    }
+  }
+  return out;
+}

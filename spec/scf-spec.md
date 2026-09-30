@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.57 (draft) — not a release.**
-Describes schema version **2.17**.
+**Version 0.58 (draft) — not a release.**
+Describes schema version **2.18**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -107,7 +107,7 @@ Three numbers, deliberately independent:
 - **Specification version** — this document. Currently `0.54` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.17`. Increments on any
+  `schema/schema_meta.py`. Currently `2.18`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
@@ -336,7 +336,7 @@ The digests are over raw bytes. A checkout whose working tree converts
 line endings will not match, which is a property of the checkout rather
 than of the artifacts.
 
-Version 2.17 defines **106 entities** across tiers 0–6.
+Version 2.18 defines **106 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -1994,7 +1994,7 @@ what question it answered.
 | `subjectKind` | The subject's KIND — `character`, `location`, `prop`, `costume` — echoing `subjectType`. **Not its uuid**, which the envelope's `subject` carries. It was itself named `subject` until 0.41, four lines from an envelope member of the same name meaning something else. |
 | `intent` | The intent asked for, echoed. |
 | `trail` | The resolution trail, **broadest first**, matching §7.4's root-first convention. |
-| `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles. |
+| `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles in §12.8.2's order. |
 | `counts` | References per resolution state, keyed by §8.3's states. Every state is a key, including those with a count of zero. |
 | `rootMapped` | Whether the session had a root mapping at all. |
 
@@ -2068,6 +2068,55 @@ zero resolved references and `rootMapped: false` is describing a
 perfectly healthy file that nobody has pointed at a folder.
 
 **A result carries references, never bytes** (§8.1).
+
+#### 12.8.2 When several bindings are in force
+
+Several bindings can be in force for one subject and one intent at one
+position. **They are taken in order of `precedence`, highest first**;
+equal precedence is ordered by row id, lower first. That is the order of
+the bundle layer in `references`. **`trail` lists the same bindings in
+the reverse order**, lowest precedence first, before the anchors and the
+shot overrides, so that it runs broadest first (§12.8).
+
+**`precedence` is the author's ranking, and higher is the more specific
+opinion.** The format does not rank bindings by what they filter on:
+whether a scene range is more specific than a physical state has no
+answer, so the author says. A baseline SHOULD have precedence 0, so that
+every binding scoped to something ranks above the one that applies
+everywhere. This is a recommendation, not a rule, and the ordering
+answers either way.
+
+**Precedence only orders.** Two bindings in force both contribute,
+unless one replaces the other. A binding declares which with `combine`:
+
+- **`add`** (the default): it contributes alongside the others in force.
+  A binding that never sets `combine` answers exactly as bindings did
+  before 2.18.
+- **`replace`**: while it is in force, every binding for the same subject
+  and intent **with lower precedence** is excluded, and MUST appear in
+  `trail` as excluded, naming the binding that replaced it (§12.8.1's
+  rule that an absence carries its reason). A binding already excluded
+  by one of its own filters is reported with that filter instead.
+
+**Replacing reaches the bundle layer only.** Anchors and shot overrides
+are never replaced by a binding: an anchor is the identity the other
+references agree with, and a shot override is already the most specific
+thing the file can say. **Equal precedence is never replaced**: a tie is
+ordered, not resolved.
+
+Neither global rule would do. Taking everything hands a night scene its
+location's day plates; letting the most specific binding win drops a
+character's identity references wherever a state bundle adds a look. A
+night plate replaces and a wounded look adds, and only the binding's
+author knows which it is.
+
+These are reported rather than refused (§9.2), checked on the bindings
+as written, not at a position:
+
+| Finding (§9.4) | Raised when |
+|---|---|
+| `binding.baseline_replaces` | A baseline has `combine = replace`. It applies everywhere, so it excludes every lower binding for its subject at every position. |
+| `binding.replace_tie` | A `replace` binding shares its subject, its bundle's intent and its precedence with another binding. Equal precedence is never replaced, so the `replace` does nothing against it. |
 
 ### 12.9 Q14 — Readiness
 
@@ -2607,6 +2656,8 @@ change to one without the other is a defect.
 | §4.5 pattern 3 | `scf-core/test/conformance.canonical.test.ts` → "pattern 3 (latest-wins)" |
 | §2.4.1 presence of a vocabulary value | `schema/lint_registry.py` (total over the options), `scf-core/test/presence.test.ts` |
 | §4.6 presence at a shot | `scf-core/test/presence.test.ts` |
+| §12.8.1 binding filters | `scf-core/test/bindingFilters.test.ts` |
+| §12.8.2 how bindings combine | `scf-core/test/bindingCombination.test.ts` |
 | §5 spans | `scf-core/test/structure.test.ts` |
 | §6.3–6.4 natural keys | `scf-core/test/junctions.test.ts` |
 | §6.5 relationships | `scf-core/test/relationships.test.ts` |

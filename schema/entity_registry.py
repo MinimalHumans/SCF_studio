@@ -1937,6 +1937,31 @@ register(EntityDef(
     ],
 ))
 
+# How a binding ranks and combines with the others in force for the same
+# subject and intent (proposal 0031, spec §12.8.2). Shared by the four
+# binding entities, so they cannot drift apart.
+def _binding_ranking() -> list[FieldDef]:
+    return [
+        FieldDef("is_baseline", "Is Baseline", "boolean", default=False,
+                 help_text="Spec §12.8.1: applies with no position asked "
+                           "about. A baseline SHOULD have precedence 0 "
+                           "(§12.8.2)."),
+        FieldDef("precedence", "Precedence", "integer", default=0,
+                 help_text="Spec §12.8.2: the author's ranking, higher is "
+                           "the more specific opinion. Orders the bindings "
+                           "in force, highest first in references and "
+                           "lowest first in the trail. Only orders: it "
+                           "never excludes on its own."),
+        FieldDef("combine", "Combine", "select", options=["add", "replace"],
+                 default="add",
+                 help_text="Spec §12.8.2. `add`: contributes alongside the "
+                           "other bindings in force. `replace`: excludes "
+                           "every binding for the same subject and intent "
+                           "with LOWER precedence. Never reaches anchors "
+                           "or shot overrides."),
+    ]
+
+
 register(EntityDef(
     name="character_asset_binding",
     label="Character Asset Binding",
@@ -1952,8 +1977,7 @@ register(EntityDef(
                  reference_entity="character", required=True),
         FieldDef("bundle_id", "Bundle", "reference",
                  reference_entity="bundle", required=True),
-        FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
-        FieldDef("precedence", "Precedence", "integer", default=0),
+        *_binding_ranking(),
         FieldDef("physical_state_filter", "Physical State Filter", "text", tab="Conditions",
                  help_text="Spec §12.8: the binding applies where a physical performance_state "
                            "is in force at the position (§4.5) whose NAME matches this, "
@@ -1988,8 +2012,7 @@ register(EntityDef(
                  reference_entity="prop", required=True),
         FieldDef("bundle_id", "Bundle", "reference",
                  reference_entity="bundle", required=True),
-        FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
-        FieldDef("precedence", "Precedence", "integer", default=0),
+        *_binding_ranking(),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
@@ -2022,8 +2045,7 @@ register(EntityDef(
                  reference_entity="costume", required=True),
         FieldDef("bundle_id", "Bundle", "reference",
                  reference_entity="bundle", required=True),
-        FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
-        FieldDef("precedence", "Precedence", "integer", default=0),
+        *_binding_ranking(),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
@@ -2050,8 +2072,7 @@ register(EntityDef(
                  reference_entity="location", required=True),
         FieldDef("bundle_id", "Bundle", "reference",
                  reference_entity="bundle", required=True),
-        FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
-        FieldDef("precedence", "Precedence", "integer", default=0),
+        *_binding_ranking(),
         FieldDef("variant_id", "Variant", "reference",
                  reference_entity="location_variant", tab="Conditions",
                  help_text="Spec §12.8: the binding applies where §12.17 picks this variant as "
