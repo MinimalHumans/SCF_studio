@@ -49,12 +49,19 @@ which is the workaround, not the answer.
 **Every declared filter is either read by §12.8 or removed.** The
 recommendation, per column:
 
-1. **`variant_id` — specify.** §12.17 already scores
-   `location_variant` against a scene on three axes and reports
-   `mismatches`. A binding naming a variant applies where that variant
-   is the one in force at the position being asked about, and nowhere
-   else. This is the column with a definition already written; it only
-   has to be pointed at.
+1. **`variant_id` — specify on `location_asset_binding`, remove on the
+   other two.** §12.17 already scores `location_variant` against a
+   scene on three axes and reports `mismatches`, so a binding naming a
+   location variant applies where that variant is the one in force and
+   nowhere else — the column with a definition already written, which
+   only had to be pointed at.
+
+   **Character and prop variants have no such rule.** Nothing in the
+   format says which `character_variant` or `prop_variant` is in force
+   at a position: there is no positional pattern on either, and no
+   junction names one. A filter that cannot be evaluated is the defect
+   this proposal is about, so those two columns go. If a rule arrives —
+   a `scene_prop.variant_id`, say — the filter comes back with it.
 2. **`time_of_day_filter` — specify**, on 0012's vocabulary: the
    binding applies where the scene's `time_of_day` equals it, compared
    trimmed and case-insensitively. Without 0012 it is free text matched
@@ -62,7 +69,10 @@ recommendation, per column:
    together.
 3. **`physical_state_filter` / `vocal_state_filter` — specify.** A state
    filter applies where a `performance_state` of that modality is in
-   force at the position (§4.5) and its value matches. This is the
+   force at the position (§4.5) and its **name** matches, compared
+   trimmed and case-insensitively. The name and not the description: a
+   filter is something an author types, and nobody retypes "Thrown at
+   the crossing; guarding her left side, dragging step." This is the
    "Eleanor guards her left side after scene 9" case, which today lives
    in prose inside a field value.
 4. **`act_id` — remove.** Act membership is derived from boundaries
@@ -70,7 +80,8 @@ recommendation, per column:
    that goes stale when a boundary moves. Anything it can say, the range
    says better.
 5. **`conditions_json` — remove**, as [0025](0025-json-that-duplicates-or-means-nothing.md)
-   already proposes.
+   already proposes. (It went in schema 2.15, before this proposal
+   landed, so 2.16 had five columns to deal with rather than six.)
 
 And, whatever is decided per column: **§12.8 MUST state that a binding
 applies only where every filter it declares is satisfied**, and the
@@ -109,12 +120,43 @@ authorial intent the rest of the format keeps.
 nobody can say what a condition is, and a filter nothing can evaluate is
 the problem this proposal is about.
 
-## Unresolved
+## Resolved in implementation (spec 0.56, schema 2.16)
 
-- Does a filter that cannot be evaluated — a variant that does not
-  exist, a state modality the file never authors — exclude the binding
-  or leave it in force? Excluding is safer and loses media silently;
-  leaving it in force is the current behaviour and is wrong. A finding
-  either way is probably the answer.
-- Whether the filters compose as AND (recommended) or whether a binding
-  with several filters means "any of these".
+Both open questions were settled by §12.8.1, and settled the same way:
+the trail carries what a finding would have carried.
+
+- **A filter that cannot be satisfied excludes the binding**, and the
+  `trail` says which filter did it and what it was compared against —
+  `EXCLUDED, time_of_day_filter "night" vs scene "morning"`, or
+  `physical_state_filter "wounded", no such physical state in force`.
+  The worry behind the question was that excluding loses media
+  silently. It is the SILENTLY that was the problem, not the excluding,
+  and an explained absence is not silent.
+
+  **No finding is raised**, which is the part that changed from the
+  recommendation here. A binding scoped to a state the character is not
+  in at this position has not gone wrong — it is a binding doing its
+  job. §9's findings are for a file that cannot be read or is not
+  finished, and "this condition is false right now" is neither.
+
+  A filter pointing at a row that does not exist — a `variant_id` whose
+  variant was deleted — is a different matter, and checking the
+  catalog while writing this turned up that **nothing reports it**:
+  `junction.endpoint_absent` covers link rows only, and a binding is
+  not a link. That is a gap in reference integrity rather than in this
+  proposal, it applies to every reference column in the format and not
+  just these, and it belongs in its own proposal. Until then such a
+  binding simply never applies, and its trail line says the variant is
+  not the one in force — true, and not the most useful thing that could
+  be said.
+
+- **Filters compose as AND**, as recommended. Every filter a binding
+  declares must be satisfied; a filter left null is no condition at
+  all. "Any of these" would make a binding weaker for each condition
+  its author added, which is the opposite of what writing one means.
+
+One thing this proposal did not anticipate: **with no position asked
+about, no positional filter is evaluated at all.** Q13 can be asked
+without a scene, and then only baselines apply (§12.8.1) — there is
+nothing to evaluate a filter against, and a baseline that declares one
+is answering a question nobody asked.
