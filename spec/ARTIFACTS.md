@@ -79,7 +79,7 @@ One normative result per query, spec §12. Rows by uuid, no row ids, no timestam
 | `fixtures/expectations/Q03.result.json` | `af698bdb861ff1d8…` | Q03's normative result. Spec §12.4. |
 | `fixtures/expectations/Q01.result.json` | `8273494421db62b0…` | Q01's normative result. Spec §12.15. |
 | `fixtures/expectations/Q02.result.json` | `55e6e162212aa0ca…` | Q02's normative result. Spec §12.16. |
-| `fixtures/expectations/Q04.result.json` | `92e501551b5ada7a…` | Q04's normative result. Spec §12.17. |
+| `fixtures/expectations/Q04.result.json` | `29a97b4abdc947f2…` | Q04's normative result. Spec §12.17. |
 | `fixtures/expectations/Q05.result.json` | `8d531321d6d9201f…` | Q05's normative result. Spec §12.2. |
 | `fixtures/expectations/Q07.result.json` | `01f3493f72634415…` | Q07's normative result. Spec §12.3. |
 | `fixtures/expectations/Q06.result.json` | `3349a47ce335e9a4…` | Q06's normative result. Spec §12.6. |
@@ -124,7 +124,7 @@ Eleven files that are wrong in a stated way, and the report each MUST produce. S
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `c67923f2dd27b4a5…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `861c3b4c3dd249b6…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

@@ -49,6 +49,8 @@ let shot1204: { id: number; uuid: string };
 let scene19: { id: number; uuid: string };
 let scene16: { id: number; uuid: string };
 let theme: { id: number; uuid: string };
+let scene3: { id: number; uuid: string };
+let shot3B: { id: number; uuid: string };
 
 const pick = async (sql: string): Promise<{ id: number; uuid: string }> => {
   const r = (await fx.ctx.exec(sql))[0];
@@ -71,6 +73,10 @@ beforeAll(async () => {
   scene19 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '19'");
   scene16 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '16'");
   theme = await pick("SELECT id, uuid FROM theme ORDER BY id LIMIT 1");
+  // Day, before the injury: the position where Q13's filtered bindings
+  // must be EXCLUDED, which scene 12 cannot show.
+  scene3 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '3'");
+  shot3B = await pick("SELECT id, uuid FROM shot WHERE shot_number = '3B'");
   if (BLESS) mkdirSync(OUT, { recursive: true });
 });
 
@@ -363,6 +369,23 @@ describe("§12.8 Q13 — media resolution", () => {
     blessOrCheck("Q13", await q13Result(
       fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
       scene12.uuid, scene12.id, shot1204.uuid, shot1204.id));
+  });
+
+  test("at scene 3 it matches its blessed result, the filter excluding",
+       async () => {
+    // Q13's normative position is 12-04, where every filtered binding
+    // legitimately applies, so it cannot tell an evaluated filter from an
+    // unread one. Same subject and intent at a day, pre-injury shot: the
+    // wounded binding must be EXCLUDED and say why. Not normative, like
+    // ShotContext-readiness; bindingFilters.test.ts covers each filter.
+    const r = await q13Result(
+      fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
+      scene3.uuid, scene3.id, shot3B.uuid, shot3B.id);
+    blessOrCheck("Q13-scene3", r);
+    expect(r.result.trail).toContain(
+      "binding Eleanor while wounded -> bundle Eleanor - lamplit, wounded: " +
+      "EXCLUDED, physical_state_filter \"wounded\", no such physical " +
+      "state in force");
   });
 
   test("an anchor contributes the asset it anchors, not itself",
@@ -706,7 +729,7 @@ describe("the results are portable", () => {
     // serialised output rather than over a projection in isolation.
     for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
                         "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
-                        "Q14", "Q15"]) {
+                        "Q14", "Q15", "Q13-scene3"]) {
       const text = readFileSync(join(OUT, `${name}.result.json`), "utf8");
       const parsed = JSON.parse(text) as unknown;
       const walk = (v: unknown, path: string): void => {
@@ -731,7 +754,7 @@ describe("the results are portable", () => {
   test("both declare the same result format", () => {
     for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
                         "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
-                        "Q14", "Q15"]) {
+                        "Q14", "Q15", "Q13-scene3"]) {
       const r = JSON.parse(
         readFileSync(join(OUT, `${name}.result.json`), "utf8")) as {
           resultFormat: string; parameters: Record<string, unknown>;
