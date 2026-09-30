@@ -140,6 +140,23 @@ describe("shotContext — composes without deriving (§4.1)", () => {
     expect(ctx.media).toHaveLength(asked);
   });
 
+  test("a plate about the SCENE reaches the shot (§8.6)", async () => {
+    // It belongs to no subject, so no binding can carry it and nothing
+    // in `media` can reach it. The first MCP session wrote a prompt
+    // for 3B without it.
+    // Shot 3B — the shot the session was writing a prompt for, and the
+    // scene whose framing plate it missed.
+    const ctx = await shotContext(
+      fx.ctx, "e9a73271-d1bd-48eb-98f1-afd3f28511e6");
+    expect(ctx.related.map((r) => r.identifier))
+      .toContain("@project/shots/marcus_in_the_kitchen.png");
+    expect(ctx.related.every((r) => r.about === "scene")).toBe(true);
+    for (const r of ctx.related) {
+      expect(r.identifier, r.name ?? "?").toBeTypeOf("string");
+      expect(r.aboutUuid).toBeTypeOf("string");
+    }
+  });
+
   test("readiness is Q14 scoped to the shot's own look (Q07)", async () => {
     const ctx = await shotContext(fx.ctx, shot1204.uuid);
     expect(ctx.readiness.result.target).toBe("Q07");

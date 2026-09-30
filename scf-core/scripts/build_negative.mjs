@@ -187,6 +187,27 @@ const CASES = [
     },
   },
   {
+    name: "bundle-unbound",
+    about:
+      "A bundle with an asset in it and no binding anywhere. Its asset " +
+      "is referenced, so §8.6's orphan finding stays silent, and the " +
+      "cascade starts at a subject and never arrives — nothing " +
+      "resolves it at any position. Info: assembling a bundle before " +
+      "deciding what it is for is an ordinary state of an unfinished " +
+      "film.",
+    damage: async (exec) => {
+      await exec(
+        "INSERT INTO asset (name, identifier, uuid) VALUES (?, ?, ?)",
+        ["kitchen plate", "@project/plates/kitchen.exr", uuid(1)]);
+      await exec(
+        "INSERT INTO bundle (name, intent, uuid) VALUES (?, ?, ?)",
+        ["Kitchen plates", "visual_identity", uuid(2)]);
+      await exec(
+        "INSERT INTO bundle_asset (bundle_id, asset_id, uuid) " +
+        "VALUES (1, 1, ?)", [uuid(3)]);
+    },
+  },
+  {
     name: "header-unstamped",
     about:
       "No application id. Every file written before schema 2.10 looks " +

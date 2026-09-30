@@ -12,7 +12,8 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { initDatabase, newUuid } from "../src/db.ts";
 import {
   applyBundleAdd, bindBundle, bindBundleToCharacter, bundleMembers,
-  bundleReach, bundleReachColumns, bundlesForAsset, createBundle,
+  bindingSubjects, bundleReach, bundleReachColumns, bundlesForAsset,
+  createBundle,
   listBundles, planBundleAdd, removeBundleMember, setMemberRole,
   unboundBundleIds,
 } from "../src/bundling.ts";
@@ -68,7 +69,7 @@ describe("the three-step path, as one action each", () => {
   });
 
   test("binding is what makes the bundle reachable", async () => {
-    const id = await bindBundleToCharacter(db.exec, eleanor, bundleId);
+    const id = await bindBundleToCharacter(db.exec, registry, eleanor, bundleId);
     expect(id).not.toBeNull();
     const [row] = await db.exec(
       "SELECT is_baseline FROM character_asset_binding WHERE id = ?", [id]);
@@ -76,7 +77,7 @@ describe("the three-step path, as one action each", () => {
   });
 
   test("binding twice is a no-op, not a duplicate", async () => {
-    expect(await bindBundleToCharacter(db.exec, eleanor, bundleId))
+    expect(await bindBundleToCharacter(db.exec, registry, eleanor, bundleId))
       .toBeNull();
     const rows = await db.exec(
       "SELECT id FROM character_asset_binding WHERE character_id = ?",
@@ -184,12 +185,18 @@ describe("binding any subject, and seeing what reaches a bundle", () => {
     bundleId = await createBundle(db.exec, "Chime — after", "visual_identity");
   });
 
+  test("binding subjects come from the registry, not a list", () => {
+    expect(bindingSubjects(registry).sort())
+      .toEqual(["character", "costume", "location", "prop"]);
+  });
+
   test("the reach columns come from the registry, not a list", () => {
     const found = bundleReachColumns(registry)
       .map((c) => `${c.entity}.${c.column}`).sort();
     expect(found).toEqual([
       "character_asset_binding.bundle_id",
       "character_shot_override.bundle_override_id",
+      "costume_asset_binding.bundle_id",
       "location_asset_binding.bundle_id",
       "location_shot_override.bundle_override_id",
       "prop_asset_binding.bundle_id",
@@ -204,7 +211,7 @@ describe("binding any subject, and seeing what reaches a bundle", () => {
   });
 
   test("a prop binding carries its scene range", async () => {
-    const id = await bindBundle(db.exec, "prop", prop, bundleId, {
+    const id = await bindBundle(db.exec, registry, "prop", prop, bundleId, {
       isBaseline: false, sceneRangeStartId: scene, precedence: 2,
       name: "after the storm",
     });
@@ -222,12 +229,12 @@ describe("binding any subject, and seeing what reaches a bundle", () => {
   });
 
   test("the same pair over the same range is a duplicate", async () => {
-    expect(await bindBundle(db.exec, "prop", prop, bundleId,
+    expect(await bindBundle(db.exec, registry, "prop", prop, bundleId,
                             { sceneRangeStartId: scene })).toBeNull();
   });
 
   test("the same pair over a different range is a second fact", async () => {
-    expect(await bindBundle(db.exec, "prop", prop, bundleId))
+    expect(await bindBundle(db.exec, registry, "prop", prop, bundleId))
       .not.toBeNull();
     expect(await bundleReach(db.exec, registry, bundleId)).toHaveLength(2);
   });
@@ -242,23 +249,25 @@ describe("binding any subject, and seeing what reaches a bundle", () => {
   });
 
   test("a subject kind without a binding table is refused", async () => {
-    await expect(bindBundle(db.exec, "costume" as "prop", 1, bundleId))
+    // costume gained one in 2.16, which is the point of deriving the
+    // list: this test had to change, and no caller did.
+    await expect(bindBundle(db.exec, registry, "theme", 1, bundleId))
       .rejects.toThrow(/no binding table/);
   });
 });
 
 describe("the fixture's media is reachable", () => {
-  test("the only bundle nothing binds is the costume's", async () => {
-    // costume has no asset binding entity, so a bundle of costume
-    // references has nowhere to be bound. Every other bundle reaches a
-    // subject — the check the editor now shows on every bundle.
+  test("every bundle in the fixture reaches a subject", async () => {
+    // The costume bundle was the exception until 2.16 gave costume a
+    // binding entity. The finding itself is exercised by the
+    // `bundle-unbound` negative fixture instead.
     const fx = openFixture();
     try {
       const unbound = await unboundBundleIds(fx.ctx.exec, registry);
       const names = (await fx.ctx.exec("SELECT id, name FROM bundle"))
         .filter((r) => unbound.has(Number(r["id"])))
         .map((r) => r["name"]);
-      expect(names).toEqual(["Ada's Shawl"]);
+      expect(names).toEqual([]);
     } finally {
       fx.close();
     }

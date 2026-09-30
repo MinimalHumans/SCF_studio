@@ -14,16 +14,60 @@ Changes that are ready and cannot ship on their own, because
 registry makes that tag serve different bytes than `SHA256SUMS`
 claims, and `schema/check_pin.py` fails. Conventions §8 exempts
 "purely cosmetic" changes from a version bump, and that exemption is
-only safe BEFORE the tag. Afterwards a cosmetic change has to wait
-here, or take a version of its own.
+only safe BEFORE the tag. Afterwards a cosmetic change waits here, or
+takes a version of its own.
 
-- **`bundle.intent`'s help text still scopes `acoustic` to location
-  ambience** ("acoustic added in Phase 1D for location ambience").
-  It is any subject's sonic identity: a prop's recorded takes belong
-  under it. The first `scf-mcp` session found a `.wav` filed under
-  `visual_identity` on a prop, and the help text is why that reads as
-  reasonable. Retrieval is BY intent, so a wrong one is a silent miss
-  rather than a visible error, and that belongs in the text too.
+*(Empty. The `bundle.intent` help text queued here in 0.55 shipped
+with 2.16.)*
+
+## 2.16
+
+Six binding filters resolved — four specified, two removed — one new
+entity, and the held help text. Proposals 0012 (its last item), 0025
+(its documentation half), 0027 and 0029.
+
+**Removed** (§11.0: pre-1.0 files are disposable):
+
+- `character_asset_binding.act_id`, `prop_asset_binding.act_id`,
+  `location_asset_binding.act_id` — act membership is derived from
+  boundaries (§5.1), so an act-scoped binding is a scene range written
+  in a way that goes stale when a boundary moves.
+- `character_asset_binding.variant_id`,
+  `prop_asset_binding.variant_id` — nothing anywhere says which
+  character or prop variant is in force at a position. There is no
+  positional rule and no junction that names one, so the filter could
+  not be evaluated, which is the defect 0027 is about. If a rule
+  arrives, the column comes back with it.
+
+**Changed:**
+
+- `location_asset_binding.time_of_day_filter` is now a `select` over
+  `scene.time_of_day`'s vocabulary (0012, item 4). Free text matched
+  against a closed vocabulary could only agree by luck.
+- `location_asset_binding.variant_id`,
+  `character_asset_binding.physical_state_filter` and
+  `vocal_state_filter` gain help text stating what §12.8.1 now makes
+  them mean. The state filters match a state's NAME, not its sentence.
+- `entity_anchor.region_box` declares its `{x, y, w, h}` shape and
+  §10.1's preserve rule (0025's remaining half).
+- `bundle.intent`'s help text: `acoustic` is any subject's sonic
+  identity, not only a location's ambience.
+
+**Added:**
+
+- `costume_asset_binding` (0029). Costume was the one media subject
+  with references and nowhere to bind them: a bundle of costume
+  images could be assembled and reach nobody. It has no variant filter
+  (costume has no variant entity) and no act filter.
+- `costume` joins the ontology's `SUBJECTS`. A costume is about its
+  character; a costume asset binding is about the costume, and Q13
+  finds a binding by the subject column the ontology names.
+
+Every new rule is exercised by the fixture rather than only stated:
+one binding scoped by time of day, one by variant, one by a physical
+state, and the costume binding. The `asset.bundle_unbound` finding,
+which the fixture previously raised on the unbindable costume bundle,
+moved to a twelfth negative fixture so it stays exercised.
 
 ## 2.15
 

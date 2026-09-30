@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  BINDING_SUBJECTS, bindBundle, bundleReach,
+  bindingSubjects, bindBundle, bundleReach,
   type BindingSubject, type BundleReach as Reach,
 } from "@scf-core/bundling.ts";
 import { sceneOrder } from "@scf-core/resolution.ts";
@@ -154,7 +154,8 @@ function BindForm({ bundleId, scenes, onDone }: {
   const submit = (): void => {
     if (subjectId === null) return;
     void (async () => {
-      const id = await bindBundle(exec, subjectType, subjectId, bundleId, {
+      const id = await bindBundle(exec, registry, subjectType, subjectId,
+                                  bundleId, {
         isBaseline: ranged ? false : baseline,
         sceneRangeStartId: start, sceneRangeEndId: end,
         precedence: ranged ? 1 : 0,
@@ -183,7 +184,8 @@ function BindForm({ bundleId, scenes, onDone }: {
       <select value={subjectType}
               onChange={(e) =>
                 setSubjectType(e.target.value as BindingSubject)}>
-        {BINDING_SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
+        {bindingSubjects(registry).map(
+          (s) => <option key={s} value={s}>{s}</option>)}
       </select>
       <select value={subjectId ?? ""}
               onChange={(e) => setSubjectId(Number(e.target.value))}>

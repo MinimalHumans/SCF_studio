@@ -84,7 +84,7 @@ describe("findByUuid on the fixture", () => {
     expect(hits[0]?.label).toBe(String(row?.["name"]));
   });
 
-  test("finds junction rows too — uuid is on all 103 entities", async () => {
+  test("finds junction rows too — uuid is on all 104 entities", async () => {
     const [row] = await fixture.exec(
       "SELECT uuid FROM scene_character WHERE uuid IS NOT NULL LIMIT 1");
     if (row === undefined) return; // fixture without the junction populated

@@ -1,7 +1,7 @@
 {
   "query": "Q14",
   "resultFormat": "1.0",
-  "schemaVersion": "2.15",
+  "schemaVersion": "2.16",
   "parameters": {
     "target": "Q07",
     "character": null,

@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.55 (draft) — not a release.**
+**Version 0.56 (draft) — not a release.**
 Describes schema version **2.15**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -1174,6 +1174,16 @@ an implementation that got this right and one that did not produced
 identical `asset.orphan` findings on every published case. It now
 carries a textless poster master reachable only through that column.
 
+**An asset may be about a SCENE or a SHOT rather than about a subject.**
+A DOP's framing plate for one scene belongs to no character, prop or
+location in it, and the media cascade (§7) starts at a subject, so a
+binding is the wrong shape for it. Such an asset is related to the scene
+or the shot through `asset_relationship` (`entity_type` = `scene` or
+`shot`), and a consumer assembling everything in force at a position
+SHOULD include those rows. There is deliberately no fourth binding
+table: a binding carries precedence, baselines and filters, and none of
+them means anything for "this picture is of that scene".
+
 **A bundle no binding reaches is the orphan one level up.** Its assets
 are referenced — `bundle_asset` points at each of them — so no
 `asset.orphan` finding is raised, and yet the media cascade (§7) starts
@@ -1188,7 +1198,10 @@ not finished.
 Which rows reach a bundle MUST be derived from the registry, as orphan
 detection is: an entity declaring a reference to `bundle`, whose own
 declared `subject` is an entity that it also references, binds that
-subject to it.
+subject to it. `costume_asset_binding` arrived in 2.16 through that
+rule and not through an edit here — before it, a bundle of costume
+references was unbindable by construction, which is what the fixture's
+only such finding was.
 
 ### 8.7 Content metadata is read, never stored
 
@@ -1890,15 +1903,15 @@ Leaf: `scene_music_design`. Result structure as §12.3.
 
 **Which assets are in force for a subject and an intent.**
 
-Parameters: `subjectType`, `subject` — a character, prop or location —
-`intent`, and `scene` and `shot`, both optional. All five appear in the
+Parameters: `subjectType`, `subject` — a character, prop, location or
+costume — `intent`, and `scene` and `shot`, both optional. All five appear in the
 envelope, as §12.1.1 requires: `intent` and `subjectType` were carried
 only in the result until 0.40, which left the envelope unable to say
 what question it answered.
 
 | Field | |
 |---|---|
-| `subjectKind` | The subject's KIND — `character`, `location`, `prop` — echoing `subjectType`. **Not its uuid**, which the envelope's `subject` carries. It was itself named `subject` until 0.41, four lines from an envelope member of the same name meaning something else. |
+| `subjectKind` | The subject's KIND — `character`, `location`, `prop`, `costume` — echoing `subjectType`. **Not its uuid**, which the envelope's `subject` carries. It was itself named `subject` until 0.41, four lines from an envelope member of the same name meaning something else. |
 | `intent` | The intent asked for, echoed. |
 | `trail` | The resolution trail, **broadest first**, matching §7.4's root-first convention. |
 | `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles. |
@@ -1940,6 +1953,33 @@ region — and carries no identifier of its own, so reporting the anchor
 row as the reference would produce something that can never resolve.
 The reference carries the asset's identity and the anchor's name in
 `anchorName`.
+
+#### 12.8.1 A binding applies where every filter it declares is satisfied
+
+A `*_asset_binding` row may narrow when it applies. **A binding is in
+force at a position only where EVERY filter it declares is satisfied**;
+the filters compose as AND, and a filter left null is no condition at
+all. A conforming implementation MUST evaluate every filter the registry
+declares on that entity.
+
+| Filter | On | Satisfied where |
+|---|---|---|
+| `scene_range_start_id` / `scene_range_end_id` | all | the position is within the range, in **story order** (§4.1) |
+| `time_of_day_filter` | `location_asset_binding` | the scene's `time_of_day` equals it, compared trimmed and case-insensitively, over `scene.time_of_day`'s vocabulary |
+| `variant_id` | `location_asset_binding` | §12.17 puts that variant in force at the position |
+| `physical_state_filter` / `vocal_state_filter` | `character_asset_binding` | a `performance_state` of that modality is in force at the position (§4.5) and its **name** matches, trimmed and case-insensitively |
+
+**Asked with no position, only baselines apply and no positional filter
+is evaluated.** There is nothing to evaluate one against, and a baseline
+declaring one is answering a question nobody asked.
+
+**A binding excluded by a filter MUST appear in `trail`, with the filter
+that excluded it.** An absence is an answer, and the reason is the part
+a consumer cannot reconstruct: a binding that simply vanishes is
+indistinguishable from one that was never written. Until 2.16 six
+columns narrowed a binding and the cascade read one of them, so a
+binding scoped to a variant or a time of day applied everywhere and its
+trail line said it fired (proposal 0027).
 
 `rootMapped` is a fact about the SESSION, not the file. With no root
 mapping every reference is `unaddressed` (§0.3, §8.3) — not

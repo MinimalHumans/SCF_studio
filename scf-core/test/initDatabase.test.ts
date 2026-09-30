@@ -29,14 +29,14 @@ afterAll(() => {
 });
 
 describe("initDatabase parity with the fixture", () => {
-  test("all 103 registry tables exist", async () => {
+  test("all 104 registry tables exist", async () => {
     const tables = await fresh.exec(
       "SELECT name FROM sqlite_master WHERE type='table'");
     const names = new Set(tables.map((r) => String(r["name"])));
     for (const entity of registry.order) {
       expect(names.has(entity), `missing table ${entity}`).toBe(true);
     }
-    expect(registry.order).toHaveLength(103);
+    expect(registry.order).toHaveLength(104);
   });
 
   test("column sets match the fixture per registry table", async () => {

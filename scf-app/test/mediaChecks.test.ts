@@ -126,6 +126,15 @@ describe("scanMedia on the shapes the session found", () => {
     }]);
   });
 
+  test("a binding scoped by a filter is not an everywhere binding",
+       async () => {
+    await db.exec("UPDATE location_asset_binding SET time_of_day_filter = " +
+                  "'night' WHERE name = 'Kitchen Day'");
+    const r = await scanMedia(db.exec, registry);
+    expect(r.everywhereBindings.map((b) => b.name))
+      .toEqual(["Kitchen Day again"]);
+  });
+
   test("a ranged binding is not an everywhere binding; a cut one is gone",
        async () => {
     await db.exec("UPDATE location_asset_binding SET scene_range_start_id = 1, " +
@@ -139,13 +148,15 @@ describe("scanMedia on the shapes the session found", () => {
 });
 
 describe("scanMedia on the fixture", () => {
-  test("one finding: the costume bundle with nowhere to be bound", async () => {
+  test("the fixture is clean: every bundle reaches a subject", async () => {
     const registry = await loadReg();
     const db = openNodeDatabase(FIXTURE, { readOnly: true });
     try {
+      // The costume bundle was the exception until schema 2.16 gave
+      // costume a binding entity of its own.
       const r = await scanMedia(db.exec, registry);
-      expect(r.unboundBundles.map((b) => b.name)).toEqual(["Ada's Shawl"]);
-      expect(mediaFindingCount(r)).toBe(1);
+      expect(r.unboundBundles).toEqual([]);
+      expect(mediaFindingCount(r)).toBe(0);
     } finally {
       db.close();
     }

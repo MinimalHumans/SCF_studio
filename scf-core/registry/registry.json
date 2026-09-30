@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.15",
+  "schemaVersion": "2.16",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -42,7 +42,7 @@
     "screenplay_title_page",
     "screenplay_version_title_page"
   ],
-  "entityCount": 103,
+  "entityCount": 104,
   "entities": [
     {
       "name": "project",
@@ -7336,7 +7336,7 @@
             "environment",
             "acoustic"
           ],
-          "helpText": "Hard enum. Tools switch on this to determine compatibility. acoustic added in Phase 1D for location ambience.",
+          "helpText": "Hard enum. Tools switch on this to determine compatibility. acoustic is any subject's sonic identity, not only a location's ambience: a prop's recorded takes belong under it. Retrieval is BY intent, so an asset filed under the wrong one is a silent miss rather than a visible error.",
           "open": true
         },
         {
@@ -7616,23 +7616,14 @@
           "default": 0
         },
         {
-          "name": "variant_id",
-          "label": "Variant",
-          "fieldType": "reference",
-          "sqlType": "INTEGER",
-          "required": false,
-          "tab": "Conditions",
-          "autoInjected": false,
-          "referenceEntity": "character_variant"
-        },
-        {
           "name": "physical_state_filter",
           "label": "Physical State Filter",
           "fieldType": "text",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Conditions",
-          "autoInjected": false
+          "autoInjected": false,
+          "helpText": "Spec §12.8: the binding applies where a physical performance_state is in force at the position (§4.5) whose NAME matches this, compared trimmed and case-insensitively — the state's label, not its sentence. Empty means no condition, not 'no state'."
         },
         {
           "name": "vocal_state_filter",
@@ -7641,7 +7632,8 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "Conditions",
-          "autoInjected": false
+          "autoInjected": false,
+          "helpText": "Spec §12.8: as physical_state_filter, against a vocal performance_state."
         },
         {
           "name": "scene_range_start_id",
@@ -7662,16 +7654,6 @@
           "tab": "Conditions",
           "autoInjected": false,
           "referenceEntity": "scene"
-        },
-        {
-          "name": "act_id",
-          "label": "Act",
-          "fieldType": "reference",
-          "sqlType": "INTEGER",
-          "required": false,
-          "tab": "Conditions",
-          "autoInjected": false,
-          "referenceEntity": "act"
         },
         {
           "name": "notes",
@@ -7710,7 +7692,7 @@
       "icon": "🎚️",
       "nameField": "name",
       "category": "Asset Reference",
-      "description": "Applies a bundle to a prop under specific conditions (variant, scene range, act). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene/state.",
+      "description": "Applies a bundle to a prop under specific conditions (scene range). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene.",
       "sortOrder": 253,
       "tier": 2,
       "parentEntity": null,
@@ -7777,16 +7759,6 @@
           "default": 0
         },
         {
-          "name": "variant_id",
-          "label": "Variant",
-          "fieldType": "reference",
-          "sqlType": "INTEGER",
-          "required": false,
-          "tab": "Conditions",
-          "autoInjected": false,
-          "referenceEntity": "prop_variant"
-        },
-        {
           "name": "scene_range_start_id",
           "label": "Scene Range Start",
           "fieldType": "reference",
@@ -7807,14 +7779,127 @@
           "referenceEntity": "scene"
         },
         {
-          "name": "act_id",
-          "label": "Act",
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Notes",
+          "autoInjected": false
+        },
+        {
+          "name": "lifecycle_status",
+          "label": "Lifecycle Status",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Lifecycle",
+          "autoInjected": true,
+          "default": "active",
+          "options": [
+            "active",
+            "draft",
+            "superseded",
+            "deprecated",
+            "cut",
+            "archived"
+          ],
+          "helpText": "Cross-cutting record state. See spec §6.6."
+        }
+      ]
+    },
+    {
+      "name": "costume_asset_binding",
+      "label": "Costume Asset Binding",
+      "labelPlural": "Costume Asset Bindings",
+      "icon": "🎚️",
+      "nameField": "name",
+      "category": "Asset Reference",
+      "description": "Applies a bundle to a costume under specific conditions (scene range). Tools walk the costume resolution cascade and use bindings to find the right media for a costume in a given scene.",
+      "sortOrder": 255,
+      "tier": 2,
+      "parentEntity": null,
+      "parentField": null,
+      "versionable": false,
+      "hasLifecycleStatus": true,
+      "hasExternalId": false,
+      "subject": "costume",
+      "scope": "scene",
+      "paired": false,
+      "positionPattern": "none",
+      "refines": [],
+      "queries": [
+        "Q13"
+      ],
+      "fields": [
+        {
+          "name": "name",
+          "label": "Binding Name",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        },
+        {
+          "name": "costume_id",
+          "label": "Costume",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "costume"
+        },
+        {
+          "name": "bundle_id",
+          "label": "Bundle",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "bundle"
+        },
+        {
+          "name": "is_baseline",
+          "label": "Is Baseline",
+          "fieldType": "boolean",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": false
+        },
+        {
+          "name": "precedence",
+          "label": "Precedence",
+          "fieldType": "integer",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": 0
+        },
+        {
+          "name": "scene_range_start_id",
+          "label": "Scene Range Start",
           "fieldType": "reference",
           "sqlType": "INTEGER",
           "required": false,
           "tab": "Conditions",
           "autoInjected": false,
-          "referenceEntity": "act"
+          "referenceEntity": "scene"
+        },
+        {
+          "name": "scene_range_end_id",
+          "label": "Scene Range End",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "Conditions",
+          "autoInjected": false,
+          "referenceEntity": "scene"
         },
         {
           "name": "notes",
@@ -7853,7 +7938,7 @@
       "icon": "🎚️",
       "nameField": "name",
       "category": "Asset Reference",
-      "description": "Applies a bundle to a location under specific conditions (variant, scene range, act, time-of-day). Tools walk the location resolution cascade and use bindings to find the right media for a location.",
+      "description": "Applies a bundle to a location under specific conditions (variant, scene range, time-of-day). Tools walk the location resolution cascade and use bindings to find the right media for a location.",
       "sortOrder": 254,
       "tier": 2,
       "parentEntity": null,
@@ -7927,7 +8012,8 @@
           "required": false,
           "tab": "Conditions",
           "autoInjected": false,
-          "referenceEntity": "location_variant"
+          "referenceEntity": "location_variant",
+          "helpText": "Spec §12.8: the binding applies where §12.17 picks this variant as the one in force at the position. The only variant filter that survives 0027 — character and prop variants have no in-force rule for a filter to test."
         },
         {
           "name": "scene_range_start_id",
@@ -7950,24 +8036,23 @@
           "referenceEntity": "scene"
         },
         {
-          "name": "act_id",
-          "label": "Act",
-          "fieldType": "reference",
-          "sqlType": "INTEGER",
-          "required": false,
-          "tab": "Conditions",
-          "autoInjected": false,
-          "referenceEntity": "act"
-        },
-        {
           "name": "time_of_day_filter",
           "label": "Time of Day Filter",
-          "fieldType": "text",
+          "fieldType": "select",
           "sqlType": "TEXT",
           "required": false,
           "tab": "Conditions",
           "autoInjected": false,
-          "helpText": "Matches scene.time_of_day for bindings scoped to specific times."
+          "options": [
+            "day",
+            "dawn",
+            "morning",
+            "midday",
+            "afternoon",
+            "dusk",
+            "night"
+          ],
+          "helpText": "Spec §12.8: the binding applies where the scene's time_of_day equals this, compared trimmed and case-insensitively. Proposal 0012 closed it over scene.time_of_day's vocabulary — free text matched against a select could only ever agree by luck."
         },
         {
           "name": "notes",
@@ -8120,7 +8205,8 @@
           "required": false,
           "tab": "Scope",
           "autoInjected": false,
-          "placeholder": "{\"x\": 420, \"y\": 180, \"w\": 480, \"h\": 600}"
+          "placeholder": "{\"x\": 420, \"y\": 180, \"w\": 480, \"h\": 600}",
+          "helpText": "Declared shape: {x, y, w, h} in pixels, origin top-left, naming the part of the asset this anchor points at. A reader that does not recognise a shape MUST preserve it (§10.1) rather than discard it."
         },
         {
           "name": "region_label",
