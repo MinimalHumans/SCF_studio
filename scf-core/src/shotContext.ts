@@ -15,13 +15,15 @@
 
 import type { FileLocator } from "./assets.ts";
 import type { QueryResult } from "./queryResult.ts";
-import { rows, type ScfContext } from "./resolution.ts";
+import {
+  ANCHOR_TYPE_FOR_INTENT, rows, type ScfContext,
+} from "./resolution.ts";
+import { QUERY_PATHS } from "./queryPaths.ts";
 import {
   q00Result, q04Result, q06Result, q07Result, q13Result, q14Result,
   type Q00Result, type Q04Result, type Q05Result, type Q07Result,
   type Q13Result, type Q14Result,
 } from "./canonicalQueries.ts";
-import { QUERY_PATHS } from "./queryPaths.ts";
 
 export interface ShotContext {
   contextFormat: "1.0";
@@ -35,6 +37,13 @@ export interface ShotContext {
   physical: QueryResult<Q05Result>[];
   /** Media in force (Q13), one per subject x applicable intent. */
   media: QueryResult<Q13Result>[];
+  /**
+   * Every subject the media sweep considered and what it asked for.
+   * A composite that returns a partial answer silently is worse than
+   * one that refuses: this is how a caller sees that a subject was
+   * swept with no intents rather than skipped by accident.
+   */
+  swept: SweptSubject[];
   /** Pre-flight readiness (Q14) for the shot's own look. */
   readiness: QueryResult<Q14Result>;
 }
@@ -48,24 +57,89 @@ async function idFor(
   return row === undefined ? null : Number(row["id"]);
 }
 
+/** What the media sweep did about one subject. */
+export interface SweptSubject {
+  subjectType: string;
+  uuid: string;
+  name: string | null;
+  /** Intents asked for, in the order Q13 was called. */
+  intents: string[];
+  /** Why `intents` is empty, when it is. */
+  note?: string;
+}
+
 /**
- * The asset intents that apply to a subject type, derived from
- * `QUERY_PATHS` rather than hard-coded (design doc §4.2): every
- * `step.intent` on a query path whose params key on `<subjectType>_id`.
- * Today that is Q02/Q05/Q06 for `character` (visual_identity,
- * voice_identity, motion); `prop`/`location` have no such path yet and
- * so correctly yield no intents, not a hard-coded guess.
+ * The asset intents to ask for about ONE subject: what a query path
+ * declares for its kind, plus what the file actually binds to it.
+ *
+ * The first version was the first half alone, derived from
+ * `QUERY_PATHS`, which keys on `<subjectType>_id`. Only `character` has
+ * such a path, so props and locations were swept with NO intents and
+ * the composite returned a shot prompt with no location media in it,
+ * silently. The subject set was never the problem — it already
+ * contained them.
+ *
+ * The second half closes that: every intent a live binding or shot
+ * override puts in force for this subject. Total on any file, no
+ * per-kind list, and it cannot ask for an intent the file has nothing
+ * under.
+ *
+ * Both halves, not the second alone. A declared path asks for `motion`
+ * on a character with no motion bundle and gets an empty answer, and
+ * that empty answer is the difference between "there is no motion
+ * reference for her" and "nobody asked" — the distinction this whole
+ * composite got wrong the first time.
+ *
+ * Anchors are the last addition, and only where the subject has
+ * neither: an anchor IS media the subject has, so a subject whose only
+ * media is an anchor must still be asked about, under the intents that
+ * map to its anchor type (§12.8). A subject with bundles is not
+ * widened that way — its anchors come back under the intents it is
+ * already asked for.
  */
-function intentsFor(subjectType: string): string[] {
+async function intentsFor(
+    ctx: ScfContext, subjectType: string, subjectId: number,
+): Promise<string[]> {
+  const intents = new Set<string>();
   const key = `${subjectType}_id`;
-  const found = new Set<string>();
   for (const path of Object.values(QUERY_PATHS)) {
     if (!path.params.includes(key)) continue;
     for (const step of path.steps) {
-      if (step.intent !== undefined) found.add(step.intent);
+      if (step.intent !== undefined) intents.add(step.intent);
     }
   }
-  return [...found];
+
+  const bundleIds: number[] = [];
+  const column = `${subjectType}_id`;
+  for (const [entity, ref] of [
+    [`${subjectType}_asset_binding`, "bundle_id"],
+    [`${subjectType}_shot_override`, "bundle_override_id"],
+  ] as const) {
+    if (!ctx.registry.entities.has(entity)) continue;
+    for (const row of await rows(ctx.exec, entity, `${column} = ?`,
+                                 [subjectId])) {
+      const id = row[ref];
+      if (id !== null && id !== undefined) bundleIds.push(Number(id));
+    }
+  }
+
+  for (const id of new Set(bundleIds)) {
+    const bundle = (await rows(ctx.exec, "bundle", "id = ?", [id]))[0];
+    const intent = bundle?.["intent"];
+    if (intent !== null && intent !== undefined && String(intent) !== "") {
+      intents.add(String(intent));
+    }
+  }
+  if (intents.size > 0) return [...intents];
+
+  // Neither a declared path nor a binding: anchors are all that is left.
+  const anchorTypes = new Set((await rows(
+    ctx.exec, "entity_anchor", "subject_type = ? AND subject_id = ?",
+    [subjectType, subjectId])).map((a) => String(a["anchor_type"] ?? "")));
+  for (const [intent, anchorType] of Object.entries(ANCHOR_TYPE_FOR_INTENT)) {
+    if (anchorTypes.has(anchorType)) intents.add(intent);
+  }
+  return [...intents];
 }
 
 interface Subject { type: string; uuid: string }
@@ -123,11 +197,23 @@ export async function shotContext(
   }
 
   const media: QueryResult<Q13Result>[] = [];
+  const swept: SweptSubject[] = [];
   for (const subj of subjects) {
-    const intents = intentsFor(subj.type);
-    if (intents.length === 0) continue;
     const subjectId = await idFor(ctx, subj.type, subj.uuid);
-    if (subjectId === null) continue;
+    if (subjectId === null) {
+      swept.push({ subjectType: subj.type, uuid: subj.uuid, name: null,
+                   intents: [], note: "no row with that uuid" });
+      continue;
+    }
+    const row = (await rows(ctx.exec, subj.type, "id = ?", [subjectId]))[0];
+    const name = row?.["name"] === null || row?.["name"] === undefined
+      ? null : String(row["name"]);
+    const intents = await intentsFor(ctx, subj.type, subjectId);
+    swept.push({
+      subjectType: subj.type, uuid: subj.uuid, name, intents,
+      ...(intents.length === 0
+        ? { note: "nothing binds media to this subject" } : {}),
+    });
     for (const intent of intents) {
       media.push(await q13Result(
         ctx, subj.type, subj.uuid, subjectId, intent,
@@ -139,5 +225,5 @@ export async function shotContext(
     ctx, "Q07", null, null, sceneUuid, sceneId, shotUuid, shotId);
 
   return { contextFormat: "1.0", brief, scene, look, physical, media,
-           readiness };
+           swept, readiness };
 }

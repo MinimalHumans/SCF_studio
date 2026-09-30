@@ -86,6 +86,37 @@ describe("listEntities — enumeration with nothing in hand (§ new)", () => {
     expect(listed.map((r) => r.label)).toEqual(["1"]);
   });
 
+  test("scenes come back in story order, carrying their position",
+       async () => {
+    // §4.1: the script decides, not scene_number and not row id. The
+    // fixture is built so all three differ, and scene 17 is unscripted
+    // and therefore last.
+    const scenes = await listEntities(fx.ctx, "scene");
+    expect(scenes.map((s) => s.label))
+      .toEqual(["1", "3", "7", "9", "10", "11", "12", "12A", "19", "16",
+                "21", "24", "17"]);
+    expect(scenes.map((s) => s.storyPosition))
+      .toEqual(scenes.map((_, i) => i));
+  });
+
+  test("rows belonging to a scene are ordered by it too", async () => {
+    const shots = await listEntities(fx.ctx, "shot");
+    const positions = shots.map((s) => s.storyPosition ?? Infinity);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  test("a filter takes the projected spelling a result hands back",
+       async () => {
+    // A listed shot carries scene_uuid; passing that straight back as
+    // the filter field used to fail on a rule the caller obeyed.
+    const [scene] = await listEntities(fx.ctx, "scene");
+    const byStored = await listEntities(fx.ctx, "shot",
+      { field: "scene_id", uuid: scene?.uuid ?? "" });
+    const byProjected = await listEntities(fx.ctx, "shot",
+      { field: "scene_uuid", uuid: scene?.uuid ?? "" });
+    expect(byProjected).toEqual(byStored);
+  });
+
   test("an unknown entity type throws", async () => {
     await expect(listEntities(fx.ctx, "spaceship"))
       .rejects.toThrow(/unknown entity type/);

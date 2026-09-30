@@ -27,8 +27,14 @@
     "then table, lexicographic",
     "then lowest row id"
   ],
-  "codeCount": 40,
+  "codeCount": 41,
   "codes": [
+    {
+      "code": "asset.bundle_unbound",
+      "severity": "info",
+      "title": "Bundle reaches no subject",
+      "spec": "§8.6"
+    },
     {
       "code": "asset.identifier_absent",
       "severity": "warning",

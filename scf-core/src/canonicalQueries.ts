@@ -651,6 +651,59 @@ export interface Q10Result {
 }
 
 
+/**
+ * The scenes a subject is PLACED IN, read from the registry rather than
+ * from a list of entity kinds (§12.11).
+ *
+ * Two shapes place a subject, and only these two:
+ *
+ *   a LINK entity (registry `subject: link`) declaring both `scene_id`
+ *   and `<subject>_id` — scene_character, scene_prop, motif_appearance,
+ *   costume_scene;
+ *
+ *   `scene` declaring a reference to the subject — `scene.location_id`.
+ *
+ * A link ASSERTS presence; that is what a link is. Everything else that
+ * happens to name both a scene and a subject DESCRIBES the subject
+ * there — `performance_beat`, `prop_state`, `makeup_hair_design` — and
+ * describing a subject in a scene is not the same claim as placing it.
+ * The distinction is the registry's own `subject` field, so a new
+ * placement junction is covered the day it is declared and a new design
+ * entity is not (conventions §2).
+ *
+ * Cut rows are excluded by `rows()` (§6.6.1), and a cut SCENE is
+ * dropped by the caller's story-order filter.
+ */
+async function placedAt(
+    ctx: ScfContext, subjectEntity: string, subjectId: number,
+): Promise<number[]> {
+  const column = `${subjectEntity}_id`;
+  const out: number[] = [];
+
+  const sceneDef = ctx.registry.entities.get("scene");
+  if (sceneDef?.fields.some(
+    (f) => f.name === column && f.referenceEntity === subjectEntity)) {
+    for (const scene of await rows(ctx.exec, "scene", `${q(column)} = ?`,
+                                   [subjectId])) {
+      const sid = asId(scene["id"]);
+      if (sid !== null) out.push(sid);
+    }
+  }
+
+  for (const name of ctx.registry.order) {
+    const def = ctx.registry.entities.get(name);
+    if (def === undefined || def.subject !== "link") continue;
+    const names = new Set(def.fields.map((f) => f.name));
+    if (!names.has("scene_id") || !names.has(column)) continue;
+    for (const link of await rows(ctx.exec, name, `${q(column)} = ?`,
+                                  [subjectId])) {
+      const sid = asId(link["scene_id"]);
+      if (sid !== null) out.push(sid);
+    }
+  }
+  return out;
+}
+
 export async function q10Result(
     ctx: ScfContext, themeUuid: string, themeId: number,
 ): Promise<QueryResult<Q10Result>> {
@@ -683,18 +736,6 @@ export async function q10Result(
 
       if (targetEntity === "scene") {
         sceneIds.push(targetId);
-      } else if (targetEntity === "motif") {
-        for (const a of await rows(ctx.exec, "motif_appearance",
-                                   "motif_id = ?", [targetId])) {
-          const sid = asId(a["scene_id"]);
-          if (sid !== null) sceneIds.push(sid);
-        }
-      } else if (targetEntity === "character") {
-        for (const link of await rows(ctx.exec, "scene_character",
-                                      "character_id = ?", [targetId])) {
-          const sid = asId(link["scene_id"]);
-          if (sid !== null) sceneIds.push(sid);
-        }
       } else if (targetEntity === "act" || targetEntity === "sequence") {
         // A span carries the theme at every scene of its DERIVED
         // membership (§5.1), so a scene moved between acts moves its
@@ -705,6 +746,8 @@ export async function q10Result(
         for (const [sid, spanId] of of) {
           if (spanId === targetId) sceneIds.push(sid);
         }
+      } else {
+        sceneIds.push(...await placedAt(ctx, targetEntity, targetId));
       }
     }
 

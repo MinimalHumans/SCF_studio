@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.15 |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `schema/entity_registry.py` (two new entities); `registry.json`, `scf-schema.sql`, `entity-reference.md`, `junction-keys.json` if either is a link; the conformance fixture; possibly Q01/Q02/Q12 |

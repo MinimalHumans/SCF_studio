@@ -172,12 +172,14 @@ export {
 } from "./naturalKey.ts";
 
 export {
-  type ShotContext, shotContext,
+  type ShotContext, type SweptSubject, shotContext,
 } from "./shotContext.ts";
 
 export {
   type ListFilter, type ListedRow, listEntities,
 } from "./listEntities.ts";
+
+export { type Usage, whereUsed } from "./whereUsed.ts";
 
 // ── Writer: identity and numbering ───────────────────────────────
 // Spec §6.1–6.4, §3.3, §4.3, §4.4.

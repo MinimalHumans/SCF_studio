@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.54 (draft) — not a release.**
+**Version 0.55 (draft) — not a release.**
 Describes schema version **2.15**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -1174,6 +1174,22 @@ an implementation that got this right and one that did not produced
 identical `asset.orphan` findings on every published case. It now
 carries a textless poster master reachable only through that column.
 
+**A bundle no binding reaches is the orphan one level up.** Its assets
+are referenced — `bundle_asset` points at each of them — so no
+`asset.orphan` finding is raised, and yet the media cascade (§7) starts
+at a subject and never arrives: no query at any position returns them.
+An implementation SHOULD report `asset.bundle_unbound`, at `info`, for a
+bundle that no `*_asset_binding` and no `*_shot_override` reaches. It is
+`info` and not a warning because a bundle assembled before anyone has
+decided what it is for is a normal state of an unfinished film, and
+§9.2's division is between a file that cannot be read and a file that is
+not finished.
+
+Which rows reach a bundle MUST be derived from the registry, as orphan
+detection is: an entity declaring a reference to `bundle`, whose own
+declared `subject` is an entity that it also references, binds that
+subject to it.
+
 ### 8.7 Content metadata is read, never stored
 
 `size_bytes` and `source_mtime` are stored, because they are hints about
@@ -2123,12 +2139,27 @@ from the projected connection and this query resolves it into the three
 is not a registry entity, or whose row is absent, carries a null
 `targetUuid` and `targetName` and reaches no scenes.
 
-How a carrier reaches scenes depends on what it points at: a scene
-carries the theme at itself; a motif carries it wherever it appears; a
-character carries it wherever they are present; **an act or a sequence
-carries it at every scene of its derived membership** (§5.1). A carrier
-pointing at anything else reaches no scenes, which is a legitimate
-answer and not a finding.
+**A carrier reaches the scenes it is placed in.** A scene carries the
+theme at itself; **an act or a sequence carries it at every scene of its
+derived membership** (§5.1); anything else carries it wherever the file
+places it, which is one of exactly two shapes:
+
+- a **link entity** (§2.2) declaring both `scene_id` and the subject's
+  own reference column — `scene_character`, `scene_prop`,
+  `motif_appearance`, `costume_scene`;
+- **`scene` declaring a reference to the subject** — `scene.location_id`.
+
+A link ASSERTS that the subject is there; that is what a link is. An
+entity that merely names both a scene and the subject DESCRIBES it
+there — `performance_beat`, `prop_state`, `makeup_hair_design` — and
+describing a subject in a scene is not the same claim as placing it, so
+those rows place nothing. A conforming implementation MUST read both
+shapes from the registry rather than from a list of entity kinds: a
+subject kind that gains a placement link is reached the day it is
+declared.
+
+A carrier the file places nowhere reaches no scenes, which is a
+legitimate answer and not a finding.
 
 **The span case is derived, never stored.** "Act 2 is where the story
 argues about forgiveness" is a claim an author makes about the act, and

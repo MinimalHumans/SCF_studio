@@ -164,7 +164,11 @@
         "targetEntity": "prop",
         "targetUuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
         "targetName": "Ada's locket",
-        "sceneUuids": []
+        "sceneUuids": [
+          "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+          "06857531-3e91-41a9-95dd-3262407d8132",
+          "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+        ]
       },
       {
         "connection": {
@@ -240,12 +244,12 @@
       {
         "sceneUuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
         "sceneNumber": "11",
-        "carriers": 2
+        "carriers": 3
       },
       {
         "sceneUuid": "06857531-3e91-41a9-95dd-3262407d8132",
         "sceneNumber": "12",
-        "carriers": 4
+        "carriers": 5
       },
       {
         "sceneUuid": "00000000-0000-4000-8000-00000000c12a",
@@ -255,7 +259,7 @@
       {
         "sceneUuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
         "sceneNumber": "19",
-        "carriers": 6
+        "carriers": 7
       },
       {
         "sceneUuid": "e4fa4c60-5f66-4b81-942f-6a026ab56c62",

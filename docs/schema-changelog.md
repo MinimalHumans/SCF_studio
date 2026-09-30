@@ -6,6 +6,25 @@ The registry is generated from `schema/entity_registry.py` by
 `schema/schema_meta.py`. Bump the version and record the change here in
 the same commit.
 
+## Held for the next bump
+
+Changes that are ready and cannot ship on their own, because
+`registry.json` is pinned by the `schema-<version>` tag
+(`spec/ARTIFACTS.md`): once a tag exists, ANY byte change to the
+registry makes that tag serve different bytes than `SHA256SUMS`
+claims, and `schema/check_pin.py` fails. Conventions §8 exempts
+"purely cosmetic" changes from a version bump, and that exemption is
+only safe BEFORE the tag. Afterwards a cosmetic change has to wait
+here, or take a version of its own.
+
+- **`bundle.intent`'s help text still scopes `acoustic` to location
+  ambience** ("acoustic added in Phase 1D for location ambience").
+  It is any subject's sonic identity: a prop's recorded takes belong
+  under it. The first `scf-mcp` session found a `.wav` filed under
+  `visual_identity` on a prop, and the help text is why that reads as
+  reasonable. Retrieval is BY intent, so a wrong one is a silent miss
+  rather than a visible error, and that belongs in the text too.
+
 ## 2.15
 
 Four entities added, two JSON columns retired, and one new field type.

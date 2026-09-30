@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.54 |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Spec §9.1, §9.4; `finding-catalog.json` (two new codes); `scf-core` report; the conformance fixture (one new row); possibly §4.4 |
