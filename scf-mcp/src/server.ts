@@ -265,10 +265,13 @@ server.registerTool("shot_context", {
   description: "Everything needed to write a shot prompt: the shot " +
     "itself (size, lens, angle, movement, description, story beat — " +
     "the same row `list` returns), the project brief, the scene and its " +
-    "cast, the resolved look, physical " +
-    "direction per character, media in force per subject — every " +
-    "subject in the scene, characters AND props AND the location — " +
-    "and a pre-flight readiness check. `swept` lists each subject and " +
+    "cast, the resolved look, and `presence`: who is at the shot, seen, " +
+    "heard or only named, with framing, facing and focus, each marked " +
+    "recorded (a shot row says so) or inherited (from the scene). Then " +
+    "physical direction per character seen at the shot, and media in " +
+    "force per subject — characters AND props AND the location; a heard " +
+    "subject is asked for voice and sound only, a named one for " +
+    "nothing — and a pre-flight readiness check. `swept` lists each subject and " +
     "the intents asked for, so a subject the file binds nothing to is " +
     "visible rather than missing. One call in place of the dozen it " +
     "replaces.",

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.56 (draft) — not a release.**
-Describes schema version **2.15**.
+**Version 0.57 (draft) — not a release.**
+Describes schema version **2.17**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -107,7 +107,7 @@ Three numbers, deliberately independent:
 - **Specification version** — this document. Currently `0.54` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.15`. Increments on any
+  `schema/schema_meta.py`. Currently `2.17`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
@@ -336,7 +336,7 @@ The digests are over raw bytes. A checkout whose working tree converts
 line endings will not match, which is a property of the checkout rather
 than of the artifacts.
 
-Version 2.15 defines **103 entities** across tiers 0–6.
+Version 2.17 defines **106 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -402,6 +402,37 @@ location variant by counting agreements on `time_of_day`, `weather` and
 and §12's own vocabularies decide result shapes. A finite set is what
 makes those answers the same in two implementations. An open vocabulary
 is for values a human reads, not values a resolver branches on.
+
+#### 2.4.1 Presence
+
+A subject at a position is there in one of three ways. This is its
+**presence**:
+
+| Presence | Means |
+|---|---|
+| `seen` | It can appear on screen. |
+| `heard` | It can be heard and is not seen. |
+| `named` | It is referred to, and is neither seen nor heard. |
+
+**A vocabulary that says whether a subject is on screen declares each
+value's presence in the registry**, as the field's `optionPresence`
+(§2.1). It is total over the options. As of 2.17 three fields declare
+one: `scene_character.role_in_scene`, `scene_prop.significance`, and
+`framing` on `shot_character` and `shot_prop` (§4.6). The mapping is
+published in [entity-reference.md](entity-reference.md), generated from
+the registry, and is not restated here. So, for example, a `mentioned`
+character is `named` and a `voiceover` is `heard`.
+
+An implementation MUST take a value's presence from `optionPresence` and
+MUST NOT infer it from the value's name. **A link with no value is
+`seen`**, which is the reading every file written before 2.17 assumes. A
+value the vocabulary does not list is also `seen`: §9.2 wants an answer,
+and it is the one that withholds nothing a consumer could use.
+
+Presence is about **what the file says is on screen**. A `named`
+character is still at the position: they are in its cast, their states
+are in force, and continuity follows them. They are simply not in the
+picture, and nothing that describes the picture asks after them.
 
 ### 2.5 Lists of strings
 
@@ -701,6 +732,52 @@ and never about comparing across them.
 **Pattern 3 — latest wins.** A state row exists at each scene where the
 value changed. The answer at any position is the most recent row at or
 before it. There is no resolution point; the next row supersedes.
+
+### 4.6 Presence at a shot
+
+**A subject is at a shot if a `shot_character` or `shot_prop` row puts
+it there.** Its presence is its `framing`'s (§2.4.1): `full` and
+`cropped` are seen, `off_screen` is heard. A row with `framing` unset
+puts the subject on screen with its framing unrecorded.
+
+How a seen subject reads is two more closed fields, independent of each
+other and of `framing`:
+
+- `facing` (characters only): `toward`, `profile` or `away`;
+- `focus`: `sharp` or `soft`.
+
+**An unset field is unknown, not a default.** `facing` and `focus`
+describe what is on screen, so they are empty when `framing` is
+`off_screen`.
+
+**If `shot.presence_complete` is true, the shot's rows are its whole
+frame.** A subject with no row is not in the shot, and a shot with no
+rows has nobody and nothing in it.
+
+**Otherwise every subject the shot's scene links and no row names is
+also at the shot, with its scene presence** (§2.4.1) and framing, facing
+and focus unknown. Such a subject is **inherited**, and one a row names
+is **recorded**. A result that reports presence at a shot MUST say which
+each subject is. A shot with no rows and `presence_complete` unset is
+**unrecorded**, not empty: it answers exactly as its scene does. A
+consumer MUST NOT read the absence of rows as a frame with nobody in it.
+
+**Presence at a shot is never wider than presence at its scene.** Per
+§9.2, these are kept and reported rather than refused:
+
+| Finding (§9.4) | Raised when |
+|---|---|
+| `presence.shot_subject_not_in_scene` | A shot row names a subject its scene does not link. |
+| `presence.named_but_on_screen` | A shot row puts on screen a subject its scene link makes `named`. |
+| `presence.off_screen_described` | An `off_screen` row sets `facing` or `focus`. |
+| `presence.complete_but_empty` | `presence_complete` is true and the shot has no rows. An empty frame is legitimate; a flag set by mistake empties the shot silently, so it is made visible. |
+
+**A shot is at its scene's location.** A shot has no location of its
+own. A change of place is a new scene, including a flashback and each
+side of an intercut. This cuts across screenplay convention, where an
+intercut is often written as one scene, and it is deliberate: the cost
+falls once on the writer who splits it, instead of on every reader of
+every shot, who would otherwise have to ask where each shot is.
 
 ---
 
@@ -1834,12 +1911,15 @@ Parameter: `scene`.
 | Field | |
 |---|---|
 | `scene` | The scene itself, projected. Null when the position does not resolve — including when the scene is cut (§6.6.1). |
-| `characters` | Each character present, with `states` in force there (§4.5) and the `costumes` they are wearing. In the row order of this scene's `scene_character` rows (§12.1.6). |
-| `props` | Each prop present, with its `state` at this position by pattern 3, or null where none is yet established. |
+| `characters` | Each character present, with their `presence` (§2.4.1), the `states` in force there (§4.5) and the `costumes` they are wearing. In the row order of this scene's `scene_character` rows (§12.1.6). |
+| `props` | Each prop present, with its `presence` (§2.4.1) and its `state` at this position by pattern 3, or null where none is yet established. |
 | `motifs` | Motif appearances at this position: name and domain. These come from a join rather than a table and carry no identity of their own. |
 
-Presence is authored, not inferred: a character appears because a
-`scene_character` link says so, not because a state mentions them.
+Presence is authored, not inferred: a character is at a position
+because a `scene_character` link says so, not because a state mentions
+them. **What the link says about being seen is its presence (§2.4.1)**,
+and each character and prop carries it as `presence`. A `mentioned`
+character is at the position and is not on screen.
 
 A cut scene answers as an empty position rather than an error (§9.2):
 `scene` null, and no characters, props or motifs.
@@ -1853,9 +1933,9 @@ Parameters: `from`, `to`.
 | Field | |
 |---|---|
 | `from`, `to` | The two scenes, projected. |
-| `characters` | Each character present at either position, projected, with `statesFrom` and `statesTo`. In the row order of the `scene_character` rows at the two positions, first appearance first — these are peers with no story position of their own (§12.1.6). |
+| `characters` | Each character present at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link them) and `statesFrom` and `statesTo`. In the row order of the `scene_character` rows at the two positions, first appearance first — these are peers with no story position of their own (§12.1.6). |
 | `relationships` | Each relationship with a stage at either position, projected, with `stageFrom` and `stageTo`. |
-| `props` | Each prop with a state at either position, projected, with `whereFrom` and `whereTo`. |
+| `props` | Each prop with a state at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link it) and `whereFrom` and `whereTo`. |
 
 A row appears when it has something to say at **either** position, so an
 appearance and a disappearance are both visible.
@@ -2015,6 +2095,11 @@ and reported, each finding's severity MUST fall within what §12.9.1
 permits for that step, and an implementation MUST disclose any finding
 it raises beyond one per step. The published `Q14.result.json` is a
 worked example of a conforming answer, not the only one.
+
+**A step about how characters look is assessed for the characters SEEN
+at the position**: at a shot, by §4.6; at a scene, by §2.4.1. A
+character who is only heard or only named has no look to design, and a
+finding asking for one could not be acted on.
 
 #### 12.9.1 The rubric
 
@@ -2361,7 +2446,7 @@ Parameter: `scene`.
 | `scene` | Projected. |
 | `lineage` | Act and sequence, **broadest first**. |
 | `storyBeats` | In `beat_order`. |
-| `cast`, `props` | Present by authored link, not inference. |
+| `cast`, `props` | Present by authored link, not inference. Each projected row also carries `presence` (§2.4.1). |
 | `location`, `locationVariant` | The location, and `{ variant, mismatches }` — see below. |
 | `detail` | Scene-level design entities, each `{ entity, rows }`, empty groups omitted. |
 | `blocking`, `stagingBeats` | Staging, beats in `beat_order`. **`blocking` is an array** — a scene may carry several — and both hold projected rows. |
@@ -2520,6 +2605,8 @@ change to one without the other is a defect.
 | §4.4 shot codes | `scf-core/test/shots.test.ts` |
 | §4.5 pattern 2 | `scf-core/test/conformance.canonical.test.ts` → "persistence rule" |
 | §4.5 pattern 3 | `scf-core/test/conformance.canonical.test.ts` → "pattern 3 (latest-wins)" |
+| §2.4.1 presence of a vocabulary value | `schema/lint_registry.py` (total over the options), `scf-core/test/presence.test.ts` |
+| §4.6 presence at a shot | `scf-core/test/presence.test.ts` |
 | §5 spans | `scf-core/test/structure.test.ts` |
 | §6.3–6.4 natural keys | `scf-core/test/junctions.test.ts` |
 | §6.5 relationships | `scf-core/test/relationships.test.ts` |

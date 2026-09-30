@@ -20,6 +20,7 @@ import {
   ANCHOR_TYPE_FOR_INTENT, rows, type ScfContext,
 } from "./resolution.ts";
 import { QUERY_PATHS } from "./queryPaths.ts";
+import { presenceAtShot, type Presence } from "./presence.ts";
 import {
   q00Result, q04Result, q06Result, q07Result, q13Result, q14Result,
   type Q00Result, type Q04Result, type Q05Result, type Q07Result,
@@ -42,7 +43,12 @@ export interface ShotContext {
   scene: QueryResult<Q04Result>;
   /** The frame at this shot (Q07). */
   look: QueryResult<Q07Result>;
-  /** Physical direction (Q06), one per character in the scene. */
+  /**
+   * Who is at the shot and how they read (spec §4.6), each marked
+   * recorded or inherited. The sweeps below follow it.
+   */
+  presence: ShotPresenceMember;
+  /** Physical direction (Q06), one per character SEEN at the shot. */
   physical: QueryResult<Q05Result>[];
   /** Media in force (Q13), one per subject x applicable intent. */
   media: QueryResult<Q13Result>[];
@@ -215,26 +221,55 @@ async function intentsFor(
   return [...intents];
 }
 
-interface Subject { type: string; uuid: string }
+/** One subject at the shot, portably (no row ids), spec §4.6. */
+export interface PresentSubject {
+  subjectType: string;
+  uuid: string;
+  name: string | null;
+  presence: Presence;
+  framing: string | null;
+  facing: string | null;
+  focus: string | null;
+  /** `recorded` by a shot row, or `inherited` from the scene. */
+  source: "recorded" | "inherited";
+}
+
+export interface ShotPresenceMember {
+  /** `shot.presence_complete`: the recorded subjects are the whole frame. */
+  complete: boolean;
+  subjects: PresentSubject[];
+}
 
 /**
- * Who is in the scene (design doc §4.2). There is no shot-level cast in
- * the registry — no `shot_character` junction exists, only
- * `scene_character` — so "in frame" means Q04's scene-level cast, props
- * and location; that is the only registry-derivable notion of presence.
+ * The intents a subject is asked for, given how it is at the shot. A
+ * heard subject has a voice and a sound and no look; a named one has
+ * nothing to put in a prompt.
  */
-function subjectsOf(scene: Q04Result): Subject[] {
-  const subjects: Subject[] = [];
-  for (const c of scene.cast) {
-    if (c.uuid !== null) subjects.push({ type: "character", uuid: c.uuid });
+const HEARD_INTENTS = new Set(["voice_identity", "acoustic"]);
+
+/**
+ * Who is at the shot (spec §4.6), from `presenceAtShot`: the shot's
+ * rows, and the scene's subjects too unless the frame is complete. The
+ * location is always its scene's (§4.6: a new place is a new scene),
+ * so it is the one subject that never comes from a shot row.
+ */
+async function presenceMember(
+    ctx: ScfContext, shotId: number): Promise<ShotPresenceMember> {
+  const at = await presenceAtShot(ctx, shotId);
+  const subjects: PresentSubject[] = [];
+  for (const s of at?.subjects ?? []) {
+    const row = (await rows(ctx.exec, s.subjectType, "id = ?", [s.id]))[0];
+    if (row === undefined) continue;
+    subjects.push({
+      subjectType: s.subjectType,
+      uuid: String(row["uuid"] ?? ""),
+      name: row["name"] === null || row["name"] === undefined
+        ? null : String(row["name"]),
+      presence: s.presence, framing: s.framing, facing: s.facing,
+      focus: s.focus, source: s.source,
+    });
   }
-  for (const p of scene.props) {
-    if (p.uuid !== null) subjects.push({ type: "prop", uuid: p.uuid });
-  }
-  if (scene.location !== null && scene.location.uuid !== null) {
-    subjects.push({ type: "location", uuid: scene.location.uuid });
-  }
-  return subjects;
+  return { complete: at?.complete ?? false, subjects };
 }
 
 export async function shotContext(
@@ -267,11 +302,21 @@ export async function shotContext(
   const scene = await q04Result(ctx, sceneUuid, sceneId);
   const look = await q07Result(ctx, sceneUuid, sceneId, shotUuid, shotId);
 
-  const subjects = subjectsOf(scene.result);
+  const presence = await presenceMember(ctx, shotId);
+  const subjects: Array<{ type: string; uuid: string; presence: Presence }> =
+    presence.subjects.map((s) => ({
+      type: s.subjectType, uuid: s.uuid, presence: s.presence,
+    }));
+  const location = scene.result.location;
+  if (location !== null && location.uuid !== null) {
+    subjects.push({ type: "location", uuid: location.uuid, presence: "seen" });
+  }
 
+  // Physical direction is for a body on screen. A heard character has
+  // none to give (§4.6), and a named one is not there.
   const physical: QueryResult<Q05Result>[] = [];
   for (const subj of subjects) {
-    if (subj.type !== "character") continue;
+    if (subj.type !== "character" || subj.presence !== "seen") continue;
     const characterId = await idFor(ctx, "character", subj.uuid);
     if (characterId === null) continue;
     physical.push(
@@ -290,11 +335,20 @@ export async function shotContext(
     const row = (await rows(ctx.exec, subj.type, "id = ?", [subjectId]))[0];
     const name = row?.["name"] === null || row?.["name"] === undefined
       ? null : String(row["name"]);
-    const intents = await intentsFor(ctx, subj.type, subjectId);
+    if (subj.presence === "named") {
+      swept.push({ subjectType: subj.type, uuid: subj.uuid, name,
+                   intents: [], note: "named only: not seen or heard here" });
+      continue;
+    }
+    const all = await intentsFor(ctx, subj.type, subjectId);
+    const intents = subj.presence === "heard"
+      ? all.filter((i) => HEARD_INTENTS.has(i)) : all;
     swept.push({
       subjectType: subj.type, uuid: subj.uuid, name, intents,
       ...(intents.length === 0
-        ? { note: "nothing binds media to this subject" } : {}),
+        ? { note: subj.presence === "heard"
+            ? "heard only, and nothing binds voice or sound to it"
+            : "nothing binds media to this subject" } : {}),
     });
     for (const intent of intents) {
       media.push(await q13Result(
@@ -309,6 +363,7 @@ export async function shotContext(
   const related = await relatedAssets(ctx, shotId, shotUuid,
                                       sceneId, sceneUuid);
 
-  return { contextFormat: "1.0", shot, brief, scene, look, physical, media,
+  return { contextFormat: "1.0", shot, brief, scene, look, presence,
+           physical, media,
            swept, related, readiness };
 }

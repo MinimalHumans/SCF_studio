@@ -40,7 +40,7 @@ describe("a junction's natural key is the rows it joins", () => {
   });
 
   test("every link entity has one", () => {
-    expect(junctionEntities(registry)).toHaveLength(14);
+    expect(junctionEntities(registry)).toHaveLength(16);
   });
 });
 

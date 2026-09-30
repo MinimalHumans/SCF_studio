@@ -17,6 +17,67 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.57 — 2026-09-30
+
+*Describes schema 2.17.*
+
+**Minor.** Proposal 0030. Whether a subject is on screen was either
+undefined (at a scene) or not recordable at all (at a shot). Both are
+now stated.
+
+### §2.4.1 — presence: seen, heard or named
+
+`scene_character.role_in_scene` has always included `mentioned` and
+`voiceover`, and `scene_prop.significance` `mentioned`. Nothing said
+what they meant, and §12.4 said a character "appears because a
+`scene_character` link says so", so every consumer took a mentioned
+character to be on screen. The published Q03 and Q12 list Ada Cade,
+who is only ever mentioned, among the characters present with nothing
+to say otherwise. The shot composite swept her for visual media and
+asked for her physical direction, and Q14 warned that she had no
+appearance profile, which an author could only silence by designing the
+look of someone who is never seen.
+
+Each value now declares a presence in the registry (`optionPresence`),
+total over the options and linted. The spec defines the three presences
+and does not restate the mapping: `entity-reference.md` publishes it,
+generated. A link with no value, or an unlisted one, is `seen`.
+
+### §4.6 — presence at a shot (new)
+
+There was no way to say who is in a shot. A prompt for shot 3B needed
+Marcus in the doorway and Eleanor's back in the soft foreground, and it
+had to be inferred from the scene's blocking prose.
+
+`shot_character` and `shot_prop` record it, with three independent
+closed fields, `framing`, `facing` and `focus`, because the cases a
+single vocabulary would list are not exclusive. `shot.presence_complete`
+says the rows are the whole frame. Unset, the scene's subjects are
+inherited, so a file with no shot rows answers exactly as before. Four
+findings report what the rule keeps rather than refuses.
+
+§4.6 also states that **a shot is at its scene's location**: a change of
+place is a new scene, flashbacks and intercuts included.
+
+### §12.4, §12.5, §12.17 — results carry presence
+
+Q03's characters and props, and Q04's `cast` and `props`, carry
+`presence`. Q12's carry `presenceFrom` and `presenceTo`, null at a
+position that does not link them. The published results are re-blessed.
+
+### §12.9 — a step about how characters look covers the seen ones
+
+Q14's appearance-profile check applies to characters seen at the
+position: at a shot by §4.6, at a scene by §2.4.1.
+
+### Also
+
+The header said the specification described schema 2.15. It described
+2.16, and now describes 2.17. §0.6's "Currently `2.15`" and §2.1's entity
+count were stale in the same way.
+
+---
+
 ## 0.56 — 2026-09-30
 
 *Describes schema 2.16.*

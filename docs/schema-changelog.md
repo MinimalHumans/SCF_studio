@@ -20,6 +20,33 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.17
+
+Presence, proposal 0030: whether a subject is seen, heard or only
+named, at a scene and at a shot. Additive: a file with no shot rows
+reads exactly as before.
+
+**Added:**
+
+- `shot_character` and `shot_prop`: which characters and props are in
+  a shot, and how they read. `framing` (`full`, `cropped`,
+  `off_screen`), `focus` (`sharp`, `soft`), and on `shot_character`
+  only, `facing` (`toward`, `profile`, `away`). Three closed fields, not
+  one vocabulary of cases, because the cases are not exclusive: a
+  character can be back to camera and out of focus at once.
+- `shot.presence_complete`: the shot's rows are its whole frame. Unset,
+  the scene's seen subjects may also be in the shot (§4.6).
+- `optionPresence` on a field in `registry.json`, declared on
+  `scene_character.role_in_scene`, `scene_prop.significance` and the new
+  `framing` fields. It gives each value a presence: `seen`, `heard` or
+  `named` (§2.4.1). `registry.schema.json` describes it.
+
+**Changed:**
+
+- `scene_character.role_in_scene` and `scene_prop.significance` gain
+  help text stating what their values say about being on screen. The
+  values themselves are unchanged.
+
 ## 2.16
 
 Six binding filters resolved — four specified, two removed — one new

@@ -70,6 +70,8 @@ def field_to_json(f: FieldDef) -> dict:
         out["hidden"] = True
     if f.open_values:
         out["open"] = True
+    if f.option_presence:
+        out["optionPresence"] = dict(f.option_presence)
     return out
 
 

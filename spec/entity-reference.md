@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.16** — **104 entities**.
+Schema **2.17** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -27,7 +27,7 @@ registry's own, and are as good as what is written there.
 
 ## Contents
 
-- **Tier 0** (24) — Structural foundation
+- **Tier 0** (26) — Structural foundation
 - **Tier 1** (9) — Project-level creative direction
 - **Tier 2** (34) — Depth — character, prop and location
 - **Tier 3** (7) — Scene detail
@@ -229,7 +229,7 @@ A character in the story. Identity and narrative function only — physical/voca
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (29) | `prop.associated_character_id`, `story_beat.pov_character_id`, `scene_character.character_id`, `character_relationship.character_a_id`, `character_relationship.character_b_id`, `character_arc.character_id`, `physical_character_profile.character_id`, `vocal_profile.character_id`, `character_appearance_profile.character_id`, `costume.character_id`, `costume_progression.character_id`, `makeup_hair_design.character_id`, `character_variant.character_id`, `physical_habit.character_id`, `prop_state.custody_character_id`, `character_asset_binding.character_id`, `actor_character_role.character_id`, `clip_character.character_id`, `character_shot_override.character_id`, `character_color_identity.character_id`, `identification_strategy.primary_character_id`, `identification_strategy.secondary_character_id`, `staging_beat_character.character_id`, `action_sequence_character.character_id`, `performance_state.character_id`, `performance_beat.character_id`, `character_environment_physicality.character_id`, `sound_perspective.pov_character_id`, `voiceover_design.character_id` |
+| Referenced by (30) | `prop.associated_character_id`, `story_beat.pov_character_id`, `scene_character.character_id`, `shot_character.character_id`, `character_relationship.character_a_id`, `character_relationship.character_b_id`, `character_arc.character_id`, `physical_character_profile.character_id`, `vocal_profile.character_id`, `character_appearance_profile.character_id`, `costume.character_id`, `costume_progression.character_id`, `makeup_hair_design.character_id`, `character_variant.character_id`, `physical_habit.character_id`, `prop_state.custody_character_id`, `character_asset_binding.character_id`, `actor_character_role.character_id`, `clip_character.character_id`, `character_shot_override.character_id`, `character_color_identity.character_id`, `identification_strategy.primary_character_id`, `identification_strategy.secondary_character_id`, `staging_beat_character.character_id`, `action_sequence_character.character_id`, `performance_state.character_id`, `performance_beat.character_id`, `character_environment_physicality.character_id`, `sound_perspective.pov_character_id`, `voiceover_design.character_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -495,7 +495,7 @@ A significant object in the story. Identity, narrative function, and story momen
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (7) | `scene_prop.prop_id`, `prop_surface_profile.prop_id`, `prop_variant.prop_id`, `prop_state.prop_id`, `prop_asset_binding.prop_id`, `clip_prop.prop_id`, `prop_shot_override.prop_id` |
+| Referenced by (8) | `scene_prop.prop_id`, `shot_prop.prop_id`, `prop_surface_profile.prop_id`, `prop_variant.prop_id`, `prop_state.prop_id`, `prop_asset_binding.prop_id`, `clip_prop.prop_id`, `prop_shot_override.prop_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -580,7 +580,7 @@ Links a character to a scene with role information.
 |---|---|---|---|
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
-| `role_in_scene` | select |  | one of `featured`, `supporting`, `background`, `mentioned`, `voiceover` |
+| `role_in_scene` | select |  | one of `featured` (seen), `supporting` (seen), `background` (seen), `mentioned` (named), `voiceover` (heard). Spec §2.4.1: also says whether the character is on screen. `mentioned` is named only, `voiceover` is heard and not seen, the rest are seen. Unset is seen. |
 | `notes` | textarea |  |  |
 
 *1 hidden field(s) omitted — present in the table, not offered for authoring.*
@@ -606,7 +606,7 @@ Links a prop to a scene with usage details.
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
 | `prop_id` | reference | **yes** | → `prop` (resolves to `prop_uuid` in a result, §12.1.2) |
 | `usage_note` | text |  |  |
-| `significance` | select |  | one of `key`, `present`, `background`, `mentioned` |
+| `significance` | select |  | one of `key` (seen), `present` (seen), `background` (seen), `mentioned` (named). Spec §2.4.1: also says whether the prop is on screen. `mentioned` is named only, the rest are seen. Unset is seen. |
 
 *1 hidden field(s) omitted — present in the table, not offered for authoring.*
 
@@ -668,6 +668,59 @@ A group of related scenes forming a narrative unit.
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 | `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |
 | `external_id_namespace` | text |  | auto-injected by the generator. Which external system the identifier belongs to. |
+
+### `shot_character`
+
+Links a character to a shot: whether they are in it, and how they read. Spec §4.6.
+
+| | |
+|---|---|
+| Label | Shot-Character / Shot-Characters |
+| Category | Connections |
+| Subject | link |
+| Scope | shot |
+| Position | Not positioned — one row, not keyed to a scene. |
+| Name field | `name` |
+| Versionable | no |
+| `lifecycle_status` | **no** — this entity cannot be marked cut |
+| `external_id` | no |
+
+| Field | Type | Req | |
+|---|---|---|---|
+| `shot_id` | reference | **yes** | → `shot` (resolves to `shot_uuid` in a result, §12.1.2) |
+| `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
+| `framing` | select |  | one of `full` (seen), `cropped` (seen), `off_screen` (heard). Spec §4.6. `full`: the whole subject is in frame. `cropped`: part of it is (the hands, a shoulder, a hand reaching in). `off_screen`: not in frame, and heard. Unset is on screen with the framing unrecorded. |
+| `facing` | select |  | one of `toward`, `profile`, `away`. Spec §4.6. `toward`: the face reads. `profile`: side on. `away`: back to camera, read by build, posture and costume. Empty when framing is off_screen. |
+| `focus` | select |  | one of `sharp`, `soft`. Spec §4.6. `soft`: out of focus, a foreground or background presence. Empty when framing is off_screen. |
+| `notes` | textarea |  |  |
+
+*1 hidden field(s) omitted — present in the table, not offered for authoring.*
+
+### `shot_prop`
+
+Links a prop to a shot: whether it is in it, and how it reads. A prop has no facing. Spec §4.6.
+
+| | |
+|---|---|
+| Label | Shot-Prop / Shot-Props |
+| Category | Connections |
+| Subject | link |
+| Scope | shot |
+| Position | Not positioned — one row, not keyed to a scene. |
+| Name field | `name` |
+| Versionable | no |
+| `lifecycle_status` | **no** — this entity cannot be marked cut |
+| `external_id` | no |
+
+| Field | Type | Req | |
+|---|---|---|---|
+| `shot_id` | reference | **yes** | → `shot` (resolves to `shot_uuid` in a result, §12.1.2) |
+| `prop_id` | reference | **yes** | → `prop` (resolves to `prop_uuid` in a result, §12.1.2) |
+| `framing` | select |  | one of `full` (seen), `cropped` (seen), `off_screen` (heard). Spec §4.6. `full`: the whole subject is in frame. `cropped`: part of it is (the hands, a shoulder, a hand reaching in). `off_screen`: not in frame, and heard. Unset is on screen with the framing unrecorded. |
+| `focus` | select |  | one of `sharp`, `soft`. Spec §4.6. `soft`: out of focus, a foreground or background presence. Empty when framing is off_screen. |
+| `notes` | textarea |  |  |
+
+*1 hidden field(s) omitted — present in the table, not offered for authoring.*
 
 ### `story_beat`
 
@@ -3073,7 +3126,7 @@ A single camera setup within a scene.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (9) | `take.shot_id`, `shot_coverage.shot_id`, `character_shot_override.shot_id`, `prop_shot_override.shot_id`, `location_shot_override.shot_id`, `lighting_design.shot_id`, `shot_design.shot_id`, `performance_state.shot_id`, `sound_cue.shot_id` |
+| Referenced by (11) | `shot_character.shot_id`, `shot_prop.shot_id`, `take.shot_id`, `shot_coverage.shot_id`, `character_shot_override.shot_id`, `prop_shot_override.shot_id`, `location_shot_override.shot_id`, `lighting_design.shot_id`, `shot_design.shot_id`, `performance_state.shot_id`, `sound_cue.shot_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -3088,6 +3141,7 @@ A single camera setup within a scene.
 | `lens_choice` | text |  |  |
 | `duration_seconds` | float |  |  |
 | `description` | textarea |  |  |
+| `presence_complete` | boolean |  | Spec §4.6: the shot's shot_character and shot_prop rows are its whole frame, so a subject with no row is not in it. Unset: the rows are what is recorded, and the scene's seen subjects may also be in the shot. |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 | `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |

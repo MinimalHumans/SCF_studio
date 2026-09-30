@@ -41,6 +41,7 @@ import { listAssets, orphanIds } from "./assetIndex.ts";
 import { unboundBundleIds } from "./bundling.ts";
 import { fileIdentity } from "./fileIdentity.ts";
 import { escapesRoot, parseIdentifier } from "./assets.ts";
+import { presenceProblems } from "./presence.ts";
 
 /**
  * How much the finding matters to a CONSUMER of the file.
@@ -114,6 +115,11 @@ export type FindingCode =
   | "asset.identifier_absolute"
   | "asset.orphan"
   | "asset.bundle_unbound"
+  // Presence at a shot — spec §4.6
+  | "presence.shot_subject_not_in_scene"
+  | "presence.named_but_on_screen"
+  | "presence.off_screen_described"
+  | "presence.complete_but_empty"
   // Extension content — spec §10.1
   | "extension.unknown_table";
 
@@ -338,6 +344,27 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     severity: "info",
     title: "Bundle reaches no subject",
     spec: "§8.6",
+  },
+
+  "presence.shot_subject_not_in_scene": {
+    severity: "warning",
+    title: "Shot names a subject its scene does not link",
+    spec: "§4.6",
+  },
+  "presence.named_but_on_screen": {
+    severity: "warning",
+    title: "Shot puts on screen a subject its scene only names",
+    spec: "§4.6",
+  },
+  "presence.off_screen_described": {
+    severity: "warning",
+    title: "Off-screen subject has facing or focus set",
+    spec: "§4.6",
+  },
+  "presence.complete_but_empty": {
+    severity: "info",
+    title: "Shot's frame is marked complete and records no subject",
+    spec: "§4.6",
   },
 
   "extension.unknown_table": {
@@ -758,6 +785,17 @@ export async function collectFindings(
     }
   } catch {
     // A file without the bundle tables has no such finding to make.
+  }
+
+  // --- presence at a shot (§4.6) ---
+  try {
+    for (const p of await presenceProblems({ exec, registry })) {
+      out.push(make(p.code, p.message,
+                    { table: p.table, rowIds: [p.rowId] }));
+    }
+  } catch {
+    // A file written before 2.17 has no shot presence tables; nothing to
+    // report, and `identity.table_absent` already says they are missing.
   }
 
   // --- unknown tables (§10.1) ---

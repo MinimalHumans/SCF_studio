@@ -153,7 +153,8 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
       step(["scene_color_palette"], "recommended", "scene color opinion"),
       step(["lighting_design"], "recommended", "scene/shot lighting"),
       step(["shot_design"], "optional", "shot-level composition"),
-      step(["character_appearance_profile"], "recommended", "who's in frame"),
+      step(["character_appearance_profile"], "recommended",
+           "each character seen at the position (§2.4.1, §4.6)"),
     ],
   },
   Q08: {

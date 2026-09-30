@@ -30,6 +30,7 @@ import {
   type SceneOrder, type ScfContext,
 } from "./resolution.ts";
 import { QUERY_PATHS, type QueryPath } from "./queryPaths.ts";
+import { presenceAtScene, presenceAtShot } from "./presence.ts";
 
 /**
  * Readiness severity is NOT the finding-vocabulary severity of
@@ -274,16 +275,32 @@ async function readinessQ07(
                "No visual identity — no material/aesthetic root."));
   }
 
-  // cast appearance
-  const cast = await rows(ctx.exec, "scene_character", "scene_id=?",
-                          [sceneId]);
-  for (const row of cast) {
-    const cid = row["character_id"] as number;
+  // Cast appearance, for characters SEEN at the position (§2.4.1,
+  // §4.6). A character who is only named or only heard has no look to
+  // design, so asking for one is a warning nobody can act on.
+  // A recorded character IS on screen in the shot; an inherited one is
+  // only in its scene (§4.6), and the message must not claim more.
+  const seen: Array<{ cid: number; where: string }> = [];
+  const atShot = shotId === null ? null : await presenceAtShot(ctx, shotId);
+  if (atShot !== null) {
+    for (const s of atShot.subjects) {
+      if (s.subjectType === "character" && s.presence === "seen") {
+        seen.push({ cid: s.id, where: s.source === "recorded"
+          ? "on screen in this shot" : "in this scene" });
+      }
+    }
+  } else {
+    for (const [cid, presence] of
+         (await presenceAtScene(ctx, sceneId)).character) {
+      if (presence === "seen") seen.push({ cid, where: "in this scene" });
+    }
+  }
+  for (const { cid, where } of seen) {
     const profiles = await rows(ctx.exec, "character_appearance_profile",
                                 "character_id=?", [cid]);
     if (profiles.length === 0) {
       out.push(f("warning", "character_appearance_profile",
-                 `${await name(ctx, "character", cid)} is in this scene ` +
+                 `${await name(ctx, "character", cid)} is ${where} ` +
                  `with no appearance profile.`));
     }
   }

@@ -172,8 +172,15 @@ export {
 } from "./naturalKey.ts";
 
 export {
-  type RelatedAsset, type ShotContext, type SweptSubject, shotContext,
+  type PresentSubject, type RelatedAsset, type ShotContext,
+  type ShotPresenceMember, type SweptSubject, shotContext,
 } from "./shotContext.ts";
+
+export {
+  type Presence, type PresenceProblem, type PresenceSubject,
+  type ScenePresence, type ShotPresence, type ShotSubject,
+  presenceAtScene, presenceAtShot, presenceProblems, valuePresence,
+} from "./presence.ts";
 
 export {
   type ListFilter, type ListedRow, listEntities,
