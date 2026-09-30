@@ -126,11 +126,14 @@ at runtime.
 // scf-core/src/shotContext.ts
 export interface ShotContext {
   contextFormat: "1.0";
+  shot:      ListedRow;       // the shot's own row, as `list` returns it
   brief:     Q00Result;       // project register
   scene:     Q04Result;       // the scene, its cast, its text
   look:      Q07Result;       // the frame at this shot
   physical:  Q06Result[];     // per character in frame
   media:     Q13Result[];     // per subject × intent
+  swept:     SweptSubject[];  // every subject, and the intents asked
+  related:   RelatedAsset[];  // assets about the scene or shot (§8.6)
   readiness: Q14Result;       // what is thin
 }
 
@@ -143,6 +146,11 @@ export async function shotContext(
 
 Every member is the **unmodified return of a canonical query**. No
 filtering, no merging, no re-ordering, no picking a winner.
+
+`shot`, like `swept` and `related`, is not a canonical query's return:
+none is scoped to a shot's own row. It is the row `listEntities` returns for
+that shot, found in the scene's list rather than projected again, so
+`shot_context` and `list` cannot describe one shot two ways.
 
 The queries already resolved everything: Q07 returns the direction
 cascade's `leaf` and its `layers`; Q13 returns the `trail` and what is
