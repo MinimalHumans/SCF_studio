@@ -127,6 +127,7 @@ at runtime.
 export interface ShotContext {
   contextFormat: "1.0";
   shot:      ListedRow;       // the shot's own row, as `list` returns it
+  presence:  ShotPresenceMember; // who is at the shot, spec §4.6
   brief:     Q00Result;       // project register
   scene:     Q04Result;       // the scene, its cast, its text
   look:      Q07Result;       // the frame at this shot
@@ -172,7 +173,13 @@ Q13's parameters are `subjectType`, `subject`, `intent`, `scene`, `shot`
 location and two props is a dozen calls. Left to the agent that is a
 dozen round trips it has to plan; done here it is a loop.
 
-The subject list comes from `scene` (Q04's cast, props, location).
+The subject list comes from `presence` (spec §4.6): the shot's own
+`shot_character` and `shot_prop` rows, plus the scene's subjects unless
+the frame is complete, plus the scene's location, which a shot always
+shares. How each is present decides what it is asked for: a **seen**
+subject every intent and, for a character, physical direction; a
+**heard** one its voice and acoustic intents only; a **named** one
+nothing, reported in `swept` with a note.
 
 **The intents are per subject, not per subject KIND.** The first
 implementation took them from the declared query paths, which key on

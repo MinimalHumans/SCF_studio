@@ -75,6 +75,10 @@ WRITING_STATUS_OPTIONS = [
 LIFECYCLE_TAB = "Lifecycle"
 EXTERNAL_TAB = "External"
 
+#: How a subject is at a position, spec §2.4.1: it can be on screen, it can
+#: be heard and not seen, or it is only referred to.
+PRESENCES = ("seen", "heard", "named")
+
 
 # =============================================================================
 # Field and Entity definitions
@@ -100,6 +104,11 @@ class FieldDef:
     #: `season`), `lifecycle_status`, `status`, and everything §12 defines —
     #: leave this False, because resolution depends on their being finite.
     open_values: bool = False
+    #: For a vocabulary that says whether a subject is on screen: each
+    #: option's PRESENCE, one of `PRESENCES`. Spec §2.4.1. Total over
+    #: `options` where declared, so no value's presence is left to a
+    #: reader to guess from its name.
+    option_presence: dict[str, str] | None = None
     sql_type: str | None = None
     auto_injected: bool = False
     #: For a POLYMORPHIC reference: the sibling column naming which table
@@ -683,7 +692,12 @@ register(EntityDef(
                  reference_entity="character", required=True),
         FieldDef("role_in_scene", "Role in Scene", "select", options=[
             "featured", "supporting", "background", "mentioned", "voiceover"
-        ]),
+        ], option_presence={
+            "featured": "seen", "supporting": "seen", "background": "seen",
+            "mentioned": "named", "voiceover": "heard",
+        }, help_text="Spec §2.4.1: also says whether the character is on "
+                     "screen. `mentioned` is named only, `voiceover` is "
+                     "heard and not seen, the rest are seen. Unset is seen."),
         FieldDef("notes", "Notes", "textarea"),
     ],
 ))
@@ -705,7 +719,86 @@ register(EntityDef(
         FieldDef("usage_note", "Usage Note", "text"),
         FieldDef("significance", "Significance", "select", options=[
             "key", "present", "background", "mentioned"
-        ]),
+        ], option_presence={
+            "key": "seen", "present": "seen", "background": "seen",
+            "mentioned": "named",
+        }, help_text="Spec §2.4.1: also says whether the prop is on "
+                     "screen. `mentioned` is named only, the rest are "
+                     "seen. Unset is seen."),
+    ],
+))
+
+# Presence at a shot (proposal 0030, spec §4.6). How a subject reads in
+# a shot is three independent closed fields rather than one vocabulary of
+# cases: Eleanor in 3B is back to camera AND out of focus, and one value
+# per row would make the author drop one. An unset field is unknown.
+def _shot_framing() -> FieldDef:
+    return FieldDef(
+        "framing", "Framing", "select",
+        options=["full", "cropped", "off_screen"],
+        option_presence={"full": "seen", "cropped": "seen",
+                         "off_screen": "heard"},
+        help_text="Spec §4.6. `full`: the whole subject is in frame. "
+                  "`cropped`: part of it is (the hands, a shoulder, a hand "
+                  "reaching in). `off_screen`: not in frame, and heard. "
+                  "Unset is on screen with the framing unrecorded.")
+
+
+def _shot_focus() -> FieldDef:
+    return FieldDef(
+        "focus", "Focus", "select", options=["sharp", "soft"],
+        help_text="Spec §4.6. `soft`: out of focus, a foreground or "
+                  "background presence. Empty when framing is off_screen.")
+
+register(EntityDef(
+    name="shot_character",
+    label="Shot-Character",
+    label_plural="Shot-Characters",
+    icon="🔗",
+    category="Connections",
+    sort_order=73,
+    tier=0,
+    description="Links a character to a shot: whether they are in it, "
+                "and how they read. Spec §4.6.",
+    has_lifecycle_status=False,
+    fields=[
+        FieldDef("name", "Display Name", hidden=True),
+        FieldDef("shot_id", "Shot", "reference", reference_entity="shot",
+                 required=True),
+        FieldDef("character_id", "Character", "reference",
+                 reference_entity="character", required=True),
+        _shot_framing(),
+        FieldDef("facing", "Facing", "select",
+                 options=["toward", "profile", "away"],
+                 help_text="Spec §4.6. `toward`: the face reads. "
+                           "`profile`: side on. `away`: back to camera, "
+                           "read by build, posture and costume. Empty when "
+                           "framing is off_screen."),
+        _shot_focus(),
+        FieldDef("notes", "Notes", "textarea"),
+    ],
+))
+
+register(EntityDef(
+    name="shot_prop",
+    label="Shot-Prop",
+    label_plural="Shot-Props",
+    icon="🔗",
+    category="Connections",
+    sort_order=74,
+    tier=0,
+    description="Links a prop to a shot: whether it is in it, and how it "
+                "reads. A prop has no facing. Spec §4.6.",
+    has_lifecycle_status=False,
+    fields=[
+        FieldDef("name", "Display Name", hidden=True),
+        FieldDef("shot_id", "Shot", "reference", reference_entity="shot",
+                 required=True),
+        FieldDef("prop_id", "Prop", "reference", reference_entity="prop",
+                 required=True),
+        _shot_framing(),
+        _shot_focus(),
+        FieldDef("notes", "Notes", "textarea"),
     ],
 ))
 
@@ -3017,6 +3110,12 @@ register(EntityDef(
         FieldDef("lens_choice", "Lens", "text"),
         FieldDef("duration_seconds", "Estimated Duration (seconds)", "float"),
         FieldDef("description", "Shot Description", "textarea"),
+        FieldDef("presence_complete", "Presence Complete", "boolean",
+                 help_text="Spec §4.6: the shot's shot_character and "
+                           "shot_prop rows are its whole frame, so a "
+                           "subject with no row is not in it. Unset: the "
+                           "rows are what is recorded, and the scene's "
+                           "seen subjects may also be in the shot."),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -3702,6 +3801,8 @@ ONTOLOGY: dict[str, tuple[str, str, list[str]]] = {
     # --- Tier 0: connections -------------------------------------------------
     "scene_character":         ("link",      "scene",   ["Q02", "Q03", "Q04"]),
     "scene_prop":              ("link",      "scene",   ["Q03", "Q04"]),
+    "shot_character":          ("link",      "shot",    ["Q07", "Q14"]),
+    "shot_prop":               ("link",      "shot",    ["Q07", "Q14"]),
     "scene_sequence":          ("link",      "scene",   ["Q04"]),
     "costume_scene":           ("link",      "scene",   ["Q02", "Q12"]),
     "bundle_asset":            ("link",      "global",  ["Q13"]),
@@ -3902,6 +4003,31 @@ def lint_ontology() -> list[str]:
                 problems.append(
                     f"{name}.{field.name}: column name claims the "
                     f"third-party 'x_' prefix (spec §10.3)")
+
+    # Option presence, spec §2.4.1: total over the options, and nothing
+    # else. A value with no presence leaves a reader to guess from its name,
+    # which is the failure the metadata exists to end.
+    for name, entity in ENTITY_REGISTRY.items():
+        for field in entity.fields:
+            if field.option_presence is None:
+                continue
+            where = f"{name}.{field.name}"
+            options = set(field.options or [])
+            if not options:
+                problems.append(f"{where}: option_presence on a field "
+                                f"with no options")
+            declared = set(field.option_presence)
+            for missing in sorted(options - declared):
+                problems.append(f"{where}: option {missing!r} has no "
+                                f"presence (spec §2.4.1)")
+            for extra in sorted(declared - options):
+                problems.append(f"{where}: presence for {extra!r}, which "
+                                f"is not an option")
+            for value, presence in field.option_presence.items():
+                if presence not in PRESENCES:
+                    problems.append(f"{where}: {value!r} has presence "
+                                    f"{presence!r}, not one of "
+                                    f"{', '.join(PRESENCES)}")
 
     return problems
 

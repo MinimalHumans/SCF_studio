@@ -15,6 +15,7 @@ import {
   resolveDescription, resolveDirection, resolveMedia,
 } from "./resolution.ts";
 import { mediaReferences } from "./mediaReferences.ts";
+import { presenceAtScene, type Presence } from "./presence.ts";
 import { projectScreenplayLines, sceneScriptLines }
   from "./screenplay/sceneScript.ts";
 import { readinessReport } from "./readiness.ts";
@@ -201,8 +202,10 @@ const asId = (v: unknown): number | null => {
 
 export interface Q03Composition {
   scene: Row | null;
-  characters: Array<{ character: Row; states: Row[]; costumes: Row[] }>;
-  props: Array<{ prop: Row; state: Row | null }>;
+  characters: Array<{
+    character: Row; presence: Presence; states: Row[]; costumes: Row[];
+  }>;
+  props: Array<{ prop: Row; presence: Presence; state: Row | null }>;
   motifs: Row[];
 }
 
@@ -213,6 +216,7 @@ export async function composeQ03(
   const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
     ?? null;
 
+  const atScene = await presenceAtScene(ctx, sceneId);
   const characters: Q03Composition["characters"] = [];
   for (const link of await rows(ctx.exec, "scene_character",
                                 "scene_id = ?", [sceneId])) {
@@ -223,6 +227,7 @@ export async function composeQ03(
     if (character === undefined) continue;
     characters.push({
       character,
+      presence: atScene.character.get(cid) ?? "seen",
       states: await statesInForce(ctx, cid, sceneId, null, order),
       costumes: excludeCut(await ctx.exec(
         "SELECT c.* FROM costume_scene cs JOIN costume c " +
@@ -238,7 +243,10 @@ export async function composeQ03(
     if (pid === null) continue;
     const prop = (await rows(ctx.exec, "prop", "id = ?", [pid]))[0];
     if (prop === undefined) continue;
-    props.push({ prop, state: await propStateAt(ctx, pid, sceneId, order) });
+    props.push({
+      prop, presence: atScene.prop.get(pid) ?? "seen",
+      state: await propStateAt(ctx, pid, sceneId, order),
+    });
   }
 
   // The junction carries no lifecycle_status and cannot; the motif can.
@@ -256,11 +264,17 @@ export async function composeQ03(
 export interface Q12Composition {
   a: Row | null;
   b: Row | null;
-  characters: Array<{ character: Row; statesA: string[]; statesB: string[] }>;
+  characters: Array<{
+    character: Row; presenceA: Presence | null; presenceB: Presence | null;
+    statesA: string[]; statesB: string[];
+  }>;
   relationships: Array<{
     relationship: Row; stageA: string | null; stageB: string | null;
   }>;
-  props: Array<{ prop: Row; whereA: string | null; whereB: string | null }>;
+  props: Array<{
+    prop: Row; presenceA: Presence | null; presenceB: Presence | null;
+    whereA: string | null; whereB: string | null;
+  }>;
 }
 
 /** The state diff between two positions. Rows, not a result. */
@@ -269,6 +283,8 @@ export async function composeQ12(
   const order = await sceneOrder(ctx);
   const sceneA = (await rows(ctx.exec, "scene", "id = ?", [a]))[0] ?? null;
   const sceneB = (await rows(ctx.exec, "scene", "id = ?", [b]))[0] ?? null;
+  const atA = await presenceAtScene(ctx, a);
+  const atB = await presenceAtScene(ctx, b);
 
   const characters: Q12Composition["characters"] = [];
   for (const c of await ctx.exec(
@@ -281,6 +297,8 @@ export async function composeQ12(
     if (character === undefined) continue;
     characters.push({
       character,
+      presenceA: atA.character.get(cid) ?? null,
+      presenceB: atB.character.get(cid) ?? null,
       statesA: (await statesInForce(ctx, cid, a, null, order))
         .map((s) => String(s["name"])),
       statesB: (await statesInForce(ctx, cid, b, null, order))
@@ -311,6 +329,8 @@ export async function composeQ12(
     if (pa === null && pb === null) continue;
     props.push({
       prop,
+      presenceA: atA.prop.get(pid) ?? null,
+      presenceB: atB.prop.get(pid) ?? null,
       whereA: pa === null ? null : String(pa["whereabouts"] ?? ""),
       whereB: pb === null ? null : String(pb["whereabouts"] ?? ""),
     });
@@ -327,10 +347,14 @@ export interface Q03Result {
   scene: ProjectedRow | null;
   characters: Array<{
     character: ProjectedRow;
+    /** Seen, heard or named at this position, §2.4.1. */
+    presence: Presence;
     states: ProjectedRow[];
     costumes: ProjectedRow[];
   }>;
-  props: Array<{ prop: ProjectedRow; state: ProjectedRow | null }>;
+  props: Array<{
+    prop: ProjectedRow; presence: Presence; state: ProjectedRow | null;
+  }>;
   motifs: Array<{ name: string; domain: string | null }>;
 }
 
@@ -345,11 +369,13 @@ export async function q03Result(
     scene: c.scene === null ? null : projectRow(c.scene, refs(ctx, "scene"), lookup),
     characters: c.characters.map((x) => ({
       character: projectRow(x.character, refs(ctx, "character"), lookup),
+      presence: x.presence,
       states: x.states.map((s) => projectRow(s, refs(ctx, "performance_state"), lookup)),
       costumes: x.costumes.map((s) => projectRow(s, refs(ctx, "costume"), lookup)),
     })),
     props: c.props.map((x) => ({
       prop: projectRow(x.prop, refs(ctx, "prop"), lookup),
+      presence: x.presence,
       state: x.state === null
         ? null : projectRow(x.state, refs(ctx, "prop_state"), lookup),
     })),
@@ -371,14 +397,19 @@ export interface Q12Result {
   from: ProjectedRow | null;
   to: ProjectedRow | null;
   characters: Array<{
-    character: ProjectedRow; statesFrom: string[]; statesTo: string[];
+    character: ProjectedRow;
+    /** Presence at each position (§2.4.1); null where not linked there. */
+    presenceFrom: Presence | null; presenceTo: Presence | null;
+    statesFrom: string[]; statesTo: string[];
   }>;
   relationships: Array<{
     relationship: ProjectedRow;
     stageFrom: string | null; stageTo: string | null;
   }>;
   props: Array<{
-    prop: ProjectedRow; whereFrom: string | null; whereTo: string | null;
+    prop: ProjectedRow;
+    presenceFrom: Presence | null; presenceTo: Presence | null;
+    whereFrom: string | null; whereTo: string | null;
   }>;
 }
 
@@ -395,6 +426,7 @@ export async function q12Result(
     to: c.b === null ? null : projectRow(c.b, refs(ctx, "scene"), lookup),
     characters: c.characters.map((x) => ({
       character: projectRow(x.character, refs(ctx, "character"), lookup),
+      presenceFrom: x.presenceA, presenceTo: x.presenceB,
       statesFrom: x.statesA, statesTo: x.statesB,
     })),
     relationships: c.relationships.map((x) => ({
@@ -403,6 +435,7 @@ export async function q12Result(
     })),
     props: c.props.map((x) => ({
       prop: projectRow(x.prop, refs(ctx, "prop"), lookup),
+      presenceFrom: x.presenceA, presenceTo: x.presenceB,
       whereFrom: x.whereA, whereTo: x.whereB,
     })),
   });
@@ -1340,8 +1373,10 @@ export interface Q04Result {
   /** Act and sequence, broadest first. */
   lineage: Array<{ entity: string; row: ProjectedRow }>;
   storyBeats: ProjectedRow[];
-  cast: ProjectedRow[];
-  props: ProjectedRow[];
+  /** Each with its presence here, §2.4.1: a `mentioned` character is
+   *  in the cast and not on screen. */
+  cast: Array<ProjectedRow & { presence: Presence }>;
+  props: Array<ProjectedRow & { presence: Presence }>;
   location: ProjectedRow | null;
   locationVariant:
     { variant: ProjectedRow | null; mismatches: string[] };
@@ -1407,6 +1442,7 @@ export async function q04Result(
   const props = excludeCut(await ctx.exec(
     "SELECT p.* FROM scene_prop sp JOIN prop p " +
     "ON p.id = sp.prop_id WHERE sp.scene_id = ?", [sceneId]));
+  const atScene = await presenceAtScene(ctx, sceneId);
 
   const locationId = asId(scene?.["location_id"]);
   const location = locationId === null
@@ -1442,8 +1478,14 @@ export async function q04Result(
     })),
     storyBeats: storyBeats.map(
       (b) => projectRow(b, refs(ctx, "story_beat"), lookup)),
-    cast: cast.map((c) => projectRow(c, refs(ctx, "character"), lookup)),
-    props: props.map((p) => projectRow(p, refs(ctx, "prop"), lookup)),
+    cast: cast.map((c) => ({
+      ...projectRow(c, refs(ctx, "character"), lookup),
+      presence: atScene.character.get(Number(c["id"])) ?? "seen",
+    })),
+    props: props.map((p) => ({
+      ...projectRow(p, refs(ctx, "prop"), lookup),
+      presence: atScene.prop.get(Number(p["id"])) ?? "seen",
+    })),
     location: location === null
       ? null : projectRow(location, refs(ctx, "location"), lookup),
     locationVariant: {

@@ -1,7 +1,7 @@
 {
   "query": "Q12",
   "resultFormat": "1.0",
-  "schemaVersion": "2.16",
+  "schemaVersion": "2.17",
   "parameters": {
     "from": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
     "to": "e4fa4c60-5f66-4b81-942f-6a026ab56c62"
@@ -71,6 +71,8 @@
             "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
           }
         },
+        "presenceFrom": "seen",
+        "presenceTo": "seen",
         "statesFrom": [
           "wounded",
           "wrung-out"
@@ -103,6 +105,8 @@
             "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
           }
         },
+        "presenceFrom": "seen",
+        "presenceTo": null,
         "statesFrom": [],
         "statesTo": []
       },
@@ -124,6 +128,8 @@
             "summary": "Buried Ada. Believes grief is a thing you can be walked through on a schedule."
           }
         },
+        "presenceFrom": null,
+        "presenceTo": "seen",
         "statesFrom": [],
         "statesTo": []
       },
@@ -143,6 +149,8 @@
             "summary": "Drowned at the creek crossing seven years before the story opens. Present in the film only as objects: a shawl, a locket, a chime by the door."
           }
         },
+        "presenceFrom": "named",
+        "presenceTo": null,
         "statesFrom": [],
         "statesTo": []
       }
@@ -187,6 +195,8 @@
             "symbolism": "What Marcus took from the creek and could not put down."
           }
         },
+        "presenceFrom": "seen",
+        "presenceTo": null,
         "whereFrom": "revealed, on the kitchen table",
         "whereTo": "revealed, on the kitchen table"
       },
@@ -205,6 +215,8 @@
             "symbolism": "Work as a way of not speaking."
           }
         },
+        "presenceFrom": null,
+        "presenceTo": null,
         "whereFrom": "stove",
         "whereTo": "stove"
       },
@@ -223,6 +235,8 @@
             "symbolism": "Ada's presence in the house."
           }
         },
+        "presenceFrom": null,
+        "presenceTo": "named",
         "whereFrom": "porch door frame",
         "whereTo": "porch door frame"
       }

@@ -103,7 +103,7 @@ names the asset intent whose bundle must resolve.
 | `scene_color_palette` | recommended | scene color opinion |
 | `lighting_design` | recommended | scene/shot lighting |
 | `shot_design` | optional | shot-level composition |
-| `character_appearance_profile` | recommended | who's in frame |
+| `character_appearance_profile` | recommended | each character seen at the position (§2.4.1, §4.6) |
 
 ---
 

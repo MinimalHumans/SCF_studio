@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.54 / schema 2.15. This document is expected
+Current as of specification 0.57 / schema 2.17. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -113,6 +113,7 @@ about it is ceremonial.
 | Polymorphic `_id` columns dropped | §12.1.2 | Provisional | Yes | `projectRow()` drops any `_id` with no `referenceEntity`. Stated in 0.29; Q10 and Q15 both depend on it. |
 | Derived records carry nulls | §12.1.4 | Provisional | Yes | Stated in 0.29. The opposite of §12.1.2's omit-empties rule, and the two were indistinguishable in the artifacts. |
 | Open vocabularies | §2.4 | Provisional | Yes | Stated in 0.53 (proposal 0022). Sixteen fields lost `other` and gained `open: true`; `vocabulary.unlisted_value` reports the tail. Exercised by the fixture's `creative_decision` row carrying `decision_type = "sound"`, which had never been a member and which nothing had ever checked. |
+| Presence of a vocabulary value | §2.4.1 | Provisional | Yes | Stated in 0.57 (proposal 0030). `optionPresence` in the registry gives each value of `scene_character.role_in_scene`, `scene_prop.significance` and the shot `framing` fields a presence: `seen`, `heard` or `named`. `lint_registry.py` requires it to be total over the options. Before 0.57 the vocabularies carried presence and nothing defined it, so the published Q03 and Q12 listed a `mentioned` character with nothing to say she is not on screen. |
 | Theme carriers on spans | §12.11 | Provisional | Yes | Stated in 0.53 (proposal 0013). An act or sequence carries a theme at every scene of its derived membership, so a scene moved across a boundary moves its count with it. The fixture connects Forgiveness to Act 2. |
 | §12's closed vocabularies | §12.1.5 | Provisional | Partly | Stated in 0.29: §8.3's states, §12.9's severities, §12.8's `provenance`. `provenance` is the only one §12 introduces, and 0.29 states its three members in §12.8 rather than leaving them in `mediaReferences.ts`. Partly, because unlike the other two it has no published artifact behind it — a fourth layer would be a spec edit with nothing to check it against. |
 | Label lists | §12.1.5 | Provisional | Yes | Stated in 0.29, with the source column named per query. Q12 only. |
@@ -127,6 +128,8 @@ about it is ceremonial.
 | Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
 | Shot-code allocation | §4.4.3 | Provisional | Yes | Continue-past-highest, with the stated no-retired-codes limitation. |
 | Restamping under `numbering_policy` | §4.4.4 | Provisional | Yes | Corrected in 0.29: §4.4.4 had cited `project.scene_numbering`, removed in schema 2.12. |
+| Presence at a shot | §4.6 | Provisional | Yes | Stated in 0.57 (proposal 0030). `shot_character` and `shot_prop` rows, three closed fields, and `shot.presence_complete`; an unrecorded shot inherits its scene. `presence.ts` is the one implementation, and Q03, Q04, Q12, Q14 and `shotContext` all call it. The fixture exercises recorded, complete and inherited shots. Provisional: no second implementation, and the field vocabularies have met one film. |
+| A shot is at its scene's location | §4.6 | Provisional | Yes | Stated in 0.57. A deliberate line: a flashback or each side of an intercut is its own scene. It asks something of importers, who split an intercut written as one scene. |
 | Pattern 1 — explicit rows | §4.3 | Stable | Yes | |
 | Pattern 2 — persistence | §4.3 | Stable | Yes | Pinned. |
 | Pattern 3 — latest wins | §4.3 | Stable | Yes | Pinned. |

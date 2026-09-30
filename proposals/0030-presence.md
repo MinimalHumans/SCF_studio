@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.57, schema 2.17 |
 | **Author** | Found writing a video-generation prompt for shot 3B through the SCF MCP; drafted with Claude |
 | **Opened** | 2026-09-30 |
 | **Affects** | §2.4 (two vocabularies gain defined meanings); §12.4 Q03, §12.5 Q12, §12.9 Q14, §12.17 Q04 wording; new entities `shot_character`, `shot_prop`; a new `shot` field; registry option metadata and `registry.schema.json`; the finding catalog; `spec/scf-mcp-design.md` §4.2; a new `stability.md` row; the fixture |
@@ -153,7 +153,7 @@ And one field on `shot`:
 
 ### C. The rule: presence at a shot
 
-Add to §12 (a new subsection, or §12.1):
+Add to §4, as §4.6:
 
 > **Presence at a shot.** A subject is at a shot if a `shot_character`
 > or `shot_prop` row puts it there. Its presence is its `framing`'s
@@ -176,7 +176,7 @@ Add to §12 (a new subsection, or §12.1):
 > | `presence.shot_subject_not_in_scene` | warning | A shot row names a subject with no link to the shot's scene. |
 > | `presence.named_but_on_screen` | warning | A shot row puts on screen a subject whose scene link is **named**. |
 > | `presence.off_screen_described` | warning | A row is `off_screen` and sets `facing` or `focus`. |
-> | `presence.complete_but_empty` | suggestion | `presence_complete` is true and the shot has no rows. Legitimate for an empty frame, and a flag set by mistake empties the shot silently, so it is made visible. |
+> | `presence.complete_but_empty` | info | `presence_complete` is true and the shot has no rows. Legitimate for an empty frame, and a flag set by mistake empties the shot silently, so it is made visible. |
 
 The flag and the rows compose. An insert of the kettle is one
 `shot_prop` row and `presence_complete` true: nobody else is in it. A
@@ -223,7 +223,9 @@ These follow from §A to §D rather than adding rules:
   each character and prop, and are re-blessed.
   `ShotContext-readiness` does not change, because Ada is not in scene 12.
 - **The fixture** gains `shot_character` and `shot_prop` rows for scene
-  3's four shots and 12-04, and one insert with `presence_complete` set.
+  3's shots: 3A recorded and inherited, 3B and 3C complete, 3D
+  unrecorded. Scene 12 is left alone, since the fixture's history treats
+  it as pinned, so 12-04 is the published inherited case.
   That exercises all three paths: recorded and complete, recorded and
   partial, and inherited (the rest of scene 12).
 - **The schema.** Two new entities and a new field is a minor version
@@ -306,7 +308,7 @@ discussion before it was put up:
 | Is `background` seen? | Yes. Directed and undirected can split when a case needs it (§A). |
 | Does a shot have a location of its own? | No. A new location is a new scene, flashbacks and intercuts included (§D). |
 | Where does the §A mapping live? | As metadata on the registry's options, with the spec's table generated from it (§A). |
-| Should a complete frame with no rows be confirmed? | A suggestion-level finding, `presence.complete_but_empty` (§C). |
+| Should a complete frame with no rows be confirmed? | An `info` finding, `presence.complete_but_empty` (§C). §9.4's scale is `error`, `warning`, `info`; `suggestion` is readiness's. |
 | Should an inherited subject raise a finding? | No. The recorded or inherited marker in `shotContext` is enough (§E). |
 | The flag's name? | `presence_complete`: it says what it covers. |
 
@@ -316,6 +318,22 @@ discussion before it was put up:
 
 ## Resolution
 
-*Left empty until the proposal is accepted, declined or deferred. The
-reasoning goes here, not only the verdict: a decline with no recorded
-reason gets re-proposed by the next person to have the same idea.*
+**Accepted and implemented, 2026-09-30.** Spec 0.57, schema 2.17.
+
+The questions this draft opened with were settled before it was put up,
+and are recorded above. Implementing it changed three details, all
+reflected in the text:
+
+- **§C's rule is §4.6**, beside the position patterns, rather than a
+  subsection of §12.1: it says who is at a position, which is §4's
+  subject, not what a query returns.
+- **`presence.complete_but_empty` is `info`.** The draft said
+  `suggestion`, which is readiness's scale, not §9.4's.
+- **Scene 12 has no shot rows.** The fixture's history treats it as
+  pinned, and leaving it unrecorded makes every result published at
+  12-04 the inherited case.
+
+One consequence was not foreseen: a Q14 message about a character at a
+shot has to say whether they are recorded there. "On screen in this
+shot" is only true of a recorded character; an inherited one is "in
+this scene", which is what the published result at 12-04 still says.

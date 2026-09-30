@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.16",
+  "schemaVersion": "2.17",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -42,7 +42,7 @@
     "screenplay_title_page",
     "screenplay_version_title_page"
   ],
-  "entityCount": 104,
+  "entityCount": 106,
   "entities": [
     {
       "name": "project",
@@ -1936,7 +1936,15 @@
             "background",
             "mentioned",
             "voiceover"
-          ]
+          ],
+          "helpText": "Spec §2.4.1: also says whether the character is on screen. `mentioned` is named only, `voiceover` is heard and not seen, the rest are seen. Unset is seen.",
+          "optionPresence": {
+            "featured": "seen",
+            "supporting": "seen",
+            "background": "seen",
+            "mentioned": "named",
+            "voiceover": "heard"
+          }
         },
         {
           "name": "notes",
@@ -2026,7 +2034,229 @@
             "present",
             "background",
             "mentioned"
-          ]
+          ],
+          "helpText": "Spec §2.4.1: also says whether the prop is on screen. `mentioned` is named only, the rest are seen. Unset is seen.",
+          "optionPresence": {
+            "key": "seen",
+            "present": "seen",
+            "background": "seen",
+            "mentioned": "named"
+          }
+        }
+      ]
+    },
+    {
+      "name": "shot_character",
+      "label": "Shot-Character",
+      "labelPlural": "Shot-Characters",
+      "icon": "🔗",
+      "nameField": "name",
+      "category": "Connections",
+      "description": "Links a character to a shot: whether they are in it, and how they read. Spec §4.6.",
+      "sortOrder": 73,
+      "tier": 0,
+      "parentEntity": null,
+      "parentField": null,
+      "versionable": false,
+      "hasLifecycleStatus": false,
+      "hasExternalId": false,
+      "subject": "link",
+      "scope": "shot",
+      "paired": false,
+      "positionPattern": "none",
+      "refines": [],
+      "queries": [
+        "Q07",
+        "Q14"
+      ],
+      "fields": [
+        {
+          "name": "name",
+          "label": "Display Name",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "hidden": true
+        },
+        {
+          "name": "shot_id",
+          "label": "Shot",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "shot"
+        },
+        {
+          "name": "character_id",
+          "label": "Character",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "character"
+        },
+        {
+          "name": "framing",
+          "label": "Framing",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "options": [
+            "full",
+            "cropped",
+            "off_screen"
+          ],
+          "helpText": "Spec §4.6. `full`: the whole subject is in frame. `cropped`: part of it is (the hands, a shoulder, a hand reaching in). `off_screen`: not in frame, and heard. Unset is on screen with the framing unrecorded.",
+          "optionPresence": {
+            "full": "seen",
+            "cropped": "seen",
+            "off_screen": "heard"
+          }
+        },
+        {
+          "name": "facing",
+          "label": "Facing",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "options": [
+            "toward",
+            "profile",
+            "away"
+          ],
+          "helpText": "Spec §4.6. `toward`: the face reads. `profile`: side on. `away`: back to camera, read by build, posture and costume. Empty when framing is off_screen."
+        },
+        {
+          "name": "focus",
+          "label": "Focus",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "options": [
+            "sharp",
+            "soft"
+          ],
+          "helpText": "Spec §4.6. `soft`: out of focus, a foreground or background presence. Empty when framing is off_screen."
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
+        }
+      ]
+    },
+    {
+      "name": "shot_prop",
+      "label": "Shot-Prop",
+      "labelPlural": "Shot-Props",
+      "icon": "🔗",
+      "nameField": "name",
+      "category": "Connections",
+      "description": "Links a prop to a shot: whether it is in it, and how it reads. A prop has no facing. Spec §4.6.",
+      "sortOrder": 74,
+      "tier": 0,
+      "parentEntity": null,
+      "parentField": null,
+      "versionable": false,
+      "hasLifecycleStatus": false,
+      "hasExternalId": false,
+      "subject": "link",
+      "scope": "shot",
+      "paired": false,
+      "positionPattern": "none",
+      "refines": [],
+      "queries": [
+        "Q07",
+        "Q14"
+      ],
+      "fields": [
+        {
+          "name": "name",
+          "label": "Display Name",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "hidden": true
+        },
+        {
+          "name": "shot_id",
+          "label": "Shot",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "shot"
+        },
+        {
+          "name": "prop_id",
+          "label": "Prop",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": true,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "prop"
+        },
+        {
+          "name": "framing",
+          "label": "Framing",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "options": [
+            "full",
+            "cropped",
+            "off_screen"
+          ],
+          "helpText": "Spec §4.6. `full`: the whole subject is in frame. `cropped`: part of it is (the hands, a shoulder, a hand reaching in). `off_screen`: not in frame, and heard. Unset is on screen with the framing unrecorded.",
+          "optionPresence": {
+            "full": "seen",
+            "cropped": "seen",
+            "off_screen": "heard"
+          }
+        },
+        {
+          "name": "focus",
+          "label": "Focus",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "options": [
+            "sharp",
+            "soft"
+          ],
+          "helpText": "Spec §4.6. `soft`: out of focus, a foreground or background presence. Empty when framing is off_screen."
+        },
+        {
+          "name": "notes",
+          "label": "Notes",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false
         }
       ]
     },
@@ -12952,6 +13182,16 @@
           "required": false,
           "tab": "General",
           "autoInjected": false
+        },
+        {
+          "name": "presence_complete",
+          "label": "Presence Complete",
+          "fieldType": "boolean",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "helpText": "Spec §4.6: the shot's shot_character and shot_prop rows are its whole frame, so a subject with no row is not in it. Unset: the rows are what is recorded, and the scene's seen subjects may also be in the shot."
         },
         {
           "name": "notes",

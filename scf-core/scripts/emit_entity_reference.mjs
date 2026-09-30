@@ -191,7 +191,12 @@ for (const tier of tiers) {
                      : ""));
       }
       if (f.options?.length) {
-        notes.push("one of " + f.options.map((o) => `\`${o}\``).join(", "));
+        // With its presence where the vocabulary declares one (§2.4.1):
+        // this table is where the spec's mapping is published, so it is
+        // generated here from the registry rather than written twice.
+        const presence = f.optionPresence ?? {};
+        notes.push("one of " + f.options.map((o) =>
+          presence[o] ? `\`${o}\` (${presence[o]})` : `\`${o}\``).join(", "));
       }
       if (f.default !== undefined && f.default !== null) {
         notes.push(`default \`${esc(f.default)}\``);

@@ -1,7 +1,7 @@
 {
   "query": "Q04",
   "resultFormat": "1.0",
-  "schemaVersion": "2.16",
+  "schemaVersion": "2.17",
   "parameters": {
     "scene": "06857531-3e91-41a9-95dd-3262407d8132"
   },
@@ -125,7 +125,8 @@
           "role": "protagonist",
           "skills_abilities": "Midwifery, horse handling, reading weather",
           "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
-        }
+        },
+        "presence": "seen"
       },
       {
         "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
@@ -148,7 +149,8 @@
           "pronouns": "he/him",
           "role": "deuteragonist",
           "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
-        }
+        },
+        "presence": "seen"
       }
     ],
     "props": [
@@ -166,7 +168,8 @@
           "realization_status": "sourced",
           "story_function": "macguffin",
           "symbolism": "What Marcus took from the creek and could not put down."
-        }
+        },
+        "presence": "seen"
       },
       {
         "uuid": "a63ce1c6-17e5-448b-8abb-9956cf2b4fcb",
@@ -180,7 +183,8 @@
           "realization_status": "sourced",
           "story_function": "character extension",
           "symbolism": "Work as a way of not speaking."
-        }
+        },
+        "presence": "seen"
       }
     ],
     "location": {

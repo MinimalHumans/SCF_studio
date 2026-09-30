@@ -46,7 +46,15 @@ export interface FieldDef {
    * sets.
    */
   open?: boolean;
+  /**
+   * On a vocabulary that says whether a subject is on screen, each
+   * option's presence (spec §2.4.1). Total over `options` where present.
+   */
+  optionPresence?: Record<string, Presence>;
 }
+
+/** How a subject is at a position, spec §2.4.1. */
+export type Presence = "seen" | "heard" | "named";
 
 export interface EntityDef {
   name: string;

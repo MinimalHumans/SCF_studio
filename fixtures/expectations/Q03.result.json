@@ -1,7 +1,7 @@
 {
   "query": "Q03",
   "resultFormat": "1.0",
-  "schemaVersion": "2.16",
+  "schemaVersion": "2.17",
   "parameters": {
     "scene": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
   },
@@ -52,6 +52,7 @@
             "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
           }
         },
+        "presence": "seen",
         "states": [
           {
             "uuid": "b319b490-9794-4541-9ea3-b82d1ab6fb9a",
@@ -125,6 +126,7 @@
             "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
           }
         },
+        "presence": "seen",
         "states": [],
         "costumes": [
           {
@@ -159,6 +161,7 @@
             "summary": "Drowned at the creek crossing seven years before the story opens. Present in the film only as objects: a shawl, a locket, a chime by the door."
           }
         },
+        "presence": "named",
         "states": [],
         "costumes": []
       }
@@ -181,6 +184,7 @@
             "symbolism": "What Marcus took from the creek and could not put down."
           }
         },
+        "presence": "seen",
         "state": {
           "uuid": "88c36f76-f82a-46f7-bc6b-90b9b5964076",
           "fields": {
@@ -206,6 +210,7 @@
             "story_function": "atmosphere"
           }
         },
+        "presence": "seen",
         "state": null
       }
     ],

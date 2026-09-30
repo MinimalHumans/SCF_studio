@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.16",
+ "schemaVersion": "2.17",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.16"
+    "value": "2.17"
    },
    {
     "key": "updated_at",
@@ -5146,7 +5146,7 @@
     "id": 6,
     "uuid": "e9a73271-d1bd-48eb-98f1-afd3f28511e6",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-30 12:00:00",
     "name": "He fills the doorway. Held long.",
     "scene_id": 2,
     "shot_number": "3B",
@@ -5157,13 +5157,14 @@
     "camera_movement": "static",
     "lens_choice": "40mm",
     "description": "He fills the doorway. Held long.",
+    "presence_complete": 1,
     "lifecycle_status": "active"
    },
    {
     "id": 7,
     "uuid": "5bb6b9ea-cc07-4bb6-9500-4691ba5c35a6",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-09-30 12:00:00",
     "name": "Her hands stop, then keep going.",
     "scene_id": 2,
     "shot_number": "3C",
@@ -5174,6 +5175,7 @@
     "camera_movement": "static",
     "lens_choice": "75mm",
     "description": "Her hands stop, then keep going.",
+    "presence_complete": 1,
     "lifecycle_status": "active"
    },
    {
@@ -5579,6 +5581,65 @@
     "lifecycle_status": "active"
    }
   ],
+  "shot_character": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-0000000e0001",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3A: at the stove, back to the door",
+    "shot_id": 5,
+    "character_id": 1,
+    "framing": "full",
+    "facing": "away",
+    "focus": "sharp"
+   },
+   {
+    "id": 2,
+    "uuid": "00000000-0000-4000-8000-0000000e0002",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3A: the door opening behind her",
+    "shot_id": 5,
+    "character_id": 2,
+    "framing": "off_screen"
+   },
+   {
+    "id": 3,
+    "uuid": "00000000-0000-4000-8000-0000000e0003",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3B: fills the doorway",
+    "shot_id": 6,
+    "character_id": 2,
+    "framing": "full",
+    "facing": "toward",
+    "focus": "sharp"
+   },
+   {
+    "id": 4,
+    "uuid": "00000000-0000-4000-8000-0000000e0004",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3B: her back, soft foreground",
+    "shot_id": 6,
+    "character_id": 1,
+    "framing": "full",
+    "facing": "away",
+    "focus": "soft"
+   },
+   {
+    "id": 5,
+    "uuid": "00000000-0000-4000-8000-0000000e0005",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3C: her hands",
+    "shot_id": 7,
+    "character_id": 1,
+    "framing": "cropped",
+    "focus": "sharp"
+   }
+  ],
   "shot_design": [
    {
     "id": 1,
@@ -5628,6 +5689,52 @@
     "depth_of_field": "shallow",
     "focus_strategy": "Nothing stable to hold on to.",
     "lifecycle_status": "active"
+   }
+  ],
+  "shot_prop": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-0000000f0001",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3B: in her hands, soft foreground",
+    "shot_id": 6,
+    "prop_id": 2,
+    "framing": "full",
+    "focus": "soft"
+   },
+   {
+    "id": 2,
+    "uuid": "00000000-0000-4000-8000-0000000f0002",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3B: by the door frame",
+    "shot_id": 6,
+    "prop_id": 3,
+    "framing": "full",
+    "focus": "sharp"
+   },
+   {
+    "id": 3,
+    "uuid": "00000000-0000-4000-8000-0000000f0003",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3B: the empty fourth chair",
+    "shot_id": 6,
+    "prop_id": 5,
+    "framing": "full",
+    "focus": "soft"
+   },
+   {
+    "id": 4,
+    "uuid": "00000000-0000-4000-8000-0000000f0004",
+    "created_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-09-30 12:00:00",
+    "name": "3C: the kettle",
+    "shot_id": 7,
+    "prop_id": 2,
+    "framing": "full",
+    "focus": "sharp"
    }
   ],
   "sonic_identity": [
@@ -6659,5 +6766,5 @@
    }
   ]
  },
- "rowCount": 518
+ "rowCount": 527
 }

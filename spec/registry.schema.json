@@ -185,6 +185,11 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "optionPresence": {
+          "description": "On a vocabulary that says whether a subject is on screen: each option's presence. `seen` can appear on screen, `heard` can be heard and is not seen, `named` is referred to and neither. Total over `options`. Spec §2.4.1. Absent in registries written before schema 2.17.",
+          "type": "object",
+          "additionalProperties": { "enum": ["seen", "heard", "named"] }
+        },
         "polymorphicType": {
           "description": "Present on a POLYMORPHIC reference: names the sibling column saying which table this one points into. Such a column carries no referenceEntity, because its target is chosen per row. Spec \u00a712.1.2 drops these from a projected row; a column whose name ends _id WITHOUT this property is an ordinary value or an ordinary reference and MUST NOT be dropped. Absent in registries written before schema 2.12.",
           "type": "string"
