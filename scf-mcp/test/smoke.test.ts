@@ -196,7 +196,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(result.isError).toBe(true);
   });
 
-  test("shot_context returns all seven members with no scfPath given",
+  test("shot_context returns all eight members with no scfPath given",
       async () => {
     const result = await server.send("tools/call", {
       name: "shot_context", arguments: { shotUuid: SHOT1204 },
@@ -205,7 +205,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     const ctx = JSON.parse(result.content[0]?.text ?? "{}");
     expect(Object.keys(ctx).sort()).toEqual(
       ["brief", "contextFormat", "look", "media", "physical", "readiness",
-       "scene", "swept"].sort());
+       "related", "scene", "swept"].sort());
     expect(ctx.readiness.result.target).toBe("Q07");
   });
 
@@ -230,7 +230,8 @@ describe("scf-mcp server — a default project set at startup", () => {
     }
   });
 
-  test("where_used runs backwards: a bundle nothing binds", async () => {
+  test("where_used runs backwards: what binds the costume bundle",
+       async () => {
     const listed = await server.send("tools/call", {
       name: "list", arguments: { entityType: "bundle" },
     }) as { content: Array<{ text: string }> };
@@ -245,7 +246,9 @@ describe("scf-mcp server — a default project set at startup", () => {
     const usage = JSON.parse(result.content[0]?.text ?? "{}") as {
       usedBy: Array<{ entity: string }>;
     };
-    expect(usage.usedBy.every((u) => !u.entity.endsWith("_asset_binding")))
+    // Reached by nothing until schema 2.16 gave costume a binding
+    // entity; the reverse lookup is how that was visible at all.
+    expect(usage.usedBy.some((u) => u.entity === "costume_asset_binding"))
       .toBe(true);
     expect(usage.usedBy.some((u) => u.entity === "bundle_asset")).toBe(true);
   });

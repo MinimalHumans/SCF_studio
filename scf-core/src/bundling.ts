@@ -209,16 +209,36 @@ export async function createBundle(
  * character's defaults.
  */
 export async function bindBundleToCharacter(
-  exec: SqlExec, characterId: number, bundleId: number,
+  exec: SqlExec, registry: Registry, characterId: number, bundleId: number,
   isBaseline = true,
 ): Promise<number | null> {
-  return bindBundle(exec, "character", characterId, bundleId,
+  return bindBundle(exec, registry, "character", characterId, bundleId,
                     { isBaseline });
 }
 
-/** The subject kinds that own an `<subject>_asset_binding` table. */
-export const BINDING_SUBJECTS = ["character", "prop", "location"] as const;
-export type BindingSubject = typeof BINDING_SUBJECTS[number];
+/**
+ * The subject kinds that own an `<subject>_asset_binding` entity.
+ *
+ * Read from the registry rather than listed: `costume_asset_binding`
+ * arrived in schema 2.16 and every caller of this — the bind form, the
+ * editor's media checks, the reach derivation — covered it without an
+ * edit. A list here would have been four edits and one forgotten.
+ */
+export function bindingSubjects(registry: Registry): string[] {
+  const out: string[] = [];
+  for (const name of registry.order) {
+    const suffix = "_asset_binding";
+    if (!name.endsWith(suffix)) continue;
+    const subject = name.slice(0, -suffix.length);
+    const def = registry.entities.get(name);
+    if (def === undefined || !registry.entities.has(subject)) continue;
+    if (def.fields.some((f) => f.name === `${subject}_id`)) out.push(subject);
+  }
+  return out;
+}
+
+/** The kinds as of this schema; `bindingSubjects` is the live answer. */
+export type BindingSubject = string;
 
 export interface BindOptions {
   isBaseline?: boolean;
@@ -243,10 +263,10 @@ export interface BindOptions {
  * stretches of the story.
  */
 export async function bindBundle(
-  exec: SqlExec, subjectType: BindingSubject, subjectId: number,
-  bundleId: number, options: BindOptions = {},
+  exec: SqlExec, registry: Registry, subjectType: BindingSubject,
+  subjectId: number, bundleId: number, options: BindOptions = {},
 ): Promise<number | null> {
-  if (!(BINDING_SUBJECTS as readonly string[]).includes(subjectType)) {
+  if (!registry.entities.has(`${subjectType}_asset_binding`)) {
     throw new Error(`bindBundle: no binding table for "${subjectType}"`);
   }
   const table = `${subjectType}_asset_binding`;

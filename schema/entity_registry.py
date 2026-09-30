@@ -1809,7 +1809,10 @@ register(EntityDef(
             "acoustic",
         ],
                  help_text="Hard enum. Tools switch on this to determine compatibility. "
-                           "acoustic added in Phase 1D for location ambience.", open_values=True),
+                           "acoustic is any subject's sonic identity, not only a location's "
+                           "ambience: a prop's recorded takes belong under it. Retrieval is BY "
+                           "intent, so an asset filed under the wrong one is a silent miss "
+                           "rather than a visible error.", open_values=True),
         FieldDef("description", "Description", "textarea"),
         FieldDef("coverage_summary", "Coverage Summary", "textarea"),
         FieldDef("format_hints", "Format Hints", "string_list", tab="Technical",
@@ -1858,15 +1861,18 @@ register(EntityDef(
                  reference_entity="bundle", required=True),
         FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
         FieldDef("precedence", "Precedence", "integer", default=0),
-        FieldDef("variant_id", "Variant", "reference",
-                 reference_entity="character_variant", tab="Conditions"),
-        FieldDef("physical_state_filter", "Physical State Filter", "text", tab="Conditions"),
-        FieldDef("vocal_state_filter", "Vocal State Filter", "text", tab="Conditions"),
+        FieldDef("physical_state_filter", "Physical State Filter", "text", tab="Conditions",
+                 help_text="Spec §12.8: the binding applies where a physical performance_state "
+                           "is in force at the position (§4.5) whose NAME matches this, "
+                           "compared trimmed and case-insensitively — the state's label, not "
+                           "its sentence. Empty means no condition, not 'no state'."),
+        FieldDef("vocal_state_filter", "Vocal State Filter", "text", tab="Conditions",
+                 help_text="Spec §12.8: as physical_state_filter, against a vocal "
+                           "performance_state."),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
                  reference_entity="scene", tab="Conditions"),
-        FieldDef("act_id", "Act", "reference", reference_entity="act", tab="Conditions"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -1880,9 +1886,9 @@ register(EntityDef(
     category="Asset Reference",
     sort_order=253,
     tier=2,
-    description="Applies a bundle to a prop under specific conditions (variant, scene "
-                "range, act). Tools walk the prop resolution cascade and use bindings to "
-                "find the right media for a prop in a given scene/state.",
+    description="Applies a bundle to a prop under specific conditions (scene range). "
+                "Tools walk the prop resolution cascade and use bindings to find the "
+                "right media for a prop in a given scene.",
     fields=[
         FieldDef("name", "Binding Name"),
         FieldDef("prop_id", "Prop", "reference",
@@ -1891,13 +1897,44 @@ register(EntityDef(
                  reference_entity="bundle", required=True),
         FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
         FieldDef("precedence", "Precedence", "integer", default=0),
-        FieldDef("variant_id", "Variant", "reference",
-                 reference_entity="prop_variant", tab="Conditions"),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
                  reference_entity="scene", tab="Conditions"),
-        FieldDef("act_id", "Act", "reference", reference_entity="act", tab="Conditions"),
+        FieldDef("notes", "Notes", "textarea", tab="Notes"),
+    ],
+))
+
+# Costume Asset Binding (NEW in 2.16 — proposal 0029)
+#
+# Costume was the one media subject with references and nowhere to bind
+# them: a bundle of costume images could be assembled and reached
+# nobody, which is what the fixture's only `asset.bundle_unbound`
+# finding was. No variant filter — costume has no variant entity — and
+# no act filter, for the reason 0027 removed the others.
+register(EntityDef(
+    name="costume_asset_binding",
+    label="Costume Asset Binding",
+    label_plural="Costume Asset Bindings",
+    icon="\U0001F39A\uFE0F",
+    category="Asset Reference",
+    sort_order=255,
+    tier=2,
+    description="Applies a bundle to a costume under specific conditions (scene range). "
+                "Tools walk the costume resolution cascade and use bindings to find the "
+                "right media for a costume in a given scene.",
+    fields=[
+        FieldDef("name", "Binding Name"),
+        FieldDef("costume_id", "Costume", "reference",
+                 reference_entity="costume", required=True),
+        FieldDef("bundle_id", "Bundle", "reference",
+                 reference_entity="bundle", required=True),
+        FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
+        FieldDef("precedence", "Precedence", "integer", default=0),
+        FieldDef("scene_range_start_id", "Scene Range Start", "reference",
+                 reference_entity="scene", tab="Conditions"),
+        FieldDef("scene_range_end_id", "Scene Range End", "reference",
+                 reference_entity="scene", tab="Conditions"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -1912,8 +1949,8 @@ register(EntityDef(
     sort_order=254,
     tier=2,
     description="Applies a bundle to a location under specific conditions (variant, "
-                "scene range, act, time-of-day). Tools walk the location resolution "
-                "cascade and use bindings to find the right media for a location.",
+                "scene range, time-of-day). Tools walk the location resolution cascade "
+                "and use bindings to find the right media for a location.",
     fields=[
         FieldDef("name", "Binding Name"),
         FieldDef("location_id", "Location", "reference",
@@ -1923,14 +1960,21 @@ register(EntityDef(
         FieldDef("is_baseline", "Is Baseline", "boolean", default=False),
         FieldDef("precedence", "Precedence", "integer", default=0),
         FieldDef("variant_id", "Variant", "reference",
-                 reference_entity="location_variant", tab="Conditions"),
+                 reference_entity="location_variant", tab="Conditions",
+                 help_text="Spec §12.8: the binding applies where §12.17 picks this variant as "
+                           "the one in force at the position. The only variant filter that "
+                           "survives 0027 — character and prop variants have no in-force rule "
+                           "for a filter to test."),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
                  reference_entity="scene", tab="Conditions"),
-        FieldDef("act_id", "Act", "reference", reference_entity="act", tab="Conditions"),
-        FieldDef("time_of_day_filter", "Time of Day Filter", "text", tab="Conditions",
-                 help_text="Matches scene.time_of_day for bindings scoped to specific times."),
+        FieldDef("time_of_day_filter", "Time of Day Filter", "select", tab="Conditions",
+                 options=["day", "dawn", "morning", "midday", "afternoon", "dusk", "night"],
+                 help_text="Spec §12.8: the binding applies where the scene's time_of_day "
+                           "equals this, compared trimmed and case-insensitively. Proposal 0012 "
+                           "closed it over scene.time_of_day's vocabulary — free text matched "
+                           "against a select could only ever agree by luck."),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -1973,7 +2017,11 @@ register(EntityDef(
         FieldDef("frame_number", "Frame Number", "integer", tab="Scope"),
         FieldDef("timecode", "Timecode", "text", tab="Scope",
                  placeholder="HH:MM:SS:FF"),
-        FieldDef("region_box", "Region Box", "json", tab="Scope",
+        FieldDef("region_box", "Region Box", "json",
+                 help_text="Declared shape: {x, y, w, h} in pixels, origin top-left, "
+                           "naming the part of the asset this anchor points at. A reader "
+                           "that does not recognise a shape MUST preserve it (§10.1) "
+                           "rather than discard it.", tab="Scope",
                  placeholder='{"x": 420, "y": 180, "w": 480, "h": 600}'),
         FieldDef("region_label", "Region Label", "text", tab="Scope"),
         FieldDef("audio_offset_start_sec", "Audio Offset Start (sec)", "float", tab="Scope"),
@@ -3632,8 +3680,12 @@ def get_junction_entities() -> list[EntityDef]:
 # Format: name: (subject, scope, queries) — plus PAIRED and REFINES below.
 # =============================================================================
 
-SUBJECTS = {"character", "location", "prop", "scene", "shot", "project",
-            "story", "theme", "link", "meta"}
+# `costume` joined in 2.16: a costume is about its character, but a
+# costume ASSET BINDING is about the costume — and Q13's cascade finds a
+# binding by the subject column the ontology names, so the subject has
+# to be the thing the row binds.
+SUBJECTS = {"character", "costume", "location", "prop", "scene", "shot",
+            "project", "story", "theme", "link", "meta"}
 SCOPES = {"global", "act", "sequence", "scene", "shot", "moment"}
 
 ONTOLOGY: dict[str, tuple[str, str, list[str]]] = {
@@ -3701,6 +3753,7 @@ ONTOLOGY: dict[str, tuple[str, str, list[str]]] = {
     "character_asset_binding": ("character", "scene",   ["Q13"]),
     "prop_asset_binding":      ("prop",      "scene",   ["Q13"]),
     "location_asset_binding":  ("location",  "scene",   ["Q13"]),
+    "costume_asset_binding":   ("costume",   "scene",   ["Q13"]),
     "entity_anchor":           ("meta",      "global",  ["Q13"]),
     "performance_corpus":      ("meta",      "global",  ["Q13"]),
     "actor":                   ("meta",      "global",  ["Q13"]),

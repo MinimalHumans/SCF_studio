@@ -485,17 +485,94 @@ export const ANCHOR_TYPE_FOR_INTENT: Record<string, string> = {
   performance: "motion",
 };
 
-function bindingApplies(
-    binding: Row, sceneId: number | null, order: SceneOrder): boolean {
-  if (sceneId === null) return pyTruthy(binding["is_baseline"]);
+const sameText = (a: SqlValue | undefined, b: SqlValue | undefined): boolean =>
+  String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+
+/**
+ * Whether a binding is in force at a position, and when it is not, WHY
+ * (spec §12.8).
+ *
+ * Every filter the binding declares must be satisfied — they compose as
+ * AND — and a filter the file leaves null is no condition at all. This
+ * used to test the scene range alone while four other declared columns
+ * were read by nothing, so a binding scoped to a variant, a time of day
+ * or a physical state applied everywhere and its `trail` line said it
+ * fired. A cascade that cannot explain an absence is worse than one
+ * that resolves less.
+ *
+ * With no position asked about, only baselines apply and no positional
+ * filter is evaluated: there is nothing to evaluate it against, and a
+ * baseline that declares one is answering a question nobody asked.
+ */
+async function bindingApplies(
+    ctx: ScfContext, subject: string, subjectId: number, binding: Row,
+    sceneId: number | null, order: SceneOrder,
+): Promise<{ applies: boolean; reason?: string }> {
+  if (sceneId === null) {
+    return pyTruthy(binding["is_baseline"])
+      ? { applies: true } : { applies: false, reason: "not a baseline" };
+  }
   const here = order.get(sceneId);
   const start = order.get(asNum(binding["scene_range_start_id"]) ?? -1);
   const end = order.get(asNum(binding["scene_range_end_id"]) ?? -1);
   if (start !== undefined && (here === undefined || here < start)) {
-    return false;
+    return { applies: false, reason: "before its scene range" };
   }
-  if (end !== undefined && (here === undefined || here > end)) return false;
-  return true;
+  if (end !== undefined && (here === undefined || here > end)) {
+    return { applies: false, reason: "after its scene range" };
+  }
+
+  // time_of_day_filter (location): equal to the scene's, on §12.17's
+  // axis and 0012's closed vocabulary.
+  if (pyTruthy(binding["time_of_day_filter"])) {
+    const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0];
+    if (scene === undefined || !pyTruthy(scene["time_of_day"])) {
+      return { applies: false,
+               reason: `time_of_day_filter ` +
+                 `"${String(binding["time_of_day_filter"])}", scene says nothing` };
+    }
+    if (!sameText(scene["time_of_day"], binding["time_of_day_filter"])) {
+      return { applies: false,
+               reason: `time_of_day_filter ` +
+                 `"${String(binding["time_of_day_filter"])}" vs scene ` +
+                 `"${String(scene["time_of_day"])}"` };
+    }
+  }
+
+  // variant_id (location): the variant §12.17 puts in force here.
+  if (pyTruthy(binding["variant_id"])) {
+    const [inForce] = await selectLocationVariant(ctx, sceneId);
+    const wanted = asNum(binding["variant_id"]);
+    if (inForce === null || asNum(inForce["id"]) !== wanted) {
+      return { applies: false,
+               reason: inForce === null
+                 ? "variant filter, no variant in force here"
+                 : `variant filter vs "${String(inForce["name"])}" in force` };
+    }
+  }
+
+  // The state filters (character): a state of that modality in force at
+  // this position (§4.5), whose description matches.
+  for (const [column, modality] of [
+    ["physical_state_filter", "physical"],
+    ["vocal_state_filter", "vocal"],
+  ] as const) {
+    if (!pyTruthy(binding[column])) continue;
+    if (subject !== "character") continue;
+    const states = await statesInForce(ctx, subjectId, sceneId, modality,
+                                       order);
+    // Matched against the state's NAME — its natural-key label (§12.5),
+    // which is what an author writing a filter has in hand. The
+    // description is a sentence and nobody will retype one.
+    const hit = states.some((st) => sameText(st["name"], binding[column]));
+    if (!hit) {
+      return { applies: false,
+               reason: `${column} "${String(binding[column])}", no such ` +
+                 `${modality} state in force` };
+    }
+  }
+
+  return { applies: true };
 }
 
 async function bundleAssets(
@@ -562,11 +639,20 @@ export async function resolveMedia(
     (asNum(b["precedence"]) ?? 0) - (asNum(a["precedence"]) ?? 0));
   const baseAssets: Row[] = [];
   for (const b of bindings) {
-    if (!bindingApplies(b, sceneId, order)) continue;
     const bundles = await rows(ctx.exec, "bundle", "id = ?",
                                [b["bundle_id"] ?? null]);
     const bundle = bundles[0];
     if (bundle === undefined || bundle["intent"] !== intent) continue;
+    const verdict = await bindingApplies(ctx, subject, subjectId, b,
+                                         sceneId, order);
+    if (!verdict.applies) {
+      // An absence with a reason. A binding excluded silently is how a
+      // filter nothing read went unnoticed for two schema versions.
+      trail.push(
+        `binding ${pyTruthy(b["name"]) ? b["name"] : b["id"]} -> ` +
+        `bundle ${bundle["name"]}: EXCLUDED, ${verdict.reason ?? "filtered"}`);
+      continue;
+    }
     trail.push(
       `binding ${pyTruthy(b["name"]) ? b["name"] : b["id"]} -> ` +
       `bundle ${bundle["name"]}`);

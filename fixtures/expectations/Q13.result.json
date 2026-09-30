@@ -1,7 +1,7 @@
 {
   "query": "Q13",
   "resultFormat": "1.0",
-  "schemaVersion": "2.15",
+  "schemaVersion": "2.16",
   "parameters": {
     "subjectType": "character",
     "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
@@ -14,6 +14,7 @@
     "intent": "visual_identity",
     "trail": [
       "binding Eleanor visual baseline -> bundle Eleanor Visual Core",
+      "binding Eleanor while wounded -> bundle Eleanor - lamplit, wounded",
       "anchor Eleanor Face Anchor",
       "shot override 12-04 Eleanor override"
     ],

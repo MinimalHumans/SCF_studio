@@ -19,7 +19,7 @@ import { q } from "@scf-core/db.ts";
 import type { Registry } from "@scf-core/registry.ts";
 import { formatOf } from "@scf-core/assets.ts";
 import {
-  BINDING_SUBJECTS, unboundBundleIds,
+  bindingSubjects, unboundBundleIds,
 } from "@scf-core/bundling.ts";
 
 export type MediaKind = "image" | "video" | "audio" | "model" | "other";
@@ -198,7 +198,10 @@ export interface MediaReport {
   unboundBundles: UnboundBundle[];
   /** Same subject, bundle and scene range, bound more than once. */
   duplicateBindings: BindingRef[][];
-  /** Not a baseline and no scene range: in force at every scene. */
+  /**
+   * Not a baseline and declaring no filter at all: in force at every
+   * scene, whatever its name says.
+   */
   everywhereBindings: BindingRef[];
   intentConflicts: IntentConflictRow[];
   lookalikes: LookalikeField[];
@@ -250,14 +253,24 @@ export async function scanMedia(
   }
 
   // --- bindings: duplicates, and non-baselines with no range ------------
-  for (const subject of BINDING_SUBJECTS) {
+  for (const subject of bindingSubjects(registry)) {
     const entity = `${subject}_asset_binding`;
     if (!tables.has(entity) || !tables.has(subject)) continue;
+    // Any column that narrows when the binding applies (spec §12.8.1),
+    // read from the registry: `variant_id` and everything ending
+    // `_filter`. Listed here instead, this check would have gone on
+    // calling a filtered binding unscoped the day a filter was added —
+    // which is exactly what happened to the cascade itself.
+    const def = registry.entities.get(entity);
+    const filters = (def?.fields ?? [])
+      .map((f) => f.name)
+      .filter((n) => n === "variant_id" || n.endsWith("_filter"));
     const rows = await exec(
       `SELECT r.id, r.name, r.${q(`${subject}_id`)} AS sid, r.bundle_id, ` +
       `  r.is_baseline, r.scene_range_start_id AS rs, ` +
       `  r.scene_range_end_id AS re, s.name AS subject_name, ` +
-      `  b.name AS bundle_name ` +
+      `  b.name AS bundle_name` +
+      filters.map((f) => `, r.${q(f)} AS ${q(`f_${f}`)}`).join("") + " " +
       `FROM ${q(entity)} r ` +
       `LEFT JOIN ${q(subject)} s ON s.id = r.${q(`${subject}_id`)} ` +
       `LEFT JOIN ${q("bundle")} b ON b.id = r.bundle_id ` +
@@ -277,7 +290,12 @@ export async function scanMedia(
       const baseline = row["is_baseline"] !== null
         && row["is_baseline"] !== undefined
         && Number(row["is_baseline"]) !== 0;
-      if (!baseline && row["rs"] === null && row["re"] === null) {
+      const filtered = filters.some((f) => {
+        const v = row[`f_${f}`];
+        return v !== null && v !== undefined && String(v).trim() !== "";
+      });
+      if (!baseline && !filtered
+          && row["rs"] === null && row["re"] === null) {
         report.everywhereBindings.push(ref);
       }
     }

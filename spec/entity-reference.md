@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.15** — **103 entities**.
+Schema **2.16** — **104 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -29,7 +29,7 @@ registry's own, and are as good as what is written there.
 
 - **Tier 0** (24) — Structural foundation
 - **Tier 1** (9) — Project-level creative direction
-- **Tier 2** (33) — Depth — character, prop and location
+- **Tier 2** (34) — Depth — character, prop and location
 - **Tier 3** (7) — Scene detail
 - **Tier 4** (8) — Thematic tracking
 - **Tier 5** (4) — Emotional architecture
@@ -56,7 +56,7 @@ A major structural division of the story.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (4) | `sequence.act_id`, `character_asset_binding.act_id`, `prop_asset_binding.act_id`, `location_asset_binding.act_id` |
+| Referenced by (1) | `sequence.act_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -529,7 +529,7 @@ A single scene in the story.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (49) | `act.start_scene_id`, `sequence.start_scene_id`, `story_beat.scene_id`, `scene_character.scene_id`, `scene_prop.scene_id`, `scene_sequence.scene_id`, `relationship_state.scene_id`, `character_arc_state.scene_id`, `costume_scene.scene_id`, `costume_progression_state.scene_id`, `makeup_hair_design.scene_id`, `prop_state.scene_id`, `character_asset_binding.scene_range_start_id`, `character_asset_binding.scene_range_end_id`, `prop_asset_binding.scene_range_start_id`, `prop_asset_binding.scene_range_end_id`, `location_asset_binding.scene_range_start_id`, `location_asset_binding.scene_range_end_id`, `take_scene.scene_id`, `clip.scene_id`, `scene_emotional_target.scene_id`, `scene_color_palette.scene_id`, `lighting_design.scene_id`, `scene_music_design.scene_id`, `tone_marker.scene_id`, `set_dressing.scene_id`, `dialogue_sound_design.scene_id`, `motif.first_appearance_scene_id`, `motif_state.scene_id`, `motif_appearance.scene_id`, `subtext.scene_id`, `color_script_entry.scene_id`, `emotional_beat.scene_id`, `information_strategy.scene_id`, `identification_strategy.scene_id`, `shot.scene_id`, `shot_language.scene_id`, `scene_blocking.scene_id`, `action_sequence.scene_id`, `performance_state.scene_id`, `performance_state.resolved_at_scene_id`, `performance_beat.scene_id`, `dialogue_rhythm.scene_id`, `movement_choreography.scene_id`, `sound_cue.scene_id`, `music_cue.scene_id`, `sound_perspective.scene_id`, `voiceover_design.scene_id`, `music_sound_relationship.scene_id` |
+| Referenced by (51) | `act.start_scene_id`, `sequence.start_scene_id`, `story_beat.scene_id`, `scene_character.scene_id`, `scene_prop.scene_id`, `scene_sequence.scene_id`, `relationship_state.scene_id`, `character_arc_state.scene_id`, `costume_scene.scene_id`, `costume_progression_state.scene_id`, `makeup_hair_design.scene_id`, `prop_state.scene_id`, `character_asset_binding.scene_range_start_id`, `character_asset_binding.scene_range_end_id`, `prop_asset_binding.scene_range_start_id`, `prop_asset_binding.scene_range_end_id`, `costume_asset_binding.scene_range_start_id`, `costume_asset_binding.scene_range_end_id`, `location_asset_binding.scene_range_start_id`, `location_asset_binding.scene_range_end_id`, `take_scene.scene_id`, `clip.scene_id`, `scene_emotional_target.scene_id`, `scene_color_palette.scene_id`, `lighting_design.scene_id`, `scene_music_design.scene_id`, `tone_marker.scene_id`, `set_dressing.scene_id`, `dialogue_sound_design.scene_id`, `motif.first_appearance_scene_id`, `motif_state.scene_id`, `motif_appearance.scene_id`, `subtext.scene_id`, `color_script_entry.scene_id`, `emotional_beat.scene_id`, `information_strategy.scene_id`, `identification_strategy.scene_id`, `shot.scene_id`, `shot_language.scene_id`, `scene_blocking.scene_id`, `action_sequence.scene_id`, `performance_state.scene_id`, `performance_state.resolved_at_scene_id`, `performance_beat.scene_id`, `dialogue_rhythm.scene_id`, `movement_choreography.scene_id`, `sound_cue.scene_id`, `music_cue.scene_id`, `sound_perspective.scene_id`, `voiceover_design.scene_id`, `music_sound_relationship.scene_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -1105,12 +1105,12 @@ Named, intent-typed collection of assets. Tool-agnostic media reference primitiv
 | Versionable | yes |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
-| Referenced by (9) | `bundle.parent_id`, `bundle.superseded_by_id`, `bundle_asset.bundle_id`, `character_asset_binding.bundle_id`, `prop_asset_binding.bundle_id`, `location_asset_binding.bundle_id`, `character_shot_override.bundle_override_id`, `prop_shot_override.bundle_override_id`, `location_shot_override.bundle_override_id` |
+| Referenced by (10) | `bundle.parent_id`, `bundle.superseded_by_id`, `bundle_asset.bundle_id`, `character_asset_binding.bundle_id`, `prop_asset_binding.bundle_id`, `costume_asset_binding.bundle_id`, `location_asset_binding.bundle_id`, `character_shot_override.bundle_override_id`, `prop_shot_override.bundle_override_id`, `location_shot_override.bundle_override_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
 | `name` | text | **yes** |  |
-| `intent` | select | **yes** | one of `visual_identity`, `voice_identity`, `motion`, `behavior`, `performance`, `surface`, `environment`, `acoustic`. Hard enum. Tools switch on this to determine compatibility. acoustic added in Phase 1D for location ambience. |
+| `intent` | select | **yes** | one of `visual_identity`, `voice_identity`, `motion`, `behavior`, `performance`, `surface`, `environment`, `acoustic`. Hard enum. Tools switch on this to determine compatibility. acoustic is any subject's sonic identity, not only a location's ambience: a prop's recorded takes belong under it. Retrieval is BY intent, so an asset filed under the wrong one is a silent miss rather than a visible error. |
 | `description` | textarea |  |  |
 | `coverage_summary` | textarea |  |  |
 | `format_hints` | string_list |  |  |
@@ -1237,12 +1237,10 @@ Applies a bundle to a character under specific conditions.
 | `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
 | `is_baseline` | boolean |  | default `false` |
 | `precedence` | integer |  | default `0` |
-| `variant_id` | reference |  | → `character_variant` (resolves to `variant_uuid` in a result, §12.1.2) |
-| `physical_state_filter` | text |  |  |
-| `vocal_state_filter` | text |  |  |
+| `physical_state_filter` | text |  | Spec §12.8: the binding applies where a physical performance_state is in force at the position (§4.5) whose NAME matches this, compared trimmed and case-insensitively — the state's label, not its sentence. Empty means no condition, not 'no state'. |
+| `vocal_state_filter` | text |  | Spec §12.8: as physical_state_filter, against a vocal performance_state. |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
-| `act_id` | reference |  | → `act` (resolves to `act_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1338,7 +1336,7 @@ Specific state or version of a character (e.g. Young Eleanor, Angry Marcus).
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
-| Referenced by (2) | `character_asset_binding.variant_id`, `character_shot_override.variant_target_id` |
+| Referenced by (1) | `character_shot_override.variant_target_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -1400,7 +1398,7 @@ A specific wardrobe look for a character.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
-| Referenced by (1) | `costume_scene.costume_id` |
+| Referenced by (2) | `costume_scene.costume_id`, `costume_asset_binding.costume_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -1421,6 +1419,34 @@ A specific wardrobe look for a character.
 | `emotional_state_reflected` | textarea |  |  |
 | `social_signals` | textarea |  |  |
 | `continuity_notes` | textarea |  |  |
+| `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
+
+### `costume_asset_binding`
+
+Applies a bundle to a costume under specific conditions (scene range). Tools walk the costume resolution cascade and use bindings to find the right media for a costume in a given scene.
+
+| | |
+|---|---|
+| Label | Costume Asset Binding / Costume Asset Bindings |
+| Category | Asset Reference |
+| Subject | costume |
+| Scope | scene |
+| Position | Not positioned — one row, not keyed to a scene. |
+| Name field | `name` |
+| Versionable | no |
+| `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
+| `external_id` | no |
+
+| Field | Type | Req | |
+|---|---|---|---|
+| `name` | text |  |  |
+| `costume_id` | reference | **yes** | → `costume` (resolves to `costume_uuid` in a result, §12.1.2) |
+| `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
+| `is_baseline` | boolean |  | default `false` |
+| `precedence` | integer |  | default `0` |
+| `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
+| `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
+| `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
 ### `costume_progression`
@@ -1507,7 +1533,7 @@ Known-good single frame, audio segment, or motion sample marked as canonical ref
 | `asset_id` | reference | **yes** | → `asset` (resolves to `asset_uuid` in a result, §12.1.2) |
 | `frame_number` | integer |  |  |
 | `timecode` | text |  |  |
-| `region_box` | json |  |  |
+| `region_box` | json |  | Declared shape: {x, y, w, h} in pixels, origin top-left, naming the part of the asset this anchor points at. A reader that does not recognise a shape MUST preserve it (§10.1) rather than discard it. |
 | `region_label` | text |  |  |
 | `audio_offset_start_sec` | float |  |  |
 | `audio_offset_end_sec` | float |  |  |
@@ -1521,7 +1547,7 @@ Known-good single frame, audio segment, or motion sample marked as canonical ref
 
 ### `location_asset_binding`
 
-Applies a bundle to a location under specific conditions (variant, scene range, act, time-of-day). Tools walk the location resolution cascade and use bindings to find the right media for a location.
+Applies a bundle to a location under specific conditions (variant, scene range, time-of-day). Tools walk the location resolution cascade and use bindings to find the right media for a location.
 
 | | |
 |---|---|
@@ -1542,11 +1568,10 @@ Applies a bundle to a location under specific conditions (variant, scene range, 
 | `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
 | `is_baseline` | boolean |  | default `false` |
 | `precedence` | integer |  | default `0` |
-| `variant_id` | reference |  | → `location_variant` (resolves to `variant_uuid` in a result, §12.1.2) |
+| `variant_id` | reference |  | → `location_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §12.8: the binding applies where §12.17 picks this variant as the one in force at the position. The only variant filter that survives 0027 — character and prop variants have no in-force rule for a filter to test. |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
-| `act_id` | reference |  | → `act` (resolves to `act_uuid` in a result, §12.1.2) |
-| `time_of_day_filter` | text |  | Matches scene.time_of_day for bindings scoped to specific times. |
+| `time_of_day_filter` | select |  | one of `day`, `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`. Spec §12.8: the binding applies where the scene's time_of_day equals this, compared trimmed and case-insensitively. Proposal 0012 closed it over scene.time_of_day's vocabulary — free text matched against a select could only ever agree by luck. |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -1864,7 +1889,7 @@ Recurring physical behavior — gesture, tic, comfort behavior.
 
 ### `prop_asset_binding`
 
-Applies a bundle to a prop under specific conditions (variant, scene range, act). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene/state.
+Applies a bundle to a prop under specific conditions (scene range). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene.
 
 | | |
 |---|---|
@@ -1885,10 +1910,8 @@ Applies a bundle to a prop under specific conditions (variant, scene range, act)
 | `bundle_id` | reference | **yes** | → `bundle` (resolves to `bundle_uuid` in a result, §12.1.2) |
 | `is_baseline` | boolean |  | default `false` |
 | `precedence` | integer |  | default `0` |
-| `variant_id` | reference |  | → `prop_variant` (resolves to `variant_uuid` in a result, §12.1.2) |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
-| `act_id` | reference |  | → `act` (resolves to `act_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 
@@ -2009,7 +2032,7 @@ Specific state or version of a prop (e.g. Locket open, Gun blood-spattered, Lett
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
-| Referenced by (2) | `prop_asset_binding.variant_id`, `prop_shot_override.variant_target_id` |
+| Referenced by (1) | `prop_shot_override.variant_target_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|

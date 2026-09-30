@@ -17,6 +17,90 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.56 — 2026-09-30
+
+*Describes schema 2.16.*
+
+**Minor.** Proposals 0012 (its last item), 0025 (its documentation
+half), 0027 and 0029. Six columns that looked like scoping and applied
+everywhere are now either read or gone, and the one media subject that
+could not be bound can be.
+
+### §12.8.1 — a binding applies where every filter it declares is satisfied
+
+The three binding entities declared six columns that narrow when a
+binding applies. `bindingApplies` tested the scene range and nothing
+else, so a binding scoped to a variant, a time of day or a physical
+state applied EVERYWHERE — and silently: its `trail` line said it
+fired, with no note that four of its five conditions were never
+evaluated.
+
+Nothing in the repository could catch it. The fixture authored none of
+the six, so every published artifact was byte-identical whether an
+implementation honoured them or ignored them — the same invisible class
+as `external_id` before 0.40 and the empty `asset_relationship` table
+before 2.13. A second implementation reading the registry would have
+honoured them, diverged on any file that used them, and been right.
+
+Per column: `time_of_day_filter` matches the scene's `time_of_day` over
+0012's closed vocabulary; `variant_id` matches the variant §12.17 puts
+in force; the two state filters match a `performance_state` in force at
+the position (§4.5) **by name**, because a filter is something an author
+types and nobody retypes a sentence. `act_id` is removed everywhere —
+act membership is derived from boundaries, so an act-scoped binding is a
+scene range that goes stale when a boundary moves. The character and
+prop `variant_id` columns are removed: nothing says which character or
+prop variant is in force at a position, so those two could never be
+evaluated at all.
+
+**Filters compose as AND, and an excluded binding MUST appear in
+`trail` with the filter that excluded it.** A cascade that cannot
+explain an absence is the failure the first `scf-mcp` session actually
+hit: asked for the wind chime at scene 3 it got the chime's scene-24
+state, because the way to say "only after 24" that the resolver read was
+the scene range, and the columns that looked like they meant that did
+not.
+
+The fixture now exercises each: one binding scoped by time of day, one
+by variant, one by Eleanor's `wounded` state. Its trail reads, at scene
+3, `Kitchen at night -> bundle Kitchen - Night Ref: EXCLUDED,
+time_of_day_filter "night" vs scene "morning"`.
+
+### §8.6 — costume media, and plates that are about a scene
+
+`costume_asset_binding` is new (0029). Costume was the one media subject
+with references and no way to bind them, which is what the fixture's
+only `asset.bundle_unbound` finding was: a bundle of costume images
+bound to nothing, not by oversight but because no row type could bind
+it. The finding moved to a twelfth negative fixture so that it stays
+exercised.
+
+It arrived through §8.6's registry-derived reach rule rather than an
+edit to it, and `bundleReach`, `unboundBundleIds`, the editor's bind
+form and its media checks all covered it the day it was declared. One
+test asserting the list of binding subjects had to change; no caller
+did.
+
+**An asset may be about a SCENE or a SHOT rather than about a subject.**
+A DOP's framing plate for one scene belongs to no character, prop or
+location in it, and the cascade starts at a subject, so a binding is the
+wrong shape — there is deliberately no fourth binding table, because
+precedence, baselines and filters mean nothing for "this picture is of
+that scene". Such an asset is related through `asset_relationship`, and
+`shotContext` now carries those rows as `related`. The plate the first
+session missed reaches shot 3B that way.
+
+### The editor knew about one filter too
+
+`mediaChecks` flagged "in force at every scene" for any non-baseline
+binding with no scene range — which, after this round, described three
+correctly scoped bindings. It now reads the filter columns from the
+registry (`variant_id` and anything ending `_filter`), so the check
+covers a filter added later without being edited. The same mistake as
+the cascade's, one layer up.
+
+---
+
 ## 0.55 — 2026-09-28
 
 *Describes schema 2.15.*

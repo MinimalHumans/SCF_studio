@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.56, schema 2.16 |
 | **Author** | Found by the first `scf-mcp` session, writing a prompt for shot 3B; written up by the maintainers |
 | **Opened** | 2026-09-28 |
 | **Affects** | Spec §12.8; six columns on the three `*_asset_binding` entities; `stability.md`'s media row; the fixture. Overlaps [0012](0012-time-of-day.md) (`time_of_day_filter`'s vocabulary) and [0025](0025-json-that-duplicates-or-means-nothing.md) (`conditions_json`) |

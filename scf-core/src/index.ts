@@ -172,7 +172,7 @@ export {
 } from "./naturalKey.ts";
 
 export {
-  type ShotContext, type SweptSubject, shotContext,
+  type RelatedAsset, type ShotContext, type SweptSubject, shotContext,
 } from "./shotContext.ts";
 
 export {

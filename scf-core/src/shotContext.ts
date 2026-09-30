@@ -44,6 +44,13 @@ export interface ShotContext {
    * swept with no intents rather than skipped by accident.
    */
   swept: SweptSubject[];
+  /**
+   * Assets related to this SHOT or its SCENE rather than to a subject
+   * in it (§8.6) — a DOP's framing plate for the scene is about the
+   * scene, belongs to no character, prop or location, and the media
+   * cascade starts at a subject, so nothing in `media` can reach it.
+   */
+  related: RelatedAsset[];
   /** Pre-flight readiness (Q14) for the shot's own look. */
   readiness: QueryResult<Q14Result>;
 }
@@ -55,6 +62,63 @@ async function idFor(
     ctx: ScfContext, entity: string, uuid: string): Promise<number | null> {
   const row = (await rows(ctx.exec, entity, "uuid = ?", [uuid]))[0];
   return row === undefined ? null : Number(row["id"]);
+}
+
+/** An asset the file relates to this shot or its scene. */
+export interface RelatedAsset {
+  /** `scene` or `shot` — what the asset is about. */
+  about: string;
+  /** That row's uuid. */
+  aboutUuid: string;
+  uuid: string;
+  name: string | null;
+  identifier: string | null;
+  /** `asset_relationship.relationship_type`, as stored. */
+  relationship: string | null;
+  notes: string | null;
+}
+
+/**
+ * Assets pointed at this shot and at its scene.
+ *
+ * Read from `asset_relationship`, whose `entity_id` is polymorphic on
+ * `entity_type` (§12.1.2). Deliberately NOT a fourth binding table: a
+ * binding carries precedence, baselines and filters, none of which
+ * means anything for "this picture is of that scene".
+ */
+async function relatedAssets(
+    ctx: ScfContext, shotId: number, shotUuid: string,
+    sceneId: number | null, sceneUuid: string | null,
+): Promise<RelatedAsset[]> {
+  if (!ctx.registry.entities.has("asset_relationship")) return [];
+  const out: RelatedAsset[] = [];
+  for (const [about, id, uuid] of [
+    ["scene", sceneId, sceneUuid], ["shot", shotId, shotUuid],
+  ] as const) {
+    if (id === null || uuid === null) continue;
+    for (const link of await rows(
+      ctx.exec, "asset_relationship",
+      "entity_type = ? AND entity_id = ?", [about, id])) {
+      const asset = (await rows(ctx.exec, "asset", "id = ?",
+                                [link["asset_id"] ?? null]))[0];
+      if (asset === undefined) continue;
+      out.push({
+        about, aboutUuid: uuid,
+        uuid: String(asset["uuid"] ?? ""),
+        name: asset["name"] === null || asset["name"] === undefined
+          ? null : String(asset["name"]),
+        identifier: asset["identifier"] === null
+          || asset["identifier"] === undefined
+          ? null : String(asset["identifier"]),
+        relationship: link["relationship_type"] === null
+          || link["relationship_type"] === undefined
+          ? null : String(link["relationship_type"]),
+        notes: link["notes"] === null || link["notes"] === undefined
+          ? null : String(link["notes"]),
+      });
+    }
+  }
+  return out;
 }
 
 /** What the media sweep did about one subject. */
@@ -224,6 +288,9 @@ export async function shotContext(
   const readiness = await q14Result(
     ctx, "Q07", null, null, sceneUuid, sceneId, shotUuid, shotId);
 
+  const related = await relatedAssets(ctx, shotId, shotUuid,
+                                      sceneId, sceneUuid);
+
   return { contextFormat: "1.0", brief, scene, look, physical, media,
-           swept, readiness };
+           swept, related, readiness };
 }

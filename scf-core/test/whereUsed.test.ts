@@ -24,16 +24,17 @@ async function used(entity: string, sql: string): Promise<
 }
 
 describe("whereUsed", () => {
-  test("a bundle nothing binds is held by its members and nothing else",
+  test("the costume bundle is reached through costume_asset_binding",
        async () => {
+    // Until schema 2.16 this bundle was reached by nothing: costume had
+    // references and no binding entity, so a bundle of them could not
+    // be bound at all. The reverse lookup is how that was visible.
     const usage = await used("bundle",
       "SELECT uuid FROM bundle WHERE name = 'Ada''s Shawl'");
     expect(new Set(usage.map((u) => u.entity))).toEqual(
-      new Set(["bundle_asset"]));
-    // Which is the finding: no *_asset_binding row reaches it, so it
-    // resolves for no subject at any scene.
-    expect(usage.some((u) => u.entity.endsWith("_asset_binding")))
-      .toBe(false);
+      new Set(["bundle_asset", "costume_asset_binding"]));
+    const binding = usage.find((u) => u.entity === "costume_asset_binding");
+    expect(binding?.fields["costume_uuid"]).toBeTypeOf("string");
   });
 
   test("a bound bundle names its binding and the subject it reaches",
