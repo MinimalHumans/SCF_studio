@@ -102,8 +102,8 @@ const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
     "a bundle no binding reaches resolves for nobody, and nothing else " +
     "will tell you that.\n" +
     "- `shot_context` is the one-call composite for writing a shot " +
-    "prompt: brief, scene, cast, look, physical direction, media, and " +
-    "a pre-flight readiness check.\n" +
+    "prompt: the shot's own framing, brief, scene, cast, look, physical " +
+    "direction, media, and a pre-flight readiness check.\n" +
     "- The `brief`, `subject_dossier`, `subject_in_context`, " +
     "`world_state`, `scene_package`, `voice_direction`, " +
     "`physical_direction`, `look_resolution`, `soundscape`, " +
@@ -262,8 +262,10 @@ server.registerTool("where_used", {
 });
 
 server.registerTool("shot_context", {
-  description: "Everything needed to write a shot prompt: project " +
-    "brief, the scene and its cast, the resolved look, physical " +
+  description: "Everything needed to write a shot prompt: the shot " +
+    "itself (size, lens, angle, movement, description, story beat — " +
+    "the same row `list` returns), the project brief, the scene and its " +
+    "cast, the resolved look, physical " +
     "direction per character, media in force per subject — every " +
     "subject in the scene, characters AND props AND the location — " +
     "and a pre-flight readiness check. `swept` lists each subject and " +

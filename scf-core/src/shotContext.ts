@@ -14,6 +14,7 @@
  */
 
 import type { FileLocator } from "./assets.ts";
+import { listEntities, type ListedRow } from "./listEntities.ts";
 import type { QueryResult } from "./queryResult.ts";
 import {
   ANCHOR_TYPE_FOR_INTENT, rows, type ScfContext,
@@ -27,6 +28,14 @@ import {
 
 export interface ShotContext {
   contextFormat: "1.0";
+  /**
+   * The shot itself — size, lens, angle, movement, description, the
+   * story beat it serves — exactly as `listEntities` returns it. No
+   * canonical query is scoped to a shot's own row, so the members below
+   * all describe what surrounds the shot; without this a caller had to
+   * make a second call for the framing it was writing a prompt about.
+   */
+  shot: ListedRow;
   /** Project register (Q00). */
   brief: QueryResult<Q00Result>;
   /** The scene, its cast, its text (Q04). */
@@ -245,6 +254,15 @@ export async function shotContext(
   }
   const sceneUuid = String(sceneRow["uuid"]);
 
+  // The same projection `list` returns, found rather than rebuilt, so the
+  // two can never describe one shot differently.
+  const shot = (await listEntities(ctx, "shot",
+    { field: "scene_id", uuid: sceneUuid })).find((s) => s.uuid === shotUuid);
+  if (shot === undefined) {
+    throw new Error(`shotContext: shot ${shotUuid} is not listed in its ` +
+                    `scene (is it cut?)`);
+  }
+
   const brief = await q00Result(ctx);
   const scene = await q04Result(ctx, sceneUuid, sceneId);
   const look = await q07Result(ctx, sceneUuid, sceneId, shotUuid, shotId);
@@ -291,6 +309,6 @@ export async function shotContext(
   const related = await relatedAssets(ctx, shotId, shotUuid,
                                       sceneId, sceneUuid);
 
-  return { contextFormat: "1.0", brief, scene, look, physical, media,
+  return { contextFormat: "1.0", shot, brief, scene, look, physical, media,
            swept, related, readiness };
 }

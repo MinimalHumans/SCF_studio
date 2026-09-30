@@ -22,6 +22,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, afterAll, describe, expect, test } from "vitest";
+import { listEntities } from "../src/listEntities.ts";
 import { resolveNaturalKey } from "../src/naturalKey.ts";
 import { shotContext } from "../src/shotContext.ts";
 import type { ScfContext } from "../src/resolution.ts";
@@ -80,6 +81,31 @@ describe("shotContext — composes without deriving (§4.1)", () => {
     expect(ctx.brief).toEqual(loadBlessed("Q00"));
     expect(ctx.scene).toEqual(loadBlessed("Q04"));
     expect(ctx.look).toEqual(loadBlessed("Q07"));
+  });
+
+  test("shot is the row `list` returns for it, framing included",
+       async () => {
+    // Every other member describes what SURROUNDS the shot. Without its
+    // own row, a prompt for 3B had its lens and size from a separate
+    // list call, or not at all.
+    const ctx = await shotContext(fx.ctx, shot1204.uuid);
+    const listed = (await listEntities(fx.ctx, "shot",
+      { field: "scene_id", uuid: scene12.uuid }))
+      .find((s) => s.uuid === shot1204.uuid);
+    expect(ctx.shot).toEqual(listed);
+    expect(ctx.shot.label).toBe(shot1204.shotNumber);
+
+    const shot3B = await shotContext(
+      fx.ctx, "e9a73271-d1bd-48eb-98f1-afd3f28511e6");
+    expect(shot3B.shot.fields).toMatchObject({
+      shot_number: "3B", shot_size: "medium", lens_choice: "40mm",
+      camera_angle: "eye level", camera_movement: "static",
+    });
+    expect(shot3B.shot.fields["scene_uuid"])
+      .toBe(shot3B.scene.parameters["scene"]);
+    // Portable like every result: uuids, never row ids.
+    expect(Object.keys(shot3B.shot.fields).some((k) => k.endsWith("_id")))
+      .toBe(false);
   });
 
   test("contextFormat is stamped (§4.4)", async () => {
