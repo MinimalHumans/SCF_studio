@@ -206,6 +206,7 @@
           "lighting_differences": "Single oil lamp; storm-blue window fill.",
           "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
           "name": "Kitchen — night, storm (autumn build)",
+          "notes": "Autumn on purpose. Every kitchen scene is winter, so scene 12 resolves this variant with a season mismatch: the one §12.17 mismatch the published Q04 shows (R92). Correcting the season to winter empties it.",
           "season": "autumn",
           "time_of_day": "night",
           "weather": "storm"
