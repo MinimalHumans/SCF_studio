@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.58, schema 2.18 |
 | **Author** | Found reading the scene 3 and scene 12 media results through the SCF MCP; drafted with Claude |
 | **Opened** | 2026-09-30 |
 | **Affects** | §12.8 (a new §12.8.2); `precedence` gains a meaning and help text on every `*_asset_binding`; a new `combine` field on every `*_asset_binding`; the order of Q13's `trail`; two findings; the fixture |
@@ -204,3 +204,27 @@ discussion before it was put up:
 | Is a precedence tie a finding? | Only when a `replace` binding is part of it: `binding.replace_tie`, `info` (§C). |
 | Reserve `replace_role` for replacing by role? | No. Replacing by role is declined for now, and would arrive with its own proposal. |
 | Should baselines sit at precedence 0? | Yes, as a SHOULD in §12.8.2, not a rule (§C). |
+
+---
+
+## Resolution
+
+**Accepted and implemented, 2026-09-30.** Spec 0.58, schema 2.18.
+
+The questions this draft opened with were settled before it was put up,
+and are recorded above. Implementing it confirmed the one claim the draft
+could only predict: **no published result changed**. Every expectation
+moved only its schema version. At 12-04, Eleanor's baseline dropping to
+precedence 0 and the trail running lowest first cancelled exactly.
+
+Three details worth recording:
+
+- **Both of Eleanor's baselines went to 0**, voice as well as visual.
+  The draft named only the visual one, and §12.8.2's SHOULD covers both.
+- **Every existing binding row now states `combine = add`** in the
+  fixture's source, rather than leaving it to the column default, so a
+  later dump of the fixture reproduces its source exactly.
+- **The filter guard (0027) had to learn that `combine` is structure,
+  not a condition**, and its probe binding now ranks above every binding
+  in the file. Without that, the night binding replaced the probe at
+  night, and the guard read the replacement as a filter being evaluated.

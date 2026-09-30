@@ -632,33 +632,48 @@ export async function resolveMedia(
   const idField = `${subject}_id`;
   const trail: string[] = [];
 
-  // Base bundles via bindings, precedence-ordered, filtered to intent.
+  // Base bundles via bindings, filtered to intent, in §12.8.2's order:
+  // precedence highest first, equal precedence by row id, lower first.
   const bindings = await rows(ctx.exec, `${subject}_asset_binding`,
                               `${idField} = ?`, [subjectId]);
   bindings.sort((a, b) =>
-    (asNum(b["precedence"]) ?? 0) - (asNum(a["precedence"]) ?? 0));
+    ((asNum(b["precedence"]) ?? 0) - (asNum(a["precedence"]) ?? 0)) ||
+    ((asNum(a["id"]) ?? 0) - (asNum(b["id"]) ?? 0)));
   const baseAssets: Row[] = [];
+  // Built highest precedence first, and reversed into `trail`, which runs
+  // broadest first (§12.8).
+  const bindingLines: string[] = [];
+  // The first `replace` binding in force: everything below its precedence
+  // is excluded. Equal precedence is ordered, never replaced.
+  let replacer: { name: string; precedence: number } | null = null;
   for (const b of bindings) {
     const bundles = await rows(ctx.exec, "bundle", "id = ?",
                                [b["bundle_id"] ?? null]);
     const bundle = bundles[0];
     if (bundle === undefined || bundle["intent"] !== intent) continue;
+    const name = String(pyTruthy(b["name"]) ? b["name"] : b["id"]);
+    const line = `binding ${name} -> bundle ${String(bundle["name"])}`;
     const verdict = await bindingApplies(ctx, subject, subjectId, b,
                                          sceneId, order);
     if (!verdict.applies) {
       // An absence with a reason. A binding excluded silently is how a
       // filter nothing read went unnoticed for two schema versions.
-      trail.push(
-        `binding ${pyTruthy(b["name"]) ? b["name"] : b["id"]} -> ` +
-        `bundle ${bundle["name"]}: EXCLUDED, ${verdict.reason ?? "filtered"}`);
+      bindingLines.push(`${line}: EXCLUDED, ${verdict.reason ?? "filtered"}`);
       continue;
     }
-    trail.push(
-      `binding ${pyTruthy(b["name"]) ? b["name"] : b["id"]} -> ` +
-      `bundle ${bundle["name"]}`);
+    const precedence = asNum(b["precedence"]) ?? 0;
+    if (replacer !== null && precedence < replacer.precedence) {
+      bindingLines.push(`${line}: EXCLUDED, replaced by ${replacer.name}`);
+      continue;
+    }
+    bindingLines.push(line);
     baseAssets.push(
       ...await bundleAssets(ctx, asNum(b["bundle_id"]) ?? -1));
+    if (replacer === null && sameText(b["combine"], "replace")) {
+      replacer = { name, precedence };
+    }
   }
+  trail.push(...bindingLines.reverse());
 
   // Anchors for the subject, matching the intent's anchor type.
   const anchorType = ANCHOR_TYPE_FOR_INTENT[intent];

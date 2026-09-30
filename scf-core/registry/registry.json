@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.17",
+  "schemaVersion": "2.18",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -7833,7 +7833,8 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": false
+          "default": false,
+          "helpText": "Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2)."
         },
         {
           "name": "precedence",
@@ -7843,7 +7844,23 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": 0
+          "default": 0,
+          "helpText": "Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own."
+        },
+        {
+          "name": "combine",
+          "label": "Combine",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": "add",
+          "options": [
+            "add",
+            "replace"
+          ],
+          "helpText": "Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides."
         },
         {
           "name": "physical_state_filter",
@@ -7976,7 +7993,8 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": false
+          "default": false,
+          "helpText": "Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2)."
         },
         {
           "name": "precedence",
@@ -7986,7 +8004,23 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": 0
+          "default": 0,
+          "helpText": "Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own."
+        },
+        {
+          "name": "combine",
+          "label": "Combine",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": "add",
+          "options": [
+            "add",
+            "replace"
+          ],
+          "helpText": "Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides."
         },
         {
           "name": "scene_range_start_id",
@@ -8099,7 +8133,8 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": false
+          "default": false,
+          "helpText": "Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2)."
         },
         {
           "name": "precedence",
@@ -8109,7 +8144,23 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": 0
+          "default": 0,
+          "helpText": "Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own."
+        },
+        {
+          "name": "combine",
+          "label": "Combine",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": "add",
+          "options": [
+            "add",
+            "replace"
+          ],
+          "helpText": "Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides."
         },
         {
           "name": "scene_range_start_id",
@@ -8222,7 +8273,8 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": false
+          "default": false,
+          "helpText": "Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2)."
         },
         {
           "name": "precedence",
@@ -8232,7 +8284,23 @@
           "required": false,
           "tab": "General",
           "autoInjected": false,
-          "default": 0
+          "default": 0,
+          "helpText": "Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own."
+        },
+        {
+          "name": "combine",
+          "label": "Combine",
+          "fieldType": "select",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "default": "add",
+          "options": [
+            "add",
+            "replace"
+          ],
+          "helpText": "Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides."
         },
         {
           "name": "variant_id",
