@@ -1,0 +1,109 @@
+{
+  "query": "Q13",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.16",
+  "parameters": {
+    "subjectType": "character",
+    "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "intent": "visual_identity",
+    "scene": "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+    "shot": "e9a73271-d1bd-48eb-98f1-afd3f28511e6"
+  },
+  "result": {
+    "subjectKind": "character",
+    "intent": "visual_identity",
+    "trail": [
+      "binding Eleanor visual baseline -> bundle Eleanor Visual Core",
+      "binding Eleanor while wounded -> bundle Eleanor - lamplit, wounded: EXCLUDED, physical_state_filter \"wounded\", no such physical state in force",
+      "anchor Eleanor Face Anchor"
+    ],
+    "references": [
+      {
+        "uuid": "67528eda-078f-4ee7-8fe5-eb11aeb8a7a3",
+        "anchorName": "Eleanor Face Anchor",
+        "name": "eleanor_face_anchor.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_face_anchor.png",
+        "format": "png",
+        "role": null,
+        "intent": "visual_identity",
+        "provenance": "anchor",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "4116dcba-af7a-4a7d-a29e-51268203694f",
+        "anchorName": null,
+        "name": "eleanor_fullbody_anchor.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_fullbody_anchor.png",
+        "format": "png",
+        "role": "full body",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "2489457c-54c5-4525-9568-7bbd3cf631f8",
+        "anchorName": null,
+        "name": "eleanor_fullbody_turnaround.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_fullbody_turnaround.png",
+        "format": "png",
+        "role": "full body",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "e721a245-f8c5-40b0-b52f-f6c3767105c5",
+        "anchorName": null,
+        "name": "eleanor_face_video.mp4",
+        "identifier": "@project/assets/characters/eleanor/eleanor_face_video.mp4",
+        "format": "mp4",
+        "role": "expression",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "f9dfae2d-2cc7-42af-b2ac-d9089025a444",
+        "anchorName": null,
+        "name": "eleanor_costume_textures.zip",
+        "identifier": "@project/assets/eleanor_costume_textures.zip",
+        "format": "zip",
+        "role": "textures",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      },
+      {
+        "uuid": "5ff2fb8f-be4b-4114-b0d0-1d16820d0ac5",
+        "anchorName": null,
+        "name": "eleanor_lighting_variations.png",
+        "identifier": "@project/assets/characters/eleanor/eleanor_lighting_variations.png",
+        "format": "png",
+        "role": "lighting",
+        "intent": "visual_identity",
+        "provenance": "bundle",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      }
+    ],
+    "counts": {
+      "resolved": 0,
+      "missing": 0,
+      "unmaterialised": 0,
+      "out-of-root": 0,
+      "unaddressed": 6
+    },
+    "rootMapped": false
+  }
+}
