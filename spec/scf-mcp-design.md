@@ -321,8 +321,11 @@ scene, not the shot: one Q13 per subject and intent. A crowded shot can
 outgrow one result however it is grouped, so `subjectUuid` asks about
 one subject, which must be at the shot.
 
-**The three cannot disagree.** They read the same open file, which this
-server never writes, and each names the shot it answers for.
+**Each answers from the file as it is when the call runs** (§5.1), and
+each names the shot it answers for. If the film is saved between two of
+the calls, the later one sees the save. That is the right answer to
+give: an agent should prompt from what the file says now, not from a
+copy held since its first call.
 
 None of this is a ceiling. Shots will carry more context and clients
 will accept more; the split is about taking an answer whole today, and
@@ -332,6 +335,21 @@ the per-subject call is the room left for growth.
 
 The shipped server is wider than this section first planned; where the
 two disagree, `scf-mcp/src/server.ts` is what runs.
+
+### 5.1 No handle outlives a call
+
+`open` remembers a film's path and roots, and opens nothing. Each tool
+call opens the file read-only, answers, and closes it, however the call
+ends (`withProject`, `projectCache.ts`).
+
+The server is a process the client keeps for its whole session. Holding
+a file open for that long is holding it locked: on Windows an open
+handle stops any other program renaming, replacing or deleting the file.
+An earlier server kept the last four films it had opened, so a film
+stayed locked against the editor saving it, and the fixture build
+rewriting it, until the client quit. Opening a database costs
+milliseconds. `scf-mcp/test/smoke.test.ts` opens a film through the
+server, queries it, then renames and deletes it while the server runs.
 
 | Tool | | |
 |---|---|---|

@@ -43,7 +43,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z, type ZodRawShape } from "zod";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
-import { currentProject } from "./projectCache.ts";
+import { withProject } from "./projectCache.ts";
 import { err, ok } from "./toolResult.ts";
 
 export interface QueryToolSpec {
@@ -158,13 +158,13 @@ export function registerQueryTools(server: McpServer): void {
       inputSchema: { ...spec.shape },
     }, async (args) => {
       try {
-        const project = currentProject();
-        const dispatch = buildDispatch(project.locate, project.rootMapped);
-        const run = dispatch[spec.id];
-        if (run === undefined) {
-          throw new Error(`internal: no dispatch entry for "${spec.id}"`);
-        }
-        return ok(await run(project.ctx, args as QueryParams));
+        return ok(await withProject(async (p) => {
+          const run = buildDispatch(p.locate, p.rootMapped)[spec.id];
+          if (run === undefined) {
+            throw new Error(`internal: no dispatch entry for "${spec.id}"`);
+          }
+          return run(p.ctx, args as QueryParams);
+        }));
       } catch (e) {
         return err(e);
       }

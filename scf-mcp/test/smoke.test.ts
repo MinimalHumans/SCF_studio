@@ -8,7 +8,10 @@
  */
 
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import {
+  copyFileSync, existsSync, mkdtempSync, readdirSync, readlinkSync,
+  renameSync, rmSync, unlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -40,6 +43,8 @@ if (!existsSync(SERVER)) {
 interface Server {
   send: (method: string, params?: unknown) => Promise<unknown>;
   kill: () => void;
+  /** The server process, to ask the OS what it holds open. */
+  pid: number | undefined;
 }
 
 /**
@@ -95,7 +100,7 @@ function startServer(
     clientInfo: { name: "smoke", version: "0.0.1" },
   }).then(() => {
     notify("notifications/initialized");
-    return { send, kill: () => child.kill() };
+    return { send, kill: () => child.kill(), pid: child.pid };
   });
 }
 
@@ -395,6 +400,54 @@ describe("scf-mcp server — recent_files persists across restarts", () => {
       }
     } finally {
       rmSync(configDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("scf-mcp server — no film is held open between calls", () => {
+  test("a film the server has answered from can be renamed and deleted " +
+       "while it runs", async () => {
+    // projectCache.ts opens a film for exactly as long as one call runs.
+    // A held handle kept every film a session had looked at locked on
+    // Windows: the editor could not save it, nor the fixture build
+    // rewrite it.
+    const dir = mkdtempSync(join(tmpdir(), "scf-mcp-release-"));
+    const film = join(dir, "film.scf");
+    copyFileSync(FIXTURE, film);
+    const server = await startServer([]);
+    try {
+      const call = (name: string, args: Record<string, unknown>) =>
+        server.send("tools/call", { name, arguments: args }) as
+          Promise<{ isError?: boolean }>;
+      expect((await call("open", { scfPath: film })).isError)
+        .toBeUndefined();
+      expect((await call("shot_context", { shotUuid: SHOT1204 })).isError)
+        .toBeUndefined();
+      expect((await call("list", { entityType: "scene" })).isError)
+        .toBeUndefined();
+
+      // Where the OS lists what a process holds (Linux, where CI runs),
+      // nothing may point at the film.
+      const fds = `/proc/${String(server.pid)}/fd`;
+      if (existsSync(fds)) {
+        const held = readdirSync(fds).map((fd) => {
+          try { return readlinkSync(join(fds, fd)); } catch { return ""; }
+        });
+        expect(held.filter((p) => p.startsWith(film))).toEqual([]);
+      }
+      // Where a held file cannot be renamed or deleted (Windows), these
+      // throw if the server still has it open.
+      const moved = join(dir, "film-renamed.scf");
+      renameSync(film, moved);
+      unlinkSync(moved);
+
+      // And with the file gone the server says so, rather than answering
+      // from a handle it should not have kept.
+      expect((await call("list", { entityType: "scene" })).isError)
+        .toBe(true);
+    } finally {
+      server.kill();
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });
