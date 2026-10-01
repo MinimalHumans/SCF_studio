@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.59, schema 2.19 |
 | **Author** | Found writing a video-generation prompt for shot 3B through the SCF MCP; drafted with Claude |
 | **Opened** | 2026-10-01 |
 | **Affects** | A new §3.5 (line anchors) and §4.7 (lines at a shot); `shot` gains a line range; `clip`'s line references are replaced; `performance_beat.line_ref` is declared an anchor; a registry field marker; four findings; `shotContext`; `spec/scf-mcp-design.md` §4; the fixture |
@@ -197,3 +197,28 @@ discussion before it was put up:
 | Does a scene with shots and no ranges raise anything? | No (§B). |
 | `lines` for an unrecorded shot? | Null, not inherited from the scene (§E). |
 | Is re-anchoring through a split or merge a MUST? | No, a SHOULD: it is a writer's behaviour, and an orphaned anchor is reported either way (§A). |
+
+---
+
+## Resolution
+
+**Accepted and implemented, 2026-10-01.** Spec 0.59, schema 2.19.
+
+The questions this draft opened with were settled before it was put up,
+and are recorded above. Implementing it confirmed that **no published
+query result changed**: every expectation moved only its schema version.
+
+Details worth recording:
+
+- **`lines.ts` is the one implementation.** It reads the anchors from the
+  registry's `lineAnchor` marker, and derives which entities carry a
+  range (`shot`, `clip`) from the anchors they declare rather than from a
+  list.
+- **The editor's integrity sweep gained a generic list** of every other
+  orphaned anchor, built from that marker. Prop tags and beats keep their
+  own richer views and are not reported twice.
+- **A range with an orphaned end is reported once**, as
+  `line.anchor_orphaned`, not again as a range problem, so one broken
+  anchor is one finding.
+- **The fixture's clips** are anchored to cue and dialogue: ELEANOR / "You
+  came back." and MARCUS / "I came back."

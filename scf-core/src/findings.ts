@@ -42,6 +42,7 @@ import { bindingCombinationProblems, unboundBundleIds } from "./bundling.ts";
 import { fileIdentity } from "./fileIdentity.ts";
 import { escapesRoot, parseIdentifier } from "./assets.ts";
 import { presenceProblems } from "./presence.ts";
+import { lineProblems } from "./lines.ts";
 
 /**
  * How much the finding matters to a CONSUMER of the file.
@@ -118,6 +119,11 @@ export type FindingCode =
   // How bindings combine — spec §12.8.2
   | "binding.baseline_replaces"
   | "binding.replace_tie"
+  // Line anchors and ranges — spec §3.5, §4.7
+  | "line.anchor_orphaned"
+  | "line.range_outside_scene"
+  | "line.range_reversed"
+  | "line.end_without_start"
   // Presence at a shot — spec §4.6
   | "presence.shot_subject_not_in_scene"
   | "presence.named_but_on_screen"
@@ -358,6 +364,27 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     severity: "info",
     title: "Replacing binding tied on precedence; the tie is not replaced",
     spec: "§12.8.2",
+  },
+
+  "line.anchor_orphaned": {
+    severity: "warning",
+    title: "Line anchor names no line of the screenplay",
+    spec: "§3.5",
+  },
+  "line.range_outside_scene": {
+    severity: "warning",
+    title: "Line range names a line outside its own scene",
+    spec: "§4.7",
+  },
+  "line.range_reversed": {
+    severity: "warning",
+    title: "Line range ends before it starts",
+    spec: "§4.7",
+  },
+  "line.end_without_start": {
+    severity: "warning",
+    title: "Line range has an end and no start",
+    spec: "§4.7",
   },
 
   "presence.shot_subject_not_in_scene": {
@@ -803,6 +830,12 @@ export async function collectFindings(
 
   // --- how bindings combine (§12.8.2) ---
   for (const p of await bindingCombinationProblems(exec, registry)) {
+    out.push(make(p.code, p.message,
+                  { table: p.table, rowIds: [p.rowId] }));
+  }
+
+  // --- line anchors and ranges (§3.5, §4.7) ---
+  for (const p of await lineProblems({ exec, registry })) {
     out.push(make(p.code, p.message,
                   { table: p.table, rowIds: [p.rowId] }));
   }

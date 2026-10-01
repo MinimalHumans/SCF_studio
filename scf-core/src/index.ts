@@ -177,6 +177,12 @@ export {
 } from "./shotContext.ts";
 
 export {
+  type LineAnchorField, type LineProblem, type OrphanedAnchor,
+  type RangeVerdict, lineAnchorFields, lineProblems, liveLineUuids,
+  orphanedAnchors, rangeEntities, rangeLines,
+} from "./lines.ts";
+
+export {
   type Presence, type PresenceProblem, type PresenceSubject,
   type ScenePresence, type ShotPresence, type ShotSubject,
   presenceAtScene, presenceAtShot, presenceProblems, valuePresence,

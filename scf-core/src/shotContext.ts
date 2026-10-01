@@ -15,12 +15,16 @@
 
 import type { FileLocator } from "./assets.ts";
 import { listEntities, type ListedRow } from "./listEntities.ts";
-import type { QueryResult } from "./queryResult.ts";
 import {
   ANCHOR_TYPE_FOR_INTENT, rows, type ScfContext,
 } from "./resolution.ts";
 import { QUERY_PATHS } from "./queryPaths.ts";
 import { presenceAtShot, type Presence } from "./presence.ts";
+import { rangeLines } from "./lines.ts";
+import { projectScreenplayLines } from "./screenplay/sceneScript.ts";
+import {
+  uuidLookupForAll, type ProjectedRow, type QueryResult,
+} from "./queryResult.ts";
 import {
   q00Result, q04Result, q06Result, q07Result, q13Result, q14Result,
   type Q00Result, type Q04Result, type Q05Result, type Q07Result,
@@ -48,6 +52,15 @@ export interface ShotContext {
    * recorded or inherited. The sweeps below follow it.
    */
   presence: ShotPresenceMember;
+  /**
+   * The screenplay lines the shot covers (spec §4.7), projected as Q04
+   * projects the scene's screenplay. NULL when the shot records no range:
+   * an unrecorded shot does not inherit its scene's lines, which would
+   * hand a three-second insert the whole scene. The scene's screenplay is
+   * in `scene` for a caller that wants it. Also null when the range cannot
+   * be read; the finding says why (§4.7).
+   */
+  lines: ProjectedRow[] | null;
   /** Physical direction (Q06), one per character SEEN at the shot. */
   physical: QueryResult<Q05Result>[];
   /** Media in force (Q13), one per subject x applicable intent. */
@@ -302,6 +315,13 @@ export async function shotContext(
   const scene = await q04Result(ctx, sceneUuid, sceneId);
   const look = await q07Result(ctx, sceneUuid, sceneId, shotUuid, shotId);
 
+  const range = await rangeLines(ctx.exec, sceneId,
+    shotRow["line_start_ref"], shotRow["line_end_ref"]);
+  const lines = range.kind === "lines"
+    ? projectScreenplayLines(range.lines,
+        await uuidLookupForAll(ctx.exec, ctx.registry))
+    : null;
+
   const presence = await presenceMember(ctx, shotId);
   const subjects: Array<{ type: string; uuid: string; presence: Presence }> =
     presence.subjects.map((s) => ({
@@ -363,7 +383,7 @@ export async function shotContext(
   const related = await relatedAssets(ctx, shotId, shotUuid,
                                       sceneId, sceneUuid);
 
-  return { contextFormat: "1.0", shot, brief, scene, look, presence,
+  return { contextFormat: "1.0", shot, brief, scene, look, presence, lines,
            physical, media,
            swept, related, readiness };
 }

@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.18",
+  "schemaVersion": "2.19",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -9331,24 +9331,26 @@
           ]
         },
         {
-          "name": "screenplay_line_start_id",
-          "label": "Screenplay Line Start",
-          "fieldType": "reference",
-          "sqlType": "INTEGER",
+          "name": "line_start_ref",
+          "label": "First Line",
+          "fieldType": "text",
+          "sqlType": "TEXT",
           "required": false,
           "tab": "Screenplay",
           "autoInjected": false,
-          "referenceEntity": "screenplay_lines"
+          "helpText": "Spec §4.7: uuid of the first screenplay line the clip covers, in its own scene. Whole lines. Ranges may overlap: several shots of one exchange each cover it.",
+          "lineAnchor": true
         },
         {
-          "name": "screenplay_line_end_id",
-          "label": "Screenplay Line End",
-          "fieldType": "reference",
-          "sqlType": "INTEGER",
+          "name": "line_end_ref",
+          "label": "Last Line",
+          "fieldType": "text",
+          "sqlType": "TEXT",
           "required": false,
           "tab": "Screenplay",
           "autoInjected": false,
-          "referenceEntity": "screenplay_lines"
+          "helpText": "Spec §4.7: uuid of the last line, inclusive. Unset: the range is the one line at line_start_ref.",
+          "lineAnchor": true
         },
         {
           "name": "beat_id",
@@ -13262,6 +13264,28 @@
           "helpText": "Spec §4.6: the shot's shot_character and shot_prop rows are its whole frame, so a subject with no row is not in it. Unset: the rows are what is recorded, and the scene's seen subjects may also be in the shot."
         },
         {
+          "name": "line_start_ref",
+          "label": "First Line",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Screenplay",
+          "autoInjected": false,
+          "helpText": "Spec §4.7: uuid of the first screenplay line the shot covers, in its own scene. Whole lines. Ranges may overlap: several shots of one exchange each cover it.",
+          "lineAnchor": true
+        },
+        {
+          "name": "line_end_ref",
+          "label": "Last Line",
+          "fieldType": "text",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "Screenplay",
+          "autoInjected": false,
+          "helpText": "Spec §4.7: uuid of the last line, inclusive. Unset: the range is the one line at line_start_ref.",
+          "lineAnchor": true
+        },
+        {
           "name": "notes",
           "label": "Notes",
           "fieldType": "textarea",
@@ -14378,7 +14402,8 @@
           "required": false,
           "tab": "Delivery",
           "autoInjected": false,
-          "helpText": "uuid of the anchored screenplay line (G5). Authored from the script editor; re-anchors deterministically through split/merge."
+          "helpText": "Spec §3.5: uuid of the anchored screenplay line. Authored from the script editor, which re-anchors it through a split or merge.",
+          "lineAnchor": true
         },
         {
           "name": "emphasis_words",

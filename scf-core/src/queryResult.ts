@@ -178,9 +178,8 @@ const empty = (v: unknown): boolean =>
  *
  * DROP BY DECLARATION, NEVER BY NAME. Dropping every column ending
  * `_id` is a much larger set: it takes `external_id`, a declared and
- * authored field on ten entities, and `clip.screenplay_line_start_id`
- * and `_end_id`, ordinary references whose target is a screenplay table
- * rather than a registry entity.
+ * authored field on ten entities, and any ordinary reference whose
+ * target is a screenplay table rather than a registry entity.
  *
  * No artifact catches that. The fixture authors no `external_id` and its
  * `clip` table is empty, and §12.1.2 omits empty fields, so a correct

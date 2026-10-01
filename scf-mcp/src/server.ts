@@ -267,7 +267,9 @@ server.registerTool("shot_context", {
     "the same row `list` returns), the project brief, the scene and its " +
     "cast, the resolved look, and `presence`: who is at the shot, seen, " +
     "heard or only named, with framing, facing and focus, each marked " +
-    "recorded (a shot row says so) or inherited (from the scene). Then " +
+    "recorded (a shot row says so) or inherited (from the scene); " +
+    "`lines`, the screenplay lines the shot covers, or null when it " +
+    "records none (ranges may overlap: coverage). Then " +
     "physical direction per character seen at the shot, and media in " +
     "force per subject — characters AND props AND the location; a heard " +
     "subject is asked for voice and sound only, a named one for " +

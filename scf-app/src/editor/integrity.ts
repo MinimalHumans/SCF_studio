@@ -22,9 +22,19 @@
  *
  * The same rule is why nothing here deletes on its own. Every repair is
  * a separate call the UI makes when asked.
+ *
+ * Every other line anchor (spec §3.5), such as a shot's or a clip's range
+ * (§4.7), is found from the registry's `lineAnchor` marker by scf-core and
+ * reported generically in `orphanAnchors`, so a new anchor is swept the
+ * day it is declared. Tags and beats keep their own, richer views above,
+ * and are left out of the generic list rather than reported twice.
  */
 
 import type { Row, SqlExec } from "@scf-core/db.ts";
+import {
+  lineAnchorFields, orphanedAnchors, type OrphanedAnchor,
+} from "@scf-core/lines.ts";
+import type { Registry } from "@scf-core/registry.ts";
 import { sceneNumberOrderJoin, sceneNumberOrderTerms }
   from "@scf-core/sceneNumbers.ts";
 
@@ -57,12 +67,20 @@ export interface UnjustifiedLink {
 export interface IntegrityReport {
   detachedTags: DetachedTag[];
   orphanBeats: OrphanBeat[];
+  /** Every other anchor whose line is gone (§3.5), from the registry. */
+  orphanAnchors: OrphanedAnchor[];
   unjustifiedLinks: UnjustifiedLink[];
   total: number;
 }
 
+/** Anchors with a dedicated view above, kept out of `orphanAnchors`. */
+const DEDICATED_VIEWS = new Set([
+  "screenplay_prop_tags.line_uuid", "performance_beat.line_ref",
+]);
+
 export const EMPTY_REPORT: IntegrityReport = {
-  detachedTags: [], orphanBeats: [], unjustifiedLinks: [], total: 0,
+  detachedTags: [], orphanBeats: [], orphanAnchors: [],
+  unjustifiedLinks: [], total: 0,
 };
 
 const str = (v: unknown): string =>
@@ -82,8 +100,8 @@ const numOrNull = (v: unknown): number | null =>
  * the document in front of the author, not whatever last reached disk.
  */
 export async function scanIntegrity(
-    exec: SqlExec, liveLineIds: ReadonlySet<string>):
-    Promise<IntegrityReport> {
+    exec: SqlExec, liveLineIds: ReadonlySet<string>,
+    registry?: Registry): Promise<IntegrityReport> {
   const tagRows = await exec(
     "SELECT t.id, t.prop_id, t.line_uuid, t.tagged_text, " +
     "p.name AS prop_name FROM screenplay_prop_tags t " +
@@ -173,10 +191,15 @@ export async function scanIntegrity(
       ? "(unnamed)" : str(r["character_name"]),
   }));
 
+  const orphanAnchors = registry === undefined ? [] :
+    (await orphanedAnchors(exec, registry, liveLineIds)).filter((a) =>
+      !DEDICATED_VIEWS.has(`${a.entity}.${a.field}`));
+
   return {
     detachedTags, orphanBeats, unjustifiedLinks,
+    orphanAnchors,
     total: detachedTags.length + orphanBeats.length +
-           unjustifiedLinks.length,
+           orphanAnchors.length + unjustifiedLinks.length,
   };
 }
 
@@ -201,6 +224,21 @@ export async function deleteBeat(
 
 /** Keep the beat, drop its dead anchor — it stays on its scene and
  * character, which is usually the part worth keeping. */
+/**
+ * Drop one dead line anchor (§3.5), keeping the row it is on. The entity
+ * and field come from the registry's own anchor list, never from input.
+ */
+export async function unanchor(
+    exec: SqlExec, registry: Registry, anchor: OrphanedAnchor):
+    Promise<void> {
+  // Only a declared anchor field is ever written, whatever was passed in.
+  const declared = lineAnchorFields(registry).some((a) =>
+    a.entity === anchor.entity && a.field === anchor.field);
+  if (!declared) return;
+  await exec(`UPDATE "${anchor.entity}" SET "${anchor.field}" = NULL ` +
+             "WHERE id = ?", [anchor.rowId]);
+}
+
 export async function unanchorBeat(
     exec: SqlExec, id: number): Promise<void> {
   await exec(

@@ -242,7 +242,7 @@ export function ScriptView(): JSX.Element {
     // that last reached disk — the author is looking at the document.
     const live = new Set(entries.map((e) => e.id));
     setLiveLineIds(live);
-    setIntegrityCount((await scanIntegrity(exec, live)).total);
+    setIntegrityCount((await scanIntegrity(exec, live, registry)).total);
     view.dispatch({ effects: setAnnotations.of(map) });
   };
 

@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.58 / schema 2.18. This document is expected
+Current as of specification 0.59 / schema 2.19. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -131,6 +131,8 @@ about it is ceremonial.
 | Restamping under `numbering_policy` | §4.4.4 | Provisional | Yes | Corrected in 0.29: §4.4.4 had cited `project.scene_numbering`, removed in schema 2.12. |
 | Presence at a shot | §4.6 | Provisional | Yes | Stated in 0.57 (proposal 0030). `shot_character` and `shot_prop` rows, three closed fields, and `shot.presence_complete`; an unrecorded shot inherits its scene. `presence.ts` is the one implementation, and Q03, Q04, Q12, Q14 and `shotContext` all call it. The fixture exercises recorded, complete and inherited shots. Provisional: no second implementation, and the field vocabularies have met one film. |
 | A shot is at its scene's location | §4.6 | Provisional | Yes | Stated in 0.57. A deliberate line: a flashback or each side of an intercut is its own scene. It asks something of importers, who split an intercut written as one scene. |
+| The lines a shot covers | §4.7 | Provisional | Yes | Stated in 0.59 (proposal 0032). Two line anchors on `shot` and on `clip`; whole lines; ranges may overlap, which is how coverage is shot. Unrecorded shots do not inherit their scene's lines. `lines.ts` is the one implementation. |
+| Line anchors | §3.5 | Provisional | Partly | Stated in 0.59. A text uuid, declared by `lineAnchor` in the registry, with orphans reported. Partly: re-anchoring through a split or merge is a SHOULD, implemented by this repository's editor and unexercised by any other writer. Before 0.59 none of this was in the specification, and `clip`'s row-id line references had come to point at a blank line, a section marker and a heading in the fixture. |
 | Pattern 1 — explicit rows | §4.3 | Stable | Yes | |
 | Pattern 2 — persistence | §4.3 | Stable | Yes | Pinned. |
 | Pattern 3 — latest wins | §4.3 | Stable | Yes | Pinned. |

@@ -128,6 +128,7 @@ export interface ShotContext {
   contextFormat: "1.0";
   shot:      ListedRow;       // the shot's own row, as `list` returns it
   presence:  ShotPresenceMember; // who is at the shot, spec §4.6
+  lines:     ProjectedRow[] | null; // the lines it covers, §4.7; null if unrecorded
   brief:     Q00Result;       // project register
   scene:     Q04Result;       // the scene, its cast, its text
   look:      Q07Result;       // the frame at this shot

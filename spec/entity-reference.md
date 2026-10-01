@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.18** — **106 entities**.
+Schema **2.19** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -1428,8 +1428,8 @@ A meaningful within-scene segment of a take. Plates are clips with clip_type=atm
 | `clip_out_timecode` | text |  |  |
 | `duration_seconds` | integer |  |  |
 | `clip_type` | select |  | one of `dialogue`, `action`, `reaction`, `transition`, `insert`, `atmospheric` |
-| `screenplay_line_start_id` | reference |  | → `screenplay_lines` (resolves to `screenplay_line_start_uuid` in a result, §12.1.2) |
-| `screenplay_line_end_id` | reference |  | → `screenplay_lines` (resolves to `screenplay_line_end_uuid` in a result, §12.1.2) |
+| `line_start_ref` | text |  | Spec §4.7: uuid of the first screenplay line the clip covers, in its own scene. Whole lines. Ranges may overlap: several shots of one exchange each cover it. |
+| `line_end_ref` | text |  | Spec §4.7: uuid of the last line, inclusive. Unset: the range is the one line at line_start_ref. |
 | `beat_id` | reference |  | → `story_beat` (resolves to `beat_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
@@ -3046,7 +3046,7 @@ A specific performance moment for a character within a scene, in one modality �
 | `trigger` | textarea |  |  |
 | `emotional_subtext` | textarea |  |  |
 | `line_text` | textarea |  | For vocal beats tied to a specific line. Interim matching contract — superseded by line_ref where a screenplay is present. |
-| `line_ref` | text |  | uuid of the anchored screenplay line (G5). Authored from the script editor; re-anchors deterministically through split/merge. |
+| `line_ref` | text |  | Spec §3.5: uuid of the anchored screenplay line. Authored from the script editor, which re-anchors it through a split or merge. |
 | `emphasis_words` | string_list |  |  |
 | `pace` | select |  | one of `fast`, `slow`, `measured`, `varying` |
 | `volume` | select |  | one of `whisper`, `soft`, `normal`, `loud`, `shout` |
@@ -3146,6 +3146,8 @@ A single camera setup within a scene.
 | `duration_seconds` | float |  |  |
 | `description` | textarea |  |  |
 | `presence_complete` | boolean |  | Spec §4.6: the shot's shot_character and shot_prop rows are its whole frame, so a subject with no row is not in it. Unset: the rows are what is recorded, and the scene's seen subjects may also be in the shot. |
+| `line_start_ref` | text |  | Spec §4.7: uuid of the first screenplay line the shot covers, in its own scene. Whole lines. Ranges may overlap: several shots of one exchange each cover it. |
+| `line_end_ref` | text |  | Spec §4.7: uuid of the last line, inclusive. Unset: the range is the one line at line_start_ref. |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
 | `external_id` | text |  | auto-injected by the generator. Optional. Identifier in an external system (OMC, EIDR, production DB, etc.). See spec §6.3. |

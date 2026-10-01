@@ -190,6 +190,10 @@
           "type": "object",
           "additionalProperties": { "enum": ["seen", "heard", "named"] }
         },
+        "lineAnchor": {
+          "description": "A LINE ANCHOR: a text field holding the uuid of a screenplay line, never its row id, which does not survive the screenplay being rewritten. Re-anchoring, the orphan sweep and the line findings find anchors by this flag. Spec §3.5. Absent in registries written before schema 2.19.",
+          "type": "boolean"
+        },
         "polymorphicType": {
           "description": "Present on a POLYMORPHIC reference: names the sibling column saying which table this one points into. Such a column carries no referenceEntity, because its target is chosen per row. Spec \u00a712.1.2 drops these from a projected row; a column whose name ends _id WITHOUT this property is an ordinary value or an ordinary reference and MUST NOT be dropped. Absent in registries written before schema 2.12.",
           "type": "string"
