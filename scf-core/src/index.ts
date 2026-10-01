@@ -173,7 +173,9 @@ export {
 
 export {
   type PresentSubject, type RelatedAsset, type ShotContext,
-  type ShotPresenceMember, type SweptSubject, shotContext,
+  type ShotContextFormat, type ShotMedia, type ShotPresenceMember,
+  type ShotReadiness, type SweptSubject, shotContext, shotMedia,
+  shotReadiness,
 } from "./shotContext.ts";
 
 export {

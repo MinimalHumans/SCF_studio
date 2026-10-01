@@ -16,7 +16,8 @@
  *   where_used    the reverse of every other tool: which rows point at
  *                 this one (whereUsed) — "which bundles hold this
  *                 asset", "what binds this bundle to anybody"
- *   shot_context  the "prompt for shot X" composite (shotContext)
+ *   shot_context, shot_media, shot_readiness
+ *                 the "prompt for shot X" composite, in three calls
  *   Q00..Q13, Q15 one tool per canonical query, precisely typed
  *                 (queryTools.ts) — each id's own params, not a
  *                 generic bag, so a wrong one is a schema error before
@@ -48,7 +49,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
-  listEntities, q00Result, resolveNaturalKey, shotContext, whereUsed,
+  listEntities, q00Result, resolveNaturalKey, shotContext, shotMedia,
+  shotReadiness, whereUsed,
 } from "@minimalhumans/scf-core";
 import { parseConfig } from "./config.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
@@ -89,16 +91,18 @@ const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
     "it when an asset or a bundle appears in `list` and in no answer — " +
     "a bundle no binding reaches resolves for nobody, and nothing else " +
     "will tell you that.\n" +
-    "- `shot_context` is the one-call composite for writing a shot " +
-    "prompt: the shot's own framing, brief, scene, cast, look, physical " +
-    "direction, media, and pre-flight readiness for all of it.\n" +
+    "- Writing a shot prompt is three calls, each small enough to take " +
+    "whole: `shot_context` (the frame: framing, look, who is in it, its " +
+    "lines, physical direction), `shot_media` (what to attach) and " +
+    "`shot_readiness` (what is thin). The scene itself is " +
+    "`scene_package`, and the project is `brief`.\n" +
     "- The `brief`, `subject_dossier`, `subject_in_context`, " +
     "`world_state`, `scene_package`, `voice_direction`, " +
     "`physical_direction`, `look_resolution`, `soundscape`, " +
     "`motif_manifest`, `thematic_accounting`, `audience_state`, " +
     "`continuity`, `media_resolution`, and `provenance` tools each " +
     "answer one canonical query (spec/scf-spec.md §12) — reach for one " +
-    "of these directly when `shot_context` doesn't cover what's asked.\n" +
+    "of these directly when the shot calls don't cover what's asked.\n" +
     "- `readiness` is pre-flight: what's thin for a target query " +
     "(voice_direction, physical_direction, look_resolution, soundscape, " +
     "media_resolution, or subject_in_context) at a given position, " +
@@ -249,35 +253,72 @@ server.registerTool("where_used", {
   }
 });
 
+// A shot prompt is three calls (design doc §4.7). Each still works out who
+// is at the shot and what to ask about each; each answer is small enough
+// for a client that limits one tool result.
+const SHOT_UUID = z.string().describe(
+  "A shot's uuid, e.g. from find(\"shot\", \"10A\").");
+
 server.registerTool("shot_context", {
-  description: "Everything needed to write a shot prompt: the shot " +
-    "itself (size, lens, angle, movement, description, story beat — " +
-    "the same row `list` returns), the project brief, the scene and its " +
-    "cast, the resolved look, and `presence`: who is at the shot, seen, " +
-    "heard or only named, with framing, facing and focus, each marked " +
-    "recorded (a shot row says so) or inherited (from the scene); " +
-    "`lines`, the screenplay lines the shot covers, or null when it " +
-    "records none (ranges may overlap: coverage). Then " +
-    "physical direction per character seen at the shot, and media in " +
-    "force per subject — characters AND props AND the location; a heard " +
-    "subject is asked for voice and sound only, a named one for " +
-    "nothing — and `readiness`, a LIST of Q14 pre-flight results: the " +
-    "shot's look (Q07, first), the scene's sound (Q08), then for each " +
-    "character on screen subject-in-context (Q02, which checks costume) " +
-    "and physical direction (Q06), and voice (Q05) for each who speaks " +
-    "in `lines`. `contextFormat` is 2.0. `swept` lists each subject and " +
-    "the intents asked for, so a subject the file binds nothing to is " +
-    "visible rather than missing. One call in place of the dozen it " +
-    "replaces.",
-  inputSchema: {
-    shotUuid: z.string().describe(
-      "A shot's uuid, e.g. from find(\"shot\", \"10A\")."),
-  },
+  description: "The FRAME for a shot prompt — call first. The shot " +
+    "itself (size, lens, angle, movement, description, story beat, " +
+    "scene — the same row `list` returns), its resolved look (Q07), " +
+    "`presence`: who is at the shot, seen, heard or only named, with " +
+    "framing, facing and focus, each marked recorded (a shot row says " +
+    "so) or inherited (from the scene); `lines`, the screenplay lines " +
+    "the shot covers, or null when it records none (ranges may overlap: " +
+    "coverage); and physical direction for each character seen. Then " +
+    "`shot_media` for what to attach and `shot_readiness` for what is " +
+    "thin. The scene's full package is `scene_package` (with " +
+    "`shot.fields.scene_uuid`); the project is `brief`. " +
+    "`contextFormat` is 3.0 on all three shot calls.",
+  inputSchema: { shotUuid: SHOT_UUID },
 }, async ({ shotUuid }) => {
   try {
+    return ok(await shotContext(currentProject().ctx, shotUuid));
+  } catch (e) {
+    return err(e);
+  }
+});
+
+server.registerTool("shot_media", {
+  description: "WHAT TO ATTACH for a shot: media in force (Q13) for " +
+    "every subject at it — characters AND props AND the location. A " +
+    "heard subject is asked for voice and sound only, a named one for " +
+    "nothing. A result with nothing to say (no references, empty trail) " +
+    "is left out and listed under its subject's `empty` in `swept`; one " +
+    "whose trail explains an absence (a binding EXCLUDED, and why) is " +
+    "kept. `related` carries assets about the scene or shot itself, such " +
+    "as a DOP's framing plate. For a shot with many subjects, pass " +
+    "`subjectUuid` (from `shot_context`'s `presence`, or the scene's " +
+    "location) to take them one at a time.",
+  inputSchema: {
+    shotUuid: SHOT_UUID,
+    subjectUuid: z.string().optional().describe(
+      "Optional: only this subject, which must be at the shot."),
+  },
+}, async ({ shotUuid, subjectUuid }) => {
+  try {
     const project = currentProject();
-    return ok(await shotContext(
-      project.ctx, shotUuid, project.locate, project.rootMapped));
+    return ok(await shotMedia(project.ctx, shotUuid, project.locate,
+                              project.rootMapped, subjectUuid ?? null));
+  } catch (e) {
+    return err(e);
+  }
+});
+
+server.registerTool("shot_readiness", {
+  description: "WHAT IS THIN for a shot: a list of Q14 pre-flight " +
+    "results, each unmodified — the shot's look (Q07, first), the " +
+    "scene's sound (Q08), then for each character on screen " +
+    "subject-in-context (Q02, which alone checks costume) and physical " +
+    "direction (Q06), and voice (Q05) for each who speaks in the shot's " +
+    "lines, including a voice from outside the frame. Rubrics overlap, " +
+    "and a finding two of them raise appears under both targets.",
+  inputSchema: { shotUuid: SHOT_UUID },
+}, async ({ shotUuid }) => {
+  try {
+    return ok(await shotReadiness(currentProject().ctx, shotUuid));
   } catch (e) {
     return err(e);
   }

@@ -9,6 +9,13 @@
  * format has already paid for that mistake once (canonicalQueries.ts's
  * own header makes the same point about Q05/Q07).
  *
+ * Three calls, not one (design doc §4.7): the frame (`shotContext`), what
+ * to attach (`shotMedia`) and what is thin (`shotReadiness`). Each still
+ * does the hard part, working out who is at the shot and what to ask
+ * about each; together they answer what one call did, in parts a client
+ * with a limit on a single result can take whole. The scene package (Q04)
+ * and the brief (Q00) are their own queries and are not repeated here.
+ *
  * Not a seventeenth canonical query (design doc §4.5): promote it only
  * if a second implementation needs it.
  */
@@ -28,54 +35,63 @@ import {
   uuidLookupForAll, type ProjectedRow, type QueryResult,
 } from "./queryResult.ts";
 import {
-  q00Result, q04Result, q06Result, q07Result, q13Result, q14Result,
-  type Q00Result, type Q04Result, type Q05Result, type Q07Result,
-  type Q13Result, type Q14Result,
+  q06Result, q07Result, q13Result, q14Result,
+  type Q05Result, type Q07Result, type Q13Result, type Q14Result,
 } from "./canonicalQueries.ts";
 
+/**
+ * The version the three shot calls share (design doc §4.4). 3.0 split
+ * one composite into three and dropped `scene` and `brief`.
+ */
+export type ShotContextFormat = "3.0";
+
+/** The frame: what is in the shot and how it reads. */
 export interface ShotContext {
-  /**
-   * 2.0: `readiness` became a list (§4.4). 1.0's single Q07 result is the
-   * list's first entry.
-   */
-  contextFormat: "2.0";
+  contextFormat: ShotContextFormat;
   /**
    * The shot itself — size, lens, angle, movement, description, the
-   * story beat it serves — exactly as `listEntities` returns it. No
-   * canonical query is scoped to a shot's own row, so the members below
-   * all describe what surrounds the shot; without this a caller had to
-   * make a second call for the framing it was writing a prompt about.
+   * story beat it serves, its scene — exactly as `listEntities` returns
+   * it. Its `scene_uuid` is what to ask Q04 (the scene package) with.
    */
   shot: ListedRow;
-  /** Project register (Q00). */
-  brief: QueryResult<Q00Result>;
-  /** The scene, its cast, its text (Q04). */
-  scene: QueryResult<Q04Result>;
   /** The frame at this shot (Q07). */
   look: QueryResult<Q07Result>;
   /**
    * Who is at the shot and how they read (spec §4.6), each marked
-   * recorded or inherited. The sweeps below follow it.
+   * recorded or inherited. `shotMedia` and `shotReadiness` follow it.
    */
   presence: ShotPresenceMember;
   /**
    * The screenplay lines the shot covers (spec §4.7), projected as Q04
    * projects the scene's screenplay. NULL when the shot records no range:
    * an unrecorded shot does not inherit its scene's lines, which would
-   * hand a three-second insert the whole scene. The scene's screenplay is
-   * in `scene` for a caller that wants it. Also null when the range cannot
-   * be read; the finding says why (§4.7).
+   * hand a three-second insert the whole scene; Q04 has the scene's text.
+   * Also null when the range cannot be read; the finding says why (§4.7).
    */
   lines: ProjectedRow[] | null;
   /** Physical direction (Q06), one per character SEEN at the shot. */
   physical: QueryResult<Q05Result>[];
-  /** Media in force (Q13), one per subject x applicable intent. */
+}
+
+/** What to attach: the media in force for what is at the shot. */
+export interface ShotMedia {
+  contextFormat: ShotContextFormat;
+  shotUuid: string;
+  /** The one subject asked about, or null for every subject at the shot. */
+  subject: string | null;
+  /**
+   * Media in force (Q13), one per subject and intent that has something
+   * to say. A result with no references and an empty trail is left out,
+   * and `swept` names its intent in `empty`. A result whose trail
+   * explains an absence (a binding EXCLUDED, and why) is kept: that is
+   * an answer, not an empty one.
+   */
   media: QueryResult<Q13Result>[];
   /**
-   * Every subject the media sweep considered and what it asked for.
-   * A composite that returns a partial answer silently is worse than
-   * one that refuses: this is how a caller sees that a subject was
-   * swept with no intents rather than skipped by accident.
+   * Every subject the sweep considered, the intents asked for, and which
+   * came back empty. A composite that returns a partial answer silently
+   * is worse than one that refuses; this is how a caller sees an absence
+   * rather than a gap.
    */
   swept: SweptSubject[];
   /**
@@ -85,23 +101,29 @@ export interface ShotContext {
    * cascade starts at a subject, so nothing in `media` can reach it.
    */
   related: RelatedAsset[];
+}
+
+/** What is thin: pre-flight for everything the shot needs. */
+export interface ShotReadiness {
+  contextFormat: ShotContextFormat;
+  shotUuid: string;
   /**
-   * Pre-flight readiness (Q14) for everything the shot needs, each result
-   * unmodified (design doc §4.6), in this order:
+   * Pre-flight readiness (Q14), each result unmodified (design doc §4.6),
+   * in this order:
    *
    *   Q07  the shot's look
    *   Q08  the scene's sound
    *   then each character at the shot, in `presence` order:
    *     Q02 and Q06  if SEEN (subject in context, which alone checks
    *                  costume; and physical direction)
-   *     Q05          if they SPEAK in `lines`
-   *   then Q05 for anyone who speaks in `lines` and is not at the shot
+   *     Q05          if they SPEAK in the shot's lines
+   *   then Q05 for anyone who speaks in its lines and is not at the shot
    *
-   * With no `lines`, every character seen or heard at the shot counts as
-   * speaking. Q13 is not asked: `media` and `swept` already report what
-   * its rubric would. Rubrics overlap (Q02 also asks about appearance,
-   * which Q07 asks about), and a finding raised by two of them appears in
-   * both, each under its own target: the composite does not merge.
+   * With no lines, every character seen or heard at the shot counts as
+   * speaking. Q13 is not asked: `shotMedia` already reports what its
+   * rubric would. Rubrics overlap (Q02 also asks about appearance, which
+   * Q07 asks about), and a finding raised by two of them appears in both,
+   * each under its own target: the composite does not merge.
    */
   readiness: QueryResult<Q14Result>[];
 }
@@ -179,6 +201,11 @@ export interface SweptSubject {
   name: string | null;
   /** Intents asked for, in the order Q13 was called. */
   intents: string[];
+  /**
+   * Intents asked for whose result had nothing to say (no references and
+   * an empty trail), and so are not in `media`.
+   */
+  empty: string[];
   /** Why `intents` is empty, when it is. */
   note?: string;
 }
@@ -187,30 +214,16 @@ export interface SweptSubject {
  * The asset intents to ask for about ONE subject: what a query path
  * declares for its kind, plus what the file actually binds to it.
  *
- * The first version was the first half alone, derived from
- * `QUERY_PATHS`, which keys on `<subjectType>_id`. Only `character` has
- * such a path, so props and locations were swept with NO intents and
- * the composite returned a shot prompt with no location media in it,
- * silently. The subject set was never the problem — it already
- * contained them.
+ * Both halves. A declared path asks for `motion` on a character with no
+ * motion bundle and gets an empty answer, and that empty answer is the
+ * difference between "there is no motion reference for her" and "nobody
+ * asked". The second half is every intent a live binding or shot override
+ * puts in force for this subject: total on any file, no per-kind list,
+ * and it cannot ask for an intent the file has nothing under.
  *
- * The second half closes that: every intent a live binding or shot
- * override puts in force for this subject. Total on any file, no
- * per-kind list, and it cannot ask for an intent the file has nothing
- * under.
- *
- * Both halves, not the second alone. A declared path asks for `motion`
- * on a character with no motion bundle and gets an empty answer, and
- * that empty answer is the difference between "there is no motion
- * reference for her" and "nobody asked" — the distinction this whole
- * composite got wrong the first time.
- *
- * Anchors are the last addition, and only where the subject has
- * neither: an anchor IS media the subject has, so a subject whose only
- * media is an anchor must still be asked about, under the intents that
- * map to its anchor type (§12.8). A subject with bundles is not
- * widened that way — its anchors come back under the intents it is
- * already asked for.
+ * Anchors only where the subject has neither: an anchor IS media the
+ * subject has, so a subject whose only media is an anchor must still be
+ * asked about, under the intents that map to its anchor type (§12.8).
  */
 async function intentsFor(
     ctx: ScfContext, subjectType: string, subjectId: number,
@@ -285,9 +298,7 @@ const HEARD_INTENTS = new Set(["voice_identity", "acoustic"]);
 
 /**
  * Who is at the shot (spec §4.6), from `presenceAtShot`: the shot's
- * rows, and the scene's subjects too unless the frame is complete. The
- * location is always its scene's (§4.6: a new place is a new scene),
- * so it is the one subject that never comes from a shot row.
+ * rows, and the scene's subjects too unless the frame is complete.
  */
 async function presenceMember(
     ctx: ScfContext, shotId: number): Promise<ShotPresenceMember> {
@@ -341,7 +352,7 @@ async function speakersIn(
   return out;
 }
 
-/** The readiness list, in the order documented on `ShotContext`. */
+/** The readiness list, in the order documented on `ShotReadiness`. */
 async function readinessFor(
     ctx: ScfContext, presence: ShotPresenceMember, range: RangeVerdict,
     sceneUuid: string, sceneId: number,
@@ -352,15 +363,13 @@ async function readinessFor(
     await q14Result(ctx, "Q08", null, null, sceneUuid, sceneId, null, null),
   ];
 
-  const characters: Array<{ id: number; uuid: string; seen: boolean;
-                            heard: boolean }> = [];
+  const characters: Array<{ id: number; uuid: string; seen: boolean }> = [];
   for (const s of presence.subjects) {
     if (s.subjectType !== "character" || s.presence === "named") continue;
     const id = (await rows(ctx.exec, "character", "uuid = ?", [s.uuid]))[0];
     if (id === undefined) continue;
     characters.push({ id: Number(id["id"]), uuid: s.uuid,
-                      seen: s.presence === "seen",
-                      heard: s.presence === "heard" });
+                      seen: s.presence === "seen" });
   }
   // With no lines to read, anyone seen or heard may speak.
   const speakers = range.kind === "lines"
@@ -393,10 +402,18 @@ async function readinessFor(
   return out;
 }
 
-export async function shotContext(
-    ctx: ScfContext, shotUuid: string,
-    locate: FileLocator = NO_ROOT, rootMapped = false,
-): Promise<ShotContext> {
+/** The shot, its scene and its listed row: what all three calls start from. */
+interface ResolvedShot {
+  shotRow: Record<string, unknown>;
+  shotId: number;
+  sceneId: number;
+  sceneUuid: string;
+  sceneLocationId: number | null;
+  shot: ListedRow;
+}
+
+async function resolveShot(
+    ctx: ScfContext, shotUuid: string): Promise<ResolvedShot> {
   const shotRow = (await rows(ctx.exec, "shot", "uuid = ?", [shotUuid]))[0];
   if (shotRow === undefined) {
     throw new Error(`shotContext: no shot with uuid ${shotUuid}`);
@@ -409,7 +426,6 @@ export async function shotContext(
       `shotContext: shot ${shotUuid} has no resolvable scene`);
   }
   const sceneUuid = String(sceneRow["uuid"]);
-
   // The same projection `list` returns, found rather than rebuilt, so the
   // two can never describe one shot differently.
   const shot = (await listEntities(ctx, "shot",
@@ -418,37 +434,84 @@ export async function shotContext(
     throw new Error(`shotContext: shot ${shotUuid} is not listed in its ` +
                     `scene (is it cut?)`);
   }
+  const loc = Number(sceneRow["location_id"]);
+  return { shotRow, shotId, sceneId, sceneUuid, shot,
+           sceneLocationId: Number.isFinite(loc) && loc > 0 ? loc : null };
+}
 
-  const brief = await q00Result(ctx);
-  const scene = await q04Result(ctx, sceneUuid, sceneId);
-  const look = await q07Result(ctx, sceneUuid, sceneId, shotUuid, shotId);
+type Subject = { type: string; uuid: string; presence: Presence };
 
-  const range = await rangeLines(ctx.exec, sceneId,
-    shotRow["line_start_ref"], shotRow["line_end_ref"]);
+/**
+ * Every subject at the shot: `presence`'s characters and props, then the
+ * scene's location, which a shot always shares (spec §4.6).
+ */
+async function subjectsAt(
+    ctx: ScfContext, r: ResolvedShot,
+    presence: ShotPresenceMember): Promise<Subject[]> {
+  const subjects: Subject[] = presence.subjects.map((s) => ({
+    type: s.subjectType, uuid: s.uuid, presence: s.presence,
+  }));
+  if (r.sceneLocationId !== null) {
+    const location = (await rows(ctx.exec, "location", "id = ?",
+                                 [r.sceneLocationId]))[0];
+    if (location !== undefined) {
+      subjects.push({ type: "location", uuid: String(location["uuid"]),
+                      presence: "seen" });
+    }
+  }
+  return subjects;
+}
+
+/** The frame: shot, look, presence, lines and physical direction. */
+export async function shotContext(
+    ctx: ScfContext, shotUuid: string): Promise<ShotContext> {
+  const r = await resolveShot(ctx, shotUuid);
+  const look = await q07Result(ctx, r.sceneUuid, r.sceneId, shotUuid,
+                               r.shotId);
+  const range = await rangeLines(ctx.exec, r.sceneId,
+    r.shotRow["line_start_ref"], r.shotRow["line_end_ref"]);
   const lines = range.kind === "lines"
     ? projectScreenplayLines(range.lines,
         await uuidLookupForAll(ctx.exec, ctx.registry))
     : null;
-
-  const presence = await presenceMember(ctx, shotId);
-  const subjects: Array<{ type: string; uuid: string; presence: Presence }> =
-    presence.subjects.map((s) => ({
-      type: s.subjectType, uuid: s.uuid, presence: s.presence,
-    }));
-  const location = scene.result.location;
-  if (location !== null && location.uuid !== null) {
-    subjects.push({ type: "location", uuid: location.uuid, presence: "seen" });
-  }
+  const presence = await presenceMember(ctx, r.shotId);
 
   // Physical direction is for a body on screen. A heard character has
   // none to give (§4.6), and a named one is not there.
   const physical: QueryResult<Q05Result>[] = [];
-  for (const subj of subjects) {
+  for (const subj of await subjectsAt(ctx, r, presence)) {
     if (subj.type !== "character" || subj.presence !== "seen") continue;
     const characterId = await idFor(ctx, "character", subj.uuid);
     if (characterId === null) continue;
-    physical.push(
-      await q06Result(ctx, subj.uuid, sceneUuid, characterId, sceneId));
+    physical.push(await q06Result(ctx, subj.uuid, r.sceneUuid, characterId,
+                                  r.sceneId));
+  }
+  return { contextFormat: "3.0", shot: r.shot, look, presence, lines,
+           physical };
+}
+
+/** A Q13 result with nothing to say: no references and an empty trail. */
+const isEmpty = (m: QueryResult<Q13Result>): boolean =>
+  m.result.references.length === 0 && m.result.trail.length === 0;
+
+/**
+ * What to attach. With `subjectUuid`, only that subject is swept, so a
+ * shot with many subjects can be fetched one at a time; it must be at the
+ * shot. `related` is about the shot and its scene, and comes either way.
+ */
+export async function shotMedia(
+    ctx: ScfContext, shotUuid: string,
+    locate: FileLocator = NO_ROOT, rootMapped = false,
+    subjectUuid: string | null = null,
+): Promise<ShotMedia> {
+  const r = await resolveShot(ctx, shotUuid);
+  const presence = await presenceMember(ctx, r.shotId);
+  let subjects = await subjectsAt(ctx, r, presence);
+  if (subjectUuid !== null) {
+    subjects = subjects.filter((s) => s.uuid === subjectUuid);
+    if (subjects.length === 0) {
+      throw new Error(`shotMedia: ${subjectUuid} is not at shot ${shotUuid}`);
+    }
   }
 
   const media: QueryResult<Q13Result>[] = [];
@@ -457,7 +520,7 @@ export async function shotContext(
     const subjectId = await idFor(ctx, subj.type, subj.uuid);
     if (subjectId === null) {
       swept.push({ subjectType: subj.type, uuid: subj.uuid, name: null,
-                   intents: [], note: "no row with that uuid" });
+                   intents: [], empty: [], note: "no row with that uuid" });
       continue;
     }
     const row = (await rows(ctx.exec, subj.type, "id = ?", [subjectId]))[0];
@@ -465,33 +528,43 @@ export async function shotContext(
       ? null : String(row["name"]);
     if (subj.presence === "named") {
       swept.push({ subjectType: subj.type, uuid: subj.uuid, name,
-                   intents: [], note: "named only: not seen or heard here" });
+                   intents: [], empty: [],
+                   note: "named only: not seen or heard here" });
       continue;
     }
     const all = await intentsFor(ctx, subj.type, subjectId);
     const intents = subj.presence === "heard"
       ? all.filter((i) => HEARD_INTENTS.has(i)) : all;
+    const empty: string[] = [];
+    for (const intent of intents) {
+      const m = await q13Result(
+        ctx, subj.type, subj.uuid, subjectId, intent,
+        r.sceneUuid, r.sceneId, shotUuid, r.shotId, locate, rootMapped);
+      if (isEmpty(m)) empty.push(intent); else media.push(m);
+    }
     swept.push({
-      subjectType: subj.type, uuid: subj.uuid, name, intents,
+      subjectType: subj.type, uuid: subj.uuid, name, intents, empty,
       ...(intents.length === 0
         ? { note: subj.presence === "heard"
             ? "heard only, and nothing binds voice or sound to it"
             : "nothing binds media to this subject" } : {}),
     });
-    for (const intent of intents) {
-      media.push(await q13Result(
-        ctx, subj.type, subj.uuid, subjectId, intent,
-        sceneUuid, sceneId, shotUuid, shotId, locate, rootMapped));
-    }
   }
 
+  const related = await relatedAssets(ctx, r.shotId, shotUuid,
+                                      r.sceneId, r.sceneUuid);
+  return { contextFormat: "3.0", shotUuid, subject: subjectUuid, media,
+           swept, related };
+}
+
+/** What is thin: the readiness list, in the order `ShotReadiness` gives. */
+export async function shotReadiness(
+    ctx: ScfContext, shotUuid: string): Promise<ShotReadiness> {
+  const r = await resolveShot(ctx, shotUuid);
+  const presence = await presenceMember(ctx, r.shotId);
+  const range = await rangeLines(ctx.exec, r.sceneId,
+    r.shotRow["line_start_ref"], r.shotRow["line_end_ref"]);
   const readiness = await readinessFor(
-    ctx, presence, range, sceneUuid, sceneId, shotUuid, shotId);
-
-  const related = await relatedAssets(ctx, shotId, shotUuid,
-                                      sceneId, sceneUuid);
-
-  return { contextFormat: "2.0", shot, brief, scene, look, presence, lines,
-           physical, media,
-           swept, related, readiness };
+    ctx, presence, range, r.sceneUuid, r.sceneId, shotUuid, r.shotId);
+  return { contextFormat: "3.0", shotUuid, readiness };
 }

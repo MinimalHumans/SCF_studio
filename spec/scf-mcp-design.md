@@ -21,12 +21,14 @@ One sentence, and the whole design falls out of it:
 > A user says *"SeeDance 2.5 prompt for shot 10A"* and gets prompt text
 > plus a list of reference files to attach.
 
-That is **two tool calls**, not fifteen:
+That is **four tool calls**, not fifteen:
 
     find("shot", "10A")        → uuid
-    shot_context(uuid)         → one payload of resolved film facts
+    shot_context(uuid)         → the frame: framing, look, who, lines
+    shot_media(uuid)           → what to attach
+    shot_readiness(uuid)       → what is thin
 
-The agent then renders that payload into SeeDance's format using a
+The agent then renders those payloads into SeeDance's format using a
 template file. Which model is being targeted is knowledge that lives in
 **one markdown file the user owns** — not in the format, not in this
 server.
@@ -123,26 +125,37 @@ at runtime.
 ## 4. `shotContext` — the composite
 
 ```ts
-// scf-core/src/shotContext.ts
-export interface ShotContext {
-  contextFormat: "2.0";
-  shot:      ListedRow;       // the shot's own row, as `list` returns it
-  presence:  ShotPresenceMember; // who is at the shot, spec §4.6
+// scf-core/src/shotContext.ts — three calls, one version (§4.4, §4.7)
+export interface ShotContext {          // the frame
+  contextFormat: "3.0";
+  shot:      ListedRow;             // the shot's own row, as `list` returns it
+  look:      Q07Result;             // the frame at this shot
+  presence:  ShotPresenceMember;    // who is at the shot, spec §4.6
   lines:     ProjectedRow[] | null; // the lines it covers, §4.7; null if unrecorded
-  brief:     Q00Result;       // project register
-  scene:     Q04Result;       // the scene, its cast, its text
-  look:      Q07Result;       // the frame at this shot
-  physical:  Q06Result[];     // per character in frame
-  media:     Q13Result[];     // per subject × intent
-  swept:     SweptSubject[];  // every subject, and the intents asked
-  related:   RelatedAsset[];  // assets about the scene or shot (§8.6)
-  readiness: Q14Result[];     // what is thin, per target and character (§4.6)
+  physical:  Q06Result[];           // per character seen
+}
+export interface ShotMedia {            // what to attach
+  contextFormat: "3.0";
+  shotUuid:  string;
+  subject:   string | null;         // one subject, or every subject at the shot
+  media:     Q13Result[];           // per subject × intent that has something to say
+  swept:     SweptSubject[];        // every subject, the intents asked, which were empty
+  related:   RelatedAsset[];        // assets about the scene or shot (§8.6)
+}
+export interface ShotReadiness {        // what is thin
+  contextFormat: "3.0";
+  shotUuid:  string;
+  readiness: Q14Result[];           // per target and character (§4.6)
 }
 
-export async function shotContext(
-  ctx: ScfContext, shotUuid: string, locate?: FileLocator,
-): Promise<ShotContext>;
+export async function shotContext(ctx, shotUuid): Promise<ShotContext>;
+export async function shotMedia(ctx, shotUuid, locate?, rootMapped?,
+                                subjectUuid?): Promise<ShotMedia>;
+export async function shotReadiness(ctx, shotUuid): Promise<ShotReadiness>;
 ```
+
+The scene package (Q04) and the brief (Q00) are not members: they are
+their own queries, asked with `shot.fields.scene_uuid` and with nothing.
 
 ### 4.1 It composes and derives nothing
 
@@ -167,12 +180,14 @@ tree — `scf-app/src/ui/queries/runnersComposed.ts` assembles its own Q04
 payload rather than calling `q04Result`. It has not diverged yet. A
 composite with six members has six chances to.
 
-### 4.2 It is one call because the fan-out is expensive
+### 4.2 It does the fan-out because the fan-out is expensive
 
 Q13's parameters are `subjectType`, `subject`, `intent`, `scene`, `shot`
 — **one call per subject per intent**. A shot with three characters, a
 location and two props is a dozen calls. Left to the agent that is a
-dozen round trips it has to plan; done here it is a loop.
+dozen round trips it has to plan; done here it is a loop. Splitting the
+answer into three calls (§4.7) keeps this: each call still works out
+who is at the shot and what to ask about each.
 
 The subject list comes from `presence` (spec §4.6): the shot's own
 `shot_character` and `shot_prop` rows, plus the scene's subjects unless
@@ -224,8 +239,8 @@ one field.
 **A new member is additive and keeps the version; a member that changes
 type moves it.** `shot`, `presence`, `lines`, `swept` and `related` all
 arrived within 1.0. `readiness` changing from one Q14 result to a list
-(§4.6) is `2.0`. 1.0's single result is the list's first entry, so a
-consumer that read `readiness` as the shot's look reads `readiness[0]`.
+(§4.6) is `2.0`. Splitting the composite into three calls and dropping
+`scene` and `brief` (§4.7) is `3.0`, shared by all three calls.
 
 ### 4.5 Not a Q16
 
@@ -240,8 +255,9 @@ it, this is one tool's convenience.
 
 ### 4.6 Readiness covers the shot, not only its look
 
-`readiness` is the pre-flight for everything the payload carries: a Q14
-result per target and subject, each unmodified, in a fixed order.
+`shot_readiness`'s `readiness` is the pre-flight for everything the
+shot calls carry: a Q14 result per target and subject, each unmodified,
+in a fixed order.
 
 | Target | Asked for |
 |---|---|
@@ -272,6 +288,46 @@ Q07 also asks about, and both results say so, each under its own
 target. Merging them would be the second description of a normative
 answer that §4.1 rules out.
 
+### 4.7 Three calls, each small enough to take whole
+
+One call answered everything, and for a shot of three characters, three
+props and a room it was 68 KB as a client displayed it, past the limit
+some clients put on a single tool result. Such a client saves the rest
+to a file, and an agent that does not go and read it works from half an
+answer without knowing.
+
+So the composite is three calls, grouped by what a prompt writer does
+with them:
+
+| Call | Answers | Members |
+|---|---|---|
+| `shot_context` | the frame: what is in it and how it reads | `shot`, `look`, `presence`, `lines`, `physical` |
+| `shot_media` | what to attach | `media`, `swept`, `related` |
+| `shot_readiness` | what is thin | `readiness` |
+
+**The scene and the brief are not repeated.** Q04 is the largest member
+the single call had, and it was already its own tool (`scene_package`),
+as Q00 was (`brief`). A shot's own lines are in `lines`; the scene's
+whole text is one call away.
+
+**`shot_media` leaves out results with nothing to say**: no references
+and an empty trail, such as a motion intent for a character nothing
+binds motion to. `swept` names each one under its subject's `empty`, so
+the absence is still reported. A result whose trail explains an absence
+(a binding EXCLUDED, and why) is kept: that is an answer.
+
+**`shot_media` can take one subject at a time.** Media grows with the
+scene, not the shot: one Q13 per subject and intent. A crowded shot can
+outgrow one result however it is grouped, so `subjectUuid` asks about
+one subject, which must be at the shot.
+
+**The three cannot disagree.** They read the same open file, which this
+server never writes, and each names the shot it answers for.
+
+None of this is a ceiling. Shots will carry more context and clients
+will accept more; the split is about taking an answer whole today, and
+the per-subject call is the room left for growth.
+
 ## 5. The server
 
 The shipped server is wider than this section first planned; where the
@@ -283,7 +339,9 @@ two disagree, `scf-mcp/src/server.ts` is what runs.
 | `find` | `(entityType, label)` | → `resolveNaturalKey` |
 | `list` | `(entityType, filter?)` | → `listEntities` |
 | `where_used` | `(entityType, uuid)` | → `whereUsed` |
-| `shot_context` | `(shotUuid)` | → `shotContext` |
+| `shot_context` | `(shotUuid)` | → `shotContext`, the frame (§4.7) |
+| `shot_media` | `(shotUuid, subjectUuid?)` | → `shotMedia`, what to attach |
+| `shot_readiness` | `(shotUuid)` | → `shotReadiness`, what is thin |
 | one tool per query | each query's own params | Q00–Q13, Q15 |
 | `readiness` | `(queryId, params)` | Q14 directly, for pre-flight |
 
