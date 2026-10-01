@@ -125,7 +125,7 @@ at runtime.
 ```ts
 // scf-core/src/shotContext.ts
 export interface ShotContext {
-  contextFormat: "1.0";
+  contextFormat: "2.0";
   shot:      ListedRow;       // the shot's own row, as `list` returns it
   presence:  ShotPresenceMember; // who is at the shot, spec §4.6
   lines:     ProjectedRow[] | null; // the lines it covers, §4.7; null if unrecorded
@@ -136,7 +136,7 @@ export interface ShotContext {
   media:     Q13Result[];     // per subject × intent
   swept:     SweptSubject[];  // every subject, and the intents asked
   related:   RelatedAsset[];  // assets about the scene or shot (§8.6)
-  readiness: Q14Result;       // what is thin
+  readiness: Q14Result[];     // what is thin, per target and character (§4.6)
 }
 
 export async function shotContext(
@@ -215,11 +215,17 @@ version of the property the whole conformance suite is built on.
 
 ### 4.4 Version the payload
 
-`contextFormat: "1.0"`, on its own track — the same reasoning as
+`contextFormat`, on its own track — the same reasoning as
 §12.1.1's `resultFormat`, which exists because envelopes needed to
 version independently of the schema. Adding a version later is a
 breaking change to whatever is already consuming it; adding it now costs
 one field.
+
+**A new member is additive and keeps the version; a member that changes
+type moves it.** `shot`, `presence`, `lines`, `swept` and `related` all
+arrived within 1.0. `readiness` changing from one Q14 result to a list
+(§4.6) is `2.0`. 1.0's single result is the list's first entry, so a
+consumer that read `readiness` as the shot's look reads `readiness[0]`.
 
 ### 4.5 Not a Q16
 
@@ -231,6 +237,40 @@ things every conforming reader must agree on; until someone else wants
 it, this is one tool's convenience.
 
 ---
+
+### 4.6 Readiness covers the shot, not only its look
+
+`readiness` is the pre-flight for everything the payload carries: a Q14
+result per target and subject, each unmodified, in a fixed order.
+
+| Target | Asked for |
+|---|---|
+| Q07 | the shot: its look |
+| Q08 | the scene: its sound |
+| Q02, Q06 | each character SEEN at the shot (§4.2's `presence`): subject in context, which alone checks costume, and physical direction |
+| Q05 | each character who SPEAKS in the shot's `lines` |
+
+The characters come in `presence` order, each with Q02, Q06 and Q05 as
+they apply, and then Q05 for anyone who speaks in `lines` and is not at
+the shot: an off-screen line in a frame recorded without its speaker.
+
+**Who speaks is read from the script.** Only a cue line names its
+character, so a line of dialogue is spoken by the nearest cue above it in
+the scene, which may sit just outside the shot's range. With no `lines`,
+everyone seen or heard at the shot counts as speaking. A named character
+gets nothing.
+
+**Only Q07 is asked at the shot.** The other rubrics take a character
+and a scene, and the envelope records exactly the parameters asked, so a
+Q06 result does not claim a shot it never used.
+
+**Q13 is not asked.** `media` and `swept` already say when a subject
+has no binding or a file is missing, which is all its rubric checks.
+
+**Overlapping rubrics are not merged.** Q02 asks about appearance, which
+Q07 also asks about, and both results say so, each under its own
+target. Merging them would be the second description of a normative
+answer that §4.1 rules out.
 
 ## 5. The server
 
@@ -343,7 +383,7 @@ feature.
   when a `required` step is missing, or write it and say what is thin?
   Second, most likely — Q14's own framing is that absence is not an
   error — but it is a product decision, not a technical one.
-- **How much of Q04's screenplay member belongs in a shot prompt?** The
-  scene's text is now in the payload (§12.17.1, spec 0.49). For a shot
-  it may be too much context, or exactly the right amount. Unknown until
-  tried.
+- **How much of Q04's screenplay member belongs in a shot prompt?**
+  Answered by spec §4.7: a shot names the lines it covers, and the
+  payload carries them as `lines`. The scene's whole text stays in
+  `scene` for a caller that wants it.

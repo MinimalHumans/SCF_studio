@@ -207,7 +207,8 @@ describe("scf-mcp server — a default project set at startup", () => {
       ["brief", "contextFormat", "look", "media", "physical", "readiness",
        "lines", "presence", "related", "scene", "shot", "swept"].sort());
     expect(ctx.shot.uuid).toBe(SHOT1204);
-    expect(ctx.readiness.result.target).toBe("Q07");
+    expect(ctx.contextFormat).toBe("2.0");
+    expect(ctx.readiness[0].result.target).toBe("Q07");
   });
 
   test("the media sweep covers the location and says what it asked for",

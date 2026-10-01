@@ -110,7 +110,8 @@ describe("shotContext — composes without deriving (§4.1)", () => {
 
   test("contextFormat is stamped (§4.4)", async () => {
     const ctx = await shotContext(fx.ctx, shot1204.uuid);
-    expect(ctx.contextFormat).toBe("1.0");
+    // 2.0: readiness became a list.
+    expect(ctx.contextFormat).toBe("2.0");
   });
 
   test("physical has one entry per cast member, Eleanor's byte-identical " +
@@ -183,12 +184,85 @@ describe("shotContext — composes without deriving (§4.1)", () => {
     }
   });
 
-  test("readiness is Q14 scoped to the shot's own look (Q07)", async () => {
+  /** Each readiness entry as `target:character name`, in order. */
+  const readinessOf = async (shotUuid: string) => {
+    const ctx = await shotContext(fx.ctx, shotUuid);
+    const names = new Map(ctx.scene.result.cast.map((c) =>
+      [c.uuid, String(c.fields["name"])]));
+    return ctx.readiness.map((r) => {
+      const who = r.parameters["character"];
+      return who === null || who === undefined
+        ? r.result.target
+        : `${r.result.target}:${names.get(String(who)) ?? String(who)}`;
+    });
+  };
+  const SHOT = {
+    "3A": "8917aaea-0ab4-4db0-9e6d-1c0fe62805d2",
+    "3B": "e9a73271-d1bd-48eb-98f1-afd3f28511e6",
+    "3C": "5bb6b9ea-cc07-4bb6-9500-4691ba5c35a6",
+  };
+
+  test("readiness opens with the shot's look (Q07), as 1.0's was",
+       async () => {
     const ctx = await shotContext(fx.ctx, shot1204.uuid);
-    expect(ctx.readiness.result.target).toBe("Q07");
-    expect(ctx.readiness.parameters["scene"]).toBe(scene12.uuid);
-    expect(ctx.readiness.parameters["shot"]).toBe(shot1204.uuid);
+    const look = ctx.readiness[0];
+    expect(look?.result.target).toBe("Q07");
+    expect(look?.parameters["scene"]).toBe(scene12.uuid);
+    expect(look?.parameters["shot"]).toBe(shot1204.uuid);
     blessOrCheck("ShotContext-readiness", ctx.readiness);
+  });
+
+  test("3B: look, sound, then each speaking character on screen",
+       async () => {
+    // Both are seen, and both speak in 3B's lines.
+    expect(await readinessOf(SHOT["3B"])).toEqual([
+      "Q07", "Q08",
+      "Q02:Marcus Cade", "Q06:Marcus Cade", "Q05:Marcus Cade",
+      "Q02:Eleanor Cade", "Q06:Eleanor Cade", "Q05:Eleanor Cade",
+    ]);
+  });
+
+  test("3A: a heard character gets a voice check and no body checks",
+       async () => {
+    // Marcus is off screen in 3A, and speaks in its lines (the master
+    // covers the whole scene). Ada is named, and gets nothing.
+    expect(await readinessOf(SHOT["3A"])).toEqual([
+      "Q07", "Q08",
+      "Q02:Eleanor Cade", "Q06:Eleanor Cade", "Q05:Eleanor Cade",
+      "Q05:Marcus Cade",
+    ]);
+  });
+
+  test("3C: a speaker the frame does not hold still gets a voice check",
+       async () => {
+    // 3C is Eleanor's hands. Its lines open on "Is Ada's room still—",
+    // whose MARCUS cue is the line before the range: the speaker is the
+    // nearest cue above, so Marcus speaks here, from outside the frame.
+    expect(await readinessOf(SHOT["3C"])).toEqual([
+      "Q07", "Q08",
+      "Q02:Eleanor Cade", "Q06:Eleanor Cade",
+      "Q05:Marcus Cade",
+    ]);
+  });
+
+  test("an unrecorded shot: anyone seen or heard may speak", async () => {
+    // 12-04 records no presence rows and no lines, so both inherited
+    // characters get every check.
+    const list = await readinessOf(shot1204.uuid);
+    for (const who of ["Eleanor Cade", "Marcus Cade"]) {
+      for (const target of ["Q02", "Q06", "Q05"]) {
+        expect(list, `${target}:${who}`).toContain(`${target}:${who}`);
+      }
+    }
+  });
+
+  test("only Q07 is asked at the shot; the rest record what they used",
+       async () => {
+    const ctx = await shotContext(fx.ctx, SHOT["3B"]);
+    for (const r of ctx.readiness) {
+      expect(r.parameters["shot"] ?? null, r.result.target)
+        .toBe(r.result.target === "Q07" ? SHOT["3B"] : null);
+    }
   });
 
   test("throws for an unknown shot uuid rather than answering silently",

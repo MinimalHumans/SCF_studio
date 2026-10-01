@@ -1,68 +1,406 @@
-{
-  "query": "Q14",
-  "resultFormat": "1.0",
-  "schemaVersion": "2.19",
-  "parameters": {
-    "target": "Q07",
-    "character": null,
-    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
-    "shot": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
-  },
-  "result": {
-    "target": "Q07",
-    "targetName": "Look resolution",
-    "findings": [
-      {
-        "severity": "warning",
-        "entity": "character_appearance_profile",
-        "message": "Marcus Cade is in this scene with no appearance profile."
-      },
-      {
-        "severity": "ok",
-        "entity": "project_color_palette",
-        "message": "project_color_palette in force: Project Color Palette."
-      },
-      {
-        "severity": "ok",
-        "entity": "color_script",
-        "message": "color_script in force: Color Script."
-      },
-      {
-        "severity": "ok",
-        "entity": "color_script_entry",
-        "message": "color_script_entry in force: First warmth."
-      },
-      {
-        "severity": "ok",
-        "entity": "scene_color_palette",
-        "message": "scene_color_palette in force: Sc 12 palette."
-      },
-      {
-        "severity": "ok",
-        "entity": "look_development",
-        "message": "look_development in force: Look Development."
-      },
-      {
-        "severity": "ok",
-        "entity": "lighting_design",
-        "message": "lighting_design in force: 12-04 lighting."
-      },
-      {
-        "severity": "ok",
-        "entity": "shot_design",
-        "message": "shot_design in force: 12-04 design."
-      },
-      {
-        "severity": "ok",
-        "entity": "visual_identity",
-        "message": "Visual identity root present."
+[
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q07",
+      "character": null,
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
+    },
+    "result": {
+      "target": "Q07",
+      "targetName": "Look resolution",
+      "findings": [
+        {
+          "severity": "warning",
+          "entity": "character_appearance_profile",
+          "message": "Marcus Cade is in this scene with no appearance profile."
+        },
+        {
+          "severity": "ok",
+          "entity": "project_color_palette",
+          "message": "project_color_palette in force: Project Color Palette."
+        },
+        {
+          "severity": "ok",
+          "entity": "color_script",
+          "message": "color_script in force: Color Script."
+        },
+        {
+          "severity": "ok",
+          "entity": "color_script_entry",
+          "message": "color_script_entry in force: First warmth."
+        },
+        {
+          "severity": "ok",
+          "entity": "scene_color_palette",
+          "message": "scene_color_palette in force: Sc 12 palette."
+        },
+        {
+          "severity": "ok",
+          "entity": "look_development",
+          "message": "look_development in force: Look Development."
+        },
+        {
+          "severity": "ok",
+          "entity": "lighting_design",
+          "message": "lighting_design in force: 12-04 lighting."
+        },
+        {
+          "severity": "ok",
+          "entity": "shot_design",
+          "message": "shot_design in force: 12-04 design."
+        },
+        {
+          "severity": "ok",
+          "entity": "visual_identity",
+          "message": "Visual identity root present."
+        }
+      ],
+      "counts": {
+        "blocker": 0,
+        "warning": 1,
+        "suggestion": 0,
+        "ok": 8
       }
-    ],
-    "counts": {
-      "blocker": 0,
-      "warning": 1,
-      "suggestion": 0,
-      "ok": 8
+    }
+  },
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q08",
+      "character": null,
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": null
+    },
+    "result": {
+      "target": "Q08",
+      "targetName": "Soundscape",
+      "findings": [
+        {
+          "severity": "ok",
+          "entity": "sonic_identity",
+          "message": "Sound world root present."
+        },
+        {
+          "severity": "ok",
+          "entity": "scene_music_design",
+          "message": "Music design authored (silence counts)."
+        },
+        {
+          "severity": "ok",
+          "entity": "location_sound_profile",
+          "message": "The room has a sound profile."
+        },
+        {
+          "severity": "ok",
+          "entity": "sound_cue",
+          "message": "1 cue(s) authored."
+        }
+      ],
+      "counts": {
+        "blocker": 0,
+        "warning": 0,
+        "suggestion": 0,
+        "ok": 4
+      }
+    }
+  },
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q02",
+      "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": null
+    },
+    "result": {
+      "target": "Q02",
+      "targetName": "Subject in context",
+      "findings": [
+        {
+          "severity": "ok",
+          "entity": "character_appearance_profile",
+          "message": "Eleanor Cade: appearance baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "physical_character_profile",
+          "message": "Eleanor Cade: physical baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "vocal_profile",
+          "message": "Eleanor Cade: voice baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "costume_scene",
+          "message": "2 costume assignment(s) for this scene."
+        },
+        {
+          "severity": "ok",
+          "entity": "bundle",
+          "message": "Eleanor Cade: 7 visual_identity asset(s) resolve (0 from overrides)."
+        },
+        {
+          "severity": "ok",
+          "entity": "entity_anchor",
+          "message": "1 verified anchor(s)."
+        }
+      ],
+      "counts": {
+        "blocker": 0,
+        "warning": 0,
+        "suggestion": 0,
+        "ok": 6
+      }
+    }
+  },
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q06",
+      "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": null
+    },
+    "result": {
+      "target": "Q06",
+      "targetName": "Physical direction",
+      "findings": [
+        {
+          "severity": "ok",
+          "entity": "physical_character_profile",
+          "message": "Eleanor Cade: movement baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "scene_blocking",
+          "message": "Staging container present (blocking)."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_state",
+          "message": "Physical states in force: wounded."
+        }
+      ],
+      "counts": {
+        "blocker": 0,
+        "warning": 0,
+        "suggestion": 0,
+        "ok": 3
+      }
+    }
+  },
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q05",
+      "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": null
+    },
+    "result": {
+      "target": "Q05",
+      "targetName": "Voice direction",
+      "findings": [
+        {
+          "severity": "suggestion",
+          "entity": "performance_state",
+          "message": "Physical state persists here (wounded) with no vocal state — does it color the voice?"
+        },
+        {
+          "severity": "ok",
+          "entity": "vocal_profile",
+          "message": "Eleanor Cade: voice baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "bundle",
+          "message": "Eleanor Cade: 1 voice asset(s) resolve."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_state",
+          "message": "No vocal state in force — baseline holds (by design)."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_beat",
+          "message": "1 vocal beat(s) authored."
+        },
+        {
+          "severity": "ok",
+          "entity": "dialogue_rhythm",
+          "message": "scene speech rhythm present."
+        },
+        {
+          "severity": "ok",
+          "entity": "sound_perspective",
+          "message": "sound perspective present."
+        }
+      ],
+      "counts": {
+        "blocker": 0,
+        "warning": 0,
+        "suggestion": 1,
+        "ok": 6
+      }
+    }
+  },
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q02",
+      "character": "145417ca-e8e5-4946-aba0-e83575dad182",
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": null
+    },
+    "result": {
+      "target": "Q02",
+      "targetName": "Subject in context",
+      "findings": [
+        {
+          "severity": "warning",
+          "entity": "character_appearance_profile",
+          "message": "Marcus Cade has no appearance baseline."
+        },
+        {
+          "severity": "warning",
+          "entity": "costume_scene",
+          "message": "Marcus Cade has costumes but none assigned to this scene (pattern 1 requires explicit rows)."
+        },
+        {
+          "severity": "suggestion",
+          "entity": "entity_anchor",
+          "message": "No verified anchors for Marcus Cade — identity is unpinned."
+        },
+        {
+          "severity": "ok",
+          "entity": "physical_character_profile",
+          "message": "Marcus Cade: physical baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "vocal_profile",
+          "message": "Marcus Cade: voice baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "bundle",
+          "message": "Marcus Cade: 3 visual_identity asset(s) resolve (0 from overrides)."
+        }
+      ],
+      "counts": {
+        "blocker": 0,
+        "warning": 2,
+        "suggestion": 1,
+        "ok": 3
+      }
+    }
+  },
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q06",
+      "character": "145417ca-e8e5-4946-aba0-e83575dad182",
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": null
+    },
+    "result": {
+      "target": "Q06",
+      "targetName": "Physical direction",
+      "findings": [
+        {
+          "severity": "ok",
+          "entity": "physical_character_profile",
+          "message": "Marcus Cade: movement baseline present."
+        },
+        {
+          "severity": "ok",
+          "entity": "scene_blocking",
+          "message": "Staging container present (blocking)."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_state",
+          "message": "Physical states in force: none (baseline)."
+        }
+      ],
+      "counts": {
+        "blocker": 0,
+        "warning": 0,
+        "suggestion": 0,
+        "ok": 3
+      }
+    }
+  },
+  {
+    "query": "Q14",
+    "resultFormat": "1.0",
+    "schemaVersion": "2.19",
+    "parameters": {
+      "target": "Q05",
+      "character": "145417ca-e8e5-4946-aba0-e83575dad182",
+      "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+      "shot": null
+    },
+    "result": {
+      "target": "Q05",
+      "targetName": "Voice direction",
+      "findings": [
+        {
+          "severity": "blocker",
+          "entity": "bundle",
+          "message": "Marcus Cade has no voice_identity bundle — nothing for a voice tool to condition on."
+        },
+        {
+          "severity": "warning",
+          "entity": "vocal_profile",
+          "message": "Marcus Cade's vocal profile is thin (7% populated) — enough to identify, not enough to direct."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_state",
+          "message": "No vocal state in force — baseline holds (by design)."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_beat",
+          "message": "1 vocal beat(s) authored."
+        },
+        {
+          "severity": "ok",
+          "entity": "dialogue_rhythm",
+          "message": "scene speech rhythm present."
+        },
+        {
+          "severity": "ok",
+          "entity": "sound_perspective",
+          "message": "sound perspective present."
+        }
+      ],
+      "counts": {
+        "blocker": 1,
+        "warning": 1,
+        "suggestion": 0,
+        "ok": 4
+      }
     }
   }
-}
+]
