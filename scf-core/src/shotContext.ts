@@ -20,8 +20,10 @@ import {
 } from "./resolution.ts";
 import { QUERY_PATHS } from "./queryPaths.ts";
 import { presenceAtShot, type Presence } from "./presence.ts";
-import { rangeLines } from "./lines.ts";
-import { projectScreenplayLines } from "./screenplay/sceneScript.ts";
+import { rangeLines, type RangeVerdict } from "./lines.ts";
+import {
+  projectScreenplayLines, sceneScriptLines,
+} from "./screenplay/sceneScript.ts";
 import {
   uuidLookupForAll, type ProjectedRow, type QueryResult,
 } from "./queryResult.ts";
@@ -32,7 +34,11 @@ import {
 } from "./canonicalQueries.ts";
 
 export interface ShotContext {
-  contextFormat: "1.0";
+  /**
+   * 2.0: `readiness` became a list (§4.4). 1.0's single Q07 result is the
+   * list's first entry.
+   */
+  contextFormat: "2.0";
   /**
    * The shot itself — size, lens, angle, movement, description, the
    * story beat it serves — exactly as `listEntities` returns it. No
@@ -79,8 +85,25 @@ export interface ShotContext {
    * cascade starts at a subject, so nothing in `media` can reach it.
    */
   related: RelatedAsset[];
-  /** Pre-flight readiness (Q14) for the shot's own look. */
-  readiness: QueryResult<Q14Result>;
+  /**
+   * Pre-flight readiness (Q14) for everything the shot needs, each result
+   * unmodified (design doc §4.6), in this order:
+   *
+   *   Q07  the shot's look
+   *   Q08  the scene's sound
+   *   then each character at the shot, in `presence` order:
+   *     Q02 and Q06  if SEEN (subject in context, which alone checks
+   *                  costume; and physical direction)
+   *     Q05          if they SPEAK in `lines`
+   *   then Q05 for anyone who speaks in `lines` and is not at the shot
+   *
+   * With no `lines`, every character seen or heard at the shot counts as
+   * speaking. Q13 is not asked: `media` and `swept` already report what
+   * its rubric would. Rubrics overlap (Q02 also asks about appearance,
+   * which Q07 asks about), and a finding raised by two of them appears in
+   * both, each under its own target: the composite does not merge.
+   */
+  readiness: QueryResult<Q14Result>[];
 }
 
 /** Resolves nothing — the state of a `.scf` opened on its own (§0.3). */
@@ -285,6 +308,91 @@ async function presenceMember(
   return { complete: at?.complete ?? false, subjects };
 }
 
+/**
+ * The characters who speak in a range of lines, in script order, once
+ * each. Only a cue line names its character, so a line of dialogue (or a
+ * parenthetical) is spoken by the nearest cue above it in the scene, which
+ * may sit just outside the range: 3C opens on "Is Ada's room still—",
+ * whose MARCUS cue is the line before. A cue naming no character row is
+ * skipped, since a voice direction needs someone to direct.
+ */
+async function speakersIn(
+    ctx: ScfContext, sceneId: number, range: RangeVerdict): Promise<number[]> {
+  if (range.kind !== "lines") return [];
+  const inRange = new Set(range.lines.map((l) => String(l["uuid"])));
+  const out: number[] = [];
+  let speaker: number | null = null;
+  for (const l of await sceneScriptLines(ctx.exec, sceneId)) {
+    const type = l["line_type"];
+    if (type === "character") {
+      const id = Number(l["character_id"]);
+      speaker = Number.isFinite(id) && id > 0 ? id : null;
+    } else if (type !== "dialogue" && type !== "parenthetical" &&
+               type !== "blank") {
+      speaker = null;
+    }
+    const speaks = type === "character" || type === "dialogue" ||
+      type === "parenthetical";
+    if (speaks && speaker !== null && inRange.has(String(l["uuid"])) &&
+        !out.includes(speaker)) {
+      out.push(speaker);
+    }
+  }
+  return out;
+}
+
+/** The readiness list, in the order documented on `ShotContext`. */
+async function readinessFor(
+    ctx: ScfContext, presence: ShotPresenceMember, range: RangeVerdict,
+    sceneUuid: string, sceneId: number,
+    shotUuid: string, shotId: number): Promise<QueryResult<Q14Result>[]> {
+  const out: QueryResult<Q14Result>[] = [
+    await q14Result(ctx, "Q07", null, null, sceneUuid, sceneId,
+                    shotUuid, shotId),
+    await q14Result(ctx, "Q08", null, null, sceneUuid, sceneId, null, null),
+  ];
+
+  const characters: Array<{ id: number; uuid: string; seen: boolean;
+                            heard: boolean }> = [];
+  for (const s of presence.subjects) {
+    if (s.subjectType !== "character" || s.presence === "named") continue;
+    const id = (await rows(ctx.exec, "character", "uuid = ?", [s.uuid]))[0];
+    if (id === undefined) continue;
+    characters.push({ id: Number(id["id"]), uuid: s.uuid,
+                      seen: s.presence === "seen",
+                      heard: s.presence === "heard" });
+  }
+  // With no lines to read, anyone seen or heard may speak.
+  const speakers = range.kind === "lines"
+    ? await speakersIn(ctx, sceneId, range)
+    : characters.map((c) => c.id);
+
+  for (const c of characters) {
+    if (c.seen) {
+      // Their rubrics take a character and a scene, not a shot, and the
+      // envelope records exactly what was asked (§12.1.1).
+      for (const target of ["Q02", "Q06"]) {
+        out.push(await q14Result(ctx, target, c.uuid, c.id, sceneUuid,
+                                 sceneId, null, null));
+      }
+    }
+    if (speakers.includes(c.id)) {
+      out.push(await q14Result(ctx, "Q05", c.uuid, c.id, sceneUuid,
+                               sceneId, null, null));
+    }
+  }
+  // Someone the lines give a voice to who is not at the shot: an
+  // off-screen line the frame was not recorded with.
+  for (const id of speakers) {
+    if (characters.some((c) => c.id === id)) continue;
+    const row = (await rows(ctx.exec, "character", "id = ?", [id]))[0];
+    if (row === undefined) continue;
+    out.push(await q14Result(ctx, "Q05", String(row["uuid"]), id,
+                             sceneUuid, sceneId, null, null));
+  }
+  return out;
+}
+
 export async function shotContext(
     ctx: ScfContext, shotUuid: string,
     locate: FileLocator = NO_ROOT, rootMapped = false,
@@ -377,13 +485,13 @@ export async function shotContext(
     }
   }
 
-  const readiness = await q14Result(
-    ctx, "Q07", null, null, sceneUuid, sceneId, shotUuid, shotId);
+  const readiness = await readinessFor(
+    ctx, presence, range, sceneUuid, sceneId, shotUuid, shotId);
 
   const related = await relatedAssets(ctx, shotId, shotUuid,
                                       sceneId, sceneUuid);
 
-  return { contextFormat: "1.0", shot, brief, scene, look, presence, lines,
+  return { contextFormat: "2.0", shot, brief, scene, look, presence, lines,
            physical, media,
            swept, related, readiness };
 }

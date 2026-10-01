@@ -103,7 +103,7 @@ const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
     "will tell you that.\n" +
     "- `shot_context` is the one-call composite for writing a shot " +
     "prompt: the shot's own framing, brief, scene, cast, look, physical " +
-    "direction, media, and a pre-flight readiness check.\n" +
+    "direction, media, and pre-flight readiness for all of it.\n" +
     "- The `brief`, `subject_dossier`, `subject_in_context`, " +
     "`world_state`, `scene_package`, `voice_direction`, " +
     "`physical_direction`, `look_resolution`, `soundscape`, " +
@@ -273,7 +273,11 @@ server.registerTool("shot_context", {
     "physical direction per character seen at the shot, and media in " +
     "force per subject — characters AND props AND the location; a heard " +
     "subject is asked for voice and sound only, a named one for " +
-    "nothing — and a pre-flight readiness check. `swept` lists each subject and " +
+    "nothing — and `readiness`, a LIST of Q14 pre-flight results: the " +
+    "shot's look (Q07, first), the scene's sound (Q08), then for each " +
+    "character on screen subject-in-context (Q02, which checks costume) " +
+    "and physical direction (Q06), and voice (Q05) for each who speaks " +
+    "in `lines`. `contextFormat` is 2.0. `swept` lists each subject and " +
     "the intents asked for, so a subject the file binds nothing to is " +
     "visible rather than missing. One call in place of the dozen it " +
     "replaces.",
