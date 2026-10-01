@@ -56,8 +56,8 @@ import { parseConfig } from "./config.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
 import { makeNodeConfigStore } from "./nodeConfigStore.ts";
 import {
-  currentProject, loadRecent, openProject, recentProjects, setConfigStore,
-  setRoots,
+  loadRecent, openProject, recentProjects, setConfigStore, setRoots,
+  withProject,
 } from "./projectCache.ts";
 import { registerQueryTools } from "./queryTools.ts";
 import { err, ok, text } from "./toolResult.ts";
@@ -129,19 +129,21 @@ server.registerTool("open", {
 }, async ({ scfPath, roots }) => {
   try {
     const project = openProject(scfPath, roots ?? {});
-    const brief = await q00Result(project.ctx);
-    const scenes = await listEntities(project.ctx, "scene");
-    const shots = await listEntities(project.ctx, "shot");
-    const name = brief.result.layers.find((l) => l.entity === "project")
-      ?.row.fields["name"] ?? null;
-    return ok({
-      opened: project.scfPath,
-      project: name,
-      sceneCount: scenes.length,
-      shotCount: shots.length,
-      rootMapped: project.rootMapped,
-      roots: project.roots,
-    });
+    return ok(await withProject(async ({ ctx }) => {
+      const brief = await q00Result(ctx);
+      const scenes = await listEntities(ctx, "scene");
+      const shots = await listEntities(ctx, "shot");
+      const name = brief.result.layers.find((l) => l.entity === "project")
+        ?.row.fields["name"] ?? null;
+      return {
+        opened: project.scfPath,
+        project: name,
+        sceneCount: scenes.length,
+        shotCount: shots.length,
+        rootMapped: project.rootMapped,
+        roots: project.roots,
+      };
+    }, project));
   } catch (e) {
     return err(e);
   }
@@ -192,8 +194,8 @@ server.registerTool("find", {
   },
 }, async ({ entityType, label }) => {
   try {
-    const project = currentProject();
-    return ok(await resolveNaturalKey(project.ctx, entityType, label));
+    return ok(await withProject(({ ctx }) =>
+      resolveNaturalKey(ctx, entityType, label)));
   } catch (e) {
     return err(e);
   }
@@ -221,8 +223,8 @@ server.registerTool("list", {
   },
 }, async ({ entityType, filter }) => {
   try {
-    const project = currentProject();
-    return ok(await listEntities(project.ctx, entityType, filter));
+    return ok(await withProject(({ ctx }) =>
+      listEntities(ctx, entityType, filter)));
   } catch (e) {
     return err(e);
   }
@@ -243,10 +245,9 @@ server.registerTool("where_used", {
   },
 }, async ({ entityType, uuid }) => {
   try {
-    const project = currentProject();
     return ok({
       entityType, uuid,
-      usedBy: await whereUsed(project.ctx, entityType, uuid),
+      usedBy: await withProject(({ ctx }) => whereUsed(ctx, entityType, uuid)),
     });
   } catch (e) {
     return err(e);
@@ -275,7 +276,7 @@ server.registerTool("shot_context", {
   inputSchema: { shotUuid: SHOT_UUID },
 }, async ({ shotUuid }) => {
   try {
-    return ok(await shotContext(currentProject().ctx, shotUuid));
+    return ok(await withProject(({ ctx }) => shotContext(ctx, shotUuid)));
   } catch (e) {
     return err(e);
   }
@@ -299,9 +300,8 @@ server.registerTool("shot_media", {
   },
 }, async ({ shotUuid, subjectUuid }) => {
   try {
-    const project = currentProject();
-    return ok(await shotMedia(project.ctx, shotUuid, project.locate,
-                              project.rootMapped, subjectUuid ?? null));
+    return ok(await withProject((p) => shotMedia(
+      p.ctx, shotUuid, p.locate, p.rootMapped, subjectUuid ?? null)));
   } catch (e) {
     return err(e);
   }
@@ -318,7 +318,7 @@ server.registerTool("shot_readiness", {
   inputSchema: { shotUuid: SHOT_UUID },
 }, async ({ shotUuid }) => {
   try {
-    return ok(await shotReadiness(currentProject().ctx, shotUuid));
+    return ok(await withProject(({ ctx }) => shotReadiness(ctx, shotUuid)));
   } catch (e) {
     return err(e);
   }
@@ -350,12 +350,12 @@ server.registerTool("readiness", {
   },
 }, async ({ queryId, params }) => {
   try {
-    const project = currentProject();
-    const dispatch = buildDispatch(project.locate, project.rootMapped);
-    const q14 = dispatch["Q14"];
-    if (q14 === undefined) throw new Error("internal: Q14 dispatch missing");
     const merged: QueryParams = { ...(params ?? {}), target: queryId };
-    return ok(await q14(project.ctx, merged));
+    return ok(await withProject(async (p) => {
+      const q14 = buildDispatch(p.locate, p.rootMapped)["Q14"];
+      if (q14 === undefined) throw new Error("internal: Q14 dispatch missing");
+      return q14(p.ctx, merged);
+    }));
   } catch (e) {
     return err(e);
   }

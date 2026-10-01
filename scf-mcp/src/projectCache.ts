@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * projectCache.ts — which `.scf` a tool call means, and reusing the
- * open handle for it.
+ * projectCache.ts — which `.scf` a tool call means, and opening it for
+ * exactly as long as the call runs.
+ *
+ * NO HANDLE OUTLIVES A CALL. `open` remembers a path and its roots; each
+ * tool call opens the file read-only, answers, and closes it
+ * (`withProject`). On Windows an open handle stops any other program
+ * renaming, replacing or deleting the file, and this process lives as
+ * long as the client's session: a cached handle would keep every film
+ * the session had looked at locked against the editor saving it and the
+ * fixture build rewriting it. Opening a database costs milliseconds; a
+ * call answers from what is on disk when it runs.
  *
  * A stdio MCP server is a single long-lived process a client (Claude
  * Desktop, an editor, whatever) spawns once and keeps running for its
@@ -37,42 +46,30 @@ import { makeNodeLocator } from "./nodeLocator.ts";
 
 const registry = loadRegistry(registryJson as unknown as RegistryJson);
 
+/** A film this session knows: where it is and its roots. No handle. */
 export interface Project {
   scfPath: string;
-  ctx: ScfContext;
   locate: FileLocator;
   rootMapped: boolean;
   roots: RootMap;
 }
 
-/** Open `.scf` handles are real file descriptors — keep only a few. */
-const MAX_OPEN = 4;
-const cache = new Map<string, { project: Project; db: NodeDatabase }>();
-let lastUsed: string | null = null;
-
-function touch(path: string): void {
-  const entry = cache.get(path);
-  if (entry === undefined) return;
-  // Map iterates in insertion order; delete+re-set moves `path` to the
-  // most-recently-used end without a second data structure.
-  cache.delete(path);
-  cache.set(path, entry);
-}
-
-function evictLeastRecentlyUsed(): void {
-  while (cache.size > MAX_OPEN) {
-    const oldest = cache.keys().next().value;
-    if (oldest === undefined) break;
-    cache.get(oldest)?.db.close();
-    cache.delete(oldest);
-  }
+/** A film open for the length of one call (`withProject`). */
+export interface OpenProject extends Project {
+  ctx: ScfContext;
 }
 
 /**
- * Paths this session has opened, independent of `cache` above: unlike
- * the live-handle cache (bounded to MAX_OPEN for file descriptors),
- * there is no resource cost to remembering more paths than that, so
- * this list is longer and never holds an open handle itself.
+ * Every film this session has opened, by resolved path, so that opening
+ * one again keeps the roots already set. Holds no handle, so there is no
+ * reason to bound it the way a cache of open files must be.
+ */
+const known = new Map<string, Project>();
+let lastUsed: string | null = null;
+
+/**
+ * Paths this session has opened, most recent first, for `recent_files`.
+ * Bounded, and persisted through the config store when one is wired in.
  */
 const RECENT_MAX = 20;
 const recent: string[] = [];
@@ -127,54 +124,54 @@ function applyRoots(project: Project, roots: RootMap): void {
 }
 
 /**
- * Open (or reuse) the project at `scfPathInput`. Given `roots`, they
- * merge into whatever this path already had — so calling `open` again
- * to add a root doesn't require repeating the ones already set.
+ * Make the film at `scfPathInput` this session's current film. Given
+ * `roots`, they merge into whatever this path already had — so calling
+ * `open` again to add a root doesn't require repeating the ones already
+ * set. Opens nothing: the first call that reads it does.
  */
 export function openProject(
     scfPathInput: string, roots: RootMap = {}): Project {
   const scfPath = resolve(scfPathInput);
-  const existing = cache.get(scfPath);
-
-  if (existing !== undefined) {
-    touch(scfPath);
-    lastUsed = scfPath;
-    applyRoots(existing.project, roots);
-    touchRecent(scfPath);
-    return existing.project;
+  let project = known.get(scfPath);
+  if (project === undefined) {
+    project = { scfPath, locate: makeNodeLocator({}), rootMapped: false,
+                roots: {} };
+    known.set(scfPath, project);
   }
-
-  const db = openNodeDatabase(scfPath, { readOnly: true });
-  const project: Project = {
-    scfPath,
-    ctx: { exec: db.exec, registry },
-    locate: makeNodeLocator(roots),
-    rootMapped: Object.keys(roots).length > 0,
-    roots,
-  };
-  cache.set(scfPath, { project, db });
+  applyRoots(project, roots);
   lastUsed = scfPath;
-  evictLeastRecentlyUsed();
   touchRecent(scfPath);
   return project;
 }
 
 /**
- * The film this session has open — whatever `open` loaded most
- * recently. Throws a clear, actionable error rather than guessing when
- * nothing has been opened yet.
+ * The film this session has open — whatever `open` named most recently.
+ * Throws a clear, actionable error rather than guessing when nothing has
+ * been opened yet.
  */
 export function currentProject(): Project {
-  if (lastUsed !== null) {
-    const entry = cache.get(lastUsed);
-    if (entry !== undefined) {
-      touch(lastUsed);
-      return entry.project;
-    }
-  }
+  const project = lastUsed === null ? undefined : known.get(lastUsed);
+  if (project !== undefined) return project;
   throw new Error(
     "no film open in this session — call `open` with a path to a " +
     ".scf file first");
+}
+
+/**
+ * Run `fn` against a film open read-only for exactly as long as `fn`
+ * runs, and close it however `fn` ends. The current film unless one is
+ * given. Every tool call goes through here, so no handle outlives a call.
+ */
+export async function withProject<T>(
+    fn: (project: OpenProject) => Promise<T>,
+    project: Project = currentProject()): Promise<T> {
+  const db: NodeDatabase = openNodeDatabase(project.scfPath,
+                                            { readOnly: true });
+  try {
+    return await fn({ ...project, ctx: { exec: db.exec, registry } });
+  } finally {
+    db.close();
+  }
 }
 
 /**
