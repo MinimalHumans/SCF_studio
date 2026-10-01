@@ -202,6 +202,9 @@ describe("scf-mcp server — a default project set at startup", () => {
       name: "shot_context", arguments: { shotUuid: SHOT1204 },
     }) as { content: Array<{ text: string }>; isError?: boolean };
     expect(result.isError).toBeUndefined();
+    // Compact JSON (toolResult.ts): one line, no indentation. Indented,
+    // a shot's composite runs past what some clients accept as one result.
+    expect(result.content[0]?.text).not.toContain("\n");
     const ctx = JSON.parse(result.content[0]?.text ?? "{}");
     expect(Object.keys(ctx).sort()).toEqual(
       ["brief", "contextFormat", "look", "media", "physical", "readiness",
