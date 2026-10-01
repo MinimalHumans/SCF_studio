@@ -24,7 +24,7 @@
  *   node --experimental-strip-types scripts/pack_test.mjs --keep
  */
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -37,11 +37,27 @@ const FIXTURE = resolve(PKG, "..", "fixtures", "hollow_creek.scf");
 const KEEP = process.argv.includes("--keep");
 const sandbox = mkdtempSync(join(tmpdir(), "scf-pack-"));
 
+/**
+ * On Windows `npm`, `npx` and an installed bin are `.cmd` launchers, and
+ * Node refuses to start a `.cmd` or `.bat` without a shell (the fix for
+ * CVE-2024-27980), failing with EINVAL. Those go through the shell, and
+ * with a shell nothing escapes the arguments, so each is quoted: the
+ * sandbox lives under the user's temp folder, whose path may hold a
+ * space. Everything else is started directly, as on every other OS.
+ */
+const isWindowsLauncher = (cmd) =>
+  process.platform === "win32" && /\.(cmd|bat)$/i.test(cmd);
+const quoted = (s) =>
+  /[\s"&|<>^()]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+
 const run = (cmd, args, cwd, label) => {
+  const options = { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] };
   try {
-    return execFileSync(cmd, args, {
-      cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
-    });
+    // One command line, quoted here, rather than an argument list Node
+    // would join unescaped (DEP0190).
+    return isWindowsLauncher(cmd)
+      ? execSync([cmd, ...args].map(quoted).join(" "), options)
+      : execFileSync(cmd, args, options);
   } catch (err) {
     console.error(`\n[pack-test] FAILED: ${label}\n`);
     console.error(err.stdout ?? "");
