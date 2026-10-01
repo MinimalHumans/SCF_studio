@@ -104,7 +104,7 @@ describe("scf-mcp server — a default project set at startup", () => {
   beforeAll(async () => { server = await startServer(["--scf", FIXTURE]); });
   afterAll(() => { server.kill(); });
 
-  test("lists open/recent_files/set_root/find/list/shot_context/" +
+  test("lists open/recent_files/set_root/find/list, the three shot calls, " +
       "readiness plus one semantically-named tool per canonical query " +
       "(Q00-Q13, Q15 — Q14 is `readiness`)", async () => {
     const result = await server.send("tools/list") as
@@ -112,7 +112,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(result.tools.map((t) => t.name).sort()).toEqual([
       ...QUERY_TOOL_NAMES,
       "find", "list", "open", "readiness", "recent_files", "set_root",
-      "shot_context", "where_used",
+      "shot_context", "shot_media", "shot_readiness", "where_used",
     ].sort());
   });
 
@@ -196,7 +196,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(result.isError).toBe(true);
   });
 
-  test("shot_context returns all eleven members with no scfPath given",
+  test("the three shot calls answer with no scfPath given",
       async () => {
     const result = await server.send("tools/call", {
       name: "shot_context", arguments: { shotUuid: SHOT1204 },
@@ -207,11 +207,21 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(result.content[0]?.text).not.toContain("\n");
     const ctx = JSON.parse(result.content[0]?.text ?? "{}");
     expect(Object.keys(ctx).sort()).toEqual(
-      ["brief", "contextFormat", "look", "media", "physical", "readiness",
-       "lines", "presence", "related", "scene", "shot", "swept"].sort());
+      ["contextFormat", "lines", "look", "physical", "presence", "shot"]);
     expect(ctx.shot.uuid).toBe(SHOT1204);
-    expect(ctx.contextFormat).toBe("2.0");
-    expect(ctx.readiness[0].result.target).toBe("Q07");
+    expect(ctx.contextFormat).toBe("3.0");
+
+    const call = async (name: string) => JSON.parse(((await server.send(
+      "tools/call", { name, arguments: { shotUuid: SHOT1204 } })) as
+      { content: Array<{ text: string }> }).content[0]?.text ?? "{}");
+    const media = await call("shot_media");
+    expect(Object.keys(media).sort()).toEqual(
+      ["contextFormat", "media", "related", "shotUuid", "subject", "swept"]);
+    expect(media.shotUuid).toBe(SHOT1204);
+    const ready = await call("shot_readiness");
+    expect(Object.keys(ready).sort())
+      .toEqual(["contextFormat", "readiness", "shotUuid"]);
+    expect(ready.readiness[0].result.target).toBe("Q07");
   });
 
   test("the media sweep covers the location and says what it asked for",
@@ -219,7 +229,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     // The composite once swept characters alone, silently: the scene's
     // framing plate is bound to the LOCATION and never came back.
     const result = await server.send("tools/call", {
-      name: "shot_context", arguments: { shotUuid: SHOT1204 },
+      name: "shot_media", arguments: { shotUuid: SHOT1204 },
     }) as { content: Array<{ text: string }> };
     const ctx = JSON.parse(result.content[0]?.text ?? "{}") as {
       swept: Array<{ subjectType: string; intents: string[];

@@ -31,7 +31,7 @@ import {
 } from "../src/presence.ts";
 import { q14Result } from "../src/canonicalQueries.ts";
 import type { ScfContext } from "../src/resolution.ts";
-import { shotContext } from "../src/shotContext.ts";
+import { shotContext, shotMedia } from "../src/shotContext.ts";
 import { FIXTURE_PATH, openFixture, registry, type Fixture } from "./setup.ts";
 
 let fx: Fixture;
@@ -285,19 +285,21 @@ describe("the consumers follow presence", () => {
     expect(b.presence.complete).toBe(true);
     expect(b.presence.subjects.map((s) => s.name)).not.toContain("Ada Cade");
     expect(b.physical).toHaveLength(2);
-    expect(b.swept.map((s) => s.name)).not.toContain("Ada Cade");
+    expect((await shotMedia(fx.ctx, await uuidOf(id.s3B as number)))
+      .swept.map((s) => s.name)).not.toContain("Ada Cade");
 
     const a = await shotContext(fx.ctx, await uuidOf(id.s3A as number));
+    const aMedia = await shotMedia(fx.ctx, await uuidOf(id.s3A as number));
     // Heard, so no physical direction: only Eleanor is a body on screen.
     expect(a.physical).toHaveLength(1);
-    const ada = a.swept.find((s) => s.name === "Ada Cade");
+    const ada = aMedia.swept.find((s) => s.name === "Ada Cade");
     expect(ada).toMatchObject({ intents: [] });
     expect(ada?.note).toMatch(/named only/);
-    expect(a.media.some((m) =>
+    expect(aMedia.media.some((m) =>
       m.result.subjectKind === "character" &&
       a.presence.subjects.find((s) => s.name === "Ada Cade")?.uuid ===
         m.parameters["subject"])).toBe(false);
-    const marcus = a.swept.find((s) => s.name === "Marcus Cade");
+    const marcus = aMedia.swept.find((s) => s.name === "Marcus Cade");
     expect(marcus?.intents.every(
       (i) => i === "voice_identity" || i === "acoustic")).toBe(true);
   });
