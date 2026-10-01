@@ -41,10 +41,10 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z, type ZodRawShape } from "zod";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
 import { currentProject } from "./projectCache.ts";
+import { err, ok } from "./toolResult.ts";
 
 export interface QueryToolSpec {
   id: string;
@@ -148,14 +148,6 @@ export const CATALOG: QueryToolSpec[] = [
              row: uuid("row") } },
 ];
 
-function ok(value: unknown): CallToolResult {
-  return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
-}
-
-function err(e: unknown): CallToolResult {
-  const message = e instanceof Error ? e.message : String(e);
-  return { content: [{ type: "text", text: message }], isError: true };
-}
 
 export function registerQueryTools(server: McpServer): void {
   for (const spec of CATALOG) {

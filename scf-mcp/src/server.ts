@@ -46,7 +46,6 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import {
   listEntities, q00Result, resolveNaturalKey, shotContext, whereUsed,
@@ -59,6 +58,7 @@ import {
   setRoots,
 } from "./projectCache.ts";
 import { registerQueryTools } from "./queryTools.ts";
+import { err, ok, text } from "./toolResult.ts";
 
 const configStore = makeNodeConfigStore();
 setConfigStore(configStore);
@@ -67,18 +67,6 @@ loadRecent((await configStore.read()).recentFiles);
 const config = parseConfig(process.argv.slice(2));
 if (config.scfPath !== undefined) openProject(config.scfPath, config.roots);
 
-function ok(value: unknown): CallToolResult {
-  return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
-}
-
-function text(value: string): CallToolResult {
-  return { content: [{ type: "text", text: value }] };
-}
-
-function err(e: unknown): CallToolResult {
-  const message = e instanceof Error ? e.message : String(e);
-  return { content: [{ type: "text", text: message }], isError: true };
-}
 
 const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
   instructions:
