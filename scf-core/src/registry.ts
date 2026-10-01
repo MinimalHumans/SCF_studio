@@ -51,6 +51,11 @@ export interface FieldDef {
    * option's presence (spec §2.4.1). Total over `options` where present.
    */
   optionPresence?: Record<string, Presence>;
+  /**
+   * A line anchor (spec §3.5): this text field holds the uuid of a
+   * screenplay line. Consumers find every anchor by this flag.
+   */
+  lineAnchor?: boolean;
 }
 
 /** How a subject is at a position, spec §2.4.1. */

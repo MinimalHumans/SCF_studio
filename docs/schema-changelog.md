@@ -20,6 +20,32 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.19
+
+Which screenplay lines a shot covers, and line anchors: proposal 0032.
+
+**Added:**
+
+- `shot.line_start_ref` and `shot.line_end_ref`: the range of the
+  screenplay a shot covers, as line anchors. Whole lines; ranges may
+  overlap, and a shot with none is unrecorded (§4.7).
+- `lineAnchor` on a field in `registry.json`: the field is a text uuid
+  naming a screenplay line (§3.5). Declared on the four range fields and
+  on `performance_beat.line_ref`. `registry.schema.json` describes it.
+
+**Removed** (§11.0: pre-1.0 files are disposable):
+
+- `clip.screenplay_line_start_id` and `clip.screenplay_line_end_id`,
+  replaced by `clip.line_start_ref` and `clip.line_end_ref`. They pointed
+  at a line by row id, which the screenplay being rewritten re-numbers:
+  in the fixture both clips had come to point at a blank line, a section
+  marker and a heading, and nothing reported it.
+
+**Changed:**
+
+- `performance_beat.line_ref`'s help text cites §3.5 instead of an
+  internal ticket.
+
 ## 2.18
 
 How bindings combine, proposal 0031. Additive: `combine` defaults to

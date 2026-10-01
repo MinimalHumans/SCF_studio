@@ -17,6 +17,44 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.59 — 2026-10-01
+
+*Describes schema 2.19.*
+
+**Minor.** Proposal 0032. Nothing said which lines a shot covers, and the
+one link to a line that existed pointed at the wrong ones.
+
+### §3.5 — line anchors (new)
+
+Prop tags and performance beats have long named a screenplay line by its
+uuid, and the editor re-anchors them through a split or merge and sweeps
+the orphans. None of it was in the specification, so a second
+implementation had no way to know it should. A line anchor is now a
+format concept: a text uuid, declared by `lineAnchor` in the registry,
+with re-anchoring a SHOULD and an orphan reported as
+`line.anchor_orphaned`.
+
+### §4.7 — the lines a shot covers (new)
+
+A shot's lines were reachable only through footage, take to clip to
+lines, and a generation-first project has no take until the shot exists.
+`shot` now carries a range of two line anchors. Whole lines; ranges may
+overlap, because a scene is covered from several angles and resolved in
+editing; and a shot with no range is unrecorded, not inheriting its
+scene's lines. Three findings report a range that cannot be read.
+
+`clip.screenplay_line_start_id` and `_end_id` are removed in favour of
+the same two anchors. They named a line by row id, which a rewrite of
+the screenplay re-numbers, and in the fixture both clips had come to
+point at a blank line, a section marker and a heading.
+
+### §12.1.2 — the screenplay-table example goes
+
+Its example of a reference into a screenplay table was the clip's line
+references. The rule stays; a line is now named by an anchor instead.
+
+---
+
 ## 0.58 — 2026-09-30
 
 *Describes schema 2.18.*

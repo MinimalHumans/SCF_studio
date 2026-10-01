@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.18",
+ "schemaVersion": "2.19",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.18"
+    "value": "2.19"
    },
    {
     "key": "updated_at",
@@ -1761,13 +1761,13 @@
     "id": 1,
     "uuid": "00000000-0000-4000-8000-00000000cf01",
     "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-10-01 12:00:00",
     "name": "You came back",
     "take_id": 1,
     "scene_id": 7,
     "clip_type": "dialogue",
-    "screenplay_line_start_id": 51,
-    "screenplay_line_end_id": 52,
+    "line_start_ref": "00000000-0000-4000-9000-000000000083",
+    "line_end_ref": "00000000-0000-4000-9000-000000000084",
     "notes": "Eleanor's line and the cue above it.",
     "lifecycle_status": "active"
    },
@@ -1775,13 +1775,13 @@
     "id": 2,
     "uuid": "00000000-0000-4000-8000-00000000cf02",
     "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-10-01 12:00:00",
     "name": "I came back",
     "take_id": 1,
     "scene_id": 7,
     "clip_type": "dialogue",
-    "screenplay_line_start_id": 54,
-    "screenplay_line_end_id": 55,
+    "line_start_ref": "00000000-0000-4000-9000-000000000086",
+    "line_end_ref": "00000000-0000-4000-9000-000000000087",
     "notes": "Marcus's answer.",
     "lifecycle_status": "active"
    }
@@ -5149,7 +5149,7 @@
     "id": 5,
     "uuid": "8917aaea-0ab4-4db0-9e6d-1c0fe62805d2",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-10-01 12:00:00",
     "name": "Kitchen",
     "scene_id": 2,
     "shot_number": "3A",
@@ -5160,13 +5160,15 @@
     "camera_movement": "static",
     "lens_choice": "27mm",
     "description": "Kitchen; she is at the stove, back to the door.",
+    "line_start_ref": "00000000-0000-4000-9000-000000000017",
+    "line_end_ref": "00000000-0000-4000-9000-000000000036",
     "lifecycle_status": "active"
    },
    {
     "id": 6,
     "uuid": "e9a73271-d1bd-48eb-98f1-afd3f28511e6",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-10-01 12:00:00",
     "name": "He fills the doorway. Held long.",
     "scene_id": 2,
     "shot_number": "3B",
@@ -5178,13 +5180,15 @@
     "lens_choice": "40mm",
     "description": "He fills the doorway. Held long.",
     "presence_complete": 1,
+    "line_start_ref": "00000000-0000-4000-9000-000000000019",
+    "line_end_ref": "00000000-0000-4000-9000-000000000029",
     "lifecycle_status": "active"
    },
    {
     "id": 7,
     "uuid": "5bb6b9ea-cc07-4bb6-9500-4691ba5c35a6",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-09-30 12:00:00",
+    "updated_at": "2026-10-01 12:00:00",
     "name": "Her hands stop, then keep going.",
     "scene_id": 2,
     "shot_number": "3C",
@@ -5196,13 +5200,15 @@
     "lens_choice": "75mm",
     "description": "Her hands stop, then keep going.",
     "presence_complete": 1,
+    "line_start_ref": "00000000-0000-4000-9000-000000000032",
+    "line_end_ref": "00000000-0000-4000-9000-000000000034",
     "lifecycle_status": "active"
    },
    {
     "id": 8,
     "uuid": "c4c1d11e-3e46-4e8b-ba94-e50f3ee2800f",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-10-01 12:00:00",
     "name": "The door, ajar, behind him.",
     "scene_id": 2,
     "shot_number": "3D",
@@ -5213,6 +5219,7 @@
     "camera_movement": "static",
     "lens_choice": "35mm",
     "description": "The door, ajar, behind him.",
+    "line_start_ref": "00000000-0000-4000-9000-000000000036",
     "lifecycle_status": "active"
    },
    {
@@ -6461,9 +6468,10 @@
     "id": 1,
     "uuid": "00000000-0000-4000-8000-00000000da01",
     "created_at": "2026-08-25 12:00:00",
-    "updated_at": "2026-08-25 12:00:00",
+    "updated_at": "2026-10-01 12:00:00",
     "name": "12-04 take 3",
     "corpus_id": 1,
+    "shot_id": 1,
     "take_number": 3,
     "preferred": 1,
     "camera_designation": "A",

@@ -109,6 +109,10 @@ class FieldDef:
     #: `options` where declared, so no value's presence is left to a
     #: reader to guess from its name.
     option_presence: dict[str, str] | None = None
+    #: A LINE ANCHOR, spec §3.5: a text field holding the uuid of a
+    #: screenplay line. Declared so that re-anchoring, the orphan sweep and
+    #: the findings find every anchor from the registry, not from a list.
+    line_anchor: bool = False
     sql_type: str | None = None
     auto_injected: bool = False
     #: For a POLYMORPHIC reference: the sibling column naming which table
@@ -732,6 +736,23 @@ register(EntityDef(
 # a shot is three independent closed fields rather than one vocabulary of
 # cases: Eleanor in 3B is back to camera AND out of focus, and one value
 # per row would make the author drop one. An unset field is unknown.
+def _line_range(what: str) -> list[FieldDef]:
+    """A range of screenplay lines, as two line anchors (spec §3.5, §4.7)."""
+    return [
+        FieldDef("line_start_ref", "First Line", "text", tab="Screenplay",
+                 line_anchor=True,
+                 help_text=f"Spec §4.7: uuid of the first screenplay line "
+                           f"{what} covers, in its own scene. Whole lines. "
+                           f"Ranges may overlap: several shots of one "
+                           f"exchange each cover it."),
+        FieldDef("line_end_ref", "Last Line", "text", tab="Screenplay",
+                 line_anchor=True,
+                 help_text="Spec §4.7: uuid of the last line, inclusive. "
+                           "Unset: the range is the one line at "
+                           "line_start_ref."),
+    ]
+
+
 def _shot_framing() -> FieldDef:
     return FieldDef(
         "framing", "Framing", "select",
@@ -2302,20 +2323,9 @@ register(EntityDef(
         FieldDef("clip_type", "Clip Type", "select", options=[
             "dialogue", "action", "reaction", "transition", "insert", "atmospheric"
         ]),
-        # References into `screenplay_lines`, which is a uuidExtraTable
-        # rather than one of the 99 entities — it carries uuid identity
-        # on §6.1's terms, so §12.1.2 can resolve these.
-        #
-        # Declared as references since 2.13. As plain integers §12.1.2's
-        # resolution rule does not reach them, and both survive
-        # projection as bare row ids — which is what that section
-        # forbids.
-        FieldDef("screenplay_line_start_id", "Screenplay Line Start",
-                 "reference", reference_entity="screenplay_lines",
-                 tab="Screenplay"),
-        FieldDef("screenplay_line_end_id", "Screenplay Line End",
-                 "reference", reference_entity="screenplay_lines",
-                 tab="Screenplay"),
+        # Line anchors (§3.5), not references: a line's row id does not
+        # survive the screenplay being rewritten, and its uuid does.
+        *_line_range("the clip"),
         FieldDef("beat_id", "Story Beat", "reference",
                  reference_entity="story_beat", tab="Screenplay"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
@@ -3137,6 +3147,7 @@ register(EntityDef(
                            "subject with no row is not in it. Unset: the "
                            "rows are what is recorded, and the scene's "
                            "seen subjects may also be in the shot."),
+        *_line_range("the shot"),
         FieldDef("notes", "Notes", "textarea", tab="Notes"),
     ],
 ))
@@ -3385,9 +3396,10 @@ register(EntityDef(
                            "Interim matching contract — superseded by "
                            "line_ref where a screenplay is present."),
         FieldDef("line_ref", "Line Ref", "text", tab="Delivery",
-                 help_text="uuid of the anchored screenplay line (G5). "
-                           "Authored from the script editor; re-anchors "
-                           "deterministically through split/merge."),
+                 line_anchor=True,
+                 help_text="Spec §3.5: uuid of the anchored screenplay "
+                           "line. Authored from the script editor, which "
+                           "re-anchors it through a split or merge."),
         FieldDef("emphasis_words", "Emphasis Words", "string_list", tab="Delivery"),
         FieldDef("pace", "Pace", "select", tab="Delivery",
                  options=["fast", "slow", "measured", "varying"]),
@@ -4024,6 +4036,15 @@ def lint_ontology() -> list[str]:
                 problems.append(
                     f"{name}.{field.name}: column name claims the "
                     f"third-party 'x_' prefix (spec §10.3)")
+
+    # Line anchors, spec §3.5: a uuid stored as text, never a reference,
+    # because a line's row id does not survive the screenplay being
+    # rewritten.
+    for name, entity in ENTITY_REGISTRY.items():
+        for field in entity.fields:
+            if field.line_anchor and field.field_type != "text":
+                problems.append(f"{name}.{field.name}: a line anchor must "
+                                f"be text, not {field.field_type} (§3.5)")
 
     # Option presence, spec §2.4.1: total over the options, and nothing
     # else. A value with no presence leaves a reader to guess from its name,

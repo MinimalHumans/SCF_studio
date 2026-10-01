@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.58 (draft) — not a release.**
-Describes schema version **2.18**.
+**Version 0.59 (draft) — not a release.**
+Describes schema version **2.19**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -107,7 +107,7 @@ Three numbers, deliberately independent:
 - **Specification version** — this document. Currently `0.54` (draft).
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.18`. Increments on any
+  `schema/schema_meta.py`. Currently `2.19`. Increments on any
   non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
@@ -336,7 +336,7 @@ The digests are over raw bytes. A checkout whose working tree converts
 line endings will not match, which is a property of the checkout rather
 than of the artifacts.
 
-Version 2.18 defines **106 entities** across tiers 0–6.
+Version 2.19 defines **106 entities** across tiers 0–6.
 
 ### 2.2 Framework columns
 
@@ -494,6 +494,25 @@ written before the threading existed.
 **Implementations MUST NOT rely on it.** To read a scene's text, find the
 heading line linked to that scene and take every line up to the next
 heading.
+
+### 3.5 Line anchors
+
+**A line anchor names a screenplay line by its uuid.** It is stored as
+text, never as a row id. A line's row id does not survive the screenplay
+being rewritten, which a writer may do wholesale; its uuid does, through
+any revision that diffs before writing (§6.1).
+
+**A field that is a line anchor is declared so in the registry**, as
+`lineAnchor: true` (§2.1), so that every consumer finds the anchors from
+the registry rather than from a list of its own. One anchor is not a
+registry field, because its table is a screenplay table (§1.3.1):
+`screenplay_prop_tags.line_uuid`.
+
+**A writer that splits or merges a line SHOULD re-anchor every anchor
+that named it**, to the line that now carries the text the anchor was
+about. It is a SHOULD because it is a writer's behaviour, and the
+failure is visible either way: **an anchor whose uuid names no line is
+ORPHANED**. It is kept, and reported as `line.anchor_orphaned` (§9.4).
 
 ---
 
@@ -778,6 +797,38 @@ side of an intercut. This cuts across screenplay convention, where an
 intercut is often written as one scene, and it is deliberate: the cost
 falls once on the writer who splits it, instead of on every reader of
 every shot, who would otherwise have to ask where each shot is.
+
+### 4.7 The lines a shot covers
+
+A shot names the screenplay it covers with two line anchors (§3.5),
+`line_start_ref` and `line_end_ref`. **It covers the lines of its scene
+from the first to the last inclusive, in script order** (§4.1), located
+by the heading as §3.4 requires. Whole lines only. With `line_end_ref`
+unset, the range is the one line at `line_start_ref`. A clip names the
+lines it covers the same way, and they need not be its shot's.
+
+**Ranges may overlap, and usually will.** A scene is covered from several
+angles and resolved in editing: a master and two singles of one exchange
+each cover the same lines, and none of them owns them. A range says what
+a shot is FOR, not where the cut falls. Nothing in the format partitions
+a scene's lines between its shots, and **a consumer MUST NOT read
+overlapping ranges as a contradiction.**
+
+**A shot with no range is unrecorded, not empty.** Unlike presence
+(§4.6), an unrecorded shot does not inherit its scene's lines: that
+would give a three-second insert every line of the scene. Neither a line
+no shot covers, nor a scene whose shots record no ranges, is a finding.
+
+Kept and reported rather than refused (§9.2):
+
+| Finding (§9.4) | Raised when |
+|---|---|
+| `line.range_outside_scene` | A range names a line that is not in its own scene. |
+| `line.range_reversed` | `line_end_ref` comes before `line_start_ref` in script order. |
+| `line.end_without_start` | `line_end_ref` is set and `line_start_ref` is not. |
+
+A range with an orphaned end is reported once, as `line.anchor_orphaned`
+(§3.5), not again as a range problem.
 
 ---
 
@@ -1681,22 +1732,22 @@ sibling itself — `entity_type`, `subject_type` — is an ordinary stored
 value and is kept.
 
 A reference MAY target a table in `uuidExtraTables` (§1.3.1) rather than
-one of the 103 entities — `clip.screenplay_line_start_id` and `_end_id`
-point at `screenplay_lines`, which carries uuid identity on §6.1's terms,
-and resolve to `screenplay_line_start_uuid` and `_end_uuid` like any
-other reference.
+one of the registry's entities, since those tables carry uuid identity on
+§6.1's terms, and it resolves to `<name>_uuid` like any other reference.
+A screenplay LINE is the exception: it is never referenced by row id but
+named by a line anchor (§3.5), whose stored value is already its uuid.
 
 **A column whose name merely ends `_id` MUST NOT be dropped on that
 basis.** Until 0.40 this section said the opposite, and the difference
 is not academic: `external_id` (§6.3) is a declared, authored field on
-ten entities, and `clip.screenplay_line_start_id` and `_end_id` are
-ordinary references whose target is a screenplay table rather than a
+ten entities, and the clip's two line references of the time were
+ordinary references whose target was a screenplay table rather than a
 registry entity. The old rule silently deleted twelve legitimate
 columns from every projected row.
 
 **No published artifact could catch that**, which is why it survived
-four revisions and three reader runs: the conformance fixture authors
-no `external_id` and its `clip` table is empty, so the omit-empties
+four revisions and three reader runs: the conformance fixture authored
+no `external_id` and its `clip` table was empty, so the omit-empties
 rule above makes a correct implementation and a data-losing one produce
 byte-identical output on all sixteen published results. A rule that
 pattern-matches on a name will eventually match something the name
@@ -2656,6 +2707,7 @@ change to one without the other is a defect.
 | §4.5 pattern 3 | `scf-core/test/conformance.canonical.test.ts` → "pattern 3 (latest-wins)" |
 | §2.4.1 presence of a vocabulary value | `schema/lint_registry.py` (total over the options), `scf-core/test/presence.test.ts` |
 | §4.6 presence at a shot | `scf-core/test/presence.test.ts` |
+| §3.5 line anchors, §4.7 the lines a shot covers | `scf-core/test/lines.test.ts` |
 | §12.8.1 binding filters | `scf-core/test/bindingFilters.test.ts` |
 | §12.8.2 how bindings combine | `scf-core/test/bindingCombination.test.ts` |
 | §5 spans | `scf-core/test/structure.test.ts` |

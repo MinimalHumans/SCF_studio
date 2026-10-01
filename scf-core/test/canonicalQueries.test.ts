@@ -147,8 +147,7 @@ describe("§12.1.2 row projection", () => {
     // The rule was "any remaining column ending `_id` is dropped",
     // which is true of the four polymorphic columns and ALSO true of
     // `external_id` — a declared, authored field on ten entities
-    // (§6.3) — and of clip.screenplay_line_start_id/_end_id, which are
-    // ordinary references into a screenplay table.
+    // (§6.3) — and of any ordinary reference into a screenplay table.
     //
     // Twelve legitimate columns were deleted from every projected row,
     // and no published artifact could catch it: the fixture authors no

@@ -196,7 +196,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(result.isError).toBe(true);
   });
 
-  test("shot_context returns all ten members with no scfPath given",
+  test("shot_context returns all eleven members with no scfPath given",
       async () => {
     const result = await server.send("tools/call", {
       name: "shot_context", arguments: { shotUuid: SHOT1204 },
@@ -205,7 +205,7 @@ describe("scf-mcp server — a default project set at startup", () => {
     const ctx = JSON.parse(result.content[0]?.text ?? "{}");
     expect(Object.keys(ctx).sort()).toEqual(
       ["brief", "contextFormat", "look", "media", "physical", "readiness",
-       "presence", "related", "scene", "shot", "swept"].sort());
+       "lines", "presence", "related", "scene", "shot", "swept"].sort());
     expect(ctx.shot.uuid).toBe(SHOT1204);
     expect(ctx.readiness.result.target).toBe("Q07");
   });

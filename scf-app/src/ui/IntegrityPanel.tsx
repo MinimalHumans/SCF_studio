@@ -16,9 +16,9 @@
 import { useEffect, useState } from "react";
 import {
   EMPTY_REPORT, deleteBeat, deletePropTag, deleteSceneCharacter,
-  scanIntegrity, unanchorBeat, type IntegrityReport,
+  scanIntegrity, unanchor, unanchorBeat, type IntegrityReport,
 } from "../editor/integrity.ts";
-import { exec, useStore } from "../state/store.ts";
+import { exec, registry, useStore } from "../state/store.ts";
 
 export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
   liveLineIds: ReadonlySet<string>;
@@ -31,7 +31,7 @@ export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
 
   const refresh = async (): Promise<void> => {
     setBusy(true);
-    setReport(await scanIntegrity(exec, liveLineIds));
+    setReport(await scanIntegrity(exec, liveLineIds, registry));
     setBusy(false);
   };
 
@@ -125,6 +125,34 @@ export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
                 <button className="ghost tiny"
                         onClick={() => act(() => deleteBeat(exec, b.id))}>
                   delete beat
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {report.orphanAnchors.length > 0 && (
+        <section>
+          <h4>Other line anchors with no line ({report.orphanAnchors.length})</h4>
+          <p className="muted">
+            A shot's or a clip's range, or another anchor, names a script
+            line that is gone. Keeping one drops only the dead anchor.
+          </p>
+          <ul className="integrity-list">
+            {report.orphanAnchors.map((a) => (
+              <li key={`${a.entity}.${a.field}.${a.rowId}`}>
+                <b>{a.entity}</b>
+                <span className="muted"> {a.field}</span>
+                <span className="flex-spacer" />
+                <button className="row-link"
+                        onClick={() => void openEntityRow(a.entity, a.rowId)}>
+                  open row
+                </button>
+                <button className="ghost tiny"
+                        title="Keep the row, drop its dead line anchor."
+                        onClick={() => act(() => unanchor(exec, registry, a))}>
+                  keep, unanchor
                 </button>
               </li>
             ))}

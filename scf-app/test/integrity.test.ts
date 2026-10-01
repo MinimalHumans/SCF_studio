@@ -8,7 +8,7 @@ import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
 import {
-  deleteSceneCharacter, scanIntegrity, unanchorBeat,
+  deleteSceneCharacter, scanIntegrity, unanchor, unanchorBeat,
 } from "../src/editor/integrity.ts";
 import { syncPropSceneLinks, tagPropRange }
   from "../src/editor/features.ts";
@@ -41,6 +41,49 @@ describe("script integrity", () => {
   });
 
   const live = (...ids: string[]) => new Set(ids);
+
+  test("every other anchor is swept from the registry, and kept on unanchor",
+       async () => {
+    // A shot's range (spec §4.7) is an anchor nothing lists by hand: the
+    // sweep finds it through the registry's lineAnchor marker (§3.5).
+    await db.exec("INSERT INTO shot (name, scene_id, line_start_ref, " +
+                  "line_end_ref) VALUES ('1A', 1, 'L-cue', 'L-dead')");
+    let report = await scanIntegrity(db.exec, live("L-head", "L-cue"),
+                                     registry);
+    expect(report.orphanAnchors.map((a) => `${a.entity}.${a.field}`))
+      .toEqual(["shot.line_end_ref"]);
+    expect(report.total).toBe(1);
+
+    // Without the registry there is nothing to sweep it from.
+    expect((await scanIntegrity(db.exec, live("L-head", "L-cue")))
+      .orphanAnchors).toEqual([]);
+
+    await unanchor(db.exec, registry, report.orphanAnchors[0]!);
+    const row = (await db.exec("SELECT * FROM shot"))[0];
+    expect(row?.["line_end_ref"]).toBeNull();
+    expect(row?.["line_start_ref"]).toBe("L-cue");
+    report = await scanIntegrity(db.exec, live("L-head", "L-cue"), registry);
+    expect(report.orphanAnchors).toHaveLength(0);
+  });
+
+  test("a beat is not reported twice: it has its own view", async () => {
+    await db.exec(
+      "INSERT INTO performance_beat (name, scene_id, character_id, " +
+      "modality, line_ref) VALUES ('Beat', 1, 1, 'vocal', 'L-dead')");
+    const report = await scanIntegrity(db.exec, live("L-head", "L-cue"),
+                                       registry);
+    expect(report.orphanBeats).toHaveLength(1);
+    expect(report.orphanAnchors).toHaveLength(0);
+  });
+
+  test("unanchor writes only a declared anchor field", async () => {
+    await db.exec("INSERT INTO shot (name, scene_id, description) " +
+                  "VALUES ('1B', 1, 'keep me')");
+    await unanchor(db.exec, registry,
+      { entity: "shot", field: "description", rowId: 1, uuid: "x" });
+    expect((await db.exec("SELECT description FROM shot"))[0]?.["description"])
+      .toBe("keep me");
+  });
 
   test("a tag on a line that is gone is reported", async () => {
     await db.exec(
