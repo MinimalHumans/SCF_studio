@@ -20,6 +20,36 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.20
+
+Which character or prop variant is in force: proposal 0033.
+
+**Added:**
+
+- `scene_character.variant_id` and `scene_prop.variant_id`: the variant
+  the subject appears as at that scene (spec §4.8). Null means the
+  subject as defined.
+- `character_asset_binding.variant_id` and `prop_asset_binding.variant_id`:
+  the filter 0027 removed for lack of an in-force rule, back now that
+  §4.8 is one. Satisfied where that variant is in force (§12.8.1).
+- `qualifier` on a field in `registry.json`: on a link entity, a
+  reference that qualifies the link and is not part of its natural key
+  (§6.3). Declared on the two presence `variant_id` columns.
+  `registry.schema.json` describes it.
+
+**Changed meaning:**
+
+- `entity_anchor.subject_variant_id` is now read by §12.8: an anchor
+  naming a variant contributes only where it is in force, and there
+  displaces the subject's own anchors of its type. Before 2.20 it was
+  read by nothing.
+
+**Fixture:** scene 25, a flashback coda at the creek; the variant
+"Marcus, age nine", named by Marcus's scene link there; a binding scoped
+to the variant that replaces his baseline; a verified anchor for the
+variant's face; a summer baseline variant for the creek. Creative
+decision 2 now allows the one flashback.
+
 ## 2.19
 
 Which screenplay lines a shot covers, and line anchors: proposal 0032.

@@ -95,6 +95,7 @@ export {
   excludeCut, latestState, mergedModulations, motifStateAt, propStateAt,
   relationshipStateAt, resolveDescription, resolveDirection, resolveMedia,
   rows, rowsIncludingCut, sceneOrder, selectLocationVariant, statesInForce,
+  variantInForce,
 } from "./resolution.ts";
 
 export {

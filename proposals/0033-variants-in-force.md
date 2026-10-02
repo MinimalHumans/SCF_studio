@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.60, schema 2.20 |
 | **Author** | Found designing the character workspace in scf-app (the Look tab's "Young Eleanor" case); drafted with Claude |
 | **Opened** | 2026-10-02 |
-| **Affects** | New §4.7; §12.8 and §12.8.1 (bindings and anchors); §12.16 Q02; new columns `scene_character.variant_id`, `scene_prop.variant_id`, `character_asset_binding.variant_id`, `prop_asset_binding.variant_id`; `entity_anchor.subject_variant_id` gains a meaning; a new finding `presence.variant_foreign`; `stability.md`'s media row; the fixture |
+| **Affects** | New §4.8; §6.3 (qualifiers); §12.8 and §12.8.1 (bindings and anchors); §12.16 Q02; new columns `scene_character.variant_id`, `scene_prop.variant_id`, `character_asset_binding.variant_id`, `prop_asset_binding.variant_id`; `entity_anchor.subject_variant_id` gains a meaning; a new finding `presence.variant_foreign`; `stability.md`'s media row; the fixture |
 
 ## The problem
 
@@ -76,7 +76,7 @@ A `variant_id` naming a variant of **another** subject is a finding,
 `presence.variant_foreign` (warning), and that link puts **no** variant
 in force.
 
-### 2. New §4.7 — The variant in force
+### 2. New §4.8 — The variant in force
 
 Proposed wording:
 
@@ -102,7 +102,7 @@ Restore `variant_id` on `character_asset_binding` and
 
 | Filter | On | Satisfied where |
 |---|---|---|
-| `variant_id` | `character_asset_binding`, `prop_asset_binding`, `location_asset_binding` | §4.7 puts that variant in force at the position |
+| `variant_id` | `character_asset_binding`, `prop_asset_binding`, `location_asset_binding` | §4.8 puts that variant in force at the position |
 
 The trail line is the one the location filter already writes — `variant
 filter vs "<name>" in force`, or `variant filter, no variant in force
@@ -113,7 +113,7 @@ here` — so no new trail vocabulary is needed.
 Add to §12.8, after "An anchor contributes the asset it anchors":
 
 > **An anchor naming a variant contributes only where that variant is in
-> force (§4.7).** An anchor naming none is the subject's own.
+> force (§4.8).** An anchor naming none is the subject's own.
 >
 > **Where a variant is in force and has at least one anchor of the
 > requested anchor type, the subject's own anchors of that type do not
@@ -138,7 +138,7 @@ other kinds.
 
 ## What it breaks
 
-- **Schema bump** (2.19 → 2.20). Four columns added; `initDatabase`
+- **Schema bump** (2.19 → 2.20). Four columns and one registry field marker added; `initDatabase`
   ALTER-adds them on open, so existing files read unchanged (§11.0).
 - **Any file with variant anchors changes meaning** — from "everywhere"
   to "where the variant is in force". No fixture row is affected; a user
@@ -150,9 +150,10 @@ other kinds.
   done until the fixture carries one (see Unresolved).
 - **`selectLocationVariant` gains callers** — anchors now depend on it,
   so a change to §12.17 changes anchor resolution too.
-- Regenerated: `registry.json`, `scf-schema.sql`, `junction-keys.json`
-  (no key change — `variant_id` is an attribute of the link, not part of
-  its key), `entity-reference.md`, `finding-catalog.json`, Q02's result.
+- Regenerated: `registry.json`, `scf-schema.sql`, `junction-keys.json`,
+  `entity-reference.md`, `finding-catalog.json`, Q02's result. The keys
+  do not move, but only because of a marker this proposal had to add —
+  see the Resolution.
 
 ## Alternatives
 
@@ -188,34 +189,15 @@ for a whole scene, though, and shot rows exist only once a scene is
 broken down, which is long after a writer knows who appears as whom.
 Scene-level first, shot-level later if needed — below.
 
-## Unresolved
+## Settled before implementation
 
-- **Both versions in one scene.** `scene_character`'s natural key is
-  `(scene_id, character_id)`, so Eleanor cannot appear in one scene as
-  herself and as her younger self — a mirror scene, a memory staged in
-  the room. Options: add `variant_id` to the natural key (a junction key
-  change, and every reader of `scene_character` must handle two rows for
-  one character); or add `shot_character.variant_id` so the shot
-  decides. The second is additive and is the recommendation if this
-  case turns out to matter.
-- **The anchor displacement rule** in §4 is a judgement. The alternative
-  is additive — variant anchors contribute *beside* the subject's own —
-  which is simpler and leaves a consumer with two faces and no way to
-  tell which to use.
-- **The fixture case.** Hollow Creek has no flashbacks by design (its
-  rejected-alternatives note says so). Candidates: a `prop_variant` for
-  the wind chime after the storm, replacing the scene-range binding 0027
-  left as a workaround — but that may be a `prop_state` rather than a
-  variant; or a character variant that does not contradict the film.
-  Needs an authoring decision.
-- **Should Q03, Q12 and Q04 carry the variant on each cast entry?** A
-  scene package that lists Eleanor without saying she is Young Eleanor
-  is incomplete for anyone casting or dressing it. Probably yes; kept
-  out here to keep the change small.
-- **Out of scope, same class:** `entity_anchor.physical_state`,
-  `vocal_state` and `environmental_state` are also declared and read by
-  nothing in §12.8. They want either 0027's treatment or removal, in
-  their own proposal.
+| Question | Settled |
+|---|---|
+| Both versions of one character in one scene? | Not at scene level. If it matters, `shot_character.variant_id` later — additive, and the shot decides. |
+| The anchor rule | Displacement, as proposed: a variant's anchor of a type replaces the subject's own of that type. |
+| The fixture case | A new flashback, scene 25: Marcus as a boy at the creek, with a variant for him. |
+| Q03, Q12, Q04 carrying the variant on each cast entry | Not in this proposal. Still worth doing. |
+| `entity_anchor`'s three state columns, also unread | Out of scope; their own proposal. |
 
 ---
 
@@ -223,4 +205,36 @@ Scene-level first, shot-level later if needed — below.
 
 ## Resolution
 
-*Left empty until the proposal is accepted, declined or deferred.*
+**Accepted and implemented, 2026-10-02.** Spec 0.60, schema 2.20.
+
+**The natural key was the thing this draft got wrong.** It said
+`junction-keys.json` would not move because `variant_id` is an attribute
+of the link. The derivation disagreed: a natural key was EVERY reference
+a link declares, so `variant_id` joined the key the moment it was added,
+and Eleanor-in-scene-9 as herself and as a variant became two links
+rather than one written twice. `junctions.test.ts` caught it. Fixed by
+declaration rather than by a list: a `qualifier` marker in the registry
+(and `registry.schema.json`), read by `junctionKeyFields`, and stated in
+§6.3. A second pair written for one link is now
+`junction.duplicate_key_conflicting`, which `variants.test.ts` pins.
+
+**The fixture.** Scene 25, `EXT. CREEK CROSSING - DAY (FLASHBACK)`, is a
+wordless coda after scene 24: Marcus at nine building a dam across the
+shallows and letting it go. Appended rather than inserted, because line
+uuids are pure position and an insert re-points every line anchor after
+it. Creative decision 2 said "No flashbacks"; it now rules out a
+flashback to the drowning and allows this one image of before. The creek
+gained a summer baseline variant, without which the flashback resolved
+"Creek — winter flood".
+
+**What moved.** Q02 by its two null members; Q10's spine by scene 25.
+No other published result changed — which is the reader-run lesson
+again: every normative result sits where no variant is in force, so all
+sixteen read the same whether an implementation honours §4.8 or not. The
+non-normative `Q13-scene25` and `variants.test.ts` are what see it.
+
+**One test learned something.** `bindingFilters.test.ts`'s guard probes
+each filter with the ids of the table it references, and `prop_variant`
+is empty in the fixture, so it had nothing to probe with and reported
+the column unread. A filter naming a row that does not exist must still
+exclude, so the guard now probes with one.

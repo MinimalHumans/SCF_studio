@@ -13,7 +13,7 @@
  */
 
 import type { Presence, Registry } from "./registry.ts";
-import { rows, type ScfContext } from "./resolution.ts";
+import { rows, rowsIncludingCut, type ScfContext } from "./resolution.ts";
 
 export type { Presence } from "./registry.ts";
 
@@ -185,7 +185,8 @@ export interface PresenceProblem {
     | "presence.shot_subject_not_in_scene"
     | "presence.named_but_on_screen"
     | "presence.off_screen_described"
-    | "presence.complete_but_empty";
+    | "presence.complete_but_empty"
+    | "presence.variant_foreign";
   table: string;
   rowId: number;
   message: string;
@@ -197,7 +198,7 @@ export interface PresenceProblem {
  */
 export async function presenceProblems(
     ctx: ScfContext): Promise<PresenceProblem[]> {
-  const out: PresenceProblem[] = [];
+  const out: PresenceProblem[] = await variantProblems(ctx);
   if (!ctx.registry.entities.has("shot")) return out;
   for (const shot of await rows(ctx.exec, "shot")) {
     const shotId = Number(shot["id"]);
@@ -248,6 +249,48 @@ export async function presenceProblems(
         rowId: shotId,
         message: `Shot ${label} is marked presence_complete and records ` +
           `nobody and nothing: an empty frame, or a flag set by mistake.` });
+    }
+  }
+  return out;
+}
+
+/**
+ * A presence link naming a variant of ANOTHER subject (§4.8, proposal
+ * 0033): Marcus's scene link pointing at one of Eleanor's variants. The
+ * link puts no variant in force — variantInForce checks the same thing —
+ * and this says so rather than letting the variant quietly not apply.
+ *
+ * A variant that does not exist at all is not reported here: a dangling
+ * reference is a reference-integrity gap across the whole format (0027
+ * records it), not a presence problem. A CUT variant is not foreign, so
+ * the lookup includes cut rows.
+ */
+async function variantProblems(
+    ctx: ScfContext): Promise<PresenceProblem[]> {
+  const out: PresenceProblem[] = [];
+  for (const [link, subject, table] of [
+    ["scene_character", "character", "character_variant"],
+    ["scene_prop", "prop", "prop_variant"],
+  ] as const) {
+    if (!ctx.registry.entities.has(link) ||
+        !ctx.registry.entities.has(table)) continue;
+    let links: Record<string, unknown>[];
+    try {
+      links = await rows(ctx.exec, link, "variant_id IS NOT NULL");
+    } catch {
+      continue;   // a file written before 2.20 has no variant_id column
+    }
+    for (const row of links) {
+      const variant = (await rowsIncludingCut(
+        ctx.exec, table, "id = ?", [Number(row["variant_id"])]))[0];
+      if (variant === undefined) continue;
+      if (Number(variant[`${subject}_id`]) === Number(row[`${subject}_id`])) {
+        continue;
+      }
+      out.push({ code: "presence.variant_foreign", table: link,
+        rowId: Number(row["id"]),
+        message: `A ${subject}'s scene link names "${String(variant["name"])}", ` +
+          `a variant of another ${subject}, so no variant is in force there.` });
     }
   }
   return out;

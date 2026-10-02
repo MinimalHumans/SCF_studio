@@ -52,7 +52,8 @@ const junctionDoc = {
   specSection: "§6.3",
   schemaVersion: registry.schemaVersion,
   derivation:
-    "Every non-auto-injected reference field the entity declares, then " +
+    "Every non-auto-injected reference field the entity declares that is " +
+    "not marked qualifier, then " +
     "entity_type, entity_id and domain where present. Derived from the " +
     "registry; not maintained by hand.",
   entityCount: junctions.length,

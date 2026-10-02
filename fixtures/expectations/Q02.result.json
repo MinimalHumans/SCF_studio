@@ -1,7 +1,7 @@
 {
   "query": "Q02",
   "resultFormat": "1.0",
-  "schemaVersion": "2.19",
+  "schemaVersion": "2.20",
   "parameters": {
     "subjectType": "character",
     "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
@@ -420,7 +420,9 @@
         }
       }
     ],
+    "characterVariant": null,
     "locationVariant": null,
+    "propVariant": null,
     "propState": null,
     "media": {
       "fromQuery": "Q13",

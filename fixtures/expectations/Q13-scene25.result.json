@@ -1,0 +1,44 @@
+{
+  "query": "Q13",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.20",
+  "parameters": {
+    "subjectType": "character",
+    "subject": "145417ca-e8e5-4946-aba0-e83575dad182",
+    "intent": "visual_identity",
+    "scene": "00000000-0000-4000-8000-003300000001",
+    "shot": null
+  },
+  "result": {
+    "subjectKind": "character",
+    "intent": "visual_identity",
+    "trail": [
+      "binding Marcus visual baseline -> bundle Marcus Visual Core: EXCLUDED, replaced by Marcus as a boy",
+      "binding Marcus as a boy -> bundle Marcus Age Nine Visual",
+      "anchor Young Marcus Face"
+    ],
+    "references": [
+      {
+        "uuid": "00000000-0000-4000-8000-003300000004",
+        "anchorName": "Young Marcus Face",
+        "name": "marcus_age9_ref.png",
+        "identifier": "@project/assets/characters/marcus_age9_ref.png",
+        "format": "png",
+        "role": null,
+        "intent": "visual_identity",
+        "provenance": "anchor",
+        "state": "unaddressed",
+        "detail": "no root named @project is configured in this session",
+        "sizeBytes": null
+      }
+    ],
+    "counts": {
+      "resolved": 0,
+      "missing": 0,
+      "unmaterialised": 0,
+      "out-of-root": 0,
+      "unaddressed": 1
+    },
+    "rootMapped": false
+  }
+}

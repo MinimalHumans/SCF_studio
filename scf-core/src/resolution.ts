@@ -471,6 +471,59 @@ export async function selectLocationVariant(
 }
 
 // ---------------------------------------------------------------------------
+// The variant in force (spec §4.8, proposal 0033)
+// ---------------------------------------------------------------------------
+
+/** The variant table for each subject kind that has one. */
+export const VARIANT_ENTITY: Record<string, string> = {
+  character: "character_variant",
+  prop: "prop_variant",
+  location: "location_variant",
+};
+
+/** The presence link that names a character's or prop's variant. */
+const PRESENCE_LINK: Record<string, string> = {
+  character: "scene_character",
+  prop: "scene_prop",
+};
+
+/**
+ * The variant of a subject in force at a scene (spec §4.8), or null.
+ *
+ * ONE definition, used by the binding filter, the anchor layer and Q02 —
+ * a second reading of "in force" would be free to disagree with this one.
+ *
+ * - **location**: the variant §12.17 selects for the scene, and only if
+ *   it is a variant of THIS location. A scene set somewhere else puts no
+ *   variant of this one in force.
+ * - **character, prop**: the variant the subject's presence link at the
+ *   scene names. No link, a null `variant_id`, a cut variant, or a
+ *   variant of another subject (`presence.variant_foreign`) → null.
+ * - Any other kind, or no position → null.
+ */
+export async function variantInForce(
+    ctx: ScfContext, subject: string, subjectId: number,
+    sceneId: number | null): Promise<Row | null> {
+  if (sceneId === null) return null;
+  if (subject === "location") {
+    const [v] = await selectLocationVariant(ctx, sceneId);
+    return v !== null && asNum(v["location_id"]) === subjectId ? v : null;
+  }
+  const link = PRESENCE_LINK[subject];
+  const table = VARIANT_ENTITY[subject];
+  if (link === undefined || table === undefined) return null;
+  const links = await rows(ctx.exec, link,
+                           `scene_id = ? AND ${subject}_id = ?`,
+                           [sceneId, subjectId]);
+  links.sort((a, b) => (asNum(a["id"]) ?? 0) - (asNum(b["id"]) ?? 0));
+  const wanted = asNum(links[0]?.["variant_id"]);
+  if (wanted === null) return null;
+  const variant = (await rows(ctx.exec, table, "id = ?", [wanted]))[0];
+  if (variant === undefined) return null;
+  return asNum(variant[`${subject}_id`]) === subjectId ? variant : null;
+}
+
+// ---------------------------------------------------------------------------
 // Media cascade (Q13)
 // ---------------------------------------------------------------------------
 
@@ -539,9 +592,11 @@ async function bindingApplies(
     }
   }
 
-  // variant_id (location): the variant §12.17 puts in force here.
+  // variant_id (character, prop, location): the variant §4.8 puts in
+  // force here. Until 0033 only the location column existed, because
+  // nothing said which character or prop variant was in force.
   if (pyTruthy(binding["variant_id"])) {
-    const [inForce] = await selectLocationVariant(ctx, sceneId);
+    const inForce = await variantInForce(ctx, subject, subjectId, sceneId);
     const wanted = asNum(binding["variant_id"]);
     if (inForce === null || asNum(inForce["id"]) !== wanted) {
       return { applies: false,
@@ -685,6 +740,35 @@ export async function resolveMedia(
   anchors = anchors.filter((a) =>
     a["canonical_status"] === null || a["canonical_status"] === undefined ||
     a["canonical_status"] === "" || a["canonical_status"] === "verified");
+
+  // Variant anchors (§12.8, proposal 0033). An anchor naming a variant
+  // contributes only where that variant is in force; where it does and
+  // the variant has an anchor of this type, the subject's own anchors of
+  // the type step aside — an anchor is identity, and two faces at one
+  // position contradict rather than combine. Every anchor left out says
+  // why: until 0033 `subject_variant_id` was read by nothing, and a
+  // variant's face came back as the subject's in every scene.
+  const variant = await variantInForce(ctx, subject, subjectId, sceneId);
+  const variantId = variant === null ? null : asNum(variant["id"]);
+  const anchorName = (a: Row): string =>
+    String(pyTruthy(a["name"]) ? a["name"] : a["id"]);
+  const ofVariant = anchors.filter((a) =>
+    variantId !== null && asNum(a["subject_variant_id"]) === variantId);
+  const own = anchors.filter((a) => !pyTruthy(a["subject_variant_id"]));
+  const kept = ofVariant.length > 0 ? ofVariant : own;
+  for (const a of anchors) {
+    if (kept.includes(a)) continue;
+    if (pyTruthy(a["subject_variant_id"])) {
+      trail.push(`anchor ${anchorName(a)}: EXCLUDED, ` +
+        (variant === null
+          ? "its variant is not in force here"
+          : `its variant is not "${String(variant["name"])}"`));
+    } else {
+      trail.push(`anchor ${anchorName(a)}: EXCLUDED, ` +
+        `displaced by variant "${String(variant?.["name"])}"`);
+    }
+  }
+  anchors = kept;
   const anchorAssets: Array<Row | null> = [];
   for (const a of anchors) {
     trail.push(`anchor ${pyTruthy(a["name"]) ? a["name"] : a["id"]}`);

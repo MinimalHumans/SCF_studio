@@ -28,14 +28,17 @@ import type { EntityDef, Registry } from "./registry.ts";
 /**
  * The columns that identify a link row.
  *
- * Its references, plus the polymorphic target where the entity has one
+ * Its references other than qualifiers, plus the polymorphic target where the entity has one
  * (`thematic_connection` points at a theme and then at anything), plus
  * `domain` where present — a motif may legitimately appear twice in one
  * scene if it appears once visually and once sonically.
  */
 export function junctionKeyFields(edef: EntityDef): string[] {
+  // A qualifier (§6.3, proposal 0033) is a reference that says something
+  // ABOUT the link — which variant appears — not which rows it joins.
   const refs = edef.fields
-    .filter((f) => f.fieldType === "reference" && !f.autoInjected)
+    .filter((f) => f.fieldType === "reference" && !f.autoInjected &&
+                   f.qualifier !== true)
     .map((f) => f.name);
   const extra = ["entity_type", "entity_id", "domain"]
     .filter((name) => edef.fields.some((f) => f.name === name));

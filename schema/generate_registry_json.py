@@ -74,6 +74,8 @@ def field_to_json(f: FieldDef) -> dict:
         out["optionPresence"] = dict(f.option_presence)
     if f.line_anchor:
         out["lineAnchor"] = True
+    if f.qualifier:
+        out["qualifier"] = True
     return out
 
 

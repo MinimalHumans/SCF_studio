@@ -17,6 +17,50 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.60 — 2026-10-02
+
+*Describes schema 2.20.*
+
+**Minor.** Proposal 0033. Character and prop variants could be authored
+and nothing said where either applied; and one declared column that
+should have answered it was read by nothing.
+
+### §4.8 — the variant in force (new)
+
+A location's variant in force was already defined, by §12.17's scoring.
+A character's or prop's had no rule, which is why 0027 removed the
+`variant_id` filter from their bindings. It is now the variant named by
+`variant_id` on the subject's `scene_character` or `scene_prop` link at
+the scene. No link, a null, a cut variant, or another subject's variant
+puts none in force; the last is reported as `presence.variant_foreign`.
+
+### §6.3 — qualifiers
+
+The natural key was every reference a link declares. `variant_id` on a
+presence link is a reference that QUALIFIES the link rather than naming
+one of its endpoints, so a `qualifier` flag in the registry keeps it out
+of the key: two rows for one character in one scene that differ only in
+variant are one link written twice.
+
+### §12.8 — anchors honour `subject_variant_id`
+
+The column was declared and §12.8 never read it, so an
+anchor recorded for a variant came back as the subject's own at every
+position. An anchor naming a variant now contributes only where that
+variant is in force, and there displaces the subject's own anchors of
+its type. Excluded anchors appear in `trail` with the reason.
+
+### §12.8.1 — the variant filter returns to character and prop bindings
+
+Its satisfied-where column now reads §4.8 for all three kinds.
+
+### §12.16 — Q02 gains `characterVariant` and `propVariant`
+
+Beside `locationVariant`; null, never omitted, where they do not apply.
+The published Q02 moves by those two null members.
+
+---
+
 ## 0.59 — 2026-10-01
 
 *Describes schema 2.19.*

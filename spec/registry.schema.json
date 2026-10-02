@@ -194,6 +194,10 @@
           "description": "A LINE ANCHOR: a text field holding the uuid of a screenplay line, never its row id, which does not survive the screenplay being rewritten. Re-anchoring, the orphan sweep and the line findings find anchors by this flag. Spec §3.5. Absent in registries written before schema 2.19.",
           "type": "boolean"
         },
+        "qualifier": {
+          "description": "On a LINK entity: a reference that qualifies the link instead of being one of the rows it joins, and so is NOT part of the natural key (spec \u00a76.3). `scene_character.variant_id` names which version of the character is in the scene; the link is the same link whichever it names. Absent in registries written before schema 2.20.",
+          "type": "boolean"
+        },
         "polymorphicType": {
           "description": "Present on a POLYMORPHIC reference: names the sibling column saying which table this one points into. Such a column carries no referenceEntity, because its target is chosen per row. Spec \u00a712.1.2 drops these from a projected row; a column whose name ends _id WITHOUT this property is an ordinary value or an ordinary reference and MUST NOT be dropped. Absent in registries written before schema 2.12.",
           "type": "string"

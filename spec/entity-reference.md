@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.19** — **106 entities**.
+Schema **2.20** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -581,6 +581,7 @@ Links a character to a scene with role information.
 | `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
 | `character_id` | reference | **yes** | → `character` (resolves to `character_uuid` in a result, §12.1.2) |
 | `role_in_scene` | select |  | one of `featured` (seen), `supporting` (seen), `background` (seen), `mentioned` (named), `voiceover` (heard). Spec §2.4.1: also says whether the character is on screen. `mentioned` is named only, `voiceover` is heard and not seen, the rest are seen. Unset is seen. |
+| `variant_id` | reference |  | → `character_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §4.8: the character appears in this scene as this variant (proposal 0033). Empty means the character as defined. A variant of another character puts no variant in force and is reported as presence.variant_foreign. |
 | `notes` | textarea |  |  |
 
 *1 hidden field(s) omitted — present in the table, not offered for authoring.*
@@ -607,6 +608,7 @@ Links a prop to a scene with usage details.
 | `prop_id` | reference | **yes** | → `prop` (resolves to `prop_uuid` in a result, §12.1.2) |
 | `usage_note` | text |  |  |
 | `significance` | select |  | one of `key` (seen), `present` (seen), `background` (seen), `mentioned` (named). Spec §2.4.1: also says whether the prop is on screen. `mentioned` is named only, the rest are seen. Unset is seen. |
+| `variant_id` | reference |  | → `prop_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §4.8: the prop appears in this scene as this variant (proposal 0033). Empty means the prop as defined. A variant of another prop puts no variant in force and is reported as presence.variant_foreign. |
 
 *1 hidden field(s) omitted — present in the table, not offered for authoring.*
 
@@ -1293,6 +1295,7 @@ Applies a bundle to a character under specific conditions.
 | `combine` | select |  | one of `add`, `replace`. default `add`. Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides. |
 | `physical_state_filter` | text |  | Spec §12.8: the binding applies where a physical performance_state is in force at the position (§4.5) whose NAME matches this, compared trimmed and case-insensitively — the state's label, not its sentence. Empty means no condition, not 'no state'. |
 | `vocal_state_filter` | text |  | Spec §12.8: as physical_state_filter, against a vocal performance_state. |
+| `variant_id` | reference |  | → `character_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §12.8.1: the binding applies where §4.8 puts this variant in force at the position — the variant the scene_character link names at that scene (proposal 0033). |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
@@ -1390,7 +1393,7 @@ Specific state or version of a character (e.g. Young Eleanor, Angry Marcus).
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
-| Referenced by (1) | `character_shot_override.variant_target_id` |
+| Referenced by (3) | `scene_character.variant_id`, `character_asset_binding.variant_id`, `character_shot_override.variant_target_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -1583,7 +1586,7 @@ Known-good single frame, audio segment, or motion sample marked as canonical ref
 | `name` | text |  |  |
 | `subject_type` | select | **yes** | one of `character`, `prop`, `location`. Hard closed enum. Tools switch on this exhaustively. Distinct from the open-polymorphism entity_type used elsewhere. |
 | `subject_id` | integer | **yes** | Polymorphic reference into the table named by subject_type. |
-| `subject_variant_id` | integer |  | Optional. Polymorphic reference into the matching variant table (character_variant / prop_variant / location_variant). |
+| `subject_variant_id` | integer |  | Optional. Polymorphic reference into the matching variant table (character_variant / prop_variant / location_variant). Spec §12.8: the anchor contributes only where §4.8 puts that variant in force, and there displaces the subject's own anchors of its type (proposal 0033). |
 | `anchor_type` | select | **yes** | one of `visual`, `audio`, `motion` |
 | `asset_id` | reference | **yes** | → `asset` (resolves to `asset_uuid` in a result, §12.1.2) |
 | `frame_number` | integer |  |  |
@@ -1624,7 +1627,7 @@ Applies a bundle to a location under specific conditions (variant, scene range, 
 | `is_baseline` | boolean |  | default `false`. Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2). |
 | `precedence` | integer |  | default `0`. Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own. |
 | `combine` | select |  | one of `add`, `replace`. default `add`. Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides. |
-| `variant_id` | reference |  | → `location_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §12.8: the binding applies where §12.17 picks this variant as the one in force at the position. The only variant filter that survives 0027 — character and prop variants have no in-force rule for a filter to test. |
+| `variant_id` | reference |  | → `location_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §12.8.1: the binding applies where §4.8 puts this variant in force at the position — for a location, the variant §12.17 selects. 0027 left this the only variant filter; 0033 gave character and prop variants the in-force rule theirs lacked. |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `time_of_day_filter` | select |  | one of `day`, `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`. Spec §12.8: the binding applies where the scene's time_of_day equals this, compared trimmed and case-insensitively. Proposal 0012 closed it over scene.time_of_day's vocabulary — free text matched against a select could only ever agree by luck. |
@@ -1945,7 +1948,7 @@ Recurring physical behavior — gesture, tic, comfort behavior.
 
 ### `prop_asset_binding`
 
-Applies a bundle to a prop under specific conditions (scene range). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene.
+Applies a bundle to a prop under specific conditions (variant, scene range). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene.
 
 | | |
 |---|---|
@@ -1967,6 +1970,7 @@ Applies a bundle to a prop under specific conditions (scene range). Tools walk t
 | `is_baseline` | boolean |  | default `false`. Spec §12.8.1: applies with no position asked about. A baseline SHOULD have precedence 0 (§12.8.2). |
 | `precedence` | integer |  | default `0`. Spec §12.8.2: the author's ranking, higher is the more specific opinion. Orders the bindings in force, highest first in references and lowest first in the trail. Only orders: it never excludes on its own. |
 | `combine` | select |  | one of `add`, `replace`. default `add`. Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides. |
+| `variant_id` | reference |  | → `prop_variant` (resolves to `variant_uuid` in a result, §12.1.2). Spec §12.8.1: the binding applies where §4.8 puts this variant in force at the position — the variant the scene_prop link names at that scene (proposal 0033). |
 | `scene_range_start_id` | reference |  | → `scene` (resolves to `scene_range_start_uuid` in a result, §12.1.2) |
 | `scene_range_end_id` | reference |  | → `scene` (resolves to `scene_range_end_uuid` in a result, §12.1.2) |
 | `notes` | textarea |  |  |
@@ -2089,7 +2093,7 @@ Specific state or version of a prop (e.g. Locket open, Gun blood-spattered, Lett
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | no |
-| Referenced by (1) | `prop_shot_override.variant_target_id` |
+| Referenced by (3) | `scene_prop.variant_id`, `prop_asset_binding.variant_id`, `prop_shot_override.variant_target_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|

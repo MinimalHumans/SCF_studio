@@ -291,6 +291,29 @@ SCREENPLAY = [
                "barn. She holds on to him. It takes him a moment to "
                "understand that is what is happening.", None),
     ("blank", "", None),
+    # The one flashback (proposal 0033). A coda rather than an insert:
+    # the creative decision that rules out a flashback at the confession
+    # holds, because this one explains nothing. Marcus appears as the
+    # variant "Marcus, age nine" — his scene_character link here names
+    # it, which is what puts it in force (§4.8) and what makes the
+    # variant-filtered binding and the variant anchor apply here and
+    # nowhere else. Wordless, like 1, 21 and 24: a silent presence.
+    #
+    # Appended LAST on purpose. Line uuids are pure position
+    # (`...-9000-{order:012d}`), so a scene inserted mid-script would
+    # re-point every line_ref and prop tag after it.
+    ("heading", "EXT. CREEK CROSSING - DAY (FLASHBACK)", "25"),
+    ("blank", "", None),
+    ("action", "Summer, years before. The creek runs low and clear over "
+               "the crossing stones.", None),
+    ("blank", "", None),
+    ("action", "MARCUS, nine, barefoot and sunburnt, is building a dam "
+               "across the shallows one stone at a time. The water rises "
+               "behind it, patient.", None),
+    ("blank", "", None),
+    ("action", "He sits back on his heels and watches it hold. Then he "
+               "pulls out the middle stone, and lets it all go.", None),
+    ("blank", "", None),
 ]
 
 # Scenes the script contains that the fixture may not have yet.

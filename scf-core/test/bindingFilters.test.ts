@@ -306,6 +306,12 @@ describe("guard: every filter column the registry declares is evaluated", () => 
             candidates = (await ctx.exec(
               `SELECT id FROM "${f.referenceEntity}" ORDER BY id`))
               .map((r) => Number(r["id"]));
+            // A table the fixture leaves empty (prop_variant, until a
+            // prop variant is authored) still has a column to probe: a
+            // filter naming a row that is not there can never be
+            // satisfied, so it must exclude. A column nothing reads
+            // would let the binding through even then.
+            if (candidates.length === 0) candidates = [2_147_483_647];
           } else if (["text", "select", "textarea"].includes(f.fieldType)) {
             candidates = [NEVER];
           } else {

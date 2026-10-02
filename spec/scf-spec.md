@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.59 (draft) — not a release.**
-Describes schema version **2.19**.
+**Version 0.60 (draft) — not a release.**
+Describes schema version **2.20**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -830,6 +830,45 @@ Kept and reported rather than refused (§9.2):
 A range with an orphaned end is reported once, as `line.anchor_orphaned`
 (§3.5), not again as a range problem.
 
+### 4.8 The variant in force
+
+A subject may have **variants** — `character_variant`, `prop_variant`,
+`location_variant`: a different design of the same subject, built,
+dressed or cast separately (the character as a child, the prop after it
+breaks, the room at night). A variant is a standing fact with no
+position of its own. **Which variant is in force at a position is
+determined by the subject's kind:**
+
+| Kind | The variant in force at a scene |
+|---|---|
+| Location | The variant §12.17 selects for the scene — and only if it is a variant of THIS location. A scene set elsewhere puts none of this location's variants in force. |
+| Character | The variant named by `variant_id` on the character's `scene_character` link at that scene. |
+| Prop | The variant named by `variant_id` on the prop's `scene_prop` link at that scene. |
+
+For a character or prop, **no variant is in force** where the subject
+has no presence link at the scene, where the link's `variant_id` is
+null, where it names a cut variant (§6.6.1), or where it names a variant
+of **another** subject. The last is reported as
+`presence.variant_foreign` (§9.4); the others are ordinary states of a
+file.
+
+**At a shot, the variant in force is its scene's.** No shot-level column
+exists. **With no position, no variant is in force** for any kind.
+
+The presence vocabulary (§2.4.1) does not affect this: a `mentioned`
+character's link may name a variant, and it is in force for whatever
+reads it.
+
+A variant is not a performance state. `performance_state` modulates a
+performance and persists (§4.5 pattern 2); a variant is a design,
+switched per appearance. The two compose: a variant may be wounded.
+
+`variant_id` on a presence link is a **qualifier** (§6.3): it says which
+version of the subject appears, not which rows the link joins, so it is
+not part of the link's natural key. A scene cannot link one character
+twice as two variants; a scene showing both is not expressible at scene
+level.
+
 ---
 
 ## 5. Structure: spans
@@ -912,8 +951,12 @@ The natural key of every link entity is published as
 merges, de-duplicates or validates junctions MUST use those keys.
 
 The keys are derived from the registry — every non-auto-injected
-reference field the entity declares, then `entity_type`, `entity_id` and
-`domain` where present — and the file records that derivation. It is
+reference field the entity declares that is not marked `qualifier`, then
+`entity_type`, `entity_id` and `domain` where present — and the file
+records that derivation. A **qualifier** is a reference that says
+something about the link rather than naming one of the rows it joins:
+`scene_character.variant_id` (§4.8) is one. Two rows differing only in a
+qualifier are one link written twice, which §6.4 reports. It is
 published rather than described because an earlier revision cited a
 function instead of an artifact, and an independent implementation could
 not compute a natural key at all.
@@ -2085,6 +2128,21 @@ row as the reference would produce something that can never resolve.
 The reference carries the asset's identity and the anchor's name in
 `anchorName`.
 
+**An anchor naming a variant contributes only where that variant is in
+force (§4.8).** `entity_anchor.subject_variant_id` names it; an anchor
+naming none is the subject's own. **Where a variant is in force and has
+at least one anchor of the requested anchor type, the subject's own
+anchors of that type do not contribute.** An anchor is identity — "this
+is her face" — and two faces at one position contradict rather than
+combine; where the variant has no anchor of that type, the subject's own
+still apply. **With no position, only the subject's own anchors
+contribute.** An anchor that does not contribute MUST appear in `trail`
+with the reason, as an excluded binding does (§12.8.1).
+
+Until 0.60 `subject_variant_id` was declared and read by nothing, so an
+anchor recorded for a variant was returned as the subject's own at every
+position, and no published result could show it.
+
 #### 12.8.1 A binding applies where every filter it declares is satisfied
 
 A `*_asset_binding` row may narrow when it applies. **A binding is in
@@ -2097,7 +2155,7 @@ declares on that entity.
 |---|---|---|
 | `scene_range_start_id` / `scene_range_end_id` | all | the position is within the range, in **story order** (§4.1) |
 | `time_of_day_filter` | `location_asset_binding` | the scene's `time_of_day` equals it, compared trimmed and case-insensitively, over `scene.time_of_day`'s vocabulary |
-| `variant_id` | `location_asset_binding` | §12.17 puts that variant in force at the position |
+| `variant_id` | `character_asset_binding`, `prop_asset_binding`, `location_asset_binding` | §4.8 puts that variant in force at the position |
 | `physical_state_filter` / `vocal_state_filter` | `character_asset_binding` | a `performance_state` of that modality is in force at the position (§4.5) and its **name** matches, trimmed and case-insensitively |
 
 **Asked with no position, only baselines apply and no positional filter
@@ -2517,7 +2575,9 @@ Parameters: `subjectType`, `subject`, `scene`, and `shot` — optional.
 | `subject`, `scene` | Projected. |
 | `dossier` | Q01's result body — what is true of the subject before this scene. |
 | `costumes`, `relationshipStates`, `arcStates`, `performanceStates`, `beats` | For a character subject. |
+| `characterVariant` | For a character subject: the variant §4.8 puts in force, projected, or null. |
 | `locationVariant` | For a location subject: the variant in force and any mismatches. |
+| `propVariant` | For a prop subject: the variant §4.8 puts in force, projected, or null. |
 | `propState` | For a prop subject. |
 
 `arcStates` carries the stage in force on each of the character's arcs
