@@ -56,6 +56,12 @@ export interface FieldDef {
    * screenplay line. Consumers find every anchor by this flag.
    */
   lineAnchor?: boolean;
+  /**
+   * On a link entity, a reference that qualifies the link rather than
+   * being one of the rows it joins: not part of its natural key (spec
+   * §6.3). Proposal 0033's presence variants.
+   */
+  qualifier?: boolean;
 }
 
 /** How a subject is at a position, spec §2.4.1. */

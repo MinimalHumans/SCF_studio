@@ -128,6 +128,13 @@ class FieldDef:
     #: so a correct implementation and a data-losing one produce
     #: identical output on all sixteen. Spec §12.1.2.
     polymorphic_type: str | None = None
+    #: On a LINK entity: a reference that QUALIFIES the link instead of
+    #: being one of the rows it joins, so it is not part of the natural
+    #: key (spec §6.3). `scene_character.variant_id` says which version of
+    #: the character is in the scene; Eleanor-in-scene-9 is one link
+    #: whichever variant it names, and two rows differing only there are
+    #: a duplicate, not two links. Proposal 0033.
+    qualifier: bool = False
 
     def get_sql_type(self) -> str:
         if self.sql_type:
@@ -702,6 +709,12 @@ register(EntityDef(
         }, help_text="Spec §2.4.1: also says whether the character is on "
                      "screen. `mentioned` is named only, `voiceover` is "
                      "heard and not seen, the rest are seen. Unset is seen."),
+        FieldDef("variant_id", "Variant", "reference",
+                 reference_entity="character_variant", qualifier=True,
+                 help_text="Spec §4.8: the character appears in this scene as this "
+                           "variant (proposal 0033). Empty means the character as "
+                           "defined. A variant of another character puts no variant "
+                           "in force and is reported as presence.variant_foreign."),
         FieldDef("notes", "Notes", "textarea"),
     ],
 ))
@@ -729,6 +742,12 @@ register(EntityDef(
         }, help_text="Spec §2.4.1: also says whether the prop is on "
                      "screen. `mentioned` is named only, the rest are "
                      "seen. Unset is seen."),
+        FieldDef("variant_id", "Variant", "reference",
+                 reference_entity="prop_variant", qualifier=True,
+                 help_text="Spec §4.8: the prop appears in this scene as this variant "
+                           "(proposal 0033). Empty means the prop as defined. A variant "
+                           "of another prop puts no variant in force and is reported "
+                           "as presence.variant_foreign."),
     ],
 ))
 
@@ -2007,6 +2026,11 @@ register(EntityDef(
         FieldDef("vocal_state_filter", "Vocal State Filter", "text", tab="Conditions",
                  help_text="Spec §12.8: as physical_state_filter, against a vocal "
                            "performance_state."),
+        FieldDef("variant_id", "Variant", "reference",
+                 reference_entity="character_variant", tab="Conditions",
+                 help_text="Spec §12.8.1: the binding applies where §4.8 puts this "
+                           "variant in force at the position — the variant the "
+                           "scene_character link names at that scene (proposal 0033)."),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
@@ -2024,7 +2048,7 @@ register(EntityDef(
     category="Asset Reference",
     sort_order=253,
     tier=2,
-    description="Applies a bundle to a prop under specific conditions (scene range). "
+    description="Applies a bundle to a prop under specific conditions (variant, scene range). "
                 "Tools walk the prop resolution cascade and use bindings to find the "
                 "right media for a prop in a given scene.",
     fields=[
@@ -2034,6 +2058,11 @@ register(EntityDef(
         FieldDef("bundle_id", "Bundle", "reference",
                  reference_entity="bundle", required=True),
         *_binding_ranking(),
+        FieldDef("variant_id", "Variant", "reference",
+                 reference_entity="prop_variant", tab="Conditions",
+                 help_text="Spec §12.8.1: the binding applies where §4.8 puts this "
+                           "variant in force at the position — the variant the "
+                           "scene_prop link names at that scene (proposal 0033)."),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
@@ -2096,10 +2125,10 @@ register(EntityDef(
         *_binding_ranking(),
         FieldDef("variant_id", "Variant", "reference",
                  reference_entity="location_variant", tab="Conditions",
-                 help_text="Spec §12.8: the binding applies where §12.17 picks this variant as "
-                           "the one in force at the position. The only variant filter that "
-                           "survives 0027 — character and prop variants have no in-force rule "
-                           "for a filter to test."),
+                 help_text="Spec §12.8.1: the binding applies where §4.8 puts this variant "
+                           "in force at the position — for a location, the variant §12.17 "
+                           "selects. 0027 left this the only variant filter; 0033 gave "
+                           "character and prop variants the in-force rule theirs lacked."),
         FieldDef("scene_range_start_id", "Scene Range Start", "reference",
                  reference_entity="scene", tab="Conditions"),
         FieldDef("scene_range_end_id", "Scene Range End", "reference",
@@ -2143,7 +2172,10 @@ register(EntityDef(
         FieldDef("subject_variant_id", "Subject Variant ID", "integer",
                  polymorphic_type="subject_type",
                  help_text="Optional. Polymorphic reference into the matching variant table "
-                           "(character_variant / prop_variant / location_variant)."),
+                           "(character_variant / prop_variant / location_variant). Spec §12.8: "
+                           "the anchor contributes only where §4.8 puts that variant in force, "
+                           "and there displaces the subject's own anchors of its type "
+                           "(proposal 0033)."),
         FieldDef("anchor_type", "Anchor Type", "select", required=True, options=[
             "visual", "audio", "motion"
         ]),

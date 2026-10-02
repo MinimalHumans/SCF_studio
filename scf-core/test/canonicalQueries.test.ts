@@ -50,6 +50,8 @@ let scene19: { id: number; uuid: string };
 let scene16: { id: number; uuid: string };
 let theme: { id: number; uuid: string };
 let scene3: { id: number; uuid: string };
+let scene25: { id: number; uuid: string };
+let marcusId: { id: number; uuid: string };
 let shot3B: { id: number; uuid: string };
 
 const pick = async (sql: string): Promise<{ id: number; uuid: string }> => {
@@ -76,6 +78,9 @@ beforeAll(async () => {
   // Day, before the injury: the position where Q13's filtered bindings
   // must be EXCLUDED, which scene 12 cannot show.
   scene3 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '3'");
+  scene25 = await pick("SELECT id, uuid FROM scene WHERE scene_number = '25'");
+  marcusId = await pick(
+    "SELECT id, uuid FROM character WHERE name LIKE '%Marcus%'");
   shot3B = await pick("SELECT id, uuid FROM shot WHERE shot_number = '3B'");
   if (BLESS) mkdirSync(OUT, { recursive: true });
 });
@@ -385,6 +390,26 @@ describe("§12.8 Q13 — media resolution", () => {
       "binding Eleanor while wounded -> bundle Eleanor - lamplit, wounded: " +
       "EXCLUDED, physical_state_filter \"wounded\", no such physical " +
       "state in force");
+  });
+
+  test("at scene 25 it matches its blessed result, a variant in force",
+       async () => {
+    // Proposal 0033. Every normative result sits where no variant is in
+    // force, so all sixteen read the same whether an implementation
+    // honours §4.8 or ignores it — the class 0027 and the R92 fixture
+    // pass were about. Marcus in the flashback: the variant-filtered
+    // binding replaces his baseline, and the variant's face is the only
+    // anchor. Not normative, like Q13-scene3; variants.test.ts covers
+    // each rule two-sided.
+    const r = await q13Result(
+      fx.ctx, "character", marcusId.uuid, marcusId.id, "visual_identity",
+      scene25.uuid, scene25.id, null, null);
+    blessOrCheck("Q13-scene25", r);
+    expect(r.result.trail).toContain(
+      "binding Marcus visual baseline -> bundle Marcus Visual Core: " +
+      "EXCLUDED, replaced by Marcus as a boy");
+    expect(r.result.references.map((x) => x.name))
+      .toEqual(["marcus_age9_ref.png"]);
   });
 
   test("an anchor contributes the asset it anchors, not itself",
@@ -728,7 +753,7 @@ describe("the results are portable", () => {
     // serialised output rather than over a projection in isolation.
     for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
                         "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
-                        "Q14", "Q15", "Q13-scene3"]) {
+                        "Q14", "Q15", "Q13-scene3", "Q13-scene25"]) {
       const text = readFileSync(join(OUT, `${name}.result.json`), "utf8");
       const parsed = JSON.parse(text) as unknown;
       const walk = (v: unknown, path: string): void => {
@@ -753,7 +778,7 @@ describe("the results are portable", () => {
   test("both declare the same result format", () => {
     for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
                         "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
-                        "Q14", "Q15", "Q13-scene3"]) {
+                        "Q14", "Q15", "Q13-scene3", "Q13-scene25"]) {
       const r = JSON.parse(
         readFileSync(join(OUT, `${name}.result.json`), "utf8")) as {
           resultFormat: string; parameters: Record<string, unknown>;

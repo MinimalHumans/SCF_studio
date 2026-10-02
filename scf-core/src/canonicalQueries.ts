@@ -190,7 +190,7 @@ import type { Row, SqlValue } from "./db.ts";
 import {
   characterArcStateAt, excludeCut, motifStateAt, propStateAt,
   relationshipStateAt, rows,
-  sceneOrder, selectLocationVariant, statesInForce,
+  sceneOrder, selectLocationVariant, statesInForce, variantInForce,
 } from "./resolution.ts";
 import { actOf, deriveStructure, sceneOrderHint, sequenceOf } from
   "./structure.ts";
@@ -1247,9 +1247,16 @@ export interface Q02Result {
   arcStates: ProjectedRow[];
   performanceStates: ProjectedRow[];
   beats: ProjectedRow[];
+  /**
+   * For a character subject: the variant §4.8 puts in force — the one its
+   * scene_character link names — or null. Null for other kinds.
+   */
+  characterVariant: ProjectedRow | null;
   /** Present for a location subject. */
   locationVariant:
     { variant: ProjectedRow | null; mismatches: string[] } | null;
+  /** For a prop subject: the variant §4.8 puts in force, or null. */
+  propVariant: ProjectedRow | null;
   /** Present for a prop subject. */
   propState: ProjectedRow | null;
   /**
@@ -1278,6 +1285,12 @@ export async function q02Result(
   let beats: Row[] = [];
   let locationVariant: Q02Result["locationVariant"] = null;
   let propState: Row | null = null;
+  // §4.8. variantInForce answers null for any kind it does not cover, so
+  // the two members are null, never omitted, as §12.16 requires.
+  const characterVariant = subjectType === "character"
+    ? await variantInForce(ctx, "character", subjectId, sceneId) : null;
+  const propVariant = subjectType === "prop"
+    ? await variantInForce(ctx, "prop", subjectId, sceneId) : null;
 
   if (subjectType === "character") {
     costumes = excludeCut(await ctx.exec(
@@ -1346,7 +1359,12 @@ export async function q02Result(
       (r) => projectRow(r, refs(ctx, "performance_state"), lookup)),
     beats: beats.map((b) => projectRow(b, refs(ctx, "performance_beat"),
                                        lookup)),
+    characterVariant: characterVariant === null
+      ? null
+      : projectRow(characterVariant, refs(ctx, "character_variant"), lookup),
     locationVariant,
+    propVariant: propVariant === null
+      ? null : projectRow(propVariant, refs(ctx, "prop_variant"), lookup),
     propState: propState === null
       ? null : projectRow(propState, refs(ctx, "prop_state"), lookup),
     media: { fromQuery: "Q13", ...media.result },

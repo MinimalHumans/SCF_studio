@@ -129,6 +129,7 @@ export type FindingCode =
   | "presence.named_but_on_screen"
   | "presence.off_screen_described"
   | "presence.complete_but_empty"
+  | "presence.variant_foreign"
   // Extension content — spec §10.1
   | "extension.unknown_table";
 
@@ -406,6 +407,11 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     severity: "info",
     title: "Shot's frame is marked complete and records no subject",
     spec: "§4.6",
+  },
+  "presence.variant_foreign": {
+    severity: "warning",
+    title: "Scene link names a variant of another subject",
+    spec: "§4.8",
   },
 
   "extension.unknown_table": {

@@ -346,7 +346,7 @@ describe("fixture invariants", () => {
     const numbers = rows.map((r) => String(r["n"]));
     expect(numbers).toEqual(
       ["1", "3", "7", "9", "10", "11", "12", "12A", "12B", "16", "17",
-       "19", "21", "24"]);
+       "19", "21", "24", "25"]);
   });
 
   test("12B is cut, and cut means absent from every answer (§6.6)",

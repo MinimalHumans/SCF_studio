@@ -90,11 +90,12 @@ describe("listEntities — enumeration with nothing in hand (§ new)", () => {
        async () => {
     // §4.1: the script decides, not scene_number and not row id. The
     // fixture is built so all three differ, and scene 17 is unscripted
-    // and therefore last.
+    // and therefore last — after 25, the flashback coda, which is the
+    // last scene the script carries.
     const scenes = await listEntities(fx.ctx, "scene");
     expect(scenes.map((s) => s.label))
       .toEqual(["1", "3", "7", "9", "10", "11", "12", "12A", "19", "16",
-                "21", "24", "17"]);
+                "21", "24", "25", "17"]);
     expect(scenes.map((s) => s.storyPosition))
       .toEqual(scenes.map((_, i) => i));
   });

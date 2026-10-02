@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.19",
+  "schemaVersion": "2.20",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -1947,6 +1947,18 @@
           }
         },
         {
+          "name": "variant_id",
+          "label": "Variant",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "character_variant",
+          "helpText": "Spec §4.8: the character appears in this scene as this variant (proposal 0033). Empty means the character as defined. A variant of another character puts no variant in force and is reported as presence.variant_foreign.",
+          "qualifier": true
+        },
+        {
           "name": "notes",
           "label": "Notes",
           "fieldType": "textarea",
@@ -2042,6 +2054,18 @@
             "background": "seen",
             "mentioned": "named"
           }
+        },
+        {
+          "name": "variant_id",
+          "label": "Variant",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "referenceEntity": "prop_variant",
+          "helpText": "Spec §4.8: the prop appears in this scene as this variant (proposal 0033). Empty means the prop as defined. A variant of another prop puts no variant in force and is reported as presence.variant_foreign.",
+          "qualifier": true
         }
       ]
     },
@@ -7883,6 +7907,17 @@
           "helpText": "Spec §12.8: as physical_state_filter, against a vocal performance_state."
         },
         {
+          "name": "variant_id",
+          "label": "Variant",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "Conditions",
+          "autoInjected": false,
+          "referenceEntity": "character_variant",
+          "helpText": "Spec §12.8.1: the binding applies where §4.8 puts this variant in force at the position — the variant the scene_character link names at that scene (proposal 0033)."
+        },
+        {
           "name": "scene_range_start_id",
           "label": "Scene Range Start",
           "fieldType": "reference",
@@ -7939,7 +7974,7 @@
       "icon": "🎚️",
       "nameField": "name",
       "category": "Asset Reference",
-      "description": "Applies a bundle to a prop under specific conditions (scene range). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene.",
+      "description": "Applies a bundle to a prop under specific conditions (variant, scene range). Tools walk the prop resolution cascade and use bindings to find the right media for a prop in a given scene.",
       "sortOrder": 253,
       "tier": 2,
       "parentEntity": null,
@@ -8021,6 +8056,17 @@
             "replace"
           ],
           "helpText": "Spec §12.8.2. `add`: contributes alongside the other bindings in force. `replace`: excludes every binding for the same subject and intent with LOWER precedence. Never reaches anchors or shot overrides."
+        },
+        {
+          "name": "variant_id",
+          "label": "Variant",
+          "fieldType": "reference",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "Conditions",
+          "autoInjected": false,
+          "referenceEntity": "prop_variant",
+          "helpText": "Spec §12.8.1: the binding applies where §4.8 puts this variant in force at the position — the variant the scene_prop link names at that scene (proposal 0033)."
         },
         {
           "name": "scene_range_start_id",
@@ -8311,7 +8357,7 @@
           "tab": "Conditions",
           "autoInjected": false,
           "referenceEntity": "location_variant",
-          "helpText": "Spec §12.8: the binding applies where §12.17 picks this variant as the one in force at the position. The only variant filter that survives 0027 — character and prop variants have no in-force rule for a filter to test."
+          "helpText": "Spec §12.8.1: the binding applies where §4.8 puts this variant in force at the position — for a location, the variant §12.17 selects. 0027 left this the only variant filter; 0033 gave character and prop variants the in-force rule theirs lacked."
         },
         {
           "name": "scene_range_start_id",
@@ -8450,7 +8496,7 @@
           "tab": "General",
           "autoInjected": false,
           "polymorphicType": "subject_type",
-          "helpText": "Optional. Polymorphic reference into the matching variant table (character_variant / prop_variant / location_variant)."
+          "helpText": "Optional. Polymorphic reference into the matching variant table (character_variant / prop_variant / location_variant). Spec §12.8: the anchor contributes only where §4.8 puts that variant in force, and there displaces the subject's own anchors of its type (proposal 0033)."
         },
         {
           "name": "anchor_type",

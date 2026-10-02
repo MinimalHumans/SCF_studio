@@ -279,7 +279,9 @@ describe("scf-mcp server — a default project set at startup", () => {
     }) as { content: Array<{ text: string }> };
     const scenes = JSON.parse(result.content[0]?.text ?? "[]") as
       Array<{ label: string; storyPosition: number }>;
-    expect(scenes.map((s) => s.label).slice(-3)).toEqual(["21", "24", "17"]);
+    // 25 is the flashback coda, the last scripted scene (proposal 0033);
+    // 17 is unscripted and sorts after every scripted one (§4.1).
+    expect(scenes.map((s) => s.label).slice(-3)).toEqual(["24", "25", "17"]);
     expect(scenes.map((s) => s.storyPosition))
       .toEqual(scenes.map((_, i) => i));
   });

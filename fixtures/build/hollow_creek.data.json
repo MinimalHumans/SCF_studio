@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.19",
+ "schemaVersion": "2.20",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.19"
+    "value": "2.20"
    },
    {
     "key": "updated_at",
@@ -671,6 +671,17 @@
     "description": "Promotional Poster without Text",
     "source": "Blckbox via Photoshop",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 53,
+    "uuid": "00000000-0000-4000-8000-003300000004",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "name": "marcus_age9_ref.png",
+    "identifier": "@project/assets/characters/marcus_age9_ref.png",
+    "description": "Casting and costume reference for Marcus as a boy.",
+    "source": "Casting",
+    "lifecycle_status": "active"
    }
   ],
   "asset_relationship": [
@@ -926,6 +937,17 @@
     "name": "Brass Wind Chime - Sound",
     "intent": "acoustic",
     "description": "Recorded takes of the practical chime.",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 21,
+    "uuid": "00000000-0000-4000-8000-003300000005",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "name": "Marcus Age Nine Visual",
+    "intent": "visual_identity",
+    "description": "Reference for the boy in the flashback.",
+    "coverage_summary": "Visual identity for the Marcus, age nine variant",
     "lifecycle_status": "active"
    }
   ],
@@ -1369,6 +1391,16 @@
     "asset_id": 8,
     "role_in_bundle": "takes",
     "order": 1
+   },
+   {
+    "id": 55,
+    "uuid": "00000000-0000-4000-8000-003300000006",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "bundle_id": 21,
+    "asset_id": 53,
+    "role_in_bundle": "reference sheet",
+    "order": 1
    }
   ],
   "character": [
@@ -1605,6 +1637,21 @@
     "combine": "add",
     "physical_state_filter": "wounded",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 7,
+    "uuid": "00000000-0000-4000-8000-003300000007",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "name": "Marcus as a boy",
+    "character_id": 2,
+    "bundle_id": 21,
+    "is_baseline": 0,
+    "precedence": 1,
+    "combine": "replace",
+    "variant_id": 1,
+    "notes": "Proposal 0033: in force only where the variant is, and it replaces the adult baseline there.",
+    "lifecycle_status": "active"
    }
   ],
   "character_environment_physicality": [
@@ -1737,6 +1784,21 @@
     "character_id": 1,
     "bundle_override_id": 3,
     "visual_delta": "Closer crop; lamp-lit.",
+    "lifecycle_status": "active"
+   }
+  ],
+  "character_variant": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-003300000002",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "name": "Marcus, age nine",
+    "character_id": 2,
+    "physical_differences": "A boy of about nine: barefoot, sunburnt, hair cut short for summer",
+    "emotional_state": "Unguarded — wholly absorbed in play",
+    "context": "The scene 25 flashback, years before Ada drowned",
+    "notes": "Cast and dressed separately from adult Marcus. Proposal 0033: in force where a scene_character link names it — scene 25 only.",
     "lifecycle_status": "active"
    }
   ],
@@ -2226,10 +2288,10 @@
     "id": 2,
     "uuid": "2e552120-97b6-4fa9-a4ea-862ed1fd6319",
     "created_at": "2026-08-05 13:24:02",
-    "updated_at": "2026-08-05 13:24:02",
+    "updated_at": "2026-10-02 12:00:00",
     "name": "Ada is never shown",
     "decision_type": "narrative",
-    "description": "No flashbacks, no photographs of Ada's face.",
+    "description": "No flashback to the drowning, no photographs of Ada's face. One image of before is allowed, at the very end: Marcus as a boy at the creek, with nobody else in frame.",
     "rationale": "The locket's portrait is never shown to camera; the audience builds her out of other people's behaviour.",
     "alternatives_considered": "A single flashback at the confession — cut: it explains what the silence already carries.",
     "decided_by": "Direction",
@@ -2608,6 +2670,22 @@
     "anchor_type": "visual",
     "asset_id": 26,
     "canonical_status": "candidate",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 13,
+    "uuid": "00000000-0000-4000-8000-003300000008",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "name": "Young Marcus Face",
+    "subject_type": "character",
+    "subject_id": 2,
+    "subject_variant_id": 1,
+    "anchor_type": "visual",
+    "asset_id": 53,
+    "region_box": "{\"x\": 320, \"y\": 64, \"w\": 256, \"h\": 256}",
+    "region_label": "head, front",
+    "canonical_status": "verified",
     "lifecycle_status": "active"
    }
   ],
@@ -3098,6 +3176,22 @@
     "physical_differences": "Rope line taut, shale invisible",
     "lighting_differences": "Flat white overcast, no shadows",
     "emotional_shift": "The place stops being scenery and becomes a threat",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 5,
+    "uuid": "00000000-0000-4000-8000-003300000009",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "name": "Creek — summer, low water",
+    "location_id": 2,
+    "is_baseline": 1,
+    "time_of_day": "afternoon",
+    "season": "summer",
+    "physical_differences": "Water ankle-deep over the crossing stones; shale bars showing",
+    "lighting_differences": "High sun, hard dappled shade under the willows",
+    "emotional_shift": "A place to play, before it was anything else",
+    "notes": "The creek as it was, for the scene 25 flashback (proposal 0033). Baseline, so it is also the fallback for any creek scene no variant scores against.",
     "lifecycle_status": "active"
    }
   ],
@@ -4374,6 +4468,25 @@
     "summary": "Shaw and Eleanor, before the service. Outlined and not yet written — it carries no screenplay heading, which is what makes it useful: spec §4.1's fallback for a scene the script does not contain fires here and nowhere else in this fixture.",
     "status": "outline",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 16,
+    "uuid": "00000000-0000-4000-8000-003300000001",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "name": "EXT. CREEK CROSSING - DAY (FLASHBACK)",
+    "scene_number": "25",
+    "int_ext": "exterior",
+    "location_id": 2,
+    "time_of_day": "afternoon",
+    "season": "summer",
+    "summary": "Marcus as a boy, building a dam across the shallows. The creek before anything happened there.",
+    "purpose": "End on the place as it was: the one image of before that the film allows itself.",
+    "status": "outline",
+    "emotional_beat": "Absorption; a held breath let go",
+    "tone": "still, warm, unhurried",
+    "tension_level": "low",
+    "lifecycle_status": "active"
    }
   ],
   "scene_blocking": [
@@ -4590,6 +4703,16 @@
     "scene_id": 9,
     "character_id": 3,
     "role_in_scene": "mentioned"
+   },
+   {
+    "id": 19,
+    "uuid": "00000000-0000-4000-8000-003300000003",
+    "created_at": "2026-10-02 12:00:00",
+    "updated_at": "2026-10-02 12:00:00",
+    "scene_id": 16,
+    "character_id": 2,
+    "role_in_scene": "featured",
+    "variant_id": 1
    }
   ],
   "scene_color_palette": [
@@ -6794,5 +6917,5 @@
    }
   ]
  },
- "rowCount": 527
+ "rowCount": 536
 }
