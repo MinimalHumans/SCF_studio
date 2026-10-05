@@ -17,6 +17,33 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.61 — 2026-10-05
+
+*Describes schema 2.21.*
+
+**Minor.** Proposals 0034 and 0035, the two items 0033 left open.
+
+### §12.8 — an anchor has no state filter (0034)
+
+`entity_anchor.physical_state`, `vocal_state` and `environmental_state`
+were free text that §12.8 never read: an anchor recorded as the wounded
+face was returned as the face in every scene. Reading them was possible
+for a character, whose states have names to match, and not for a prop or
+location, which have no named state at all. They are removed. Media
+scoped by state is a binding with a state filter; a different design is
+a variant; `condition_description` still says what the asset shows, as
+description.
+
+### §4.8, §12.4, §12.5, §12.17 — the cast names its variant (0035)
+
+Q03 and Q04 carry `variant` on each character and prop entry, projected
+or null; Q12 carries `variantFrom` and `variantTo`, by name, as it
+reports states and stages. A scene package listing Marcus in scene 25
+without saying he is the boy was wrong for anyone casting or dressing
+it. The published Q03, Q04 and Q12 move by null members only.
+
+---
+
 ## 0.60 — 2026-10-02
 
 *Describes schema 2.20.*

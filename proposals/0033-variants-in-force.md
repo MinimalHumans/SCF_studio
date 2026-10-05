@@ -196,8 +196,8 @@ Scene-level first, shot-level later if needed — below.
 | Both versions of one character in one scene? | Not at scene level. If it matters, `shot_character.variant_id` later — additive, and the shot decides. |
 | The anchor rule | Displacement, as proposed: a variant's anchor of a type replaces the subject's own of that type. |
 | The fixture case | A new flashback, scene 25: Marcus as a boy at the creek, with a variant for him. |
-| Q03, Q12, Q04 carrying the variant on each cast entry | Not in this proposal. Still worth doing. |
-| `entity_anchor`'s three state columns, also unread | Out of scope; their own proposal. |
+| Q03, Q12, Q04 carrying the variant on each cast entry | Not in this proposal. Done in [0035](0035-variants-in-the-cast.md). |
+| `entity_anchor`'s three state columns, also unread | Out of scope; removed by [0034](0034-anchor-state-columns.md). |
 
 ---
 

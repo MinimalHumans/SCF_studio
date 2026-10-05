@@ -2193,14 +2193,18 @@ register(EntityDef(
         FieldDef("region_label", "Region Label", "text", tab="Scope"),
         FieldDef("audio_offset_start_sec", "Audio Offset Start (sec)", "float", tab="Scope"),
         FieldDef("audio_offset_end_sec", "Audio Offset End (sec)", "float", tab="Scope"),
-        FieldDef("condition_description", "Condition Description", "textarea", tab="Context"),
-        FieldDef("physical_state", "Physical State", "text", tab="Context",
-                 help_text="Applies for character and prop subjects."),
-        FieldDef("vocal_state", "Vocal State", "text", tab="Context",
-                 help_text="Applies for character subjects."),
-        FieldDef("environmental_state", "Environmental State", "text", tab="Context",
-                 placeholder='e.g. "midday clear", "post-rain dusk"',
-                 help_text="Applies for location subjects."),
+        # Proposal 0034 removed physical_state, vocal_state and
+        # environmental_state: free text that §12.8 never read, so an
+        # anchor "scoped" by one applied everywhere. State-specific media
+        # is a binding with a state filter (§12.8.1); a different design
+        # of the subject is a variant (§4.8). What the condition WAS stays
+        # describable here, as description rather than as a filter.
+        FieldDef("condition_description", "Condition Description", "textarea",
+                 tab="Context",
+                 help_text="What state the subject is in, in this asset — for "
+                           "a reader. Not a filter: the anchor applies wherever "
+                           "§12.8 says. Scope by state with a binding's state "
+                           "filter, or by design with a variant."),
         FieldDef("canonical_status", "Canonical Status", "select", options=[
             "verified", "candidate", "rejected"
         ], default="candidate",

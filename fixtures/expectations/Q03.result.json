@@ -1,7 +1,7 @@
 {
   "query": "Q03",
   "resultFormat": "1.0",
-  "schemaVersion": "2.20",
+  "schemaVersion": "2.21",
   "parameters": {
     "scene": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
   },
@@ -53,6 +53,7 @@
           }
         },
         "presence": "seen",
+        "variant": null,
         "states": [
           {
             "uuid": "b319b490-9794-4541-9ea3-b82d1ab6fb9a",
@@ -127,6 +128,7 @@
           }
         },
         "presence": "seen",
+        "variant": null,
         "states": [],
         "costumes": [
           {
@@ -162,6 +164,7 @@
           }
         },
         "presence": "named",
+        "variant": null,
         "states": [],
         "costumes": []
       }
@@ -185,6 +188,7 @@
           }
         },
         "presence": "seen",
+        "variant": null,
         "state": {
           "uuid": "88c36f76-f82a-46f7-bc6b-90b9b5964076",
           "fields": {
@@ -211,6 +215,7 @@
           }
         },
         "presence": "seen",
+        "variant": null,
         "state": null
       }
     ],
