@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.20** — **106 entities**.
+Schema **2.21** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -1595,10 +1595,7 @@ Known-good single frame, audio segment, or motion sample marked as canonical ref
 | `region_label` | text |  |  |
 | `audio_offset_start_sec` | float |  |  |
 | `audio_offset_end_sec` | float |  |  |
-| `condition_description` | textarea |  |  |
-| `physical_state` | text |  | Applies for character and prop subjects. |
-| `vocal_state` | text |  | Applies for character subjects. |
-| `environmental_state` | text |  | Applies for location subjects. |
+| `condition_description` | textarea |  | What state the subject is in, in this asset — for a reader. Not a filter: the anchor applies wherever §12.8 says. Scope by state with a binding's state filter, or by design with a variant. |
 | `canonical_status` | select |  | one of `verified`, `candidate`, `rejected`. default `candidate`. Verification axis distinct from lifecycle_status. |
 | `notes` | textarea |  |  |
 | `lifecycle_status` | select |  | one of `active`, `draft`, `superseded`, `deprecated`, `cut`, `archived`. default `active`. auto-injected by the generator. Cross-cutting record state. See spec §6.6. |
