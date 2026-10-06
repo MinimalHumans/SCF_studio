@@ -531,6 +531,12 @@ export function ScriptView(): JSX.Element {
   useEffect(() => {
     const host = hostRef.current;
     if (host === null) return;
+    // Set when this mount is torn down. React's StrictMode mounts the
+    // view twice in development; the first mount's load keeps running
+    // after teardown, and must not consume a one-shot request (an "open
+    // the script at this line" from another section) that the second,
+    // real mount is waiting for.
+    let disposed = false;
     const view = new EditorView({
       state: EditorState.create({
         doc: "",
@@ -820,7 +826,8 @@ export function ScriptView(): JSX.Element {
       await updateDirty();
       // Another section asked to open the script at a line (a character's
       // Scenes & Lines tab): that wins over where the writer last was.
-      const asked = useStore.getState().takePendingScriptLine();
+      const asked = disposed
+        ? null : useStore.getState().takePendingScriptLine();
       if (asked !== null && jumpToId(asked, "center")) {
         // done
       } else if (savedPosition !== null) {
@@ -836,6 +843,7 @@ export function ScriptView(): JSX.Element {
     })();
 
     return () => {
+      disposed = true;
       if (commitTimer.current !== null) clearTimeout(commitTimer.current);
       // StrictMode double-mounts: its interleaved cleanup runs on a
       // still-empty view and was clobbering the real saved position
