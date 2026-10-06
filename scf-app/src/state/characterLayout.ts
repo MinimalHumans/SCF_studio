@@ -36,6 +36,36 @@ export const PROFILE_SECTIONS: Array<{
     fields: ["backstory", "education_level", "skills_abilities"] },
 ];
 
+/** Subtabs with a built view. The rest list their records (PENDING_SOURCES). */
+export const BUILT_TABS: CharacterTab[] = ["Profile", "Relationships", "Arc"];
+
+/**
+ * The fields of `character_relationship` in the Relationships tab. The
+ * two characters and `directionality` are not here: the map and the
+ * direction control show them from the selected character's side.
+ */
+export const RELATIONSHIP_SECTIONS: Array<{
+  title: string; fields: string[]; grid?: boolean;
+}> = [
+  { title: "What they are to each other", grid: true,
+    fields: ["relationship_type", "specific_relationship",
+             "emotional_valence", "current_status"] },
+  { title: "Dynamic", fields: ["power_dynamic", "relationship_arc"] },
+  { title: "Physically", grid: true,
+    fields: ["touch_comfort", "distance_preference", "eye_contact_pattern",
+             "body_orientation"] },
+  { title: "", fields: ["mirroring_tendencies", "physical_evolution"] },
+  { title: "History", fields: ["history", "notes"] },
+];
+
+/** Relationship fields shown other than through RELATIONSHIP_SECTIONS. */
+export const RELATIONSHIP_ELSEWHERE: Record<string, string> = {
+  name: "derived from the two characters, never shown",
+  character_a_id: "the map",
+  character_b_id: "the map",
+  directionality: "the direction control",
+};
+
 /** Character fields the workspace shows somewhere other than the sections. */
 export const PROFILE_ELSEWHERE: Record<string, string> = {
   name: "the header",
@@ -94,12 +124,6 @@ export const PENDING_SOURCES: Partial<Record<CharacterTab, RecordSource[]>> = {
       prefill: (id) => ({ character_id: id, modality: "physical" }) },
     own("character_environment_physicality", "In the environment"),
   ],
-  Relationships: [
-    { entity: "character_relationship", label: "Relationships",
-      where: "character_a_id = ? OR character_b_id = ?",
-      prefill: (id) => ({ character_a_id: id }) },
-  ],
-  Arc: [own("character_arc", "Arcs")],
   "Scenes & Lines": [
     { entity: "scene_character", label: "Scenes",
       where: "character_id = ?", prefill: (id) => ({ character_id: id }) },

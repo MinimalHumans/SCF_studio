@@ -8,6 +8,8 @@ import { AutoField } from "./AutoField.tsx";
 import { CharacterFace } from "./CharacterFace.tsx";
 import { ProfileTab } from "./ProfileTab.tsx";
 import { PendingTab } from "./PendingTab.tsx";
+import { ArcTab } from "./ArcTab.tsx";
+import { RelationshipsTab } from "./RelationshipsTab.tsx";
 
 /** Where each character's tab was scrolled to, so "open record" and
  *  back lands where the writer was. Per session; not worth persisting. */
@@ -118,6 +120,10 @@ export function CharacterWorkspace(): JSX.Element {
       <div role="tabpanel" aria-label={characterTab}>
         {characterTab === "Profile"
           ? <ProfileTab key={id} characterId={id} />
+          : characterTab === "Arc"
+          ? <ArcTab key={id} characterId={id} />
+          : characterTab === "Relationships"
+          ? <RelationshipsTab key={id} characterId={id} />
           : <PendingTab key={`${String(id)}:${characterTab}`}
                         tab={characterTab as CharacterTab} characterId={id} />}
       </div>

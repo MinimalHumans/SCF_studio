@@ -8,8 +8,9 @@ import {
   loadRegistry, type Registry, type RegistryJson,
 } from "@scf-core/registry.ts";
 import {
-  addVariant, castActor, charactersNamed, cleanName, createCharacter,
-  loadProfile, reassignActor, setField,
+  addArc, addStage, addVariant, castActor, charactersNamed, cleanName,
+  createCharacter, fromPointOfView, loadProfile, reassignActor, relate,
+  setDirection, setField,
 } from "../src/editor/elementOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
@@ -142,5 +143,86 @@ describe("the profile read", () => {
 
   test("an unknown character is null", async () => {
     expect(await loadProfile(db.exec, 999)).toBeNull();
+  });
+});
+
+describe("arcs and stages", () => {
+  test("an arc is named by what changes; its name is left to derive",
+       async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const arc = await addArc(db.exec, id, " trust → betrayal ");
+    expect(await one("SELECT axis, name, character_id FROM character_arc " +
+                     "WHERE id = ?", [arc]))
+      .toEqual({ axis: "trust → betrayal", name: null, character_id: id });
+  });
+
+  test("a stage starts at a scene, under the right parent column",
+       async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const arc = await addArc(db.exec, id, "competence → admission");
+    await db.exec("INSERT INTO scene (name) VALUES ('EXT. ROAD')");
+    const scene = Number((await one("SELECT last_insert_rowid() AS id"))["id"]);
+    const stage = await addStage(db.exec, "character_arc_state", arc, scene,
+                                 "walls up");
+    expect(await one("SELECT character_arc_id, scene_id, stage_label " +
+                     "FROM character_arc_state WHERE id = ?", [stage]))
+      .toEqual({ character_arc_id: arc, scene_id: scene,
+                 stage_label: "walls up" });
+  });
+
+  test("refuses a table that is not a stage table, and a blank label",
+       async () => {
+    await expect(addStage(db.exec, "character; DROP TABLE x", 1, 1, "a"))
+      .rejects.toThrow(/not a stage table/);
+    await expect(addStage(db.exec, "relationship_state", 1, 1, "  "))
+      .rejects.toThrow(/label/);
+  });
+});
+
+describe("relationships", () => {
+  test("one relationship per pair, whichever side asks", async () => {
+    const a = await createCharacter(db.exec, "Eleanor Cade");
+    const b = await createCharacter(db.exec, "Marcus Cade");
+    const first = await relate(db.exec, a, b);
+    const again = await relate(db.exec, b, a);
+    expect(first.created).toBe(true);
+    expect(again).toEqual({ id: first.id, created: false });
+    expect((await one("SELECT COUNT(*) AS n FROM character_relationship"))
+      ["n"]).toBe(1);
+  });
+
+  test("a character cannot be related to themself", async () => {
+    const a = await createCharacter(db.exec, "Eleanor Cade");
+    await expect(relate(db.exec, a, a)).rejects.toThrow(/themself/);
+  });
+
+  test("seen from either side", () => {
+    const row = { character_a_id: 1, character_b_id: 2,
+                  directionality: "a_to_b" };
+    expect(fromPointOfView(row, 1)).toEqual({ otherId: 2, direction: "from" });
+    expect(fromPointOfView(row, 2)).toEqual({ otherId: 1, direction: "to" });
+    expect(fromPointOfView({ ...row, directionality: "mutual" }, 2))
+      .toEqual({ otherId: 1, direction: "mutual" });
+    expect(fromPointOfView({ ...row, directionality: null }, 1).direction)
+      .toBeNull();
+  });
+
+  test("pointing it the other way swaps the sides; mutual leaves them",
+       async () => {
+    const a = await createCharacter(db.exec, "Eleanor Cade");
+    const b = await createCharacter(db.exec, "Ada Cade");
+    const { id } = await relate(db.exec, a, b);
+    await setDirection(db.exec, id, { fromId: b });
+    expect(await one("SELECT character_a_id, character_b_id, directionality " +
+                     "FROM character_relationship WHERE id = ?", [id]))
+      .toEqual({ character_a_id: b, character_b_id: a,
+                 directionality: "a_to_b" });
+    await setDirection(db.exec, id, "mutual");
+    expect(await one("SELECT character_a_id, directionality " +
+                     "FROM character_relationship WHERE id = ?", [id]))
+      .toEqual({ character_a_id: b, directionality: "mutual" });
+    const c = await createCharacter(db.exec, "Shaw");
+    await expect(setDirection(db.exec, id, { fromId: c }))
+      .rejects.toThrow(/not in this relationship/);
   });
 });
