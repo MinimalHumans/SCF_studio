@@ -2297,3 +2297,37 @@ button.strip-span-label:hover { color: var(--amber); }
 .speech-cue { letter-spacing: 0.02em; }
 .speech-parenthetical { color: var(--paper-dim); }
 .speech-dialogue { max-width: 36ch; text-align: left; justify-self: center; }
+
+/* ---- anchor scope: region and clip editors ---------------------------- */
+.scope-open { justify-self: start; }
+.scope-open.set { border-color: var(--amber-dim); color: var(--amber); }
+.scope-panel { max-width: none; margin-top: 12px; }
+.scope-head { display: flex; align-items: center; justify-content: space-between; }
+.scope-head h4 { margin: 0; font-size: 13px; }
+.scope-stage { display: flex; justify-content: center; background: var(--ink-0); padding: 8px; border-radius: 4px; }
+.scope-frame {
+  position: relative; display: inline-block; overflow: hidden; line-height: 0;
+  cursor: crosshair; touch-action: none; user-select: none;
+}
+.scope-frame img { display: block; max-width: 100%; max-height: 60vh; width: auto; height: auto; }
+.scope-box {
+  position: absolute; border: 2px solid var(--amber);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); pointer-events: none;
+}
+.scope-box span {
+  position: absolute; left: 0; top: -1px; transform: translateY(-100%);
+  background: var(--amber); color: #211a0d; font-size: 11px; line-height: 1.4;
+  padding: 0 5px; border-radius: 3px 3px 0 0; white-space: nowrap;
+}
+.scope-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.scope-num { display: grid; gap: 2px; font-size: 11.5px; color: var(--paper-dim); }
+.scope-num input { width: 88px; font-size: 12px; padding: 3px 6px; }
+.scope-label input { width: 160px; }
+.scope-size { font-size: 11.5px; padding-bottom: 4px; }
+.scope-audio { display: grid; gap: 8px; }
+.scope-wave {
+  width: 100%; height: 84px; background: var(--ink-0); border-radius: 4px;
+  cursor: col-resize; touch-action: none;
+  --scope-sel: rgba(106, 169, 233, 0.24); --scope-wave: var(--paper-dim); --scope-head: var(--amber);
+}
+.scope-audio audio { width: 100%; }

@@ -620,6 +620,17 @@ import, not the public surface, so `api-surface.json` did not move.
 - **Nothing is enforced.** An unbound bundle can be assembled before
   anyone decides what it is for; these are findings, not errors.
 
+## 7f. ✅ Narrative element workspaces
+
+The Characters, Locations and Props workspaces — an activity bar, a
+workspace per subject, reference boards that write bundles, bindings
+and anchors by intent, exceptions, the "as of scene" control, and the
+region and clip editors on identity tiles — have their own design
+record: [`narrative-workspaces.md`](narrative-workspaces.md). It is a
+separate document because it is one surface with its own decisions
+(proposals 0033–0035, the no-copy file rule) and its own open list;
+this document links to it so neither gets lost.
+
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.

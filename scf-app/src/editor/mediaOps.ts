@@ -12,6 +12,7 @@
  * |                          | on first use a bundle of the board's intent |
  * |                          | and a baseline binding to it                |
  * | Concept, Inspiration     | asset_relationship                          |
+ * | Which part of it         | entity_anchor.region_box / audio offsets    |
  * | An exception             | a bundle and a non-baseline binding with    |
  * |                          | the condition as its filter                 |
  *
@@ -47,6 +48,7 @@ import {
   applyAssetImport, planAssetImport, type ImportCandidate,
 } from "@scf-core/assetImport.ts";
 import { previewCapability } from "@scf-core/preview.ts";
+import { parseRegionBox, type RegionBox } from "@scf-core/anchors.ts";
 import { ChangeRecorder, type ChangeUndo } from "../state/undoChange.ts";
 
 export const BOARDS = {
@@ -197,6 +199,45 @@ export interface Tile {
   status: string | null;
   /** The variant an identity anchor belongs to (proposal 0033). */
   variant: string | null;
+  /** Which part of the file an identity anchor points at; null for
+   *  every other tile. */
+  scope: AnchorScope | null;
+}
+
+/**
+ * The part of a file an anchor means: a face in a group shot, the three
+ * seconds of a recording that are the voice. Read leniently, as anchors.ts
+ * reads region_box: a malformed box is reported as `regionRaw` with
+ * `region` null, never thrown or silently dropped.
+ */
+export interface AnchorScope {
+  region: RegionBox | null;
+  /** The stored text, when it is there but not a usable box. */
+  regionRaw: string | null;
+  regionLabel: string | null;
+  clipStart: number | null;
+  clipEnd: number | null;
+}
+
+const num = (v: unknown): number | null => {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+function scopeOf(r: Row): AnchorScope {
+  const raw = r["a_region_box"];
+  const region = parseRegionBox(raw);
+  const label = r["a_region_label"];
+  return {
+    region,
+    regionRaw: region === null && raw !== null && raw !== undefined && raw !== ""
+      ? String(raw) : null,
+    regionLabel: label === null || label === undefined || label === ""
+      ? null : String(label),
+    clipStart: num(r["a_audio_start"]),
+    clipEnd: num(r["a_audio_end"]),
+  };
 }
 
 export interface BaselineSet {
@@ -309,7 +350,7 @@ async function memberTiles(exec: SqlExec, bundleId: number,
       asset, link: { entity: "bundle_asset", id: Number(link_id) },
       role: role_in_bundle === null || role_in_bundle === undefined ||
         role_in_bundle === "" ? null : String(role_in_bundle),
-      status: null, variant: null,
+      status: null, variant: null, scope: null,
     };
   });
 }
@@ -402,7 +443,10 @@ export async function loadBoard(
 
   if (ANCHOR_KINDS.has(o.kind)) {
     const anchors = await exec(
-      "SELECT a.id AS link_id, a.canonical_status, v.name AS variant, s.* " +
+      "SELECT a.id AS link_id, a.canonical_status, v.name AS variant, " +
+      "a.region_box AS a_region_box, a.region_label AS a_region_label, " +
+      "a.audio_offset_start_sec AS a_audio_start, " +
+      "a.audio_offset_end_sec AS a_audio_end, s.* " +
       "FROM entity_anchor a JOIN asset s ON s.id = a.asset_id " +
       `LEFT JOIN ${q(VARIANT_TABLE[o.kind] ?? "character_variant")} v ` +
       "ON v.id = a.subject_variant_id " +
@@ -410,8 +454,11 @@ export async function loadBoard(
       `AND a.anchor_type = ? AND ${NOT_CUT("a")} ORDER BY a.id`,
       [o.kind, o.id, spec.anchorType]);
     for (const r of anchors) {
-      const { link_id, canonical_status, variant, ...asset } = r;
+      const { link_id, canonical_status, variant, a_region_box: _rb,
+              a_region_label: _rl, a_audio_start: _as, a_audio_end: _ae,
+              ...asset } = r;
       tiles.push({
+        scope: scopeOf(r),
         key: `entity_anchor:${String(link_id)}`, purpose: "identity",
         label: purposeLabel(o.kind, board, "identity"), asset,
         link: { entity: "entity_anchor", id: Number(link_id) },
@@ -446,7 +493,7 @@ export async function loadBoard(
         key: `asset_relationship:${String(link_id)}`, purpose,
         label: purpose === "other" ? type : labels[purpose], asset,
         link: { entity: "asset_relationship", id: Number(link_id) },
-        role: null, status: null, variant: null,
+        role: null, status: null, variant: null, scope: null,
       });
     }
   }
@@ -653,6 +700,88 @@ export async function setTileRole(exec: SqlExec, linkId: number,
   await rec.snapshot(exec, "bundle_asset", linkId);
   await exec("UPDATE bundle_asset SET role_in_bundle = ? WHERE id = ?",
              [role === null || role.trim() === "" ? null : role.trim(), linkId]);
+  return rec.result;
+}
+
+/** A value the anchor editors refuse, in words the panel can show. */
+export class ScopeError extends Error {}
+
+/**
+ * Mark which part of an image the anchor means — the face in a group
+ * shot. `box` is in the image's own pixels, origin top-left (the shape
+ * anchors.ts reads); null clears it, and the anchor means the whole
+ * image again. Stored rounded to whole pixels: sub-pixel precision from
+ * a mouse drag is noise, not a measurement.
+ *
+ * `size` is the image as loaded. A box that does not fit it is refused
+ * here rather than stored, because every reader would discard it
+ * (`regionFits`) and the writer would see a mark that does nothing.
+ */
+export async function setAnchorRegion(
+    exec: SqlExec, anchorId: number, box: RegionBox | null,
+    label: string | null,
+    size?: { width: number; height: number }): Promise<ChangeUndo> {
+  let stored: string | null = null;
+  if (box !== null) {
+    const r = { x: Math.round(box.x), y: Math.round(box.y),
+                w: Math.round(box.w), h: Math.round(box.h) };
+    if (parseRegionBox(r) === null) {
+      throw new ScopeError("The box needs a position at or inside the " +
+                           "top-left corner and a width and height above zero.");
+    }
+    if (size !== undefined &&
+        (r.x + r.w > size.width || r.y + r.h > size.height)) {
+      throw new ScopeError(`The box runs past the edge of the image ` +
+                           `(${String(size.width)}×${String(size.height)}).`);
+    }
+    stored = JSON.stringify(r);
+  }
+  const text = label === null || label.trim() === "" ? null : label.trim();
+  const rec = new ChangeRecorder(box === null ? "Cleared the marked region"
+                                              : "Marked the region");
+  await rec.snapshot(exec, "entity_anchor", anchorId);
+  await exec(
+    "UPDATE entity_anchor SET region_box = ?, region_label = ?, " +
+    "updated_at = datetime('now') WHERE id = ?",
+    [stored, box === null ? null : text, anchorId]);
+  return rec.result;
+}
+
+/**
+ * Mark which stretch of a recording the anchor means — the line that IS
+ * the voice. Seconds from the start of the file; either end may be open
+ * (null): from the start, or to the end. Both null clears the range.
+ * Stored to the millisecond.
+ *
+ * `duration`, when known, bounds the range: a clip past the end of the
+ * file is a typo, not a measurement.
+ */
+export async function setAnchorClip(
+    exec: SqlExec, anchorId: number, start: number | null,
+    end: number | null, duration?: number): Promise<ChangeUndo> {
+  const ms = (v: number | null): number | null =>
+    v === null ? null : Math.round(v * 1000) / 1000;
+  const s = ms(start);
+  const e = ms(end);
+  for (const v of [s, e]) {
+    if (v !== null && (!Number.isFinite(v) || v < 0)) {
+      throw new ScopeError("Times are seconds from the start, zero or more.");
+    }
+  }
+  if (s !== null && e !== null && e <= s) {
+    throw new ScopeError("The clip has to end after it starts.");
+  }
+  if (duration !== undefined && Number.isFinite(duration) &&
+      ((s !== null && s >= duration) || (e !== null && e > duration + 0.001))) {
+    throw new ScopeError(`The recording is ${duration.toFixed(2)} s long.`);
+  }
+  const rec = new ChangeRecorder(s === null && e === null
+    ? "Cleared the clip" : "Set the clip");
+  await rec.snapshot(exec, "entity_anchor", anchorId);
+  await exec(
+    "UPDATE entity_anchor SET audio_offset_start_sec = ?, " +
+    "audio_offset_end_sec = ?, updated_at = datetime('now') WHERE id = ?",
+    [s, e, anchorId]);
   return rec.result;
 }
 

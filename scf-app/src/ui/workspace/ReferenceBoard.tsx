@@ -7,6 +7,7 @@ import {
 } from "../../editor/mediaOps.ts";
 import type { ChangeUndo } from "../../state/undoChange.ts";
 import { ExceptionList } from "./ExceptionList.tsx";
+import { ClipEditor, RegionEditor } from "./AnchorScope.tsx";
 import {
   BoardTile, fail, FileIntake, placeFiles, useInForce, type Incoming,
 } from "./BoardParts.tsx";
@@ -25,6 +26,8 @@ export function ReferenceBoard({ owner, board }: {
   const [shared, setShared] = useState<{ purpose: Purpose; role: string;
                                          names: string[] } | null>(null);
   const [filter, setFilter] = useState<Purpose | "all">("all");
+  /** The tile whose region or clip is being marked, by key. */
+  const [scoping, setScoping] = useState<string | null>(null);
   const inForce = useInForce(owner, board);
   const purposes = purposesFor(owner, board);
   const label = (p: Purpose): string => purposeLabel(owner.kind, board, p);
@@ -141,9 +144,21 @@ export function ReferenceBoard({ owner, board }: {
           <BoardTile key={t.key} tile={t} board={board} owner={owner}
                      purposes={purposes} live={live(t)} onChange={done}
                      onOpen={() => void openEntityRow("asset",
-                       Number(t.asset["id"]))} />
+                       Number(t.asset["id"]))}
+                     scoping={scoping === t.key}
+                     onScope={() => setScoping((k) => k === t.key ? null : t.key)} />
         ))}
       </ul>
+
+      {(() => {
+        const t = data?.tiles.find((x) => x.key === scoping);
+        if (t === undefined) return null;
+        return board === "look"
+          ? <RegionEditor key={t.key} tile={t} kind={owner.kind} onDone={done}
+                          onClose={() => setScoping(null)} />
+          : <ClipEditor key={t.key} tile={t} onDone={done}
+                        onClose={() => setScoping(null)} />;
+      })()}
 
       {data !== null && data.sets.some((s) => s.sharedWith.length > 0) && (
         <p className="muted board-sets">
