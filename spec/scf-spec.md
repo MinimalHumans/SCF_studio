@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.60 (draft) — not a release.**
-Describes schema version **2.20**.
+**Version 0.61 (draft) — not a release.**
+Describes schema version **2.21**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -851,6 +851,10 @@ null, where it names a cut variant (§6.6.1), or where it names a variant
 of **another** subject. The last is reported as
 `presence.variant_foreign` (§9.4); the others are ordinary states of a
 file.
+
+Q03, Q04 and Q12 report it on each character and prop they list, and
+Q02 for its subject: a scene package that lists a character without
+saying which version appears is wrong for anyone casting or dressing it.
 
 **At a shot, the variant in force is its scene's.** No shot-level column
 exists. **With no position, no variant is in force** for any kind.
@@ -2005,8 +2009,8 @@ Parameter: `scene`.
 | Field | |
 |---|---|
 | `scene` | The scene itself, projected. Null when the position does not resolve — including when the scene is cut (§6.6.1). |
-| `characters` | Each character present, with their `presence` (§2.4.1), the `states` in force there (§4.5) and the `costumes` they are wearing. In the row order of this scene's `scene_character` rows (§12.1.6). |
-| `props` | Each prop present, with its `presence` (§2.4.1) and its `state` at this position by pattern 3, or null where none is yet established. |
+| `characters` | Each character present, with their `presence` (§2.4.1), the `variant` in force there (§4.8; projected, or null), the `states` in force there (§4.5) and the `costumes` they are wearing. In the row order of this scene's `scene_character` rows (§12.1.6). |
+| `props` | Each prop present, with its `presence` (§2.4.1), its `variant` in force (§4.8; projected, or null) and its `state` at this position by pattern 3, or null where none is yet established. |
 | `motifs` | Motif appearances at this position: name and domain. These come from a join rather than a table and carry no identity of their own. |
 
 Presence is authored, not inferred: a character is at a position
@@ -2027,9 +2031,9 @@ Parameters: `from`, `to`.
 | Field | |
 |---|---|
 | `from`, `to` | The two scenes, projected. |
-| `characters` | Each character present at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link them) and `statesFrom` and `statesTo`. In the row order of the `scene_character` rows at the two positions, first appearance first — these are peers with no story position of their own (§12.1.6). |
+| `characters` | Each character present at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link them), `variantFrom` and `variantTo`, and `statesFrom` and `statesTo`. In the row order of the `scene_character` rows at the two positions, first appearance first — these are peers with no story position of their own (§12.1.6). |
 | `relationships` | Each relationship with a stage at either position, projected, with `stageFrom` and `stageTo`. |
-| `props` | Each prop with a state at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link it) and `whereFrom` and `whereTo`. |
+| `props` | Each prop with a state at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link it), `variantFrom` and `variantTo`, and `whereFrom` and `whereTo`. |
 
 A row appears when it has something to say at **either** position, so an
 appearance and a disappearance are both visible.
@@ -2041,6 +2045,7 @@ the column it is taken from:
 |---|---|---|
 | `statesFrom`, `statesTo` | Label list, resolved by §4.5 pattern 2, **oldest first** | `performance_state.name` |
 | `stageFrom`, `stageTo` | A single label, or **null** where no stage is in force | `relationship_state.stage_label` |
+| `variantFrom`, `variantTo` | A single label, or **null** where no variant is in force (§4.8) | `character_variant.name` / `prop_variant.name` |
 | `whereFrom`, `whereTo` | A single label, or **null** where no state is in force | `prop_state.whereabouts` |
 
 Each is a derived record member under §12.1.4, so a null is carried
@@ -2142,6 +2147,15 @@ with the reason, as an excluded binding does (§12.8.1).
 Until 0.60 `subject_variant_id` was declared and read by nothing, so an
 anchor recorded for a variant was returned as the subject's own at every
 position, and no published result could show it.
+
+**An anchor has no state filter.** It applies wherever this section
+says, and its `condition_description` describes the asset for a reader;
+it never scopes the anchor. Media for a subject in a particular
+performance state is a binding with a state filter (§12.8.1); a
+different design of the subject is a variant (§4.8). Until 0.61
+`entity_anchor` declared `physical_state`, `vocal_state` and
+`environmental_state`, free text that nothing read, so an anchor
+"scoped" by one applied everywhere; they were removed (proposal 0034).
 
 #### 12.8.1 A binding applies where every filter it declares is satisfied
 
@@ -2606,7 +2620,7 @@ Parameter: `scene`.
 | `scene` | Projected. |
 | `lineage` | Act and sequence, **broadest first**. |
 | `storyBeats` | In `beat_order`. |
-| `cast`, `props` | Present by authored link, not inference. Each projected row also carries `presence` (§2.4.1). |
+| `cast`, `props` | Present by authored link, not inference. Each projected row also carries `presence` (§2.4.1) and `variant`: the variant in force (§4.8), projected, or null. |
 | `location`, `locationVariant` | The location, and `{ variant, mismatches }` — see below. |
 | `detail` | Scene-level design entities, each `{ entity, rows }`, empty groups omitted. |
 | `blocking`, `stagingBeats` | Staging, beats in `beat_order`. **`blocking` is an array** — a scene may carry several — and both hold projected rows. |

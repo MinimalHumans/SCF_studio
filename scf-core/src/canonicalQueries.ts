@@ -203,9 +203,12 @@ const asId = (v: unknown): number | null => {
 export interface Q03Composition {
   scene: Row | null;
   characters: Array<{
-    character: Row; presence: Presence; states: Row[]; costumes: Row[];
+    character: Row; presence: Presence; variant: Row | null;
+    states: Row[]; costumes: Row[];
   }>;
-  props: Array<{ prop: Row; presence: Presence; state: Row | null }>;
+  props: Array<{
+    prop: Row; presence: Presence; variant: Row | null; state: Row | null;
+  }>;
   motifs: Row[];
 }
 
@@ -228,6 +231,7 @@ export async function composeQ03(
     characters.push({
       character,
       presence: atScene.character.get(cid) ?? "seen",
+      variant: await variantInForce(ctx, "character", cid, sceneId),
       states: await statesInForce(ctx, cid, sceneId, null, order),
       costumes: excludeCut(await ctx.exec(
         "SELECT c.* FROM costume_scene cs JOIN costume c " +
@@ -245,6 +249,7 @@ export async function composeQ03(
     if (prop === undefined) continue;
     props.push({
       prop, presence: atScene.prop.get(pid) ?? "seen",
+      variant: await variantInForce(ctx, "prop", pid, sceneId),
       state: await propStateAt(ctx, pid, sceneId, order),
     });
   }
@@ -266,6 +271,7 @@ export interface Q12Composition {
   b: Row | null;
   characters: Array<{
     character: Row; presenceA: Presence | null; presenceB: Presence | null;
+    variantA: string | null; variantB: string | null;
     statesA: string[]; statesB: string[];
   }>;
   relationships: Array<{
@@ -273,8 +279,19 @@ export interface Q12Composition {
   }>;
   props: Array<{
     prop: Row; presenceA: Presence | null; presenceB: Presence | null;
+    variantA: string | null; variantB: string | null;
     whereA: string | null; whereB: string | null;
   }>;
+}
+
+/**
+ * The variant in force (§4.8) by NAME, for Q12 — which reports what
+ * changes between two positions as labels, as it does states and stages.
+ */
+async function variantName(ctx: ScfContext, subject: string, id: number,
+                           sceneId: number): Promise<string | null> {
+  const v = await variantInForce(ctx, subject, id, sceneId);
+  return v === null ? null : String(v["name"]);
 }
 
 /** The state diff between two positions. Rows, not a result. */
@@ -299,6 +316,8 @@ export async function composeQ12(
       character,
       presenceA: atA.character.get(cid) ?? null,
       presenceB: atB.character.get(cid) ?? null,
+      variantA: await variantName(ctx, "character", cid, a),
+      variantB: await variantName(ctx, "character", cid, b),
       statesA: (await statesInForce(ctx, cid, a, null, order))
         .map((s) => String(s["name"])),
       statesB: (await statesInForce(ctx, cid, b, null, order))
@@ -331,6 +350,8 @@ export async function composeQ12(
       prop,
       presenceA: atA.prop.get(pid) ?? null,
       presenceB: atB.prop.get(pid) ?? null,
+      variantA: await variantName(ctx, "prop", pid, a),
+      variantB: await variantName(ctx, "prop", pid, b),
       whereA: pa === null ? null : String(pa["whereabouts"] ?? ""),
       whereB: pb === null ? null : String(pb["whereabouts"] ?? ""),
     });
@@ -349,11 +370,14 @@ export interface Q03Result {
     character: ProjectedRow;
     /** Seen, heard or named at this position, §2.4.1. */
     presence: Presence;
+    /** The variant in force here (§4.8), or null. */
+    variant: ProjectedRow | null;
     states: ProjectedRow[];
     costumes: ProjectedRow[];
   }>;
   props: Array<{
-    prop: ProjectedRow; presence: Presence; state: ProjectedRow | null;
+    prop: ProjectedRow; presence: Presence; variant: ProjectedRow | null;
+    state: ProjectedRow | null;
   }>;
   motifs: Array<{ name: string; domain: string | null }>;
 }
@@ -370,12 +394,16 @@ export async function q03Result(
     characters: c.characters.map((x) => ({
       character: projectRow(x.character, refs(ctx, "character"), lookup),
       presence: x.presence,
+      variant: x.variant === null
+        ? null : projectRow(x.variant, refs(ctx, "character_variant"), lookup),
       states: x.states.map((s) => projectRow(s, refs(ctx, "performance_state"), lookup)),
       costumes: x.costumes.map((s) => projectRow(s, refs(ctx, "costume"), lookup)),
     })),
     props: c.props.map((x) => ({
       prop: projectRow(x.prop, refs(ctx, "prop"), lookup),
       presence: x.presence,
+      variant: x.variant === null
+        ? null : projectRow(x.variant, refs(ctx, "prop_variant"), lookup),
       state: x.state === null
         ? null : projectRow(x.state, refs(ctx, "prop_state"), lookup),
     })),
@@ -400,6 +428,8 @@ export interface Q12Result {
     character: ProjectedRow;
     /** Presence at each position (§2.4.1); null where not linked there. */
     presenceFrom: Presence | null; presenceTo: Presence | null;
+    /** The variant in force at each position (§4.8), by name; or null. */
+    variantFrom: string | null; variantTo: string | null;
     statesFrom: string[]; statesTo: string[];
   }>;
   relationships: Array<{
@@ -409,6 +439,7 @@ export interface Q12Result {
   props: Array<{
     prop: ProjectedRow;
     presenceFrom: Presence | null; presenceTo: Presence | null;
+    variantFrom: string | null; variantTo: string | null;
     whereFrom: string | null; whereTo: string | null;
   }>;
 }
@@ -427,6 +458,7 @@ export async function q12Result(
     characters: c.characters.map((x) => ({
       character: projectRow(x.character, refs(ctx, "character"), lookup),
       presenceFrom: x.presenceA, presenceTo: x.presenceB,
+      variantFrom: x.variantA, variantTo: x.variantB,
       statesFrom: x.statesA, statesTo: x.statesB,
     })),
     relationships: c.relationships.map((x) => ({
@@ -436,6 +468,7 @@ export async function q12Result(
     props: c.props.map((x) => ({
       prop: projectRow(x.prop, refs(ctx, "prop"), lookup),
       presenceFrom: x.presenceA, presenceTo: x.presenceB,
+      variantFrom: x.variantA, variantTo: x.variantB,
       whereFrom: x.whereA, whereTo: x.whereB,
     })),
   });
@@ -1393,8 +1426,10 @@ export interface Q04Result {
   storyBeats: ProjectedRow[];
   /** Each with its presence here, §2.4.1: a `mentioned` character is
    *  in the cast and not on screen. */
-  cast: Array<ProjectedRow & { presence: Presence }>;
-  props: Array<ProjectedRow & { presence: Presence }>;
+  cast: Array<ProjectedRow & { presence: Presence;
+                                variant: ProjectedRow | null }>;
+  props: Array<ProjectedRow & { presence: Presence;
+                                 variant: ProjectedRow | null }>;
   location: ProjectedRow | null;
   locationVariant:
     { variant: ProjectedRow | null; mismatches: string[] };
@@ -1488,6 +1523,20 @@ export async function q04Result(
   }
   stagingBeats.sort(byBeatOrder);
 
+  // §4.8, per entry: who appears as which version. A package listing
+  // Marcus in scene 25 without saying he is the boy is wrong for anyone
+  // casting or dressing it (proposal 0035).
+  const castVariants: Array<[Row, Row | null]> = [];
+  for (const c of cast) {
+    castVariants.push([c, await variantInForce(
+      ctx, "character", Number(c["id"]), sceneId)]);
+  }
+  const propVariants: Array<[Row, Row | null]> = [];
+  for (const p of props) {
+    propVariants.push([p, await variantInForce(
+      ctx, "prop", Number(p["id"]), sceneId)]);
+  }
+
   return envelope("Q04", ctx.registry, { scene: sceneUuid }, {
     scene: scene === null
       ? null : projectRow(scene, refs(ctx, "scene"), lookup),
@@ -1496,13 +1545,17 @@ export async function q04Result(
     })),
     storyBeats: storyBeats.map(
       (b) => projectRow(b, refs(ctx, "story_beat"), lookup)),
-    cast: cast.map((c) => ({
+    cast: castVariants.map(([c, v]) => ({
       ...projectRow(c, refs(ctx, "character"), lookup),
       presence: atScene.character.get(Number(c["id"])) ?? "seen",
+      variant: v === null
+        ? null : projectRow(v, refs(ctx, "character_variant"), lookup),
     })),
-    props: props.map((p) => ({
+    props: propVariants.map(([p, v]) => ({
       ...projectRow(p, refs(ctx, "prop"), lookup),
       presence: atScene.prop.get(Number(p["id"])) ?? "seen",
+      variant: v === null
+        ? null : projectRow(v, refs(ctx, "prop_variant"), lookup),
     })),
     location: location === null
       ? null : projectRow(location, refs(ctx, "location"), lookup),

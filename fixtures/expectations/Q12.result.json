@@ -1,7 +1,7 @@
 {
   "query": "Q12",
   "resultFormat": "1.0",
-  "schemaVersion": "2.20",
+  "schemaVersion": "2.21",
   "parameters": {
     "from": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
     "to": "e4fa4c60-5f66-4b81-942f-6a026ab56c62"
@@ -73,6 +73,8 @@
         },
         "presenceFrom": "seen",
         "presenceTo": "seen",
+        "variantFrom": null,
+        "variantTo": null,
         "statesFrom": [
           "wounded",
           "wrung-out"
@@ -107,6 +109,8 @@
         },
         "presenceFrom": "seen",
         "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
         "statesFrom": [],
         "statesTo": []
       },
@@ -130,6 +134,8 @@
         },
         "presenceFrom": null,
         "presenceTo": "seen",
+        "variantFrom": null,
+        "variantTo": null,
         "statesFrom": [],
         "statesTo": []
       },
@@ -151,6 +157,8 @@
         },
         "presenceFrom": "named",
         "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
         "statesFrom": [],
         "statesTo": []
       }
@@ -197,6 +205,8 @@
         },
         "presenceFrom": "seen",
         "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
         "whereFrom": "revealed, on the kitchen table",
         "whereTo": "revealed, on the kitchen table"
       },
@@ -217,6 +227,8 @@
         },
         "presenceFrom": null,
         "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
         "whereFrom": "stove",
         "whereTo": "stove"
       },
@@ -237,6 +249,8 @@
         },
         "presenceFrom": null,
         "presenceTo": "named",
+        "variantFrom": null,
+        "variantTo": null,
         "whereFrom": "porch door frame",
         "whereTo": "porch door frame"
       }
