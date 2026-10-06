@@ -20,6 +20,27 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.21
+
+The anchor state columns, and variants in the cast: proposals 0034 and
+0035.
+
+**Removed** (§11.0: pre-1.0 files are disposable):
+
+- `entity_anchor.physical_state`, `entity_anchor.vocal_state`,
+  `entity_anchor.environmental_state` — free text that §12.8 never read,
+  so an anchor scoped by one applied at every position. No fixture row
+  set them. Scope by state with a binding's state filter, or by design
+  with a variant.
+
+**Changed:**
+
+- `entity_anchor.condition_description` gains help text saying it
+  describes and never scopes.
+
+Query results (not schema): Q03, Q04 and Q12 gain variant members
+(proposal 0035).
+
 ## 2.20
 
 Which character or prop variant is in force: proposal 0033.

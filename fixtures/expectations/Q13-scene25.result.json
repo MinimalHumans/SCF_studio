@@ -1,7 +1,7 @@
 {
   "query": "Q13",
   "resultFormat": "1.0",
-  "schemaVersion": "2.20",
+  "schemaVersion": "2.21",
   "parameters": {
     "subjectType": "character",
     "subject": "145417ca-e8e5-4946-aba0-e83575dad182",

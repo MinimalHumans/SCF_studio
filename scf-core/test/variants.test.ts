@@ -19,7 +19,9 @@ import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { q02Result } from "../src/canonicalQueries.ts";
+import {
+  q02Result, q03Result, q04Result, q12Result,
+} from "../src/canonicalQueries.ts";
 import { collectFindings } from "../src/findings.ts";
 import { openNodeDatabase } from "../src/node.ts";
 import {
@@ -267,5 +269,39 @@ describe("§12.16 — Q02 reports the variant", () => {
                                  uuid["scene9"] as string, n("scene9"),
                                  null, null);
     expect(away.result.characterVariant).toBeNull();
+  });
+});
+
+describe("proposal 0035 — the cast says who appears as which version", () => {
+  test("Q04 and Q03 name the variant on Marcus's entry at scene 25",
+       async () => {
+    const q04 = await q04Result(fx.ctx, uuid["scene25"] as string,
+                                n("scene25"));
+    const marcus04 = q04.result.cast.find((c) => c["uuid"] === uuid["marcus"]);
+    expect(marcus04?.variant?.["uuid"]).toBe(uuid["boy"]);
+    const q03 = await q03Result(fx.ctx, uuid["scene25"] as string,
+                                n("scene25"));
+    const marcus03 = q03.result.characters
+      .find((c) => c.character["uuid"] === uuid["marcus"]);
+    expect(marcus03?.variant?.["uuid"]).toBe(uuid["boy"]);
+  });
+
+  test("…and null wherever none is in force", async () => {
+    const q04 = await q04Result(fx.ctx, uuid["scene9"] as string,
+                                n("scene9"));
+    expect(q04.result.cast.length).toBeGreaterThan(0);
+    for (const c of q04.result.cast) expect(c.variant).toBeNull();
+    for (const p of q04.result.props) expect(p.variant).toBeNull();
+  });
+
+  test("Q12 reports the change of version across positions, by name",
+       async () => {
+    const r = await q12Result(fx.ctx, uuid["scene24"] as string,
+                              uuid["scene25"] as string, n("scene24"),
+                              n("scene25"));
+    const marcus = r.result.characters
+      .find((c) => c.character["uuid"] === uuid["marcus"]);
+    expect(marcus?.variantFrom).toBeNull();
+    expect(marcus?.variantTo).toBe("Marcus, age nine");
   });
 });

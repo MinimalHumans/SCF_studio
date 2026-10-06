@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.20",
+  "schemaVersion": "2.21",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -8586,38 +8586,8 @@
           "sqlType": "TEXT",
           "required": false,
           "tab": "Context",
-          "autoInjected": false
-        },
-        {
-          "name": "physical_state",
-          "label": "Physical State",
-          "fieldType": "text",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Context",
           "autoInjected": false,
-          "helpText": "Applies for character and prop subjects."
-        },
-        {
-          "name": "vocal_state",
-          "label": "Vocal State",
-          "fieldType": "text",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Context",
-          "autoInjected": false,
-          "helpText": "Applies for character subjects."
-        },
-        {
-          "name": "environmental_state",
-          "label": "Environmental State",
-          "fieldType": "text",
-          "sqlType": "TEXT",
-          "required": false,
-          "tab": "Context",
-          "autoInjected": false,
-          "placeholder": "e.g. \"midday clear\", \"post-rain dusk\"",
-          "helpText": "Applies for location subjects."
+          "helpText": "What state the subject is in, in this asset — for a reader. Not a filter: the anchor applies wherever §12.8 says. Scope by state with a binding's state filter, or by design with a variant."
         },
         {
           "name": "canonical_status",
