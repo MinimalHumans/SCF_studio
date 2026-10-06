@@ -79,7 +79,8 @@ describe("the interim record lists", () => {
         Array.from({ length: n }, () => 1));
       found += rows.length;
     }
-    expect(found).toBeGreaterThan(0);
+    // Every character tab is built now, so there may be nothing to run.
+    if (sources.length > 0) expect(found).toBeGreaterThan(0);
   });
 
   test("everything a New button pre-fills is a field of its entity", () => {

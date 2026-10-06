@@ -14,6 +14,7 @@ import { LookTab } from "./LookTab.tsx";
 import { VoiceTab } from "./VoiceTab.tsx";
 import { WardrobeTab } from "./WardrobeTab.tsx";
 import { PhysicalityTab } from "./PhysicalityTab.tsx";
+import { ScenesTab } from "./ScenesTab.tsx";
 import { RelationshipsTab } from "./RelationshipsTab.tsx";
 
 /** Where each character's tab was scrolled to, so "open record" and
@@ -130,6 +131,8 @@ export function CharacterWorkspace(): JSX.Element {
           ? <ProfileTab key={id} characterId={id} />
           : characterTab === "Look"
           ? <LookTab key={id} characterId={id} />
+          : characterTab === "Scenes & Lines"
+          ? <ScenesTab key={id} characterId={id} />
           : characterTab === "Wardrobe"
           ? <WardrobeTab key={id} characterId={id} />
           : characterTab === "Physicality"

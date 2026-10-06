@@ -148,6 +148,15 @@ interface AppState {
    *  looks how in one scene is the point of it. */
   asOfSceneId: number | null;
   setAsOfScene: (id: number | null) => void;
+  /** A screenplay line the Script view should open at when it next
+   *  loads — how other sections say "show me this line". Consumed once. */
+  pendingScriptLine: string | null;
+  /** By the line's uuid: line identity survives edits, and the document
+   *  does not number its lines the way the table does. */
+  openScriptAt: (lineUuid: string) => void;
+  takePendingScriptLine: () => string | null;
+  /** Open a character's workspace, from anywhere. */
+  openCharacter: (id: number) => void;
   selectCharacter: (id: number | null) => void;
   setCharacterTab: (tab: CharacterTab) => void;
   draft: FormDraft | null;
@@ -821,6 +830,17 @@ export const useStore = create<AppState>((set, get) => ({
     set({ selectedCharacterId, openRow: null, draft: null }),
   setCharacterTab: (characterTab) => set({ characterTab }),
   setAsOfScene: (asOfSceneId) => set({ asOfSceneId }),
+  pendingScriptLine: null,
+  openScriptAt: (pendingScriptLine) =>
+    set({ pendingScriptLine, navMode: "script", openRow: null, draft: null }),
+  takePendingScriptLine: () => {
+    const line = get().pendingScriptLine;
+    if (line !== null) set({ pendingScriptLine: null });
+    return line;
+  },
+  openCharacter: (selectedCharacterId) =>
+    set({ selectedCharacterId, navMode: "characters", openRow: null,
+          draft: null }),
   setSchemaCollapsed: (schemaCollapsed) => set({ schemaCollapsed }),
   selectQuery: (selectedQuery) =>
     set({ selectedQuery, openRow: null, draft: null }),

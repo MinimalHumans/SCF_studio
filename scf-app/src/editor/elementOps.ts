@@ -388,3 +388,19 @@ export async function addPlaceFor(exec: SqlExec, characterId: number,
              [newUuid(), characterId, locationId]);
   return insertedId(exec);
 }
+
+/**
+ * Put a character in a scene. One link per pair (§6.3): linking again
+ * returns the existing link. The role is left unset — "seen" (§2.4.1) —
+ * until the writer says otherwise.
+ */
+export async function linkToScene(exec: SqlExec, characterId: number,
+                                  sceneId: number): Promise<number> {
+  const found = await exec(
+    "SELECT id FROM scene_character WHERE character_id = ? AND scene_id = ?",
+    [characterId, sceneId]);
+  if (found[0] !== undefined) return Number(found[0]["id"]);
+  await exec("INSERT INTO scene_character (uuid, character_id, scene_id) " +
+             "VALUES (?, ?, ?)", [newUuid(), characterId, sceneId]);
+  return insertedId(exec);
+}
