@@ -9,6 +9,9 @@ export interface FieldProps {
   def: FieldDef;
   value: SqlValue;
   onChange: (value: SqlValue) => void;
+  /** The input's id, where one form shows the same field more than once
+   *  (a variant card per variant). Defaults to `f-<field name>`. */
+  inputId?: string;
 }
 
 const str = (v: SqlValue): string =>
@@ -31,16 +34,16 @@ export function Field(props: FieldProps): JSX.Element {
   }
 }
 
-function TextField({ def, value, onChange }: FieldProps): JSX.Element {
+function TextField({ def, value, onChange, inputId }: FieldProps): JSX.Element {
   return (
-    <input id={`f-${def.name}`} type="text" value={str(value)}
+    <input id={inputId ?? `f-${def.name}`} type="text" value={str(value)}
            placeholder={def.placeholder ?? ""}
            onChange={(e) =>
              onChange(e.target.value === "" ? null : e.target.value)} />
   );
 }
 
-function AutoGrowTextArea({ def, value, onChange }: FieldProps):
+function AutoGrowTextArea({ def, value, onChange, inputId }: FieldProps):
     JSX.Element {
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -51,14 +54,14 @@ function AutoGrowTextArea({ def, value, onChange }: FieldProps):
     }
   }, [value]);
   return (
-    <textarea id={`f-${def.name}`} ref={ref} rows={2} value={str(value)}
+    <textarea id={inputId ?? `f-${def.name}`} ref={ref} rows={2} value={str(value)}
               placeholder={def.placeholder ?? ""}
               onChange={(e) =>
                 onChange(e.target.value === "" ? null : e.target.value)} />
   );
 }
 
-function SelectField({ def, value, onChange }: FieldProps): JSX.Element {
+function SelectField({ def, value, onChange, inputId }: FieldProps): JSX.Element {
   const options = def.options ?? [];
   // An OPEN vocabulary (spec §2.4) is a combobox whatever its length:
   // the options are the known values and any other string is the value.
@@ -73,29 +76,42 @@ function SelectField({ def, value, onChange }: FieldProps): JSX.Element {
   if (def.open === true || options.length > 12) {
     return (
       <>
-        <input id={`f-${def.name}`} list={`dl-${def.name}`}
+        <input id={inputId ?? `f-${def.name}`} list={`dl-${inputId ?? def.name}`}
                value={str(value)}
                placeholder={def.placeholder ?? ""}
                onChange={(e) =>
                  onChange(e.target.value === "" ? null : e.target.value)} />
-        <datalist id={`dl-${def.name}`}>
+        <datalist id={`dl-${inputId ?? def.name}`}>
           {options.map((o) => <option key={o} value={o} />)}
         </datalist>
       </>
     );
   }
+  // A stored value the closed list does not offer — "deuteragonist" in
+  // a list without it, a value from an older schema — is still the
+  // value. Without its own option the <select> showed "—", and touching
+  // the control would have overwritten what the file says. It is shown,
+  // marked, and kept until someone picks something else.
+  const current = str(value);
+  const unlisted = current !== "" && !options.includes(current);
   return (
-    <select id={`f-${def.name}`} value={str(value)}
+    <select id={inputId ?? `f-${def.name}`} value={current}
+            className={unlisted ? "unlisted" : undefined}
+            title={unlisted
+              ? `"${current}" is not one of this field's values. It is ` +
+                "kept as written until you choose another."
+              : undefined}
             onChange={(e) =>
               onChange(e.target.value === "" ? null : e.target.value)}>
       <option value="">—</option>
+      {unlisted && <option value={current}>{current} (not in list)</option>}
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>
   );
 }
 
 /** Stored as comma-separated text. */
-function MultiselectField({ def, value, onChange }: FieldProps):
+function MultiselectField({ def, value, onChange, inputId }: FieldProps):
     JSX.Element {
   const selected = new Set(
     str(value).split(",").map((s) => s.trim()).filter((s) => s !== ""));
@@ -106,7 +122,7 @@ function MultiselectField({ def, value, onChange }: FieldProps):
     onChange(next.size === 0 ? null : [...next].join(", "));
   };
   return (
-    <div className="multiselect" id={`f-${def.name}`}>
+    <div className="multiselect" id={inputId ?? `f-${def.name}`}>
       {(def.options ?? []).map((o) => (
         <button key={o} type="button"
                 className={"chip" + (selected.has(o) ? " on" : "")}
@@ -119,10 +135,10 @@ function MultiselectField({ def, value, onChange }: FieldProps):
   );
 }
 
-function NumberField({ def, value, onChange, integer = false }:
+function NumberField({ def, value, onChange, inputId, integer = false }:
     FieldProps & { integer?: boolean }): JSX.Element {
   return (
-    <input id={`f-${def.name}`} type="number"
+    <input id={inputId ?? `f-${def.name}`} type="number"
            step={integer ? 1 : "any"} value={str(value)}
            placeholder={def.placeholder ?? ""}
            onChange={(e) => {
@@ -137,11 +153,11 @@ function NumberField({ def, value, onChange, integer = false }:
   );
 }
 
-function BooleanField({ def, value, onChange }: FieldProps): JSX.Element {
+function BooleanField({ def, value, onChange, inputId }: FieldProps): JSX.Element {
   const checked = value === 1 || value === true || value === "1";
   return (
     <label className="bool">
-      <input id={`f-${def.name}`} type="checkbox" checked={checked}
+      <input id={inputId ?? `f-${def.name}`} type="checkbox" checked={checked}
              onChange={(e) => onChange(e.target.checked ? 1 : 0)} />
       <span>{checked ? "yes" : "no"}</span>
     </label>

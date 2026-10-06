@@ -61,7 +61,10 @@ export const COLLAPSE_ALL = new Set<string>(["\u0000all"]);
 
 export type NavMode =
   "subject" | "schema" | "structure" | "queries" | "script" | "shoot" |
-  "assets";
+  "assets" | "characters" | "locations" | "props";
+
+export { CHARACTER_TABS, type CharacterTab } from "./characterLayout.ts";
+import type { CharacterTab } from "./characterLayout.ts";
 
 export interface OpenRow {
   entity: string;
@@ -133,6 +136,13 @@ interface AppState {
   selectedEntityType: string | null;
   selectedSubject: { entity: string; id: number; name: string } | null;
   openRow: OpenRow | null;
+  /** The character open in the Characters workspace. Lives in the store
+   *  so "open record" and back returns to the same character and tab —
+   *  the workspace unmounts while a raw record is shown. */
+  selectedCharacterId: number | null;
+  characterTab: CharacterTab;
+  selectCharacter: (id: number | null) => void;
+  setCharacterTab: (tab: CharacterTab) => void;
   draft: FormDraft | null;
 
   openDemo: () => Promise<void>;
@@ -372,6 +382,7 @@ async function finishFolderOpen(
   await rememberHandle(opened.token);
   const rev = get().revision + 1;
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        selectedCharacterId: null,
         phase: "open", projectName: opened.name,
         fileToken: opened.token, lastSession: opened.name,
         folderChoice: null,
@@ -411,7 +422,7 @@ export const useStore = create<AppState>((set, get) => ({
   // The script is what a project is FOR: opening anywhere else means a
   // click before you can write. Every open path sets this too, so
   // closing one project and opening another lands on the script again.
-  navMode: "script",
+  navMode: "script", selectedCharacterId: null, characterTab: "Profile",
   assetPrefix: "",
   listSort: "story",
   selectedQuery: null,
@@ -439,6 +450,7 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:auto-resume", "1");
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        selectedCharacterId: null,
             phase: "open", projectName: "Hollow Creek (demo)",
             fileToken: null, lastSession: "Hollow Creek (demo)",
             revision: rev, lastSavedRevision: rev });
@@ -479,6 +491,7 @@ export const useStore = create<AppState>((set, get) => ({
         projectRoot === null
           ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        selectedCharacterId: null,
             phase: "open", projectName: `${name}`, fileToken,
             projectRoot, rootMode,
             rootVerified: pair !== null,
@@ -512,6 +525,7 @@ export const useStore = create<AppState>((set, get) => ({
       revokeAll();
       clearResolutions();
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        selectedCharacterId: null,
             phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
             projectRoot: null, rootPermission: "none",
@@ -684,6 +698,7 @@ export const useStore = create<AppState>((set, get) => ({
                          { editorVersion: EDITOR_VERSION });
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        selectedCharacterId: null,
             phase: "open", projectName: "Untitled.scf", fileToken: null,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
@@ -708,7 +723,7 @@ export const useStore = create<AppState>((set, get) => ({
     // views leaves their in-flight queries — and the script editor's
     // blur-triggered commit — resolving against no database.
     set({ phase: "start", fileToken: null, errorMessage: null,
-          navMode: "script",
+          navMode: "script", selectedCharacterId: null, characterTab: "Profile",
   assetPrefix: "", openRow: null, draft: null,
           selectedSubject: null, projectRoot: null,
           rootPermission: "none", rootTraversal: "unknown",
@@ -787,6 +802,9 @@ export const useStore = create<AppState>((set, get) => ({
   // else's form.
   setListSort: (listSort) => set({ listSort }),
   setNavMode: (navMode) => set({ navMode, openRow: null, draft: null }),
+  selectCharacter: (selectedCharacterId) =>
+    set({ selectedCharacterId, openRow: null, draft: null }),
+  setCharacterTab: (characterTab) => set({ characterTab }),
   setSchemaCollapsed: (schemaCollapsed) => set({ schemaCollapsed }),
   selectQuery: (selectedQuery) =>
     set({ selectedQuery, openRow: null, draft: null }),

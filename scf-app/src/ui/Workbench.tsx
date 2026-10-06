@@ -54,51 +54,30 @@ class MainPaneBoundary extends Component<
 import { SceneRail } from "./SceneRail.tsx";
 import { IdentityPanel } from "./IdentityPanel.tsx";
 import { AssetBrowser, AssetPathRail } from "./AssetBrowser.tsx";
+import { ActivityBar } from "./workspace/ActivityBar.tsx";
+import { CharacterRail } from "./workspace/CharacterRail.tsx";
+import { CharacterWorkspace } from "./workspace/CharacterWorkspace.tsx";
 
 const RAIL_KEY = "scf:rail-width";
 const RAIL_MIN = 180;
-/** Wide enough for a deep asset path or a long scene heading. The old
- *  ceiling was 500, which the tab bar alone outgrew once Assets became
- *  the seventh tab — the drag stopped short of the content every time. */
+/** Wide enough for a deep asset path or a long scene heading. */
 const RAIL_MAX = 900;
+/** The section switcher moved out of the rail into the activity bar, so
+ *  the rail no longer has a tab bar to measure; it starts at a width a
+ *  character list or scene list reads well at, and remembers a drag. */
+const RAIL_DEFAULT = 260;
 
-/**
- * The rail defaults to the width its own tab bar needs.
- *
- * Seven tabs squeezed into 260px truncate, so the first thing anyone
- * did on opening a project was drag the rail wider. Measuring beats
- * guessing here: the tabs are laid out with `flex: 1`, so their
- * natural width is whatever their labels require, and reading it after
- * mount adapts to a renamed or added tab without another magic number.
- */
-function useRailWidth(): [number, (w: number) => void, (el: HTMLElement
-  | null) => void] {
+function useRailWidth(): [number, (w: number) => void] {
   const [width, setWidth] = useState(() => {
     const saved = Number(localStorage.getItem(RAIL_KEY));
-    return Number.isFinite(saved) && saved >= RAIL_MIN ? saved : 0;
+    return Number.isFinite(saved) && saved >= RAIL_MIN ? saved : RAIL_DEFAULT;
   });
-
   const set = (w: number): void => {
     const clamped = Math.min(RAIL_MAX, Math.max(RAIL_MIN, w));
     setWidth(clamped);
     localStorage.setItem(RAIL_KEY, String(clamped));
   };
-
-  // Only measures when there is no stored preference: someone who has
-  // sized the rail themselves keeps that size.
-  const measure = (el: HTMLElement | null): void => {
-    if (el === null || width !== 0) return;
-    // The container's own scrollWidth already accounts for padding and
-    // borders; summing children missed both. The margin covers the
-    // vertical scrollbar, which otherwise steals the last few pixels
-    // and pushes the tabs into a second row.
-    const fitted = Math.min(RAIL_MAX,
-                            Math.max(RAIL_MIN, el.scrollWidth + 20));
-    setWidth(fitted);
-    localStorage.setItem(RAIL_KEY, String(fitted));
-  };
-
-  return [width === 0 ? RAIL_MIN : width, set, measure];
+  return [width, set];
 }
 
 function RailResizeHandle({ onDrag }: {
@@ -120,12 +99,12 @@ function RailResizeHandle({ onDrag }: {
 }
 
 export function Workbench(): JSX.Element {
-  const [railWidth, setRailWidth, measureRail] = useRailWidth();
+  const [railWidth, setRailWidth] = useRailWidth();
   // A diagnostic, not a workspace: an overlay reachable from anywhere
   // rather than a seventh nav tab, because it reads whatever row is
   // already open.
   const [identityOpen, setIdentityOpen] = useState(false);
-  const { projectName, navMode, setNavMode, openRow,
+  const { projectName, navMode, openRow,
           selectedEntityType, selectedSubject } = useStore();
 
   const main = openRow !== null
@@ -140,6 +119,8 @@ export function Workbench(): JSX.Element {
       ? <QueryRunner />
     : navMode === "assets"
       ? <AssetBrowser />
+    : navMode === "characters"
+      ? <CharacterWorkspace />
       // Subjects mode never falls through to the schema list: with no
       // subject picked it showed whichever entity the Schema tab was
       // last on, so switching subject type landed on Story Beats.
@@ -151,6 +132,18 @@ export function Workbench(): JSX.Element {
       : selectedEntityType !== null
         ? <EntityList entity={selectedEntityType} />
         : <EmptyMain />;
+
+  // What the rail lists for the current section. Structure and Shoot
+  // have no list of their own, so they get the width back rather than
+  // an empty column.
+  const railContent: JSX.Element | null =
+    navMode === "subject" ? <SubjectNav />
+    : navMode === "schema" ? <CategoryTree />
+    : navMode === "script" ? <SceneRail />
+    : navMode === "assets" ? <AssetPathRail />
+    : navMode === "characters" ? <CharacterRail />
+    : navMode === "queries" ? <QueryIndex />
+    : null;
 
   const errorMessage = useStoreRaw((st) => st.errorMessage);
   return (
@@ -193,54 +186,16 @@ export function Workbench(): JSX.Element {
           </button>
       </header>
       <div className="panels">
-        <nav className="rail rail-nav" style={{ width: railWidth }}>
-          <RailResizeHandle onDrag={(x) =>
-            setRailWidth(x - (document.querySelector(".rail-nav")
-              ?.getBoundingClientRect().left ?? 0))} />
-          <div className="nav-modes" role="tablist" ref={measureRail}>
-            <button role="tab" aria-selected={navMode === "script"}
-                    className={navMode === "script" ? "active" : ""}
-                    onClick={() => setNavMode("script")}>
-              Script
-            </button>
-            <button role="tab" aria-selected={navMode === "structure"}
-                    className={navMode === "structure" ? "active" : ""}
-                    onClick={() => setNavMode("structure")}>
-              Structure
-            </button>
-            <button role="tab" aria-selected={navMode === "shoot"}
-                    className={navMode === "shoot" ? "active" : ""}
-                    onClick={() => setNavMode("shoot")}>
-              Shoot
-            </button>
-            <button role="tab" aria-selected={navMode === "schema"}
-                    className={navMode === "schema" ? "active" : ""}
-                    onClick={() => setNavMode("schema")}>
-              Schema
-            </button>
-            <button role="tab" aria-selected={navMode === "subject"}
-                    className={navMode === "subject" ? "active" : ""}
-                    onClick={() => setNavMode("subject")}>
-              Subjects
-            </button>
-            <button role="tab" aria-selected={navMode === "queries"}
-                    className={navMode === "queries" ? "active" : ""}
-                    onClick={() => setNavMode("queries")}>
-              Queries
-            </button>
-            <button role="tab" aria-selected={navMode === "assets"}
-                    className={navMode === "assets" ? "active" : ""}
-                    onClick={() => setNavMode("assets")}>
-              Assets
-            </button>
-          </div>
-          {navMode === "subject" ? <SubjectNav />
-            : navMode === "schema" ? <CategoryTree />
-            : navMode === "script" ? <SceneRail />
-            : navMode === "assets" ? <AssetPathRail />
-            : navMode === "structure" || navMode === "shoot" ? null
-            : <QueryIndex />}
-        </nav>
+        <ActivityBar />
+        {railContent !== null && (
+          <nav className="rail rail-nav" style={{ width: railWidth }}
+               aria-label="Section contents">
+            <RailResizeHandle onDrag={(x) =>
+              setRailWidth(x - (document.querySelector(".rail-nav")
+                ?.getBoundingClientRect().left ?? 0))} />
+            {railContent}
+          </nav>
+        )}
         <main className="main-panel">{main}<UndoToast /></main>
         {openRow !== null && openRow.id !== null && (
           <aside className="rail rail-context">
