@@ -14,10 +14,12 @@ import {
   applyBundleAdd, bindBundle, createBundle,
 } from "@scf-core/bundling.ts";
 import { resolveMedia } from "@scf-core/resolution.ts";
+import { visualAnchorFor } from "@scf-core/anchors.ts";
 import {
   attach, boardForIdentifier, confirmIdentity, detach, loadBoard,
   registerFiles, repurpose, SharedSetError, withCreatedAssets,
   addException, moveException, purposesFor, removeException, updateException,
+  ScopeError, setAnchorClip, setAnchorRegion,
 } from "../src/editor/mediaOps.ts";
 import { applyUndoChange } from "../src/state/undoChange.ts";
 import { createCharacter } from "../src/editor/elementOps.ts";
@@ -493,5 +495,109 @@ describe("a location's board", () => {
     expect(anchor).toEqual({ anchor_type: "audio", subject_type: "location" });
     const look = await loadBoard(db.exec, registry, loc, "look");
     expect(look.tiles.map((t) => t.asset["name"])).toEqual(["kitchen.png"]);
+  });
+});
+
+describe("which part of the file an anchor means", () => {
+  const anchorOf = async (board: "look" | "voice", path: string) => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const f = await asset(db.exec, path);
+    await attach(db.exec, registry, id, board, [f], "identity");
+    const tile = (await loadBoard(db.exec, registry, id, board)).tiles[0];
+    if (tile === undefined) throw new Error("no tile");
+    return { id, tile };
+  };
+
+  test("a marked face is the region_box the thumbnails read", async () => {
+    const { id, tile } = await anchorOf("look", "refs/group.png");
+    expect(tile.scope).toEqual({ region: null, regionRaw: null,
+      regionLabel: null, clipStart: null, clipEnd: null });
+    await setAnchorRegion(db.exec, tile.link.id,
+                          { x: 420.4, y: 180.6, w: 480, h: 600 }, " face ",
+                          { width: 1920, height: 1080 });
+    const row = (await db.exec("SELECT region_box, region_label FROM " +
+                               "entity_anchor"))[0];
+    expect(row).toEqual({ region_box: '{"x":420,"y":181,"w":480,"h":600}',
+                          region_label: "face" });
+    // The one reader of the field agrees with the board.
+    const found = await visualAnchorFor({ exec: db.exec, registry },
+                                      "character", id);
+    expect(found?.region).toEqual({ x: 420, y: 181, w: 480, h: 600 });
+    const again = (await loadBoard(db.exec, registry, id, "look")).tiles[0];
+    expect(again?.scope?.region).toEqual({ x: 420, y: 181, w: 480, h: 600 });
+    expect(again?.scope?.regionLabel).toBe("face");
+  });
+
+  test("a box past the edge, or with no size, is refused", async () => {
+    const { tile } = await anchorOf("look", "refs/group.png");
+    await expect(setAnchorRegion(db.exec, tile.link.id,
+      { x: 1800, y: 0, w: 200, h: 100 }, null, { width: 1920, height: 1080 }))
+      .rejects.toThrow(ScopeError);
+    await expect(setAnchorRegion(db.exec, tile.link.id,
+      { x: 10, y: 10, w: 0, h: 100 }, null)).rejects.toThrow(ScopeError);
+    const row = (await db.exec("SELECT region_box FROM entity_anchor"))[0];
+    expect(row?.["region_box"]).toBeNull();
+  });
+
+  test("clearing the box clears its label; undo puts both back", async () => {
+    const { tile } = await anchorOf("look", "refs/group.png");
+    await setAnchorRegion(db.exec, tile.link.id,
+                          { x: 1, y: 2, w: 3, h: 4 }, "face");
+    const cleared = await setAnchorRegion(db.exec, tile.link.id, null, "face");
+    expect((await db.exec("SELECT region_box, region_label FROM " +
+                          "entity_anchor"))[0])
+      .toEqual({ region_box: null, region_label: null });
+    await applyUndoChange(db.exec, cleared);
+    expect((await db.exec("SELECT region_box, region_label FROM " +
+                          "entity_anchor"))[0])
+      .toEqual({ region_box: '{"x":1,"y":2,"w":3,"h":4}', region_label: "face" });
+  });
+
+  test("a stored box nothing can read is shown, not dropped", async () => {
+    const { id, tile } = await anchorOf("look", "refs/group.png");
+    await db.exec("UPDATE entity_anchor SET region_box = 'left third' " +
+                  "WHERE id = ?", [tile.link.id]);
+    const again = (await loadBoard(db.exec, registry, id, "look")).tiles[0];
+    expect(again?.scope?.region).toBeNull();
+    expect(again?.scope?.regionRaw).toBe("left third");
+  });
+
+  test("a voice clip is the two audio offsets, to the millisecond",
+       async () => {
+    const { id, tile } = await anchorOf("voice", "voice/eleanor_take3.wav");
+    const change = await setAnchorClip(db.exec, tile.link.id, 2.12345, 5.4,
+                                       12);
+    expect((await db.exec("SELECT audio_offset_start_sec AS s, " +
+                          "audio_offset_end_sec AS e FROM entity_anchor"))[0])
+      .toEqual({ s: 2.123, e: 5.4 });
+    const again = (await loadBoard(db.exec, registry, id, "voice")).tiles[0];
+    expect([again?.scope?.clipStart, again?.scope?.clipEnd]).toEqual([2.123, 5.4]);
+    // Open at one end is allowed: from here to the end of the file.
+    await setAnchorClip(db.exec, tile.link.id, 3, null);
+    await applyUndoChange(db.exec, change);
+    expect((await db.exec("SELECT audio_offset_start_sec AS s, " +
+                          "audio_offset_end_sec AS e FROM entity_anchor"))[0])
+      .toEqual({ s: null, e: null });
+  });
+
+  test("a clip that ends before it starts, or past the end, is refused",
+       async () => {
+    const { tile } = await anchorOf("voice", "voice/eleanor_take3.wav");
+    await expect(setAnchorClip(db.exec, tile.link.id, 5, 2))
+      .rejects.toThrow(/end after it starts/);
+    await expect(setAnchorClip(db.exec, tile.link.id, -1, 2))
+      .rejects.toThrow(ScopeError);
+    await expect(setAnchorClip(db.exec, tile.link.id, 1, 20, 12))
+      .rejects.toThrow(/12.00 s long/);
+  });
+
+  test("sets and concepts carry no scope", async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const f = await asset(db.exec, "a.png");
+    const g = await asset(db.exec, "b.png");
+    await attach(db.exec, registry, id, "look", [f], "set");
+    await attach(db.exec, registry, id, "look", [g], "concept");
+    const b = await loadBoard(db.exec, registry, id, "look");
+    expect(b.tiles.map((t) => t.scope)).toEqual([null, null]);
   });
 });

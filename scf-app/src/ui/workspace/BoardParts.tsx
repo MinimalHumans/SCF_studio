@@ -3,7 +3,7 @@
  * BoardParts.tsx — the pieces a reference board and its exception cards
  * share: how files arrive, a tile, and what is in force "as of" a scene.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ImportCandidate } from "@scf-core/assetImport.ts";
 import { resolveMedia } from "@scf-core/resolution.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
@@ -16,6 +16,7 @@ import type { ChangeUndo } from "../../state/undoChange.ts";
 import { addressHandles, beginDrop } from "../../files/dropIntake.ts";
 import { pickAssetFiles } from "../../files/assetLocator.ts";
 import { AssetThumb } from "../AssetThumb.tsx";
+import { scopeSummary } from "./AnchorScope.tsx";
 import { useQuery } from "../useQuery.ts";
 
 /** Files on their way onto a board or an exception. */
@@ -187,13 +188,29 @@ export async function placeFiles(
   }
 }
 
+/** Boards whose identity tiles can say which part of the file is meant. */
+const SCOPED: Partial<Record<BoardName, "region" | "clip">> = {
+  look: "region", voice: "clip", sound: "clip",
+};
+
 export function BoardTile({ tile, board, owner, purposes, live, onChange,
-                            onOpen }: {
+                            onOpen, onScope, scoping = false }: {
   tile: Tile; board: BoardName; owner: Owner; purposes: Purpose[];
   /** True or false when an "as of" scene is set; null otherwise. */
   live: boolean | null;
   onChange: (c: ChangeUndo) => void; onOpen: () => void;
+  /** Open the region or clip editor for this tile; absent where the
+   *  board does not offer it. */
+  onScope?: () => void;
+  scoping?: boolean;
 }): JSX.Element {
+  const scopeKind = tile.purpose === "identity" ? SCOPED[board] : undefined;
+  const summary = scopeKind === undefined ? null
+    : scopeSummary(tile, scopeKind === "clip");
+  // A new object every read; the thumbnail keys its work on identity.
+  const regionKey = JSON.stringify(tile.scope?.region ?? null);
+  const region = useMemo(() => tile.scope?.region ?? null,
+                         [regionKey]);  // eslint-disable-line react-hooks/exhaustive-deps
   const [role, setRole] = useState(tile.role ?? "");
   useEffect(() => { setRole(tile.role ?? ""); }, [tile.role]);
   const identifier = tile.asset["identifier"];
@@ -209,7 +226,8 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
                    (live === false ? " dim" : "")}>
       <div className="board-thumb">
         <AssetThumb identifier={typeof identifier === "string" ? identifier : null}
-                    size="lg" alt={name} onClick={onOpen} />
+                    size="lg" alt={name} onClick={onOpen}
+                    region={scopeKind === "region" ? region : null} />
         {primary && <span className="board-star" title="The reference">★</span>}
         {live === true && <span className="board-live">in force</span>}
       </div>
@@ -260,6 +278,19 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
                   onClick={() => run(confirmIdentity(exec, tile.link.id),
                                      "Could not confirm")}>
             Confirm ({tile.status ?? "unconfirmed"})
+          </button>
+        )}
+        {scopeKind !== undefined && onScope !== undefined && (
+          <button className={"tiny scope-open" + (summary !== null ? " set" : "")}
+                  aria-expanded={scoping} onClick={onScope}
+                  title={scopeKind === "region"
+                    ? "Mark which part of the image is meant"
+                    : "Mark which stretch of the recording is meant"}>
+            {scopeKind === "region"
+              ? summary === null
+                ? owner.kind === "character" ? "Mark the face" : "Mark a region"
+                : `Region: ${summary}`
+              : summary === null ? "Mark the clip" : `Clip ${summary}`}
           </button>
         )}
         <div className="ws-row-actions">
