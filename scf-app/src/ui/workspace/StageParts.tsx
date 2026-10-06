@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo, useState } from "react";
 import { q } from "@scf-core/db.ts";
-import { exec, useStore } from "../../state/store.ts";
-import { addStage } from "../../editor/elementOps.ts";
+import { exec, registry, useStore } from "../../state/store.ts";
+import {
+  addStage, STAGE_LABEL, STAGE_PARENT,
+} from "../../editor/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import type { MarkLane, StripScene } from "./StoryStrip.tsx";
@@ -50,30 +52,44 @@ export function AddStageForm({ pending, scenes, onDone, onCancel }: {
   );
 }
 
-/** Edit one stage: its label, where it starts, what it means. */
+/**
+ * Edit one stage: its label, where it starts, and the rest of its own
+ * fields. Read from the registry, so a prop's state shows who holds it
+ * and where it is, and an arc stage its description, without a list
+ * per table.
+ */
 export function StageEditor({ table, id, onRemoved }: {
   table: string; id: number; onRemoved: () => void;
 }): JSX.Element | null {
   const { deleteRow, openEntityRow } = useStore();
   const row = useQuery(`SELECT * FROM ${q(table)} WHERE id = ?`, [id])[0];
   if (row === undefined) return null;
+  const labelField = STAGE_LABEL[table] ?? "stage_label";
+  const others = (registry.entities.get(table)?.fields ?? []).filter((f) =>
+    f.autoInjected !== true && f.hidden !== true &&
+    f.name !== labelField && f.name !== "scene_id" && f.name !== "name" &&
+    f.name !== STAGE_PARENT[table]);
+  const short = others.filter((f) => f.fieldType !== "textarea");
+  const long = others.filter((f) => f.fieldType === "textarea");
   return (
     <article className="ws-card strip-stage-editor">
       <div className="ws-grid">
-        <AutoField entity={table} id={id} field="stage_label"
-                   value={row["stage_label"] ?? null} label="Stage"
+        <AutoField entity={table} id={id} field={labelField}
+                   value={row[labelField] ?? null} label="Stage"
                    showHelp={false} />
         <AutoField entity={table} id={id} field="scene_id"
                    value={row["scene_id"] ?? null} label="Starts at"
                    showHelp={false} />
+        {short.map((f) => (
+          <AutoField key={f.name} entity={table} id={id} field={f.name}
+                     value={row[f.name] ?? null} showHelp={false} />
+        ))}
       </div>
       <div className="ws-stack">
-        {["description", "wardrobe", "meaning", "notes"]
-          .filter((f) => f in row)
-          .map((f) => (
-            <AutoField key={f} entity={table} id={id} field={f}
-                       value={row[f] ?? null} showHelp={false} />
-          ))}
+        {long.map((f) => (
+          <AutoField key={f.name} entity={table} id={id} field={f.name}
+                     value={row[f.name] ?? null} showHelp={false} />
+        ))}
       </div>
       <div className="ws-row-actions">
         <button className="ghost tiny"

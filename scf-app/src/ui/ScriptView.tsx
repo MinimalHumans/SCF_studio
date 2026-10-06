@@ -543,11 +543,12 @@ export function ScriptView(): JSX.Element {
         extensions: [
           screenplayExtensions({
             onCommitRequest: () => void explicitCommit(),
-            // A character chip opens the character's workspace, where
-            // everything about them is; other chips open the record.
+            // A character, location or prop chip opens that workspace,
+            // where everything about it is; other chips open the record.
             onChipClick: (entity, entityId) =>
-              entity === "character"
-                ? useStore.getState().openCharacter(entityId)
+              entity === "character" || entity === "location" ||
+              entity === "prop"
+                ? useStore.getState().openSubject(entity, entityId)
                 : void openEntityRow(entity, entityId),
             getLocations: () => entityNamesRef.current.locations,
             getCharacters: () => entityNamesRef.current.characters,

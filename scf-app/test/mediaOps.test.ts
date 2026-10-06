@@ -412,3 +412,86 @@ describe("a costume's board", () => {
       .rejects.toThrow(/cannot carry/);
   });
 });
+
+describe("a location's board", () => {
+  // The fixture's creek: scene 25 resolves "Creek — summer, low water",
+  // scene 9 "Creek — winter flood" (§12.17). Scene 7 is at dusk.
+  const sceneId = async (exec: SqlExec, n: string): Promise<number> =>
+    Number((await exec("SELECT id FROM scene WHERE scene_number = ?", [n]))[0]
+      ?.["id"]);
+
+  test("a variant exception applies where §12.17 picks the variant",
+       async () => {
+    const fx = fixtureCopy("loc-variant");
+    try {
+      const creek = { kind: "location" as const, id: 2 };
+      const summer = Number((await fx.exec(
+        "SELECT id FROM location_variant WHERE name LIKE 'Creek — summer%'"))[0]
+        ?.["id"]);
+      const { bindingId } = await addException(fx.exec, registry, creek, "look",
+        { kind: "variant", variantId: summer }, false);
+      const x = (await loadBoard(fx.exec, registry, creek, "look")).exceptions
+        .find((e) => e.bindingId === bindingId);
+      expect(x?.when).toBe("as Creek — summer, low water");
+      const f = await asset(fx.exec, "plates/creek_summer.png");
+      await attach(fx.exec, registry, creek, "look", [f], "set",
+                   { bundleId: x?.bundleId });
+      const at = async (n: string): Promise<boolean> =>
+        (await resolveMedia({ exec: fx.exec, registry }, "location", 2,
+          "visual_identity", await sceneId(fx.exec, n)))
+          .assets_most_specific_first.some((a) => Number(a["id"]) === f);
+      expect(await at("25")).toBe(true);
+      expect(await at("9")).toBe(false);
+    } finally { fx.close(); }
+  });
+
+  test("a time-of-day exception applies at that time only", async () => {
+    const fx = fixtureCopy("loc-time");
+    try {
+      const creek = { kind: "location" as const, id: 2 };
+      const { bindingId } = await addException(fx.exec, registry, creek, "look",
+        { kind: "time", value: "dusk" }, false);
+      const x = (await loadBoard(fx.exec, registry, creek, "look")).exceptions
+        .find((e) => e.bindingId === bindingId);
+      expect(x?.when).toBe("at dusk");
+      const f = await asset(fx.exec, "plates/creek_dusk.png");
+      await attach(fx.exec, registry, creek, "look", [f], "set",
+                   { bundleId: x?.bundleId });
+      const verdict = async (n: string): Promise<boolean | undefined> =>
+        (await resolveMedia({ exec: fx.exec, registry }, "location", 2,
+          "visual_identity", await sceneId(fx.exec, n))).binding_verdicts
+          .find((v) => v.id === bindingId)?.applies;
+      expect(await verdict("7")).toBe(true);
+      expect(await verdict("9")).toBe(false);
+    } finally { fx.close(); }
+  });
+
+  test("a time condition is refused for an owner whose table lacks it",
+       async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    await expect(addException(db.exec, registry, id, "look",
+      { kind: "time", value: "night" }, false)).rejects.toThrow(/cannot be scoped/);
+  });
+
+  test("the Sound board: an audio anchor, and audio concepts", async () => {
+    await db.exec("INSERT INTO location (uuid, name) VALUES (?, 'Kitchen')",
+                  [newUuid()]);
+    const loc = { kind: "location" as const,
+      id: Number((await db.exec("SELECT last_insert_rowid() AS id"))[0]?.["id"]) };
+    const tone = await asset(db.exec, "sound/kitchen_tone.wav");
+    const sketch = await asset(db.exec, "sound/kettle_idea.wav");
+    const photo = await asset(db.exec, "look/kitchen.png");
+    await attach(db.exec, registry, loc, "sound", [tone], "identity");
+    await attach(db.exec, registry, loc, "sound", [sketch], "concept");
+    await attach(db.exec, registry, loc, "look", [photo], "concept");
+    const sound = await loadBoard(db.exec, registry, loc, "sound");
+    expect(sound.tiles.map((t) => [t.purpose, t.asset["name"]])).toEqual([
+      ["identity", "kitchen_tone.wav"], ["concept", "kettle_idea.wav"]]);
+    expect(sound.tiles[0]?.label).toBe("This is how it sounds");
+    const anchor = (await db.exec("SELECT anchor_type, subject_type FROM " +
+                                  "entity_anchor"))[0];
+    expect(anchor).toEqual({ anchor_type: "audio", subject_type: "location" });
+    const look = await loadBoard(db.exec, registry, loc, "look");
+    expect(look.tiles.map((t) => t.asset["name"])).toEqual(["kitchen.png"]);
+  });
+});

@@ -66,6 +66,9 @@ export type NavMode =
   "assets" | "characters" | "locations" | "props";
 
 export { CHARACTER_TABS, type CharacterTab } from "./characterLayout.ts";
+import type {
+  LocationTab, PropTab, SubjectKind,
+} from "./subjectKinds.ts";
 import type { CharacterTab } from "./characterLayout.ts";
 
 export interface OpenRow {
@@ -148,6 +151,15 @@ interface AppState {
    *  looks how in one scene is the point of it. */
   asOfSceneId: number | null;
   setAsOfScene: (id: number | null) => void;
+  /** The location and prop open in their workspaces, and their tabs. */
+  selectedLocationId: number | null;
+  locationTab: LocationTab;
+  selectedPropId: number | null;
+  propTab: PropTab;
+  /** One way in for all three kinds, so the shared shell and rail need
+   *  not know which kind they are showing. */
+  selectSubjectOf: (kind: SubjectKind, id: number | null) => void;
+  setTabOf: (kind: SubjectKind, tab: string) => void;
   /** A screenplay line the Script view should open at when it next
    *  loads — how other sections say "show me this line". Consumed once. */
   pendingScriptLine: string | null;
@@ -157,6 +169,8 @@ interface AppState {
   takePendingScriptLine: () => string | null;
   /** Open a character's workspace, from anywhere. */
   openCharacter: (id: number) => void;
+  /** Open any narrative element's workspace, from anywhere. */
+  openSubject: (kind: SubjectKind, id: number) => void;
   selectCharacter: (id: number | null) => void;
   setCharacterTab: (tab: CharacterTab) => void;
   draft: FormDraft | null;
@@ -404,6 +418,7 @@ async function finishFolderOpen(
   const rev = get().revision + 1;
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         selectedCharacterId: null, asOfSceneId: null,
+        selectedLocationId: null, selectedPropId: null,
         phase: "open", projectName: opened.name,
         fileToken: opened.token, lastSession: opened.name,
         folderChoice: null,
@@ -445,7 +460,8 @@ export const useStore = create<AppState>((set, get) => ({
   // click before you can write. Every open path sets this too, so
   // closing one project and opening another lands on the script again.
   navMode: "script", selectedCharacterId: null, characterTab: "Profile",
-  asOfSceneId: null,
+  asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
+  selectedPropId: null, propTab: "Profile",
   assetPrefix: "",
   listSort: "story",
   selectedQuery: null,
@@ -474,6 +490,7 @@ export const useStore = create<AppState>((set, get) => ({
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         selectedCharacterId: null, asOfSceneId: null,
+        selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: "Hollow Creek (demo)",
             fileToken: null, lastSession: "Hollow Creek (demo)",
             revision: rev, lastSavedRevision: rev });
@@ -515,6 +532,7 @@ export const useStore = create<AppState>((set, get) => ({
           ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         selectedCharacterId: null, asOfSceneId: null,
+        selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: `${name}`, fileToken,
             projectRoot, rootMode,
             rootVerified: pair !== null,
@@ -549,6 +567,7 @@ export const useStore = create<AppState>((set, get) => ({
       clearResolutions();
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         selectedCharacterId: null, asOfSceneId: null,
+        selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
             projectRoot: null, rootPermission: "none",
@@ -722,6 +741,7 @@ export const useStore = create<AppState>((set, get) => ({
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
         selectedCharacterId: null, asOfSceneId: null,
+        selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: "Untitled.scf", fileToken: null,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
@@ -747,7 +767,8 @@ export const useStore = create<AppState>((set, get) => ({
     // blur-triggered commit — resolving against no database.
     set({ phase: "start", fileToken: null, errorMessage: null,
           navMode: "script", selectedCharacterId: null, characterTab: "Profile",
-  asOfSceneId: null,
+  asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
+  selectedPropId: null, propTab: "Profile",
   assetPrefix: "", openRow: null, draft: null,
           selectedSubject: null, projectRoot: null,
           rootPermission: "none", rootTraversal: "unknown",
@@ -830,6 +851,16 @@ export const useStore = create<AppState>((set, get) => ({
     set({ selectedCharacterId, openRow: null, draft: null }),
   setCharacterTab: (characterTab) => set({ characterTab }),
   setAsOfScene: (asOfSceneId) => set({ asOfSceneId }),
+  selectSubjectOf: (kind, id) => set({
+    ...(kind === "character" ? { selectedCharacterId: id }
+      : kind === "location" ? { selectedLocationId: id }
+      : { selectedPropId: id }),
+    openRow: null, draft: null,
+  }),
+  setTabOf: (kind, tab) => set(
+    kind === "character" ? { characterTab: tab as CharacterTab }
+      : kind === "location" ? { locationTab: tab as LocationTab }
+      : { propTab: tab as PropTab }),
   pendingScriptLine: null,
   openScriptAt: (pendingScriptLine) =>
     set({ pendingScriptLine, navMode: "script", openRow: null, draft: null }),
@@ -838,6 +869,12 @@ export const useStore = create<AppState>((set, get) => ({
     if (line !== null) set({ pendingScriptLine: null });
     return line;
   },
+  openSubject: (kind, id) => set({
+    ...(kind === "character" ? { selectedCharacterId: id, navMode: "characters" }
+      : kind === "location" ? { selectedLocationId: id, navMode: "locations" }
+      : { selectedPropId: id, navMode: "props" }),
+    openRow: null, draft: null,
+  }),
   openCharacter: (selectedCharacterId) =>
     set({ selectedCharacterId, navMode: "characters", openRow: null,
           draft: null }),

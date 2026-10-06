@@ -6,8 +6,9 @@ import {
 } from "../../state/subjectStats.ts";
 import { useQuery } from "../useQuery.ts";
 import { CharacterFace } from "./CharacterFace.tsx";
+import { KINDS, type SubjectKind } from "../../state/subjectKinds.ts";
 import {
-  charactersNamed, cleanName, createCharacter,
+  cleanName, createSubject, subjectsNamed,
 } from "../../editor/elementOps.ts";
 
 /**
@@ -19,8 +20,18 @@ import {
  * duplicate made by accident splits every cue match and scene link.
  */
 export function CharacterRail(): JSX.Element {
-  const { selectedCharacterId, selectCharacter, setCharacterTab } =
-    useStore();
+  return <SubjectRail kind="character" />;
+}
+
+/** The list for any narrative-element kind. */
+export function SubjectRail({ kind }: { kind: SubjectKind }): JSX.Element {
+  const spec = KINDS[kind];
+  const selectedId = useStore((st) =>
+    kind === "character" ? st.selectedCharacterId
+      : kind === "location" ? st.selectedLocationId : st.selectedPropId);
+  const { selectSubjectOf, setTabOf } = useStore();
+  const selectCharacter = (id: number | null): void => selectSubjectOf(kind, id);
+  const selectedCharacterId = selectedId;
   const [sort, setSort] = useState<SubjectSort>("story");
   const [filter, setFilter] = useState("");
   const [showCut, setShowCut] = useState(false);
@@ -29,8 +40,9 @@ export function CharacterRail(): JSX.Element {
   const [clash, setClash] = useState<Array<{ id: number; name: string }>>([]);
 
   const rows = useQuery(
-    "SELECT id, name, role, lifecycle_status FROM character ORDER BY name");
-  const statsSql = useMemo(() => subjectStatsSql(registry, "character"), []);
+    `SELECT id, name, ${spec.metaField} AS meta, lifecycle_status ` +
+    `FROM ${kind} ORDER BY name`);
+  const statsSql = useMemo(() => subjectStatsSql(registry, kind), [kind]);
   const statRows = useQuery(statsSql);
   const stats = useMemo(() => {
     const map = new Map<number, SubjectStat>();
@@ -50,7 +62,8 @@ export function CharacterRail(): JSX.Element {
     .filter((r) => showCut || r["lifecycle_status"] !== "cut")
     .map((r) => ({
       id: Number(r["id"]), name: String(r["name"] ?? ""),
-      role: r["role"] === null ? null : String(r["role"]),
+      role: r["meta"] === null || r["meta"] === undefined
+        ? null : String(r["meta"]).replace(/_/g, " "),
       cut: r["lifecycle_status"] === "cut",
       stat: stats.get(Number(r["id"])),
     }))
@@ -61,7 +74,7 @@ export function CharacterRail(): JSX.Element {
     const name = cleanName(draftName);
     if (name === null) return;
     if (!force) {
-      const same = await charactersNamed(exec, name);
+      const same = await subjectsNamed(exec, kind, name);
       if (same.length > 0) {
         setClash(same.map((r) => ({ id: Number(r["id"]),
                                     name: String(r["name"]) })));
@@ -69,15 +82,15 @@ export function CharacterRail(): JSX.Element {
       }
     }
     try {
-      const id = await createCharacter(exec, name);
+      const id = await createSubject(exec, kind, name);
       useStore.getState().noteWrite();
       setCreating(false);
       setDraftName("");
       setClash([]);
-      setCharacterTab("Profile");
+      setTabOf(kind, "Profile");
       selectCharacter(id);
     } catch (e) {
-      useStore.setState({ errorMessage: `Could not create the character: ${
+      useStore.setState({ errorMessage: `Could not create the ${spec.noun}: ${
         e instanceof Error ? e.message : String(e)}` });
     }
   };
@@ -87,8 +100,8 @@ export function CharacterRail(): JSX.Element {
       {creating ? (
         <form className="ws-create"
               onSubmit={(e) => { e.preventDefault(); void finishCreate(false); }}>
-          <label htmlFor="ws-new-character">Name the new character</label>
-          <input id="ws-new-character" autoFocus value={draftName}
+          <label htmlFor={`ws-new-${kind}`}>Name the new {spec.noun}</label>
+          <input id={`ws-new-${kind}`} autoFocus value={draftName}
                  onChange={(e) => { setDraftName(e.target.value); setClash([]); }}
                  onKeyDown={(e) => {
                    if (e.key === "Escape") {
@@ -97,7 +110,7 @@ export function CharacterRail(): JSX.Element {
                  }} />
           {clash.length > 0 ? (
             <div className="ws-clash" role="alert">
-              <p>A character with this name already exists.</p>
+              <p>A {spec.noun} with this name already exists.</p>
               <button type="button" onClick={() => {
                 const first = clash[0];
                 if (first !== undefined) selectCharacter(first.id);
@@ -120,13 +133,13 @@ export function CharacterRail(): JSX.Element {
         </form>
       ) : (
         <button className="primary ws-new" onClick={() => setCreating(true)}>
-          New character
+          New {spec.noun}
         </button>
       )}
 
       <div className="ws-rail-tools">
         <input type="search" placeholder="Filter" value={filter}
-               aria-label="Filter characters"
+               aria-label={`Filter ${spec.plural}`}
                onChange={(e) => setFilter(e.target.value)} />
         <select value={sort} aria-label="Order"
                 onChange={(e) => setSort(e.target.value as SubjectSort)}>
@@ -136,7 +149,7 @@ export function CharacterRail(): JSX.Element {
         </select>
       </div>
 
-      <ul className="ws-list" aria-label="Characters">
+      <ul className="ws-list" aria-label={spec.plural}>
         {items.map((c) => (
           <li key={c.id}>
             <button className={"ws-list-item" +
@@ -145,15 +158,16 @@ export function CharacterRail(): JSX.Element {
                     aria-current={c.id === selectedCharacterId
                                   ? "true" : undefined}
                     onClick={() => selectCharacter(c.id)}>
-              <CharacterFace id={c.id} name={c.name} />
+              <CharacterFace id={c.id} name={c.name} kind={kind} />
               <span className="ws-list-text">
                 <span className="ws-list-name">{c.name}</span>
                 <span className="ws-list-meta">
-                  {c.cut ? "cut" : c.role ?? "no role yet"}
+                  {c.cut ? "cut" : c.role ??
+                    (kind === "character" ? "no role yet" : "no type yet")}
                 </span>
               </span>
               <span className="ws-list-count"
-                    title="Scenes this character is tied to">
+                    title={`Scenes this ${spec.noun} is tied to`}>
                 {c.stat?.scenes ?? 0}
               </span>
             </button>
@@ -162,7 +176,7 @@ export function CharacterRail(): JSX.Element {
         {items.length === 0 && (
           <li className="rail-empty">
             {rows.length === 0
-              ? "No characters yet."
+              ? `No ${spec.plural} yet.`
               : "Nobody matches that filter."}
           </li>
         )}
