@@ -37,7 +37,9 @@ export const PROFILE_SECTIONS: Array<{
 ];
 
 /** Subtabs with a built view. The rest list their records (PENDING_SOURCES). */
-export const BUILT_TABS: CharacterTab[] = ["Profile", "Relationships", "Arc"];
+export const BUILT_TABS: CharacterTab[] = [
+  "Profile", "Look", "Voice", "Relationships", "Arc",
+];
 
 /**
  * The fields of `character_relationship` in the Relationships tab. The
@@ -95,26 +97,10 @@ const own = (entity: string, label: string): RecordSource => ({
  * from the start, just not yet in its friendly form.
  */
 export const PENDING_SOURCES: Partial<Record<CharacterTab, RecordSource[]>> = {
-  Look: [
-    own("character_appearance_profile", "Appearance"),
-    own("character_color_identity", "Color identity"),
-    { entity: "entity_anchor", label: "Identity references",
-      where: "subject_type = 'character' AND subject_id = ?",
-      prefill: (id) => ({ subject_type: "character", subject_id: id,
-                          anchor_type: "visual" }) },
-    own("character_asset_binding", "Reference sets"),
-  ],
   Wardrobe: [
     own("costume", "Costumes"),
     own("costume_progression", "Wardrobe through the story"),
     own("makeup_hair_design", "Makeup & hair"),
-  ],
-  Voice: [
-    own("vocal_profile", "Voice"),
-    { entity: "performance_state", label: "Vocal shifts",
-      where: "character_id = ? AND modality = 'vocal'",
-      prefill: (id) => ({ character_id: id, modality: "vocal" }) },
-    own("voiceover_design", "Voiceover"),
   ],
   Physicality: [
     own("physical_character_profile", "Physicality"),

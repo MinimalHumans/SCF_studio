@@ -309,13 +309,16 @@ permission to read it on reload.">
  * delete to prevent the rare wrong one, an undo interrupts none.
  */
 function UndoToast(): JSX.Element | null {
-  const { undo, undoDelete, dismissUndo } = useStore();
-  if (undo === null) return null;
+  const { undo, undoDelete, dismissUndo, lastChange, undoLastChange } =
+    useStore();
+  if (undo === null && lastChange === null) return null;
   return (
     <div className="undo-toast" role="status">
-      <span>{undoSummary(undo)}</span>
+      <span>{lastChange !== null ? lastChange.label
+        : undo === null ? "" : undoSummary(undo)}</span>
       <button className="ghost tiny"
-              onClick={() => void undoDelete()}>Undo</button>
+              onClick={() => void (lastChange !== null
+                ? undoLastChange() : undoDelete())}>Undo</button>
       <button className="ghost tiny" aria-label="dismiss"
               onClick={dismissUndo}>×</button>
     </div>

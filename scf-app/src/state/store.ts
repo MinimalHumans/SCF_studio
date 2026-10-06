@@ -25,6 +25,8 @@ import { rowLabel } from "./displayName.ts";
 import {
   captureForUndo, restoreFromUndo, type UndoEntry,
 } from "./undoDelete.ts";
+import { applyUndoChange, type ChangeUndo } from "./undoChange.ts";
+import { withTransaction } from "@scf-core/db.ts";
 import {
   forgetHandle, forgetRoot, recallHandle, recallPairFor, recallRoot,
   rememberHandle, rememberPair, rememberRoot,
@@ -210,6 +212,11 @@ interface AppState {
   setSchemaCollapsed: (next: Set<string>) => void;
   /** The last delete, restorable until dismissed or superseded. */
   undo: UndoEntry | null;
+  /** The last workspace change, if it was more recent than any delete:
+   *  one toast, one Undo, whichever kind the last action was. */
+  lastChange: ChangeUndo | null;
+  recordChange: (change: ChangeUndo) => void;
+  undoLastChange: () => Promise<void>;
   undoDelete: () => Promise<void>;
   dismissUndo: () => void;
 }
@@ -400,6 +407,7 @@ export const useStore = create<AppState>((set, get) => ({
   schemaCollapsed: new Set<string>(),
   subjectType: "character",
   undo: null,
+  lastChange: null,
   lastSession: localStorage.getItem("scf:last-session"),
   errorMessage: null,
   projectName: null,
@@ -959,6 +967,7 @@ export const useStore = create<AppState>((set, get) => ({
     set({
       revision: get().revision + 1,
       undo,
+      lastChange: null,
       ...(openRow?.entity === entity && openRow.id === id
         ? { openRow: null, draft: null } : {}),
     });
@@ -976,7 +985,25 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  dismissUndo: () => set({ undo: null }),
+  dismissUndo: () => set({ undo: null, lastChange: null }),
+
+  recordChange: (change) => {
+    const empty = change.created.length === 0 && change.before.length === 0;
+    set({ revision: get().revision + 1,
+          ...(empty ? {} : { lastChange: change, undo: null }) });
+  },
+
+  undoLastChange: async () => {
+    const change = get().lastChange;
+    if (change === null) return;
+    try {
+      await withTransaction(exec, () => applyUndoChange(exec, change));
+      set({ revision: get().revision + 1, lastChange: null });
+    } catch (e) {
+      set({ errorMessage: `Undo failed: ${
+        e instanceof Error ? e.message : String(e)}` });
+    }
+  },
 }));
 
 /**
