@@ -8,7 +8,7 @@ import type { ImportCandidate } from "@scf-core/assetImport.ts";
 import { resolveMedia } from "@scf-core/resolution.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
-  attach, BOARDS, confirmIdentity, detach, PURPOSE_LABEL, registerFiles,
+  attach, BOARDS, confirmIdentity, detach, purposeLabel, registerFiles,
   repurpose, setTileRole, SharedSetError, withCreatedAssets,
   type BoardName, type Owner, type Purpose, type Tile,
 } from "../../editor/mediaOps.ts";
@@ -236,7 +236,7 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
               {tile.purpose === "other" &&
                 <option value="other">{tile.label}</option>}
               {purposes.map((p) => (
-                <option key={p} value={p}>{PURPOSE_LABEL[board][p]}</option>
+                <option key={p} value={p}>{purposeLabel(owner.kind, board, p)}</option>
               ))}
             </select>
           </>

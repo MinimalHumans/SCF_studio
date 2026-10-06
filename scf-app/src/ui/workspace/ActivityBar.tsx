@@ -25,10 +25,8 @@ export const SECTION_GROUPS: Array<{ name: string; sections: Section[] }> = [
   ] },
   { name: "Narrative elements", sections: [
     { mode: "characters", label: "Characters" },
-    { mode: "locations", label: "Locations",
-      pending: "Locations get their own workspace after Characters." },
-    { mode: "props", label: "Props",
-      pending: "Props get their own workspace after Characters." },
+    { mode: "locations", label: "Locations" },
+    { mode: "props", label: "Props" },
   ] },
   { name: "Tools", sections: [
     { mode: "subject", label: "Subjects" },

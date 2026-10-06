@@ -201,10 +201,23 @@ export async function addArc(
  * the strip draws; the parent column is named by the table, never by the
  * caller, so it is never interpolated from outside.
  */
-const STAGE_PARENT: Record<string, string> = {
+export const STAGE_PARENT: Record<string, string> = {
   character_arc_state: "character_arc_id",
   relationship_state: "character_relationship_id",
   costume_progression_state: "costume_progression_id",
+  prop_state: "prop_id",
+};
+
+/**
+ * The column a stage's short label lives in. `prop_state` has no
+ * `stage_label`: what a writer names a prop's state by is its `name`
+ * ("cracked", "in Ada's coat"), which is also its natural-key label.
+ */
+export const STAGE_LABEL: Record<string, string> = {
+  character_arc_state: "stage_label",
+  relationship_state: "stage_label",
+  costume_progression_state: "stage_label",
+  prop_state: "name",
 };
 
 export async function addStage(
@@ -214,9 +227,11 @@ export async function addStage(
   if (parent === undefined) throw new Error(`${table} is not a stage table.`);
   const clean = cleanName(label);
   if (clean === null) throw new Error("Give the stage a short label.");
+  const labelColumn = STAGE_LABEL[table] ?? "stage_label";
   await exec(
-    `INSERT INTO ${q(table)} (uuid, ${q(parent)}, scene_id, stage_label) ` +
-    "VALUES (?, ?, ?, ?)", [newUuid(), parentId, sceneId, clean]);
+    `INSERT INTO ${q(table)} (uuid, ${q(parent)}, scene_id, ` +
+    `${q(labelColumn)}) VALUES (?, ?, ?, ?)`,
+    [newUuid(), parentId, sceneId, clean]);
   return insertedId(exec);
 }
 
@@ -402,5 +417,66 @@ export async function linkToScene(exec: SqlExec, characterId: number,
   if (found[0] !== undefined) return Number(found[0]["id"]);
   await exec("INSERT INTO scene_character (uuid, character_id, scene_id) " +
              "VALUES (?, ?, ?)", [newUuid(), characterId, sceneId]);
+  return insertedId(exec);
+}
+
+// ---------------------------------------------------------------------------
+// Locations and props (phase 6): the same intents, for any subject kind
+// ---------------------------------------------------------------------------
+
+/** The kinds a workspace edits. Names are interpolated only from here. */
+const SUBJECT_TABLES = new Set(["character", "location", "prop"]);
+const VARIANT_OF: Record<string, string> = {
+  character: "character_variant", location: "location_variant",
+  prop: "prop_variant",
+};
+
+function subjectTable(kind: string): string {
+  if (!SUBJECT_TABLES.has(kind)) throw new Error(`Not a subject kind: ${kind}`);
+  return kind;
+}
+
+/** Subjects of a kind already called this, ignoring case and spacing. */
+export async function subjectsNamed(
+    exec: SqlExec, kind: string, name: string): Promise<Row[]> {
+  const clean = cleanName(name);
+  if (clean === null) return [];
+  return exec(
+    `SELECT id, name FROM ${q(subjectTable(kind))} ` +
+    "WHERE lower(trim(name)) = lower(?) ORDER BY id", [clean]);
+}
+
+/** A new subject with only its name. */
+export async function createSubject(
+    exec: SqlExec, kind: string, name: string): Promise<number> {
+  const clean = cleanName(name);
+  if (clean === null) throw new Error(`A ${kind} needs a name.`);
+  await exec(`INSERT INTO ${q(subjectTable(kind))} (uuid, name) VALUES (?, ?)`,
+             [newUuid(), clean]);
+  return insertedId(exec);
+}
+
+/** A named variant of any subject kind. */
+export async function addVariantOf(
+    exec: SqlExec, kind: string, ownerId: number, name: string):
+    Promise<number> {
+  const table = VARIANT_OF[kind];
+  if (table === undefined) throw new Error(`A ${kind} has no variants.`);
+  const clean = cleanName(name);
+  if (clean === null) throw new Error("A variant needs a name.");
+  await exec(`INSERT INTO ${q(table)} (uuid, name, ${q(`${kind}_id`)}) ` +
+             "VALUES (?, ?, ?)", [newUuid(), clean, ownerId]);
+  return insertedId(exec);
+}
+
+/** Put a prop in a scene. One link per pair (§6.3). */
+export async function linkPropToScene(exec: SqlExec, propId: number,
+                                      sceneId: number): Promise<number> {
+  const found = await exec(
+    "SELECT id FROM scene_prop WHERE prop_id = ? AND scene_id = ?",
+    [propId, sceneId]);
+  if (found[0] !== undefined) return Number(found[0]["id"]);
+  await exec("INSERT INTO scene_prop (uuid, prop_id, scene_id) VALUES (?, ?, ?)",
+             [newUuid(), propId, sceneId]);
   return insertedId(exec);
 }

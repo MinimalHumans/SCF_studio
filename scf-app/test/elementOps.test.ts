@@ -12,6 +12,7 @@ import {
   createCharacter, fromPointOfView, loadProfile, reassignActor, relate,
   setDirection, setField, addCostume, wearIn, ensureProgression,
   addMakeupFor, addHabit, addPlaceFor,
+  createSubject, subjectsNamed, addVariantOf, linkPropToScene,
 } from "../src/editor/elementOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
@@ -268,5 +269,40 @@ describe("wardrobe and physicality", () => {
     const id = await createCharacter(db.exec, "Eleanor Cade");
     await expect(addHabit(db.exec, id, "  ")).rejects.toThrow(/Name the habit/);
     expect(await addHabit(db.exec, id, "Wipes dry hands")).toBeGreaterThan(0);
+  });
+});
+
+describe("locations and props", () => {
+  test("any kind is made by name, and found again by name", async () => {
+    const loc = await createSubject(db.exec, "location", " Farmhouse  Kitchen ");
+    expect((await subjectsNamed(db.exec, "location", "farmhouse kitchen"))
+      .map((r) => r["id"])).toEqual([loc]);
+    await expect(createSubject(db.exec, "scene; DROP TABLE x", "a"))
+      .rejects.toThrow(/Not a subject kind/);
+  });
+
+  test("variants of a location and a prop, under the right owner column",
+       async () => {
+    const loc = await createSubject(db.exec, "location", "Kitchen");
+    const prop = await createSubject(db.exec, "prop", "Wind chime");
+    const v1 = await addVariantOf(db.exec, "location", loc, "Kitchen at night");
+    const v2 = await addVariantOf(db.exec, "prop", prop, "Chime, bent");
+    expect(await one("SELECT location_id FROM location_variant WHERE id = ?",
+                     [v1])).toEqual({ location_id: loc });
+    expect(await one("SELECT prop_id FROM prop_variant WHERE id = ?", [v2]))
+      .toEqual({ prop_id: prop });
+  });
+
+  test("a prop in a scene is one link; its states use their name as label",
+       async () => {
+    const prop = await createSubject(db.exec, "prop", "Locket");
+    await db.exec("INSERT INTO scene (name) VALUES ('EXT. ROAD')");
+    const sc = Number((await one("SELECT last_insert_rowid() AS id"))["id"]);
+    const a = await linkPropToScene(db.exec, prop, sc);
+    expect(await linkPropToScene(db.exec, prop, sc)).toBe(a);
+    const st = await addStage(db.exec, "prop_state", prop, sc, "chain broken");
+    expect(await one("SELECT name, prop_id, scene_id FROM prop_state " +
+                     "WHERE id = ?", [st]))
+      .toEqual({ name: "chain broken", prop_id: prop, scene_id: sc });
   });
 });

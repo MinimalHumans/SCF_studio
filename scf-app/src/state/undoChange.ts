@@ -75,3 +75,10 @@ export async function applyUndoChange(exec: SqlExec,
       cols.map((k) => row[k] as SqlValue));
   }
 }
+
+/** Two changes made by one action, undone as one. */
+export function mergeChanges(first: ChangeUndo, second: ChangeUndo,
+                             label = second.label): ChangeUndo {
+  return { label, created: [...first.created, ...second.created],
+           before: [...first.before, ...second.before] };
+}

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
-  loadBoard, PURPOSE_HELP, PURPOSE_LABEL, purposesFor, SharedSetError,
+  loadBoard, purposeHelp, purposeLabel, purposesFor, SharedSetError,
   type BoardData, type BoardName, type Owner, type Purpose, type Tile,
 } from "../../editor/mediaOps.ts";
 import type { ChangeUndo } from "../../state/undoChange.ts";
@@ -27,7 +27,7 @@ export function ReferenceBoard({ owner, board }: {
   const [filter, setFilter] = useState<Purpose | "all">("all");
   const inForce = useInForce(owner, board);
   const purposes = purposesFor(owner, board);
-  const labels = PURPOSE_LABEL[board];
+  const label = (p: Purpose): string => purposeLabel(owner.kind, board, p);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +80,7 @@ export function ReferenceBoard({ owner, board }: {
                     Number(t.asset["id"])))} />
 
       {incoming !== null && shared === null && (
-        <PurposeDialog board={board} names={incoming.names}
+        <PurposeDialog board={board} kind={owner.kind} names={incoming.names}
                        purposes={purposes}
                        onCancel={() => setIncoming(null)}
                        onChoose={(p, role) => void place(p, role)} />
@@ -122,7 +122,7 @@ export function ReferenceBoard({ owner, board }: {
             return (
               <button key={p} className={"chip" + (filter === p ? " on" : "")}
                       aria-pressed={filter === p} onClick={() => setFilter(p)}>
-                {p === "all" ? "All" : labels[p]} {n}
+                {p === "all" ? "All" : label(p)} {n}
               </button>
             );
           })}
@@ -160,8 +160,8 @@ export function ReferenceBoard({ owner, board }: {
   );
 }
 
-function PurposeDialog({ board, names, purposes, onChoose, onCancel }: {
-  board: BoardName; names: string[]; purposes: Purpose[];
+function PurposeDialog({ board, kind, names, purposes, onChoose, onCancel }: {
+  board: BoardName; kind: string; names: string[]; purposes: Purpose[];
   onChoose: (p: Purpose, role: string) => void; onCancel: () => void;
 }): JSX.Element {
   const [role, setRole] = useState("");
@@ -177,8 +177,8 @@ function PurposeDialog({ board, names, purposes, onChoose, onCancel }: {
         {purposes.map((p) => (
           <button key={p} className="board-purpose"
                   onClick={() => onChoose(p, role)}>
-            <strong>{PURPOSE_LABEL[board][p]}</strong>
-            <span>{PURPOSE_HELP[board][p]}</span>
+            <strong>{purposeLabel(kind, board, p)}</strong>
+            <span>{purposeHelp(kind, board, p)}</span>
           </button>
         ))}
       </div>

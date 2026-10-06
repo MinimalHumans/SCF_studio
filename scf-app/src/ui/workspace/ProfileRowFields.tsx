@@ -22,9 +22,14 @@ import { AutoField } from "./AutoField.tsx";
  */
 export function ProfileRowFields({ entity, characterId, titles,
                                    gridTabs = [], where = null,
-                                   exclude = [] }: {
+                                   exclude = [],
+                                   ownerColumn = "character_id" }: {
   entity: string;
+  /** The owner's id — a character's, or a location's or prop's when
+   *  `ownerColumn` says so. */
   characterId: number;
+  /** The column naming the owner: `location_id` for a location design. */
+  ownerColumn?: string;
   /** Narrows which row is "the" row: `scene_id IS NULL` for a baseline
    *  makeup design, say. A literal condition, never user input. */
   where?: string | null;
@@ -37,7 +42,7 @@ export function ProfileRowFields({ entity, characterId, titles,
 }): JSX.Element | null {
   const edef = registry.entities.get(entity);
   const rows = useQuery(
-    `SELECT * FROM ${q(entity)} WHERE character_id = ? ` +
+    `SELECT * FROM ${q(entity)} WHERE ${q(ownerColumn)} = ? ` +
     (where === null ? "" : `AND (${where}) `) +
     "AND (lifecycle_status IS NULL OR lifecycle_status <> 'cut') ORDER BY id",
     [characterId]);
@@ -49,7 +54,8 @@ export function ProfileRowFields({ entity, characterId, titles,
   const ensure = (): Promise<number> => {
     if (creating.current === null) {
       creating.current = (async () => {
-        await exec(`INSERT INTO ${q(entity)} (uuid, character_id) VALUES (?, ?)`,
+        await exec(`INSERT INTO ${q(entity)} (uuid, ${q(ownerColumn)}) ` +
+                   "VALUES (?, ?)",
                    [newUuid(), characterId]);
         const made = Number((await exec(
           "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
@@ -63,7 +69,7 @@ export function ProfileRowFields({ entity, characterId, titles,
   const tabs: string[] = [];
   for (const f of edef.fields) {
     if (f.autoInjected === true || f.hidden === true) continue;
-    if (f.name === "name" || f.name === "character_id") continue;
+    if (f.name === "name" || f.name === ownerColumn) continue;
     if (exclude.includes(f.name)) continue;
     if (!tabs.includes(f.tab)) tabs.push(f.tab);
   }
@@ -83,7 +89,7 @@ export function ProfileRowFields({ entity, characterId, titles,
             {edef.fields
               .filter((f) => f.tab === tab && f.autoInjected !== true &&
                              f.hidden !== true && f.name !== "name" &&
-                             f.name !== "character_id" &&
+                             f.name !== ownerColumn &&
                              !exclude.includes(f.name))
               .map((f) => (
                 <AutoField key={f.name} entity={entity}

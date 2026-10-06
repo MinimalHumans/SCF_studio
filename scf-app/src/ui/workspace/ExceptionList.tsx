@@ -29,6 +29,9 @@ function whenOf(x: Exception): When | "several" | null {
   if (set("vocal_state_filter")) {
     kinds.push({ kind: "vocal", state: String(f["vocal_state_filter"]) });
   }
+  if (set("time_of_day_filter")) {
+    kinds.push({ kind: "time", value: String(f["time_of_day_filter"]) });
+  }
   if (set("scene_range_start_id") || set("scene_range_end_id")) {
     kinds.push({
       kind: "scenes",
@@ -46,6 +49,15 @@ const KIND_LABEL: Record<Kind, string> = {
   physical: "While in a physical state",
   vocal: "While in a vocal state",
   variant: "As a variant",
+  time: "At a time of day",
+};
+
+/** Which conditions each owner kind's binding table can hold. */
+const KINDS_FOR: Record<Owner["kind"], Kind[]> = {
+  character: ["scenes", "physical", "vocal", "variant"],
+  location: ["scenes", "variant", "time"],
+  prop: ["scenes", "variant"],
+  costume: ["scenes"],
 };
 
 /**
@@ -238,16 +250,18 @@ function WhenPicker({ owner, value, onChange, draft = false }: {
 }): JSX.Element {
   const scenes = useStoryScenes();
   const character = owner.kind === "character";
+  const variantTable = owner.kind === "costume" ? null : `${owner.kind}_variant`;
   const states = useQuery(character
     ? "SELECT DISTINCT name, modality FROM performance_state " +
       "WHERE character_id = ? AND name IS NOT NULL AND name <> '' ORDER BY name"
     : null, [owner.id]);
-  const variants = useQuery(character
-    ? "SELECT id, name FROM character_variant WHERE character_id = ? " +
-      "AND (lifecycle_status IS NULL OR lifecycle_status <> 'cut') ORDER BY id"
-    : null, [owner.id]);
-  const kinds: Kind[] = character
-    ? ["scenes", "physical", "vocal", "variant"] : ["scenes"];
+  const variants = useQuery(variantTable === null ? null
+    : `SELECT id, name FROM ${variantTable} WHERE ${owner.kind}_id = ? ` +
+      "AND (lifecycle_status IS NULL OR lifecycle_status <> 'cut') ORDER BY id",
+    [owner.id]);
+  const kinds = KINDS_FOR[owner.kind];
+  const times = registry.entities.get("location_asset_binding")?.fields
+    .find((f) => f.name === "time_of_day_filter")?.options ?? [];
   const [kind, setKind] = useState<Kind>(value?.kind ?? "scenes");
   useEffect(() => { if (value !== null) setKind(value.kind); }, [value]);
 
@@ -316,10 +330,25 @@ function WhenPicker({ owner, value, onChange, draft = false }: {
           </label>
         )
       )}
+      {kind === "time" && (
+        <label className="exc-pick">
+          <span>Time of day</span>
+          <select value={value?.kind === "time" ? value.value : ""}
+                  onChange={(e) => {
+                    if (e.target.value !== "") {
+                      emit({ kind: "time", value: e.target.value });
+                    }
+                  }}>
+            <option value="">{draft ? "Pick a time" : "—"}</option>
+            {times.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </label>
+      )}
       {kind === "variant" && (
         variants.length === 0 ? (
           <span className="muted">
-            No variants yet — add one on Profile, Variants.
+            No variants yet — add one under{" "}
+            {character ? "Profile, Variants" : "Variants"}.
           </span>
         ) : (
           <label className="exc-pick">

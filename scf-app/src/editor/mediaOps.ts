@@ -53,6 +53,9 @@ export const BOARDS = {
   look: { intent: "visual_identity", anchorType: "visual", noun: "look" },
   voice: { intent: "voice_identity", anchorType: "audio", noun: "voice" },
   motion: { intent: "motion", anchorType: "motion", noun: "movement" },
+  /** A place's or an object's sonic identity — room tone, the chime's
+   *  ring. `acoustic` is any subject's, not only a location's. */
+  sound: { intent: "acoustic", anchorType: "audio", noun: "sound" },
 } as const;
 export type BoardName = keyof typeof BOARDS;
 
@@ -66,6 +69,8 @@ export const PURPOSE_LABEL: Record<BoardName, Record<Purpose, string>> = {
            concept: "Concept", inspiration: "Inspiration" },
   motion: { identity: "This is how they move", set: "Motion reference",
             concept: "Concept", inspiration: "Inspiration" },
+  sound: { identity: "This is how it sounds", set: "Sound reference",
+           concept: "Concept", inspiration: "Inspiration" },
 };
 
 /** What each purpose means, for the drop dialog. */
@@ -88,16 +93,54 @@ export const PURPOSE_HELP: Record<BoardName, Record<Purpose, string>> = {
     concept: "Exploration of movement. Informs, isn't the answer.",
     inspiration: "Movement from outside the project.",
   },
+  sound: {
+    identity: "Its sound. Downstream tools match against it.",
+    set: "Part of how it sounds — what tools should use.",
+    concept: "Exploration of the sound. Informs, isn't the answer.",
+    inspiration: "Recordings from outside the project.",
+  },
 };
 
+/**
+ * A purpose's label for an owner. "This is them" is a person; a place or
+ * an object is "this is it". Everything else reads the same for all.
+ */
+export function purposeLabel(kind: string, board: BoardName,
+                             purpose: Purpose): string {
+  if (purpose === "identity" && kind !== "character" && board === "look") {
+    return "This is it";
+  }
+  return PURPOSE_LABEL[board][purpose];
+}
+
+export function purposeHelp(kind: string, board: BoardName,
+                            purpose: Purpose): string {
+  if (purpose === "identity" && kind !== "character" && board === "look") {
+    return "What it looks like. Downstream tools match against it.";
+  }
+  return PURPOSE_HELP[board][purpose];
+}
+
 /** Who a board belongs to. A bare number means a character. */
-export interface Owner { kind: "character" | "costume"; id: number }
+export interface Owner {
+  kind: "character" | "costume" | "location" | "prop";
+  id: number;
+}
 type OwnerArg = Owner | number;
 const ownerOf = (o: OwnerArg): Owner =>
   typeof o === "number" ? { kind: "character", id: o } : o;
 
 /** Owner kinds that can carry an entity_anchor (its subject_type enum). */
 const ANCHOR_KINDS = new Set(["character", "prop", "location"]);
+
+/** Each owner kind's variant table, where it has one (§4.8). */
+const VARIANT_TABLE: Record<string, string> = {
+  character: "character_variant", location: "location_variant",
+  prop: "prop_variant",
+};
+
+/** Audio files sit on the boards that are about sound. */
+const AUDIO_BOARDS = new Set<BoardName>(["voice", "sound"]);
 
 /** The purposes a board offers for an owner. Concept and inspiration
  *  sit on Look and Voice only: an asset_relationship has no modality, so
@@ -168,7 +211,9 @@ export interface BaselineSet {
 export type When =
   | { kind: "scenes"; startId: number | null; endId: number | null }
   | { kind: "physical" | "vocal"; state: string }
-  | { kind: "variant"; variantId: number };
+  | { kind: "variant"; variantId: number }
+  /** A location binding's time_of_day_filter: the scene's time of day. */
+  | { kind: "time"; value: string };
 
 export interface Exception {
   bindingId: number;
@@ -283,6 +328,8 @@ export function describeWhen(f: Record<string, unknown>,
   if (typeof voc === "string" && voc !== "") {
     parts.push(`while the voice is ${voc}`);
   }
+  const time = f["time_of_day_filter"];
+  if (typeof time === "string" && time !== "") parts.push(`at ${time}`);
   const from = names.scene(f["scene_range_start_id"]);
   const to = names.scene(f["scene_range_end_id"]);
   if (from !== null && to !== null) parts.push(`scenes ${from}–${to}`);
@@ -303,9 +350,10 @@ async function exceptions(exec: SqlExec, registry: Registry, o: Owner,
     [o.id, BOARDS[board].intent]);
   const scenes = new Map((await exec("SELECT id, scene_number FROM scene"))
     .map((s) => [Number(s["id"]), String(s["scene_number"] ?? "?")]));
-  const variants = new Map((await exec(
-    "SELECT id, name FROM character_variant")).map((v) =>
-    [Number(v["id"]), String(v["name"])]));
+  const variantTable = VARIANT_TABLE[o.kind];
+  const variants = new Map(variantTable === undefined ? [] : (await exec(
+    `SELECT id, name FROM ${q(variantTable)}`)).map((v) =>
+    [Number(v["id"]), String(v["name"])] as const));
   const stateNames = o.kind !== "character" ? [] : await exec(
     "SELECT name, modality FROM performance_state WHERE character_id = ?",
     [o.id]);
@@ -356,7 +404,8 @@ export async function loadBoard(
     const anchors = await exec(
       "SELECT a.id AS link_id, a.canonical_status, v.name AS variant, s.* " +
       "FROM entity_anchor a JOIN asset s ON s.id = a.asset_id " +
-      "LEFT JOIN character_variant v ON v.id = a.subject_variant_id " +
+      `LEFT JOIN ${q(VARIANT_TABLE[o.kind] ?? "character_variant")} v ` +
+      "ON v.id = a.subject_variant_id " +
       "WHERE a.subject_type = ? AND a.subject_id = ? " +
       `AND a.anchor_type = ? AND ${NOT_CUT("a")} ORDER BY a.id`,
       [o.kind, o.id, spec.anchorType]);
@@ -364,7 +413,7 @@ export async function loadBoard(
       const { link_id, canonical_status, variant, ...asset } = r;
       tiles.push({
         key: `entity_anchor:${String(link_id)}`, purpose: "identity",
-        label: labels.identity, asset,
+        label: purposeLabel(o.kind, board, "identity"), asset,
         link: { entity: "entity_anchor", id: Number(link_id) },
         role: null,
         status: canonical_status === null || canonical_status === undefined
@@ -388,7 +437,8 @@ export async function loadBoard(
       [o.kind, o.id]);
     for (const r of related) {
       const { link_id, relationship_type, ...asset } = r;
-      if (boardForIdentifier(asset["identifier"]) !== board) continue;
+      const audio = boardForIdentifier(asset["identifier"]) === "voice";
+      if (audio !== AUDIO_BOARDS.has(board)) continue;
       const type = String(relationship_type ?? "reference");
       const purpose: Purpose | "other" =
         type === "concept" || type === "inspiration" ? type : "other";
@@ -628,6 +678,10 @@ function filterValues(registry: Registry, o: Owner,
   } else if (when.kind === "variant") {
     need("variant_id");
     out["variant_id"] = when.variantId;
+  } else if (when.kind === "time") {
+    need("time_of_day_filter");
+    if (when.value.trim() === "") throw new Error("Pick the time of day.");
+    out["time_of_day_filter"] = when.value;
   } else {
     const col = when.kind === "physical"
       ? "physical_state_filter" : "vocal_state_filter";

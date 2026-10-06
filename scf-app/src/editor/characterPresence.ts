@@ -138,3 +138,29 @@ export function presenceByScene(sceneOrder: number[], links: Row[],
   }
   return out;
 }
+
+export interface SceneIndex {
+  /** Line uuid → the scene of the heading above it (§3.4). */
+  sceneOfLine: Map<string, number>;
+  /** Scene → its heading line's uuid. */
+  headingLine: Map<number, string>;
+}
+
+/** The same heading walk as readScriptPresence, for any line. */
+export async function readSceneIndex(exec: SqlExec): Promise<SceneIndex> {
+  const lines = await exec(
+    "SELECT line_type, scene_id, uuid FROM screenplay_lines ORDER BY line_order");
+  const sceneOfLine = new Map<string, number>();
+  const headingLine = new Map<number, string>();
+  let scene: number | null = null;
+  for (const l of lines) {
+    const uuid = String(l["uuid"] ?? "");
+    if (l["line_type"] === "heading") {
+      const sid = l["scene_id"];
+      scene = sid === null || sid === undefined ? null : Number(sid);
+      if (scene !== null && !headingLine.has(scene)) headingLine.set(scene, uuid);
+    }
+    if (scene !== null && uuid !== "") sceneOfLine.set(uuid, scene);
+  }
+  return { sceneOfLine, headingLine };
+}

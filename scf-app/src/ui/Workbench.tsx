@@ -55,7 +55,9 @@ import { SceneRail } from "./SceneRail.tsx";
 import { IdentityPanel } from "./IdentityPanel.tsx";
 import { AssetBrowser, AssetPathRail } from "./AssetBrowser.tsx";
 import { ActivityBar } from "./workspace/ActivityBar.tsx";
-import { CharacterRail } from "./workspace/CharacterRail.tsx";
+import { CharacterRail, SubjectRail } from "./workspace/CharacterRail.tsx";
+import { LocationWorkspace } from "./workspace/LocationWorkspace.tsx";
+import { PropWorkspace } from "./workspace/PropWorkspace.tsx";
 import { CharacterWorkspace } from "./workspace/CharacterWorkspace.tsx";
 
 const RAIL_KEY = "scf:rail-width";
@@ -121,6 +123,10 @@ export function Workbench(): JSX.Element {
       ? <AssetBrowser />
     : navMode === "characters"
       ? <CharacterWorkspace />
+    : navMode === "locations"
+      ? <LocationWorkspace />
+    : navMode === "props"
+      ? <PropWorkspace />
       // Subjects mode never falls through to the schema list: with no
       // subject picked it showed whichever entity the Schema tab was
       // last on, so switching subject type landed on Story Beats.
@@ -142,6 +148,8 @@ export function Workbench(): JSX.Element {
     : navMode === "script" ? <SceneRail />
     : navMode === "assets" ? <AssetPathRail />
     : navMode === "characters" ? <CharacterRail />
+    : navMode === "locations" ? <SubjectRail key="location" kind="location" />
+    : navMode === "props" ? <SubjectRail key="prop" kind="prop" />
     : navMode === "queries" ? <QueryIndex />
     : null;
 

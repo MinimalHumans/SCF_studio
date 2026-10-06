@@ -19,19 +19,22 @@ export function initials(name: string): string {
  * caption, no crop toggle, no click — so it can sit inside a list
  * button without nesting one control in another.
  */
-export function CharacterFace({ id, name, size = "sm" }: {
+export function CharacterFace({ id, name, size = "sm", kind = "character" }: {
   id: number; name: string; size?: ThumbSize;
+  /** Any anchor subject kind: a location's or prop's verified visual
+   *  anchor is its face the same way. */
+  kind?: "character" | "location" | "prop";
 }): JSX.Element {
   const revision = useStore((s) => s.revision);
   const [found, setFound] = useState<SubjectAnchor | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void visualAnchorFor({ exec, registry }, "character", id).then((a) => {
+    void visualAnchorFor({ exec, registry }, kind, id).then((a) => {
       if (!cancelled) setFound(a);
     }).catch(() => { if (!cancelled) setFound(null); });
     return () => { cancelled = true; };
-  }, [id, revision]);
+  }, [id, kind, revision]);
 
   const identifier = found?.asset?.["identifier"];
   // The initials are always drawn, and the picture is laid over them.
