@@ -18,17 +18,21 @@ npm run build      # static bundle in dist/
 
 ## Where the work happens
 
-Seven tabs, in the order the work is usually done:
+Sections in an always-visible activity bar on the left, grouped in the
+order the work is usually done — the story, then who and what is in it,
+then the tools. `Alt+1` … `Alt+0` switch between them.
 
-| Tab | Surface | Owns |
-|---|---|---|
-| **Script** | `ScriptView`, `SceneRail` | The screenplay. CodeMirror 6 over a line-identity model; headings become scenes and `#` sections become acts and sequences, at commit. |
-| **Structure** | `StructureView` | Act and sequence boundaries. Three verbs only — start a span at a scene, move it, unanchor it — because membership is derived, not edited. |
-| **Shoot** | `ShootView` | Coverage: beats and shots against a read-only scene spine. The script owns structure; this owns what gets shot. |
-| **Schema** | `CategoryTree`, `EntityList` | Every entity type, with row counts. |
-| **Subjects** | `SubjectNav`, `SubjectView` | One thing and everything addressed to it. |
-| **Queries** | `ui/queries/` | The 16 canonical queries, each with view / JSON / copy-as-context. |
-| **Assets** | `AssetBrowser`, `BundleAssets`, `AssetPreview` | Bundles, bindings and anchors, and whether an identifier resolves to bytes. |
+| Group | Section | Surface | Owns |
+|---|---|---|---|
+| Story | **Script** | `ScriptView`, `SceneRail` | The screenplay. CodeMirror 6 over a line-identity model; headings become scenes and `#` sections become acts and sequences, at commit. |
+| Story | **Structure** | `StructureView` | Act and sequence boundaries. Three verbs only — start a span at a scene, move it, unanchor it — because membership is derived, not edited. |
+| Story | **Shoot** | `ShootView` | Coverage: beats and shots against a read-only scene spine. The script owns structure; this owns what gets shot. |
+| Narrative elements | **Characters** | `ui/workspace/`, `editor/elementOps.ts` | Everything about one character in subtabs, written as the writer works. Authors by intent; `elementOps.ts` turns each intent into ordinary rows. Profile is built; the other subtabs list their records until they are. |
+| Narrative elements | Locations, Props | — | Shown, not built yet. Same workspace pattern, after Characters. |
+| Tools | **Subjects** | `SubjectNav`, `SubjectView` | One thing and everything addressed to it. |
+| Tools | **Queries** | `ui/queries/` | The 16 canonical queries, each with view / JSON / copy-as-context. |
+| Tools | **Schema** | `CategoryTree`, `EntityList` | Every entity type, with row counts. The complete record editor; every workspace section links back to it. |
+| Tools | **Assets** | `AssetBrowser`, `BundleAssets`, `AssetPreview` | Bundles, bindings and anchors, and whether an identifier resolves to bytes. |
 
 ## Architecture
 

@@ -147,7 +147,14 @@ export async function visualAnchorFor(
   const candidates = (await rows(
     ctx.exec, "entity_anchor", "subject_type = ? AND subject_id = ?",
     [subjectType, subjectId]))
-    .filter((a) => a["anchor_type"] === "visual");
+    .filter((a) => a["anchor_type"] === "visual")
+    // A thumbnail has no position, and with no position only the
+    // subject's own anchors apply (§12.8, proposal 0033). Without this a
+    // verified variant face — Marcus at nine — outranked the subject's
+    // own candidate and became his face everywhere in the app.
+    .filter((a) => a["subject_variant_id"] === null ||
+                   a["subject_variant_id"] === undefined ||
+                   a["subject_variant_id"] === "");
   if (candidates.length === 0) return null;
 
   const rank = (a: Row): number => {

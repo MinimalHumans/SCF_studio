@@ -132,6 +132,17 @@ describe("visualAnchorFor", () => {
     expect(await visualAnchorFor(ctx, "prop", 5)).toBeNull();
   });
 
+  test("a variant's face is never the subject's thumbnail", async () => {
+    // Marcus has his own face anchor (a candidate) and the verified
+    // "Young Marcus Face" of the age-nine variant (proposal 0033). A
+    // thumbnail has no position, so only his own applies (§12.8) —
+    // ranking by status alone made the boy his face everywhere.
+    const marcus = Number((await ctx.exec(
+      "SELECT id FROM character WHERE name LIKE '%Marcus%'"))[0]?.["id"]);
+    const found = await visualAnchorFor(ctx, "character", marcus);
+    expect(found?.anchor["name"]).toBe("Marcus Face Anchor");
+  });
+
   test("an unknown subject type finds nothing", async () => {
     expect(await visualAnchorFor(ctx, "scene", 1)).toBeNull();
   });
