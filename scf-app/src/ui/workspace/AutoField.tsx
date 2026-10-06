@@ -25,10 +25,14 @@ const TYPED = new Set(["text", "textarea", "integer", "float", "timestamp"]);
  * pending: the project's revision bump re-reads the row, and that read
  * must not snap the text back under the cursor.
  */
-export function AutoField({ entity, id, field, value, inputId, label,
-                            showHelp = true }: {
+export function AutoField({ entity, id, ensure, field, value, inputId,
+                            label, showHelp = true }: {
   entity: string;
-  id: number;
+  /** Null while the row does not exist yet; `ensure` makes it. */
+  id: number | null;
+  /** Creates the row on the first write, for one-per-character rows
+   *  (a vocal profile) that should not exist until something is in them. */
+  ensure?: () => Promise<number>;
   field: string;
   value: SqlValue;
   inputId?: string;
@@ -61,7 +65,9 @@ export function AutoField({ entity, id, field, value, inputId, label,
     const next = latest.current;
     if ((next ?? null) === (saved.current ?? null)) return;
     try {
-      await setField(exec, registry, entity, id, field, next);
+      const target = id ?? (ensure === undefined ? null : await ensure());
+      if (target === null) throw new Error("Nothing to save this to yet.");
+      await setField(exec, registry, entity, target, field, next);
       saved.current = next;
       setFailed(null);
       useStore.getState().noteWrite();
@@ -82,7 +88,7 @@ export function AutoField({ entity, id, field, value, inputId, label,
 
   if (def === undefined) return null;
   const typed = TYPED.has(def.fieldType);
-  const id_ = inputId ?? `ws-${entity}-${String(id)}-${field}`;
+  const id_ = inputId ?? `ws-${entity}-${String(id ?? "new")}-${field}`;
 
   return (
     <div className={"ws-field" + (def.fieldType === "textarea"

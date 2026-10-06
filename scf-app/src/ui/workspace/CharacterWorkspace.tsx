@@ -9,6 +9,8 @@ import { CharacterFace } from "./CharacterFace.tsx";
 import { ProfileTab } from "./ProfileTab.tsx";
 import { PendingTab } from "./PendingTab.tsx";
 import { ArcTab } from "./ArcTab.tsx";
+import { LookTab } from "./LookTab.tsx";
+import { VoiceTab } from "./VoiceTab.tsx";
 import { RelationshipsTab } from "./RelationshipsTab.tsx";
 
 /** Where each character's tab was scrolled to, so "open record" and
@@ -120,6 +122,10 @@ export function CharacterWorkspace(): JSX.Element {
       <div role="tabpanel" aria-label={characterTab}>
         {characterTab === "Profile"
           ? <ProfileTab key={id} characterId={id} />
+          : characterTab === "Look"
+          ? <LookTab key={id} characterId={id} />
+          : characterTab === "Voice"
+          ? <VoiceTab key={id} characterId={id} />
           : characterTab === "Arc"
           ? <ArcTab key={id} characterId={id} />
           : characterTab === "Relationships"

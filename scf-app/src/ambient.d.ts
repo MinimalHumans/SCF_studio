@@ -78,3 +78,10 @@ interface Window {
 interface HTMLInputElement {
   webkitdirectory: boolean;
 }
+
+interface DataTransferItem {
+  /** Chromium: a real handle for a dropped file, so its place under the
+   *  project folder can be resolved. Must be called during the drop
+   *  event; the item is dead afterwards. */
+  getAsFileSystemHandle?(): Promise<FileSystemHandle | null>;
+}
