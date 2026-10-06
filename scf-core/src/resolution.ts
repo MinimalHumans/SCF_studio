@@ -672,6 +672,14 @@ export interface ResolvedMedia {
   base_assets: Row[];
   assets_most_specific_first: Row[];
   trail: string[];
+  /**
+   * Every binding of the requested intent and whether it applied, as
+   * data. `trail` says the same in prose a consumer MUST NOT parse; an
+   * editor that marks which of a character's exceptions are in force at
+   * a scene needs the verdict itself. Not part of any published result.
+   */
+  binding_verdicts: Array<{ id: number; applies: boolean;
+                            reason: string | null }>;
 }
 
 /**
@@ -701,6 +709,7 @@ export async function resolveMedia(
   // The first `replace` binding in force: everything below its precedence
   // is excluded. Equal precedence is ordered, never replaced.
   let replacer: { name: string; precedence: number } | null = null;
+  const verdicts: ResolvedMedia["binding_verdicts"] = [];
   for (const b of bindings) {
     const bundles = await rows(ctx.exec, "bundle", "id = ?",
                                [b["bundle_id"] ?? null]);
@@ -714,14 +723,19 @@ export async function resolveMedia(
       // An absence with a reason. A binding excluded silently is how a
       // filter nothing read went unnoticed for two schema versions.
       bindingLines.push(`${line}: EXCLUDED, ${verdict.reason ?? "filtered"}`);
+      verdicts.push({ id: asNum(b["id"]) ?? -1, applies: false,
+                      reason: verdict.reason ?? "filtered" });
       continue;
     }
     const precedence = asNum(b["precedence"]) ?? 0;
     if (replacer !== null && precedence < replacer.precedence) {
       bindingLines.push(`${line}: EXCLUDED, replaced by ${replacer.name}`);
+      verdicts.push({ id: asNum(b["id"]) ?? -1, applies: false,
+                      reason: `replaced by ${replacer.name}` });
       continue;
     }
     bindingLines.push(line);
+    verdicts.push({ id: asNum(b["id"]) ?? -1, applies: true, reason: null });
     baseAssets.push(
       ...await bundleAssets(ctx, asNum(b["bundle_id"]) ?? -1));
     if (replacer === null && sameText(b["combine"], "replace")) {
@@ -808,5 +822,6 @@ export async function resolveMedia(
       ...baseAssets.filter((a) => !overrideIds.has(a["id"])),
     ],
     trail,
+    binding_verdicts: verdicts,
   };
 }

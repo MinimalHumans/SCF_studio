@@ -10,7 +10,8 @@ import {
 import {
   addArc, addStage, addVariant, castActor, charactersNamed, cleanName,
   createCharacter, fromPointOfView, loadProfile, reassignActor, relate,
-  setDirection, setField,
+  setDirection, setField, addCostume, wearIn, ensureProgression,
+  addMakeupFor, addHabit, addPlaceFor,
 } from "../src/editor/elementOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
@@ -224,5 +225,48 @@ describe("relationships", () => {
     const c = await createCharacter(db.exec, "Shaw");
     await expect(setDirection(db.exec, id, { fromId: c }))
       .rejects.toThrow(/not in this relationship/);
+  });
+});
+
+describe("wardrobe and physicality", () => {
+  const scene = async (): Promise<number> => {
+    await db.exec("INSERT INTO scene (name) VALUES ('EXT. ROAD')");
+    return Number((await one("SELECT last_insert_rowid() AS id"))["id"]);
+  };
+
+  test("wearing a costume in a scene twice is one link", async () => {
+    const id = await createCharacter(db.exec, "Ada Cade");
+    const costume = await addCostume(db.exec, id, " Blue shawl ");
+    const sc = await scene();
+    const a = await wearIn(db.exec, costume, sc);
+    expect(await wearIn(db.exec, costume, sc)).toBe(a);
+    expect((await one("SELECT COUNT(*) AS n FROM costume_scene"))["n"]).toBe(1);
+    expect((await one("SELECT name FROM costume WHERE id = ?", [costume]))
+      ["name"]).toBe("Blue shawl");
+  });
+
+  test("a progression is made once, on first need", async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const p = await ensureProgression(db.exec, id);
+    expect(await ensureProgression(db.exec, id)).toBe(p);
+  });
+
+  test("one makeup design per scene, one place row per location",
+       async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const sc = await scene();
+    const m = await addMakeupFor(db.exec, id, sc);
+    expect(await addMakeupFor(db.exec, id, sc)).toBe(m);
+    await db.exec("INSERT INTO location (uuid, name) VALUES (?, 'Kitchen')",
+                  ["00000000-0000-4000-8000-0000000000aa"]);
+    const loc = Number((await one("SELECT last_insert_rowid() AS id"))["id"]);
+    const e = await addPlaceFor(db.exec, id, loc);
+    expect(await addPlaceFor(db.exec, id, loc)).toBe(e);
+  });
+
+  test("a habit needs a name", async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    await expect(addHabit(db.exec, id, "  ")).rejects.toThrow(/Name the habit/);
+    expect(await addHabit(db.exec, id, "Wipes dry hands")).toBeGreaterThan(0);
   });
 });

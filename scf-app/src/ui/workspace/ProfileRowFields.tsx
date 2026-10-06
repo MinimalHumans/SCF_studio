@@ -21,9 +21,15 @@ import { AutoField } from "./AutoField.tsx";
  * says so.
  */
 export function ProfileRowFields({ entity, characterId, titles,
-                                   gridTabs = [] }: {
+                                   gridTabs = [], where = null,
+                                   exclude = [] }: {
   entity: string;
   characterId: number;
+  /** Narrows which row is "the" row: `scene_id IS NULL` for a baseline
+   *  makeup design, say. A literal condition, never user input. */
+  where?: string | null;
+  /** Fields not to show here. */
+  exclude?: string[];
   /** Section title per registry tab; a tab not named keeps its own name. */
   titles: Record<string, string>;
   /** Tabs of short fields, laid out as a grid. */
@@ -32,6 +38,7 @@ export function ProfileRowFields({ entity, characterId, titles,
   const edef = registry.entities.get(entity);
   const rows = useQuery(
     `SELECT * FROM ${q(entity)} WHERE character_id = ? ` +
+    (where === null ? "" : `AND (${where}) `) +
     "AND (lifecycle_status IS NULL OR lifecycle_status <> 'cut') ORDER BY id",
     [characterId]);
   const creating = useRef<Promise<number> | null>(null);
@@ -57,6 +64,7 @@ export function ProfileRowFields({ entity, characterId, titles,
   for (const f of edef.fields) {
     if (f.autoInjected === true || f.hidden === true) continue;
     if (f.name === "name" || f.name === "character_id") continue;
+    if (exclude.includes(f.name)) continue;
     if (!tabs.includes(f.tab)) tabs.push(f.tab);
   }
 
@@ -75,12 +83,49 @@ export function ProfileRowFields({ entity, characterId, titles,
             {edef.fields
               .filter((f) => f.tab === tab && f.autoInjected !== true &&
                              f.hidden !== true && f.name !== "name" &&
-                             f.name !== "character_id")
+                             f.name !== "character_id" &&
+                             !exclude.includes(f.name))
               .map((f) => (
                 <AutoField key={f.name} entity={entity}
                            id={id} ensure={ensure} field={f.name}
                            value={row?.[f.name] ?? null} showHelp={false} />
               ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The fields of an existing row, grouped by the registry's tabs — the
+ * body of a costume card or a habit card.
+ */
+export function RowFields({ entity, row, titles = {}, gridTabs = [],
+                            exclude = [] }: {
+  entity: string;
+  row: Record<string, unknown>;
+  titles?: Record<string, string>;
+  gridTabs?: string[];
+  exclude?: string[];
+}): JSX.Element | null {
+  const edef = registry.entities.get(entity);
+  if (edef === undefined) return null;
+  const id = Number(row["id"]);
+  const shown = edef.fields.filter((f) => f.autoInjected !== true &&
+    f.hidden !== true && !exclude.includes(f.name));
+  const tabs = [...new Set(shown.map((f) => f.tab))];
+  return (
+    <div className="ws-rowfields">
+      {tabs.map((tab) => (
+        <div key={tab} className="rel-group">
+          {tabs.length > 1 && <h4>{titles[tab] ?? tab}</h4>}
+          <div className={gridTabs.includes(tab) ? "ws-grid" : "ws-stack"}>
+            {shown.filter((f) => f.tab === tab).map((f) => (
+              <AutoField key={f.name} entity={entity} id={id} field={f.name}
+                         value={(row[f.name] ?? null) as never}
+                         showHelp={false} />
+            ))}
           </div>
         </div>
       ))}

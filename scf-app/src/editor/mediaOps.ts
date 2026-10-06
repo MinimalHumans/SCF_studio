@@ -8,32 +8,35 @@
  * | The writer says          | Rows                                        |
  * |--------------------------|---------------------------------------------|
  * | This is them             | entity_anchor, verified                     |
- * | Look / Voice reference   | bundle_asset in the character's baseline    |
- * |                          | set; on first use a bundle of the board's   |
- * |                          | intent and a baseline binding to it         |
+ * | Look / Voice reference   | bundle_asset in the owner's baseline set;   |
+ * |                          | on first use a bundle of the board's intent |
+ * |                          | and a baseline binding to it                |
  * | Concept, Inspiration     | asset_relationship                          |
+ * | An exception             | a bundle and a non-baseline binding with    |
+ * |                          | the condition as its filter                 |
+ *
+ * A board belongs to an OWNER: a character, or one of its costumes
+ * (costume_asset_binding, 2.16). Everything below is written once for
+ * every owner kind; what differs — whether it can carry an anchor, which
+ * filter columns its binding table declares — is read from the registry.
  *
  * Every row is ordinary SCF — what a careful hand-author would write —
  * so a board-built look and a hand-built look give the same Q13 answer
  * (`mediaOps.test.ts` holds that equivalence).
  *
  * "The baseline set" is identified STRUCTURALLY, never by a marker: a
- * binding of this character, baseline, at no scene range, with no state
- * or variant filter, to a bundle of the board's intent. A flag saying
- * "made by the workspace" would be a second description of that same
- * fact, free to disagree with it. Bindings that do carry a filter are
- * exceptions; they are read here and authored in a later phase.
+ * binding of this owner, baseline, carrying no filter its table
+ * declares, to a bundle of the board's intent. A flag saying "made by
+ * the workspace" would be a second description of that same fact.
  *
- * Purpose lives on the LINK, never on the asset (§8.4): one file can be
- * a character's face and a location's inspiration at once, and changing
- * what it is for here changes one link and leaves the asset alone.
+ * Purpose lives on the LINK, never on the asset (§8.4).
  *
  * Headless (no view imports), and every write returns its ChangeUndo so
- * one drop undoes as one step.
+ * one action undoes as one step.
  */
 
 import {
-  newUuid, q, withTransaction, type Row, type SqlExec,
+  newUuid, q, withTransaction, type Row, type SqlExec, type SqlValue,
 } from "@scf-core/db.ts";
 import type { Registry } from "@scf-core/registry.ts";
 import {
@@ -49,6 +52,7 @@ import { ChangeRecorder, type ChangeUndo } from "../state/undoChange.ts";
 export const BOARDS = {
   look: { intent: "visual_identity", anchorType: "visual", noun: "look" },
   voice: { intent: "voice_identity", anchorType: "audio", noun: "voice" },
+  motion: { intent: "motion", anchorType: "motion", noun: "movement" },
 } as const;
 export type BoardName = keyof typeof BOARDS;
 
@@ -60,6 +64,8 @@ export const PURPOSE_LABEL: Record<BoardName, Record<Purpose, string>> = {
           inspiration: "Inspiration" },
   voice: { identity: "This is their voice", set: "Voice reference",
            concept: "Concept", inspiration: "Inspiration" },
+  motion: { identity: "This is how they move", set: "Motion reference",
+            concept: "Concept", inspiration: "Inspiration" },
 };
 
 /** What each purpose means, for the drop dialog. */
@@ -71,23 +77,62 @@ export const PURPOSE_HELP: Record<BoardName, Record<Purpose, string>> = {
     inspiration: "Mood and references from outside the project.",
   },
   voice: {
-    identity: "Their voice. Mark the stretch to match against.",
+    identity: "Their voice. Downstream tools match against it.",
     set: "Part of how they sound — what tools should use.",
     concept: "Exploration of the voice. Informs, isn't the answer.",
     inspiration: "Voices and recordings from outside the project.",
   },
+  motion: {
+    identity: "Their movement. Downstream tools match against it.",
+    set: "Part of how they move — what tools should use.",
+    concept: "Exploration of movement. Informs, isn't the answer.",
+    inspiration: "Movement from outside the project.",
+  },
 };
+
+/** Who a board belongs to. A bare number means a character. */
+export interface Owner { kind: "character" | "costume"; id: number }
+type OwnerArg = Owner | number;
+const ownerOf = (o: OwnerArg): Owner =>
+  typeof o === "number" ? { kind: "character", id: o } : o;
+
+/** Owner kinds that can carry an entity_anchor (its subject_type enum). */
+const ANCHOR_KINDS = new Set(["character", "prop", "location"]);
+
+/** The purposes a board offers for an owner. Concept and inspiration
+ *  sit on Look and Voice only: an asset_relationship has no modality, so
+ *  it is placed by what the file is, and only those two boards read it. */
+export function purposesFor(owner: OwnerArg, board: BoardName): Purpose[] {
+  const o = ownerOf(owner);
+  return PURPOSES.filter((p) =>
+    (p !== "identity" || ANCHOR_KINDS.has(o.kind)) &&
+    (board !== "motion" || p === "identity" || p === "set"));
+}
+
+/** Every column that can make a binding conditional, on any table. */
+const FILTER_COLUMNS = [
+  "scene_range_start_id", "scene_range_end_id", "physical_state_filter",
+  "vocal_state_filter", "variant_id", "time_of_day_filter",
+];
 
 const NOT_CUT = (alias: string): string =>
   `(${alias}.lifecycle_status IS NULL OR ${alias}.lifecycle_status <> 'cut')`;
-
 const blank = (col: string): string => `COALESCE(${col}, '') = ''`;
 
-/** The filter columns that make a binding an exception, not a baseline. */
-const PURE_BASELINE =
-  `b.is_baseline = 1 AND ${blank("b.scene_range_start_id")} AND ` +
-  `${blank("b.scene_range_end_id")} AND ${blank("b.physical_state_filter")} ` +
-  `AND ${blank("b.vocal_state_filter")} AND ${blank("b.variant_id")}`;
+function bindingTable(o: Owner): string { return `${o.kind}_asset_binding`; }
+
+/** The filter columns this owner's binding table actually declares. */
+function filterColumns(registry: Registry, o: Owner): string[] {
+  const fields = new Set(registry.entities.get(bindingTable(o))?.fields
+    .map((f) => f.name));
+  return FILTER_COLUMNS.filter((c) => fields.has(c));
+}
+
+function pureBaseline(registry: Registry, o: Owner): string {
+  return ["b.is_baseline = 1",
+          ...filterColumns(registry, o).map((c) => blank(`b.${c}`))]
+    .join(" AND ");
+}
 
 export class SharedSetError extends Error {
   constructor(readonly sharedWith: string[]) {
@@ -103,7 +148,7 @@ export interface Tile {
   label: string;
   asset: Row;
   link: { entity: string; id: number };
-  /** bundle_asset.role_in_bundle, for Look and Voice reference tiles. */
+  /** bundle_asset.role_in_bundle, for set tiles. */
   role: string | null;
   /** entity_anchor.canonical_status, for identity tiles. */
   status: string | null;
@@ -119,6 +164,12 @@ export interface BaselineSet {
   sharedWith: string[];
 }
 
+/** What a condition is, as the exception editor authors it. */
+export type When =
+  | { kind: "scenes"; startId: number | null; endId: number | null }
+  | { kind: "physical" | "vocal"; state: string }
+  | { kind: "variant"; variantId: number };
+
 export interface Exception {
   bindingId: number;
   bundleId: number;
@@ -126,7 +177,14 @@ export interface Exception {
   /** "while wounded", "as Marcus, age nine", "scenes 9–12", in words. */
   when: string;
   replaces: boolean;
-  assets: number;
+  precedence: number;
+  /** The filter values, for editing. */
+  filters: Record<string, SqlValue>;
+  /** A state filter naming no state this character has: it can never
+   *  apply. Usually a renamed state. */
+  stale: string[];
+  /** The bundle's members, as tiles. */
+  tiles: Tile[];
 }
 
 export interface BoardData {
@@ -136,15 +194,17 @@ export interface BoardData {
 }
 
 /** Which board a concept or inspiration file sits on: by what it is. */
-export function boardForIdentifier(identifier: unknown): BoardName {
+export function boardForIdentifier(identifier: unknown): "look" | "voice" {
   if (typeof identifier !== "string") return "look";
   return previewCapability(formatOf(identifier)).kind === "audio"
     ? "voice" : "look";
 }
 
-async function characterName(exec: SqlExec, id: number): Promise<string> {
-  return String((await exec("SELECT name FROM character WHERE id = ?",
-                            [id]))[0]?.["name"] ?? "Character");
+async function ownerName(exec: SqlExec, registry: Registry,
+                         o: Owner): Promise<string> {
+  const field = registry.entities.get(o.kind)?.nameField ?? "name";
+  return String((await exec(`SELECT ${q(field)} AS n FROM ${q(o.kind)} ` +
+                            "WHERE id = ?", [o.id]))[0]?.["n"] ?? o.kind);
 }
 
 /** Other subjects a bundle is bound to, by name. */
@@ -168,15 +228,16 @@ export async function bundleSharedWith(
 }
 
 export async function baselineSets(
-    exec: SqlExec, registry: Registry, characterId: number,
+    exec: SqlExec, registry: Registry, owner: OwnerArg,
     board: BoardName): Promise<BaselineSet[]> {
+  const o = ownerOf(owner);
   const rows = await exec(
     "SELECT b.id AS binding_id, u.id AS bundle_id, u.name " +
-    "FROM character_asset_binding b JOIN bundle u ON u.id = b.bundle_id " +
-    `WHERE b.character_id = ? AND u.intent = ? AND ${PURE_BASELINE} ` +
-    `AND ${NOT_CUT("b")} AND ${NOT_CUT("u")} ` +
+    `FROM ${q(bindingTable(o))} b JOIN bundle u ON u.id = b.bundle_id ` +
+    `WHERE b.${q(`${o.kind}_id`)} = ? AND u.intent = ? AND ` +
+    `${pureBaseline(registry, o)} AND ${NOT_CUT("b")} AND ${NOT_CUT("u")} ` +
     "ORDER BY COALESCE(b.precedence, 0), b.id",
-    [characterId, BOARDS[board].intent]);
+    [o.id, BOARDS[board].intent]);
   const out: BaselineSet[] = [];
   for (const r of rows) {
     const bundleId = Number(r["bundle_id"]);
@@ -184,165 +245,216 @@ export async function baselineSets(
       bindingId: Number(r["binding_id"]), bundleId,
       name: String(r["name"] ?? "Untitled set"),
       sharedWith: await bundleSharedWith(exec, registry, bundleId,
-                                         { subject: "character", id: characterId }),
+                                         { subject: o.kind, id: o.id }),
     });
   }
   return out;
 }
 
-async function exceptions(exec: SqlExec, characterId: number,
-                          board: BoardName): Promise<Exception[]> {
-  const rows = await exec(
-    "SELECT b.*, u.name AS bundle_name, " +
-    "(SELECT COUNT(*) FROM bundle_asset m WHERE m.bundle_id = u.id) AS n, " +
-    "s1.scene_number AS from_n, s2.scene_number AS to_n, v.name AS variant " +
-    "FROM character_asset_binding b JOIN bundle u ON u.id = b.bundle_id " +
-    "LEFT JOIN scene s1 ON s1.id = b.scene_range_start_id " +
-    "LEFT JOIN scene s2 ON s2.id = b.scene_range_end_id " +
-    "LEFT JOIN character_variant v ON v.id = b.variant_id " +
-    `WHERE b.character_id = ? AND u.intent = ? AND NOT (${PURE_BASELINE}) ` +
-    `AND ${NOT_CUT("b")} ORDER BY COALESCE(b.precedence, 0), b.id`,
-    [characterId, BOARDS[board].intent]);
-  return rows.map((r) => {
-    const parts: string[] = [];
-    if (r["variant"] !== null && r["variant"] !== undefined) {
-      parts.push(`as ${String(r["variant"])}`);
-    }
-    const phys = r["physical_state_filter"];
-    if (typeof phys === "string" && phys !== "") parts.push(`while ${phys}`);
-    const voc = r["vocal_state_filter"];
-    if (typeof voc === "string" && voc !== "") parts.push(`while the voice is ${voc}`);
-    const from = r["from_n"], to = r["to_n"];
-    if (from !== null && from !== undefined && to !== null && to !== undefined) {
-      parts.push(`scenes ${String(from)}–${String(to)}`);
-    } else if (from !== null && from !== undefined) {
-      parts.push(`from scene ${String(from)}`);
-    } else if (to !== null && to !== undefined) {
-      parts.push(`up to scene ${String(to)}`);
-    }
-    if (parts.length === 0) parts.push("as a second baseline");
+async function memberTiles(exec: SqlExec, bundleId: number,
+                           label: string): Promise<Tile[]> {
+  const members = await exec(
+    "SELECT m.id AS link_id, m.role_in_bundle, s.* FROM bundle_asset m " +
+    "JOIN asset s ON s.id = m.asset_id WHERE m.bundle_id = ? " +
+    'ORDER BY m."order", m.id', [bundleId]);
+  return members.map((r) => {
+    const { link_id, role_in_bundle, ...asset } = r;
     return {
-      bindingId: Number(r["id"]), bundleId: Number(r["bundle_id"]),
-      bundleName: String(r["bundle_name"] ?? "Untitled set"),
-      when: parts.join(", "),
-      replaces: r["combine"] === "replace",
-      assets: Number(r["n"] ?? 0),
+      key: `bundle_asset:${String(link_id)}`, purpose: "set" as const, label,
+      asset, link: { entity: "bundle_asset", id: Number(link_id) },
+      role: role_in_bundle === null || role_in_bundle === undefined ||
+        role_in_bundle === "" ? null : String(role_in_bundle),
+      status: null, variant: null,
     };
   });
 }
 
+/** A condition in words. Shared by the exception list and its editor. */
+export function describeWhen(f: Record<string, unknown>,
+                             names: { scene: (id: unknown) => string | null;
+                                      variant: (id: unknown) => string | null }):
+    string {
+  const parts: string[] = [];
+  const variant = names.variant(f["variant_id"]);
+  if (variant !== null) parts.push(`as ${variant}`);
+  const phys = f["physical_state_filter"];
+  if (typeof phys === "string" && phys !== "") parts.push(`while ${phys}`);
+  const voc = f["vocal_state_filter"];
+  if (typeof voc === "string" && voc !== "") {
+    parts.push(`while the voice is ${voc}`);
+  }
+  const from = names.scene(f["scene_range_start_id"]);
+  const to = names.scene(f["scene_range_end_id"]);
+  if (from !== null && to !== null) parts.push(`scenes ${from}–${to}`);
+  else if (from !== null) parts.push(`from scene ${from}`);
+  else if (to !== null) parts.push(`up to scene ${to}`);
+  return parts.length === 0 ? "always, as a second baseline" : parts.join(", ");
+}
+
+async function exceptions(exec: SqlExec, registry: Registry, o: Owner,
+                          board: BoardName): Promise<Exception[]> {
+  const cols = filterColumns(registry, o);
+  const rows = await exec(
+    "SELECT b.*, u.name AS bundle_name " +
+    `FROM ${q(bindingTable(o))} b JOIN bundle u ON u.id = b.bundle_id ` +
+    `WHERE b.${q(`${o.kind}_id`)} = ? AND u.intent = ? ` +
+    `AND NOT (${pureBaseline(registry, o)}) AND ${NOT_CUT("b")} ` +
+    "ORDER BY COALESCE(b.precedence, 0) DESC, b.id",
+    [o.id, BOARDS[board].intent]);
+  const scenes = new Map((await exec("SELECT id, scene_number FROM scene"))
+    .map((s) => [Number(s["id"]), String(s["scene_number"] ?? "?")]));
+  const variants = new Map((await exec(
+    "SELECT id, name FROM character_variant")).map((v) =>
+    [Number(v["id"]), String(v["name"])]));
+  const stateNames = o.kind !== "character" ? [] : await exec(
+    "SELECT name, modality FROM performance_state WHERE character_id = ?",
+    [o.id]);
+  const has = (modality: string, name: unknown): boolean =>
+    stateNames.some((s) => s["modality"] === modality &&
+      String(s["name"] ?? "").trim().toLowerCase() ===
+      String(name).trim().toLowerCase());
+
+  const out: Exception[] = [];
+  for (const r of rows) {
+    const filters: Record<string, SqlValue> = {};
+    for (const c of cols) filters[c] = r[c] ?? null;
+    const stale: string[] = [];
+    for (const [c, m] of [["physical_state_filter", "physical"],
+                          ["vocal_state_filter", "vocal"]] as const) {
+      const v = filters[c];
+      if (typeof v === "string" && v !== "" && !has(m, v)) stale.push(v);
+    }
+    const bundleId = Number(r["bundle_id"]);
+    out.push({
+      bindingId: Number(r["id"]), bundleId,
+      bundleName: String(r["bundle_name"] ?? "Untitled set"),
+      when: describeWhen(filters, {
+        scene: (id) => id === null || id === undefined || id === ""
+          ? null : scenes.get(Number(id)) ?? "?",
+        variant: (id) => id === null || id === undefined || id === ""
+          ? null : variants.get(Number(id)) ?? "a variant",
+      }),
+      replaces: r["combine"] === "replace",
+      precedence: Number(r["precedence"] ?? 0),
+      filters, stale,
+      tiles: await memberTiles(exec, bundleId, PURPOSE_LABEL[board].set),
+    });
+  }
+  return out;
+}
+
 /** Everything a board shows, in one read. */
 export async function loadBoard(
-    exec: SqlExec, registry: Registry, characterId: number,
+    exec: SqlExec, registry: Registry, owner: OwnerArg,
     board: BoardName): Promise<BoardData> {
+  const o = ownerOf(owner);
   const spec = BOARDS[board];
   const labels = PURPOSE_LABEL[board];
   const tiles: Tile[] = [];
 
-  const anchors = await exec(
-    "SELECT a.id AS link_id, a.canonical_status, v.name AS variant, s.* " +
-    "FROM entity_anchor a JOIN asset s ON s.id = a.asset_id " +
-    "LEFT JOIN character_variant v ON v.id = a.subject_variant_id " +
-    "WHERE a.subject_type = 'character' AND a.subject_id = ? " +
-    `AND a.anchor_type = ? AND ${NOT_CUT("a")} ORDER BY a.id`,
-    [characterId, spec.anchorType]);
-  for (const r of anchors) {
-    const { link_id, canonical_status, variant, ...asset } = r;
-    tiles.push({
-      key: `entity_anchor:${String(link_id)}`, purpose: "identity",
-      label: labels.identity, asset,
-      link: { entity: "entity_anchor", id: Number(link_id) },
-      role: null,
-      status: canonical_status === null || canonical_status === undefined
-        ? null : String(canonical_status),
-      variant: variant === null || variant === undefined ? null : String(variant),
-    });
-  }
-
-  const sets = await baselineSets(exec, registry, characterId, board);
-  for (const set of sets) {
-    const members = await exec(
-      "SELECT m.id AS link_id, m.role_in_bundle, s.* FROM bundle_asset m " +
-      "JOIN asset s ON s.id = m.asset_id WHERE m.bundle_id = ? " +
-      'ORDER BY m."order", m.id', [set.bundleId]);
-    for (const r of members) {
-      const { link_id, role_in_bundle, ...asset } = r;
+  if (ANCHOR_KINDS.has(o.kind)) {
+    const anchors = await exec(
+      "SELECT a.id AS link_id, a.canonical_status, v.name AS variant, s.* " +
+      "FROM entity_anchor a JOIN asset s ON s.id = a.asset_id " +
+      "LEFT JOIN character_variant v ON v.id = a.subject_variant_id " +
+      "WHERE a.subject_type = ? AND a.subject_id = ? " +
+      `AND a.anchor_type = ? AND ${NOT_CUT("a")} ORDER BY a.id`,
+      [o.kind, o.id, spec.anchorType]);
+    for (const r of anchors) {
+      const { link_id, canonical_status, variant, ...asset } = r;
       tiles.push({
-        key: `bundle_asset:${String(link_id)}`, purpose: "set",
-        label: labels.set, asset,
-        link: { entity: "bundle_asset", id: Number(link_id) },
-        role: role_in_bundle === null || role_in_bundle === undefined ||
-          role_in_bundle === "" ? null : String(role_in_bundle),
-        status: null, variant: null,
+        key: `entity_anchor:${String(link_id)}`, purpose: "identity",
+        label: labels.identity, asset,
+        link: { entity: "entity_anchor", id: Number(link_id) },
+        role: null,
+        status: canonical_status === null || canonical_status === undefined
+          ? null : String(canonical_status),
+        variant: variant === null || variant === undefined
+          ? null : String(variant),
       });
     }
   }
 
-  const related = await exec(
-    "SELECT r.id AS link_id, r.relationship_type, s.* FROM asset_relationship r " +
-    "JOIN asset s ON s.id = r.asset_id WHERE r.entity_type = 'character' " +
-    "AND r.entity_id = ? ORDER BY r.id", [characterId]);
-  for (const r of related) {
-    const { link_id, relationship_type, ...asset } = r;
-    if (boardForIdentifier(asset["identifier"]) !== board) continue;
-    const type = String(relationship_type ?? "reference");
-    const purpose: Purpose | "other" =
-      type === "concept" || type === "inspiration" ? type : "other";
-    tiles.push({
-      key: `asset_relationship:${String(link_id)}`, purpose,
-      label: purpose === "other" ? type : labels[purpose], asset,
-      link: { entity: "asset_relationship", id: Number(link_id) },
-      role: null, status: null, variant: null,
-    });
+  const sets = await baselineSets(exec, registry, o, board);
+  for (const set of sets) {
+    tiles.push(...await memberTiles(exec, set.bundleId, labels.set));
+  }
+
+  if (board !== "motion") {
+    const related = await exec(
+      "SELECT r.id AS link_id, r.relationship_type, s.* " +
+      "FROM asset_relationship r JOIN asset s ON s.id = r.asset_id " +
+      "WHERE r.entity_type = ? AND r.entity_id = ? ORDER BY r.id",
+      [o.kind, o.id]);
+    for (const r of related) {
+      const { link_id, relationship_type, ...asset } = r;
+      if (boardForIdentifier(asset["identifier"]) !== board) continue;
+      const type = String(relationship_type ?? "reference");
+      const purpose: Purpose | "other" =
+        type === "concept" || type === "inspiration" ? type : "other";
+      tiles.push({
+        key: `asset_relationship:${String(link_id)}`, purpose,
+        label: purpose === "other" ? type : labels[purpose], asset,
+        link: { entity: "asset_relationship", id: Number(link_id) },
+        role: null, status: null, variant: null,
+      });
+    }
   }
 
   return { tiles, sets,
-           exceptions: await exceptions(exec, characterId, board) };
+           exceptions: await exceptions(exec, registry, o, board) };
 }
 
 export interface AttachOptions {
-  /** bundle_asset.role_in_bundle for a Look / Voice reference. */
+  /** bundle_asset.role_in_bundle for a set tile. */
   role?: string | null;
   /** When the baseline set is shared with another subject: add for
-   *  everyone using it, or give this character a copy first. Unset
-   *  means ask — `attach` throws SharedSetError. */
+   *  everyone using it, or give this owner a copy first. Unset means
+   *  ask — `attach` throws SharedSetError. */
   shared?: "both" | "split";
+  /** Add set files to this bundle — an exception's — instead of the
+   *  baseline set. */
+  bundleId?: number;
 }
 
 /**
- * Point files at a character, for a purpose. Re-attaching what is
- * already attached the same way does nothing, so a repeated drop is
- * safe. Returns the change to undo, empty when nothing was written.
+ * Point files at an owner, for a purpose. Re-attaching what is already
+ * attached the same way does nothing, so a repeated drop is safe.
  */
 export async function attach(
-    exec: SqlExec, registry: Registry, characterId: number,
+    exec: SqlExec, registry: Registry, owner: OwnerArg,
     board: BoardName, assetIds: readonly number[], purpose: Purpose,
     options: AttachOptions = {}): Promise<ChangeUndo> {
+  const o = ownerOf(owner);
   const rec = new ChangeRecorder("");
   await withTransaction(exec, () =>
-    attachInto(rec, exec, registry, characterId, board, assetIds, purpose,
-               options));
-  const name = await characterName(exec, characterId);
+    attachInto(rec, exec, registry, o, board, assetIds, purpose, options));
+  const name = await ownerName(exec, registry, o);
   const n = assetIds.length;
   rec.label = `Added ${n === 1 ? "a file" : `${String(n)} files`} to ` +
-              `${name}'s ${BOARDS[board].noun}`;
+    (options.bundleId !== undefined ? `an exception for ${name}`
+      : `${name}'s ${BOARDS[board].noun}`);
   return rec.result;
 }
 
 async function attachInto(
-    rec: ChangeRecorder, exec: SqlExec, registry: Registry,
-    characterId: number, board: BoardName, assetIds: readonly number[],
-    purpose: Purpose, options: AttachOptions): Promise<void> {
+    rec: ChangeRecorder, exec: SqlExec, registry: Registry, o: Owner,
+    board: BoardName, assetIds: readonly number[], purpose: Purpose,
+    options: AttachOptions): Promise<void> {
   const spec = BOARDS[board];
   const lastId = async (): Promise<number> =>
     Number((await exec("SELECT last_insert_rowid() AS id"))[0]?.["id"]);
 
   if (purpose === "identity") {
+    if (!ANCHOR_KINDS.has(o.kind)) {
+      throw new Error(`A ${o.kind} cannot carry an identity reference.`);
+    }
     for (const assetId of assetIds) {
       const existing = await exec(
-        "SELECT id FROM entity_anchor WHERE subject_type = 'character' " +
+        "SELECT id FROM entity_anchor WHERE subject_type = ? " +
         "AND subject_id = ? AND asset_id = ? AND anchor_type = ? " +
-        "AND subject_variant_id IS NULL", [characterId, assetId, spec.anchorType]);
+        "AND subject_variant_id IS NULL",
+        [o.kind, o.id, assetId, spec.anchorType]);
       if (existing.length > 0) continue;
       // Verified: the writer pointing at it IS the verification. Q13
       // passes over candidates (§12.8), so a candidate would never reach
@@ -350,10 +462,9 @@ async function attachInto(
       await exec(
         "INSERT INTO entity_anchor (uuid, subject_type, subject_id, " +
         "anchor_type, asset_id, canonical_status) " +
-        "VALUES (?, 'character', ?, ?, ?, 'verified')",
-        [newUuid(), characterId, spec.anchorType, assetId]);
-      const id = await lastId();
-      rec.created("entity_anchor", id);
+        "VALUES (?, ?, ?, ?, ?, 'verified')",
+        [newUuid(), o.kind, o.id, spec.anchorType, assetId]);
+      rec.created("entity_anchor", await lastId());
     }
     return;
   }
@@ -362,87 +473,89 @@ async function attachInto(
     for (const assetId of assetIds) {
       const existing = await exec(
         "SELECT id FROM asset_relationship WHERE asset_id = ? " +
-        "AND entity_type = 'character' AND entity_id = ? " +
-        "AND relationship_type = ?", [assetId, characterId, purpose]);
+        "AND entity_type = ? AND entity_id = ? AND relationship_type = ?",
+        [assetId, o.kind, o.id, purpose]);
       if (existing.length > 0) continue;
       await exec(
         "INSERT INTO asset_relationship (uuid, asset_id, entity_type, " +
-        "entity_id, relationship_type) VALUES (?, ?, 'character', ?, ?)",
-        [newUuid(), assetId, characterId, purpose]);
-      const id = await lastId();
-      rec.created("asset_relationship", id);
+        "entity_id, relationship_type) VALUES (?, ?, ?, ?, ?)",
+        [newUuid(), assetId, o.kind, o.id, purpose]);
+      rec.created("asset_relationship", await lastId());
     }
     return;
   }
 
-  // purpose === "set": the character's baseline set for this board.
-  let set = (await baselineSets(exec, registry, characterId, board))[0];
-  if (set === undefined) {
-    const name = await characterName(exec, characterId);
-    const bundleId = await createBundle(exec, `${name} — ${spec.noun}`,
-                                        spec.intent);
-    rec.created("bundle", bundleId);
-    const bindingId = await bindBundle(exec, registry, "character",
-                                       characterId, bundleId,
-                                       { isBaseline: true, precedence: 0 });
-    if (bindingId !== null) rec.created("character_asset_binding", bindingId);
-    set = { bindingId: bindingId ?? 0, bundleId, name, sharedWith: [] };
-  } else if (set.sharedWith.length > 0) {
-    if (options.shared === undefined) throw new SharedSetError(set.sharedWith);
-    if (options.shared === "split") {
-      set = await splitInto(rec, exec, characterId, board, set);
+  // purpose === "set"
+  let bundleId: number;
+  if (options.bundleId !== undefined) {
+    bundleId = options.bundleId;
+  } else {
+    let set = (await baselineSets(exec, registry, o, board))[0];
+    if (set === undefined) {
+      const name = await ownerName(exec, registry, o);
+      const made = await createBundle(exec, `${name} — ${spec.noun}`,
+                                      spec.intent);
+      rec.created("bundle", made);
+      const bindingId = await bindBundle(exec, registry, o.kind, o.id, made,
+                                         { isBaseline: true, precedence: 0 });
+      if (bindingId !== null) rec.created(bindingTable(o), bindingId);
+      set = { bindingId: bindingId ?? 0, bundleId: made, name, sharedWith: [] };
+    } else if (set.sharedWith.length > 0) {
+      if (options.shared === undefined) throw new SharedSetError(set.sharedWith);
+      if (options.shared === "split") {
+        set = await splitInto(rec, exec, registry, o, board, set);
+      }
     }
+    bundleId = set.bundleId;
   }
-  const plan = await planBundleAdd(exec, set.bundleId, assetIds);
+  const plan = await planBundleAdd(exec, bundleId, assetIds);
   if (plan.add.length === 0) return;
   const role = options.role === undefined || options.role === null ||
     options.role.trim() === "" ? null : options.role.trim();
-  await applyBundleAdd(exec, set.bundleId, plan.add, role);
+  await applyBundleAdd(exec, bundleId, plan.add, role);
   const links = await exec(
-    "SELECT id, asset_id FROM bundle_asset WHERE bundle_id = ? " +
+    "SELECT id FROM bundle_asset WHERE bundle_id = ? " +
     `AND asset_id IN (${plan.add.map(() => "?").join(", ")})`,
-    [set.bundleId, ...plan.add]);
+    [bundleId, ...plan.add]);
   for (const l of links) rec.created("bundle_asset", Number(l["id"]));
 }
 
 /**
- * Give this character its own copy of a shared baseline set: a new
- * bundle with the same members, and this character's binding pointed at
- * it. The other subjects keep the original untouched.
+ * Give this owner its own copy of a shared baseline set: a new bundle
+ * with the same members, and this owner's binding pointed at it.
  */
 async function splitInto(rec: ChangeRecorder, exec: SqlExec,
-                         characterId: number, board: BoardName,
+                         registry: Registry, o: Owner, board: BoardName,
                          set: BaselineSet): Promise<BaselineSet> {
   const spec = BOARDS[board];
-  const name = await characterName(exec, characterId);
-  const bundleId = await createBundle(exec, `${name} — ${spec.noun}`,
-                                      spec.intent);
+  const name = `${await ownerName(exec, registry, o)} — ${spec.noun}`;
+  const bundleId = await createBundle(exec, name, spec.intent);
   rec.created("bundle", bundleId);
+  await copyMembers(rec, exec, set.bundleId, bundleId);
+  await rec.snapshot(exec, bindingTable(o), set.bindingId);
+  await exec(
+    `UPDATE ${q(bindingTable(o))} SET bundle_id = ?, ` +
+    "updated_at = datetime('now') WHERE id = ?", [bundleId, set.bindingId]);
+  return { bindingId: set.bindingId, bundleId, name, sharedWith: [] };
+}
+
+async function copyMembers(rec: ChangeRecorder, exec: SqlExec,
+                           from: number, to: number): Promise<void> {
   const members = await exec(
     'SELECT asset_id, role_in_bundle FROM bundle_asset WHERE bundle_id = ? ' +
-    'ORDER BY "order", id', [set.bundleId]);
+    'ORDER BY "order", id', [from]);
   for (const m of members) {
-    await applyBundleAdd(exec, bundleId, [Number(m["asset_id"])],
+    await applyBundleAdd(exec, to, [Number(m["asset_id"])],
                          m["role_in_bundle"] === null ? null
                            : String(m["role_in_bundle"]));
   }
   for (const l of await exec(
-      "SELECT id FROM bundle_asset WHERE bundle_id = ?", [bundleId])) {
+      "SELECT id FROM bundle_asset WHERE bundle_id = ?", [to])) {
     rec.created("bundle_asset", Number(l["id"]));
   }
-  await rec.snapshot(exec, "character_asset_binding", set.bindingId);
-  await exec(
-    "UPDATE character_asset_binding SET bundle_id = ?, " +
-    "updated_at = datetime('now') WHERE id = ?", [bundleId, set.bindingId]);
-  return { bindingId: set.bindingId, bundleId, name: `${name} — ${spec.noun}`,
-           sharedWith: [] };
 }
 
-/**
- * Take a tile off the board: its link row only. The asset stays in the
- * project — §8.6's orphan report is what notices it is now unused —
- * and removing a file from the project is a separate act, in Assets.
- */
+/** Take a tile off the board: its link row only. The asset stays. */
 export async function detach(exec: SqlExec, tile: Tile): Promise<ChangeUndo> {
   const rec = new ChangeRecorder(`Removed ${String(tile.asset["name"] ??
     "a file")} from the board`);
@@ -456,7 +569,7 @@ export async function detach(exec: SqlExec, tile: Tile): Promise<ChangeUndo> {
 
 /** Change what a tile is for: one link out, another in, one undo. */
 export async function repurpose(
-    exec: SqlExec, registry: Registry, characterId: number,
+    exec: SqlExec, registry: Registry, owner: OwnerArg,
     board: BoardName, tile: Tile, purpose: Purpose,
     options: AttachOptions = {}): Promise<ChangeUndo> {
   const rec = new ChangeRecorder(
@@ -466,7 +579,7 @@ export async function repurpose(
     await rec.snapshot(exec, tile.link.entity, tile.link.id);
     await exec(`DELETE FROM ${q(tile.link.entity)} WHERE id = ?`,
                [tile.link.id]);
-    await attachInto(rec, exec, registry, characterId, board,
+    await attachInto(rec, exec, registry, ownerOf(owner), board,
                      [Number(tile.asset["id"])], purpose, options);
   });
   return rec.result;
@@ -493,6 +606,178 @@ export async function setTileRole(exec: SqlExec, linkId: number,
   return rec.result;
 }
 
+// ---------------------------------------------------------------------------
+// Exceptions
+// ---------------------------------------------------------------------------
+
+/** The filter columns a condition sets, everything else cleared. */
+function filterValues(registry: Registry, o: Owner,
+                      when: When): Record<string, SqlValue> {
+  const out: Record<string, SqlValue> = {};
+  for (const c of filterColumns(registry, o)) out[c] = null;
+  const need = (c: string): void => {
+    if (!(c in out)) throw new Error(`A ${o.kind} cannot be scoped that way.`);
+  };
+  if (when.kind === "scenes") {
+    need("scene_range_start_id");
+    if (when.startId === null && when.endId === null) {
+      throw new Error("Pick at least the scene it starts at or ends at.");
+    }
+    out["scene_range_start_id"] = when.startId;
+    out["scene_range_end_id"] = when.endId;
+  } else if (when.kind === "variant") {
+    need("variant_id");
+    out["variant_id"] = when.variantId;
+  } else {
+    const col = when.kind === "physical"
+      ? "physical_state_filter" : "vocal_state_filter";
+    need(col);
+    if (when.state.trim() === "") throw new Error("Pick the state.");
+    out[col] = when.state.trim();
+  }
+  return out;
+}
+
+/**
+ * A new exception: an empty bundle of the board's intent, bound with the
+ * condition as its filter, ranked above every binding the owner already
+ * has for that intent — a new exception is the most specific thing, and
+ * the writer can move it down.
+ */
+export async function addException(
+    exec: SqlExec, registry: Registry, owner: OwnerArg, board: BoardName,
+    when: When, replaces: boolean): Promise<{ change: ChangeUndo;
+                                              bindingId: number }> {
+  const o = ownerOf(owner);
+  const rec = new ChangeRecorder("Added an exception");
+  const spec = BOARDS[board];
+  const filters = filterValues(registry, o, when);
+  let bindingId = 0;
+  await withTransaction(exec, async () => {
+    const top = Number((await exec(
+      `SELECT MAX(COALESCE(b.precedence, 0)) AS top FROM ` +
+      `${q(bindingTable(o))} b JOIN bundle u ON u.id = b.bundle_id ` +
+      `WHERE b.${q(`${o.kind}_id`)} = ? AND u.intent = ?`,
+      [o.id, spec.intent]))[0]?.["top"] ?? 0);
+    const name = await ownerName(exec, registry, o);
+    const bundleId = await createBundle(exec, `${name} — ${spec.noun}, ` +
+      `exception`, spec.intent);
+    rec.created("bundle", bundleId);
+    const cols = Object.keys(filters);
+    await exec(
+      `INSERT INTO ${q(bindingTable(o))} (uuid, ${q(`${o.kind}_id`)}, ` +
+      "bundle_id, is_baseline, precedence, combine" +
+      cols.map((c) => `, ${q(c)}`).join("") + ") VALUES (?, ?, ?, 0, ?, ?" +
+      cols.map(() => ", ?").join("") + ")",
+      [newUuid(), o.id, bundleId, top + 1, replaces ? "replace" : "add",
+       ...cols.map((c) => filters[c] ?? null)]);
+    bindingId = Number((await exec(
+      "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
+    rec.created(bindingTable(o), bindingId);
+  });
+  return { change: rec.result, bindingId };
+}
+
+/** Change when an exception applies, or whether it replaces. */
+export async function updateException(
+    exec: SqlExec, registry: Registry, owner: OwnerArg, bindingId: number,
+    patch: { when?: When; replaces?: boolean }): Promise<ChangeUndo> {
+  const o = ownerOf(owner);
+  const rec = new ChangeRecorder("Changed an exception");
+  await withTransaction(exec, async () => {
+    await rec.snapshot(exec, bindingTable(o), bindingId);
+    const sets: Record<string, SqlValue> = {};
+    if (patch.when !== undefined) {
+      Object.assign(sets, filterValues(registry, o, patch.when));
+    }
+    if (patch.replaces !== undefined) {
+      sets["combine"] = patch.replaces ? "replace" : "add";
+    }
+    const cols = Object.keys(sets);
+    if (cols.length === 0) return;
+    await exec(
+      `UPDATE ${q(bindingTable(o))} SET ` +
+      cols.map((c) => `${q(c)} = ?`).join(", ") +
+      ", updated_at = datetime('now') WHERE id = ?",
+      [...cols.map((c) => sets[c] ?? null), bindingId]);
+  });
+  return rec.result;
+}
+
+/**
+ * Move an exception one place up (wins over more) or down. Exceptions
+ * are renumbered 1…n from the bottom so the order shown IS the
+ * precedence; baselines, at 0, are never touched.
+ */
+export async function moveException(
+    exec: SqlExec, registry: Registry, owner: OwnerArg, board: BoardName,
+    bindingId: number, direction: "up" | "down"): Promise<ChangeUndo> {
+  const o = ownerOf(owner);
+  const rec = new ChangeRecorder("Reordered exceptions");
+  await withTransaction(exec, async () => {
+    const list = (await exceptions(exec, registry, o, board))
+      .map((x) => x.bindingId);           // highest first
+    const i = list.indexOf(bindingId);
+    const j = direction === "up" ? i - 1 : i + 1;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j] as number, list[i] as number];
+    for (let k = 0; k < list.length; k += 1) {
+      const id = list[k] as number;
+      const precedence = list.length - k;
+      const cur = Number((await exec(
+        `SELECT COALESCE(precedence, 0) AS p FROM ${q(bindingTable(o))} ` +
+        "WHERE id = ?", [id]))[0]?.["p"]);
+      if (cur === precedence) continue;
+      await rec.snapshot(exec, bindingTable(o), id);
+      await exec(
+        `UPDATE ${q(bindingTable(o))} SET precedence = ?, ` +
+        "updated_at = datetime('now') WHERE id = ?", [precedence, id]);
+    }
+  });
+  return rec.result;
+}
+
+/**
+ * Remove an exception: its binding, and its bundle with the bundle's
+ * memberships when nothing else binds that bundle. The files stay in
+ * the project.
+ */
+export async function removeException(
+    exec: SqlExec, registry: Registry, owner: OwnerArg,
+    bindingId: number): Promise<ChangeUndo> {
+  const o = ownerOf(owner);
+  const rec = new ChangeRecorder("Removed an exception");
+  await withTransaction(exec, async () => {
+    const row = (await exec(
+      `SELECT bundle_id FROM ${q(bindingTable(o))} WHERE id = ?`,
+      [bindingId]))[0];
+    if (row === undefined) return;
+    const bundleId = Number(row["bundle_id"]);
+    await rec.snapshot(exec, bindingTable(o), bindingId);
+    await exec(`DELETE FROM ${q(bindingTable(o))} WHERE id = ?`, [bindingId]);
+    let stillBound = false;
+    for (const subject of bindingSubjects(registry)) {
+      const n = await exec(
+        `SELECT 1 FROM ${q(`${subject}_asset_binding`)} WHERE bundle_id = ? ` +
+        "LIMIT 1", [bundleId]);
+      if (n.length > 0) { stillBound = true; break; }
+    }
+    if (stillBound) return;
+    for (const m of await exec(
+        "SELECT id FROM bundle_asset WHERE bundle_id = ?", [bundleId])) {
+      await rec.snapshot(exec, "bundle_asset", Number(m["id"]));
+    }
+    await rec.snapshot(exec, "bundle", bundleId);
+    await exec("DELETE FROM bundle_asset WHERE bundle_id = ?", [bundleId]);
+    await exec("DELETE FROM bundle WHERE id = ?", [bundleId]);
+  });
+  return rec.result;
+}
+
+// ---------------------------------------------------------------------------
+// Files
+// ---------------------------------------------------------------------------
+
 /**
  * Make asset rows for files the board was given, reusing any row that
  * already has the identifier — one file used twenty ways is twenty links
@@ -511,7 +796,8 @@ export async function registerFiles(
   }
   const ids = new Map<string, number>([
     ...plan.existing.map((e) => [e.identifier, e.id] as const),
-    ...plan.create.map((c, i) => [c.identifier.trim(), created[i] as number] as const),
+    ...plan.create.map((c, i) =>
+      [c.identifier.trim(), created[i] as number] as const),
   ]);
   const assetIds: number[] = [];
   for (const c of candidates) {

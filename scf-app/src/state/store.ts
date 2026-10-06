@@ -143,6 +143,11 @@ interface AppState {
    *  the workspace unmounts while a raw record is shown. */
   selectedCharacterId: number | null;
   characterTab: CharacterTab;
+  /** The "as of scene" position the workspace shows what is in force
+   *  at. Null shows baselines. Kept across characters: comparing who
+   *  looks how in one scene is the point of it. */
+  asOfSceneId: number | null;
+  setAsOfScene: (id: number | null) => void;
   selectCharacter: (id: number | null) => void;
   setCharacterTab: (tab: CharacterTab) => void;
   draft: FormDraft | null;
@@ -389,7 +394,7 @@ async function finishFolderOpen(
   await rememberHandle(opened.token);
   const rev = get().revision + 1;
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
-        selectedCharacterId: null,
+        selectedCharacterId: null, asOfSceneId: null,
         phase: "open", projectName: opened.name,
         fileToken: opened.token, lastSession: opened.name,
         folderChoice: null,
@@ -431,6 +436,7 @@ export const useStore = create<AppState>((set, get) => ({
   // click before you can write. Every open path sets this too, so
   // closing one project and opening another lands on the script again.
   navMode: "script", selectedCharacterId: null, characterTab: "Profile",
+  asOfSceneId: null,
   assetPrefix: "",
   listSort: "story",
   selectedQuery: null,
@@ -458,7 +464,7 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:auto-resume", "1");
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
-        selectedCharacterId: null,
+        selectedCharacterId: null, asOfSceneId: null,
             phase: "open", projectName: "Hollow Creek (demo)",
             fileToken: null, lastSession: "Hollow Creek (demo)",
             revision: rev, lastSavedRevision: rev });
@@ -499,7 +505,7 @@ export const useStore = create<AppState>((set, get) => ({
         projectRoot === null
           ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
-        selectedCharacterId: null,
+        selectedCharacterId: null, asOfSceneId: null,
             phase: "open", projectName: `${name}`, fileToken,
             projectRoot, rootMode,
             rootVerified: pair !== null,
@@ -533,7 +539,7 @@ export const useStore = create<AppState>((set, get) => ({
       revokeAll();
       clearResolutions();
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
-        selectedCharacterId: null,
+        selectedCharacterId: null, asOfSceneId: null,
             phase: "open", projectName: opened.name,
             fileToken: opened.token, lastSession: opened.name,
             projectRoot: null, rootPermission: "none",
@@ -706,7 +712,7 @@ export const useStore = create<AppState>((set, get) => ({
                          { editorVersion: EDITOR_VERSION });
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
-        selectedCharacterId: null,
+        selectedCharacterId: null, asOfSceneId: null,
             phase: "open", projectName: "Untitled.scf", fileToken: null,
             revision: rev, lastSavedRevision: rev });
     } catch (e) {
@@ -732,6 +738,7 @@ export const useStore = create<AppState>((set, get) => ({
     // blur-triggered commit — resolving against no database.
     set({ phase: "start", fileToken: null, errorMessage: null,
           navMode: "script", selectedCharacterId: null, characterTab: "Profile",
+  asOfSceneId: null,
   assetPrefix: "", openRow: null, draft: null,
           selectedSubject: null, projectRoot: null,
           rootPermission: "none", rootTraversal: "unknown",
@@ -813,6 +820,7 @@ export const useStore = create<AppState>((set, get) => ({
   selectCharacter: (selectedCharacterId) =>
     set({ selectedCharacterId, openRow: null, draft: null }),
   setCharacterTab: (characterTab) => set({ characterTab }),
+  setAsOfScene: (asOfSceneId) => set({ asOfSceneId }),
   setSchemaCollapsed: (schemaCollapsed) => set({ schemaCollapsed }),
   selectQuery: (selectedQuery) =>
     set({ selectedQuery, openRow: null, draft: null }),

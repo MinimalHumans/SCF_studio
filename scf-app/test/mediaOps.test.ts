@@ -17,6 +17,7 @@ import { resolveMedia } from "@scf-core/resolution.ts";
 import {
   attach, boardForIdentifier, confirmIdentity, detach, loadBoard,
   registerFiles, repurpose, SharedSetError, withCreatedAssets,
+  addException, moveException, purposesFor, removeException, updateException,
 } from "../src/editor/mediaOps.ts";
 import { applyUndoChange } from "../src/state/undoChange.ts";
 import { createCharacter } from "../src/editor/elementOps.ts";
@@ -270,5 +271,144 @@ describe("undo", () => {
     await applyUndoChange(db.exec, change);
     expect((await db.exec("SELECT canonical_status FROM entity_anchor"))[0])
       .toEqual({ canonical_status: "candidate" });
+  });
+});
+
+describe("exceptions", () => {
+  // A character, a baseline look, a "wounded" physical state at scene B.
+  async function setup(): Promise<{ id: number; a: number; b: number;
+                                    base: number; hurt: number }> {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const scenes: number[] = [];
+    for (const n of ["1", "2"]) {
+      await db.exec("INSERT INTO scene (uuid, name, scene_number) " +
+                    "VALUES (?, ?, ?)", [newUuid(), `SC ${n}`, n]);
+      scenes.push(Number((await db.exec(
+        "SELECT last_insert_rowid() AS id"))[0]?.["id"]));
+    }
+    await db.exec(
+      "INSERT INTO performance_state (uuid, name, character_id, scene_id, " +
+      "modality, persistence) VALUES (?, 'wounded', ?, ?, 'physical', " +
+      "'scene_only')", [newUuid(), id, scenes[1]]);
+    const base = await asset(db.exec, "base.png");
+    const hurt = await asset(db.exec, "hurt.png");
+    await attach(db.exec, registry, id, "look", [base], "set");
+    return { id, a: scenes[0] as number, b: scenes[1] as number, base, hurt };
+  }
+  const inForce = async (id: number, scene: number): Promise<string[]> =>
+    (await resolveMedia({ exec: db.exec, registry }, "character", id,
+                        "visual_identity", scene))
+      .assets_most_specific_first.map((x) => String(x["name"]));
+
+  test("applies where Q13 says the state is in force, and only there",
+       async () => {
+    const { id, a, b, hurt } = await setup();
+    const { bindingId } = await addException(
+      db.exec, registry, id, "look", { kind: "physical", state: "wounded" },
+      true);
+    const board = await loadBoard(db.exec, registry, id, "look");
+    const x = board.exceptions[0];
+    expect(x?.when).toBe("while wounded");
+    await attach(db.exec, registry, id, "look", [hurt], "set",
+                 { bundleId: x?.bundleId });
+    expect(await inForce(id, a)).toEqual(["base.png"]);
+    // Replaces: at the wounded scene the baseline steps aside.
+    expect(await inForce(id, b)).toEqual(["hurt.png"]);
+    const verdicts = (await resolveMedia({ exec: db.exec, registry },
+      "character", id, "visual_identity", b)).binding_verdicts;
+    expect(verdicts.find((v) => v.id === bindingId)?.applies).toBe(true);
+  });
+
+  test("adding instead of replacing keeps the baseline beside it",
+       async () => {
+    const { id, b, hurt } = await setup();
+    const { bindingId } = await addException(
+      db.exec, registry, id, "look", { kind: "physical", state: "wounded" },
+      false);
+    const x = (await loadBoard(db.exec, registry, id, "look")).exceptions[0];
+    await attach(db.exec, registry, id, "look", [hurt], "set",
+                 { bundleId: x?.bundleId });
+    expect((await inForce(id, b)).sort()).toEqual(["base.png", "hurt.png"]);
+    await updateException(db.exec, registry, id, bindingId,
+                          { replaces: true });
+    expect(await inForce(id, b)).toEqual(["hurt.png"]);
+  });
+
+  test("a filter naming no state is flagged, not silently dead", async () => {
+    const { id } = await setup();
+    await addException(db.exec, registry, id, "look",
+                       { kind: "physical", state: "drowned" }, false);
+    const x = (await loadBoard(db.exec, registry, id, "look")).exceptions[0];
+    expect(x?.stale).toEqual(["drowned"]);
+  });
+
+  test("the order shown is the precedence; moving undoes", async () => {
+    const { id, a } = await setup();
+    const first = await addException(db.exec, registry, id, "look",
+      { kind: "physical", state: "wounded" }, false);
+    const second = await addException(db.exec, registry, id, "look",
+      { kind: "scenes", startId: a, endId: a }, false);
+    const order = async (): Promise<number[]> =>
+      (await loadBoard(db.exec, registry, id, "look")).exceptions
+        .map((x) => x.bindingId);
+    expect(await order()).toEqual([second.bindingId, first.bindingId]);
+    const moved = await moveException(db.exec, registry, id, "look",
+                                      first.bindingId, "up");
+    expect(await order()).toEqual([first.bindingId, second.bindingId]);
+    await applyUndoChange(db.exec, moved);
+    expect(await order()).toEqual([second.bindingId, first.bindingId]);
+  });
+
+  test("removing takes its set with it, and undo brings all of it back",
+       async () => {
+    const { id, hurt } = await setup();
+    const before = await counts(db.exec);
+    const { change: added, bindingId } = await addException(
+      db.exec, registry, id, "look", { kind: "physical", state: "wounded" },
+      true);
+    const x = (await loadBoard(db.exec, registry, id, "look")).exceptions[0];
+    await attach(db.exec, registry, id, "look", [hurt], "set",
+                 { bundleId: x?.bundleId });
+    const withIt = await counts(db.exec);
+    const removed = await removeException(db.exec, registry, id, bindingId);
+    expect(await counts(db.exec)).toEqual(before);   // files stay: asset rows unchanged
+    await applyUndoChange(db.exec, removed);
+    expect(await counts(db.exec)).toEqual(withIt);
+    void added;
+  });
+
+  test("a condition the owner's table cannot hold is refused", async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    await db.exec("INSERT INTO costume (uuid, name, character_id) " +
+                  "VALUES (?, 'Mourning dress', ?)", [newUuid(), id]);
+    const costume = Number((await db.exec(
+      "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
+    await expect(addException(db.exec, registry,
+      { kind: "costume", id: costume }, "look",
+      { kind: "physical", state: "wounded" }, false))
+      .rejects.toThrow(/cannot be scoped/);
+  });
+});
+
+describe("a costume's board", () => {
+  test("binds through costume_asset_binding and resolves for the costume",
+       async () => {
+    const id = await createCharacter(db.exec, "Ada Cade");
+    await db.exec("INSERT INTO costume (uuid, name, character_id) " +
+                  "VALUES (?, 'Shawl', ?)", [newUuid(), id]);
+    const costume = Number((await db.exec(
+      "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
+    const f = await asset(db.exec, "shawl.png");
+    const owner = { kind: "costume" as const, id: costume };
+    await attach(db.exec, registry, owner, "look", [f], "set");
+    expect(await count(db.exec, "costume_asset_binding")).toBe(1);
+    expect(await count(db.exec, "character_asset_binding")).toBe(0);
+    const m = await resolveMedia({ exec: db.exec, registry }, "costume",
+                                 costume, "visual_identity");
+    expect(m.assets_most_specific_first.map((x) => x["name"]))
+      .toEqual(["shawl.png"]);
+    expect(purposesFor(owner, "look")).not.toContain("identity");
+    await expect(attach(db.exec, registry, owner, "look", [f], "identity"))
+      .rejects.toThrow(/cannot carry/);
   });
 });

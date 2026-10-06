@@ -304,3 +304,87 @@ export async function setDirection(
     "character_b_id = ?, directionality = 'a_to_b', " +
     "updated_at = datetime('now') WHERE id = ?", [from, to, relationshipId]);
 }
+
+// ---------------------------------------------------------------------------
+// Wardrobe and physicality (phase 4)
+// ---------------------------------------------------------------------------
+
+/** A named row owned by a character: a costume, a habit. */
+async function addOwned(exec: SqlExec, entity: string, characterId: number,
+                        name: string, what: string): Promise<number> {
+  const clean = cleanName(name);
+  if (clean === null) throw new Error(`Name the ${what}.`);
+  await exec(`INSERT INTO ${q(entity)} (uuid, name, character_id) ` +
+             "VALUES (?, ?, ?)", [newUuid(), clean, characterId]);
+  return insertedId(exec);
+}
+
+export const addCostume = (exec: SqlExec, characterId: number,
+                           name: string): Promise<number> =>
+  addOwned(exec, "costume", characterId, name, "costume");
+
+export const addHabit = (exec: SqlExec, characterId: number,
+                         name: string): Promise<number> =>
+  addOwned(exec, "physical_habit", characterId, name, "habit");
+
+/**
+ * Say a costume is worn in a scene. `costume_scene` is a link whose
+ * natural key is the pair, so wearing it there twice is one link: the
+ * existing row is returned.
+ */
+export async function wearIn(exec: SqlExec, costumeId: number,
+                             sceneId: number): Promise<number> {
+  const found = await exec(
+    "SELECT id FROM costume_scene WHERE costume_id = ? AND scene_id = ?",
+    [costumeId, sceneId]);
+  if (found[0] !== undefined) return Number(found[0]["id"]);
+  await exec("INSERT INTO costume_scene (uuid, costume_id, scene_id) " +
+             "VALUES (?, ?, ?)", [newUuid(), costumeId, sceneId]);
+  return insertedId(exec);
+}
+
+/**
+ * The character's costume progression — the row wardrobe stages hang
+ * from — made on first need, so a stage can be added straight from the
+ * strip without a separate "create progression" step.
+ */
+export async function ensureProgression(exec: SqlExec,
+                                        characterId: number): Promise<number> {
+  const found = await exec(
+    "SELECT id FROM costume_progression WHERE character_id = ? " +
+    "AND (lifecycle_status IS NULL OR lifecycle_status <> 'cut') " +
+    "ORDER BY id LIMIT 1", [characterId]);
+  if (found[0] !== undefined) return Number(found[0]["id"]);
+  await exec("INSERT INTO costume_progression (uuid, character_id) " +
+             "VALUES (?, ?)", [newUuid(), characterId]);
+  return insertedId(exec);
+}
+
+/**
+ * A makeup and hair design for one scene. The baseline — no scene — is
+ * made by its fields on first edit; this is for the per-scene ones, and
+ * returns the existing design if the scene already has one.
+ */
+export async function addMakeupFor(exec: SqlExec, characterId: number,
+                                   sceneId: number): Promise<number> {
+  const found = await exec(
+    "SELECT id FROM makeup_hair_design WHERE character_id = ? AND scene_id = ?",
+    [characterId, sceneId]);
+  if (found[0] !== undefined) return Number(found[0]["id"]);
+  await exec("INSERT INTO makeup_hair_design (uuid, character_id, scene_id) " +
+             "VALUES (?, ?, ?)", [newUuid(), characterId, sceneId]);
+  return insertedId(exec);
+}
+
+/** How a character is in one location: one row per pair. */
+export async function addPlaceFor(exec: SqlExec, characterId: number,
+                                  locationId: number): Promise<number> {
+  const found = await exec(
+    "SELECT id FROM character_environment_physicality " +
+    "WHERE character_id = ? AND location_id = ?", [characterId, locationId]);
+  if (found[0] !== undefined) return Number(found[0]["id"]);
+  await exec("INSERT INTO character_environment_physicality " +
+             "(uuid, character_id, location_id) VALUES (?, ?, ?)",
+             [newUuid(), characterId, locationId]);
+  return insertedId(exec);
+}

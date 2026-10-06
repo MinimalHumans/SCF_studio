@@ -7,10 +7,13 @@ import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import { CharacterFace } from "./CharacterFace.tsx";
 import { ProfileTab } from "./ProfileTab.tsx";
+import { useStoryScenes } from "./StoryStrip.tsx";
 import { PendingTab } from "./PendingTab.tsx";
 import { ArcTab } from "./ArcTab.tsx";
 import { LookTab } from "./LookTab.tsx";
 import { VoiceTab } from "./VoiceTab.tsx";
+import { WardrobeTab } from "./WardrobeTab.tsx";
+import { PhysicalityTab } from "./PhysicalityTab.tsx";
 import { RelationshipsTab } from "./RelationshipsTab.tsx";
 
 /** Where each character's tab was scrolled to, so "open record" and
@@ -103,10 +106,13 @@ export function CharacterWorkspace(): JSX.Element {
             ))}
           </div>
         </div>
-        <button className="ghost tiny ws-open-record"
-                onClick={() => void openEntityRow("character", id)}>
-          Open record
-        </button>
+        <div className="ws-header-side">
+          <AsOfScene characterId={id} />
+          <button className="ghost tiny ws-open-record"
+                  onClick={() => void openEntityRow("character", id)}>
+            Open record
+          </button>
+        </div>
       </header>
 
       <div className="ws-tabs" role="tablist" aria-label="Character">
@@ -124,6 +130,10 @@ export function CharacterWorkspace(): JSX.Element {
           ? <ProfileTab key={id} characterId={id} />
           : characterTab === "Look"
           ? <LookTab key={id} characterId={id} />
+          : characterTab === "Wardrobe"
+          ? <WardrobeTab key={id} characterId={id} />
+          : characterTab === "Physicality"
+          ? <PhysicalityTab key={id} characterId={id} />
           : characterTab === "Voice"
           ? <VoiceTab key={id} characterId={id} />
           : characterTab === "Arc"
@@ -134,5 +144,34 @@ export function CharacterWorkspace(): JSX.Element {
                         tab={characterTab as CharacterTab} characterId={id} />}
       </div>
     </div>
+  );
+}
+
+/**
+ * "As of scene": pick a scene and every tab shows what is in force there
+ * — which references apply, which exception, which costume and states —
+ * using the same resolution the queries use. Off by default, so the
+ * tabs show baselines. Scenes this character is in are marked.
+ */
+function AsOfScene({ characterId }: { characterId: number }): JSX.Element {
+  const { asOfSceneId, setAsOfScene } = useStore();
+  const scenes = useStoryScenes();
+  const present = new Set(useQuery(
+    "SELECT scene_id FROM scene_character WHERE character_id = ?",
+    [characterId]).map((r) => Number(r["scene_id"])));
+  return (
+    <label className={"ws-asof" + (asOfSceneId !== null ? " on" : "")}>
+      <span>As of</span>
+      <select value={asOfSceneId === null ? "" : String(asOfSceneId)}
+              onChange={(e) => setAsOfScene(e.target.value === ""
+                ? null : Number(e.target.value))}>
+        <option value="">no scene — baselines</option>
+        {scenes.map((s) => (
+          <option key={s.id} value={s.id}>
+            {present.has(s.id) ? "● " : "\u2003"}sc {s.number} — {s.name}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
