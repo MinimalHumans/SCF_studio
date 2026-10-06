@@ -61,6 +61,10 @@ const projectOpen = (): boolean => useStore.getState().phase === "open";
 /** Cross-component handle for the scene rail's jump-to-line. */
 export const scriptViewHandle: {
   scrollToLineOrder: ((order: number) => void) | null;
+  /** Jump to a line by its uuid. Prefer this: the document drops stored
+   *  blank rows and lays out its own spacing, so a table's line_order is
+   *  not a document line number. */
+  scrollToLineId: ((id: string) => boolean) | null;
   /** Move a scene block so it sits before `beforeSceneId` (null = last).
    * The Scene Rail's drag calls this; the scene ENTITY is never touched,
    * so its beats, shots and links follow by construction. */
@@ -73,7 +77,8 @@ export const scriptViewHandle: {
   /** Newly minted copy of the scene and its block, inserted after it. */
   duplicateScene: ((sceneId: number) => Promise<void>) | null;
 } = {
-  scrollToLineOrder: null, moveScene: null, sceneLineIds: null,
+  scrollToLineOrder: null, scrollToLineId: null, moveScene: null,
+  sceneLineIds: null,
   removeScene: null, duplicateScene: null,
 };
 
@@ -532,8 +537,12 @@ export function ScriptView(): JSX.Element {
         extensions: [
           screenplayExtensions({
             onCommitRequest: () => void explicitCommit(),
+            // A character chip opens the character's workspace, where
+            // everything about them is; other chips open the record.
             onChipClick: (entity, entityId) =>
-              void openEntityRow(entity, entityId),
+              entity === "character"
+                ? useStore.getState().openCharacter(entityId)
+                : void openEntityRow(entity, entityId),
             getLocations: () => entityNamesRef.current.locations,
             getCharacters: () => entityNamesRef.current.characters,
           }),
@@ -779,6 +788,19 @@ export function ScriptView(): JSX.Element {
       await commit(true);
     };
 
+    const jumpToId = (id: string, y: "start" | "center"): boolean => {
+      const index = lineEntries(view.state).findIndex((e) => e.id === id);
+      if (index < 0) return false;
+      const line = view.state.doc.line(index + 1);
+      view.dispatch({
+        selection: { anchor: line.from },
+        effects: EditorView.scrollIntoView(line.from, { y }),
+      });
+      view.focus();
+      return true;
+    };
+    scriptViewHandle.scrollToLineId = (id: string) => jumpToId(id, "start");
+
     scriptViewHandle.scrollToLineOrder = (order: number) => {
       const line = view.state.doc.line(
         Math.min(order + 1, view.state.doc.lines));
@@ -796,7 +818,12 @@ export function ScriptView(): JSX.Element {
       setLoaded(true);
       await refreshAnnotations();
       await updateDirty();
-      if (savedPosition !== null) {
+      // Another section asked to open the script at a line (a character's
+      // Scenes & Lines tab): that wins over where the writer last was.
+      const asked = useStore.getState().takePendingScriptLine();
+      if (asked !== null && jumpToId(asked, "center")) {
+        // done
+      } else if (savedPosition !== null) {
         const head = Math.min(savedPosition.head,
                               view.state.doc.length);
         // scrollIntoView goes through CM's measure cycle — a raw
@@ -820,6 +847,7 @@ export function ScriptView(): JSX.Element {
         };
       }
       scriptViewHandle.scrollToLineOrder = null;
+      scriptViewHandle.scrollToLineId = null;
       scriptViewHandle.moveScene = null;
       scriptViewHandle.sceneLineIds = null;
       scriptViewHandle.removeScene = null;
