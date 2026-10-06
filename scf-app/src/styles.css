@@ -2025,3 +2025,140 @@ tr.prop-weak td { opacity: .6; }
   .ws-role { grid-template-columns: 1fr 1fr; }
 }
 select.unlisted { border-color: var(--amber-dim); color: var(--amber); }
+
+/* ---- story strip ------------------------------------------------------
+   Scenes as columns in story order; a lane per arc or relationship.
+   A stage is a span from where it starts to the scene before the next. */
+.strip-wrap { overflow-x: auto; margin-top: 8px; padding-bottom: 4px; }
+.strip { display: grid; grid-auto-rows: 30px; min-width: max-content; }
+.strip-corner, .strip-scene {
+  font: 10.5px var(--mono);
+  color: var(--paper-dim);
+  display: flex;
+  align-items: end;
+  padding: 0 0 4px;
+  border-bottom: 1px solid var(--line);
+}
+.strip-scene { justify-content: center; }
+.strip-scene.hover { color: var(--paper); }
+.strip-lane-label {
+  grid-column: 1;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--ink-2);
+}
+.strip-lane-quiet { color: var(--paper-dim); font-size: 11.5px; }
+.strip-cell {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--ink-2);
+  border-left: 1px solid var(--ink-2);
+  background: none;
+  padding: 0;
+  min-width: 0;
+}
+.strip-cell.hover { background: var(--ink-1); }
+.strip-add { cursor: copy; position: relative; }
+.strip-add:hover::after, .strip-add:focus-visible::after {
+  content: "+";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--amber);
+  font-weight: 600;
+}
+.strip-span {
+  margin: 4px 1px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+  border-left: 3px solid var(--amber);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  z-index: 1;
+}
+.strip-span.selected { background: color-mix(in srgb, var(--amber) 38%, transparent); }
+.strip-span-quiet {
+  background: color-mix(in srgb, var(--paper-dim) 14%, transparent);
+  border-left-color: var(--paper-dim);
+}
+.strip-span-label {
+  pointer-events: auto;
+  background: none;
+  border: 0;
+  padding: 0 6px;
+  font-size: 11.5px;
+  color: var(--paper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: left;
+}
+button.strip-span-label:hover { color: var(--amber); }
+.strip-mark-cell { display: grid; place-items: center; }
+.strip-mark { width: 9px; height: 9px; border-radius: 50%; }
+.strip-mark-strong { background: var(--paper); }
+.strip-mark-weak { border: 1px solid var(--paper-dim); }
+.strip-problems { margin: 6px 0 0; padding-left: 18px; font-size: 12px; color: var(--amber); }
+.strip-problems .row-link { flex: none; padding: 0; display: inline; }
+.strip-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.strip-head .ws-row-actions { margin-left: auto; }
+.strip-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--paper-dim); margin-left: auto; }
+.strip-add-form { margin-top: 10px; max-width: 760px; flex-wrap: wrap; }
+.strip-add-form label { flex-basis: 100%; font-size: 12px; color: var(--paper-dim); }
+.strip-add-form input { flex: 1; }
+.strip-stage-editor { margin-top: 10px; max-width: 78ch; }
+
+/* ---- relationship map ------------------------------------------------- */
+.rel-map { width: 100%; max-width: 760px; height: auto; display: block; margin: 6px 0 10px; }
+.rel-node circle { fill: var(--ink-2); stroke: var(--paper-dim); stroke-width: 1; }
+.rel-node text { fill: var(--paper); font: 700 11px "Courier Prime", var(--mono); }
+.rel-node .rel-node-name { font: 12px var(--sans); fill: var(--paper); }
+.rel-node { cursor: pointer; }
+.rel-node:hover circle, .rel-node:focus-visible circle, .rel-node.selected circle { stroke: var(--amber); stroke-width: 2; }
+.rel-node.unrelated { opacity: 0.45; }
+.rel-node.unrelated:hover, .rel-node.unrelated:focus-visible { opacity: 0.9; }
+.rel-node-viewer circle { fill: var(--ink-1); stroke: var(--amber); stroke-width: 2; }
+.rel-node-viewer text { font-size: 15px; }
+.rel-node:focus, .rel-edge:focus { outline: none; }
+.rel-edge { cursor: pointer; }
+.rel-hit { stroke: transparent; stroke-width: 14; }
+.rel-line { stroke-width: 2; }
+.rel-edge.selected .rel-line { stroke-width: 3.5; }
+.rel-edge:focus-visible .rel-line { stroke-width: 3.5; }
+.rel-edge-label {
+  fill: var(--paper-dim);
+  font-size: 11px;
+  paint-order: stroke;
+  stroke: var(--ink-0);
+  stroke-width: 4px;
+}
+.rel-edge.selected .rel-edge-label, .rel-edge:hover .rel-edge-label { fill: var(--paper); }
+/* Valence by colour AND dash, so it reads without colour. */
+.rel-v-positive { stroke: var(--ok); fill: var(--ok); }
+.rel-v-negative { stroke: var(--blocker); fill: var(--blocker); stroke-dasharray: 2 4; }
+.rel-v-complex { stroke: var(--amber); fill: var(--amber); stroke-dasharray: 8 4; }
+.rel-v-neutral, .rel-v-none { stroke: var(--paper-dim); fill: var(--paper-dim); }
+.rel-arrow { stroke: none; stroke-dasharray: none; }
+.rel-direction {
+  border: 0; padding: 0; margin: 8px 0 4px;
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.rel-direction legend { font-size: 11.5px; color: var(--paper-dim); padding: 0; margin-bottom: 4px; }
+.rel-direction label {
+  display: flex; align-items: center; gap: 6px;
+  border: 1px solid var(--line); border-radius: 3px; padding: 3px 10px;
+  font-size: 12.5px; cursor: pointer;
+}
+.rel-direction label.on { border-color: var(--amber); color: var(--amber); }
+.rel-group h4 { margin: 14px 0 0; font-size: 12px; font-weight: 600; color: var(--paper-dim); }
+.rel-node .rel-edge-label { font: 11.5px var(--sans); fill: var(--paper-dim); stroke: none; }
+.rel-node.selected .rel-edge-label { fill: var(--amber); }

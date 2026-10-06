@@ -176,3 +176,131 @@ export async function loadProfile(
     "ORDER BY id", [characterId]);
   return { character, roles, variants };
 }
+
+// ---------------------------------------------------------------------------
+// Arcs and relationships (phase 2)
+// ---------------------------------------------------------------------------
+
+/**
+ * A new arc for a character. Its axis — "trust → betrayal" — is what the
+ * writer names; `name` is left empty, because a label derived from the
+ * axis at display time cannot go stale when the axis is reworded.
+ */
+export async function addArc(
+    exec: SqlExec, characterId: number, axis: string): Promise<number> {
+  const clean = cleanName(axis);
+  if (clean === null) throw new Error("Name what changes in this arc.");
+  await exec(
+    "INSERT INTO character_arc (uuid, character_id, axis) VALUES (?, ?, ?)",
+    [newUuid(), characterId, clean]);
+  return insertedId(exec);
+}
+
+/**
+ * A stage starting at a scene. Works for every latest-wins stage table
+ * the strip draws; the parent column is named by the table, never by the
+ * caller, so it is never interpolated from outside.
+ */
+const STAGE_PARENT: Record<string, string> = {
+  character_arc_state: "character_arc_id",
+  relationship_state: "character_relationship_id",
+  costume_progression_state: "costume_progression_id",
+};
+
+export async function addStage(
+    exec: SqlExec, table: string, parentId: number, sceneId: number,
+    label: string): Promise<number> {
+  const parent = STAGE_PARENT[table];
+  if (parent === undefined) throw new Error(`${table} is not a stage table.`);
+  const clean = cleanName(label);
+  if (clean === null) throw new Error("Give the stage a short label.");
+  await exec(
+    `INSERT INTO ${q(table)} (uuid, ${q(parent)}, scene_id, stage_label) ` +
+    "VALUES (?, ?, ?, ?)", [newUuid(), parentId, sceneId, clean]);
+  return insertedId(exec);
+}
+
+/** The relationship between two characters in either order, if any. */
+export async function relationshipBetween(
+    exec: SqlExec, a: number, b: number): Promise<Row | null> {
+  return (await exec(
+    "SELECT * FROM character_relationship WHERE " +
+    "(character_a_id = ? AND character_b_id = ?) OR " +
+    "(character_a_id = ? AND character_b_id = ?) ORDER BY id LIMIT 1",
+    [a, b, b, a]))[0] ?? null;
+}
+
+/**
+ * Relate two characters. Returns the existing relationship instead of a
+ * second one: two rows for one pair split its stages and its history
+ * between them, and nothing reading the file could tell which is meant.
+ * A new one starts `mutual` — the writer says otherwise when it is not.
+ */
+export async function relate(
+    exec: SqlExec, characterId: number, otherId: number):
+    Promise<{ id: number; created: boolean }> {
+  if (characterId === otherId) {
+    throw new Error("A character cannot have a relationship with themself.");
+  }
+  const existing = await relationshipBetween(exec, characterId, otherId);
+  if (existing !== null) return { id: Number(existing["id"]), created: false };
+  await exec(
+    "INSERT INTO character_relationship (uuid, character_a_id, " +
+    "character_b_id, directionality) VALUES (?, ?, ?, 'mutual')",
+    [newUuid(), characterId, otherId]);
+  return { id: await insertedId(exec), created: true };
+}
+
+export type Direction = "mutual" | "from" | "to" | null;
+
+/**
+ * A relationship as seen from one character: who the other one is, and
+ * which way it points relative to the viewer. The workspace always
+ * shows a relationship from the selected character's side, whichever
+ * column they happen to be stored in.
+ */
+export function fromPointOfView(row: Row, viewerId: number):
+    { otherId: number; direction: Direction } {
+  const a = Number(row["character_a_id"]);
+  const b = Number(row["character_b_id"]);
+  const viewerIsA = a === viewerId;
+  const d = row["directionality"];
+  return {
+    otherId: viewerIsA ? b : a,
+    direction: d === "mutual" ? "mutual"
+      : d === "a_to_b" ? (viewerIsA ? "from" : "to")
+      : null,
+  };
+}
+
+/**
+ * Set which way a relationship points, as the writer reads it: "mutual",
+ * or from one named character to the other. `a_to_b` only has one
+ * direction, so pointing it the other way swaps the two columns — the
+ * only write here that touches which side is A, and only because the
+ * meaning changed.
+ */
+export async function setDirection(
+    exec: SqlExec, relationshipId: number,
+    direction: "mutual" | { fromId: number }): Promise<void> {
+  const row = (await exec(
+    "SELECT character_a_id, character_b_id FROM character_relationship " +
+    "WHERE id = ?", [relationshipId]))[0];
+  if (row === undefined) throw new Error("No such relationship.");
+  if (direction === "mutual") {
+    await exec(
+      "UPDATE character_relationship SET directionality = 'mutual', " +
+      "updated_at = datetime('now') WHERE id = ?", [relationshipId]);
+    return;
+  }
+  const a = Number(row["character_a_id"]);
+  const b = Number(row["character_b_id"]);
+  if (direction.fromId !== a && direction.fromId !== b) {
+    throw new Error("That character is not in this relationship.");
+  }
+  const [from, to] = direction.fromId === a ? [a, b] : [b, a];
+  await exec(
+    "UPDATE character_relationship SET character_a_id = ?, " +
+    "character_b_id = ?, directionality = 'a_to_b', " +
+    "updated_at = datetime('now') WHERE id = ?", [from, to, relationshipId]);
+}
