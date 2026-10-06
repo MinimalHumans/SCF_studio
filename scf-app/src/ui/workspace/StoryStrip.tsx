@@ -3,6 +3,7 @@ import { Fragment, useState } from "react";
 import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "@scf-core/structure.ts";
 import { layoutStages } from "../../state/storyStrip.ts";
 import { useQuery } from "../useQuery.ts";
+import { useStore } from "../../state/store.ts";
 
 export interface StripScene {
   id: number;
@@ -69,7 +70,10 @@ export function StoryStrip({ scenes, lanes, selectedStage,
   caption: string;
 }): JSX.Element {
   const [hover, setHover] = useState<number | null>(null);
+  // The "as of" scene from the character header, drawn as a column.
+  const asOf = useStore((st) => st.asOfSceneId);
   const ids = scenes.map((s) => s.id);
+  const asOfIndex = asOf === null ? -1 : ids.indexOf(asOf);
   if (scenes.length === 0) {
     return <p className="muted">There are no scenes yet to place stages on.</p>;
   }
@@ -81,21 +85,31 @@ export function StoryStrip({ scenes, lanes, selectedStage,
       <div className="strip" role="grid" aria-label={caption}
            style={{ gridTemplateColumns: cols }}
            onMouseLeave={() => setHover(null)}>
-        <div className="strip-corner" role="columnheader">Scene</div>
+        {/* Every cell is placed explicitly: the "as of" highlight spans a
+            column, and anything auto-placed would flow around it. */}
+        <div className="strip-corner" role="columnheader"
+             style={{ gridRow: 1, gridColumn: 1 }}>Scene</div>
         {scenes.map((s, i) => (
           <div key={s.id} role="columnheader" title={s.name}
-               className={"strip-scene" + (hover === i ? " hover" : "")}>
+               style={{ gridRow: 1, gridColumn: i + 2 }}
+               className={"strip-scene" + (hover === i ? " hover" : "") +
+                          (asOfIndex === i ? " asof" : "")}>
             {s.number}
           </div>
         ))}
 
+        {asOfIndex >= 0 && (
+          <div className="strip-asof" aria-hidden="true"
+               style={{ gridColumn: asOfIndex + 2,
+                        gridRow: `1 / ${String(lanes.length + 2)}` }} />
+        )}
         {lanes.map((lane, row) => {
           const gridRow = row + 2;
           if (lane.kind === "marks") {
             return (
               <Fragment key={lane.key}>
                 <div className="strip-lane-label strip-lane-quiet"
-                     style={{ gridRow }}>{lane.label}</div>
+                     style={{ gridRow, gridColumn: 1 }}>{lane.label}</div>
                 {scenes.map((s, i) => {
                   const m = lane.marks.get(s.id);
                   return (
@@ -121,7 +135,7 @@ export function StoryStrip({ scenes, lanes, selectedStage,
           const editable = lane.onAddAt !== undefined;
           return (
             <Fragment key={lane.key}>
-              <div className="strip-lane-label" style={{ gridRow }}>
+              <div className="strip-lane-label" style={{ gridRow, gridColumn: 1 }}>
                 {lane.label}
               </div>
               {scenes.map((s, i) => (

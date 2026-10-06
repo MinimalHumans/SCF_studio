@@ -2221,3 +2221,49 @@ button.strip-span-label:hover { color: var(--amber); }
 .board-exceptions h4 { margin: 8px 0 2px; font-size: 12.5px; }
 .board-sets { margin: 0; font-size: 12px; }
 .ws-swatch { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); }
+
+/* ---- phase 4: as-of scene, exceptions, wardrobe ---------------------- */
+.ws-header-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; align-self: flex-start; }
+.ws-asof { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--paper-dim); }
+.ws-asof select { width: auto; max-width: 280px; font-size: 12px; padding: 2px 6px; }
+.ws-asof.on select { border-color: var(--amber); color: var(--amber); }
+.strip-scene.asof { color: var(--amber); font-weight: 600; }
+.strip-asof {
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
+  box-shadow: inset 1px 0 0 var(--amber-dim), inset -1px 0 0 var(--amber-dim);
+  pointer-events: none;
+  z-index: 0;
+}
+.board-asof { margin: 0; font-size: 12px; color: var(--amber); }
+.board-tile.dim, .exc-card.dim { opacity: 0.45; }
+.board-tile.dim:hover, .exc-card.dim:hover { opacity: 0.85; }
+.board-live {
+  position: absolute; top: 6px; right: 8px; font-size: 10.5px;
+  background: var(--amber); color: #211a0d; border-radius: 8px; padding: 0 6px;
+}
+.board-drop.compact { padding: 6px 10px; font-size: 12px; }
+.exc-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.exc-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.exc-head .ws-row-actions { margin-left: auto; }
+.exc-when { font-size: 13px; }
+.ws-chip.exc-live { border-color: var(--amber); color: var(--amber); }
+.exc-editor { display: grid; gap: 6px; }
+.exc-when-picker { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.exc-pick { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: var(--paper-dim); }
+.exc-pick select { width: auto; min-width: 160px; max-width: 320px; color: var(--paper); }
+.exc-replaces { margin-left: 0; color: var(--paper); }
+.exc-tiles { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.exc-tiles .board-thumb { min-height: 100px; }
+.exc-tiles .board-thumb .asset-thumb { height: 110px; }
+.costume-card { padding: 0; }
+.costume-card > summary {
+  display: flex; align-items: baseline; gap: 10px; padding: 10px 12px;
+  cursor: pointer; list-style-position: inside;
+}
+.costume-card[open] > summary { border-bottom: 1px solid var(--line); }
+.costume-card.live { border-color: var(--amber); }
+.costume-body { padding: 10px 12px; display: grid; gap: 8px; }
+.costume-worn { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.costume-scene { display: inline-flex; align-items: center; gap: 2px; padding-right: 2px; }
+.costume-scene button { padding: 0 4px; }
+.costume-worn select, .ws-add-select { width: auto; font-size: 12px; }

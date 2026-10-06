@@ -21,7 +21,8 @@ export function LookTab({ characterId }: { characterId: number }):
         <p className="ws-section-note">
           Point at images and video, and say what each one is for.
         </p>
-        <ReferenceBoard characterId={characterId} board="look" />
+        <ReferenceBoard owner={{ kind: "character", id: characterId }}
+                        board="look" />
       </section>
 
       <section className="ws-section" aria-labelledby="ws-s-appearance">

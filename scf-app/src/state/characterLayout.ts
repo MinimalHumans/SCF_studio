@@ -38,7 +38,8 @@ export const PROFILE_SECTIONS: Array<{
 
 /** Subtabs with a built view. The rest list their records (PENDING_SOURCES). */
 export const BUILT_TABS: CharacterTab[] = [
-  "Profile", "Look", "Voice", "Relationships", "Arc",
+  "Profile", "Look", "Wardrobe", "Voice", "Physicality", "Relationships",
+  "Arc",
 ];
 
 /**
@@ -97,19 +98,6 @@ const own = (entity: string, label: string): RecordSource => ({
  * from the start, just not yet in its friendly form.
  */
 export const PENDING_SOURCES: Partial<Record<CharacterTab, RecordSource[]>> = {
-  Wardrobe: [
-    own("costume", "Costumes"),
-    own("costume_progression", "Wardrobe through the story"),
-    own("makeup_hair_design", "Makeup & hair"),
-  ],
-  Physicality: [
-    own("physical_character_profile", "Physicality"),
-    own("physical_habit", "Habits"),
-    { entity: "performance_state", label: "Physical shifts",
-      where: "character_id = ? AND modality = 'physical'",
-      prefill: (id) => ({ character_id: id, modality: "physical" }) },
-    own("character_environment_physicality", "In the environment"),
-  ],
   "Scenes & Lines": [
     { entity: "scene_character", label: "Scenes",
       where: "character_id = ?", prefill: (id) => ({ character_id: id }) },
