@@ -238,6 +238,12 @@ interface AppState {
    * time is worse than the wall of categories it was hiding. */
   schemaCollapsed: Set<string>;
   setSchemaCollapsed: (next: Set<string>) => void;
+  /** Where the Shoot tab was left. Opening a shot's record replaces the
+   *  view, and coming back to every scene collapsed at the top lost the
+   *  place you were planning from — so the expansion, the filter and the
+   *  scroll outlive the component, until the project changes. */
+  shootView: ShootMemory;
+  setShootView: (patch: Partial<ShootMemory>) => void;
   /** The last delete, restorable until dismissed or superseded. */
   undo: UndoEntry | null;
   /** The last workspace change, if it was more recent than any delete:
@@ -404,6 +410,17 @@ async function applyRoot(
         ...probe });
 }
 
+export interface ShootMemory {
+  /** Expanded rows: `scene:<id>`, and `script:<id>` for a scene whose
+   *  text is showing. */
+  open: Set<string>;
+  showEmpty: boolean;
+  scrollTop: number;
+}
+
+const freshShootView = (): ShootMemory =>
+  ({ open: new Set(), showEmpty: true, scrollTop: 0 });
+
 async function finishFolderOpen(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
@@ -417,6 +434,7 @@ async function finishFolderOpen(
   await rememberHandle(opened.token);
   const rev = get().revision + 1;
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
         phase: "open", projectName: opened.name,
@@ -434,6 +452,7 @@ async function finishFolderOpen(
 export const useStore = create<AppState>((set, get) => ({
   phase: "start",
   schemaCollapsed: new Set<string>(),
+  shootView: freshShootView(),
   subjectType: "character",
   undo: null,
   lastChange: null,
@@ -489,6 +508,7 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:auto-resume", "1");
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: "Hollow Creek (demo)",
@@ -531,6 +551,7 @@ export const useStore = create<AppState>((set, get) => ({
         projectRoot === null
           ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: `${name}`, fileToken,
@@ -566,6 +587,7 @@ export const useStore = create<AppState>((set, get) => ({
       revokeAll();
       clearResolutions();
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: opened.name,
@@ -740,6 +762,7 @@ export const useStore = create<AppState>((set, get) => ({
                          { editorVersion: EDITOR_VERSION });
       const rev = get().revision + 1;
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+        shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: "Untitled.scf", fileToken: null,
@@ -767,6 +790,7 @@ export const useStore = create<AppState>((set, get) => ({
     // blur-triggered commit — resolving against no database.
     set({ phase: "start", fileToken: null, errorMessage: null,
           navMode: "script", selectedCharacterId: null, characterTab: "Profile",
+          shootView: freshShootView(),
   asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
   selectedPropId: null, propTab: "Profile",
   assetPrefix: "", openRow: null, draft: null,
@@ -879,6 +903,8 @@ export const useStore = create<AppState>((set, get) => ({
     set({ selectedCharacterId, navMode: "characters", openRow: null,
           draft: null }),
   setSchemaCollapsed: (schemaCollapsed) => set({ schemaCollapsed }),
+  setShootView: (patch) =>
+    set((s) => ({ shootView: { ...s.shootView, ...patch } })),
   selectQuery: (selectedQuery) =>
     set({ selectedQuery, openRow: null, draft: null }),
   selectEntityType: (selectedEntityType) =>

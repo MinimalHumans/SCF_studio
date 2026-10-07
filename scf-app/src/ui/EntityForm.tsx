@@ -12,6 +12,10 @@ import { AssetBundles, BundleAssets } from "./BundleAssets.tsx";
 import { ANCHOR_SUBJECTS, AnchorThumb, BundleStrip }
   from "./AnchorThumb.tsx";
 import { Field } from "./fields/Field.tsx";
+import { LineRangePicker } from "./fields/LineRangePicker.tsx";
+import { rangeEntities } from "@scf-core/lines.ts";
+
+const RANGE_FIELDS = ["line_start_ref", "line_end_ref"];
 
 /**
  * The form generator — one component tree driven entirely by the registry.
@@ -47,6 +51,9 @@ export function EntityForm(): JSX.Element | null {
     ? activeTab : tabs[0] ?? "General";
   const dirty = isDirty(draft);
   const creating = openRow.id === null;
+  // Shot and clip, found rather than listed: the two line anchors are
+  // edited together, against the row's scene, as one picker.
+  const hasRange = rangeEntities(registry).includes(openRow.entity);
 
   return (
     <div className="entity-form">
@@ -97,7 +104,8 @@ export function EntityForm(): JSX.Element | null {
 
       <div className="form-fields">
         {edef.fields
-          .filter((f) => f.hidden !== true && f.tab === tab)
+          .filter((f) => f.hidden !== true && f.tab === tab &&
+                         !(hasRange && RANGE_FIELDS.includes(f.name)))
           .map((f) => (
             <div key={f.name} className="field">
               <label htmlFor={`f-${f.name}`}>
@@ -114,6 +122,23 @@ export function EntityForm(): JSX.Element | null {
               )}
             </div>
           ))}
+        {hasRange && edef.fields.some((f) =>
+            f.name === "line_start_ref" && f.tab === tab) && (
+          <div className="field">
+            <label>Lines covered</label>
+            <LineRangePicker
+              sceneId={draft.values["scene_id"] ?? null}
+              start={draft.values["line_start_ref"] ?? null}
+              end={draft.values["line_end_ref"] ?? null}
+              onChange={(field, v) => {
+                // Each write is an undo step; a pick that leaves one end
+                // as it was should not cost an extra Undo press.
+                if ((draft.values[field] ?? null) !== v) {
+                  setDraftValue(field, v);
+                }
+              }} />
+          </div>
+        )}
       </div>
 
       {!creating && openRow.entity === "asset" && openRow.id !== null && (
