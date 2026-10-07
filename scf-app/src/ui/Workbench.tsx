@@ -12,6 +12,7 @@ import { ScriptView } from "./ScriptView.tsx";
 import { StructureView } from "./StructureView.tsx";
 import { undoSummary } from "../state/undoDelete.ts";
 import { ShootView } from "./ShootView.tsx";
+import { ScriptReader } from "./ScriptReader.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
 import { Component, useEffect, useRef, useState, type ReactNode }
   from "react";
@@ -69,17 +70,40 @@ const RAIL_MAX = 900;
  *  character list or scene list reads well at, and remembers a drag. */
 const RAIL_DEFAULT = 260;
 
-function useRailWidth(): [number, (w: number) => void] {
+/** The read-only script beside Structure and Shoot: wide enough for a
+ *  dialogue block to keep its indents, remembered once dragged. */
+const READER_KEY = "scf:reader-width";
+const READER_OPEN_KEY = "scf:reader-open";
+const READER_MIN = 280;
+const READER_MAX = 1100;
+const READER_DEFAULT = 480;
+
+function usePaneWidth(key: string, min: number, max: number,
+                      fallback: number): [number, (w: number) => void] {
   const [width, setWidth] = useState(() => {
-    const saved = Number(localStorage.getItem(RAIL_KEY));
-    return Number.isFinite(saved) && saved >= RAIL_MIN ? saved : RAIL_DEFAULT;
+    const saved = Number(localStorage.getItem(key));
+    return Number.isFinite(saved) && saved >= min ? saved : fallback;
   });
   const set = (w: number): void => {
-    const clamped = Math.min(RAIL_MAX, Math.max(RAIL_MIN, w));
+    const clamped = Math.min(max, Math.max(min, w));
     setWidth(clamped);
-    localStorage.setItem(RAIL_KEY, String(clamped));
+    localStorage.setItem(key, String(clamped));
   };
   return [width, set];
+}
+
+function useRailWidth(): [number, (w: number) => void] {
+  return usePaneWidth(RAIL_KEY, RAIL_MIN, RAIL_MAX, RAIL_DEFAULT);
+}
+
+function useReaderOpen(): [boolean, (open: boolean) => void] {
+  const [open, setOpen] = useState(
+    () => localStorage.getItem(READER_OPEN_KEY) !== "0");
+  const set = (v: boolean): void => {
+    setOpen(v);
+    localStorage.setItem(READER_OPEN_KEY, v ? "1" : "0");
+  };
+  return [open, set];
 }
 
 function RailResizeHandle({ onDrag }: {
@@ -102,6 +126,9 @@ function RailResizeHandle({ onDrag }: {
 
 export function Workbench(): JSX.Element {
   const [railWidth, setRailWidth] = useRailWidth();
+  const [readerWidth, setReaderWidth] = usePaneWidth(
+    READER_KEY, READER_MIN, READER_MAX, READER_DEFAULT);
+  const [readerOpen, setReaderOpen] = useReaderOpen();
   // A diagnostic, not a workspace: an overlay reachable from anywhere
   // rather than a seventh nav tab, because it reads whatever row is
   // already open.
@@ -152,6 +179,12 @@ export function Workbench(): JSX.Element {
     : navMode === "props" ? <SubjectRail key="prop" kind="prop" />
     : navMode === "queries" ? <QueryIndex />
     : null;
+
+  // Structure and Shoot are planned against the script, so they read it
+  // alongside rather than across a tab switch. Not while a record is
+  // open: that is the form's turn for the width.
+  const showReader = openRow === null &&
+    (navMode === "structure" || navMode === "shoot");
 
   const errorMessage = useStoreRaw((st) => st.errorMessage);
   return (
@@ -204,6 +237,21 @@ export function Workbench(): JSX.Element {
             {railContent}
           </nav>
         )}
+        {showReader && (readerOpen
+          ? <aside className="script-reader-pane"
+                   style={{ width: readerWidth }}
+                   aria-label="Screenplay (read-only)">
+              <RailResizeHandle onDrag={(x) =>
+                setReaderWidth(x - (document
+                  .querySelector(".script-reader-pane")
+                  ?.getBoundingClientRect().left ?? 0))} />
+              <ScriptReader onHide={() => setReaderOpen(false)} />
+            </aside>
+          : <button className="script-reader-collapsed"
+                    title="Show the script beside this view"
+                    onClick={() => setReaderOpen(true)}>
+              <span>Script ▸</span>
+            </button>)}
         <main className="main-panel">{main}<UndoToast /></main>
         {openRow !== null && openRow.id !== null && (
           <aside className="rail rail-context">

@@ -12,6 +12,7 @@ import {
 import { sceneLabel } from "../state/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
+import { revealSceneInReader } from "./ScriptReader.tsx";
 
 /**
  * ShootView — the shooting surface.
@@ -102,7 +103,11 @@ export function ShootView(): JSX.Element {
                   aria-expanded={expanded}>
             {expanded ? "▾" : "▸"}
           </button>
-          <span className="shoot-label">{sceneLabel(scene)}</span>
+          <button className="row-link shoot-label"
+                  title="Show this scene in the script"
+                  onClick={() => revealSceneInReader(sceneId)}>
+            {sceneLabel(scene)}
+          </button>
           <span className="shoot-count">
             {summarize(sceneBeats.length, sceneShots.length)}
           </span>
