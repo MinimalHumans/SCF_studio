@@ -1,8 +1,8 @@
 {
   "about": "Two rows sharing a uuid. Lineage becomes ambiguous.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.21",
-  "fileSchemaVersion": "2.21",
+  "toolSchemaVersion": "2.22",
+  "fileSchemaVersion": "2.22",
   "source": "fixtures/negative/build/uuid-duplicate.scf",
   "counts": {
     "error": 1,

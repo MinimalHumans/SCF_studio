@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.21",
+ "schemaVersion": "2.22",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.21"
+    "value": "2.22"
    },
    {
     "key": "updated_at",
@@ -3890,6 +3890,7 @@
     "updated_at": "2026-07-16 06:01:31",
     "name": "Hollow Creek",
     "logline": "1889, an Oregon homestead: a son returns after seven years to the mother who has never said aloud that she blames him for his sister's drowning.",
+    "synopsis": "Oregon, 1889. Seven years after his sister Ada drowned at the creek crossing, Marcus Cade walks the last mile back to the family homestead without warning. His mother, Eleanor, sixty-one and running the place alone, meets him with her back turned. She will not speak about Ada, and he does not say why he left within a month of the funeral. The kitchen door he came in by stays open behind them, and neither of them closes it. Reverend Shaw, who buried Ada, would like Eleanor back in his congregation; she keeps her grief at the graveside, and to herself.\n\nWhen the swollen creek takes Eleanor's legs from under her at the crossing, Marcus is in the water before he has decided to be, and carries her home. That night she puts on Ada's shawl for the first time. Across the kitchen table she tells him he has come back for the part where there is nothing left to carry, and dares him to say what he came to say. He cannot. He goes as far as the truck in the dark, and does not leave.\n\nWith Ada's locket on the table between them, Marcus finally confesses: he was at the creek the day she drowned. Eleanor already knows. She has known since the day after, and has waited all these years for him to be the one to say it. In a storm he goes up the ridge after the runaway horses, and at dawn he comes up from the barn to find her on the porch by the open door. She holds on to him. The film ends on the creek as it was before any of it — Marcus at nine, building a dam across the shallows one stone at a time, watching it hold, and letting it go.",
     "production_status": "development",
     "workflow_mode": "generation_first",
     "numbering_policy": "fixed",

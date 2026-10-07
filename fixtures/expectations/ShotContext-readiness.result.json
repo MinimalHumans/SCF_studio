@@ -2,7 +2,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q07",
       "character": null,
@@ -70,7 +70,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q08",
       "character": null,
@@ -113,7 +113,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q02",
       "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
@@ -166,7 +166,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q06",
       "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
@@ -204,7 +204,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q05",
       "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
@@ -262,7 +262,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q02",
       "character": "145417ca-e8e5-4946-aba0-e83575dad182",
@@ -315,7 +315,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q06",
       "character": "145417ca-e8e5-4946-aba0-e83575dad182",
@@ -353,7 +353,7 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.21",
+    "schemaVersion": "2.22",
     "parameters": {
       "target": "Q05",
       "character": "145417ca-e8e5-4946-aba0-e83575dad182",

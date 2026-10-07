@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — spec 0.62, schema 2.22 |
 | **Author** | Found while building the editor's Project tab; drafted with Claude |
 | **Opened** | 2026-10-07 |
 | **Affects** | `schema/entity_registry.py` (`project`); `registry.json`, `scf-schema.sql`, `entity-reference.md`; §12.12 Q00's result if authored in the fixture |
@@ -143,6 +143,28 @@ synopsis is the logline's longer form.
 
 ## Resolution
 
-*Left empty until the proposal is accepted, declined or deferred. The
-reasoning goes here, not only the verdict: a decline with no recorded
-reason gets re-proposed by the next person to have the same idea.*
+**Accepted and implemented, 2026-10-07.** Spec 0.62 (editorial), schema
+2.22.
+
+The three open questions, as settled:
+
+- **One length or two: one.** Writers keep a one-paragraph synopsis for
+  pitches and a one-page one for coverage, and the question was whether
+  the format should hold a field for each. It does not: the boundary
+  between the two is a convention, two fields invite the same text in
+  both, and the writer chooses the length of the one. If a project ever
+  needs several lengths at once, that is the development-documents
+  entity under Alternatives, as its own proposal.
+- **The title page: no.** A synopsis is not printed on a title page, and
+  the Fountain export is unchanged.
+- **Q00: yes,** and with no change to §12.12's text — the brief projects
+  the project row whole, so the synopsis reaches it as any other field
+  of the row does. The published Q00 result carries it.
+
+**The fixture synopsis** is three paragraphs, written from the
+screenplay and the fixture's own character data. It follows the data
+and the logline on the timeline — Ada drowned seven years before the
+story opens — and avoids restating the number in the confession, where
+the screenplay's dialogue says "eleven years" against the data's seven.
+That disagreement is in the fixture, predates this proposal, and is not
+settled here.
