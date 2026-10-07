@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.21** — **106 entities**.
+Schema **2.22** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -465,6 +465,7 @@ The root container for an SCF story project.
 |---|---|---|---|
 | `name` | text | **yes** |  |
 | `logline` | textarea |  |  |
+| `synopsis` | textarea |  | The story in prose: a paragraph to a page. The logline is one sentence; this is the story told short. Not the screenplay's = synopsis lines, which outline a section or a scene. |
 | `genre` | select |  | one of `drama`, `comedy`, `thriller`, `sci-fi`, `fantasy`, `horror`, `action`, `romance`, `documentary`, `animation`, `western` |
 | `tone` | text |  |  |
 | `setting_period` | text |  |  |

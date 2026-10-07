@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.21",
+  "schemaVersion": "2.22",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -87,6 +87,17 @@
           "tab": "General",
           "autoInjected": false,
           "placeholder": "A one-sentence summary of the story"
+        },
+        {
+          "name": "synopsis",
+          "label": "Synopsis",
+          "fieldType": "textarea",
+          "sqlType": "TEXT",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "placeholder": "What happens, start to finish, told short",
+          "helpText": "The story in prose: a paragraph to a page. The logline is one sentence; this is the story told short. Not the screenplay's = synopsis lines, which outline a section or a scene."
         },
         {
           "name": "genre",

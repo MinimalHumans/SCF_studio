@@ -337,6 +337,14 @@ register(EntityDef(
     fields=[
         FieldDef("name", "Project Name", required=True, placeholder="e.g. My Feature Film"),
         FieldDef("logline", "Logline", "textarea", placeholder="A one-sentence summary of the story"),
+        # Proposal 0036: the story told short, between the one-sentence
+        # logline and the screenplay. Q00 projects it with the row.
+        FieldDef("synopsis", "Synopsis", "textarea",
+                 placeholder="What happens, start to finish, told short",
+                 help_text="The story in prose: a paragraph to a page. The "
+                           "logline is one sentence; this is the story told "
+                           "short. Not the screenplay's = synopsis lines, which "
+                           "outline a section or a scene."),
         FieldDef("genre", "Genre", "select", options=[
             "drama", "comedy", "thriller", "sci-fi", "fantasy", "horror",
             "action", "romance", "documentary", "animation", "western"

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.61 (draft) — not a release.**
-Describes schema version **2.21**.
+**Version 0.62 (draft) — not a release.**
+Describes schema version **2.22**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |

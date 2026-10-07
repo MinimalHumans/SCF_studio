@@ -17,6 +17,18 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.62 — 2026-10-07
+
+*Describes schema 2.22.*
+
+**Editorial.** No normative change. Proposal 0036 adds
+`project.synopsis` — the story told short, between the one-sentence
+logline and the screenplay. §12.12 Q00 projects the project row whole,
+so the brief carries the synopsis with no change to its text; the
+published Q00 result gains the member because the fixture authors one.
+
+---
+
 ## 0.61 — 2026-10-05
 
 *Describes schema 2.21.*

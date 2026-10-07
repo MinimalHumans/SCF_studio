@@ -105,18 +105,20 @@ function ProjectSection(): JSX.Element {
   const projectName = useStore((s) => s.projectName);
   const single = useSingleton("project",
                               () => projectName ?? "Untitled project");
-  const general = tabFields("project", "General", ["name", "logline"]);
+  // The prose — name, logline, synopsis — reads down the page; the short
+  // facts sit in a grid beneath it.
+  const prose = ["name", "logline", "synopsis"];
+  const general = tabFields("project", "General", prose);
   return (
     <>
       <section className="ws-section">
         <h3>Project</h3>
         <p className="ws-section-note">
           The film itself: what it is called, what it is about in one
-          line, and what kind of thing it is.
+          line and then told short, and what kind of thing it is.
         </p>
         <ManyWarning count={single.count} what="project" />
-        <Fields entity="project" names={["name", "logline"]}
-                single={single} />
+        <Fields entity="project" names={prose} single={single} />
         <Fields entity="project" names={general} single={single} grid />
       </section>
       <section className="ws-section">

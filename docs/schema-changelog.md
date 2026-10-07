@@ -20,6 +20,22 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.22
+
+The project synopsis: proposal 0036.
+
+**Added:**
+
+- `project.synopsis`: the story told short, in prose — a paragraph to
+  a page, between the one-sentence `logline` and the screenplay. Not
+  the screenplay's `=` synopsis lines (`line_type = synopsis`), which
+  outline a section or a scene. Optional, no default.
+
+**Fixture:** Hollow Creek's project row carries a synopsis, so Q00's
+published result shows the field surviving projection.
+
+Query results (not schema): Q00's `project` layer gains `synopsis`.
+
 ## 2.21
 
 The anchor state columns, and variants in the cast: proposals 0034 and
