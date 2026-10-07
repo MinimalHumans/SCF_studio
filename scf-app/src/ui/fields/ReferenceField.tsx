@@ -1,9 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useState } from "react";
 import type { FieldDef } from "@scf-core/registry.ts";
-import { newUuid, q, type SqlValue } from "@scf-core/db.ts";
+import { newUuid, q, type Row, type SqlValue } from "@scf-core/db.ts";
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
+import { sceneShort } from "../../state/displayName.ts";
 import { useQuery } from "../useQuery.ts";
+
+/** The owning scene, joined in under names no entity column can take. */
+const SCENE_COLUMNS =
+  ", s.scene_number AS __scene_number, s.name AS __scene_name";
+const SCENE_JOIN = " LEFT JOIN scene s ON s.id = t.scene_id";
+/** Story order, as everywhere else: the scene heading's place in the
+ *  script, not the scene number (a label — 12A, 12B). */
+const STORY_ORDER =
+  "(SELECT MIN(line_order) FROM screenplay_lines " +
+  " WHERE scene_id = t.scene_id AND line_type = 'heading')";
 
 /**
  * Reference field: entity picker with search + create-inline. The current
@@ -20,17 +31,35 @@ export function ReferenceField({ def, value, onChange }: {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const nameField = targetDef?.nameField ?? "name";
+  // Rows that belong to a scene (beats, …) are named per scene: "Beat A"
+  // exists in every scene that has been broken down, so the name alone
+  // picks nothing. Those get the scene as a prefix, list in story order,
+  // and can be found by scene number.
+  const sceneScoped = target !== "scene" &&
+    (targetDef?.fields.some((f) => f.name === "scene_id") ?? false);
 
   const current = useQuery(
     typeof value === "number" && targetDef !== undefined
-      ? `SELECT * FROM ${q(target)} WHERE id = ?` : null,
+      ? `SELECT t.*${sceneScoped ? SCENE_COLUMNS : ""} FROM ${q(target)} t` +
+        `${sceneScoped ? SCENE_JOIN : ""} WHERE t.id = ?` : null,
     typeof value === "number" ? [value] : []);
   const candidates = useQuery(
     open && targetDef !== undefined
-      ? `SELECT * FROM ${q(target)} WHERE ${q(nameField)} LIKE ? ` +
-        `ORDER BY ${q(nameField)} LIMIT 30`
+      ? sceneScoped
+        ? `SELECT t.*${SCENE_COLUMNS} FROM ${q(target)} t${SCENE_JOIN} ` +
+          `WHERE t.${q(nameField)} LIKE ? OR s.scene_number LIKE ? ` +
+          `ORDER BY ${STORY_ORDER} IS NULL, ${STORY_ORDER}, ` +
+          `t.${q(nameField)} LIMIT 60`
+        : `SELECT * FROM ${q(target)} WHERE ${q(nameField)} LIKE ? ` +
+          `ORDER BY ${q(nameField)} LIMIT 30`
       : null,
-    [`%${filter}%`]);
+    sceneScoped ? [`%${filter}%`, `${filter.trim()}%`] : [`%${filter}%`]);
+  const label = (r: Row): string => {
+    const name = rowName(target, r);
+    return sceneScoped && r["scene_id"] !== null && r["scene_id"] !== undefined
+      ? `${sceneShort({ scene_number: r["__scene_number"] ?? null })} · ${name}`
+      : name;
+  };
 
   if (targetDef === undefined) {
     return <p className="muted">unknown reference target: {target}</p>;
@@ -58,7 +87,7 @@ export function ReferenceField({ def, value, onChange }: {
           <button type="button" className="ref-name"
                   title={`Open ${targetDef.label.toLowerCase()}`}
                   onClick={() => void openEntityRow(target, value)}>
-            {targetDef.icon} {rowName(target, current[0])}
+            {targetDef.icon} {label(current[0])}
           </button>
           <button type="button" aria-label="Clear reference"
                   onClick={() => onChange(null)}>×</button>
@@ -85,12 +114,14 @@ export function ReferenceField({ def, value, onChange }: {
             {candidates.map((r) => (
               <li key={String(r["id"])}>
                 <button type="button"
+                        title={sceneScoped
+                          ? String(r["__scene_name"] ?? "") : undefined}
                         onClick={() => {
                           onChange(r["id"] as number);
                           setOpen(false);
                           setFilter("");
                         }}>
-                  {rowName(target, r)}
+                  {label(r)}
                 </button>
               </li>
             ))}
