@@ -60,6 +60,7 @@ import { CharacterRail, SubjectRail } from "./workspace/CharacterRail.tsx";
 import { LocationWorkspace } from "./workspace/LocationWorkspace.tsx";
 import { PropWorkspace } from "./workspace/PropWorkspace.tsx";
 import { CharacterWorkspace } from "./workspace/CharacterWorkspace.tsx";
+import { ProjectWorkspace } from "./workspace/ProjectWorkspace.tsx";
 
 const RAIL_KEY = "scf:rail-width";
 const RAIL_MIN = 180;
@@ -138,6 +139,8 @@ export function Workbench(): JSX.Element {
 
   const main = openRow !== null
     ? <EntityForm key={`${openRow.entity}:${String(openRow.id)}`} />
+    : navMode === "project"
+      ? <ProjectWorkspace />
     : navMode === "script"
       ? <ScriptView />
     : navMode === "structure"

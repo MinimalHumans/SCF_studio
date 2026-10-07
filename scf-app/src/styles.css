@@ -2475,3 +2475,42 @@ button.strip-span-label:hover { color: var(--amber); }
 .line-range-line.covered { background: #dce8f6; }
 .line-range-line.first, .line-range-line.last { box-shadow: inset 3px 0 0 #2f6bb0; }
 .line-range-line.pending { outline: 1px dashed #2f6bb0; }
+
+/* ---- Project tab ---- */
+.project-ws { padding-bottom: 60px; }
+.project-ws .ws-section > p:not(.ws-section-note):not(.ws-field-error) {
+  margin: 4px 0 8px; font-size: 12.5px; max-width: 70ch;
+}
+.project-folder-actions { display: flex; gap: 8px; }
+/* fields beside a preview of the page they make */
+.tp-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(240px, 340px);
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 900px) { .tp-layout { grid-template-columns: 1fr; } }
+.tp-fields { margin-top: 0; }
+.tp-fill { justify-self: start; }
+/* a Letter page in miniature: 8.5 × 11 */
+.tp-preview {
+  position: sticky; top: 8px;
+  aspect-ratio: 8.5 / 11;
+  display: flex; flex-direction: column;
+  padding: 9% 9% 7%;
+  background: #fbfbf8; color: #1a1d22;
+  border: 1px solid #d3d5cd;
+  box-shadow: 0 0 18px rgba(0, 0, 0, .25);
+  font: 9.5px/1.35 "Courier Prime", "Courier New", monospace;
+  overflow: hidden;
+}
+.tp-preview p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tp-center { margin-top: 28%; text-align: center; display: grid; gap: 1.4em; }
+.tp-title { font-weight: 700; text-transform: uppercase; font-size: 1.15em; }
+.tp-foot {
+  margin-top: auto;
+  display: flex; justify-content: space-between; gap: 1.5em;
+}
+.tp-foot > div { display: grid; gap: 0.8em; align-content: end; min-width: 0; }
+.tp-foot-right { text-align: right; }
+.tp-empty { margin: auto; color: #8a94a4; text-align: center; }

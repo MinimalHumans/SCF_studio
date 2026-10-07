@@ -7,6 +7,8 @@ interface Section {
   label: string;
   /** Not built yet: shown so the shape of the app is visible, not clickable. */
   pending?: string;
+  /** Left off Alt+digit, so adding it did not renumber the rest. */
+  noShortcut?: boolean;
 }
 
 /**
@@ -17,7 +19,16 @@ interface Section {
  * Characters, and a dropdown would make every switch two clicks and
  * hide where you are.
  */
-export const SECTION_GROUPS: Array<{ name: string; sections: Section[] }> = [
+export const SECTION_GROUPS: Array<{
+  name: string; sections: Section[];
+  /** A group of one that names itself needs no heading above it. */
+  hideName?: boolean;
+}> = [
+  // The baseline everything else hangs off, so first. No shortcut: Alt+1
+  // has always been Script, and it stays Script.
+  { name: "Project", hideName: true, sections: [
+    { mode: "project", label: "Project", noShortcut: true },
+  ] },
   { name: "Story", sections: [
     { mode: "script", label: "Script" },
     { mode: "structure", label: "Structure" },
@@ -38,7 +49,8 @@ export const SECTION_GROUPS: Array<{ name: string; sections: Section[] }> = [
 
 /** Alt+1 … Alt+0, in list order. Ctrl+digit is the browser's own. */
 const SHORTCUTS: NavMode[] = SECTION_GROUPS
-  .flatMap((g) => g.sections).map((s) => s.mode);
+  .flatMap((g) => g.sections).filter((s) => s.noShortcut !== true)
+  .map((s) => s.mode);
 
 export function ActivityBar(): JSX.Element {
   const { navMode, setNavMode } = useStore();
@@ -66,9 +78,11 @@ export function ActivityBar(): JSX.Element {
       {SECTION_GROUPS.map((g) => (
         <div key={g.name} className="activity-group" role="group"
              aria-label={g.name}>
-          <span className="activity-group-name">{g.name}</span>
+          {g.hideName !== true && (
+            <span className="activity-group-name">{g.name}</span>
+          )}
           {g.sections.map((s) => {
-            n += 1;
+            if (s.noShortcut !== true) n += 1;
             const key = n === 10 ? "0" : String(n);
             const active = navMode === s.mode;
             return (
@@ -76,7 +90,8 @@ export function ActivityBar(): JSX.Element {
                       className={"activity-item" + (active ? " active" : "")}
                       aria-current={active ? "page" : undefined}
                       disabled={s.pending !== undefined}
-                      title={s.pending ?? `${s.label} (Alt+${key})`}
+                      title={s.pending ?? (s.noShortcut === true ? s.label
+                        : `${s.label} (Alt+${key})`)}
                       onClick={() => setNavMode(s.mode)}>
                 {s.label}
               </button>
