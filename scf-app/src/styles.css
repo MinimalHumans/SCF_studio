@@ -2331,3 +2331,87 @@ button.strip-span-label:hover { color: var(--amber); }
   --scope-sel: rgba(106, 169, 233, 0.24); --scope-wave: var(--paper-dim); --scope-head: var(--amber);
 }
 .scope-audio audio { width: 100%; }
+
+/* ---- read-only script beside Structure / Shoot ----
+   The same paper as the Script tab, so it reads as the script and not
+   as another panel of controls. Scrolls on its own. */
+.script-reader-pane {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  min-height: 0;
+  border-right: 1px solid var(--line);
+}
+.script-reader { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.script-reader-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px;
+  background: var(--ink-1);
+  border-bottom: 1px solid var(--line);
+}
+.script-reader-title { font-weight: 650; letter-spacing: .02em; }
+.script-reader-ro { font: 10.5px var(--mono); }
+.script-reader-jump { margin-left: auto; max-width: 60%; font-size: 12px; }
+.script-reader-body {
+  flex: 1; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  background: #fbfbf8;
+  color: #1a1d22;
+}
+.script-reader-page {
+  max-width: 62ch;
+  margin: 0 auto;
+  padding: 20px 20px 40vh 40px;
+  font: 13px/1.4 "Courier Prime", "Courier New", monospace;
+}
+.script-reader-empty { padding: 24px; color: #5b6570; }
+.sr { margin: 0.95em 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* a dialogue block reads as one unit under its cue */
+.sr-dialogue, .sr-parenthetical { margin-top: 0; }
+.sr-heading, .sr-section { margin-top: 1.6em; }
+.script-reader-page > .sr:first-child { margin-top: 0; }
+.sr-section + .sr-section, .sr-section + .sr-heading { margin-top: 0.5em; }
+.sr-heading {
+  position: relative;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .01em;
+  scroll-margin-top: 12px;
+  border-radius: 3px;
+  transition: background .4s;
+}
+.sr-heading.sr-flash { background: #cfe0f5; }
+.sr-sceneno {
+  position: absolute; right: 100%; margin-right: 8px;
+  font: 700 10px var(--mono); color: #2f6bb0; white-space: nowrap;
+}
+/* ch indents scaled down from the editor's: the pane is often narrower
+   than a page, and dialogue must still wrap inside it */
+.sr-character { margin-left: min(22ch, 35%); text-transform: uppercase; }
+.sr-dialogue { margin-left: min(10ch, 16%); max-width: 35ch; }
+.sr-parenthetical { margin-left: min(15ch, 25%); max-width: 22ch; color: #5b6570; }
+.sr-transition { text-align: right; text-transform: uppercase; }
+.sr-centered { text-align: center; }
+.sr-lyric { margin-left: min(10ch, 16%); font-style: italic; }
+.sr-section { color: #2f6bb0; font-weight: 700; }
+.sr-synopsis, .sr-note { color: #5b6570; font-style: italic; }
+.script-reader-collapsed {
+  flex-shrink: 0;
+  width: 26px;
+  padding: 8px 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--ink-1);
+  color: var(--paper-dim);
+}
+.script-reader-collapsed span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  font-size: 11.5px;
+  letter-spacing: .04em;
+}
+.script-reader-collapsed:hover { color: var(--amber); }
+/* scene names that reveal the scene in the reader */
+.structure-scenes li .row-link { padding: 0; color: inherit; font: inherit; flex: none; }
+.structure-scenes li .row-link:hover,
+.shoot-row-scene .row-link.shoot-label:hover { color: var(--amber); }
+.shoot-row-scene .row-link.shoot-label { padding: 0; flex: none; color: inherit; }

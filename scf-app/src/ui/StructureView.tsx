@@ -9,6 +9,7 @@ import { sceneLabel } from "../state/displayName.ts";
 import { exec, useStore } from "../state/store.ts";
 import { renumberSpans } from "../editor/structureCommit.ts";
 import { useQuery } from "./useQuery.ts";
+import { revealSceneInReader } from "./ScriptReader.tsx";
 
 /**
  * The script's spine: acts, the sequences inside them, the scenes
@@ -201,7 +202,7 @@ function ActBlock({ act, structure, scenes, sceneById, onOpen, onMove }: {
         group.sequence === null
           ? <ol key={`bare:${String(i)}`} className="structure-scenes">
               {group.sceneIds.map((id) => (
-                <li key={id}>{sceneLabel(sceneById.get(id))}</li>
+                <SceneItem key={id} id={id} scene={sceneById.get(id)} />
               ))}
             </ol>
           : <div key={group.sequence.id} className="structure-seq">
@@ -213,7 +214,7 @@ function ActBlock({ act, structure, scenes, sceneById, onOpen, onMove }: {
                          onMove("sequence", group.sequence!.id, sceneId)} />
               <ol className="structure-scenes">
                 {group.sceneIds.map((id) => (
-                  <li key={id}>{sceneLabel(sceneById.get(id))}</li>
+                  <SceneItem key={id} id={id} scene={sceneById.get(id)} />
                 ))}
               </ol>
             </div>
@@ -277,5 +278,20 @@ function StartHere({ label, scenes, onPick }: {
         </option>
       ))}
     </select>
+  );
+}
+
+/** A scene in the outline; clicking it brings it up in the script. */
+function SceneItem({ id, scene }: {
+  id: number;
+  scene: Row | undefined;
+}): JSX.Element {
+  return (
+    <li>
+      <button className="row-link" title="Show this scene in the script"
+              onClick={() => revealSceneInReader(id)}>
+        {sceneLabel(scene)}
+      </button>
+    </li>
   );
 }
