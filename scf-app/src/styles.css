@@ -1048,6 +1048,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 .script-editor {
   background: #fbfbf8;
   color: #1a1d22;
+  /* the page's margins are sized against this width (cqw) */
+  container-type: inline-size;
 }
 .script-editor .cm-editor { color: #1a1d22; }
 .script-editor .cm-content { caret-color: #1a1d22; }
@@ -1106,7 +1108,21 @@ ul { list-style: none; margin: 0; padding: 0; }
   border-left: 1px solid #d3d5cd;
   border-right: 1px solid #d3d5cd;
   box-shadow: 0 0 18px rgba(20, 24, 30, 0.08);
-  padding: 40px 6ch 12em;
+  /* The paper of a printed page: US Letter is 8.5in, 85 characters of
+     12pt Courier, with a 1.5in binding margin on the left and 1in on the
+     right around the 60 characters of text — 15ch and 10ch. Only the
+     page grows; the text column is unchanged.
+     In a narrow window the margins give way first, keeping their 3:2
+     ratio. The 60-character line itself never gives: below that the
+     page scrolls sideways, and the zoom control is the way to fit it —
+     a re-wrapped line is not the script as it will print.
+     The spare width is the editor's less the gutter (~130px) and the
+     text itself. */
+  min-width: 60ch;
+  padding: 40px
+    clamp(2ch, calc((100cqw - 130px - 62ch) * 0.4), 10ch)
+    12em
+    clamp(2ch, calc((100cqw - 130px - 62ch) * 0.6), 15ch);
   max-width: 60ch; /* manuscript: ~60 characters across */
   box-sizing: content-box;
 }
