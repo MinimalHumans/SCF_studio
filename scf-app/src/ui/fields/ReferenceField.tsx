@@ -37,6 +37,13 @@ export function ReferenceField({ def, value, onChange }: {
   // and can be found by scene number.
   const sceneScoped = target !== "scene" &&
     (targetDef?.fields.some((f) => f.name === "scene_id") ?? false);
+  // Within a scene, its own order (beat_order, shot_order) where it has
+  // one: the beats of a scene read in the order they play, not A–Z.
+  const orderField = targetDef?.fields.find((f) =>
+    f.name.endsWith("_order") && f.fieldType === "integer")?.name;
+  const inScene = orderField === undefined
+    ? `t.${q(nameField)}`
+    : `t.${q(orderField)} IS NULL, t.${q(orderField)}, t.${q(nameField)}`;
 
   const current = useQuery(
     typeof value === "number" && targetDef !== undefined
@@ -49,7 +56,7 @@ export function ReferenceField({ def, value, onChange }: {
         ? `SELECT t.*${SCENE_COLUMNS} FROM ${q(target)} t${SCENE_JOIN} ` +
           `WHERE t.${q(nameField)} LIKE ? OR s.scene_number LIKE ? ` +
           `ORDER BY ${STORY_ORDER} IS NULL, ${STORY_ORDER}, ` +
-          `t.${q(nameField)} LIMIT 60`
+          `t.scene_id, ${inScene} LIMIT 60`
         : `SELECT * FROM ${q(target)} WHERE ${q(nameField)} LIKE ? ` +
           `ORDER BY ${q(nameField)} LIMIT 30`
       : null,

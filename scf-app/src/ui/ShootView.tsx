@@ -163,6 +163,11 @@ export function ShootView(): JSX.Element {
                 </div>
               );
             })}
+            {/* Named only beside beats: with none, every shot is on the
+                scene and a label would say nothing. */}
+            {loose.length > 0 && sceneBeats.length > 0 && (
+              <div className="shoot-loose-head">on the scene, no beat</div>
+            )}
             {loose.map((shot) => shotRow(shot, sceneShots, scene))}
             {sceneShots.length === 0 && sceneBeats.length === 0 && (
               <p className="muted shoot-empty">

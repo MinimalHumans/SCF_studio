@@ -1365,8 +1365,26 @@ tr.prop-weak td { opacity: .6; }
 .shoot-scene { margin-left: 16px; }
 .shoot-row-scene { border-bottom: 1px solid var(--line); }
 .shoot-scene-body { margin: 2px 0 8px 18px; }
-.shoot-beat { margin: 4px 0; }
-.shoot-row-shot { margin-left: 18px; }
+/* A beat is a bracket: a rule down its left edge holds its shots, which
+   sit a step further in. A shot on the scene itself sits at the beat's
+   level, outside every bracket — so where a shot belongs reads from its
+   indent and its rule, not from row order. */
+.shoot-beat {
+  margin: 6px 0;
+  padding: 0 0 2px 8px;
+  border-left: 2px solid var(--amber-dim);
+  background: color-mix(in srgb, var(--ink-2) 45%, transparent);
+  border-radius: 0 3px 3px 0;
+}
+.shoot-beat .shoot-row-shot { margin-left: 26px; }
+.shoot-scene-body > .shoot-row-shot { margin-left: 10px; }
+.shoot-loose-head {
+  margin: 8px 0 2px 10px;
+  font: 10px var(--mono);
+  color: var(--paper-dim);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
 .shoot-kind {
   font: 10px var(--mono); color: var(--paper-dim);
   text-transform: uppercase; min-width: 58px;
