@@ -62,6 +62,7 @@ export const exec = client.exec;
 export const COLLAPSE_ALL = new Set<string>(["\u0000all"]);
 
 export type NavMode =
+  "project" |
   "subject" | "schema" | "structure" | "queries" | "script" | "shoot" |
   "assets" | "characters" | "locations" | "props";
 
