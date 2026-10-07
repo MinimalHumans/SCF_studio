@@ -6,3 +6,5 @@ __pycache__/
 dist/
 .DS_Store
 site/dist/
+# Local Claude Code settings and dev-server launch config
+.claude/

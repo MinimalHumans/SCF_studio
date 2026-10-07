@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import type { Row } from "@scf-core/db.ts";
 import {
   actOutline, deriveStructure, sceneOrderHint,
@@ -28,8 +28,13 @@ import { revealSceneInReader } from "./ScriptReader.tsx";
  */
 export function ShootView(): JSX.Element {
   const { openEntityRow, revision } = useStore();
-  const [open, setOpen] = useState<Set<string>>(new Set());
-  const [showEmpty, setShowEmpty] = useState(true);
+  const { open, showEmpty } = useStore((s) => s.shootView);
+  const setShootView = useStore((s) => s.setShootView);
+  const setOpen = (next: Set<string>): void => setShootView({ open: next });
+  const setShowEmpty = (v: boolean): void =>
+    setShootView({ showEmpty: v });
+  const rootRef = useRef<HTMLDivElement>(null);
+  useRestoredScroll(rootRef);
 
   const scenes = useQuery("SELECT id, scene_number, name FROM scene");
   const headings = useQuery(
@@ -59,12 +64,10 @@ export function ShootView(): JSX.Element {
     useStore.setState((s) => ({ revision: s.revision + 1 }));
   };
   const toggle = (key: string): void => {
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    const next = new Set(useStore.getState().shootView.open);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setOpen(next);
   };
 
   const run = async (op: Promise<void>): Promise<void> => {
@@ -74,7 +77,9 @@ export function ShootView(): JSX.Element {
 
   if (scenes.length === 0) {
     return (
-      <div className="shoot">
+      // The ref here too: this is also the first render, before the
+      // queries return, and the scroll hook finds the panel through it.
+      <div className="shoot" ref={rootRef}>
         <p className="muted">
           No scenes yet. Coverage is planned against the script, so
           import or write one first.
@@ -214,8 +219,11 @@ export function ShootView(): JSX.Element {
   }
 
   const placed = new Set<number>();
+  // By scene rather than by size: the set also holds `script:` keys.
+  const allOpen = structure.scenes.length > 0 &&
+    structure.scenes.every((sc) => open.has(`scene:${String(sc.id)}`));
   return (
-    <div className="shoot" data-revision={revision}>
+    <div className="shoot" data-revision={revision} ref={rootRef}>
       <div className="shoot-head">
         <h2>Shoot</h2>
         <span className="muted">
@@ -228,11 +236,9 @@ export function ShootView(): JSX.Element {
                   // just "clear", since a scene is closed by default.
                   const keys = structure.scenes.map(
                     (sc) => `scene:${String(sc.id)}`);
-                  setOpen(open.size >= keys.length
-                    ? new Set() : new Set(keys));
+                  setOpen(allOpen ? new Set() : new Set(keys));
                 }}>
-          {structure.scenes.length > 0 &&
-           open.size >= structure.scenes.length
+          {allOpen
             ? "collapse all" : "expand all"}
         </button>
         <label className="shoot-toggle">
@@ -300,7 +306,14 @@ export function ShootView(): JSX.Element {
  * to read it is how detail gets lost between the two.
  */
 function SceneText({ sceneId }: { sceneId: number }): JSX.Element | null {
-  const [open, setOpen] = useState(false);
+  const key = `script:${String(sceneId)}`;
+  const open = useStore((s) => s.shootView.open.has(key));
+  const setOpen = (v: boolean): void => {
+    const next = new Set(useStore.getState().shootView.open);
+    if (v) next.add(key);
+    else next.delete(key);
+    useStore.getState().setShootView({ open: next });
+  };
   const lines = useQuery(open ? SCENE_SCRIPT_SQL : null,
                          [sceneId, sceneId, sceneId]);
   return (
@@ -325,6 +338,76 @@ function SceneText({ sceneId }: { sceneId: number }): JSX.Element | null {
       )}
     </div>
   );
+}
+
+/**
+ * Keep the Shoot tab's scroll across a trip to a record and back.
+ *
+ * The scroller is the main panel, which outlives this view, so the
+ * position is tracked as the user scrolls and handed to the store on
+ * unmount.
+ * Coming back, the rows arrive over several query round-trips. Until
+ * they have, the page may be too short to hold the old position, and
+ * rows landing above it make the browser's scroll anchoring push it
+ * further down — stopping at the first render that reached the target
+ * drifted lower on every round trip. So the restore re-applies on each
+ * render for a short window, and stops when that ends or the user
+ * scrolls for themselves.
+ */
+const RESTORE_WINDOW_MS = 1500;
+
+function useRestoredScroll(rootRef: RefObject<HTMLDivElement>): void {
+  const target = useRef(useStore.getState().shootView.scrollTop);
+  // The position as the user left it, from scroll events. Not read from
+  // the panel at unmount: by then the same commit is taking the script
+  // pane away too, and the reflow has already moved the scroll.
+  const pos = useRef(target.current);
+  const settled = useRef(target.current === 0);
+
+  useLayoutEffect(() => {
+    if (settled.current) return;
+    const panel = rootRef.current?.closest(".main-panel");
+    if (panel !== null && panel !== undefined) {
+      panel.scrollTop = target.current;
+    }
+  });
+
+  useLayoutEffect(() => {
+    if (settled.current) return;
+    const t = window.setTimeout(
+      () => { settled.current = true; }, RESTORE_WINDOW_MS);
+    return () => window.clearTimeout(t);
+    // Once per mount: the window opens when the view does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A layout effect, not a passive one, for its cleanup: it runs inside
+  // the commit, before the scroll event of the browser clamping the panel
+  // to the shorter record. A passive cleanup ran after it and saved the
+  // clamped position.
+  useLayoutEffect(() => {
+    const panel = rootRef.current?.closest(".main-panel");
+    if (panel === null || panel === undefined) return;
+    // While restoring, the scroll is ours — clamps and anchoring — and
+    // not where the user is; `pos` keeps the target until it settles.
+    const onScroll = (): void => {
+      if (settled.current) pos.current = panel.scrollTop;
+    };
+    const userScrolled = (): void => { settled.current = true; };
+    panel.addEventListener("scroll", onScroll, { passive: true });
+    panel.addEventListener("wheel", userScrolled, { passive: true });
+    panel.addEventListener("pointerdown", userScrolled);
+    panel.addEventListener("keydown", userScrolled);
+    return () => {
+      panel.removeEventListener("scroll", onScroll);
+      panel.removeEventListener("wheel", userScrolled);
+      panel.removeEventListener("pointerdown", userScrolled);
+      panel.removeEventListener("keydown", userScrolled);
+      useStore.getState().setShootView({ scrollTop: pos.current });
+    };
+    // The panel and the ref are fixed for the view's life.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
 
 function FieldSelect({ field, value, onPick }: {
