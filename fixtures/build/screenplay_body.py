@@ -355,7 +355,9 @@ def emit_fountain(path: Path) -> None:
     out = []
     for kind, content, _ref in SCREENPLAY:
         out.append("" if kind == "blank" else content)
-    path.write_text("\n".join(out).rstrip("\n") + "\n", encoding="utf-8")
+    # newline="\n": text mode on Windows writes CRLF (.gitattributes: LF).
+    path.write_text("\n".join(out).rstrip("\n") + "\n", encoding="utf-8",
+                    newline="\n")
 
 
 def main(db_path: str) -> int:

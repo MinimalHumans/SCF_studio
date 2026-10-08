@@ -58,7 +58,7 @@ Generated from `schema/`, which is the source of truth for all of them.
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `scf-core/registry/registry.json` | `04a1ae1ddf303a77…` | The normative field set. Spec §2.1. |
+| `scf-core/registry/registry.json` | `335ceaf88373d2a0…` | The normative field set. Spec §2.1. |
 | `spec/scf-schema.sql` | `5721dfe46ac0028b…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/screenplay-tables.json` | `2cbc26ef1c813213…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
 | `spec/entity-reference.md` | `b2b36b7f5e65808d…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |

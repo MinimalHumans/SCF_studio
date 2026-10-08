@@ -110,8 +110,10 @@ def main() -> int:
         print(f"missing fixture: {FIXTURE}", file=sys.stderr)
         return 1
     payload = dump(FIXTURE)
+    # newline="\n": text mode on Windows writes CRLF, and the repository
+    # is LF everywhere (.gitattributes).
     OUT.write_text(json.dumps(payload, indent=1, ensure_ascii=False) + "\n",
-                   encoding="utf-8")
+                   encoding="utf-8", newline="\n")
     print(f"[dump-fixture] {payload['rowCount']} rows across "
           f"{len(payload['tables'])} tables -> {OUT.relative_to(ROOT)}")
     return 0

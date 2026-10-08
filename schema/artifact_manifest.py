@@ -350,8 +350,11 @@ def main() -> int:
               f"schema {SCHEMA_VERSION}).")
         return 0
 
-    OUT.write_text(manifest, encoding="utf-8")
-    sums_path.write_text(sums, encoding="utf-8")
+    # newline="\n" on purpose: in text mode Python on Windows writes CRLF,
+    # and SHA256SUMS is over raw bytes (see .gitattributes). Without it a
+    # Windows run published digests of files that exist nowhere.
+    OUT.write_text(manifest, encoding="utf-8", newline="\n")
+    sums_path.write_text(sums, encoding="utf-8", newline="\n")
     print(f"[artifacts] wrote {len(ARTIFACTS)} artifacts, "
           f"schema {SCHEMA_VERSION}.")
     return 0
