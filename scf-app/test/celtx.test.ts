@@ -119,6 +119,13 @@ describe("linkAndCreateAtCommit", () => {
                               "FROM location");
     expect(loc[0]!["name"]).toBe("Monument Valley");
     expect(loc[0]!["ns"]).toBe("scf:editor");
+    // Everything the commit wrote has identity now, not after a reopen.
+    for (const t of ["scene", "location", "character", "scene_character"]) {
+      const missing = await db.exec(
+        `SELECT COUNT(*) AS n FROM ${t} WHERE uuid IS NULL ` +
+        (t === "character" ? "AND name != 'Alexis'" : ""));
+      expect(missing[0]!["n"], t).toBe(0);
+    }
 
     // Idempotent: running again creates nothing.
     const again = await linkAndCreateAtCommit(db.exec, rows);
