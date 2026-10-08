@@ -133,8 +133,9 @@ something it happens to cascade with.
 
 ## Resolution
 
-**Accepted in its narrow form, 2026-10-08, for schema 2.22.** Settled
-in the 1.0 decision pass (`docs/release-checklist.md` §A).
+**Accepted in its narrow form, 2026-10-08, for schema 2.23, the release
+schema.** Settled in the 1.0 decision pass (`docs/release-checklist.md`
+§A).
 
 **A clip is not deleted with its scene.** That was the question this
 proposal waited on, and it is answered as a production question:
