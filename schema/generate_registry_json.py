@@ -152,7 +152,9 @@ def main() -> int:
               f"entities, schema {payload['schemaVersion']}).")
         return 0
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(rendered, encoding="utf-8")
+    # LF on every platform: SHA256SUMS hashes these raw bytes, and text
+    # mode on Windows would write CRLF.
+    out_path.write_text(rendered, encoding="utf-8", newline="\n")
     print(f"[registry.json] {payload['entityCount']} entities, "
           f"schema {payload['schemaVersion']} -> {out_path}")
     return 0
