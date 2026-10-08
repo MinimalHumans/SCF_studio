@@ -299,7 +299,7 @@ list (it had none, so it would have shipped its tests) and a README;
 - **Both packages are `"private": true`**, which npm refuses to publish.
   Presumably the guard until publish day; flip it as part of §E.
 
-### B7. ◑ Small hygiene
+### B7. ✅ Small hygiene
 
 - **`scf-core/scripts/scf_check.mjs` is committed `100644`** but is the
   package's bin; installing chmods it, so `verify.py` leaves a dirty
@@ -312,8 +312,10 @@ list (it had none, so it would have shipped its tests) and a README;
   "the demo fixture is the conformance fixture". Both pass today.
 
 **Done 2026-10-08:** `scf_check.mjs` is `100755` in the index; both
-checks are `verify.py` steps. **○ The two tags** are recreated annotated
-at their own commits when this change is pushed.
+checks are `verify.py` steps. `schema-2.13` and `schema-2.21` were
+recreated annotated at their own commits (`b1bdc18`, `fd371dd`), so every
+schema tag from 2.12 to 2.22 is annotated, and `check_pin` still
+passes.
 
 ### B8. ○ Work the §A decisions add
 
