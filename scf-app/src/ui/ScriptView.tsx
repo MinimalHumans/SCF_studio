@@ -36,7 +36,7 @@ import { lineEntries, lineEvents, type LineEvent }
 import {
   createBeatForLine, diffVersionAgainstCurrent, linkAndCreateAtCommit,
   planCommitLinks, publishVersion, reanchorForEvents, syncPropSceneLinks,
-  tagPropRange,
+  createEditorProp, tagPropRange,
   validateTags, type CommitPlanInfo,
 } from "../editor/features.ts";
 import { paginationFor } from "../editor/extensions.ts";
@@ -1307,13 +1307,9 @@ function TagControl({ selection, onTagged }: {
                   "New prop name:", selection.text.trim());
                 if (name === null || name.trim() === "") return;
                 void (async () => {
-                  await exec(
-                    "INSERT INTO prop (name, external_id_namespace) " +
-                    "VALUES (?, 'scf:editor')", [name.trim()]);
-                  const id = (await exec(
-                    "SELECT last_insert_rowid() AS id"))[0]!["id"];
+                  const id = await createEditorProp(exec, name.trim());
                   await tagPropRange(exec, selection.lineId,
-                                     id as number, selection.text,
+                                     id, selection.text,
                                      selection.from, selection.to);
                   onTagged(name.trim());
                 })();
@@ -1456,12 +1452,7 @@ function PropContextMenu({ at, selection, onClose, onDone }: {
       onClose();
       return;
     }
-    await exec(
-      "INSERT INTO prop (name, external_id_namespace) " +
-      "VALUES (?, 'scf:editor')", [name.trim()]);
-    const id = (await exec(
-      "SELECT last_insert_rowid() AS id"))[0]!["id"] as number;
-    await tag(id);
+    await tag(await createEditorProp(exec, name.trim()));
   };
   return (
     <>
