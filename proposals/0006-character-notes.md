@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — via 0023, schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `schema/entity_registry.py` (`character`); `registry.json`, `scf-schema.sql`, `entity-reference.md`; the conformance fixture |
@@ -97,3 +97,16 @@ limited to the one tier-0 outlier.
   choice rather than an oversight.
 - **Which character carries the fixture note**, and is re-blessing a
   character-projecting result acceptable?
+
+---
+
+## Resolution
+
+**Superseded by 0023 and implemented through it**, in schema 2.14. 0023
+asked the same question across every entity and added `notes` to 22 of
+them, `character` among them — so `character.notes` exists, declared as
+this proposal asked.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

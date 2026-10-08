@@ -3,7 +3,7 @@
  * nodeLocator.ts — a FileLocator backed by the real filesystem.
  *
  * Preserves the `unaddressed`/`missing` distinction all the way to the
- * agent (spec/scf-mcp-design.md §5.1, spec §8.3): a root name this
+ * agent (docs/scf-mcp-design.md §5.1, spec §8.3): a root name this
  * server was never told about is `undefined` ("no root named @X is
  * configured"), a known root with nothing at the path is `null`
  * ("nothing there"), and no on-disk placeholder concept applies to a

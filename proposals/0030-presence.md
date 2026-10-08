@@ -7,7 +7,7 @@
 | **Status** | **implemented** — spec 0.57, schema 2.17 |
 | **Author** | Found writing a video-generation prompt for shot 3B through the SCF MCP; drafted with Claude |
 | **Opened** | 2026-09-30 |
-| **Affects** | §2.4 (two vocabularies gain defined meanings); §12.4 Q03, §12.5 Q12, §12.9 Q14, §12.17 Q04 wording; new entities `shot_character`, `shot_prop`; a new `shot` field; registry option metadata and `registry.schema.json`; the finding catalog; `spec/scf-mcp-design.md` §4.2; a new `stability.md` row; the fixture |
+| **Affects** | §2.4 (two vocabularies gain defined meanings); §12.4 Q03, §12.5 Q12, §12.9 Q14, §12.17 Q04 wording; new entities `shot_character`, `shot_prop`; a new `shot` field; registry option metadata and `registry.schema.json`; the finding catalog; `docs/scf-mcp-design.md` §4.2; a new `stability.md` row; the fixture |
 
 ## The problem
 

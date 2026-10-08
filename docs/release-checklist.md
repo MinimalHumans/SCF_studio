@@ -155,7 +155,7 @@ Twenty-five of 113 fixture tables are empty in all. Most are unread
 design entities and can stay that way; the ones above are the ones a
 normative query reads.
 
-### B3. ○ Eight proposals implemented but still `draft`
+### B3. ✅ Eight proposals implemented but still `draft`
 
 **0010, 0011, 0017, 0018, 0020, 0021, 0023** landed in schema 2.14 —
 the registry carries every field they add and lacks the one 0021
@@ -168,7 +168,14 @@ parenthetically — `scene.characters_present` **(0021)**. Widen the
 pattern to a parenthesised four-digit number, fix the eight, and the
 check covers what it was written for.
 
-### B4. ○ Checksummed documents that say false things
+**Done 2026-10-08.** The check matches `(0ddd…)` citations too — a
+leading 0, so a year in parentheses cannot match — and on its first run
+flagged exactly the seven above. All eight now say `implemented`, with a
+Resolution confirmed against the registry rather than the changelog;
+0006 as implemented through 0023. 27 proposals are recorded as landed,
+all agreeing.
+
+### B4. ◑ Checksummed documents that say false things
 
 The R86 class: a hand-written count or version beside a fact that
 moved.
@@ -211,6 +218,21 @@ of entities, codes, exports or artifacts in checksummed prose unless
 the stamping step writes it. The generators already know every number
 above.
 
+**Done 2026-10-08 (spec 0.63, editorial), except that check.** Every
+item above is fixed, plus seven the list missed: §0.7 still said 99
+entities and **thirteen** link entities while §6.3 and §6.6 said
+**fourteen** (the registry has sixteen); §2.4 "sixteen" open fields
+(seventeen); and `stability.md`'s forward-compatibility row called §10.1
+untested while its own history says it is tested. Where a count was not
+load-bearing it was removed in favour of the generated file that holds
+it, which is the class fix in prose form. `varies` and `status` now say
+*Yes — not exercised*. §11.0 lists 2.14, 2.15 and 2.21, and
+`check_spec_references.py` records their removed columns as history.
+
+**○ Still open: the check itself.** Deciding what it flags is the hard
+part — "Sixteen fields lost `other` in 0.53" is history, not drift, and
+a naive pattern cannot tell them apart.
+
 ### B5. ✅ `verify.py` fails on Windows
 
 **Fixed 2026-10-08.** `py tools/verify.py --fast` now runs end to end on
@@ -244,7 +266,7 @@ the site step skipped and said so. Before, it could not start.
   `bless_corpus.mjs --check` compare the blessed types after normalising
   line ends, so the check is about classification, not the checkout.
 
-### B6. ○ Packaging blocks the publish
+### B6. ◑ Packaging blocks the publish
 
 - **`scf-core`'s `files` lists `LICENSE` and `NOTICE`, and neither
   exists in `scf-core/`.** `npm pack --dry-run` ships 224 files and no
@@ -259,7 +281,25 @@ the site step skipped and said so. Before, it could not start.
 - `scf-mcp` depends on `"file:../scf-core"`; it needs a version range
   before it can be published. `scf-app` has no `license` field.
 
-### B7. ○ Small hygiene
+**Done 2026-10-08:** `tools/legal_files.mjs` copies the root `LICENSE`
+and `NOTICE` in at `prepack` and out at `postpack` (the copies are
+gitignored), for both packages; `pack-test` asserts both arrive
+byte-equal, and without the hook the tarball has neither. `repository`
+and `publishConfig.access: "public"` on both; scf-mcp gained a `files`
+list (it had none, so it would have shipped its tests) and a README;
+`scf-app` has `license`.
+
+**○ Still open, and none can be done from the repository:**
+- **Create the `@minimalhumans` npm org** — a step on npmjs.com.
+- **scf-mcp's dependency.** A range (`^0.1.0`) cannot resolve until
+  `scf-core` is on npm, and `npm ci` in `scf-mcp/` would fail before
+  that. Either switch it on publish day, after `scf-core` is up, or
+  make the repository an npm workspace so a range resolves locally.
+  A structural choice, so not taken here.
+- **Both packages are `"private": true`**, which npm refuses to publish.
+  Presumably the guard until publish day; flip it as part of §E.
+
+### B7. ◑ Small hygiene
 
 - **`scf-core/scripts/scf_check.mjs` is committed `100644`** but is the
   package's bin; installing chmods it, so `verify.py` leaves a dirty
@@ -270,6 +310,10 @@ the site step skipped and said so. Before, it could not start.
   `check_pin` keeps passing.
 - `verify.py` omits two checks CI runs — the corpus bless check and
   "the demo fixture is the conformance fixture". Both pass today.
+
+**Done 2026-10-08:** `scf_check.mjs` is `100755` in the index; both
+checks are `verify.py` steps. **○ The two tags** are recreated annotated
+at their own commits when this change is pushed.
 
 ### B8. ○ Work the §A decisions add
 
@@ -285,7 +329,8 @@ item that declares something authors a fixture row that exercises it.
   - the `<entity>_id`-must-be-deliberate lint in `lint_registry.py`;
   - drop `sequence.act_id`, its app reads and writes, and
     `structure.sequence_act_mismatch` (finding catalog 52 → 51 before
-    the addition below);
+    the addition below) — and re-take `docs/walkthrough.md`'s
+    `scf-check` output, which quotes that finding;
   - drop `queries` from `registry.json` and `registry.schema.json`; keep
     it in `entity_registry.py`;
   - `audio_offset_*` help text as decided;
@@ -311,12 +356,12 @@ item that declares something authors a fixture row that exercises it.
 
 | | File | What |
 |---|---|---|
-| ○ | `docs/glossary.md` | "Currently 2.12" and "currently 0.42"; "103 entities" |
-| ○ | `docs/walkthrough.md` | `scf-check` output shows schema 2.12 and two findings; today it is 2.21 and five. "107 tables" — 113 |
-| ○ | `README.md` | Manifest "44 files" — 45. **No mention of `scf-mcp`** |
-| ○ | `scf-core/README.md` | "All 99 entities" — 106. This is the page npm will show |
-| ○ | `spec/scf-mcp-design.md` | Sits in `spec/` beside the normative documents and is not in the manifest; says "Nothing here is built" and "Status: proposal"; stamped 0.51/2.13; its link to `editor-mvp.md` is broken from `spec/`. **Move to `docs/`**, mark as built. `scf-mcp/` has no README |
-| ○ | `docs/editor-mvp.md` | §5 and §8 describe rev 13; §7b's "open decision" (`region_box` help text) is done — the registry carries it |
+| ✅ | `docs/glossary.md` | "Currently 2.12" and "currently 0.42"; "103 entities" |
+| ✅ | `docs/walkthrough.md` | `scf-check` output shows schema 2.12 and two findings; today it is 2.22 and five. "107 tables" — the walkthrough's own command prints **114**, counting SQLite's bookkeeping table. **Changes again in 2.23**, when `structure.sequence_act_mismatch` goes (§B8) |
+| ✅ | `README.md` | Manifest "44 files" — 45. **No mention of `scf-mcp`** |
+| ✅ | `scf-core/README.md` | "All 99 entities" — 106. This is the page npm will show |
+| ✅ | `docs/scf-mcp-design.md` (was `spec/`) | Sat in `spec/` beside the normative documents and is not in the manifest; says "Nothing here is built" and "Status: proposal"; stamped 0.51/2.13; its link to `editor-mvp.md` is broken from `spec/`. **Move to `docs/`**, mark as built. `scf-mcp/` has no README |
+| ✅ | `docs/editor-mvp.md` | §5 and §8 describe rev 13; §7b's "open decision" (`region_box` help text) is done — the registry carries it |
 | ✅ | `docs/conventions.md` | ~38 inbound references meaning "the rules". Carried since rev 11. **Deferred past 1.0** (§A15, §F) |
 
 ---

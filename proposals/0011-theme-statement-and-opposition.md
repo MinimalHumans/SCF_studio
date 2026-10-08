@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `schema/entity_registry.py` (`theme`); `registry.json`, `scf-schema.sql`, `entity-reference.md`; Q00 and Q10 results if authored in the fixture |
@@ -76,3 +76,14 @@ complementary, not a replacement.
 - **`theme.character_connections` and `scene_connections` are prose
   shadows of `thematic_connection` rows.** Should they stay? See 0021 for
   the same question about `scene.characters_present`.
+
+---
+
+## Resolution
+
+**Implemented in schema 2.14**, as proposed: `theme.statement` and
+`theme.opposition`. `description` stays the general account.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

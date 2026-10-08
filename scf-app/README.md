@@ -19,14 +19,18 @@ npm run build      # static bundle in dist/
 ## Where the work happens
 
 Sections in an always-visible activity bar on the left, grouped in the
-order the work is usually done — the story, then who and what is in it,
-then the tools. `Alt+1` … `Alt+0` switch between them.
+order the work is usually done — the project, the story, then who and
+what is in it, then the tools. `Alt+1` … `Alt+0` switch between the ten
+below Project, which has no shortcut so that adding it renumbered
+nothing.
 
 | Group | Section | Surface | Owns |
 |---|---|---|---|
+| — | **Project** | `workspace/ProjectWorkspace.tsx` | The baseline of the film: the `project` row (logline, synopsis, vision), the screenplay's title page (which the Fountain export writes), `technical_specs`, and the project folder. Fields save as you type. |
 | Story | **Script** | `ScriptView`, `SceneRail` | The screenplay. CodeMirror 6 over a line-identity model; headings become scenes and `#` sections become acts and sequences, at commit. |
 | Story | **Structure** | `StructureView` | Act and sequence boundaries. Three verbs only — start a span at a scene, move it, unanchor it — because membership is derived, not edited. |
-| Story | **Shoot** | `ShootView` | Coverage: beats and shots against a read-only scene spine. The script owns structure; this owns what gets shot. |
+| Story | **Shoot** | `ShootView` | Coverage: beats and shots against a read-only scene spine. The script owns structure; this owns what gets shot. Remembers what is expanded and where you were, across a trip to a record. |
+| Story | (both) | `ScriptReader` | The screenplay, read-only, beside Structure and Shoot; clicking a scene in either brings it up. |
 | Narrative elements | **Characters** | `ui/workspace/`, `editor/elementOps.ts` | Everything about one character in subtabs, written as the writer works. Authors by intent; `elementOps.ts` turns each intent into ordinary rows. Profile, Look and Voice (reference boards: point at a file in the project folder, say what it is for, and `editor/mediaOps.ts` writes the bundle, binding, anchor or relationship — nothing is copied, per conventions §9), Wardrobe (costumes with their own boards, worn-in scenes, wardrobe stages, makeup by scene), Physicality (motion board, habits, shifts, places), Relationships (a map from the character's side, direction as the writer reads it), Arc, and Scenes & Lines (presence and speech read from the script by the §3.4 heading walk, scene links with role and variant, every speech opening the Script at its cue by line uuid, shots, props carried, themes) are built — every character tab. Identity tiles carry two small editors (`AnchorScope.tsx`): drag a box over the image to mark the face (`region_box`), or mark in and out on a waveform for the voice (`audio_offset_*`). Clicking a character chip in the Script opens their workspace. Every board carries exceptions — a scene range, a state, a variant — ordered by precedence, and an "as of scene" control in the header shows what is in force there using Q13's own resolution, the last two on one story strip (`StoryStrip`, `state/storyStrip.ts`) that draws latest-wins stages across the scenes. |
 | Narrative elements | **Locations**, **Props** | `LocationWorkspace`, `PropWorkspace`, `SubjectShell`, `SubjectRail` | The same shell, rail, boards, exceptions and "as of scene" as Characters (`state/subjectKinds.ts` names what differs). Locations: Profile, Look (board, design, color), Sound (board, sound profile), Variants (each with its own references, bound as a variant exception), Scenes (the variant §12.17 picks per scene). Props: Profile, Look (board, surface), Variants, Through the story (states and custody on the strip), Scenes (links with significance and version, script tags). |
 | Tools | **Subjects** | `SubjectNav`, `SubjectView` | One thing and everything addressed to it. |

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * shotContext.ts — the composite behind "prompt for shot 10A"
- * (spec/scf-mcp-design.md §4).
+ * (docs/scf-mcp-design.md §4).
  *
  * Every member is the UNMODIFIED return of a canonical query — no
  * filtering, no merging, no re-ordering, no picking a winner. A second

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `prop.story_function` vocabulary |
@@ -50,3 +50,15 @@ production meaning, and SCF is aimed at productions as well as writers.
 
 - Is `functional` the right word? Other candidates are `utilitarian` and
   `used`.
+
+---
+
+## Resolution
+
+**Implemented in schema 2.14**: `functional` added to
+`prop.story_function` — deliberately not "practical", which on set means
+a working prop.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

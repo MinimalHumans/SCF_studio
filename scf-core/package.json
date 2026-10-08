@@ -5,6 +5,14 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MinimalHumans/SCF_studio.git",
+    "directory": "scf-core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -19,7 +27,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "prepack": "npm run clean && npm run build",
+    "prepack": "node ../tools/legal_files.mjs copy && npm run clean && npm run build",
     "pack-test": "node --experimental-strip-types scripts/pack_test.mjs",
     "emit-api-surface": "node --experimental-strip-types scripts/emit_api_surface.mjs",
     "check-api-surface": "node --experimental-strip-types scripts/emit_api_surface.mjs --check",
@@ -44,7 +52,8 @@
     "check-finding-catalog": "node --experimental-strip-types scripts/emit_finding_catalog.mjs --check",
     "bless-queries": "vitest run test/canonicalQueries.test.ts --mode bless",
     "emit-normative-data": "node --experimental-strip-types scripts/emit_normative_data.mjs",
-    "check-normative-data": "node --experimental-strip-types scripts/emit_normative_data.mjs --check"
+    "check-normative-data": "node --experimental-strip-types scripts/emit_normative_data.mjs --check",
+    "postpack": "node ../tools/legal_files.mjs remove"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

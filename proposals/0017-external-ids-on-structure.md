@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `has_external_id` on `act`, `sequence`, `story_beat`, `theme` (and `motif`); generated artifacts |
@@ -62,3 +62,14 @@ machine-created for that reason. That is a larger question than this one.
   entity?
 - **Links.** Is the importer's noted gap — no provenance on junction rows —
   worth its own proposal?
+
+---
+
+## Resolution
+
+**Implemented in schema 2.14**, as proposed: `external_id` on `act`,
+`sequence`, `story_beat`, `theme` and `motif`.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

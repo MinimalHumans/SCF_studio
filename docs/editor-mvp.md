@@ -4,6 +4,9 @@
 Consolidated from the second-implementation design doc
 (`20260715_SCF_Second_Implementation.md`, never in the repository) and
 checked against `SCF_studio@main`, 2026-08-26 — spec 0.51, schema 2.13.
+**Updated 2026-10-08** (spec 0.63, schema 2.22): §7b's open decision is
+closed, and §9 is answered — the editor is not part of the format's 1.0
+(`release-checklist.md` §A10).
 
 It lives here rather than as an upload for the same reason rev 11 of the
 release checklist does: *rev 10 lived outside the repository and had
@@ -160,7 +163,10 @@ an oversight — which is the whole reason this document exists.
 - ✅ **`docs/release-checklist.md` was stamped rev 12, spec 0.42, schema
   2.12** against a main at 0.48 / 2.13. **Rev 13** re-checked against
   the tree: section 7 turned out to be complete, and one item had
-  regressed — **`schema-2.13` shipped in 0.47 and is not tagged.**
+  regressed — **`schema-2.13` shipped in 0.47 and is not tagged.** Rev
+  13 has since been superseded: **rev 14** (2026-10-06, decisions
+  settled 2026-10-08) is the current list, and the release questions
+  this file used to carry live there.
 - ✅ **No editor design document in the repository.** The `Part N`
   references in the source pointed at an upload. This file closes that,
   and `scf-app/README.md` now points at it.
@@ -404,15 +410,16 @@ mutation, where it fails. The `release` guard is now honestly a fast
 path rather than a second line of defence, which is what it should have
 been all along.
 
-**One open decision, deferred on purpose.** The definition belongs in
-the registry's help text, not in `conventions.md` — §2.1 makes the
-registry the authority on fields, and help text is generated into
-`entity-reference.md` and checksummed. Writing it there changes
-`registry.json`, which is the one artifact pinned to the `schema-2.13`
-tag, so `check_pin` fails: the live tag would serve different bytes than
-`SHA256SUMS` claims. That needs a re-cut tag or a schema bump, which is
-a release decision. `check_pin` caught this immediately, which is the
-best argument for its existence so far.
+**One decision, deferred on purpose — closed in schema 2.16.** The
+definition belongs in the registry's help text, not in
+`conventions.md` — §2.1 makes the registry the authority on fields, and
+help text is generated into `entity-reference.md` and checksummed.
+Writing it there changes `registry.json`, which was the one artifact
+pinned to the `schema-2.13` tag, so `check_pin` failed: the live tag
+would have served different bytes than `SHA256SUMS` claimed. It waited
+for a schema bump, and `entity_anchor.region_box` has declared its
+`{x, y, w, h}` shape in the registry since 2.16. `check_pin` caught the
+conflict immediately, which was the best argument for its existence.
 
 ## 7c. ✅ Two review surfaces that cried wolf
 
@@ -634,8 +641,8 @@ this document links to it so neither gets lost.
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.
-2. ✅ **§5 — the stale documents.** Checklist at rev 13, app README at
-   seven tabs, this file checked in.
+2. ✅ **§5 — the stale documents.** Checklist at rev 13 (rev 14 since),
+   app README at seven tabs, this file checked in.
 3. ✅ **§4 — the deferrals recorded** as decisions rather than left
    implicit.
 4. **§3 — the three unexercised features.** The live item. Highest value
@@ -652,8 +659,13 @@ this document links to it so neither gets lost.
 
 ## 9. What "MVP" is being taken to mean here
 
-Stated because the list above depends on it, and because it is the one
-thing in this document that is a proposal rather than a finding:
+**Answered for the release, 2026-10-08** (`release-checklist.md` §A10):
+**the editor is not part of SCF 1.0.** 1.0 is the format, its artifacts
+and `scf-core`; the editor ships as the reference editor on its own
+version line, and `scf-mcp` publishes at 0.x. So what follows is the
+editor's own bar, and nothing below blocks the format's release.
+
+Stated because the list above depends on it:
 
 > **The editor is MVP-complete when every capability the format claims
 > can be authored in it, and every capability the editor can author is

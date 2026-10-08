@@ -97,6 +97,11 @@ REMOVED = {
     "vocal_state",                        #   ...
     "entity_anchor.environmental_state",  # removed in 2.21 (0034)
     "environmental_state",                #   ...
+    # Listed in §11.0 as changes taken under the pre-1.0 clause (0.63).
+    "scene.characters_present",                # removed in 2.14 (0021)
+    "conditions_json",                         # three columns, removed in 2.14
+    "costume_progression.progression_stages",  # replaced by rows in 2.15 (0026)
+    "staging_beat.character_positions",        # replaced by rows in 2.15 (0026)
     # Never a registry entity: a cascade leaf §12.13 once named. The
     # changelog records that, correctly, and must not fail the check.
     "scene_emotional_design",

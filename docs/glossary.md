@@ -26,17 +26,18 @@ open it, and everything needed to answer a question about the story is
 inside.
 
 **Entity** — one kind of thing the format knows about, and the table that
-holds it. `character` is an entity. `scene` is an entity. There are 99 of
-them, listed in the [entity reference](../spec/entity-reference.md).
+holds it. `character` is an entity. `scene` is an entity. The
+[entity reference](../spec/entity-reference.md), generated from the
+registry, lists them all and says how many there are.
 
-**Registry** — the single declaration of all 103 entities and their
+**Registry** — the single declaration of every entity and its
 fields. Everything else — the database schema, the JSON Schema, the
 documentation — is generated from it, so there is one place where the
 field set is decided and no second place to disagree with it.
 
 **Link entity**, or **junction** — a row whose whole job is to connect
-two other rows. "This character is in this scene" is a link. Thirteen of
-the 103 entities are links.
+two other rows. "This character is in this scene" is a link. A handful
+of the entities are links; the entity reference marks them.
 
 **Tier** — a rough depth band from 0 to 6, grouping entities by how far
 they sit from the basic nouns. `scene` is tier 0; `emotional architecture`
@@ -170,11 +171,13 @@ edits, exports and rebuilds.
 to one file and means nothing outside it, which is why it never appears
 in an answer.
 
-**Schema version** — which version of the 99-entity structure a file
-uses, stamped in the file. Currently 2.12.
+**Schema version** — which version of the entity structure a file uses,
+stamped in the file. The specification's header names the one it
+describes.
 
 **Specification version** — which revision of the written specification
-you are reading. Currently 0.42, and on a separate track from the schema.
+you are reading, named in its header, and on a separate track from the
+schema.
 
 **Conformance** — whether an implementation does what the specification
 says. There are three roles — Reader, Writer, Editor — and a claim is

@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.59 / schema 2.19. This document is expected
+Current as of specification 0.63 / schema 2.22. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -50,9 +50,9 @@ about it is ceremonial.
 | The variant in force | §4.8 | Provisional | Yes | Stated in 0.60 (proposal 0033); reported on every cast and prop entry of Q03, Q04 and Q12 since 0.61 (proposal 0035). A character's or prop's variant is the one its scene presence link names; a location's is §12.17's. One function, `variantInForce`, serves the binding filter, the anchor layer and Q02. Exercised by the fixture's scene 25 flashback; no NORMATIVE result sits where a variant is in force, so the non-normative `Q13-scene25` and `variants.test.ts` carry it, two-sided. Provisional: one variant in one fixture, and a scene showing two versions of one character is not expressible at scene level. |
 | Variant anchors | §12.8 | Provisional | Yes | Since 0.60 `entity_anchor.subject_variant_id` is read: a variant's anchor contributes only where it is in force, and displaces the subject's own of its type. Before 0.60 the column was read by nothing. Since 0.61 an anchor carries no state filter at all: the three free-text state columns nothing read were removed (proposal 0034). |
 | How bindings combine | §12.8.2 | Provisional | Yes | Stated in 0.58 (proposal 0031). `precedence` orders the bindings in force, higher being the more specific opinion; `combine = replace` excludes lower bindings for the same subject and intent, never anchors or shot overrides. Before 0.58 neither was defined, the fixture used `precedence` both ways round, and every night scene in the kitchen resolved its day plates. Pinned by `bindingCombination.test.ts`, two-sided. |
-| Artifact addressing and checksums | §2.1 | Provisional | Yes | `spec/ARTIFACTS.md` and `SHA256SUMS` cover **41 files** as of 0.31 — the four specification documents and the eleven blessed negative reports joined the twenty-six generated artifacts, and **42 as of 0.33**. `schema-2.12` exists; the URLs resolve and verify against their digests. |
+| Artifact addressing and checksums | §2.1 | Provisional | Yes | `spec/ARTIFACTS.md` and `SHA256SUMS` cover every file `schema/artifact_manifest.py` lists — the specification documents, the generated artifacts and the blessed results and negative reports — and the manifest states the count. The four specification documents and the blessed negative reports joined the generated artifacts in 0.31. Every schema version from 2.12 is tagged; `check_pin.py --strict` confirms the current tag serves the digests `SHA256SUMS` claims. |
 | Licensing boundary: prose CC BY 4.0, generated data Apache-2.0 | — | Provisional | Yes | Stated in `spec/LICENSE` since 0.32 and enforced per file by `tools/add_spdx_headers.py --check`, which CI runs. Provisional only because no third party has yet relied on it. |
-| `@minimalhumans/scf-core` public API | — | Provisional | Yes | `src/index.ts` is an explicit export list organised by `conformance.md`'s roles as of 0.34 — **224 names**, down from 259, with four editor-tooling modules cut. `spec/api-surface.json` records it and CI checks two things: that the set has not moved, and that **every type named in a public signature is itself public**. Provisional rather than Stable because no external consumer has used it; the package is still unpublished. |
+| `@minimalhumans/scf-core` public API | — | Provisional | Yes | `src/index.ts` is an explicit export list organised by `conformance.md`'s roles since 0.34, when four editor-tooling modules were cut. `spec/api-surface.json` records every name and CI checks two things: that the set has not moved, and that **every type named in a public signature is itself public**. Provisional rather than Stable because no external consumer has used it; the package is still unpublished. |
 | Reproducible fixture build | — | Provisional | Yes | `fixtures/build/build_fixture.py` since 0.35: published DDL + `hollow_creek.data.json` + the screenplay, from nothing, byte-identical across runs. CI checks the rebuild against the checked-in file. Provisional because only one fixture has ever been built this way. |
 | The generated references | — | Provisional | Yes | `entity-reference.md` and `query-reference.md` since 0.37, both generated and CI-checked. Explicitly not normative. Provisional because nobody outside the project has read them yet. |
 | Cut exclusion through a junction | §6.6.1 | Provisional | Yes | Fixed in 0.39. `rows()` covers a table at a time; five queries reached an entity THROUGH a junction in one join and filtered neither side. `cutChangesTheAnswer.test.ts` pins the mirror of §6.6.1's test — cutting a row MUST change the answer — which nothing had checked. |
@@ -64,7 +64,7 @@ about it is ceremonial.
 | `affected_entities` write convention | §12.14 | Provisional | Yes | Stated in 0.54 (proposal 0007). Exercised since the fixture attached a decision and a note to scene 12 by uuid — Q15's `attached` member had been empty in every published result until then. |
 | `string_list` | §2.5 | Provisional | Yes | Stated in 0.54 (proposal 0024). 29 fields; Q00's `visual_identity` and `project_color_palette` layers carry arrays in the published result. |
 | Character arcs | §12.16 | Provisional | Yes | Schema 2.15 (proposal 0008). `arcStates` on Q02, the arcs themselves through the dossier. Eleanor's three stages are in the fixture. |
-| `status` is a writing stage | §6.6 | Provisional | **No** | Stated in 0.53 (proposal 0004), and 2.14 removed `cut` from the vocabulary that carried it. Not exercised: every scene, act and sequence in the fixture is `outline`, and nothing in `scf-core` reads the column — which is exactly how the two-column ambiguity survived. A file whose `status` disagrees with its `lifecycle_status` is the case to author. |
+| `status` is a writing stage | §6.6 | Provisional | Yes | Stated in 0.53 (proposal 0004), and 2.14 removed `cut` from the vocabulary that carried it. A writing stage is something nothing needs to read, so `scf-core` not reading it is the rule working, not a gap. **Not exercised:** every scene, act and sequence in the fixture is `outline`, which is how the two-column ambiguity survived. A file whose `status` disagrees with its `lifecycle_status` is the case to author. |
 | The carrier record's row member | §12.1.4 | Provisional | Yes | Named for the entity unless the section says otherwise, stated in 0.40. Five of sixteen sections could not be shaped correctly from the document before it. |
 | Published query selectors | §5.4 | Provisional | Yes | `fixtures/expectations/selectors.json` since 0.40, generated and cross-checked against every published `parameters` block. `conformance.md` promised them from the start and nothing shipped. |
 | Spec prose resolves against the registry | — | Provisional | Yes | `schema/check_spec_references.py` since 0.40, in CI. 0.29 wrote two entity names that do not exist; 0.38 made the RUBRIC's names checkable and left the prose unchecked. |
@@ -72,10 +72,11 @@ about it is ceremonial.
 | Position tie-break within a scene | §4.5 | Provisional | Yes | Row id, stated in 0.41. Pattern 2 merges oldest-first; pattern 3 takes the highest id at the winning position. |
 | `persistence` closed at two values | §4.5 | Provisional | Yes | Stated in 0.41, with an unknown value treated as `scene_only` — the narrower reading, so it cannot silently extend a state across the story. |
 | Rubric steps scoped to the query's position | §12.9.1 | Provisional | Yes | Stated in 0.41. A step asks about the position the query was asked about, not the file. |
+| **Rubric steps resolve to entities** | §12.9.1 | Provisional | Yes | **Closed in 0.38.** A step now carries `entities` (registry names, checked against the registry at generation time), an optional `filter` and `intent`, and a `label` derived from them for display only. `readinessRubric.test.ts` additionally pins that every entity Q14 reports is one the rubric declares — `readiness.ts` assesses by hand rather than walking the rubric, so the two were free to drift and nothing checked them. |
 | Q04 carries the scene's text | §12.17.1 | Provisional | Yes | Added in 0.49. `screenplay_lines` is a `uuidExtraTable`, so the section declares its own reference columns and its own bounds; the empty case is exercised by fixture scene 17, which has no heading line. Provisional until a second implementation has produced the member from the text alone. |
 | Location variant selection | §12.17 | Provisional | Yes | Stated in 0.41 and **exercised since 0.42**: scene 12's kitchen dressing was built for autumn and reused in winter, so it still wins on two axes and the published Q04 result carries a non-empty `mismatches`. The zero-score baseline fallback remains unexercised. |
 | `time_of_day` is a light axis | §12.17 | Provisional | Partly | Stated in 0.53 (proposal 0012). `day` added, `continuous` removed — it could never match a variant. Partly: the fixture authors refined times against DAY headings, which is the case the rule exists for, but no fixture scene carries `day` itself. |
-| `varies` is a wildcard on the time axis | §12.17 | Provisional | **No** | Stated in 0.53. `varies` scored as an ordinary value could never agree, making the one value meaning "holds at any hour" the one that never won. No fixture variant uses it. |
+| `varies` is a wildcard on the time axis | §12.17 | Provisional | Yes | Stated in 0.53, and implemented in `resolution.ts`. `varies` scored as an ordinary value could never agree, making the one value meaning "holds at any hour" the one that never won. **Not exercised:** no fixture variant uses it. |
 | Dossier group reference column | §12.15 | Provisional | Yes | `<subject>_id`, stated in 0.41. |
 | Q11's emotional cascade | §12.13 | Provisional | Yes | Fixed in 0.44. The leaf was `scene_emotional_design`, which is not a registry entity, so the member was `[]` for every file that could exist — and the blessed artifact recorded the empty array. Now `scene_emotional_target`, which declares `refines: ["project_tone"]`. |
 | Sequences crossing an act boundary | §5.3 | Provisional | Yes | Fixed in 0.44. `structure.sequence_act_mismatch` tested the start scene, which is the comparison §5.3 calls incorrect, and so never fired on a fixture that contains a crossing. It now tests the span. |
@@ -113,7 +114,7 @@ about it is ceremonial.
 | Pre-1.0 change licence | §11.0 | Provisional | n/a | States that §11's rules take effect at 1.0 and that earlier files are disposable, with the fixture excepted. Provisional because it is the kind of clause that is easy to write and easy to overrun — it needs the 1.0 release to prove it was honoured. |
 | Result envelope and row projection | §12.1 | Provisional | Yes | `queryResult.ts`. Rows by uuid, volatile columns dropped, references resolved to uuids. Provisional until a second implementation has produced a matching result. |
 | The `{uuid, fields}` projected row | §12.1.2 | Provisional | Yes | Stated in 0.29. It had been demonstrated by the blessed artifacts and never defined, which was the third reader run's central finding. Provisional until a second implementation has produced one from the text alone. |
-| Polymorphic `_id` columns dropped | §12.1.2 | Provisional | Yes | `projectRow()` drops any `_id` with no `referenceEntity`. Stated in 0.29; Q10 and Q15 both depend on it. |
+| Polymorphic `_id` columns dropped | §12.1.2 | Provisional | Yes | `projectRow()` drops a column the registry declares `polymorphicType`, and the query lifts the resolved reference instead. Stated in 0.29 as "any `_id` with no `referenceEntity`"; 0.40 replaced that pattern-match with the declaration ("Polymorphic references declared", above). Q10 and Q15 both depend on it. |
 | Derived records carry nulls | §12.1.4 | Provisional | Yes | Stated in 0.29. The opposite of §12.1.2's omit-empties rule, and the two were indistinguishable in the artifacts. |
 | Open vocabularies | §2.4 | Provisional | Yes | Stated in 0.53 (proposal 0022). Sixteen fields lost `other` and gained `open: true`; `vocabulary.unlisted_value` reports the tail. Exercised by the fixture's `creative_decision` row carrying `decision_type = "sound"`, which had never been a member and which nothing had ever checked. |
 | Presence of a vocabulary value | §2.4.1 | Provisional | Yes | Stated in 0.57 (proposal 0030). `optionPresence` in the registry gives each value of `scene_character.role_in_scene`, `scene_prop.significance` and the shot `framing` fields a presence: `seen`, `heard` or `named`. `lint_registry.py` requires it to be total over the options. Before 0.57 the vocabularies carried presence and nothing defined it, so the published Q03 and Q12 listed a `mentioned` character with nothing to say she is not on screen. |
@@ -125,7 +126,7 @@ about it is ceremonial.
 | The screenplay tables are published | §1.3.1 | Provisional | Yes | `screenplay-tables.json`, dumped from `initDatabase()` on `scf-schema.sql`'s reasoning. Columns, nullability, defaults and a purpose per table. |
 | `line_type` is a closed vocabulary | §1.3.1 | Provisional | Yes | Fifteen values. `LINE_TYPES` in `fountain/types.ts` is now a runtime array rather than a type-only union, the artifact is generated from it, and `screenplayTables.test.ts` checks the artifact back. Provisional because the closure is a requirement on implementations that the column — free TEXT — cannot enforce, and **no finding fires on a value outside the set**. |
 | All sixteen queries | §12.2–12.17 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |
-| Expectation coverage | — | Provisional | Partly | Four results now sit at three different positions. The rendered-markdown expectations still cluster on scene 12, and will until the queries behind them are specified. |
+| Expectation coverage | — | Provisional | Partly | Every query is specified and has a normative result. They sit at scenes 12, 19 and 16; the non-normative Q13 variants add scenes 3 and 25. Most still key on scene 12, and the variant members of Q02, Q03, Q04 and Q12 are empty at every normative position — `docs/release-checklist.md` §B2. |
 | Results exclude `cut` rows | §12.1.2 | Provisional | Yes | Follows §6.6.1. Settled before the other fourteen queries were blessed, so they get blessed once. |
 | Shot-code canonical form | §4.4.1 | Stable | Yes | `shots.ts`. Bijective base-26, zero-based. |
 | Shot codes parsed relative to the scene | §4.4.2 | Provisional | Yes | `parseShotCode()`, used by both `nextShotNumber()` and `restampShotNumber()`. Pinned by the A-page regression cases in `shots.test.ts`. |
@@ -135,10 +136,10 @@ about it is ceremonial.
 | A shot is at its scene's location | §4.6 | Provisional | Yes | Stated in 0.57. A deliberate line: a flashback or each side of an intercut is its own scene. It asks something of importers, who split an intercut written as one scene. |
 | The lines a shot covers | §4.7 | Provisional | Yes | Stated in 0.59 (proposal 0032). Two line anchors on `shot` and on `clip`; whole lines; ranges may overlap, which is how coverage is shot. Unrecorded shots do not inherit their scene's lines. `lines.ts` is the one implementation. |
 | Line anchors | §3.5 | Provisional | Partly | Stated in 0.59. A text uuid, declared by `lineAnchor` in the registry, with orphans reported. Partly: re-anchoring through a split or merge is a SHOULD, implemented by this repository's editor and unexercised by any other writer. Before 0.59 none of this was in the specification, and `clip`'s row-id line references had come to point at a blank line, a section marker and a heading in the fixture. |
-| Pattern 1 — explicit rows | §4.3 | Stable | Yes | |
-| Pattern 2 — persistence | §4.3 | Stable | Yes | Pinned. |
-| Pattern 3 — latest wins | §4.3 | Stable | Yes | Pinned. |
-| Oldest-first merge of persistent states | §4.3 | Provisional | Yes | Field-by-field override is right for the cases in the fixture; no outside consumer has tested it. |
+| Pattern 1 — explicit rows | §4.5 | Stable | Yes | |
+| Pattern 2 — persistence | §4.5 | Stable | Yes | Pinned. |
+| Pattern 3 — latest wins | §4.5 | Stable | Yes | Pinned. |
+| Oldest-first merge of persistent states | §4.5 | Provisional | Yes | Field-by-field override is right for the cases in the fixture; no outside consumer has tested it. |
 
 ### Structure
 
@@ -158,7 +159,6 @@ about it is ceremonial.
 | Row `uuid` on all entities | §6.1 | Stable | Yes | Schema 2.3. |
 | Uuids do not cross files | §6.2 | Stable | Yes | |
 | Junction natural keys | §6.3 | Provisional | Yes | Published as `spec/junction-keys.json` in 0.26 — it was cited as a FUNCTION until then, so no third party could compute one. Still only exercised by de-duplication; merge is the real test and does not exist. Since 0.60 a reference marked `qualifier` is excluded from the key. |
-| **Rubric steps resolve to entities** | §12.9.1 | Provisional | Yes | **Closed in 0.38.** A step now carries `entities` (registry names, checked against the registry at generation time), an optional `filter` and `intent`, and a `label` derived from them for display only. `readinessRubric.test.ts` additionally pins that every entity Q14 reports is one the rubric declares — `readiness.ts` assesses by hand rather than walking the rubric, so the two were free to drift and nothing checked them. |
 | Unexplained shadow rows reported | §5.4 | Provisional | Yes | `structure.shadow_row_unexplained`, added in 0.26. §5.4 required a finding the closed catalog had no code for, and the detection lived only in the editor's commit path — so the one tool a third party runs never mentioned them. |
 | Duplicates as findings | §6.4 | Stable | Yes | |
 | Relationship `directionality` | §6.5 | Provisional | Yes | Schema 2.4. |
@@ -206,7 +206,7 @@ about it is ceremonial.
 | Finding catalog published | §9.4 | Provisional | Yes | `spec/finding-catalog.json`, generated and checked. Closes the reason no independent implementation could satisfy §9.4. |
 | Negative fixtures reproducible by third parties | — | Provisional | Yes | `fixtures/negative/CASES.json`, generated by the same script that builds them. |
 | **Queries as part of the format** | §12 | Provisional | Yes | Decided 2026-08-17: the sixteen canonical queries are normative, and the normative answer is the STRUCTURE, not the rendered prose. **All sixteen are specified** (§12.2–12.17), each with a published normative `.result.json`, and §12.1's shape conventions were stated in 0.29. This row read "Nothing is specified yet — the largest remaining piece of specification work" until 0.36, four revisions after that stopped being true. |
-| Enumerated finding types | §9.4 | Provisional | Yes | `findings.ts` — a closed catalog of 36 codes, severity owned by the catalog, deterministic ordering, and `collectFindings()` as the single engine a CLI, the panels and the tests all share. Provisional until a report has been read by someone who did not write it. |
+| Enumerated finding types | §9.4 | Provisional | Yes | `findings.ts` — a closed catalog, published as `spec/finding-catalog.json`, with severity owned by the catalog, deterministic ordering, and `collectFindings()` as the single engine a CLI, the panels and the tests all share. Provisional until a report has been read by someone who did not write it. |
 | The known-table set | §1.3 | Provisional | Yes | §1.3 defines the file's tables as the registry plus `UUID_EXTRA_TABLES`, which conflated two questions. Schema 2.10 splits them: `ownedTables` for SCF's tables that carry no identity, `uuidExtraTables` for those that do, and `Registry.knownTables` as the union. Title-page rows are properties of the screenplay, so they carry no uuids. Found by `collectFindings` on its first run over the fixture. |
 | Enumerated finding behaviour on broken files | §9.4 | Provisional | Yes | Eleven negative fixtures in `fixtures/negative/`, each pinning one code, with blessed reports and a `--check` mode. |
 | The serialised report | §9.5 | Provisional | Yes | `report.ts`, own format version, determinism pinned. Provisional until a second implementation has parsed one. |
@@ -229,7 +229,7 @@ about it is ceremonial.
 | Area | Spec | Tier | Implemented | Notes |
 |---|---|---|---|---|
 | Additive-only schema changes | §11.1 | Stable | Yes | Every change so far has been one. |
-| Forward compatibility | §11.2 | Provisional | Partly | Follows from §10.1, which is untested. |
+| Forward compatibility | §11.2 | Provisional | Partly | Follows from §10.1, which is tested and holds (`extensibility.test.ts`, since 0.13). Partly because no file from a later schema has yet been read by an earlier reader outside the test suite. |
 | Backward compatibility | §11.3 | Provisional | Partly | Same. |
 | Deprecation window | §11.4 | Provisional | n/a | Newly stated. 2.8's removal of `asset_type` predates it. |
 
@@ -247,10 +247,16 @@ about it is ceremonial.
 
 ## Summary — what stands between here and 1.0
 
-**No Unstable rows remain.** The last three closed in 0.38: rubric steps
-now resolve against the registry (§12.9.1), `scf-check --cut` reads back
-what was cut (§6.6.2), and `scene_sequence` shadow rows are decided —
-they stay, and no canonical query reads them (§5.4).
+**No Unstable rows remain**, and none has since 0.38, when rubric steps
+came to resolve against the registry (§12.9.1), `scf-check --cut` began
+reading back what was cut (§6.6.2), and `scene_sequence` shadow rows
+were decided — they stay, and no canonical query reads them (§5.4).
+
+**No row is "not yet implemented" either.** Two rows — `varies` and
+`status` — had said *No* when what they lacked was a fixture row that
+exercises them. They now say *Yes* and **Not exercised**, which is the
+honest statement: a rule implemented and never run against data is a
+Provisional rule, and `docs/release-checklist.md` §D3 lists that class.
 
 By the definition at the top of this document, **that is what a 1.0
 is.** It is not a claim that the format is finished, and this section
@@ -260,9 +266,9 @@ should not be read as one. Two Provisional rows carry known gaps:
   of `conformance.md` §4's nine the validator cannot do, because §0.3
   makes the root mapping a property of the consuming environment and no
   flag exists to supply one.
-- **The `scf-core` public API** — stated and enforced since 0.34, but a
-  handful of rendering and browsing helpers inside kept modules could
-  still be cut. That is a proposal, not a defect.
+- **The `scf-core` public API** — stated and enforced since 0.34, and
+  not yet used by anyone outside this repository; the package is
+  unpublished.
 
 And what remains outside this document is real: documentation for people
 who are not implementing the format, a second MAINTAINED implementation,

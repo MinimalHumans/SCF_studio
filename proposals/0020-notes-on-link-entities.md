@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `thematic_connection` (one field) if accepted; nothing else |
@@ -56,3 +56,15 @@ writer for cosmetics.
 
 - Should `actor_character_role`, the other claim, be checked for the same
   need? It already has `notes` and `scope_details`.
+
+---
+
+## Resolution
+
+**Implemented in schema 2.14**, as proposed:
+`thematic_connection.notes`. `scene_prop.usage_note` and
+`motif_appearance.manifestation_notes` were not renamed.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

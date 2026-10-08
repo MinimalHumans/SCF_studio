@@ -4,7 +4,7 @@
  *
  * An agent handed the string "10A" or "Eleanor" has exactly the problem
  * `fixtures/expectations/selectors.json` exists to solve for the seven
- * rows the conformance suite names by hand (spec/scf-mcp-design.md §3):
+ * rows the conformance suite names by hand (docs/scf-mcp-design.md §3):
  * it needs a row's uuid and has nothing but a label to find it with.
  *
  * §6.3's "natural key" and `junctionKeyFields` cover the thirteen
