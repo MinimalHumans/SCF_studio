@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **deferred** — after 1.0; waits on named-root support in the editor. See Resolution |
 | **Author** | Raised by the maintainers, from a studio use case |
 | **Opened** | 2026-08-26 |
 | **Affects** | Spec §8.2 and §8.3, `FileLocator` in `scf-core/src/assets.ts`, `scf-app/src/files/assetLocator.ts` |
@@ -125,4 +125,16 @@ about the same file for a reason not in the file.
 
 ## Resolution
 
-*Left empty until the proposal is accepted, declined or deferred.*
+**Deferred, 2026-10-08, to after 1.0.** Settled in the 1.0 decision
+pass (`docs/release-checklist.md` §A).
+
+The change is behavioural and additive — an environment that cannot
+open an absolute path returns exactly what it returns today — so it can
+land in any later revision without breaking a file or a reader. Nothing
+about it needs to be fixed before §11 binds.
+
+**What it waits on:** named-root support in the reference editor, which
+this proposal's own Unresolved list calls the portable answer to the
+multi-drive case and probably the higher-value work. Revisit when the
+editor resolves roots other than `@project`; if absolute paths still
+matter then, take this as written.
