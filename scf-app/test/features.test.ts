@@ -16,9 +16,9 @@ import { parseFountain } from "@scf-core/fountain/index.ts";
 import { linesToRows, writeScreenplay }
   from "@scf-core/screenplay/rowModel.ts";
 import {
-  beatAnchoredLineIds, beatsForLine, createBeatForLine,
+  beatAnchoredLineIds, beatsForLine, createBeatForLine, createEditorProp,
   diffVersionAgainstCurrent, listVersions, publishVersion,
-  reanchorForEvents, tagPropRange, validateTags,
+  reanchorForEvents, syncPropSceneLinks, tagPropRange, validateTags,
 } from "../src/editor/features.ts";
 import { rowsToBlocks } from "../src/editor/screenplayDoc.ts";
 
@@ -166,5 +166,31 @@ describe("prop tags: block-anchored ranges, honest validation", () => {
     const still = await db.exec(
       "SELECT COUNT(*) AS n FROM screenplay_prop_tags");
     expect(still[0]!["n"]).toBe(1);
+  });
+});
+
+describe("prop tags: rows written from the script editor carry identity", () => {
+  // Every one of these was left to the open-time backfill, so a prop made
+  // and tagged in the script editor had no uuid until the file was
+  // reopened — and any tool reading the file in between saw NULLs.
+  test("prop, tag and scene link are minted a uuid at insert", async () => {
+    const propId = await createEditorProp(db.exec, "Lightbulb");
+    await tagPropRange(db.exec, "line-2", propId, "Eleanor", 0, 7);
+    const uuidOf = async (sql: string) =>
+      (await db.exec(sql, [propId]))[0]?.["uuid"];
+    expect(await uuidOf("SELECT uuid FROM prop WHERE id = ?"))
+      .toMatch(/^[0-9a-f-]{36}$/);
+    expect(await uuidOf(
+      "SELECT uuid FROM screenplay_prop_tags WHERE prop_id = ?"))
+      .toMatch(/^[0-9a-f-]{36}$/);
+    expect(await uuidOf("SELECT uuid FROM scene_prop WHERE prop_id = ?"))
+      .toMatch(/^[0-9a-f-]{36}$/);
+
+    // The commit-time derivation writes the same link; it mints too.
+    await db.exec("DELETE FROM scene_prop WHERE prop_id = ?", [propId]);
+    expect(await syncPropSceneLinks(db.exec)).toBeGreaterThan(0);
+    const nulls = await db.exec(
+      "SELECT COUNT(*) AS n FROM scene_prop WHERE uuid IS NULL");
+    expect(nulls[0]!["n"]).toBe(0);
   });
 });

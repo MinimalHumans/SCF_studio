@@ -23,7 +23,7 @@
  */
 
 import type { SqlExec } from "@scf-core/db.ts";
-import { withTransaction } from "@scf-core/db.ts";
+import { newUuid, withTransaction } from "@scf-core/db.ts";
 import type { Row } from "@scf-core/db.ts";
 import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
 import { readScreenplay } from "@scf-core/screenplay/rowModel.ts";
@@ -208,6 +208,20 @@ export async function diffVersionAgainstCurrent(
 // ---------------------------------------------------------------------------
 
 /**
+ * Create a prop from the script editor, with its identity minted now
+ * rather than left to the open-time backfill — the tag and scene link
+ * written straight after it are what anchor to it.
+ */
+export async function createEditorProp(
+    exec: SqlExec, name: string): Promise<number> {
+  await exec(
+    "INSERT INTO prop (uuid, name, external_id_namespace) " +
+    "VALUES (?, ?, 'scf:editor')", [newUuid(), name]);
+  const id = await exec("SELECT last_insert_rowid() AS id");
+  return id[0]!["id"] as number;
+}
+
+/**
  * Tag a prop on a line — and record that the prop is in that SCENE.
  *
  * The tag alone was not enough. Every query that asks "which props are
@@ -228,9 +242,9 @@ export async function tagPropRange(
     startOffset: number, endOffset: number): Promise<void> {
   await exec(
     `INSERT INTO screenplay_prop_tags
-       (tagged_text, prop_id, line_uuid, start_offset, end_offset)
-     VALUES (?, ?, ?, ?, ?)`,
-    [taggedText, propId, lineId, startOffset, endOffset]);
+       (uuid, tagged_text, prop_id, line_uuid, start_offset, end_offset)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [newUuid(), taggedText, propId, lineId, startOffset, endOffset]);
   await linkPropToLineScene(exec, lineId, propId);
 }
 
@@ -273,8 +287,9 @@ export async function syncPropSceneLinks(exec: SqlExec): Promise<number> {
       [sceneId, propId]);
     if (existing.length > 0) continue;
     await exec(
-      "INSERT INTO scene_prop (name, scene_id, prop_id) VALUES (?, ?, ?)",
-      [String(row["prop_name"] ?? ""), sceneId, propId]);
+      "INSERT INTO scene_prop (uuid, name, scene_id, prop_id) " +
+      "VALUES (?, ?, ?, ?)",
+      [newUuid(), String(row["prop_name"] ?? ""), sceneId, propId]);
     added += 1;
   }
   return added;
@@ -295,8 +310,8 @@ export async function linkPropToLineScene(
   if (existing.length > 0) return;
   const name = await exec("SELECT name FROM prop WHERE id = ?", [propId]);
   await exec(
-    "INSERT INTO scene_prop (name, scene_id, prop_id) VALUES (?, ?, ?)",
-    [String(name[0]?.["name"] ?? ""), sceneId, propId]);
+    "INSERT INTO scene_prop (uuid, name, scene_id, prop_id) VALUES (?, ?, ?, ?)",
+    [newUuid(), String(name[0]?.["name"] ?? ""), sceneId, propId]);
 }
 
 export interface ValidatedTag {
