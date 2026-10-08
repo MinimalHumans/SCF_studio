@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.62 (draft) — not a release.**
+**Version 0.63 (draft) — not a release.**
 Describes schema version **2.22**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -104,11 +104,11 @@ one role, the role is named.
 
 Three numbers, deliberately independent:
 
-- **Specification version** — this document. Currently `0.54` (draft).
+- **Specification version** — this document, stated in its header.
   Increments when the normative text changes.
 - **Schema version** — the entity/field set, `SCHEMA_VERSION` in
-  `schema/schema_meta.py`. Currently `2.19`. Increments on any
-  non-cosmetic registry change.
+  `schema/schema_meta.py`; the one this document describes is stated in
+  its header. Increments on any non-cosmetic registry change.
 - **Implementation version** — any given tool's own release number. Not
   governed here.
 
@@ -118,10 +118,11 @@ equal to the minimum it declares support for, subject to §11.
 
 ### 0.7 Terminology
 
-**entity** — one of the 99 row types defined by the registry. A table.
+**entity** — one of the row types defined by the registry (§2.1). A
+table.
 
 **link entity** (also **junction**) — an entity whose purpose is to
-connect two others. Thirteen exist.
+connect two others: those whose `subject` is `link`.
 
 **tier** — a registry-declared depth band, 0–6, grouping entities by how
 far they sit from the bedrock nouns. Tier is descriptive; it carries no
@@ -336,7 +337,9 @@ The digests are over raw bytes. A checkout whose working tree converts
 line endings will not match, which is a property of the checkout rather
 than of the artifacts.
 
-Version 2.19 defines **106 entities** across tiers 0–6.
+The registry defines the entities across tiers 0–6;
+`spec/entity-reference.md`, generated from it, lists them with their
+count.
 
 ### 2.2 Framework columns
 
@@ -389,7 +392,7 @@ are the **known** values, and:
   (§9.4), which is `info`: nothing is wrong, and the tail of unlisted
   values is how a maintainer learns which one to promote into the list.
 
-Sixteen fields are open as of 2.14, among them `prop.story_function`,
+Open fields arrived in 2.14; among them are `prop.story_function`,
 `project.genre` and `technical_specs.resolution`. Each of them ended in
 `other` until 2.14, and `other` recorded that the vocabulary had failed
 while discarding the value that would have said how. A production
@@ -698,7 +701,7 @@ and `latest_wins`:
 
 | Registry value | | |
 |---|---|---|
-| `none` | Not positioned | 95 of 103 entities. The row is not keyed to a scene, so nothing below applies to it. |
+| `none` | Not positioned | Almost every entity. The row is not keyed to a scene, so nothing below applies to it. |
 | `explicit` | Pattern 1 | One row per scene. |
 | `sparse_persistence` | Pattern 2 | Keyed at a scene, in force onward per its `persistence` field. |
 | `latest_wins` | Pattern 3 | The most recent row at or before a position is in force. |
@@ -983,7 +986,7 @@ and no convention about ordering.
 **Consumers MUST read relationships from both character columns** and
 MUST NOT assume the character of interest occupies `character_a_id`.
 
-`character_relationship` is not one of the fourteen link entities — its
+`character_relationship` is not a link entity — its
 `subject` is `character` — so junction tooling does not cover it.
 Implementations MUST report, separately:
 
@@ -1039,11 +1042,11 @@ rather than honoured, because two columns saying the same thing can
 disagree and one of them then has to win.
 
 Where the registry declares it, an implementation MUST preserve it. Of
-the fourteen link entities only `actor_character_role` and
+the link entities only `actor_character_role` and
 `thematic_connection` carry it; the others MUST NOT.
 
-**A link inherits its endpoints' lifecycle.** That is why eleven of the
-thirteen have no `lifecycle_status` of their own and must not gain one:
+**A link inherits its endpoints' lifecycle.** That is why every other
+link entity has no `lifecycle_status` of its own and must not gain one:
 a junction is a *connection*, and a connection to something that is not
 in the film is not in the film either. It needs a status of its own only
 when the row is a **claim** rather than a connection — an actor's
@@ -1136,7 +1139,7 @@ MUST take the leaf as an input.
 ### 7.2 The chain is the `refines` closure
 
 Each entity declares `refines`: a list of the entities it adds detail
-to. Twelve of the 103 entities declare a non-empty one.
+to. Most declare an empty one.
 
 The chain for a leaf is produced by walking `refines` **depth-first,
 post-order**, so that an entity's parents precede it and the leaf is
@@ -1613,10 +1616,22 @@ on the format, so a deprecation window protects nothing and leaves the
 format carrying two descriptions of one fact. After 1.0 someone has, and
 every rule below is expensive to violate.
 
-Two changes taken under this clause: schema 2.9 widened
-`scene.scene_number` from integer to text, and schema 2.12 removed
-`project.scene_numbering` one version after renaming it, without the
-window §11.4 would otherwise require.
+Changes taken under this clause, each without the window §11.4 would
+otherwise require:
+
+- schema 2.9 widened `scene.scene_number` from integer to text;
+- schema 2.12 removed `project.scene_numbering` one version after
+  renaming it;
+- schema 2.14 removed `scene.characters_present`, four other JSON
+  columns holding names and the three `conditions_json` columns, and
+  removed `cut` from the three `status` vocabularies and `continuous`
+  from `scene.time_of_day`;
+- schema 2.15 replaced two JSON columns with rows
+  (`costume_progression.progression_stages`,
+  `staging_beat.character_positions`);
+- schema 2.21 removed `entity_anchor`'s three state columns.
+
+`docs/schema-changelog.md` records each in full.
 
 ### 11.1 Schema changes are additive
 

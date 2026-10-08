@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `scene.characters_present` (removed); Q04 and Q15 results; fixture |
@@ -71,3 +71,16 @@ character.
   They are authored narrative rather than copies, so they do not fall
   under §3.1 the way this field does. Are the name collisions worth fixing
   pre-1.0 anyway?
+
+---
+
+## Resolution
+
+**Implemented in schema 2.14**: `scene.characters_present` removed. The
+other JSON name lists this file's Unresolved section asks about
+(`project.themes`, `theme.motifs`, …) were removed in the same release
+under 0025.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

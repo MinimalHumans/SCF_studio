@@ -14,7 +14,7 @@ settles** (design decision 6).
 
 | Module | Contents |
 |---|---|
-| `registry/registry.json` | **Generated artifact — never hand-edit.** Emitted from `schema/entity_registry.py` (the source of truth) by `schema/generate_registry_json.py`. All 99 entities, every field, the full Phase A ontology. |
+| `registry/registry.json` | **Generated artifact — never hand-edit.** Emitted from `schema/entity_registry.py` (the source of truth) by `schema/generate_registry_json.py`. Every entity, every field, the full Phase A ontology. |
 | `src/registry.ts` | Types + loader + `cascadeChain` (the `refines` walk). |
 | `src/db.ts` | The `SqlExec` seam, `initDatabase()` (CREATE + ALTER-add-columns + uuid identity + `_scf_meta` stamping, same as Python), `newUuid()`. |
 | `src/resolution.ts` | Description / direction / media cascades, pattern-3 latest-wins, G4 variant selection. Port of `resolution.py`. |

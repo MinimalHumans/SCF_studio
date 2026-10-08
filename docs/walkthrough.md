@@ -63,7 +63,8 @@ sqlite3 fixtures/hollow_creek.scf \
   "SELECT COUNT(*) FROM sqlite_master WHERE type='table';"
 ```
 
-107 tables — 99 registry entities plus the screenplay's own.
+114 tables: one per registry entity, the screenplay's own, the file's
+metadata table, and SQLite's bookkeeping.
 
 ## 2. Check that it says what it claims
 
@@ -73,27 +74,37 @@ npm run scf-check -- ../fixtures/hollow_creek.scf
 ```
 
 ```
-../fixtures/hollow_creek.scf  (schema 2.12)
+../fixtures/hollow_creek.scf  (schema 2.22)
 
+  info     field.required_absent  [shot 31]
+           shot.scene_id is absent on 1 row(s). The row is incomplete,
+           not invalid — nothing is rejected on write (§9.1).
   info     structure.scene_not_in_script  [scene 15]
            INT. HOLLOW CREEK CHURCH - VESTRY - DAY has no heading in the
            screenplay, so it has no story position and belongs to no act…
-
   info     structure.sequence_act_mismatch  [sequence 1]
            The Reckoning spans Act 2 — The Thaw and Act 3 — The Truth.
            That is legal (§5.3); a presenter showing acts and sequences
-           as nested must split it into the part belonging to each…
+           as nested must split it into the part belonging to each.
+  info     vocabulary.unlisted_value  [asset_relationship 1]
+           asset_relationship.relationship_type carries "derived_from",
+           which is not among its known values. Open vocabulary: this is
+           the value, not an error.
+  info     vocabulary.unlisted_value  [creative_decision 1]
+           creative_decision.decision_type carries "sound", …
 
-  0 error, 0 warning, 2 info
+  0 error, 0 warning, 5 info
   This file is readable. Findings above are worth fixing, none prevent reading.
 ```
 
-**Read those, because they are the format's whole disposition in two
-lines.** A scene has been outlined and not yet written. A sequence runs
-across an act boundary, which is legal and which anyone drawing this
-film as a tree needs to know about. Neither is an error, neither stops
-anything, and both are reported anyway — with what they mean and what
-is unaffected.
+**Read those, because they are the format's whole disposition.** A shot
+has been planned before it was given a scene. A scene has been outlined
+and not yet written. A sequence runs across an act boundary, which is
+legal and which anyone drawing this film as a tree needs to know about.
+Two fields carry values outside their known lists, which for an open
+vocabulary is simply the value. None is an error, none stops anything,
+and all are reported anyway — with what they mean and what is
+unaffected.
 
 Nothing is wrong with this file. Something in it is unfinished. Those
 are different, and a format for work in progress has to be able to say

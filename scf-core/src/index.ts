@@ -165,7 +165,7 @@ export {
 } from "./readiness.ts";
 
 // ── Reader: label lookup and the shot-context composite ──────────
-// Not part of the sixteen (§12.0, §4.5 of spec/scf-mcp-design.md) —
+// Not part of the sixteen (§12.0, §4.5 of docs/scf-mcp-design.md) —
 // convenience for a caller that starts from a typed label rather than a
 // uuid, and a composite of existing queries for one common request.
 export {

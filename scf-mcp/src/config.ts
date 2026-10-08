@@ -11,7 +11,7 @@
  *
  * A `--config` file is optional, for a project with several roots that
  * would be tedious to repeat as flags every time. Root mapping is
- * intentionally not part of the `.scf` itself (spec/scf-mcp-design.md
+ * intentionally not part of the `.scf` itself (docs/scf-mcp-design.md
  * §5.1, spec §0.3/§8.2): the file is portable, where its bytes live on
  * this machine is not.
  */

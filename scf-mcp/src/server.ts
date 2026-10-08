@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * server.ts — scf-mcp, a stdio MCP server over `.scf` files
- * (spec/scf-mcp-design.md §5).
+ * (docs/scf-mcp-design.md §5).
  *
  * Tools:
  *   open          open (or switch to) a film, with optional root
@@ -341,7 +341,7 @@ server.registerTool("readiness", {
   inputSchema: {
     queryId: z.enum(READINESS_TARGETS).describe(
       "The target query to assess — only these six have a readiness " +
-      "rubric (spec/scf-mcp-design.md §4.2); the other ten are " +
+      "rubric (docs/scf-mcp-design.md §4.2); the other ten are " +
       "analytic and read whatever exists."),
     params: z.record(z.string(), z.union([z.string(), z.null()]))
       .optional().describe(

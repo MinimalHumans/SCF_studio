@@ -7,7 +7,7 @@
 | **Status** | **implemented** — spec 0.59, schema 2.19 |
 | **Author** | Found writing a video-generation prompt for shot 3B through the SCF MCP; drafted with Claude |
 | **Opened** | 2026-10-01 |
-| **Affects** | A new §3.5 (line anchors) and §4.7 (lines at a shot); `shot` gains a line range; `clip`'s line references are replaced; `performance_beat.line_ref` is declared an anchor; a registry field marker; four findings; `shotContext`; `spec/scf-mcp-design.md` §4; the fixture |
+| **Affects** | A new §3.5 (line anchors) and §4.7 (lines at a shot); `shot` gains a line range; `clip`'s line references are replaced; `performance_beat.line_ref` is declared an anchor; a registry field marker; four findings; `shotContext`; `docs/scf-mcp-design.md` §4; the fixture |
 
 ## The problem
 

@@ -2,7 +2,7 @@
 /**
  * dispatch.ts — reshapes the sixteen canonical queries' positional,
  * (uuid, id)-paired arguments into the named, uuid-only params an agent
- * actually has (spec/scf-mcp-design.md §5, the `query` tool).
+ * actually has (docs/scf-mcp-design.md §5, the `query` tool).
  *
  * This is transport glue, not a second description of query semantics:
  * it does not decide what a query means or what its steps require —

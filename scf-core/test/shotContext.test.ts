@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * spec/scf-mcp-design.md §3, §4 — resolveNaturalKey and the shot
+ * docs/scf-mcp-design.md §3, §4 — resolveNaturalKey and the shot
  * composite: `shotContext` (the frame), `shotMedia` (what to attach) and
  * `shotReadiness` (what is thin).
  *

@@ -19,7 +19,7 @@ production.
 
 ## 1. Field mapping
 
-`shot_context` returns six members (`spec/scf-mcp-design.md` §4). This
+`shot_context` returns six members (`docs/scf-mcp-design.md` §4). This
 is what each becomes in the skeleton below (§4).
 
 | Payload | Feeds |
@@ -99,7 +99,7 @@ given film; use it deliberately, not by default.)
    Element. Everything else (`unaddressed`, `missing`, `unmaterialised`,
    `out-of-root`) is a real asset the film calls for that isn't
    reachable from here; **name it to the human, don't drop it silently**
-   (`spec/scf-mcp-design.md` §5.1 — omitting an unresolved reference is
+   (`docs/scf-mcp-design.md` §5.1 — omitting an unresolved reference is
    a lie about what's true, not a simplification).
 2. `references` is ordered most-specific-first — `references[0]` is the
    opinion in force. That's the tag's primary Element image. Add a
@@ -196,7 +196,7 @@ clip — a different situation from combining several SCF shots into one.
 ## 7. Readiness gate
 
 `readiness.result` is `Q14` for `Q07` (this shot's own look) —
-`spec/scf-mcp-design.md` §9 leaves the policy an open product decision;
+`docs/scf-mcp-design.md` §9 leaves the policy an open product decision;
 this is the default this template takes, adjust if you want stricter or
 looser:
 

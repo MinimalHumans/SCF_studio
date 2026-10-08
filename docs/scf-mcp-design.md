@@ -5,12 +5,16 @@ An MCP server over a `.scf`, so an agent can answer questions about a
 film and assemble a shot prompt without being handed a schema and told
 to write SQL.
 
-Written for Jesse. Nothing here is built. Checked against
-`SCF_studio@main`, spec 0.51 / schema 2.13.
+**Status: built.** `scf-mcp/` implements it; its tools are listed at the
+top of `scf-mcp/src/server.ts`. It publishes to npm at 0.x after
+`scf-core`, with no 1.0 stability promise (`release-checklist.md` §A10).
 
-**Status: proposal. Post-MVP** — see [`editor-mvp.md`](editor-mvp.md).
-This is not a format capability being made authorable, so it sits behind
-the three unexercised Part 3 features on the list.
+Written for Jesse as a proposal, checked against spec 0.51 / schema 2.13,
+when it sat post-MVP behind three unexercised Part 3 features (see
+[`editor-mvp.md`](editor-mvp.md)). It is kept as the design record —
+why the server is shaped the way it is. Where it and the code disagree,
+the code is current. It moved from `spec/` to `docs/` in spec 0.63: it
+is not normative, and it had sat beside the documents that are.
 
 ---
 

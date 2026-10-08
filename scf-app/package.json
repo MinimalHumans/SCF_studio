@@ -1,8 +1,9 @@
 {
   "name": "@minimalhumans/scf-app",
   "version": "0.1.0",
-  "description": "SCF editor, second implementation \u2014 Part 1: entity browser/editor. Local-first, Chromium-first, no server.",
+  "description": "SCF editor, second implementation — Part 1: entity browser/editor. Local-first, Chromium-first, no server.",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

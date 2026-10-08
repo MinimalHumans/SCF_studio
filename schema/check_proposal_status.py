@@ -35,6 +35,12 @@ CHANGELOGS = [ROOT / "spec" / "CHANGELOG.md",
 # "Proposal 0028", "Proposals 0008, 0024 and 0026", "proposals 0005, 0007,
 # 0016 and 0024" — the number is what matters; the prose around it varies.
 MENTION = re.compile(r"[Pp]roposals?\s+((?:\d{4}(?:\s*(?:,|and)\s*)?)+)")
+# And parenthetically — `scene.characters_present` **(0021)**, "(0012,
+# item 4)", "(0025's remaining half)". The schema changelog cites most of
+# 2.14 this way, and matching only the word "proposal" missed eight
+# implemented proposals that still said `draft`. Proposal numbers start
+# with 0; a year in parentheses does not, so it cannot match.
+CITED = re.compile(r"\(\s*(0\d{3}(?:\s*(?:,|and)\s*0\d{3})*)(?!\d)")
 STATUS = re.compile(r"^\|\s*\*\*Status\*\*\s*\|\s*(.+?)\s*\|\s*$", re.M)
 
 
@@ -44,7 +50,8 @@ def mentioned() -> dict[str, list[str]]:
     for path in CHANGELOGS:
         if not path.exists():
             continue
-        for run in MENTION.findall(path.read_text(encoding="utf-8")):
+        text = path.read_text(encoding="utf-8")
+        for run in MENTION.findall(text) + CITED.findall(text):
             for number in re.findall(r"\d{4}", run):
                 found.setdefault(number, []).append(path.name)
     return found

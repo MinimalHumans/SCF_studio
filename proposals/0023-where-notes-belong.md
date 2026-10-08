@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | 22 entities gain one field each; `schema/entity_registry.py`, generated artifacts; supersedes 0006, which asked the same question for `character` alone |
@@ -95,3 +95,15 @@ remark about this row".
   but positional. In or out?
 - Should the rule be recorded in `docs/conventions.md` so the next
   entity added does not need a proposal?
+
+---
+
+## Resolution
+
+**Implemented in schema 2.14**: `notes` on 22 entities under the rule
+proposed — an entity a person authors as a unit gets one, tiers 0 to 2.
+Supersedes 0006.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

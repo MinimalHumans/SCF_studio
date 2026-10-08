@@ -79,8 +79,19 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
      [NPM, "run", "check-normative-data"], "scf-core", False),
     ("the negative reports are blessed",
      [NPM, "run", "check-negative"], "scf-core", False),
+    # CI ran these two and this script did not, so a local green could
+    # still go red on push.
+    ("the corpus expectations are current",
+     [NPM, "run", "bless-corpus", "--", "--check"], "scf-core", False),
     ("the fixture rebuilds from its source",
      [PY, "fixtures/build/build_fixture.py", "--check"], ".", False),
+    # The demo the editor opens must be the file the tests are graded
+    # against; a demo running a different fixture is invisible until
+    # someone notices.
+    ("the demo fixture is the conformance fixture",
+     [PY, "-c", "import filecmp, sys; sys.exit(0 if filecmp.cmp("
+      "'fixtures/hollow_creek.scf', 'scf-app/public/hollow_creek.scf', "
+      "shallow=False) else 1)"], ".", False),
     ("the manifest is up to date",
      [PY, "schema/artifact_manifest.py", "--check"], ".", False),
 

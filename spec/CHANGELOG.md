@@ -17,6 +17,48 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.63 — 2026-10-08
+
+*Describes schema 2.22.*
+
+**Editorial.** No requirement changes meaning. The checksummed documents
+stated facts that had moved — `docs/release-checklist.md` §B4.
+
+### Counts and versions written by hand
+
+§0.6 restated the spec and schema versions as `0.54` and `2.19` under a
+header saying otherwise; it now points at the header. §0.7 called the
+registry 99 entities and the link entities thirteen; §6.3 and §6.6 said
+fourteen; the registry has sixteen. §2.1 said "version 2.19 defines 106
+entities", §4.5 "95 of 103", §7.2 "twelve of the 103". Where a count was
+not load-bearing it is gone, in favour of the generated artifact that
+holds it (`entity-reference.md`, `junction-keys.json`) — a number
+written beside a fact that moves is the class this entry exists to
+close, not only its instances.
+
+### §11.0 — what was taken under it
+
+The clause named two changes, 2.9 and 2.12. 2.14, 2.15 and 2.21 removed
+or replaced columns under it too, and are now listed.
+
+### `stability.md` and `conformance.md`
+
+`stability.md`: header and summary (it still described 0.38); the
+polymorphic-`_id` row stated the 0.29 rule 0.40 replaced; patterns 1–3
+cited §4.3 for §4.5; `varies` and `status` said *not implemented* when
+what they lack is a fixture row, and now say *Yes — not exercised*;
+"Expectation coverage" waited on queries that are all specified; the
+forward-compatibility row called §10.1 untested, contradicting the
+document's own record that it is tested; the rubric row moved out of
+*Identity*; counts of artifacts, exports and finding codes give way to
+the files that hold them.
+
+`conformance.md`: §4 opened "*Not yet built*" about a validator built in
+0.15, and the status line promised sections marked *not yet
+specifiable* that no section is.
+
+---
+
 ## 0.62 — 2026-10-07
 
 *Describes schema 2.22.*

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **implemented** — schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `schema/entity_registry.py` (`scene`); `registry.json`, `scf-schema.sql`, `entity-reference.md`; the conformance fixture; Q04 and Q15 results |
@@ -81,3 +81,14 @@ wrong answer for the most widely used scene-analysis model there is.
 - **`goal` whose?** It is usually the point-of-view character's.
   `story_beat` has a `pov_character_id`; `scene` does not. Is that a gap
   of its own?
+
+---
+
+## Resolution
+
+**Implemented in schema 2.14**, as proposed: `scene.goal`,
+`scene.conflict` and `scene.outcome`, named to match `sequence`'s.
+
+Recorded retrospectively, 2026-10-08 (release checklist §B3): the change
+landed in schema 2.14 and `docs/schema-changelog.md` records it, but
+this file was never updated, so it read `draft` for six revisions.

@@ -4,9 +4,9 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: draft, incomplete.** Sections marked *not yet specifiable*
-depend on work tracked in [stability.md](stability.md). They are named
-here rather than omitted, so the gaps are visible.
+**Status: draft.** Every section is specified. What is known to be
+unfinished is tracked in [stability.md](stability.md); the one check the
+validator cannot yet make is named in §4.
 
 ---
 
@@ -170,13 +170,11 @@ code path.
 
 ## 4. The validator
 
-*Not yet built.* Tracked as `scf-check`.
-
 A validator takes an arbitrary `.scf` and reports findings without
 opening the reference editor. It is what turns a conformance claim from
 an assertion into something a third party can test.
 
-Intended scope, in order of value:
+Its scope, in order of value:
 
 1. schema version, and whether the file carries `application_id` /
    `user_version` (§1.2);
@@ -193,17 +191,14 @@ Intended scope, in order of value:
 9. identity findings — missing uuids, uuid collisions within a table
    (§6.1).
 
-Most of this exists already as library code — `identity.ts`,
-`resolution.ts`, `assets.ts`, `relationships.ts`, `junctions.ts`,
-`structure.ts`, `assetIndex.ts`. What is missing is a CLI over it and a
-stable output format.
-
-**Built.** `scf-core/scripts/scf_check.mjs`, registered as the
-`scf-check` bin. The finding vocabulary landed in spec 0.14:
+**Built since 0.15**: `scf-core/scripts/scf_check.mjs`, registered as
+the `scf-check` bin, over the library code that already did the work —
+`identity.ts`, `resolution.ts`, `assets.ts`, `relationships.ts`,
+`junctions.ts`, `structure.ts`, `assetIndex.ts`. The finding vocabulary landed in spec 0.14:
 `findings.ts` defines a closed catalog of codes with catalog-owned
 severities, and `collectFindings(exec, registry)` is the engine — one
-implementation of "what is wrong with this file", shared by the CLI when
-it exists, the editor's panels, and the tests.
+implementation of "what is wrong with this file", shared by the CLI,
+the editor's panels, and the tests.
 
     scf-check FILE...          human-readable report
     scf-check --json FILE...   the serialised report (§9.5)

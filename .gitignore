@@ -8,3 +8,9 @@ dist/
 site/dist/
 # Local Claude Code settings and dev-server launch config
 .claude/
+
+# Copied in from the root by tools/legal_files.mjs for npm pack only.
+scf-core/LICENSE
+scf-core/NOTICE
+scf-mcp/LICENSE
+scf-mcp/NOTICE

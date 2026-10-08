@@ -25,7 +25,9 @@
  */
 
 import { execFileSync, execSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
+import {
+  mkdtempSync, rmSync, writeFileSync, copyFileSync, existsSync, readFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -88,6 +90,28 @@ run(npm, ["install", tarball, "--no-audit", "--no-fund"], sandbox,
     "npm install <tarball>");
 run(npm, ["install", "-D", "typescript", "--no-audit", "--no-fund"], sandbox,
     "npm install typescript");
+
+// ---- 0. the licence travels with the package ----------------------
+// Apache-2.0 §4. `files` listed LICENSE and NOTICE while neither existed
+// in scf-core/, and npm packed 224 files and no licence without a word.
+// The prepack hook copies the root's in; this is what notices if it
+// stops. Byte-equal, so a stale or hand-edited copy fails too.
+{
+  const installed = join(sandbox, "node_modules", "@minimalhumans", "scf-core");
+  for (const name of ["LICENSE", "NOTICE"]) {
+    const got = join(installed, name);
+    const want = join(PKG, "..", name);
+    if (!existsSync(got) ||
+        !readFileSync(got).equals(readFileSync(want))) {
+      console.error(`\n[pack-test] FAILED: ${name} is ` +
+        `${existsSync(got) ? "not the repository's" : "missing from the tarball"}` +
+        " (Apache-2.0 §4 requires it in every distribution)");
+      if (!KEEP) rmSync(sandbox, { recursive: true, force: true });
+      process.exit(1);
+    }
+  }
+  console.log("  LICENSE and NOTICE ship with the package");
+}
 
 // ---- 1. a plain JavaScript consumer -------------------------------
 writeFileSync(join(sandbox, "smoke.mjs"), `
