@@ -20,7 +20,7 @@ in what order, formatted how. SCF describes **a film**: who these people
 are, what the room looks like at night in winter, which take was printed,
 what is in force at page 47 that was not in force at page 12. The
 screenplay lives inside an `.scf` because story order comes from it, but
-it is one table out of ninety-nine.
+it is one table out of more than a hundred.
 
 You would not replace Final Draft with this. You would export from it
 into this.
@@ -71,8 +71,8 @@ A `.scf` is one file. You can email it. Any language with a SQLite
 driver — which is most of them, usually in the standard library — can
 read it without a parser, without this project's code, and without
 a network. It is queryable the moment you have it, and the format
-degrades gracefully: a consumer that understands ten of the ninety-nine
-entities can read those ten and ignore the rest.
+degrades gracefully: a consumer that understands ten of the entities
+can read those ten and ignore the rest.
 
 A folder of JSON would have been more fashionable and worse in every
 one of those respects.

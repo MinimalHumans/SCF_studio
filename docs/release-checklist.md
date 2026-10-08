@@ -175,7 +175,7 @@ Resolution confirmed against the registry rather than the changelog;
 0006 as implemented through 0023. 27 proposals are recorded as landed,
 all agreeing.
 
-### B4. ◑ Checksummed documents that say false things
+### B4. ✅ Checksummed documents that say false things
 
 The R86 class: a hand-written count or version beside a fact that
 moved.
@@ -229,9 +229,19 @@ it, which is the class fix in prose form. `varies` and `status` now say
 *Yes — not exercised*. §11.0 lists 2.14, 2.15 and 2.21, and
 `check_spec_references.py` records their removed columns as history.
 
-**○ Still open: the check itself.** Deciding what it flags is the hard
-part — "Sixteen fields lost `other` in 0.53" is history, not drift, and
-a naive pattern cannot tell them apart.
+**✅ The check, too (2026-10-08): `schema/check_prose_counts.py`**, in
+`verify.py` and CI. It does not ban numbers; it compares them. For each
+quantity a generated file knows — entities, link entities, per-tier
+counts, open fields, finding codes, exported names, manifest files, line
+types, canonical queries — a number beside that noun in the reading
+documents must be the true one. It skips sentences anchored in time
+("in 0.53", "as of 2.14"), subsets ("eleven of the sixteen", or a count
+under half the total), code blocks and changelogs. Run against the
+documents as they stood before this pass, it finds twelve of the stale
+counts above unaided. On its first run against the corrected tree it
+found six more nobody had listed — `faq.md`'s "ninety-nine" twice, and
+the tier counts in `what-is-scf.md` and `authoring-guide.md` (tier 0 is
+26, tier 2 is 34, tier 6 is 18) — and all six are fixed.
 
 ### B5. ✅ `verify.py` fails on Windows
 
@@ -291,11 +301,17 @@ list (it had none, so it would have shipped its tests) and a README;
 
 **○ Still open, and none can be done from the repository:**
 - **Create the `@minimalhumans` npm org** — a step on npmjs.com.
-- **scf-mcp's dependency.** A range (`^0.1.0`) cannot resolve until
-  `scf-core` is on npm, and `npm ci` in `scf-mcp/` would fail before
-  that. Either switch it on publish day, after `scf-core` is up, or
-  make the repository an npm workspace so a range resolves locally.
-  A structural choice, so not taken here.
+- ✅ **scf-mcp's dependency** — decided 2026-10-08: the repository keeps
+  `file:../scf-core`, and `tools/pack_with_ranges.mjs` replaces it with
+  `^<scf-core's version>` for the length of a pack or publish, restoring
+  `package.json` byte-for-byte after, failure or not. Publish with
+  **`npm run publish:release`** in `scf-mcp/`; a bare `npm publish` is
+  refused by a `prepublishOnly` guard while a `file:` dependency
+  remains. A wrapper rather than a prepack hook because `npm publish`
+  re-reads `package.json` after packing, so a hook restoring it at
+  postpack would publish correct bytes under wrong metadata. `verify.py`
+  and CI run its `plan` mode, so a rewrite that cannot be made fails
+  now. Workspaces replace it after 1.0 (§F).
 - **Both packages are `"private": true`**, which npm refuses to publish.
   Presumably the guard until publish day; flip it as part of §E.
 
@@ -408,7 +424,8 @@ the prose.
 4. ○ 🔒 Annotated tag `spec-1.0`, pushed; `check_pin.py --strict`.
 5. ○ 🔒 `npm publish --access public` for `scf-core`, after `pack-test`
    confirms the licence is in the tarball. Then `scf-mcp` **at 0.x**,
-   depending on `scf-core` by version range (§A10).
+   with **`npm run publish:release`**, which publishes it depending on
+   `scf-core` by version range (§A10, §B6).
 6. ○ A GitHub Release: notes from the CHANGELOG, the manifest's files
    and `SHA256SUMS` attached.
 7. ○ Pages rebuilt from the tag.
@@ -435,6 +452,11 @@ Listed so an unstated deferral cannot be mistaken for an oversight.
   `scene.location_id` stays the primary.
 - **A generated `queries` member** in `registry.json`, from what each
   `qNNResult()` reads. Additive.
+- **An npm workspace** for `scf-core`, `scf-mcp` and `scf-app`, so a
+  sibling dependency is a real range resolved locally. It retires
+  `tools/pack_with_ranges.mjs` (§B6). Deferred because it replaces three
+  lockfiles with one and changes dependency hoisting — plumbing to move
+  when nothing else is.
 - **`docs/conventions.md`** and its ~38 inbound references.
 - **The editor at its own version** (§A10), and `scf-mcp` toward 1.0.
 - **Hosted editor build**, signed tags, roadmap and decision log.

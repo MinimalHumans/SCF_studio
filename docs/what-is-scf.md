@@ -125,13 +125,13 @@ Tiers separate *what a thing is* from *how deeply it is specified*.
 
 | | | |
 |---|---|---|
-| **0** | Structural foundation | 24 entities. The objects the film is made of and the wiring between them. Nothing here is an opinion. |
+| **0** | Structural foundation | 26 entities. The objects the film is made of and the wiring between them. Nothing here is an opinion. |
 | **1** | Project-level direction | 9. The film's rules, stated once, at the top. Everything below inherits from here. |
-| **2** | Subject depth | 30. What a character, prop or location is before any scene bends it. The timeless essence. |
+| **2** | Subject depth | 34. What a character, prop or location is before any scene bends it. The timeless essence. |
 | **3** | Scene detail | 7. The scene's own opinion, between the project's rules and the shot's execution. |
 | **4** | Thematic tracking | 8. Meaning, as data rather than an essay. |
 | **5** | Emotional architecture | 4. The audience's experience, distinct from the characters'. |
-| **6** | Production | 17. How it is actually executed. Camera, staging, performance, sound. |
+| **6** | Production | 18. How it is actually executed. Camera, staging, performance, sound. |
 
 ### The direction cascade
 
