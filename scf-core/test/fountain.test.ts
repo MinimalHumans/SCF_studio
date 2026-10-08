@@ -151,9 +151,16 @@ describe("golden corpus: public tier (blessed expectations required)",
     const text = readFileSync(script, "utf8");
     const actual = parseFountain(text).lines.map((l) => l.type)
       .join("\n") + "\n";
-    expect(actual).toBe(readFileSync(expected, "utf8"));
+    // The blessed file is LF in the repository, but a Windows checkout
+    // can hold a CRLF copy of it (core.autocrlf), and that is not a
+    // classification change. The types are compared, not the line ends.
+    expect(actual).toBe(lf(readFileSync(expected, "utf8")));
   });
 });
+
+function lf(s: string): string {
+  return s.replace(/\r\n/g, "\n");
+}
 
 describe.skipIf(privateScripts.length === 0)(
   "golden corpus: private tier (local-only)", () => {
@@ -163,7 +170,7 @@ describe.skipIf(privateScripts.length === 0)(
       const text = readFileSync(script, "utf8");
       const actual = parseFountain(text).lines.map((l) => l.type)
         .join("\n") + "\n";
-      expect(actual).toBe(readFileSync(expectedPathFor(script), "utf8"));
+      expect(actual).toBe(lf(readFileSync(expectedPathFor(script), "utf8")));
     });
 });
 

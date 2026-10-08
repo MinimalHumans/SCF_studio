@@ -122,7 +122,7 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
     # defect this check exists to catch, reproduced inside the check.
     # Offline is handled by the script, which skips and exits 0.
     ("the pinned schema tag resolves",
-     ["python3", "schema/check_pin.py", "--strict"], ".", False),
+     [PY, "schema/check_pin.py", "--strict"], ".", False),
 ]
 
 
@@ -149,6 +149,11 @@ def checksums() -> tuple[bool, str]:
 
 
 def main() -> int:
+    # This script prints … and quotes; on Windows stdout defaults to the
+    # locale codepage and they arrive as mojibake. UTF-8 everywhere.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
     ap.add_argument("--fast", action="store_true",
                     help="skip the slow steps (packaging, app build)")
@@ -171,7 +176,7 @@ def main() -> int:
     # errors like "cannot find type definition file for 'node'", which
     # reads as seven problems rather than one missing install. Say the
     # one thing instead.
-    uninstalled = [pkg for pkg in ("scf-core", "scf-app", "scf-mcp", "site")
+    uninstalled = [pkg for pkg in ("scf-core", "scf-app", "scf-mcp")
                    if not (ROOT / pkg / "node_modules").is_dir()]
     if uninstalled:
         print("error: dependencies are not installed in "
@@ -180,6 +185,19 @@ def main() -> int:
             print(f"  (cd {pkg} && npm ci)", file=sys.stderr)
         return 2
 
+    # The docs site is the one optional toolchain. Refusing to start
+    # without it meant a checkout with no site/ install could run none of
+    # the other steps — so its step is skipped, said out loud here and in
+    # the summary, and never reported as a pass.
+    skipped: list[str] = []
+    if not (ROOT / "site" / "node_modules").is_dir():
+        skipped = [label for label, _argv, cwd, _slow in steps
+                   if cwd == "site"]
+        steps = [s for s in steps if s[2] != "site"]
+        print("warning: site/ dependencies are not installed; skipping "
+              + ", ".join(f"“{s}”" for s in skipped)
+              + "  (cd site && npm ci)", file=sys.stderr)
+
     failures = []
     started = time.monotonic()
 
@@ -187,8 +205,10 @@ def main() -> int:
         print(f"[{i:>2}/{len(steps)}] {label} … ", end="", flush=True)
         began = time.monotonic()
         # No pipes, no shell. The exit code is the step's own.
+        # UTF-8, not the locale codec: on Windows that is cp1252, and a
+        # test runner's ✓ would crash this script instead of the step.
         done = subprocess.run(argv, cwd=ROOT / cwd, capture_output=True,
-                              text=True)
+                              text=True, encoding="utf-8", errors="replace")
         took = time.monotonic() - began
         if done.returncode == 0:
             print(f"ok ({took:.0f}s)")
@@ -207,7 +227,12 @@ def main() -> int:
     elapsed = time.monotonic() - started
     print()
     if not failures:
-        print(f"verify: everything passes ({elapsed:.0f}s).")
+        if skipped:
+            print(f"verify: everything run passes ({elapsed:.0f}s), but "
+                  f"{len(skipped)} step(s) were skipped: "
+                  + ", ".join(skipped) + ". CI runs them.")
+        else:
+            print(f"verify: everything passes ({elapsed:.0f}s).")
         if args.fast:
             print("        --fast skipped the packaging test and the app "
                   "build; CI runs both.")

@@ -59,8 +59,10 @@ PINNED = "scf-core/registry/registry.json"
 
 
 def git(*args: str) -> tuple[int, str]:
-    done = subprocess.run(["git", *args], cwd=ROOT,
-                          capture_output=True, text=True)
+    # UTF-8, not the locale codec: on Windows that is cp1252, which cannot
+    # decode git's output and crashed this check before it could report.
+    done = subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                          text=True, encoding="utf-8", errors="replace")
     return done.returncode, (done.stdout or "") + (done.stderr or "")
 
 
@@ -72,10 +74,14 @@ def digest_at(tag: str, rel: str) -> str | None:
     `SHA256SUMS`, so a consumer verifies against a digest it fetched
     from somewhere else and concludes the artifact is corrupt.
     """
-    code, out = git("cat-file", "-p", f"{tag}:{rel}")
-    if code != 0:
+    # Raw bytes, never decoded: SHA256SUMS is over the bytes a consumer
+    # downloads, and a text round trip (decode, translate newlines,
+    # re-encode) can only make the digest describe something else.
+    done = subprocess.run(["git", "cat-file", "-p", f"{tag}:{rel}"],
+                          cwd=ROOT, capture_output=True)
+    if done.returncode != 0:
         return None
-    return hashlib.sha256(out.encode("utf-8")).hexdigest()
+    return hashlib.sha256(done.stdout).hexdigest()
 
 
 def expected_digest(rel: str) -> str | None:
