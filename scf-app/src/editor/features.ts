@@ -47,9 +47,9 @@ export async function createBeatForLine(
   // Production-category entities carry no identity columns anyway).
   await exec(
     `INSERT INTO performance_beat
-       (name, scene_id, character_id, modality, line_ref, line_text)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [`Beat @ ${lineText.slice(0, 40)}`, block.sceneId,
+       (uuid, name, scene_id, character_id, modality, line_ref, line_text)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [newUuid(), `Beat @ ${lineText.slice(0, 40)}`, block.sceneId,
      block.characterId, modality, block.id, lineText]);
   const row = await exec("SELECT last_insert_rowid() AS id");
   return row[0]!["id"] as number;
@@ -592,9 +592,9 @@ export async function linkAndCreateAtCommit(
           locationId = locationByName.get(key) ?? null;
           if (locationId === null && options.createNew) {
             await exec(
-              "INSERT INTO location (name, external_id_namespace) " +
-              "VALUES (?, 'scf:editor')",
-              [smartTitle(parsed.locationName)]);
+              "INSERT INTO location (uuid, name, external_id_namespace) " +
+              "VALUES (?, ?, 'scf:editor')",
+              [newUuid(), smartTitle(parsed.locationName)]);
             locationId = ((await exec(
               "SELECT last_insert_rowid() AS id"))[0]!["id"] as number);
             locationByName.set(key, locationId);
@@ -613,9 +613,10 @@ export async function linkAndCreateAtCommit(
         const intExt = parsed.intExt !== null
           ? intExtMap[parsed.intExt] ?? null : null;
         await exec(
-          "INSERT INTO scene (name, location_id, int_ext, time_of_day, " +
-          "external_id_namespace) VALUES (?, ?, ?, ?, 'scf:editor')",
-          [row.content.trim(), locationId, intExt, time]);
+          "INSERT INTO scene (uuid, name, location_id, int_ext, " +
+          "time_of_day, external_id_namespace) " +
+          "VALUES (?, ?, ?, ?, ?, 'scf:editor')",
+          [newUuid(), row.content.trim(), locationId, intExt, time]);
         row.sceneId = ((await exec(
           "SELECT last_insert_rowid() AS id"))[0]!["id"] as number);
         result.scenesCreated += 1;
@@ -637,8 +638,8 @@ export async function linkAndCreateAtCommit(
           row.characterId = existing;
         } else if (options.createNew) {
           await exec(
-            "INSERT INTO character (name, external_id_namespace) " +
-            "VALUES (?, 'scf:editor')", [smartTitle(cue)]);
+            "INSERT INTO character (uuid, name, external_id_namespace) " +
+            "VALUES (?, ?, 'scf:editor')", [newUuid(), smartTitle(cue)]);
           row.characterId = ((await exec(
             "SELECT last_insert_rowid() AS id"))[0]!["id"] as number);
           characterByName.set(norm(cue), row.characterId);
@@ -650,9 +651,9 @@ export async function linkAndCreateAtCommit(
         const key = `${String(currentScene)}:${String(row.characterId)}`;
         if (!linkSet.has(key)) {
           await exec(
-            "INSERT INTO scene_character (name, scene_id, character_id) " +
-            "VALUES (?, ?, ?)",
-            [cue, currentScene, row.characterId]);
+            "INSERT INTO scene_character " +
+            "(uuid, name, scene_id, character_id) VALUES (?, ?, ?, ?)",
+            [newUuid(), cue, currentScene, row.characterId]);
           linkSet.add(key);
           result.linksCreated += 1;
         }

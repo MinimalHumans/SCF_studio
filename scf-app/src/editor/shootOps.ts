@@ -10,7 +10,7 @@
  * plans coverage against the script's spine; it never edits it.
  */
 
-import type { Row, SqlExec } from "@scf-core/db.ts";
+import { newUuid, type Row, type SqlExec } from "@scf-core/db.ts";
 import { nextShotNumber } from "@scf-core/shots.ts";
 
 const beatLetter = (i: number): string =>
@@ -45,8 +45,9 @@ export async function addBeat(exec: SqlExec,
   const existing = await exec(
     "SELECT id FROM story_beat WHERE scene_id = ?", [sceneId]);
   await exec(
-    "INSERT INTO story_beat (name, scene_id, beat_order) VALUES (?, ?, ?)",
-    [`Beat ${beatLetter(existing.length)}`, sceneId, existing.length + 1]);
+    "INSERT INTO story_beat (uuid, name, scene_id, beat_order) " +
+    "VALUES (?, ?, ?, ?)",
+    [newUuid(), `Beat ${beatLetter(existing.length)}`, sceneId, existing.length + 1]);
 }
 
 export async function addShot(exec: SqlExec, sceneId: number,
@@ -59,9 +60,9 @@ export async function addShot(exec: SqlExec, sceneId: number,
     (scene[0]?.["scene_number"] ?? null) as string | number | null,
     inScene.map((r) => (r["shot_number"] ?? null) as string | null));
   await exec(
-    "INSERT INTO shot (name, scene_id, story_beat_id, shot_number, " +
-    "shot_order) VALUES (?, ?, ?, ?, ?)",
-    ["", sceneId, beatId, number, inScene.length + 1]);
+    "INSERT INTO shot (uuid, name, scene_id, story_beat_id, " +
+    "shot_number, shot_order) VALUES (?, ?, ?, ?, ?, ?)",
+    [newUuid(), "", sceneId, beatId, number, inScene.length + 1]);
 }
 
 /**

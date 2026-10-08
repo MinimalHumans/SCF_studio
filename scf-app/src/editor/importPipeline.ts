@@ -20,7 +20,7 @@
 
 import type { SqlExec } from "@scf-core/db.ts";
 import { setNumberingMode } from "./structureCommit.ts";
-import { q, withTransaction } from "@scf-core/db.ts";
+import { newUuid, q, withTransaction } from "@scf-core/db.ts";
 import { parseFountain, serialize } from "@scf-core/fountain/index.ts";
 import { repairConversionArtifacts, type RepairRecord }
   from "@scf-core/fountain/repair.ts";
@@ -91,6 +91,9 @@ const TIME_MAP: Record<string, string> = {
 async function insert(exec: SqlExec, table: string,
                       values: Record<string, unknown>,
                       mark = true): Promise<number> {
+  // Identity at insert, not at the next open: the links written straight
+  // after each row anchor to it.
+  values = { uuid: newUuid(), ...values };
   const keys = Object.keys(values);
   const cols = [...keys.map(q),
                 ...(mark ? ["external_id_namespace"] : [])];

@@ -14,7 +14,7 @@
  * docs/story-structure-design-record.md for why.
  */
 
-import type { Row, SqlExec } from "@scf-core/db.ts";
+import { newUuid, type Row, type SqlExec } from "@scf-core/db.ts";
 import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
 import {
   deriveStructure, sceneOrderHint, scenePositions, type Structure,
@@ -386,8 +386,9 @@ export async function commitStructure(
       id = byName[table].get(norm(info.label)) ?? null;
       if (id === null && createNew) {
         await exec(
-          `INSERT INTO ${table} (name, start_scene_id) VALUES (?, ?)`,
-          [info.label, sceneId]);
+          `INSERT INTO ${table} (uuid, name, start_scene_id) ` +
+          "VALUES (?, ?, ?)",
+          [newUuid(), info.label, sceneId]);
         id = Number(((await exec(
           "SELECT last_insert_rowid() AS id"))[0] as Row)["id"]);
         byName[table].set(norm(info.label), id);
@@ -514,8 +515,9 @@ export async function commitStructure(
         continue;
       }
       await exec(
-        "INSERT INTO scene_sequence (scene_id, sequence_id, " +
-        "order_in_sequence) VALUES (?, ?, ?)", [sceneId, span.id, order]);
+        "INSERT INTO scene_sequence (uuid, scene_id, sequence_id, " +
+        "order_in_sequence) VALUES (?, ?, ?, ?)",
+        [newUuid(), sceneId, span.id, order]);
       result.membershipRows += 1;
     }
   }

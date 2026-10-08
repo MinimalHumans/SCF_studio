@@ -63,6 +63,12 @@ describe("import pipeline end to end (Alexis Nexus, public tier)", () => {
         `WHERE external_id_namespace IS NOT 'scf:import'`);
       expect(unmarked[0]!["n"], t).toBe(0);
     }
+    // Identity is minted at insert, not left to the next open.
+    for (const t of ["scene", "location", "character", "scene_character"]) {
+      const missing = await db.exec(
+        `SELECT COUNT(*) AS n FROM ${t} WHERE uuid IS NULL`);
+      expect(missing[0]!["n"], t).toBe(0);
+    }
 
     // Rows are blank-free (blanks are never stored) and contiguous.
     const rows = (await readScreenplay(db.exec)).lines;

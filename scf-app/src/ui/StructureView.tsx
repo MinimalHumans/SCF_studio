@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useMemo } from "react";
-import type { Row } from "@scf-core/db.ts";
+import { newUuid, type Row } from "@scf-core/db.ts";
 import {
   actOutline, deriveStructure, sceneOrderHint, structureFindings,
   type Span, type Structure,
@@ -72,8 +72,8 @@ export function StructureView(): JSX.Element {
     // derived and displayed beside the name; the name is a title.
     const label = table === "act" ? "Untitled act" : "Untitled sequence";
     await exec(
-      `INSERT INTO ${table} (name, start_scene_id) VALUES (?, ?)`,
-      [label, sceneId]);
+      `INSERT INTO ${table} (uuid, name, start_scene_id) VALUES (?, ?, ?)`,
+      [newUuid(), label, sceneId]);
     await renumberSpans(exec);
     useStore.setState((s) => ({ revision: s.revision + 1 }));
   };

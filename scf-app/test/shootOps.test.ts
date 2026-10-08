@@ -48,6 +48,16 @@ describe("shoot operations", () => {
     db.exec("SELECT id, shot_number, shot_order, story_beat_id FROM shot " +
             "ORDER BY shot_order, id");
 
+  test("new beats and shots are minted a uuid at insert", async () => {
+    await addBeat(db.exec, sceneId);
+    await addShot(db.exec, sceneId, null);
+    for (const t of ["story_beat", "shot"]) {
+      const missing = await db.exec(
+        `SELECT COUNT(*) AS n FROM ${t} WHERE uuid IS NULL`);
+      expect(missing[0]!["n"], t).toBe(0);
+    }
+  });
+
   test("new shots take the next code in the scene", async () => {
     await addShot(db.exec, sceneId, null);
     await addShot(db.exec, sceneId, null);

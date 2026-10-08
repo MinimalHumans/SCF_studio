@@ -121,6 +121,11 @@ describe("commitStructure", () => {
     const result = await commitStructure(db.exec, plan, true);
     expect(result.actsCreated).toBe(2);
     expect(result.sequencesCreated).toBe(1);
+    for (const t of ["act", "sequence", "scene_sequence"]) {
+      const missing = await db.exec(
+        `SELECT COUNT(*) AS n FROM ${t} WHERE uuid IS NULL`);
+      expect(missing[0]!["n"], t).toBe(0);
+    }
 
     const acts = await db.exec(
       "SELECT name, act_number, start_scene_id FROM act ORDER BY id");
