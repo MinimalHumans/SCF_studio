@@ -83,6 +83,9 @@ jobs:
       - name: every entity.column in the spec resolves
         run: python3 schema/check_spec_references.py
 
+      - name: every count in the prose is true
+        run: python3 schema/check_prose_counts.py
+
       - name: proposal statuses agree with the changelogs
         run: python3 schema/check_proposal_status.py
 
@@ -268,6 +271,13 @@ jobs:
 
       - name: typecheck
         run: npm run typecheck
+        working-directory: scf-mcp
+
+      # The repository keeps file:../scf-core; a published package may
+      # not. Fails here, not on publish day, if the rewrite to a range
+      # could not be made (tools/pack_with_ranges.mjs).
+      - name: file dependencies rewrite to ranges
+        run: node ../tools/pack_with_ranges.mjs plan
         working-directory: scf-mcp
 
       # The smoke tests spawn dist/server.js. Without this build they

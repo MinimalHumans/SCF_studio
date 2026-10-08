@@ -97,7 +97,7 @@ is this and what are its rules" completely.
 
 ## Stage 4 — Subject depth
 
-Tier 2, thirty entities: what a character, prop or location **is**,
+Tier 2, thirty-four entities: what a character, prop or location **is**,
 before any scene bends it.
 
 A character's voice — pitch, pace, accent, what they do while listening.

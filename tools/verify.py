@@ -57,6 +57,8 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
      [PY, "schema/lint_registry.py"], ".", False),
     ("every entity.column in the prose resolves",
      [PY, "schema/check_spec_references.py"], ".", False),
+    ("every count in the prose is true",
+     [PY, "schema/check_prose_counts.py"], ".", False),
     ("no proposal the changelogs say landed still says draft",
      [PY, "schema/check_proposal_status.py"], ".", False),
     ("every source file carries an SPDX header",
@@ -114,6 +116,11 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
     # outside this list and outside CI until 0.55: the package was
     # merged into main with nothing running its tests anywhere.
     ("scf-mcp typechecks", [NPM, "run", "typecheck"], "scf-mcp", False),
+    # The repository keeps `file:../scf-core`; only what is published may
+    # not. This fails now, rather than on publish day, if the rewrite to a
+    # version range could not be made (tools/pack_with_ranges.mjs).
+    ("scf-mcp's file: dependencies rewrite to ranges",
+     ["node", "../tools/pack_with_ranges.mjs", "plan"], "scf-mcp", False),
     ("scf-mcp builds", [NPM, "run", "build"], "scf-mcp", True),
     ("scf-mcp tests", [NPM, "test"], "scf-mcp", True),
 

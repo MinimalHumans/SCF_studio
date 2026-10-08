@@ -28,7 +28,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepack": "node ../tools/legal_files.mjs copy && npm run build",
-    "postpack": "node ../tools/legal_files.mjs remove"
+    "postpack": "node ../tools/legal_files.mjs remove",
+    "pack:release": "node ../tools/pack_with_ranges.mjs pack",
+    "publish:release": "node ../tools/pack_with_ranges.mjs publish",
+    "prepublishOnly": "node ../tools/pack_with_ranges.mjs check"
   },
   "dependencies": {
     "@minimalhumans/scf-core": "file:../scf-core",
