@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft — still open |
+| **Status** | **accepted** — narrow form for 1.0 (`clip` only, plus the lint); declarations deferred. See Resolution |
 | **Author** | Found by the fifth independent reader run (G-28); written up by the maintainers |
 | **Opened** | 2026-08-25 |
 | **Affects** | Spec §2.3, `schema/entity_registry.py`, `registry.json`, Editor conformance (`conformance.md` §2.3) |
@@ -133,16 +133,42 @@ something it happens to cascade with.
 
 ## Resolution
 
-*Still open.* 0.47 implemented 0001 and a defect adjacent to this one —
-§2.3's asset-usage rule could not see a polymorphic reference — but
-neither touches ownership.
+**Accepted in its narrow form, 2026-10-08, for schema 2.22.** Settled
+in the 1.0 decision pass (`docs/release-checklist.md` §A).
 
-The adjacent fix is worth noting here because it is evidence for this
-proposal rather than against it: §2.3's asset rule already read a
-declaration and still had a gap, which suggests the problem with the
-ownership bullet is not that declarations are unreliable but that
-ownership is the one bullet in that list still matching on a name.
+**A clip is not deleted with its scene.** That was the question this
+proposal waited on, and it is answered as a production question:
+footage outlives the script. A cut scene's footage becomes a deleted
+scene, an alternate edit or a pickup, and losing a clip costs far more
+than a stale pointer. Cutting a scene in SCF is normally done with the
+cut status, not by deleting the row, so a delete is rare and deliberate
+— which makes keeping the footage the safer default, not the riskier
+one.
 
-**The question this waits on is unchanged and is not a schema question:
-should a clip be deleted with its scene?** As of 2.13 the fixture has
-clips, so somebody can now try it and see what they lose.
+What lands before the tag:
+
+1. **`clip.scene_id` is renamed** so §2.3's name match no longer owns
+   it: the column becomes a reference that POINTS AT the scene and is
+   cleared when the scene is deleted. The name is settled with the
+   change. This is a breaking change, taken under §11.0 while it is
+   still free, and it changes what `canonicalDump` produces after a
+   scene delete; the CHANGELOG says so.
+2. **Step 3's lint lands as written:** any column named
+   `<entity>_id` on an entity that declares no parent must be recorded
+   as deliberate in `schema/lint_registry.py`.
+
+What does not: **step 1 and step 2 — populating `parentEntity` on the
+thirty-three and rewriting §2.3 to read declarations only — are
+deferred past 1.0.** Done entity by entity, that move can reproduce
+today's behaviour exactly, so after 1.0 it is non-breaking. The lint
+makes sure no thirty-eighth `scene_id` arrives by accident in the
+meantime.
+
+Before this resolution the proposal was open. 0.47 implemented 0001
+and an adjacent defect — §2.3's asset-usage rule could not see a
+polymorphic reference — and neither touched ownership. That fix is
+still evidence for the full proposal: the asset rule already read a
+declaration and still had a gap, so the trouble with the ownership
+bullet is not that declarations are unreliable but that ownership is
+the one bullet in §2.3's list still matching on a name. That is why the
+declaration move is deferred rather than declined.

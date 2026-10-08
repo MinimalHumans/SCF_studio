@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.62, schema 2.22 |
+| **Status** | **implemented** — spec 0.62, schema 2.22. See Resolution |
 | **Author** | Found while building the editor's Project tab; drafted with Claude |
 | **Opened** | 2026-10-07 |
 | **Affects** | `schema/entity_registry.py` (`project`); `registry.json`, `scf-schema.sql`, `entity-reference.md`; §12.12 Q00's result if authored in the fixture |
@@ -143,8 +143,19 @@ synopsis is the logline's longer form.
 
 ## Resolution
 
-**Accepted and implemented, 2026-10-07.** Spec 0.62 (editorial), schema
-2.22.
+**Implemented 2026-10-07, accepted 2026-10-08.** Spec 0.62 (editorial),
+schema 2.22, commit `0d65695`.
+
+It was built ahead of the 1.0 decision pass, which then accepted it
+(`docs/release-checklist.md` §A14). Adding a field is additive and could
+have landed after 1.0, but the release schema carries every other
+registry change anyway, so this costs one field in a bump that was
+already happening. The case for it is Q00's: a brief that answers "what
+film is this" and cannot say what happens past one sentence is missing
+what its readers need first. Under rev 13's rule — declaring a thing
+and authoring a row that exercises it are one change — it landed with a
+synopsis authored in the fixture, so Q00's normative result carries the
+field.
 
 The three open questions, as settled:
 
@@ -166,5 +177,7 @@ screenplay and the fixture's own character data. It follows the data
 and the logline on the timeline — Ada drowned seven years before the
 story opens — and avoids restating the number in the confession, where
 the screenplay's dialogue says "eleven years" against the data's seven.
-That disagreement is in the fixture, predates this proposal, and is not
-settled here.
+That disagreement is in the fixture and predates this proposal. Changing
+the script to agree was considered and **declined, 2026-10-08**: the
+fixture and the blessed results are published under `schema-2.22`, and
+a dialogue fix is not worth moving them.

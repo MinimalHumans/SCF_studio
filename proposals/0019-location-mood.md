@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft — recommends **decline**, recorded so the question is not reopened without its reasoning |
+| **Status** | **declined** — mood stays in `location_design.emotional_target`; see Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Nothing if declined. |
@@ -52,3 +52,20 @@ two places for one fact the moment a designer fills in
 - Is `emotional_target` really the same thing as a writer's "mood"? Or
   is a writer's mood closer to `location_variant.emotional_shift`, or to
   scene `tone`?
+
+---
+
+## Resolution
+
+**Declined, 2026-10-08.** Settled in the 1.0 decision pass
+(`docs/release-checklist.md` §A).
+
+`location` does not regain `mood`. How a place feels is design, design
+is tier 2, and `location_design.emotional_target` is where it lives —
+where `location_variant` can refine it instead of a single value fixed
+on the identity row. A writing tool that has a one-line mood writes
+`emotional_target` on the location's `location_design` row.
+
+The Unresolved question — whether a writer's mood is nearer
+`location_variant.emotional_shift` or scene `tone` — is an authoring-
+guide matter for exporters, not a schema change.

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft — recommends **defer** |
+| **Status** | **deferred** — after 1.0; `scene.location_id` stays the primary. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Nothing now. `scene.location_id` and a possible new link if accepted later. |
@@ -58,3 +58,20 @@ dramatically.
   productions to settle now?
 - If a link is added later, does `scene.location_id` stay as the primary,
   or move into the link? Keeping it avoids a breaking change after 1.0.
+
+---
+
+## Resolution
+
+**Deferred, 2026-10-08, to after 1.0.** Settled in the 1.0 decision
+pass (`docs/release-checklist.md` §A).
+
+INTERCUT is a real gap and a rare one, and nothing in a production file
+has needed it yet. Revisit when one does.
+
+**The condition that keeps this deferrable: `scene.location_id` stays,
+and stays the primary location.** If a `scene_location` link is added
+later, it is additive — intercut and visible locations go in the link,
+the heading's location stays where it is, and §12.17's variant choice
+stays keyed to it. Moving the primary into the link would be a breaking
+change after 1.0 and is ruled out by this resolution.
