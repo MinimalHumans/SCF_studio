@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft — recommends **decline**, recorded so the question is not reopened without its reasoning |
+| **Status** | **declined** — the cast of a span is derived; see Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Nothing if declined. A sentence in `docs/authoring-guide.md` if accepted as a clarification. |
@@ -57,3 +57,25 @@ claimed.
   not a connection, and is not derivable. Is that a thematic connection,
   a `scene_character` with `role_in_scene = mentioned` per scene, or a
   case that justifies a span-level claim entity after all?
+
+---
+
+## Resolution
+
+**Declined, 2026-10-08.** Settled in the 1.0 decision pass
+(`docs/release-checklist.md` §A).
+
+SCF gains no `act_character`, `sequence_character` or span-level prop
+link. **The cast of an act or sequence is the union of its scenes'
+casts over derived membership (§5.1)**, for the reason given above: a
+stored span-level link is a second truth that goes stale the first time
+an edit to the script moves a scene across a boundary, with no write to
+any link. Scriptyard's exporter reports span-level placements as not
+exported.
+
+**The open question about absent presence is not settled by this
+decline.** A character felt across an act without appearing is a claim,
+not a connection. Proposal 0030 has since given `mentioned` a defined
+meaning per scene (named, not seen), which covers the case scene by
+scene; whether a span-level *claim* is ever needed is a new proposal,
+not a reopening of this one.

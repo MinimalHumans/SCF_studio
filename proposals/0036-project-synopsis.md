@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | draft |
+| **Status** | **accepted** — for schema 2.22, the 1.0 release schema. See Resolution |
 | **Author** | Found while building the editor's Project tab; drafted with Claude |
 | **Opened** | 2026-10-07 |
 | **Affects** | `schema/entity_registry.py` (`project`); `registry.json`, `scf-schema.sql`, `entity-reference.md`; §12.12 Q00's result if authored in the fixture |
@@ -143,6 +143,18 @@ synopsis is the logline's longer form.
 
 ## Resolution
 
-*Left empty until the proposal is accepted, declined or deferred. The
-reasoning goes here, not only the verdict: a decline with no recorded
-reason gets re-proposed by the next person to have the same idea.*
+**Accepted, 2026-10-08, for schema 2.22.** Settled in the 1.0
+decision pass (`docs/release-checklist.md` §A).
+
+Adding a field is additive and could land after 1.0, but 2.22 is being
+cut as the release schema anyway and carries every other registry
+change, so this costs one field in a bump that is already happening.
+The case for it is Q00's: a brief that answers "what film is this" and
+cannot say what happens past one sentence is missing what its readers
+need first.
+
+**Not yet implemented.** An implementation is believed to exist
+uncommitted on another machine and is to be checked before work starts.
+Under rev 13's rule — declaring a thing and authoring a row that
+exercises it are one change — it lands with a synopsis authored in the
+fixture, so Q00's normative result carries the field.
