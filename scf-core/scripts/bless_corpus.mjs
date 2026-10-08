@@ -41,8 +41,10 @@ for (const tier of ["public", "private"]) {
     const types = doc.lines.map((l) => l.type).join("\n") + "\n";
     const expectedPath = path.replace(/\.(fountain|fountain\.txt)$/,
                                       ".types.txt");
+    // Line ends normalised: a Windows checkout can hold a CRLF copy of an
+    // LF blessed file, which is not a stale classification.
     const current = existsSync(expectedPath)
-      ? readFileSync(expectedPath, "utf8") : null;
+      ? readFileSync(expectedPath, "utf8").replace(/\r\n/g, "\n") : null;
     if (current === types) continue;
     if (check && tier === "public") {
       console.error(`STALE/MISSING (public tier): ${expectedPath}`);

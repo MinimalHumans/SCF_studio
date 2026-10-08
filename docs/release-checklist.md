@@ -211,15 +211,14 @@ of entities, codes, exports or artifacts in checksummed prose unless
 the stamping step writes it. The generators already know every number
 above.
 
-### B5. ○ `verify.py` fails on Windows
+### B5. ✅ `verify.py` fails on Windows
 
-Step 28 runs `["python3", "schema/check_pin.py", "--strict"]`. Every
-other step uses `PY = sys.executable`. On Windows `python3` is absent
-or the Store stub, so the one-command check fails on the machine it is
-most often run on. One word.
+**Fixed 2026-10-08.** `py tools/verify.py --fast` now runs end to end on
+a Windows checkout — all 23 steps and the published checksums green,
+the site step skipped and said so. Before, it could not start.
 
-Found while landing 0036, same class:
-
+- ✅ **Step 28 ran `python3`**, absent or the Store stub on Windows.
+  It uses `PY = sys.executable`, like every other step.
 - ✅ **The Python generators wrote CRLF on Windows.** Text mode
   translates `\n`, and four writers — `generate_registry_json.py`,
   `artifact_manifest.py`, `dump_fixture.py`, `screenplay_body.py` —
@@ -229,16 +228,21 @@ Found while landing 0036, same class:
   Fixed at the root in `7f2fbb7`, and the digest corrected.
   `.gitattributes` already said why this matters; the writers were the
   exceptions to it.
-- ○ **`check_pin.py` crashes on Windows** reading `git` output with the
-  locale codec (`UnicodeDecodeError`); it still prints its verdict.
-  Decode as UTF-8, or run it under `py -X utf8`.
-- ○ **`verify.py` will not start without `site/` installed** (`npm ci`
-  in `site/`), so a Windows checkout without the docs toolchain cannot
-  run any of its steps. Skip the site step with a warning instead.
-- ○ **With `core.autocrlf=true`, a Windows working tree holds CRLF
-  copies** of committed LF files despite `eol=lf`, and the golden-corpus
-  test (`alexis-nexus`) fails there for that reason alone. Renormalise
-  the checkout, or have the test compare after normalising line ends.
+- ✅ **`check_pin.py` crashed on Windows** decoding `git` output with the
+  locale codec. It decodes as UTF-8, and it now hashes the tagged blob's
+  **raw bytes** — it used to decode and re-encode them, so a digest that
+  is defined over bytes went through a text round trip first.
+- ✅ **`verify.py` would not start without `site/` installed.** The site
+  step is skipped with a warning instead, and the summary says
+  "everything run passes … 1 step skipped", never "everything passes".
+  Its step output and its own console output are decoded and written as
+  UTF-8, so neither a test runner's `✓` nor its own `…` breaks on
+  Windows.
+- ✅ **A CRLF working tree failed the golden-corpus test.** With
+  `core.autocrlf=true` a Windows checkout can hold CRLF copies of LF
+  files despite `eol=lf`. The corpus test (both tiers) and
+  `bless_corpus.mjs --check` compare the blessed types after normalising
+  line ends, so the check is about classification, not the checkout.
 
 ### B6. ○ Packaging blocks the publish
 
@@ -402,8 +406,8 @@ Listed so an unstated deferral cannot be mistaken for an oversight.
 **Decide — done 2026-10-08.** Section A is settled, and the
 `project.synopsis` work it was waiting on has landed (§A14).
 
-**Day 1, morning — the mechanical half.** B3, B4, B5, B6 except the
-publish, B7 and C. It is one change across many files.
+**Day 1, morning — the mechanical half.** B3, B4, B6 except the
+publish, B7 and C (B5 is done). It is one change across many files.
 
 **Day 1, afternoon — the app.** B1: query pages onto scf-core. Removing
 `act_id` (§B8) falls out of it: Q04's read goes with the runner, and the
