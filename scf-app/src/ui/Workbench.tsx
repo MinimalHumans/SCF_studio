@@ -14,6 +14,8 @@ import { undoSummary } from "../state/undoDelete.ts";
 import { ShootView } from "./ShootView.tsx";
 import { ScriptReader } from "./ScriptReader.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
+import logoSmallCloud from "../assets/logoSmall_cloud.svg";
+import logoFullWhite from "../assets/logoFull_white.svg";
 import { Component, useEffect, useRef, useState, type ReactNode }
   from "react";
 
@@ -139,6 +141,8 @@ export function Workbench(): JSX.Element {
 
   const main = openRow !== null
     ? <EntityForm key={`${openRow.entity}:${String(openRow.id)}`} />
+    : navMode === "intro"
+      ? <IntroMain />
     : navMode === "project"
       ? <ProjectWorkspace />
     : navMode === "script"
@@ -200,7 +204,7 @@ export function Workbench(): JSX.Element {
         </div>
       )}
       <header className="topbar">
-        <span className="topbar-mark">SCF</span>
+        <img className="topbar-mark" src={logoSmallCloud} alt="SCF" />
         <span className="topbar-project">{projectName}</span>
         <span className="topbar-schema"
               title={`scf-app ${__APP_VERSION__} · ${__APP_COMMIT__}` +
@@ -425,6 +429,14 @@ function SaveControls(): JSX.Element {
         Save as…
       </button>
     </>
+  );
+}
+
+function IntroMain(): JSX.Element {
+  return (
+    <div className="intro-main">
+      <img src={logoFullWhite} alt="SCF" />
+    </div>
   );
 }
 

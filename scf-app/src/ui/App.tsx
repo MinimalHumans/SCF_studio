@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";
+import logoBigCloud from "../assets/logoBig_cloud.svg";
 
 function StartScreen(): JSX.Element {
   const { openDemo, openFromPicker, newProject, fsAccessSupported,
@@ -9,7 +10,9 @@ function StartScreen(): JSX.Element {
   return (
     <div className="start">
       <div className="start-card">
-        <h1 className="start-mark">SCF</h1>
+        <h1 className="start-mark">
+          <img src={logoBigCloud} alt="SCF" />
+        </h1>
         <p className="start-sub">Story Context Framework — editor</p>
         {!fsAccessSupported && (
           <p className="start-warn">
@@ -42,13 +45,6 @@ the file, but it can confirm the one you name holds it.">
             </button>
           </>
         )}
-        <p className="start-foot">
-          Local-first. Your project stays on this machine — the file you
-          open is copied into browser storage while you work, and written
-          back when you save. A project is a folder holding one .scf and
-          the assets it points at; open the .scf here and attach its
-          folder from the topbar.
-        </p>
       </div>
     </div>
   );
@@ -58,7 +54,9 @@ function MultiTabScreen(): JSX.Element {
   return (
     <div className="start">
       <div className="start-card">
-        <h1 className="start-mark">SCF</h1>
+        <h1 className="start-mark">
+          <img src={logoBigCloud} alt="SCF" />
+        </h1>
         <p className="start-sub">Story Context Framework — editor</p>
         <p className="start-warn">
           SCF is already open in another tab. The working database uses

@@ -62,7 +62,8 @@ export const exec = client.exec;
 export const COLLAPSE_ALL = new Set<string>(["\u0000all"]);
 
 export type NavMode =
-  "project" |
+  // Where an opened project lands: a neutral page, not any one section.
+  "intro" | "project" |
   "subject" | "schema" | "structure" | "queries" | "script" | "shoot" |
   "assets" | "characters" | "locations" | "props";
 
@@ -434,7 +435,7 @@ async function finishFolderOpen(
   localStorage.setItem("scf:last-session", opened.name);
   await rememberHandle(opened.token);
   const rev = get().revision + 1;
-  set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+  set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
@@ -479,7 +480,7 @@ export const useStore = create<AppState>((set, get) => ({
   // The script is what a project is FOR: opening anywhere else means a
   // click before you can write. Every open path sets this too, so
   // closing one project and opening another lands on the script again.
-  navMode: "script", selectedCharacterId: null, characterTab: "Profile",
+  navMode: "intro", selectedCharacterId: null, characterTab: "Profile",
   asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
   selectedPropId: null, propTab: "Profile",
   assetPrefix: "",
@@ -508,7 +509,7 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:last-session", "Hollow Creek (demo)");
       localStorage.setItem("scf:auto-resume", "1");
       const rev = get().revision + 1;
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
@@ -551,7 +552,7 @@ export const useStore = create<AppState>((set, get) => ({
       setAssetLocator(
         projectRoot === null
           ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
@@ -587,7 +588,7 @@ export const useStore = create<AppState>((set, get) => ({
       setAssetLocator(null);
       revokeAll();
       clearResolutions();
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
@@ -762,7 +763,7 @@ export const useStore = create<AppState>((set, get) => ({
       await initDatabase(client.exec, registry,
                          { editorVersion: EDITOR_VERSION });
       const rev = get().revision + 1;
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "script",
+      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
@@ -790,7 +791,7 @@ export const useStore = create<AppState>((set, get) => ({
     // views leaves their in-flight queries — and the script editor's
     // blur-triggered commit — resolving against no database.
     set({ phase: "start", fileToken: null, errorMessage: null,
-          navMode: "script", selectedCharacterId: null, characterTab: "Profile",
+          navMode: "intro", selectedCharacterId: null, characterTab: "Profile",
           shootView: freshShootView(),
   asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
   selectedPropId: null, propTab: "Profile",

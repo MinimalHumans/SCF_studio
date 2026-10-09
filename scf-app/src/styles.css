@@ -95,21 +95,13 @@ ul { list-style: none; margin: 0; padding: 0; }
   border-radius: 6px;
   padding: 32px;
 }
-.start-mark {
-  font: 700 40px/1 var(--mono);
-  letter-spacing: 0.18em;
-  color: var(--amber);
-}
-.start-sub { color: var(--paper-dim); margin: 4px 0 24px; }
+.start-mark { margin: 0; text-align: center; }
+.start-mark img { display: block; width: 180px; height: auto; margin: 0 auto; }
+.start-sub { color: var(--paper-dim); margin: 12px 0 24px; text-align: center; }
 .start-actions { display: flex; flex-direction: column; gap: 8px; }
 .start-actions button { padding: 9px; }
 .start-warn, .start-error { color: var(--blocker); font-size: 12px; }
 .start-status { color: var(--paper-dim); }
-.start-foot {
-  margin-top: 24px;
-  font-size: 11.5px;
-  color: var(--paper-dim);
-}
 
 /* ---- workbench frame ---- */
 .workbench { height: 100%; display: flex; flex-direction: column; }
@@ -121,11 +113,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   background: var(--ink-1);
   border-bottom: 1px solid var(--line);
 }
-.topbar-mark {
-  font: 700 15px var(--mono);
-  letter-spacing: 0.15em;
-  color: var(--amber);
-}
+.topbar-mark { display: block; height: 26px; width: auto; }
 .topbar-project { font-weight: 600; }
 .topbar-schema {
   font: 11px var(--mono);
@@ -156,6 +144,13 @@ ul { list-style: none; margin: 0; padding: 0; }
    * a scroll in the main pane could carry the whole window away. */
   position: relative; }
 .rail-empty { color: var(--paper-dim); padding: 8px 10px; font-size: 12px; }
+.intro-main {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0 40px;
+}
+.intro-main img { width: min(520px, 70%); height: auto; }
 .empty-main {
   height: 100%;
   display: grid;
