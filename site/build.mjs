@@ -265,15 +265,41 @@ function hero() {
 </header>`;
 }
 
-/** On-page contents. Deep documents are unusable without one. */
+/**
+ * On-page contents. Deep documents are unusable without one.
+ *
+ * A <details> so that it costs one line above the text on a narrow
+ * screen; on a wide one it is a column of its own beside the text and
+ * TOC_SCRIPT holds it open. Without script it is simply open.
+ */
 function contents(headings) {
   const useful = headings.filter((h) => h.level >= 2 && h.level <= 3);
   if (useful.length < 4) return "";
   const items = useful.map((h) =>
     `<li class="l${h.level}"><a href="#${h.id}">${esc(h.title)}</a></li>`)
     .join("");
-  return `<nav class="toc"><h2>On this page</h2><ul>${items}</ul></nav>`;
+  return `<details class="toc" open><summary>On this page</summary>` +
+    `<nav aria-label="On this page"><ul>${items}</ul></nav></details>`;
 }
+
+/** Keep in step with the wide breakpoint in style.css. */
+const TOC_SCRIPT = `<script>
+(() => {
+  const toc = document.querySelector(".toc");
+  if (toc === null) return;
+  const wide = matchMedia("(min-width: 75rem)");
+  const sync = () => { toc.open = wide.matches; };
+  sync();
+  wide.addEventListener("change", sync);
+  // On a narrow screen, get out of the way once a section is chosen.
+  toc.addEventListener("click", (e) => {
+    if (!wide.matches && e.target.closest("a") !== null) toc.open = false;
+  });
+  toc.querySelector("summary").addEventListener("click", (e) => {
+    if (wide.matches) e.preventDefault();
+  });
+})();
+</script>`;
 
 const built = [];
 for (const { page, text, headings } of docs) {
@@ -308,8 +334,9 @@ ${nav(page.slug)}
 </a>
 </aside>
 <main id="content"${page.slug === "index" ? ' class="landing"' : ""}>
-${page.slug === "index" ? hero() : ""}
 ${contents(headings)}
+<div class="page">
+${page.slug === "index" ? hero() : ""}
 <article>
 ${body}
 </article>
@@ -318,8 +345,10 @@ ${body}
 source of truth; if this page disagrees with it, the repository is right.</p>
 <p class="credit">SCF is developed by <a href="https://www.minimalhumans.com">Minimal Humans</a>.</p>
 </footer>
+</div>
 </main>
 </div>
+${TOC_SCRIPT}
 </body>
 </html>
 `;
