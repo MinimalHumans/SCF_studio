@@ -1379,7 +1379,7 @@ tr.prop-weak td { opacity: .6; }
 .shoot-seq { margin-left: 16px; }
 .shoot-row-seq .shoot-label { font-weight: 600; }
 .shoot-scene { margin-left: 16px; }
-.shoot-row-scene { border-bottom: 1px solid var(--line); }
+.shoot-row-scene { border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .shoot-scene-body { margin: 2px 0 8px 18px; }
 /* A beat is a bracket: a rule down its left edge holds its shots, which
    sit a step further in. A shot on the scene itself sits at the beat's
@@ -2281,6 +2281,8 @@ button.strip-span-label:hover { color: var(--amber); }
 .media-toggle.has { color: var(--amber); }
 .shoot-media { margin: 4px 0 10px 22px; }
 .shoot-media-scene { margin-left: 18px; }
+.record-media { margin-top: 14px; display: grid; gap: 8px; }
+.record-media h4 { margin: 0; font-size: 12.5px; }
 .media-strip { display: grid; gap: 8px; }
 .media-empty { margin: 0; font-size: 12px; }
 /* A strip, not a grid: a storyboard reads left to right, and wraps

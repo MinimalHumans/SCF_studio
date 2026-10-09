@@ -134,6 +134,8 @@ export function ShootView(): JSX.Element {
                   onClick={() => revealSceneInReader(sceneId)}>
             {sceneLabel(scene)}
           </button>
+          <button className="ghost tiny" title="Open the full scene record"
+                  onClick={() => void openEntityRow("scene", sceneId)}>⋯</button>
           <span className="shoot-count">
             {summarize(sceneBeats.length, sceneShots.length)}
           </span>

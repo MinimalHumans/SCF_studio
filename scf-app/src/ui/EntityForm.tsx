@@ -13,6 +13,7 @@ import { ANCHOR_SUBJECTS, AnchorThumb, BundleStrip }
   from "./AnchorThumb.tsx";
 import { Field } from "./fields/Field.tsx";
 import { LineRangePicker } from "./fields/LineRangePicker.tsx";
+import { MediaStrip } from "./MediaStrip.tsx";
 import { rangeEntities } from "@scf-core/lines.ts";
 
 const RANGE_FIELDS = ["line_start_ref", "line_end_ref"];
@@ -157,6 +158,15 @@ export function EntityForm(): JSX.Element | null {
       )}
       {!creating && openRow.entity === "bundle" && openRow.id !== null && (
         <BundleAssets bundleId={openRow.id} />
+      )}
+      {!creating && (openRow.entity === "shot" || openRow.entity === "scene")
+       && openRow.id !== null && (
+        // The same strip the Shoot tab opens under the row: media about
+        // this shot or scene (§8.6), added and ordered from either place.
+        <section className="record-media">
+          <h4>Media</h4>
+          <MediaStrip owner={{ kind: openRow.entity, id: openRow.id }} />
+        </section>
       )}
       {!creating && openRow.entity.endsWith("_asset_binding") &&
        bundleRef(draft.values) !== null && (
