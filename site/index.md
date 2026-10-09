@@ -1,8 +1,4 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
-# SCF
-
-**A film, described in a way a machine can answer questions about.**
-
 SCF — the Story Context Framework — is a file format. An `.scf` is a
 SQLite database holding what is true of a film: its scenes and their
 order, its characters and how they change, what a location looks like on
