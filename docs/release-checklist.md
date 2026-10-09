@@ -360,6 +360,10 @@ item that declares something authors a fixture row that exercises it.
     spec 0.64 §8.6; shot 12-04's panels in the fixture. It moved
     `SCHEMA_VERSION` to 2.23 ahead of the rest of this batch, which
     lands under the same number.
+  - ◑ the project poster (0038) — in the working tree 2026-10-09,
+    awaiting review: `relationship_type` gains `poster`; spec 0.65
+    §8.6 and §12.12; Q00 gains `posters`; the fixture project relates
+    `poster01.png`.
 - **Spec text:** §0.6's floor (exactly 2.23, §A8); §12.8's
   `audio_offset_*` sentence (§A9); §12.17's ordered comparison (§A11);
   §1.3.1's finding sentence (§A12); §2.3's clip note (§A1); the

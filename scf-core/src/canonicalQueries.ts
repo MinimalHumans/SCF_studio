@@ -19,6 +19,7 @@ import { presenceAtScene, type Presence } from "./presence.ts";
 import { projectScreenplayLines, sceneScriptLines }
   from "./screenplay/sceneScript.ts";
 import { readinessReport } from "./readiness.ts";
+import { byRelatedOrder } from "./relatedOrder.ts";
 import type { FileLocator } from "./assets.ts";
 import {
   columnRoles, envelope, projectRow, uuidLookupForAll,
@@ -872,23 +873,45 @@ export const Q00_LAYERS = [
 export interface Q00Result {
   layers: Array<{ entity: string; row: ProjectedRow }>;
   themes: ProjectedRow[];
+  /**
+   * The film's key art: assets related to the project row as `poster`,
+   * projected, in §8.6's order. The first is the poster; any after it
+   * are alternatives. Empty when none is related (proposal 0038).
+   */
+  posters: ProjectedRow[];
 }
 
 export async function q00Result(
     ctx: ScfContext): Promise<QueryResult<Q00Result>> {
   const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
   const layers: Q00Result["layers"] = [];
+  let projectId: SqlValue = null;
   for (const entity of Q00_LAYERS) {
     const row = (await rows(ctx.exec, entity))[0];
     // An unauthored layer is absent, not present and empty (§12.3.2's
     // rule, applied here for the same reason).
     if (row === undefined) continue;
+    if (entity === "project") projectId = row["id"] ?? null;
     layers.push({ entity, row: projectRow(row, refs(ctx, entity), lookup) });
+  }
+  const posters: ProjectedRow[] = [];
+  if (projectId !== null && ctx.registry.entities.has("asset_relationship")) {
+    const links = await rows(ctx.exec, "asset_relationship",
+      "entity_type = 'project' AND entity_id = ? " +
+      "AND relationship_type = 'poster'", [projectId]);
+    for (const link of links.sort(byRelatedOrder)) {
+      const asset = (await rows(ctx.exec, "asset", "id = ?",
+                                [link["asset_id"] ?? null]))[0];
+      if (asset !== undefined) {
+        posters.push(projectRow(asset, refs(ctx, "asset"), lookup));
+      }
+    }
   }
   return envelope("Q00", ctx.registry, {}, {
     layers,
     themes: (await rows(ctx.exec, "theme"))
       .map((t) => projectRow(t, refs(ctx, "theme"), lookup)),
+    posters,
   });
 }
 

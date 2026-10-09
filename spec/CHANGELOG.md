@@ -17,6 +17,23 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.65 — 2026-10-09
+
+*Describes schema 2.23.*
+
+**Minor.** Proposal 0038: the project poster.
+
+### §8.6 and §12.12 — the film's poster
+
+`asset_relationship.relationship_type` gains `poster`. An asset related
+to the project row as `poster` is the film's key art; several may be,
+and §8.6's order makes the first the poster. Q00 gains `posters`, those
+assets projected in that order, empty when there are none.
+
+The fixture's project relates `poster01.png` as its poster.
+
+---
+
 ## 0.64 — 2026-10-09
 
 *Describes schema 2.23.*

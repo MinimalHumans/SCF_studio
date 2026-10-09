@@ -183,6 +183,20 @@
           "name": "What the water keeps"
         }
       }
+    ],
+    "posters": [
+      {
+        "uuid": "0475bde7-b22d-4fd0-8ee8-eebcf6619960",
+        "fields": {
+          "description": "Promotional Poster with Text",
+          "identifier": "@project/promotional/poster01.png",
+          "lifecycle_status": "active",
+          "name": "poster01.png",
+          "size_bytes": 28980776,
+          "source": "Blckbox via Photoshop",
+          "source_mtime": "2026-09-02T17:07:05.663Z"
+        }
+      }
     ]
   }
 }

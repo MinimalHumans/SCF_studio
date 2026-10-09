@@ -3787,12 +3787,14 @@ register(EntityDef(
                  polymorphic_type="entity_type"),
         FieldDef("relationship_type", "Relationship Type", "select", options=[
             "reference", "documentation", "concept", "inspiration", "final",
-            "storyboard", "start_frame", "end_frame", "previs",
+            "storyboard", "start_frame", "end_frame", "previs", "poster",
         ], open_values=True,
                  help_text="What the asset is to the entity. storyboard, "
                            "start_frame, end_frame and previs are for a "
                            "shot or a scene (proposal 0037); anything else "
-                           "a shot points at is a reference."),
+                           "a shot points at is a reference. poster is the "
+                           "film's key art, related to the project "
+                           "(proposal 0038)."),
         FieldDef("order", "Order", "integer",
                  help_text="Position among the assets related to the same "
                            "entity, ascending; rows with none come last, "

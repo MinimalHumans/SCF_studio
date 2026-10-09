@@ -40,6 +40,18 @@ Shot and scene media: proposal 0037.
 **Fixture:** shot 12-04 carries two storyboard panels, ordered against
 their row ids, and a start frame.
 
+The project poster: proposal 0038.
+
+**Added:**
+
+- `asset_relationship.relationship_type` gains `poster`: the film's key
+  art, related to the project row (spec §8.6). Still open-valued.
+
+**Fixture:** the project relates `poster01.png` as its poster.
+
+Query results (not schema): Q00 gains `posters`, the project's poster
+assets in §8.6's order (spec §12.12).
+
 Query results (not schema): `shotMedia`'s `related` carries `order`,
 scene rows first, then shot rows, each in §8.6's order, and each row's
 `format`, `state`, `detail` and `sizeBytes` as a Q13 reference carries

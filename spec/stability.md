@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.64 / schema 2.23. This document is expected
+Current as of specification 0.65 / schema 2.23. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -84,6 +84,7 @@ about it is ceremonial.
 | `clip`'s screenplay line references | §12.1.2 | Provisional | Yes | Declared in schema 2.13. First reference in the schema targeting a `uuidExtraTable`; exercised by two fixture clips. |
 | Polymorphic references count as asset usage | §2.3, §8.6 | Provisional | Yes | Stated in 0.47 and exercised by a fixture asset reachable only through `asset_relationship.entity_id`. |
 | Shot and scene media: types and order | §8.6 | Provisional | Yes | Proposal 0037, spec 0.64, schema 2.23. `relationship_type` gains `storyboard`, `start_frame`, `end_frame`, `previs`; `asset_relationship.order` orders an entity's related assets. Exercised by shot 12-04's panels, whose `order` runs against their row ids. |
+| The project poster | §8.6, §12.12 | Provisional | Yes | Proposal 0038, spec 0.65, schema 2.23. `relationship_type` gains `poster`, related to the project row; Q00 returns `posters`. Exercised by the fixture project's one-sheet. |
 | Absolute identifiers are permitted | §8.2 | Provisional | Yes | Stated explicitly in 0.48: a warning, never a refusal, and `..` is the error instead. Whether an implementation may resolve one to bytes is 0003 and open. |
 | The proposal path | — | Provisional | Yes | `proposals/` since 0.32. **Used as of 0.47**: 0001 accepted and implemented, 0002 still open — its question (should a clip be deleted with its scene?) is a production decision rather than a schema one. |
 | Framework columns | §2.2 | Stable | Yes | |

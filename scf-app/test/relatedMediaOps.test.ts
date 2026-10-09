@@ -7,7 +7,7 @@ import { initDatabase } from "@scf-core/db.ts";
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
 import {
   attachMedia, detachMedia, loadMedia, mediaCounts, mediaLabel, moveMedia,
-  setMediaType, type MediaOwner,
+  setMediaType, loadPosters, setPoster, type MediaOwner,
 } from "../src/editor/relatedMediaOps.ts";
 import { applyUndoChange } from "../src/state/undoChange.ts";
 
@@ -108,5 +108,54 @@ describe("shot and scene media (proposal 0037)", () => {
     expect(mediaLabel("start_frame")).toBe("Start frame");
     expect(mediaLabel("lighting_plate")).toBe("lighting_plate");
     expect(mediaLabel(null)).toBe("Untyped");
+  });
+});
+
+describe("the project poster (proposal 0038)", () => {
+  let db: ReturnType<typeof openNodeDatabase>;
+  let assets: number[];
+
+  beforeEach(async () => {
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    db = openNodeDatabase(":memory:");
+    await initDatabase(db.exec, registry);
+    await db.exec("INSERT INTO project (uuid, name) VALUES (?, 'Film')",
+                  [crypto.randomUUID()]);
+    assets = [];
+    for (const name of ["one.png", "two.png"]) {
+      const made = await db.exec(
+        "INSERT INTO asset (uuid, name, identifier) VALUES (?, ?, ?) RETURNING id",
+        [crypto.randomUUID(), name, `@project/promotional/${name}`]);
+      assets.push(Number(made[0]!["id"]));
+    }
+  });
+
+  const posters = async (): Promise<string[]> =>
+    (await loadPosters(db.exec, 1)).map((t) => String(t.asset["name"]));
+
+  test("a replaced poster stays behind the new one as an alternative", async () => {
+    await setPoster(db.exec, 1, assets[0]!);
+    await setPoster(db.exec, 1, assets[1]!);
+    expect(await posters()).toEqual(["two.png", "one.png"]);
+    const rows = await db.exec(
+      "SELECT entity_type, relationship_type, uuid FROM asset_relationship");
+    expect(rows.every((r) => r["entity_type"] === "project" &&
+      r["relationship_type"] === "poster" && r["uuid"] !== null)).toBe(true);
+  });
+
+  test("choosing an alternative again moves it, it does not relate it twice", async () => {
+    await setPoster(db.exec, 1, assets[0]!);
+    await setPoster(db.exec, 1, assets[1]!);
+    const change = await setPoster(db.exec, 1, assets[0]!);
+    expect(change.created).toEqual([]);
+    expect(await posters()).toEqual(["one.png", "two.png"]);
+  });
+
+  test("undo puts the previous poster back", async () => {
+    await setPoster(db.exec, 1, assets[0]!);
+    const change = await setPoster(db.exec, 1, assets[1]!);
+    await applyUndoChange(db.exec, change);
+    expect(await posters()).toEqual(["one.png"]);
   });
 });

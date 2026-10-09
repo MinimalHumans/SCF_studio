@@ -29,6 +29,7 @@ import {
   ANCHOR_TYPE_FOR_INTENT, rows, type ScfContext,
 } from "./resolution.ts";
 import { QUERY_PATHS } from "./queryPaths.ts";
+import { byRelatedOrder } from "./relatedOrder.ts";
 import { presenceAtShot, type Presence } from "./presence.ts";
 import { rangeLines, type RangeVerdict } from "./lines.ts";
 import {
@@ -165,19 +166,6 @@ export interface RelatedAsset {
   detail: string | null;
   /** Read from the resolved file. Null unless `state` is `resolved`. */
   sizeBytes: number | null;
-}
-
-/**
- * §8.6's order for the rows relating assets to one entity: `order`
- * ascending, rows with none after rows with one, then row id. A
- * storyboard's panels are a sequence, and attachment order is not it.
- */
-function byRelatedOrder(a: Row, b: Row): number {
-  const oa = a["order"], ob = b["order"];
-  const na = oa === null || oa === undefined, nb = ob === null || ob === undefined;
-  if (na !== nb) return na ? 1 : -1;
-  if (!na && Number(oa) !== Number(ob)) return Number(oa) - Number(ob);
-  return Number(a["id"]) - Number(b["id"]);
 }
 
 /**

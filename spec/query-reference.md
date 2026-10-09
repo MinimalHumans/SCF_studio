@@ -268,7 +268,7 @@ Specified in **§12.12**. Normative result: [`fixtures/expectations/Q00.result.j
 
 Takes no parameters — it answers about the whole project.
 
-Result members: `layers`, `themes`.
+Result members: `layers`, `themes`, `posters`.
 
 ---
 
