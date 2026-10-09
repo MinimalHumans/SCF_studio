@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect } from "react";
 import { useStore, type NavMode } from "../../state/store.ts";
+import logoMinimalHumansM from "../../assets/minimalHumans_logoM.svg";
 
 interface Section {
   mode: NavMode;
@@ -99,6 +100,10 @@ export function ActivityBar(): JSX.Element {
           })}
         </div>
       ))}
+      <a className="activity-maker" href="https://www.minimalhumans.com"
+         target="_blank" rel="noopener noreferrer" title="Minimal Humans">
+        <img src={logoMinimalHumansM} alt="Minimal Humans" />
+      </a>
     </nav>
   );
 }

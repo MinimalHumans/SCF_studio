@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
+import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
 
 function StartScreen(): JSX.Element {
   const { openDemo, openFromPicker, newProject, fsAccessSupported,
@@ -46,6 +47,10 @@ the file, but it can confirm the one you name holds it.">
           </>
         )}
       </div>
+      <a className="start-maker" href="https://www.minimalhumans.com"
+         target="_blank" rel="noopener noreferrer">
+        <img src={logoMinimalHumans} alt="Minimal Humans" />
+      </a>
     </div>
   );
 }

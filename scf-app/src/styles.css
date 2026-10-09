@@ -102,6 +102,17 @@ ul { list-style: none; margin: 0; padding: 0; }
 .start-actions button { padding: 9px; }
 .start-warn, .start-error { color: var(--blocker); font-size: 12px; }
 .start-status { color: var(--paper-dim); }
+/* scales with the viewport, pinned to the bottom-left corner */
+.start-maker {
+  position: fixed;
+  left: clamp(12px, 2vw, 32px);
+  bottom: clamp(12px, 2vw, 32px);
+  width: clamp(192px, 24vw, 400px);
+  opacity: 0.8;
+  transition: opacity 120ms;
+}
+.start-maker:hover, .start-maker:focus-visible { opacity: 1; }
+.start-maker img { display: block; width: 100%; height: auto; }
 
 /* ---- workbench frame ---- */
 .workbench { height: 100%; display: flex; flex-direction: column; }
@@ -1868,6 +1879,16 @@ tr.prop-weak td { opacity: .6; }
   flex-direction: column;
   gap: 14px;
 }
+/* the maker mark sits at the foot of the bar, half its width */
+.activity-maker {
+  margin-top: auto;
+  display: flex; justify-content: center;
+  padding: 8px 0 4px;
+  opacity: 0.8;
+  transition: opacity 120ms;
+}
+.activity-maker:hover, .activity-maker:focus-visible { opacity: 1; }
+.activity-maker img { display: block; width: 50%; height: auto; }
 .activity-group { display: flex; flex-direction: column; gap: 1px; }
 .activity-group-name {
   font-size: 11px;
