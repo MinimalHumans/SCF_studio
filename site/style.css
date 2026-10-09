@@ -102,7 +102,8 @@ body::before {
 .maker img { display: block; width: 150px; height: auto; }
 
 /* ---- main ---- */
-main { flex: 1; min-width: 0; max-width: 52rem; padding: 2.75rem 2rem 6rem; }
+main { flex: 1; min-width: 0; padding: 2.75rem 2rem 6rem; }
+.page { min-width: 0; max-width: 52rem; }
 article { overflow-wrap: break-word; }
 
 h1, h2, h3, h4, h5, h6 { line-height: 1.25; scroll-margin-top: 1.5rem; }
@@ -202,23 +203,57 @@ hr { border: none; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
 .btn-ghost { border-color: var(--rule); color: var(--ink-soft); }
 .landing article > p:first-child { font-size: 1.08rem; }
 
-/* ---- on-page contents ---- */
+/* ---- on-page contents ----
+   Narrow: one collapsed line above the text. Wide (75rem+): a quiet
+   column of its own to the right, sticky, never in the text's way. */
 .toc {
-  float: right; width: 15rem; margin: 0 0 1.5rem 2rem;
-  padding: .9rem 1.1rem; background: var(--panel);
-  border: 1px solid var(--rule); border-top: 3px solid var(--accent);
-  border-radius: 6px; font-size: .84rem;
+  margin: 0 0 1.75rem; max-width: 52rem; font-size: .84rem;
+  border: 1px solid var(--rule); border-radius: 6px; background: var(--panel);
 }
-.toc h2 {
-  margin: 0 0 .5rem; padding: 0; background: none;
-  font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ink-soft);
+.toc summary {
+  cursor: pointer; padding: .55rem .9rem; list-style: none;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-soft);
 }
-.toc ul { list-style: none; margin: 0; padding: 0; max-height: 60vh;
-          overflow-y: auto; }
+.toc summary::-webkit-details-marker { display: none; }
+.toc summary::before {
+  content: "▸"; display: inline-block; width: 1.1em; color: var(--accent);
+  transition: transform 120ms;
+}
+.toc[open] summary::before { transform: rotate(90deg); }
+.toc nav { padding: 0 .9rem .7rem; }
+.toc ul { list-style: none; margin: 0; padding: 0; }
 .toc li.l3 { padding-left: .85rem; }
-.toc a { display: block; padding: .12rem 0; text-decoration: none; }
-.toc a:hover { text-decoration: underline; }
+.toc a {
+  display: block; padding: .18rem 0; text-decoration: none;
+  color: var(--ink-soft); line-height: 1.4;
+}
+.toc a:hover { color: var(--accent); }
+
+@media (min-width: 75rem) {
+  main {
+    display: grid; grid-template-columns: minmax(0, 52rem) 13.5rem;
+    column-gap: 3rem; align-items: start;
+  }
+  .page { grid-column: 1; grid-row: 1; }
+  .toc {
+    grid-column: 2; grid-row: 1;
+    position: sticky; top: 1.75rem; margin: 0; max-width: none;
+    max-height: calc(100vh - 3.5rem); overflow-y: auto;
+    background: none; border: 0; border-left: 1px solid var(--rule);
+    border-radius: 0;
+  }
+  .toc summary { cursor: default; padding: 0 0 .5rem .9rem; }
+  .toc summary::before { display: none; }
+  .toc nav { padding: 0; }
+  .toc li { margin-left: -1px; }
+  .toc a {
+    padding: .2rem 0 .2rem .9rem; border-left: 2px solid transparent;
+  }
+  .toc li.l3 a { padding-left: 1.75rem; font-size: .8rem; }
+  .toc li.l3 { padding-left: 0; }
+  .toc a:hover { border-left-color: var(--accent); }
+}
 
 footer {
   margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--rule);
@@ -234,6 +269,5 @@ footer .credit { margin-top: .4rem; }
   .brand img { max-width: 170px; }
   .maker { margin-top: 1.25rem; }
   main { padding: 1.75rem 1rem 4rem; }
-  .toc { float: none; width: auto; margin: 0 0 1.5rem; }
   .hero { padding: 1.75rem 1rem; }
 }
