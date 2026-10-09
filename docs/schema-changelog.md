@@ -20,6 +20,31 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.23
+
+**The release schema** (release checklist §A7): every registry change
+in the 1.0 batch lands under this one number. Untagged until RC day.
+What has landed so far:
+
+Shot and scene media: proposal 0037.
+
+**Added:**
+
+- `asset_relationship.relationship_type` gains `storyboard`,
+  `start_frame`, `end_frame` and `previs`, for media about a shot or a
+  scene (spec §8.6). Still open-valued.
+- `asset_relationship.order`: position among the assets related to the
+  same entity, ascending (spec §8.6). Optional; rows without one sort
+  last, then by row id.
+
+**Fixture:** shot 12-04 carries two storyboard panels, ordered against
+their row ids, and a start frame.
+
+Query results (not schema): `shotMedia`'s `related` carries `order`,
+scene rows first, then shot rows, each in §8.6's order, and each row's
+`format`, `state`, `detail` and `sizeBytes` as a Q13 reference carries
+them (§8.3), so a storyboard that is not on disk is reported.
+
 ## 2.22
 
 The project synopsis: proposal 0036.

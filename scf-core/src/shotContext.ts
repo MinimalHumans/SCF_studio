@@ -20,7 +20,10 @@
  * if a second implementation needs it.
  */
 
-import type { FileLocator } from "./assets.ts";
+import {
+  resolveIdentifier, type FileLocator, type ResolutionState,
+} from "./assets.ts";
+import type { Row } from "./db.ts";
 import { listEntities, type ListedRow } from "./listEntities.ts";
 import {
   ANCHOR_TYPE_FOR_INTENT, rows, type ScfContext,
@@ -148,20 +151,47 @@ export interface RelatedAsset {
   identifier: string | null;
   /** `asset_relationship.relationship_type`, as stored. */
   relationship: string | null;
+  /** `asset_relationship.order`: position among the entity's related
+   *  assets (§8.6, proposal 0037). Null where none is stored. */
+  order: number | null;
   notes: string | null;
+  /** Derived from the identifier (§8.5); a hint, never a purpose. */
+  format: string | null;
+  /** §8.3's resolution state, as a Q13 reference carries it, so a
+   *  storyboard that is not on disk is reported rather than handed on
+   *  as if it were. `unaddressed` when the session maps no root. */
+  state: ResolutionState;
+  /** Why, for anything not `resolved`. For a person; never parsed. */
+  detail: string | null;
+  /** Read from the resolved file. Null unless `state` is `resolved`. */
+  sizeBytes: number | null;
+}
+
+/**
+ * §8.6's order for the rows relating assets to one entity: `order`
+ * ascending, rows with none after rows with one, then row id. A
+ * storyboard's panels are a sequence, and attachment order is not it.
+ */
+function byRelatedOrder(a: Row, b: Row): number {
+  const oa = a["order"], ob = b["order"];
+  const na = oa === null || oa === undefined, nb = ob === null || ob === undefined;
+  if (na !== nb) return na ? 1 : -1;
+  if (!na && Number(oa) !== Number(ob)) return Number(oa) - Number(ob);
+  return Number(a["id"]) - Number(b["id"]);
 }
 
 /**
  * Assets pointed at this shot and at its scene.
  *
  * Read from `asset_relationship`, whose `entity_id` is polymorphic on
- * `entity_type` (§12.1.2). Deliberately NOT a fourth binding table: a
+ * `entity_type` (§12.1.2). Scene rows come first, then shot rows, each
+ * in §8.6's order. Deliberately NOT a fourth binding table: a
  * binding carries precedence, baselines and filters, none of which
  * means anything for "this picture is of that scene".
  */
 async function relatedAssets(
     ctx: ScfContext, shotId: number, shotUuid: string,
-    sceneId: number | null, sceneUuid: string | null,
+    sceneId: number | null, sceneUuid: string | null, locate: FileLocator,
 ): Promise<RelatedAsset[]> {
   if (!ctx.registry.entities.has("asset_relationship")) return [];
   const out: RelatedAsset[] = [];
@@ -169,25 +199,34 @@ async function relatedAssets(
     ["scene", sceneId, sceneUuid], ["shot", shotId, shotUuid],
   ] as const) {
     if (id === null || uuid === null) continue;
-    for (const link of await rows(
-      ctx.exec, "asset_relationship",
-      "entity_type = ? AND entity_id = ?", [about, id])) {
+    const links = await rows(ctx.exec, "asset_relationship",
+                             "entity_type = ? AND entity_id = ?", [about, id]);
+    for (const link of links.sort(byRelatedOrder)) {
       const asset = (await rows(ctx.exec, "asset", "id = ?",
                                 [link["asset_id"] ?? null]))[0];
       if (asset === undefined) continue;
+      const identifier = asset["identifier"] === null
+        || asset["identifier"] === undefined
+        ? null : String(asset["identifier"]);
+      const resolution = await resolveIdentifier(identifier, locate);
       out.push({
         about, aboutUuid: uuid,
         uuid: String(asset["uuid"] ?? ""),
         name: asset["name"] === null || asset["name"] === undefined
           ? null : String(asset["name"]),
-        identifier: asset["identifier"] === null
-          || asset["identifier"] === undefined
-          ? null : String(asset["identifier"]),
+        identifier,
         relationship: link["relationship_type"] === null
           || link["relationship_type"] === undefined
           ? null : String(link["relationship_type"]),
+        order: link["order"] === null || link["order"] === undefined
+          ? null : Number(link["order"]),
         notes: link["notes"] === null || link["notes"] === undefined
           ? null : String(link["notes"]),
+        format: resolution.format,
+        state: resolution.state,
+        detail: resolution.detail,
+        sizeBytes: resolution.state === "resolved"
+          ? resolution.sizeBytes : null,
       });
     }
   }
@@ -552,7 +591,7 @@ export async function shotMedia(
   }
 
   const related = await relatedAssets(ctx, r.shotId, shotUuid,
-                                      r.sceneId, r.sceneUuid);
+                                      r.sceneId, r.sceneUuid, locate);
   return { contextFormat: "3.0", shotUuid, subject: subjectUuid, media,
            swept, related };
 }

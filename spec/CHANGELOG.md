@@ -17,6 +17,28 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.64 — 2026-10-09
+
+*Describes schema 2.23.*
+
+**Minor.** Proposal 0037: media about a shot or a scene.
+
+### §8.6 — shot and scene media are typed and ordered
+
+§8.6 already put an asset about a shot or a scene on
+`asset_relationship`, but nothing could say a file was the storyboard,
+and a storyboard of six panels had no order but row id, which is when
+each was attached. `relationship_type` gains `storyboard`,
+`start_frame`, `end_frame` and `previs`, and `asset_relationship` gains
+`order`. An implementation listing an entity's related assets **MUST**
+present them by `order`, unordered rows last, then row id. One sequence
+per entity, not per type.
+
+The fixture's shot 12-04 carries two storyboard panels whose `order`
+runs against their row ids, and a start frame.
+
+---
+
 ## 0.63 — 2026-10-08
 
 *Describes schema 2.22.*

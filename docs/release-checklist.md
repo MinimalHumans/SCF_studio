@@ -354,6 +354,12 @@ item that declares something authors a fixture row that exercises it.
   - `audio_offset_*` help text as decided;
   - ✅ `project.synopsis` (0036) — done in `0d65695`, with a synopsis
     authored in the fixture.
+  - ◑ shot and scene media (0037) — in the working tree 2026-10-09,
+    awaiting review: `relationship_type` gains `storyboard`,
+    `start_frame`, `end_frame`, `previs`; `asset_relationship.order`;
+    spec 0.64 §8.6; shot 12-04's panels in the fixture. It moved
+    `SCHEMA_VERSION` to 2.23 ahead of the rest of this batch, which
+    lands under the same number.
 - **Spec text:** §0.6's floor (exactly 2.23, §A8); §12.8's
   `audio_offset_*` sentence (§A9); §12.17's ordered comparison (§A11);
   §1.3.1's finding sentence (§A12); §2.3's clip note (§A1); the
