@@ -54,7 +54,7 @@ const OUT = CHECK ? mkdtempSync(join(tmpdir(), "scf-site-")) : join(HERE, "dist"
  * section numbers other documents may reference. Only the spec does.
  */
 const PAGES = [
-  { group: "", title: "SCF", slug: "index", source: "site/index.md",
+  { group: "", title: "Overview", slug: "index", source: "site/index.md",
     blurb: "What the format is" },
 
   { group: "Specification", title: "The specification",
@@ -119,6 +119,21 @@ const PAGES = [
     slug: "release-checklist", source: "docs/release-checklist.md",
     blurb: "What stands between here and 1.0" },
 ];
+
+/**
+ * Brand files, copied from the CI collections under docs/ rather than
+ * kept here: one copy of each logo, in the place the designers put it.
+ * Keys are paths under dist/assets, values repository-relative sources.
+ */
+const ASSETS = {
+  "scf-full-black.svg": "docs/SCF_CI_Collection/SVG/logoFull_black.svg",
+  "scf-full-white.svg": "docs/SCF_CI_Collection/SVG/logoFull_white.svg",
+  "mh-short.svg": "docs/MinimalHumans_CI_Collection/SVG/logoShort.svg",
+  "favicon.ico": "docs/SCF_CI_Collection/favicon/favicon.ico",
+  "favicon-16x16.png": "docs/SCF_CI_Collection/favicon/favicon-16x16.png",
+  "favicon-32x32.png": "docs/SCF_CI_Collection/favicon/favicon-32x32.png",
+  "apple-touch-icon.png": "docs/SCF_CI_Collection/favicon/apple-touch-icon.png",
+};
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
   .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -232,6 +247,24 @@ function nav(currentSlug) {
   }).join("");
 }
 
+/** The landing page's masthead. Only index has one. */
+function hero() {
+  return `<header class="hero">
+<h1 class="hero-mark">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="assets/scf-full-white.svg">
+<img src="assets/scf-full-black.svg" alt="SCF — Story Context Framework" width="440" height="129">
+</picture>
+</h1>
+<p class="hero-lede">A film, described in a way a machine can answer questions about.</p>
+<p class="hero-actions">
+<a class="btn btn-primary" href="what-is-scf.html">What is SCF?</a>
+<a class="btn" href="spec.html">Read the specification</a>
+<a class="btn btn-ghost" href="https://github.com/MinimalHumans/SCF_studio">GitHub</a>
+</p>
+</header>`;
+}
+
 /** On-page contents. Deep documents are unusable without one. */
 function contents(headings) {
   const useful = headings.filter((h) => h.level >= 2 && h.level <= 3);
@@ -251,20 +284,31 @@ for (const { page, text, headings } of docs) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(page.title)} — SCF</title>
+<title>${page.slug === "index" ? "SCF — Story Context Framework" : `${esc(page.title)} — SCF`}</title>
 <meta name="description" content="${esc(page.blurb)}">
+<meta name="theme-color" content="#1b6393">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
 <div class="shell">
 <aside class="side">
-<a class="brand" href="index.html">SCF</a>
-<p class="tagline">Story Context Framework</p>
+<a class="brand" href="index.html">
+<img src="assets/scf-full-white.svg" alt="SCF — Story Context Framework" width="200" height="59">
+</a>
 ${nav(page.slug)}
-<p class="repo"><a href="https://github.com/MinimalHumans/SCF_studio">Repository</a></p>
+<p class="repo"><a href="https://github.com/MinimalHumans/SCF_studio">Repository on GitHub</a></p>
+<a class="maker" href="https://www.minimalhumans.com" target="_blank" rel="noopener">
+<span>Developed by</span>
+<img src="assets/mh-short.svg" alt="Minimal Humans" width="150" height="49">
+</a>
 </aside>
-<main id="content">
+<main id="content"${page.slug === "index" ? ' class="landing"' : ""}>
+${page.slug === "index" ? hero() : ""}
 ${contents(headings)}
 <article>
 ${body}
@@ -272,6 +316,7 @@ ${body}
 <footer>
 <p>Rendered from <code>${esc(page.source)}</code>. The repository is the
 source of truth; if this page disagrees with it, the repository is right.</p>
+<p class="credit">SCF is developed by <a href="https://www.minimalhumans.com">Minimal Humans</a>.</p>
 </footer>
 </main>
 </div>
@@ -305,6 +350,10 @@ for (const { slug, html } of built) {
   writeFileSync(join(OUT, `${slug}.html`), html, "utf8");
 }
 cpSync(join(HERE, "style.css"), join(OUT, "style.css"));
+mkdirSync(join(OUT, "assets"), { recursive: true });
+for (const [name, source] of Object.entries(ASSETS)) {
+  cpSync(join(ROOT, source), join(OUT, "assets", name));
+}
 writeFileSync(join(OUT, ".nojekyll"), "", "utf8");
 
 const summary = `${String(built.length)} pages, ` +

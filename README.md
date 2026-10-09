@@ -1,7 +1,36 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
-# SCF Studio
+<p align="center">
+  <a href="https://minimalhumans.github.io/SCF_studio/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/SCF_CI_Collection/SVG/logoFull_white.svg">
+      <img src="docs/SCF_CI_Collection/SVG/logoFull_black.svg" alt="SCF — Story Context Framework" width="440">
+    </picture>
+  </a>
+</p>
 
-[![CI](https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml/badge.svg)](https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml)
+<h1 align="center">SCF Studio</h1>
+
+<p align="center">
+  <strong>A film, described in a way a machine can answer questions about.</strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml"><img src="https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://minimalhumans.github.io/SCF_studio/"><img src="https://img.shields.io/badge/docs-minimalhumans.github.io-1b6393" alt="Documentation"></a>
+  <a href="spec/stability.md"><img src="https://img.shields.io/badge/spec-pre--1.0%20draft-ef393b" alt="Specification: pre-1.0 draft"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-1b6393" alt="Code licence: Apache-2.0"></a>
+  <a href="spec/LICENSE"><img src="https://img.shields.io/badge/prose-CC%20BY%204.0-f4af3f" alt="Prose licence: CC BY 4.0"></a>
+</p>
+
+<p align="center">
+  <a href="https://minimalhumans.github.io/SCF_studio/">Documentation</a> ·
+  <a href="https://minimalhumans.github.io/SCF_studio/what-is-scf.html">What is SCF?</a> ·
+  <a href="https://minimalhumans.github.io/SCF_studio/spec.html">Specification</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+<img src=".github/assets/brand-rule.svg" alt="" width="100%" height="6">
 
 Tooling for the **Story Context Framework** — a description of a film's
 intent, dense enough that a human or a machine can answer a specific
@@ -135,3 +164,13 @@ and the resolution semantics, and was held to conformance parity with
 this one while both existed. It is retired; nothing here depends on it.
 The conformance suites and the Hollow Creek fixture carry the contract
 forward.
+
+<img src=".github/assets/brand-rule.svg" alt="" width="100%" height="6">
+
+<p align="center">
+  <a href="https://www.minimalhumans.com">
+    <img src=".github/assets/minimal-humans-plate.svg" alt="Minimal Humans" width="240">
+  </a>
+  <br>
+  <sub>SCF is developed by <a href="https://www.minimalhumans.com">Minimal Humans</a>.</sub>
+</p>
