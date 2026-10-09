@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.64 (draft) — not a release.**
+**Version 0.65 (draft) — not a release.**
 Describes schema version **2.23**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -1377,6 +1377,13 @@ entity's related assets, not only those of its own `relationship_type`,
 so a storyboard's panels keep their sequence whatever sits beside them.
 Row id alone records when a file was attached, not where it falls.
 
+**The film's poster is related to the project.** An asset related to
+the `project` row with `relationship_type` `poster` is the film's key
+art. A project may relate several: the first in the order above is the
+poster, and any after it are alternatives. Q00 returns them (§12.12).
+The member is not restricted by `entity_type`, but this section gives
+it no meaning on any other entity.
+
 **A bundle no binding reaches is the orphan one level up.** Its assets
 are referenced — `bundle_asset` points at each of them — so no
 `asset.orphan` finding is raised, and yet the media cascade (§7) starts
@@ -2506,6 +2513,7 @@ No parameters. The only canonical query with an empty envelope.
 |---|---|
 | `layers` | The project-level entities, **broadest first**, each `{ entity, row }`. |
 | `themes` | Every theme in the project. |
+| `posters` | The assets related to the project row as `poster` (§8.6), each projected, in §8.6's order. Empty when there are none. The first is the poster. |
 
 The layer list is an editorial choice about what a brief *is*, not a
 fact the registry knows, so it is fixed by this section rather than

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * relatedMediaOps.ts — media about a shot or a scene.
+ * relatedMediaOps.ts — media about a shot, a scene or the project.
  *
  * Storyboard panels, start and end frames, previs, and anything else a
  * shot or scene points at. Spec §8.6 says these sit on
@@ -9,6 +9,10 @@
  * file is about that shot". Purpose lives on the link (§8.4) as
  * `relationship_type`; position is `order` (proposal 0037), one
  * sequence per entity whatever the type.
+ *
+ * The project's one kind of related media is its poster (proposal
+ * 0038): `relationship_type` = `poster`, the first in §8.6's order
+ * being the one shown.
  *
  * Headless (no view imports), and every write returns its ChangeUndo so
  * one action undoes as one step.
@@ -20,7 +24,7 @@ import {
 import { ChangeRecorder, type ChangeUndo } from "../state/undoChange.ts";
 
 /** What a related file can be about. */
-export type MediaOwnerKind = "shot" | "scene";
+export type MediaOwnerKind = "shot" | "scene" | "project";
 
 export interface MediaOwner {
   kind: MediaOwnerKind;
@@ -194,6 +198,50 @@ export async function moveMedia(
     (moved as MediaTile).asset["name"] ?? "a file")} ${
     delta < 0 ? "earlier" : "later"}`);
   await withTransaction(exec, async () => {
+    for (const [i, t] of next.entries()) {
+      if (t.order === i + 1) continue;
+      await rec.snapshot(exec, "asset_relationship", t.linkId);
+      await exec(
+        `UPDATE asset_relationship SET ${q("order")} = ?, ` +
+        "updated_at = datetime('now') WHERE id = ?", [i + 1, t.linkId]);
+    }
+  });
+  return rec.result;
+}
+
+/** The project's posters, in §8.6's order: the first is the poster. */
+export async function loadPosters(exec: SqlExec,
+                                  projectId: number): Promise<MediaTile[]> {
+  return (await loadMedia(exec, { kind: "project", id: projectId }))
+    .filter((t) => t.type === "poster");
+}
+
+/**
+ * Make an asset the project's poster. It goes first in the project's
+ * order and whatever was the poster stays behind it as an alternative,
+ * so replacing one loses nothing. An asset already related as a poster
+ * is moved, not related twice.
+ */
+export async function setPoster(exec: SqlExec, projectId: number,
+                                assetId: number): Promise<ChangeUndo> {
+  const rec = new ChangeRecorder("Set the poster");
+  await withTransaction(exec, async () => {
+    const owner: MediaOwner = { kind: "project", id: projectId };
+    let tiles = await loadMedia(exec, owner);
+    let chosen = tiles.find((t) =>
+      t.type === "poster" && Number(t.asset["id"]) === assetId);
+    if (chosen === undefined) {
+      const made = await exec(
+        "INSERT INTO asset_relationship (uuid, asset_id, entity_type, " +
+        "entity_id, relationship_type) VALUES (?, ?, 'project', ?, " +
+        "'poster') RETURNING id", [newUuid(), assetId, projectId]);
+      const linkId = Number(made[0]?.["id"]);
+      rec.created("asset_relationship", linkId);
+      tiles = await loadMedia(exec, owner);
+      chosen = tiles.find((t) => t.linkId === linkId);
+    }
+    const next = [chosen as MediaTile,
+                  ...tiles.filter((t) => t !== chosen)];
     for (const [i, t] of next.entries()) {
       if (t.order === i + 1) continue;
       await rec.snapshot(exec, "asset_relationship", t.linkId);

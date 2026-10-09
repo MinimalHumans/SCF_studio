@@ -183,7 +183,7 @@ Links an asset to an entity it documents or references. Open polymorphism — en
 | `asset_id` | reference | **yes** | → `asset` (resolves to `asset_uuid` in a result, §12.1.2) |
 | `entity_type` | text | **yes** | Open-ended — any entity name. |
 | `entity_id` | integer | **yes** |  |
-| `relationship_type` | select |  | one of `reference`, `documentation`, `concept`, `inspiration`, `final`, `storyboard`, `start_frame`, `end_frame`, `previs`. What the asset is to the entity. storyboard, start_frame, end_frame and previs are for a shot or a scene (proposal 0037); anything else a shot points at is a reference. |
+| `relationship_type` | select |  | one of `reference`, `documentation`, `concept`, `inspiration`, `final`, `storyboard`, `start_frame`, `end_frame`, `previs`, `poster`. What the asset is to the entity. storyboard, start_frame, end_frame and previs are for a shot or a scene (proposal 0037); anything else a shot points at is a reference. poster is the film's key art, related to the project (proposal 0038). |
 | `order` | integer |  | Position among the assets related to the same entity, ascending; rows with none come last, then by row id (spec §8.6). One sequence per entity, whatever the relationship type. |
 | `notes` | textarea |  |  |
 

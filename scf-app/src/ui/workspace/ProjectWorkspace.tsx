@@ -10,6 +10,12 @@ import { useQuery } from "../useQuery.ts";
 import { Field } from "../fields/Field.tsx";
 import { asPolicy, NumberingPolicyConfirm } from "../NumberingPolicyConfirm.tsx";
 import { AutoField } from "./AutoField.tsx";
+import { fail, FileIntake, type Incoming } from "./BoardParts.tsx";
+import { AssetPreview } from "../AssetPreview.tsx";
+import {
+  detachMedia, loadPosters, setPoster, type MediaTile,
+} from "../../editor/relatedMediaOps.ts";
+import { registerFiles, withCreatedAssets } from "../../editor/mediaOps.ts";
 
 /**
  * ProjectWorkspace — the baseline of the film, in one place.
@@ -178,7 +184,10 @@ function ProjectSection(): JSX.Element {
           line and then told short, and what kind of thing it is.
         </p>
         <ManyWarning count={single.count} what="project" />
-        <Fields entity="project" names={prose} single={single} />
+        <div className="tp-layout">
+          <Fields entity="project" names={prose} single={single} />
+          <ProjectPoster single={single} />
+        </div>
         <Fields entity="project" names={general} single={single} grid />
       </section>
       <section className="ws-section">
@@ -187,6 +196,103 @@ function ProjectSection(): JSX.Element {
                 single={single} />
       </section>
     </>
+  );
+}
+
+/**
+ * The film's poster, beside the prose that describes it.
+ *
+ * An `asset_relationship` row from the project, typed `poster`
+ * (proposal 0038), not a column: the first in §8.6's order is shown, and
+ * one replaced stays behind it as an alternative. Fit to the column's
+ * width, so any aspect ratio works.
+ */
+function ProjectPoster({ single }: {
+  single: ReturnType<typeof useSingleton>;
+}): JSX.Element {
+  const { revision, openEntityRow, projectRoot, attachFolder } = useStore();
+  const [posters, setPosters] = useState<MediaTile[] | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    if (single.id === null) { setPosters([]); return; }
+    let cancelled = false;
+    void loadPosters(exec, single.id).then((p) => {
+      if (!cancelled) setPosters(p);
+    }).catch((e: unknown) => fail("Could not read the poster", e));
+    return () => { cancelled = true; };
+  }, [single.id, revision]);
+
+  const take = async (incoming: Incoming): Promise<void> => {
+    try {
+      const { assetIds, created } = await registerFiles(
+        exec, incoming.candidates);
+      const first = [...incoming.assetIds, ...assetIds][0];
+      if (first === undefined) return;
+      const projectId = single.id ?? await single.ensure();
+      const change = await setPoster(exec, projectId, first);
+      useStore.getState().recordChange(withCreatedAssets(change, created));
+      setAdding(false);
+    } catch (e) {
+      fail("Could not set the poster", e);
+    }
+  };
+
+  if (posters === null) return <div className="project-poster" />;
+  const poster = posters[0];
+  const identifier = poster?.asset["identifier"];
+  const name = poster === undefined ? ""
+    : String(poster.asset["name"] ?? identifier ?? "poster");
+
+  return (
+    <div className="project-poster">
+      {poster !== undefined && (
+        <>
+          <div className="project-poster-image">
+            {projectRoot === null ? (
+              // The demo opens with no folder, and every asset reads
+              // unresolved; say what would show it rather than that.
+              <div className="asset-preview asset-preview-none">
+                <p className="muted">
+                  Connect the project folder to see the poster.
+                </p>
+                <button className="ghost tiny"
+                        onClick={() => void attachFolder()}>
+                  Connect folder
+                </button>
+              </div>
+            ) : (
+              <AssetPreview identifier={typeof identifier === "string"
+                                        ? identifier : null} />
+            )}
+          </div>
+          <div className="project-poster-bar">
+            <span className="project-poster-name"
+                  title={String(identifier ?? "")}>{name}</span>
+            <button className="ghost tiny" aria-expanded={adding}
+                    onClick={() => setAdding((v) => !v)}>Replace</button>
+            <button className="ghost tiny" title="Show in Assets"
+                    onClick={() => void openEntityRow(
+                      "asset", Number(poster.asset["id"]))}>Open</button>
+            <button className="ghost tiny"
+                    title="Take it off the project. The asset stays."
+                    onClick={() => void detachMedia(exec, poster)
+                      .then((c) => useStore.getState().recordChange(c))
+                      .catch((e: unknown) => fail("Could not remove it", e))}>
+              Remove
+            </button>
+          </div>
+        </>
+      )}
+      {(poster === undefined || adding) && (
+        <div className="project-poster-add">
+          {poster === undefined && <p>Poster</p>}
+          <FileIntake compact onFiles={(i) => void take(i)}
+                      exclude={new Set(posters.slice(0, 1)
+                        .map((t) => Number(t.asset["id"])))} />
+        </div>
+      )}
+    </div>
   );
 }
 

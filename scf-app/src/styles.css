@@ -2534,6 +2534,35 @@ button.strip-span-label:hover { color: var(--amber); }
 }
 @media (max-width: 900px) { .tp-layout { grid-template-columns: 1fr; } }
 .tp-fields { margin-top: 0; }
+/* the film's poster, beside its prose: fit to width, any aspect */
+.project-poster { margin-top: 8px; min-width: 0; }
+.project-poster-image .asset-preview {
+  margin: 0; padding: 0; border: 0; background: none;
+}
+.project-poster-image .asset-preview-image {
+  width: 100%; max-height: none; height: auto;
+  border: 1px solid var(--line); border-radius: 4px;
+}
+/* no image to show: hold a poster's shape, so the column does not
+   collapse to a line of text */
+.project-poster-image .asset-preview-none {
+  aspect-ratio: 2 / 3;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px; padding: 16px; text-align: center;
+  border: 1px dashed var(--line); border-radius: 4px;
+}
+.project-poster-bar {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px;
+}
+.project-poster-name {
+  flex: 1; min-width: 0; font-size: 11.5px; color: var(--paper-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.project-poster-add { display: grid; gap: 6px; margin-top: 8px; }
+.project-poster-add > p {
+  margin: 0; font-size: 12px; color: var(--paper);
+}
+
 .tp-fill { justify-self: start; }
 /* a Letter page in miniature: 8.5 × 11 */
 .tp-preview {

@@ -16126,9 +16126,10 @@
             "storyboard",
             "start_frame",
             "end_frame",
-            "previs"
+            "previs",
+            "poster"
           ],
-          "helpText": "What the asset is to the entity. storyboard, start_frame, end_frame and previs are for a shot or a scene (proposal 0037); anything else a shot points at is a reference.",
+          "helpText": "What the asset is to the entity. storyboard, start_frame, end_frame and previs are for a shot or a scene (proposal 0037); anything else a shot points at is a reference. poster is the film's key art, related to the project (proposal 0038).",
           "open": true
         },
         {

@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `b19b98af3e3b4bea…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/scf-spec.md` | `ee846bea5b4816bc…` | The specification. Everything normative about the format is here or cited from here. |
 | `spec/conformance.md` | `7ab18d3a68a22b4f…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `1377b788b0576edd…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `d88bce3d0b4ab5e3…` | The specification changelog. Spec §11.5. |
+| `spec/stability.md` | `fbaa161a6b0186a3…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `d5fd49dc57db5314…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -58,11 +58,11 @@ Generated from `schema/`, which is the source of truth for all of them.
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `scf-core/registry/registry.json` | `49f986b94c84bd75…` | The normative field set. Spec §2.1. |
+| `scf-core/registry/registry.json` | `343b56ebe7869bfa…` | The normative field set. Spec §2.1. |
 | `spec/scf-schema.sql` | `588f617d25379918…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
 | `spec/screenplay-tables.json` | `0cf0f020a3d33d1a…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
-| `spec/entity-reference.md` | `a69fea48861d544f…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
-| `spec/query-reference.md` | `81bc0c83027389a5…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
+| `spec/entity-reference.md` | `fdb29feec273e00e…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
+| `spec/query-reference.md` | `d8f22f0cc8efca5b…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
 | `spec/api-surface.json` | `47977687dcf53a71…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `dd17bfd163b4412e…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `f7b0858f9f51b2b0…` | Natural keys for every link entity. Spec §6.3. |
@@ -75,7 +75,7 @@ One normative result per query, spec §12. Rows by uuid, no row ids, no timestam
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `fixtures/expectations/Q00.result.json` | `f52a90861d96d10f…` | Q00's normative result. Spec §12.12. |
+| `fixtures/expectations/Q00.result.json` | `0194ed1a1f621f1f…` | Q00's normative result. Spec §12.12. |
 | `fixtures/expectations/Q03.result.json` | `345f32c99427b6a7…` | Q03's normative result. Spec §12.4. |
 | `fixtures/expectations/Q01.result.json` | `fe5cf6e3df9e3fcc…` | Q01's normative result. Spec §12.15. |
 | `fixtures/expectations/Q02.result.json` | `9cc0abccd6dbce28…` | Q02's normative result. Spec §12.16. |
@@ -124,7 +124,7 @@ Eleven files that are wrong in a stated way, and the report each MUST produce. S
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `c5e8dc3a44c17812…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `e3d4d3b8ada67566…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 
