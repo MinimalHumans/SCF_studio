@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.63 (draft) — not a release.**
-Describes schema version **2.22**.
+**Version 0.64 (draft) — not a release.**
+Describes schema version **2.23**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -1361,6 +1361,21 @@ or the shot through `asset_relationship` (`entity_type` = `scene` or
 SHOULD include those rows. There is deliberately no fourth binding
 table: a binding carries precedence, baselines and filters, and none of
 them means anything for "this picture is of that scene".
+
+**What it is to the shot is the relationship type.** Four of
+`relationship_type`'s members exist for this case: `storyboard` (a
+panel planning the shot), `start_frame` and `end_frame` (the frames it
+opens and closes on), and `previs` (a moving rough). Anything else a
+shot or scene points at — a reference clip, a sound, a scan — is
+`reference`, and §8.5 says what kind of file it is.
+
+**Rows relating assets to the same entity are ordered** by
+`asset_relationship.order` ascending, rows with no `order` after rows
+with one, then by row id. An implementation listing them MUST present
+them in that order. `order` positions a row among **all** of that
+entity's related assets, not only those of its own `relationship_type`,
+so a storyboard's panels keep their sequence whatever sits beside them.
+Row id alone records when a file was attached, not where it falls.
 
 **A bundle no binding reaches is the orphan one level up.** Its assets
 are referenced — `bundle_asset` points at each of them — so no

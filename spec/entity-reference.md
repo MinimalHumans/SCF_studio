@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.22** — **106 entities**.
+Schema **2.23** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -183,7 +183,8 @@ Links an asset to an entity it documents or references. Open polymorphism — en
 | `asset_id` | reference | **yes** | → `asset` (resolves to `asset_uuid` in a result, §12.1.2) |
 | `entity_type` | text | **yes** | Open-ended — any entity name. |
 | `entity_id` | integer | **yes** |  |
-| `relationship_type` | select |  | one of `reference`, `documentation`, `concept`, `inspiration`, `final` |
+| `relationship_type` | select |  | one of `reference`, `documentation`, `concept`, `inspiration`, `final`, `storyboard`, `start_frame`, `end_frame`, `previs`. What the asset is to the entity. storyboard, start_frame, end_frame and previs are for a shot or a scene (proposal 0037); anything else a shot points at is a reference. |
+| `order` | integer |  | Position among the assets related to the same entity, ascending; rows with none come last, then by row id (spec §8.6). One sequence per entity, whatever the relationship type. |
 | `notes` | textarea |  |  |
 
 *1 hidden field(s) omitted — present in the table, not offered for authoring.*

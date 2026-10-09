@@ -13,6 +13,8 @@ import { sceneLabel } from "../state/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
+import { MediaStrip } from "./MediaStrip.tsx";
+import type { MediaOwnerKind } from "../editor/relatedMediaOps.ts";
 
 /**
  * ShootView — the shooting surface.
@@ -50,6 +52,9 @@ export function ShootView(): JSX.Element {
   const shots = useQuery(
     "SELECT id, name, scene_id, story_beat_id, shot_number, shot_order, " +
     "shot_size, camera_angle FROM shot ORDER BY shot_order, id");
+  const mediaRows = useQuery(
+    "SELECT entity_type, entity_id, COUNT(*) AS n FROM asset_relationship " +
+    "WHERE entity_type IN ('shot', 'scene') GROUP BY entity_type, entity_id");
 
   const structure = useMemo(
     () => deriveStructure(scenes, acts, sequences,
@@ -59,6 +64,22 @@ export function ShootView(): JSX.Element {
     () => new Map(scenes.map((s) => [Number(s["id"]), s])), [scenes]);
   const beatsByScene = useMemo(() => groupBy(beats, "scene_id"), [beats]);
   const shotsByScene = useMemo(() => groupBy(shots, "scene_id"), [shots]);
+  const mediaCount = useMemo(() => new Map(mediaRows.map((r) => [
+    `${String(r["entity_type"])}:${String(r["entity_id"])}`,
+    Number(r["n"])])), [mediaRows]);
+  const mediaToggle = (kind: MediaOwnerKind, id: number): JSX.Element => {
+    const key = `media:${kind}:${String(id)}`;
+    const n = mediaCount.get(`${kind}:${String(id)}`) ?? 0;
+    const shown = open.has(key);
+    return (
+      <button className={"ghost tiny media-toggle" + (n > 0 ? " has" : "")}
+              aria-expanded={shown}
+              title={`Storyboards, frames and references for this ${kind}`}
+              onClick={() => toggle(key)}>
+        {shown ? "▾ " : ""}media{n > 0 ? ` ${String(n)}` : ""}
+      </button>
+    );
+  };
 
   const bump = (): void => {
     useStore.setState((s) => ({ revision: s.revision + 1 }));
@@ -116,6 +137,7 @@ export function ShootView(): JSX.Element {
           <span className="shoot-count">
             {summarize(sceneBeats.length, sceneShots.length)}
           </span>
+          {mediaToggle("scene", sceneId)}
           <button className="ghost tiny"
                   onClick={() => void run(addBeat(exec, sceneId))}>+ beat</button>
           <button className="ghost tiny"
@@ -123,6 +145,11 @@ export function ShootView(): JSX.Element {
             + shot
           </button>
         </div>
+        {open.has(`media:scene:${String(sceneId)}`) && (
+          <div className="shoot-media shoot-media-scene">
+            <MediaStrip owner={{ kind: "scene", id: sceneId }} />
+          </div>
+        )}
         {expanded && (
           <div className="shoot-scene-body">
             <SceneText sceneId={sceneId} />
@@ -189,36 +216,44 @@ export function ShootView(): JSX.Element {
       (scene?.["scene_number"] ?? null) as string | number | null,
       sceneShots.findIndex((r) => Number(r["id"]) === id));
     return (
-      <div key={id} className="shoot-row shoot-row-shot">
-        <input className="shoot-input shoot-number"
-               defaultValue={authored}
-               onBlur={(e) => void run(updateField(
-                 exec, "shot", id, "shot_number", e.target.value))} />
-        {authored !== "" && authored !== derived && (
-          <span className="shoot-drift"
-                title={"A shot number is an identifier issued to a crew, " +
-                       "so it is never rewritten automatically. By " +
-                       "position this shot would be " + derived + "."}>
-            ≠ {derived}
-          </span>
+      <div key={id} className="shoot-shot">
+        <div className="shoot-row shoot-row-shot">
+          <input className="shoot-input shoot-number"
+                 defaultValue={authored}
+                 onBlur={(e) => void run(updateField(
+                   exec, "shot", id, "shot_number", e.target.value))} />
+          {authored !== "" && authored !== derived && (
+            <span className="shoot-drift"
+                  title={"A shot number is an identifier issued to a crew, " +
+                         "so it is never rewritten automatically. By " +
+                         "position this shot would be " + derived + "."}>
+              ≠ {derived}
+            </span>
+          )}
+          <input className="shoot-input shoot-shot-name"
+                 placeholder="description"
+                 defaultValue={String(shot["name"] ?? "")}
+                 onBlur={(e) => void run(updateField(exec, "shot", id, "name", e.target.value))} />
+          <FieldSelect field="shot_size" value={shot["shot_size"]}
+                       onPick={(v) => void run(updateField(exec, "shot", id, "shot_size", v))} />
+          <FieldSelect field="camera_angle" value={shot["camera_angle"]}
+                       onPick={(v) =>
+                         void run(updateField(exec, "shot", id, "camera_angle", v))} />
+          <button className="ghost tiny" title="Move up"
+                  onClick={() => void run(moveShot(exec, id, sceneShots, -1))}>▲</button>
+          <button className="ghost tiny" title="Move down"
+                  onClick={() => void run(moveShot(exec, id, sceneShots, 1))}>▼</button>
+          <button className="ghost tiny" title="Open the full shot record"
+                  onClick={() => void openEntityRow("shot", id)}>⋯</button>
+          {mediaToggle("shot", id)}
+          <button className="ghost tiny"
+                  onClick={() => void run(removeShot(exec, id))}>×</button>
+        </div>
+        {open.has(`media:shot:${String(id)}`) && (
+          <div className="shoot-media">
+            <MediaStrip owner={{ kind: "shot", id }} />
+          </div>
         )}
-        <input className="shoot-input shoot-shot-name"
-               placeholder="description"
-               defaultValue={String(shot["name"] ?? "")}
-               onBlur={(e) => void run(updateField(exec, "shot", id, "name", e.target.value))} />
-        <FieldSelect field="shot_size" value={shot["shot_size"]}
-                     onPick={(v) => void run(updateField(exec, "shot", id, "shot_size", v))} />
-        <FieldSelect field="camera_angle" value={shot["camera_angle"]}
-                     onPick={(v) =>
-                       void run(updateField(exec, "shot", id, "camera_angle", v))} />
-        <button className="ghost tiny" title="Move up"
-                onClick={() => void run(moveShot(exec, id, sceneShots, -1))}>▲</button>
-        <button className="ghost tiny" title="Move down"
-                onClick={() => void run(moveShot(exec, id, sceneShots, 1))}>▼</button>
-        <button className="ghost tiny" title="Open the full shot record"
-                onClick={() => void openEntityRow("shot", id)}>⋯</button>
-        <button className="ghost tiny"
-                onClick={() => void run(removeShot(exec, id))}>×</button>
       </div>
     );
   }

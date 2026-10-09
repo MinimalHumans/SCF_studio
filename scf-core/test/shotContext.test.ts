@@ -236,6 +236,41 @@ describe("shotMedia — what to attach", () => {
       .toContain("@project/shots/marcus_in_the_kitchen.png");
     expect(m.related.every((r) => r.about === "scene")).toBe(true);
   });
+
+  test("a shot's storyboard comes back in its order, not row order (§8.6)",
+       async () => {
+    // 12-04's panels are stored against their row ids on purpose.
+    const m = await shotMedia(fx.ctx, shot1204.uuid);
+    const own = m.related.filter((r) => r.about === "shot");
+    expect(own.map((r) => [r.relationship, r.order])).toEqual([
+      ["storyboard", 1], ["storyboard", 2], ["start_frame", 3]]);
+    expect(own.map((r) => r.identifier)).toEqual([
+      "@project/assets/locations/kitchen/kitchen_no_table_night.png",
+      "@project/assets/locations/kitchen/kitchen_night.png",
+      "@project/shots/demo_kitchen_night_01.png"]);
+  });
+
+  test("a related asset carries its resolution state, as a Q13 reference does",
+       async () => {
+    // No root: every one is unaddressed, never missing (§8.3).
+    const bare = await shotMedia(fx.ctx, shot1204.uuid);
+    expect(bare.related.every((r) => r.state === "unaddressed")).toBe(true);
+    expect(bare.related.every((r) => r.sizeBytes === null)).toBe(true);
+
+    // A project root holding one panel and not the other: the absent
+    // storyboard is reported, not handed on as if it were there.
+    const locate = async (root: string | null, path: string) =>
+      root !== "project" ? undefined
+        : path === "assets/locations/kitchen/kitchen_no_table_night.png"
+          ? { materialised: true, sizeBytes: 2048, mtime: null } : null;
+    const m = await shotMedia(fx.ctx, shot1204.uuid, locate, true);
+    const own = m.related.filter((r) => r.about === "shot");
+    expect(own.map((r) => [r.state, r.sizeBytes, r.format])).toEqual([
+      ["resolved", 2048, "png"], ["missing", null, "png"],
+      ["missing", null, "png"]]);
+    expect(own[0]!.detail).toBeNull();
+    expect(own[1]!.detail).toMatch(/kitchen_night\.png/);
+  });
 });
 
 describe("shotReadiness — what is thin", () => {

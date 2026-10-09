@@ -290,7 +290,9 @@ server.registerTool("shot_media", {
     "is left out and listed under its subject's `empty` in `swept`; one " +
     "whose trail explains an absence (a binding EXCLUDED, and why) is " +
     "kept. `related` carries assets about the scene or shot itself, such " +
-    "as a DOP's framing plate. For a shot with many subjects, pass " +
+    "as a DOP's framing plate, storyboard panels or a start and end " +
+    "frame, in their stored order (`relationship` says which), each " +
+    "with its resolution `state` like a Q13 reference. For a shot with many subjects, pass " +
     "`subjectUuid` (from `shot_context`'s `presence`, or the scene's " +
     "location) to take them one at a time.",
   inputSchema: {

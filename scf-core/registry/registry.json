@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.22",
+  "schemaVersion": "2.23",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -16122,9 +16122,24 @@
             "documentation",
             "concept",
             "inspiration",
-            "final"
+            "final",
+            "storyboard",
+            "start_frame",
+            "end_frame",
+            "previs"
           ],
+          "helpText": "What the asset is to the entity. storyboard, start_frame, end_frame and previs are for a shot or a scene (proposal 0037); anything else a shot points at is a reference.",
           "open": true
+        },
+        {
+          "name": "order",
+          "label": "Order",
+          "fieldType": "integer",
+          "sqlType": "INTEGER",
+          "required": false,
+          "tab": "General",
+          "autoInjected": false,
+          "helpText": "Position among the assets related to the same entity, ascending; rows with none come last, then by row id (spec §8.6). One sequence per entity, whatever the relationship type."
         },
         {
           "name": "notes",
