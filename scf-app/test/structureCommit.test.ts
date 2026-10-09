@@ -14,7 +14,8 @@ import {
 import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
 import {
   classifySection, commitStructure, planCommitStructure,
-  reanchorSpansForMove, setNumberingMode,
+  previewDerivedNumbering, reanchorSpansForMove, renumberSpans,
+  setNumberingMode,
 } from "../src/editor/structureCommit.ts";
 import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
 
@@ -286,6 +287,74 @@ describe("scene renumbering", () => {
     await commitStructure(db.exec, [], true);
     // Gaps and duplicates survive: they are the production's data.
     expect(await numbers()).toEqual(["12", "12A", "47"]);
+  });
+
+  /** Two acts and a sequence carrying a production's own numbers. */
+  const spans = async (): Promise<void> => {
+    await db.exec("INSERT INTO act (name, act_number, start_scene_id) " +
+                  "VALUES ('Act One', 3, 1), ('Act Two', 7, 3)");
+    await db.exec("INSERT INTO sequence (name, sequence_number, " +
+                  "start_scene_id) VALUES ('The Ridge', 12, 2)");
+  };
+  const spanNumbers = async (): Promise<unknown[]> => [
+    ...(await db.exec("SELECT act_number FROM act ORDER BY id"))
+      .map((r) => Number(r["act_number"])),
+    ...(await db.exec("SELECT sequence_number FROM sequence ORDER BY id"))
+      .map((r) => Number(r["sequence_number"])),
+  ];
+
+  test("fixed: act and sequence numbers are never touched (§4.3)",
+       async () => {
+    // All four numbers, not only scenes and shots. The Structure view
+    // calls renumberSpans directly, so the commit path alone is not
+    // enough to test.
+    await spans();
+    await setNumberingMode(db.exec, "fixed");
+    await script([1, 2, 3]);
+    await commitStructure(db.exec, [], true);
+    expect(await spanNumbers()).toEqual([3, 7, 12]);
+    await renumberSpans(db.exec);
+    expect(await spanNumbers()).toEqual([3, 7, 12]);
+  });
+
+  test("derived: act and sequence numbers follow story order", async () => {
+    await spans();
+    await script([1, 2, 3]);
+    await commitStructure(db.exec, [], true);
+    expect(await spanNumbers()).toEqual([1, 2, 1]);
+  });
+
+  test("the preview counts what switching to derived would rewrite",
+       async () => {
+    // A locked production: gapped numbers, a shot list, spans with
+    // their own numbers, and a scene cut from the page.
+    await db.exec("UPDATE scene SET scene_number = '12' WHERE id = 1");
+    await db.exec("UPDATE scene SET scene_number = '2' WHERE id = 2");
+    await db.exec("UPDATE scene SET scene_number = '47' WHERE id = 3");
+    await db.exec("INSERT INTO shot (scene_id, shot_number) VALUES " +
+                  "(1, '12A'), (1, '12B'), (2, '2A'), (1, 'pickup')");
+    await spans();
+    await setNumberingMode(db.exec, "fixed");
+    await script([1, 2]);
+    await commitStructure(db.exec, [], true);
+
+    const preview = await previewDerivedNumbering(db.exec);
+    expect(preview).toEqual({
+      scenesRenumbered: 1,   // 12 -> 1; scene 2 is already 2
+      scenesCleared: 1,      // 47 is not in the script
+      shotsRestamped: 2,     // 12A, 12B; 2A stays, 'pickup' never parses
+      spansRenumbered: 3,    // acts 3, 7 and sequence 12
+      scenes: 3, shots: 4,
+    });
+
+    // And it is what the commit then does.
+    await setNumberingMode(db.exec, "derived");
+    await commitStructure(db.exec, [], true);
+    expect(await numbers()).toEqual(["1", "2", null]);
+    expect(await previewDerivedNumbering(db.exec)).toMatchObject({
+      scenesRenumbered: 0, scenesCleared: 0, shotsRestamped: 0,
+      spansRenumbered: 0,
+    });
   });
 
   test("a project with no stored preference renumbers", async () => {

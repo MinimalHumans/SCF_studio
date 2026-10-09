@@ -121,15 +121,22 @@ export async function renumberSpans(
     derived = deriveStructure(scenes, acts, sequences,
                               sceneOrderHint(headings));
   }
-  for (const [i, span] of derived.acts.entries()) {
-    await exec("UPDATE act SET act_number = ? WHERE id = ? AND " +
-               "(act_number IS NULL OR act_number != ?)",
-               [i + 1, span.id, i + 1]);
-  }
-  for (const [i, span] of derived.sequences.entries()) {
-    await exec("UPDATE sequence SET sequence_number = ? WHERE id = ? AND " +
-               "(sequence_number IS NULL OR sequence_number != ?)",
-               [i + 1, span.id, i + 1]);
+  // Act and sequence numbers are two of §4.3's four: `fixed` preserves
+  // them as it does scene numbers and shot codes. The gate lives here,
+  // not at the call sites, because the Structure view calls this
+  // directly — and recomputing any of the four on a fixed file is
+  // non-conforming.
+  if (await numberingMode(exec) === "derived") {
+    for (const [i, span] of derived.acts.entries()) {
+      await exec("UPDATE act SET act_number = ? WHERE id = ? AND " +
+                 "(act_number IS NULL OR act_number != ?)",
+                 [i + 1, span.id, i + 1]);
+    }
+    for (const [i, span] of derived.sequences.entries()) {
+      await exec("UPDATE sequence SET sequence_number = ? WHERE id = ? " +
+                 "AND (sequence_number IS NULL OR sequence_number != ?)",
+                 [i + 1, span.id, i + 1]);
+    }
   }
 
   /*
@@ -210,6 +217,72 @@ export async function numberingMode(exec: SqlExec): Promise<NumberingMode> {
 export async function setNumberingMode(
     exec: SqlExec, mode: NumberingMode): Promise<void> {
   await setNumberingPolicy(exec, mode);
+}
+
+/**
+ * What `derived` would rewrite at the next commit, counted now.
+ *
+ * The same reads and the same rules as `commitStructure` and
+ * `renumberSpans`, without the writes — so the warning before switching
+ * the policy can name the scale of what follows rather than describe it
+ * in the abstract. Everything here is a number that would CHANGE: a
+ * scene already numbered by its position is not counted.
+ */
+export interface NumberingPreview {
+  /** Scenes in the script whose number would change. */
+  scenesRenumbered: number;
+  /** Scenes with no heading in the script whose number would be cleared. */
+  scenesCleared: number;
+  /** Shot codes that would be restamped to follow their scene. */
+  shotsRestamped: number;
+  /** Acts and sequences whose number would change. */
+  spansRenumbered: number;
+  /** Scenes and shots in the project, for scale. */
+  scenes: number;
+  shots: number;
+}
+
+export async function previewDerivedNumbering(
+    exec: SqlExec): Promise<NumberingPreview> {
+  const scenes = await exec("SELECT id, scene_number, name FROM scene");
+  const acts = await exec(
+    "SELECT id, name, act_number, start_scene_id FROM act");
+  const sequences = await exec(
+    "SELECT id, name, sequence_number, start_scene_id FROM sequence");
+  const headings = await exec(
+    "SELECT scene_id, line_order FROM screenplay_lines " +
+    "WHERE line_type = 'heading' ORDER BY line_order");
+  const orderHint = sceneOrderHint(headings);
+  const structure = deriveStructure(scenes, acts, sequences, orderHint);
+  const out: NumberingPreview = {
+    scenesRenumbered: 0, scenesCleared: 0, shotsRestamped: 0,
+    spansRenumbered: 0, scenes: scenes.length, shots: 0,
+  };
+  const positioned = structure.scenes.filter((s) => orderHint.has(s.id));
+  for (const [i, scene] of positioned.entries()) {
+    if ((scene.number ?? "").trim() !== String(i + 1)) {
+      out.scenesRenumbered += 1;
+    }
+    for (const shot of await exec(
+        "SELECT shot_number FROM shot WHERE scene_id = ?", [scene.id])) {
+      if (restampShotNumber((shot["shot_number"] ?? null) as string | null,
+                            scene.number, i + 1) !== null) {
+        out.shotsRestamped += 1;
+      }
+    }
+  }
+  for (const scene of structure.scenes) {
+    if (!orderHint.has(scene.id) && scene.number !== null &&
+        scene.number.trim() !== "") out.scenesCleared += 1;
+  }
+  for (const spans of [structure.acts, structure.sequences]) {
+    for (const [i, span] of spans.entries()) {
+      if (span.number !== i + 1) out.spansRenumbered += 1;
+    }
+  }
+  out.shots = Number((await exec(
+    "SELECT COUNT(*) AS n FROM shot"))[0]?.["n"] ?? 0);
+  return out;
 }
 
 export interface StructureCommitResult {

@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useRef, useState } from "react";
-import { newUuid, q, type Row } from "@scf-core/db.ts";
+import { newUuid, q, type Row, type SqlValue } from "@scf-core/db.ts";
+import {
+  DEFAULT_NUMBERING_POLICY, type NumberingPolicy,
+} from "@scf-core/numbering.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
+import { setField } from "../../editor/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
+import { Field } from "../fields/Field.tsx";
+import { asPolicy, NumberingPolicyConfirm } from "../NumberingPolicyConfirm.tsx";
 import { AutoField } from "./AutoField.tsx";
 
 /**
@@ -80,12 +86,66 @@ function Fields({ entity, names, single, grid = false }: {
 }): JSX.Element {
   return (
     <div className={grid ? "ws-grid" : "ws-stack"}>
-      {names.map((f) => (
+      {names.map((f) => entity === "project" && f === "numbering_policy"
+        ? <NumberingPolicyField key={f} single={single}
+                                value={(single.row?.[f] ?? null) as SqlValue} />
+        : (
         <AutoField key={f} entity={entity} id={single.id}
                    ensure={single.ensure} field={f}
                    value={(single.row?.[f] ?? null) as never}
                    showHelp={false} />
       ))}
+    </div>
+  );
+}
+
+/**
+ * `numbering_policy`, which is not saved by the select alone: every
+ * change goes through NumberingPolicyConfirm, because what follows it
+ * is every number in the production and there is no undo.
+ */
+function NumberingPolicyField({ single, value }: {
+  single: ReturnType<typeof useSingleton>;
+  value: SqlValue;
+}): JSX.Element | null {
+  const def = registry.entities.get("project")?.fields
+    .find((f) => f.name === "numbering_policy");
+  const [pending, setPending] = useState<NumberingPolicy | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  if (def === undefined) return null;
+  // Absent means derived (spec §4.3), so choosing derived on a file with
+  // no stored value changes nothing and asks nothing.
+  const current = asPolicy(value) ?? DEFAULT_NUMBERING_POLICY;
+  const id = "ws-project-numbering_policy";
+  return (
+    <div className="ws-field">
+      <label htmlFor={id}>{def.label}</label>
+      <Field def={def} value={current} inputId={id}
+             onChange={(v) => {
+               const next = asPolicy(v);
+               if (next !== null && next !== current) setPending(next);
+             }} />
+      {failed !== null && <p className="ws-field-error" role="alert">{failed}</p>}
+      {pending !== null && (
+        <NumberingPolicyConfirm
+          to={pending}
+          onCancel={() => setPending(null)}
+          onConfirm={() => {
+            const to = pending;
+            setPending(null);
+            void (async () => {
+              try {
+                const target = single.id ?? await single.ensure();
+                await setField(exec, registry, "project", target,
+                               "numbering_policy", to);
+                setFailed(null);
+                useStore.getState().noteWrite();
+              } catch (e) {
+                setFailed(e instanceof Error ? e.message : String(e));
+              }
+            })();
+          }} />
+      )}
     </div>
   );
 }
