@@ -14,6 +14,10 @@ import { ANCHOR_SUBJECTS, AnchorThumb, BundleStrip }
 import { Field } from "./fields/Field.tsx";
 import { LineRangePicker } from "./fields/LineRangePicker.tsx";
 import { MediaStrip } from "./MediaStrip.tsx";
+import { asPolicy, NumberingPolicyConfirm } from "./NumberingPolicyConfirm.tsx";
+import {
+  DEFAULT_NUMBERING_POLICY, type NumberingPolicy,
+} from "@scf-core/numbering.ts";
 import { rangeEntities } from "@scf-core/lines.ts";
 
 const RANGE_FIELDS = ["line_start_ref", "line_end_ref"];
@@ -35,6 +39,8 @@ export function EntityForm(): JSX.Element | null {
   const { openRow, draft, setDraftValue, undoDraft, saveDraft, closeRow,
           deleteRow } = useStore();
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [pendingPolicy, setPendingPolicy] =
+    useState<NumberingPolicy | null>(null);
   const edef = openRow !== null
     ? registry.entities.get(openRow.entity) : undefined;
 
@@ -117,7 +123,22 @@ export function EntityForm(): JSX.Element | null {
                 )}
               </label>
               <Field def={f} value={draft.values[f.name] ?? null}
-                     onChange={(v) => setDraftValue(f.name, v)} />
+                     onChange={(v) => {
+                       // The numbering policy is confirmed before it is
+                       // even drafted: what follows it is every number
+                       // in the production, with no undo.
+                       if (openRow.entity === "project" &&
+                           f.name === "numbering_policy") {
+                         const to = asPolicy(v);
+                         const from = asPolicy(draft.values[f.name]) ??
+                           DEFAULT_NUMBERING_POLICY;
+                         if (to !== null && to !== from) {
+                           setPendingPolicy(to);
+                           return;
+                         }
+                       }
+                       setDraftValue(f.name, v);
+                     }} />
               {f.helpText !== undefined && f.helpText !== "" && (
                 <p className="help">{f.helpText}</p>
               )}
@@ -177,6 +198,15 @@ export function EntityForm(): JSX.Element | null {
           <h4>What this bundle puts on screen</h4>
           <BundleStrip bundleId={bundleRef(draft.values) as number} />
         </section>
+      )}
+      {pendingPolicy !== null && (
+        <NumberingPolicyConfirm to={pendingPolicy} onSave
+                                onCancel={() => setPendingPolicy(null)}
+                                onConfirm={() => {
+                                  setDraftValue("numbering_policy",
+                                                pendingPolicy);
+                                  setPendingPolicy(null);
+                                }} />
       )}
       {!creating && <IdentityFooter values={draft.values} id={openRow.id} />}
     </div>
