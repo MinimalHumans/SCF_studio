@@ -12,7 +12,65 @@ leaves your machine except as the answers your assistant asks for.
 **It reads.** There are no write tools: SCF is the ground truth of the
 film, not the workflow for making it.
 
-## Running it
+## Running it from a checkout
+
+From a fresh clone, no build is needed:
+
+```sh
+cd scf-mcp && npm ci       # once
+node scripts/start.mjs --scf ../fixtures/hollow_creek.scf
+```
+
+`scripts/start.mjs` runs `src/server.ts` directly under Node's type
+stripping and resolves `@minimalhumans/scf-core` to its `src/` through
+the `scf-source` export condition, so there is no `dist/` to build and
+none to go stale after a `git pull`. It takes the same arguments as
+`scf-mcp` below. It needs Node 22.6 or newer and `scf-core` as a
+sibling directory; if dependencies are missing it says so on stderr and
+exits. It installs nothing itself.
+
+### Connecting Claude Desktop
+
+Edit `claude_desktop_config.json` (Settings → Developer → Edit Config,
+or `~/Library/Application Support/Claude/` on macOS,
+`%APPDATA%\Claude\` on Windows) and restart Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "scf": {
+      "command": "/absolute/path/to/node",
+      "args": [
+        "/absolute/path/to/SCF_studio/scf-mcp/scripts/start.mjs",
+        "--scf", "/absolute/path/to/film.scf",
+        "--root", "project=/absolute/path/to/project/assets"
+      ]
+    }
+  }
+}
+```
+
+- **Use absolute paths, including to Node.** Claude Desktop does not
+  read your shell profile, so `node` from nvm or a version manager is
+  usually not on its PATH, or is the wrong version. `which node`
+  (macOS/Linux) or `where node` (Windows) gives the path.
+- **`--scf` and `--root` are optional.** Without `--scf` the assistant
+  opens a film with the `open` tool.
+- **Repository inside WSL, Claude Desktop on Windows:** use
+  `"command": "wsl.exe"` and put `node` and the Linux paths first in
+  `args`.
+- **Logs** are in `~/Library/Logs/Claude/` on macOS and
+  `%APPDATA%\Claude\logs\` on Windows (`mcp-server-scf.log`). The
+  launcher's own messages appear there.
+
+| Symptom in the log | Cause |
+|---|---|
+| `dependencies are not installed` | Run `npm ci` in `scf-mcp`. |
+| `Node … cannot run TypeScript source` | `command` points at a Node older than 22.6. Use an absolute path to a newer one. |
+| `scf-core source not found` | `scf-mcp` was moved away from its sibling `scf-core` directory. |
+| `Cannot find module … dist/server.js` | The config still points at the built server. Point it at `scripts/start.mjs`. |
+
+## Running the built package
 
 ```sh
 scf-mcp [--scf <path>] [--root name=path ...] [--config <path>]

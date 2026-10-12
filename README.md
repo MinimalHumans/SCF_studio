@@ -61,9 +61,21 @@ normative artifact.
 
 ## Getting started
 
+Node 22.6 or newer. Each package has its own `package-lock.json`, so
+install in the one you are working on:
+
 ```sh
-cd scf-app && npm install && npm run dev
+cd scf-app && npm ci && npm run dev         # the editor
+cd scf-mcp && npm ci                         # the MCP server
+node scf-mcp/scripts/start.mjs --scf fixtures/hollow_creek.scf
 ```
+
+Neither needs `scf-core` built: the app aliases it to its TypeScript
+source, and the MCP launcher resolves it there through the `scf-source`
+export condition. A build (`npm run build` in `scf-core`, then
+`scf-mcp`) is for publishing only. `scf-core` needs its own `npm ci`
+only to run its tests and scripts. Connecting an MCP client is in
+[`scf-mcp/README.md`](scf-mcp/README.md).
 
 The app opens with a demo project; no file is written until you save.
 

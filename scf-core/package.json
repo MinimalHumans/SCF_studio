@@ -15,10 +15,12 @@
   },
   "exports": {
     ".": {
+      "scf-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
     "./node": {
+      "scf-source": "./src/node.ts",
       "types": "./dist/node.d.ts",
       "default": "./dist/node.js"
     },
