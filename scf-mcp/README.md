@@ -29,7 +29,32 @@ none to go stale after a `git pull`. It takes the same arguments as
 sibling directory; if dependencies are missing it says so on stderr and
 exits. It installs nothing itself.
 
-### Connecting Claude Desktop
+### Connecting a client
+
+Point the client at `scripts/start.mjs`, not at `dist/server.js`. Both
+clients take the same arguments, and `--scf` and `--root` are optional:
+without `--scf` the assistant opens a film with the `open` tool.
+
+#### Claude Code
+
+```sh
+claude mcp add scf -- node /absolute/path/to/SCF_studio/scf-mcp/scripts/start.mjs \
+  --scf /absolute/path/to/film.scf \
+  --root project=/absolute/path/to/project/assets
+```
+
+Everything after `--` is the server's command line. The default scope
+is local, private to you in this project, which is what you want: the
+paths are specific to your machine, so do not commit a project-level
+`.mcp.json` with them in it.
+
+`claude mcp list` shows whether the server connects, and `/mcp` does
+the same inside a session. `claude mcp remove scf` undoes it. Claude
+Code starts the server from your shell, so a plain `node` normally
+works; if it resolves to the wrong version, give an absolute path as
+below.
+
+#### Claude Desktop
 
 Edit `claude_desktop_config.json` (Settings → Developer → Edit Config,
 or `~/Library/Application Support/Claude/` on macOS,
@@ -54,8 +79,6 @@ or `~/Library/Application Support/Claude/` on macOS,
   read your shell profile, so `node` from nvm or a version manager is
   usually not on its PATH, or is the wrong version. `which node`
   (macOS/Linux) or `where node` (Windows) gives the path.
-- **`--scf` and `--root` are optional.** Without `--scf` the assistant
-  opens a film with the `open` tool.
 - **Repository inside WSL, Claude Desktop on Windows:** use
   `"command": "wsl.exe"` and put `node` and the Linux paths first in
   `args`.
@@ -63,12 +86,14 @@ or `~/Library/Application Support/Claude/` on macOS,
   `%APPDATA%\Claude\logs\` on Windows (`mcp-server-scf.log`). The
   launcher's own messages appear there.
 
-| Symptom in the log | Cause |
+#### When it does not start
+
+| Message | Cause |
 |---|---|
 | `dependencies are not installed` | Run `npm ci` in `scf-mcp`. |
-| `Node … cannot run TypeScript source` | `command` points at a Node older than 22.6. Use an absolute path to a newer one. |
+| `Node … cannot run TypeScript source` | The Node the client launched is older than 22.6. Use an absolute path to a newer one. |
 | `scf-core source not found` | `scf-mcp` was moved away from its sibling `scf-core` directory. |
-| `Cannot find module … dist/server.js` | The config still points at the built server. Point it at `scripts/start.mjs`. |
+| `Cannot find module … dist/server.js` | The client still points at the built server. Point it at `scripts/start.mjs`. |
 
 ## Running the built package
 
