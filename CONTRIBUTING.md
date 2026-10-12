@@ -118,6 +118,23 @@ python3 tools/add_spdx_headers.py --check     # reports what is missing
 python3 tools/add_spdx_headers.py --apply     # writes the headers
 ```
 
+## First run
+
+Node 22 or newer (`nvm use` reads [`.nvmrc`](.nvmrc)). Each package has
+its own lockfile, so install in the one you are working on, with
+`npm ci` rather than `npm install`, which can rewrite the lockfile:
+
+```sh
+cd scf-app && npm ci && npm run dev         # the editor
+cd scf-mcp && npm ci                         # the MCP server
+cd scf-core && npm ci                        # only to run its tests and scripts
+```
+
+No package needs another one built first. The app and the MCP launcher
+both read `scf-core` as TypeScript source, so keep the directories
+siblings. A build is for publishing. Connecting an MCP client is in
+[`scf-mcp/README.md`](scf-mcp/README.md).
+
 ## Before you push
 
 ```sh
