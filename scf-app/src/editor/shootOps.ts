@@ -21,14 +21,23 @@ const beatLetter = (i: number): string =>
  * scene broken into beats with no shots yet is further along than an
  * untouched one, and the row should not read the same for both.
  */
-export function summarize(beats: number, shots: number): string {
+export function summarize(beats: number, shots: number,
+                          cut = 0): string {
   const parts: string[] = [];
   if (beats > 0) parts.push(`${String(beats)} beat${beats === 1 ? "" : "s"}`);
   if (shots > 0) parts.push(`${String(shots)} shot${shots === 1 ? "" : "s"}`);
-  if (parts.length === 0) return "nothing yet";
-  if (shots === 0) return `${parts.join(" · ")}, no coverage`;
-  return parts.join(" · ");
+  // Cut shots are not coverage, but they are not nothing either: they
+  // still hold their numbers, and the row should say they are there.
+  const tail = cut > 0 ? ` (${String(cut)} cut)` : "";
+  if (parts.length === 0) return cut > 0 ? `no coverage${tail}` : "nothing yet";
+  if (shots === 0) return `${parts.join(" · ")}, no coverage${tail}`;
+  return parts.join(" · ") + tail;
 }
+
+/** §6.6.1: a cut shot is not in the film, and `cut` is the only value
+ *  that says so. */
+export const isCut = (shot: Row): boolean =>
+  shot["lifecycle_status"] === "cut";
 
 /**
  * The lines of one scene, located by its HEADING rather than by every
@@ -121,21 +130,50 @@ export async function removeBeat(exec: SqlExec, id: number): Promise<void> {
   await exec("DELETE FROM story_beat WHERE id = ?", [id]);
 }
 
+/**
+ * Cut or restore a shot. Cutting is the everyday edit decision; it keeps
+ * the row, its media and its number, so a crew's 42B is never reissued
+ * and the shot can come back in the next cut. Restore returns it to
+ * `active` rather than remembering an earlier `draft`: every derivation
+ * treats the two alike (§6.6).
+ */
+export async function setShotCut(exec: SqlExec, id: number,
+                                 cut: boolean): Promise<void> {
+  await exec(
+    "UPDATE shot SET lifecycle_status = ?, updated_at = datetime('now') " +
+    "WHERE id = ?", [cut ? "cut" : "active", id]);
+}
+
 export async function removeShot(exec: SqlExec, id: number): Promise<void> {
   await exec("DELETE FROM shot WHERE id = ?", [id]);
 }
 
-/** Swap a shot with its neighbour in the scene's order. */
+/**
+ * Move a shot one step past its neighbour in the scene's order.
+ *
+ * `hidden` names shots the view is not showing (cut shots, when they
+ * are filtered out). They are stepped over rather than swapped with, or
+ * a click would trade places with something invisible and seem to do
+ * nothing. Every shot in the scene is then written back as 1..n, so the
+ * hidden ones keep their place relative to each other.
+ */
 export async function moveShot(exec: SqlExec, id: number,
                                shotsInScene: Row[],
-                               delta: number): Promise<void> {
-  const i = shotsInScene.findIndex((r) => Number(r["id"]) === id);
-  const j = i + delta;
-  if (i < 0 || j < 0 || j >= shotsInScene.length) return;
-  const a = shotsInScene[i] as Row;
-  const b = shotsInScene[j] as Row;
-  await exec("UPDATE shot SET shot_order = ? WHERE id = ?",
-             [j + 1, Number(a["id"])]);
-  await exec("UPDATE shot SET shot_order = ? WHERE id = ?",
-             [i + 1, Number(b["id"])]);
+                               delta: number,
+                               hidden: ReadonlySet<number> = new Set()):
+    Promise<void> {
+  const ids = shotsInScene.map((r) => Number(r["id"]));
+  const i = ids.indexOf(id);
+  if (i < 0) return;
+  let j = i + delta;
+  while (j >= 0 && j < ids.length && hidden.has(ids[j] as number)) j += delta;
+  if (j < 0 || j >= ids.length) return;
+  const next = ids.filter((x) => x !== id);
+  const target = next.indexOf(ids[j] as number);
+  next.splice(delta < 0 ? target : target + 1, 0, id);
+  for (const [k, shotId] of next.entries()) {
+    const was = shotsInScene.find((r) => Number(r["id"]) === shotId);
+    if (Number(was?.["shot_order"]) === k + 1) continue;
+    await exec("UPDATE shot SET shot_order = ? WHERE id = ?", [k + 1, shotId]);
+  }
 }

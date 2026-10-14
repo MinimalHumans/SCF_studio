@@ -417,11 +417,44 @@ export interface ShootMemory {
    *  text is showing. */
   open: Set<string>;
   showEmpty: boolean;
+  /** Hide shots whose lifecycle_status is `cut`. */
+  hideCut: boolean;
   scrollTop: number;
 }
 
+/**
+ * The Shoot tab's two filters are preferences, not film data, so they
+ * live in the browser and outlast opening another file. Storage can
+ * throw (private windows, blocked site data); the defaults then apply.
+ */
+const SHOOT_PREFS = {
+  showEmpty: "scf:shoot-show-empty", hideCut: "scf:shoot-hide-cut",
+} as const;
+
+function readShootPref(key: keyof typeof SHOOT_PREFS,
+                       fallback: boolean): boolean {
+  try {
+    const v = localStorage.getItem(SHOOT_PREFS[key]);
+    return v === null ? fallback : v === "1";
+  } catch {
+    return fallback;
+  }
+}
+
+function writeShootPrefs(patch: Partial<ShootMemory>): void {
+  try {
+    for (const key of ["showEmpty", "hideCut"] as const) {
+      const v = patch[key];
+      if (v !== undefined) localStorage.setItem(SHOOT_PREFS[key], v ? "1" : "0");
+    }
+  } catch {
+    // Not remembered this time; the view still changes.
+  }
+}
+
 const freshShootView = (): ShootMemory =>
-  ({ open: new Set(), showEmpty: true, scrollTop: 0 });
+  ({ open: new Set(), showEmpty: readShootPref("showEmpty", true),
+     hideCut: readShootPref("hideCut", false), scrollTop: 0 });
 
 async function finishFolderOpen(
   set: (partial: Partial<AppState>) => void,
@@ -905,8 +938,10 @@ export const useStore = create<AppState>((set, get) => ({
     set({ selectedCharacterId, navMode: "characters", openRow: null,
           draft: null }),
   setSchemaCollapsed: (schemaCollapsed) => set({ schemaCollapsed }),
-  setShootView: (patch) =>
-    set((s) => ({ shootView: { ...s.shootView, ...patch } })),
+  setShootView: (patch) => {
+    writeShootPrefs(patch);
+    set((s) => ({ shootView: { ...s.shootView, ...patch } }));
+  },
   selectQuery: (selectedQuery) =>
     set({ selectedQuery, openRow: null, draft: null }),
   selectEntityType: (selectedEntityType) =>

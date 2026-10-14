@@ -1440,6 +1440,22 @@ tr.prop-weak td { opacity: .6; }
 .shoot-input:focus { border-color: var(--amber); outline: none; }
 .shoot-number { width: 62px; font: 12px var(--mono); }
 .shoot-drift { font: 10px var(--mono); color: var(--amber); }
+.shoot-policy {
+  font: 10.5px var(--mono); color: var(--paper-dim);
+  border: 1px solid var(--line); border-radius: 3px; padding: 0 5px;
+}
+/* A cut shot stays listed, since it holds its number, but reads as out
+   of the film: dimmed, struck through, tagged. */
+.shoot-shot-cut .shoot-input,
+.shoot-shot-cut .shoot-select { opacity: .45; }
+.shoot-shot-cut .shoot-number,
+.shoot-shot-cut .shoot-shot-name { text-decoration: line-through; }
+.shoot-cut-tag {
+  font: 10px var(--mono); color: var(--paper-dim);
+  text-transform: uppercase; border: 1px solid var(--line);
+  border-radius: 3px; padding: 0 4px;
+}
+.shoot-hidden-note { margin: 2px 0 6px 10px; font-size: 11px; }
 .shoot-beat-name { width: 130px; font-weight: 600; }
 .shoot-beat-desc { flex: 1; }
 .shoot-shot-name { flex: 1; }

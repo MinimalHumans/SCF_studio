@@ -6,8 +6,8 @@ import {
 } from "@scf-core/structure.ts";
 import { shotCode } from "@scf-core/shots.ts";
 import {
-  addBeat, addShot, moveShot, removeBeat, removeShot, SCENE_SCRIPT_SQL,
-  summarize, updateField,
+  addBeat, addShot, isCut, moveShot, removeBeat, removeShot,
+  SCENE_SCRIPT_SQL, setShotCut, summarize, updateField,
 } from "../editor/shootOps.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
@@ -30,11 +30,12 @@ import type { MediaOwnerKind } from "../editor/relatedMediaOps.ts";
  */
 export function ShootView(): JSX.Element {
   const { openEntityRow, revision } = useStore();
-  const { open, showEmpty } = useStore((s) => s.shootView);
+  const { open, showEmpty, hideCut } = useStore((s) => s.shootView);
   const setShootView = useStore((s) => s.setShootView);
   const setOpen = (next: Set<string>): void => setShootView({ open: next });
   const setShowEmpty = (v: boolean): void =>
     setShootView({ showEmpty: v });
+  const setHideCut = (v: boolean): void => setShootView({ hideCut: v });
   const rootRef = useRef<HTMLDivElement>(null);
   useRestoredScroll(rootRef);
 
@@ -51,7 +52,13 @@ export function ShootView(): JSX.Element {
     "FROM story_beat ORDER BY beat_order, id");
   const shots = useQuery(
     "SELECT id, name, scene_id, story_beat_id, shot_number, shot_order, " +
-    "shot_size, camera_angle FROM shot ORDER BY shot_order, id");
+    "shot_size, camera_angle, lifecycle_status FROM shot " +
+    "ORDER BY shot_order, id");
+  const project = useQuery("SELECT numbering_policy FROM project LIMIT 1");
+  // §4.4.4: under `fixed`, a code that disagrees with its position is
+  // the point rather than drift, so the per-shot ≠ is shown only under
+  // `derived`.
+  const fixed = project[0]?.["numbering_policy"] === "fixed";
   const mediaRows = useQuery(
     "SELECT entity_type, entity_id, COUNT(*) AS n FROM asset_relationship " +
     "WHERE entity_type IN ('shot', 'scene') GROUP BY entity_type, entity_id");
@@ -112,6 +119,12 @@ export function ShootView(): JSX.Element {
   const sceneNode = (sceneId: number): JSX.Element | null => {
     const scene = sceneById.get(sceneId);
     const sceneShots = shotsByScene.get(sceneId) ?? [];
+    const cutIds = new Set(
+      sceneShots.filter(isCut).map((r) => Number(r["id"])));
+    // The filter decides only what is drawn. Numbering and moves still
+    // see every shot: a cut shot keeps its number and its place.
+    const hidden = hideCut ? cutIds : new Set<number>();
+    const shown = sceneShots.filter((r) => !hidden.has(Number(r["id"])));
     const sceneBeats = beatsByScene.get(sceneId) ?? [];
     // A scene with beats and no shots is planned, not untouched — it
     // is exactly the scene you broke down and have yet to cover, so
@@ -120,7 +133,7 @@ export function ShootView(): JSX.Element {
         sceneBeats.length === 0) return null;
     const key = `scene:${String(sceneId)}`;
     const expanded = open.has(key);
-    const loose = sceneShots.filter((r) => r["story_beat_id"] === null);
+    const loose = shown.filter((r) => r["story_beat_id"] === null);
 
     return (
       <div key={key} className="shoot-scene">
@@ -137,7 +150,8 @@ export function ShootView(): JSX.Element {
           <button className="ghost tiny" title="Open the full scene record"
                   onClick={() => void openEntityRow("scene", sceneId)}>⋯</button>
           <span className="shoot-count">
-            {summarize(sceneBeats.length, sceneShots.length)}
+            {summarize(sceneBeats.length, sceneShots.length - cutIds.size,
+                       cutIds.size)}
           </span>
           {mediaToggle("scene", sceneId)}
           <button className="ghost tiny"
@@ -157,7 +171,7 @@ export function ShootView(): JSX.Element {
             <SceneText sceneId={sceneId} />
             {sceneBeats.map((beat) => {
               const beatId = Number(beat["id"]);
-              const inBeat = sceneShots.filter(
+              const inBeat = shown.filter(
                 (r) => Number(r["story_beat_id"]) === beatId);
               return (
                 <div key={beatId} className="shoot-beat">
@@ -188,7 +202,8 @@ export function ShootView(): JSX.Element {
                       ×
                     </button>
                   </div>
-                  {inBeat.map((shot) => shotRow(shot, sceneShots, scene))}
+                  {inBeat.map((shot) =>
+                    shotRow(shot, sceneShots, scene, hidden))}
                 </div>
               );
             })}
@@ -197,7 +212,12 @@ export function ShootView(): JSX.Element {
             {loose.length > 0 && sceneBeats.length > 0 && (
               <div className="shoot-loose-head">on the scene, no beat</div>
             )}
-            {loose.map((shot) => shotRow(shot, sceneShots, scene))}
+            {loose.map((shot) => shotRow(shot, sceneShots, scene, hidden))}
+            {hidden.size > 0 && (
+              <p className="muted shoot-hidden-note">
+                {hidden.size} cut shot{hidden.size === 1 ? "" : "s"} hidden
+              </p>
+            )}
             {sceneShots.length === 0 && sceneBeats.length === 0 && (
               <p className="muted shoot-empty">
                 Nothing planned. Shots can sit straight on the scene —
@@ -211,25 +231,33 @@ export function ShootView(): JSX.Element {
   };
 
   function shotRow(shot: Row, sceneShots: Row[],
-                   scene: Row | undefined): JSX.Element {
+                   scene: Row | undefined,
+                   hidden: ReadonlySet<number>): JSX.Element {
     const id = Number(shot["id"]);
+    const cut = isCut(shot);
     const authored = String(shot["shot_number"] ?? "");
     const derived = shotCode(
       (scene?.["scene_number"] ?? null) as string | number | null,
       sceneShots.findIndex((r) => Number(r["id"]) === id));
     return (
-      <div key={id} className="shoot-shot">
+      <div key={id} className={"shoot-shot" + (cut ? " shoot-shot-cut" : "")}>
         <div className="shoot-row shoot-row-shot">
           <input className="shoot-input shoot-number"
                  defaultValue={authored}
                  onBlur={(e) => void run(updateField(
                    exec, "shot", id, "shot_number", e.target.value))} />
-          {authored !== "" && authored !== derived && (
+          {!fixed && authored !== "" && authored !== derived && (
             <span className="shoot-drift"
                   title={"A shot number is an identifier issued to a crew, " +
                          "so it is never rewritten automatically. By " +
                          "position this shot would be " + derived + "."}>
               ≠ {derived}
+            </span>
+          )}
+          {cut && (
+            <span className="shoot-cut-tag"
+                  title="Not in the film. It keeps its number and media.">
+              cut
             </span>
           )}
           <input className="shoot-input shoot-shot-name"
@@ -242,14 +270,34 @@ export function ShootView(): JSX.Element {
                        onPick={(v) =>
                          void run(updateField(exec, "shot", id, "camera_angle", v))} />
           <button className="ghost tiny" title="Move up"
-                  onClick={() => void run(moveShot(exec, id, sceneShots, -1))}>▲</button>
+                  onClick={() => void run(
+                    moveShot(exec, id, sceneShots, -1, hidden))}>▲</button>
           <button className="ghost tiny" title="Move down"
-                  onClick={() => void run(moveShot(exec, id, sceneShots, 1))}>▼</button>
+                  onClick={() => void run(
+                    moveShot(exec, id, sceneShots, 1, hidden))}>▼</button>
           <button className="ghost tiny" title="Open the full shot record"
                   onClick={() => void openEntityRow("shot", id)}>⋯</button>
           {mediaToggle("shot", id)}
+          {/* Cut is the everyday edit decision and sits in reach; delete
+              is rare and asks first, since nothing brings it back. */}
+          <button className="ghost tiny shoot-cut-toggle"
+                  title={cut
+                    ? "Put this shot back in the film"
+                    : "Take this shot out of the film. It keeps its " +
+                      "number and media, and can be restored."}
+                  onClick={() => void run(setShotCut(exec, id, !cut))}>
+            {cut ? "restore" : "cut"}
+          </button>
           <button className="ghost tiny"
-                  onClick={() => void run(removeShot(exec, id))}>×</button>
+                  title="Delete this shot permanently"
+                  onClick={() => {
+                    const label = authored === "" ? "this shot" : authored;
+                    if (window.confirm(
+                      `Delete ${label} permanently? To take it out of ` +
+                      "the film but keep it, use cut instead.")) {
+                      void run(removeShot(exec, id));
+                    }
+                  }}>×</button>
         </div>
         {open.has(`media:shot:${String(id)}`) && (
           <div className="shoot-media">
@@ -260,6 +308,8 @@ export function ShootView(): JSX.Element {
     );
   }
 
+  const cutShots = shots.filter(isCut).length;
+  const liveShots = shots.length - cutShots;
   const placed = new Set<number>();
   // By scene rather than by size: the set also holds `script:` keys.
   const allOpen = structure.scenes.length > 0 &&
@@ -269,8 +319,18 @@ export function ShootView(): JSX.Element {
       <div className="shoot-head">
         <h2>Shoot</h2>
         <span className="muted">
-          {shots.length} shot{shots.length === 1 ? "" : "s"} across{" "}
+          {liveShots} shot{liveShots === 1 ? "" : "s"}
+          {cutShots > 0 ? ` (${String(cutShots)} cut)` : ""} across{" "}
           {shotsByScene.size} scene{shotsByScene.size === 1 ? "" : "s"}
+        </span>
+        <span className="shoot-policy"
+              title={fixed
+                ? "Shot numbers are fixed: they never renumber, so a " +
+                  "shot inserted later keeps the number it was issued."
+                : "Shot numbers are derived: a number that no longer " +
+                  "matches its position is marked ≠ so the list can " +
+                  "be reissued."}>
+          shot numbers: {fixed ? "fixed" : "derived"}
         </span>
         <button className="ghost tiny"
                 onClick={() => {
@@ -287,6 +347,11 @@ export function ShootView(): JSX.Element {
           <input type="checkbox" checked={showEmpty}
                  onChange={(e) => setShowEmpty(e.target.checked)} />
           untouched scenes
+        </label>
+        <label className="shoot-toggle">
+          <input type="checkbox" checked={!hideCut}
+                 onChange={(e) => setHideCut(!e.target.checked)} />
+          cut shots
         </label>
       </div>
 

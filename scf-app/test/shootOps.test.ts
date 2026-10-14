@@ -6,8 +6,8 @@ import { openNodeDatabase } from "@scf-core/node.ts";
 import { initDatabase } from "@scf-core/db.ts";
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
 import {
-  addBeat, addShot, moveShot, removeBeat, removeShot, renumberForScene,
-  summarize,
+  addBeat, addShot, isCut, moveShot, removeBeat, removeShot,
+  renumberForScene, setShotCut, summarize,
 } from "../src/editor/shootOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
@@ -26,6 +26,12 @@ describe("what a collapsed scene row says", () => {
     expect(summarize(2, 5)).toBe("2 beats · 5 shots");
     expect(summarize(0, 1)).toBe("1 shot");
     expect(summarize(1, 3)).toBe("1 beat · 3 shots");
+  });
+
+  test("cut shots are counted apart from coverage", () => {
+    expect(summarize(0, 4, 1)).toBe("4 shots (1 cut)");
+    expect(summarize(1, 0, 2)).toBe("1 beat, no coverage (2 cut)");
+    expect(summarize(0, 0, 1)).toBe("no coverage (1 cut)");
   });
 });
 
@@ -111,6 +117,49 @@ describe("shoot operations", () => {
     await moveShot(db.exec, Number(before[1]!["id"]), before, -1);
     expect((await shots()).map((s) => s["shot_number"]))
       .toEqual(["42B", "42A"]);
+  });
+
+  test("a move steps over hidden shots instead of swapping with them",
+       async () => {
+    for (let i = 0; i < 3; i += 1) await addShot(db.exec, sceneId, null);
+    const before = await shots();
+    // 42B is cut and filtered out; moving 42C up should land above 42A,
+    // not trade places with a row the user cannot see.
+    const hidden = new Set([Number(before[1]!["id"])]);
+    await moveShot(db.exec, Number(before[2]!["id"]), before, -1, hidden);
+    const after = await shots();
+    expect(after.map((s) => s["shot_number"]))
+      .toEqual(["42C", "42A", "42B"]);
+    expect(after.map((s) => s["shot_order"])).toEqual([1, 2, 3]);
+  });
+
+  test("a move with only hidden shots beyond it does nothing",
+       async () => {
+    await addShot(db.exec, sceneId, null);
+    await addShot(db.exec, sceneId, null);
+    const before = await shots();
+    const hidden = new Set([Number(before[1]!["id"])]);
+    await moveShot(db.exec, Number(before[0]!["id"]), before, 1, hidden);
+    expect((await shots()).map((s) => s["shot_number"]))
+      .toEqual(["42A", "42B"]);
+  });
+
+  test("cutting keeps the shot and its number; restore makes it active",
+       async () => {
+    await addShot(db.exec, sceneId, null);
+    const id = Number((await shots())[0]!["id"]);
+    const status = async (): Promise<unknown> => (await db.exec(
+      "SELECT lifecycle_status FROM shot WHERE id = ?", [id]))[0]!
+      ["lifecycle_status"];
+    await setShotCut(db.exec, id, true);
+    expect(await status()).toBe("cut");
+    expect(isCut({ lifecycle_status: await status() })).toBe(true);
+    // The cut code is still held, so the next shot does not reuse it.
+    await addShot(db.exec, sceneId, null);
+    expect((await shots()).map((s) => s["shot_number"]))
+      .toEqual(["42A", "42B"]);
+    await setShotCut(db.exec, id, false);
+    expect(await status()).toBe("active");
   });
 
   test("moving past either end does nothing", async () => {
