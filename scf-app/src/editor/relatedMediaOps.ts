@@ -67,6 +67,8 @@ export interface MediaTile {
   order: number | null;
   notes: string | null;
   asset: Row;
+  /** The name of the asset that superseded this one, if any. */
+  successorName: string | null;
 }
 
 const str = (v: unknown): string | null =>
@@ -80,17 +82,20 @@ export async function loadMedia(exec: SqlExec,
                                 owner: MediaOwner): Promise<MediaTile[]> {
   const rows = await exec(
     `SELECT r.id AS link_id, r.relationship_type AS link_type, ` +
-    `r.${q("order")} AS link_order, r.notes AS link_notes, s.* ` +
+    `r.${q("order")} AS link_order, r.notes AS link_notes, ` +
+    "COALESCE(n.name, n.identifier) AS link_successor, s.* " +
     "FROM asset_relationship r JOIN asset s ON s.id = r.asset_id " +
+    "LEFT JOIN asset n ON n.id = s.superseded_by_id " +
     `WHERE r.entity_type = ? AND r.entity_id = ? ${ORDER_BY}`,
     [owner.kind, owner.id]);
   return rows.map((r) => {
-    const { link_id, link_type, link_order, link_notes, ...asset } = r;
+    const { link_id, link_type, link_order, link_notes, link_successor,
+            ...asset } = r;
     return {
       linkId: Number(link_id), type: str(link_type),
       order: link_order === null || link_order === undefined
         ? null : Number(link_order),
-      notes: str(link_notes), asset,
+      notes: str(link_notes), asset, successorName: str(link_successor),
     };
   });
 }

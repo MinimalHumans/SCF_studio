@@ -1729,6 +1729,24 @@ tr.prop-weak td { opacity: .6; }
   color: var(--paper-dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .asset-row-orphan { color: var(--amber); font-size: 11px; flex: none; }
+/* Current vs history (assetStanding.ts). History is dimmed; a cut file
+   is struck through as a cut shot is. */
+.asset-row-historic .asset-thumb,
+.asset-row-historic .asset-row-name,
+.asset-row-historic .asset-row-id { opacity: .5; }
+.asset-row-cut .asset-row-name { text-decoration: line-through; }
+.standing-tag {
+  flex: none; font: 10.5px var(--mono); color: var(--paper-dim);
+  border: 1px solid var(--line); border-radius: 3px; padding: 0 5px;
+  max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; justify-self: start;
+}
+button.standing-tag { cursor: pointer; }
+button.standing-tag:hover { color: var(--paper); border-color: var(--paper-dim); }
+.standing-in-use { color: var(--ok); border-color: transparent; }
+.standing-unreferenced { color: var(--amber); border-color: transparent; }
+/* History that is still attached is the one case still in force. */
+.standing-tag.standing-attached { color: var(--amber); border-color: var(--amber-dim); }
 .asset-relink { margin-top: 16px; border-top: 1px solid var(--line);
   padding-top: 10px; }
 .asset-relink input { width: 100%; font-size: 11.5px; }
@@ -2356,6 +2374,9 @@ button.strip-span-label:hover { color: var(--amber); }
 .media-name { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .media-meta select, .media-meta input { font-size: 11.5px; padding: 2px 5px; }
 .media-actions { display: flex; gap: 2px; justify-content: flex-end; }
+.media-tile-historic { border-style: dashed; }
+.media-tile-historic .media-thumb,
+.media-tile-historic .media-name { opacity: .5; }
 .exc-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
 .exc-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .exc-head .ws-row-actions { margin-left: auto; }

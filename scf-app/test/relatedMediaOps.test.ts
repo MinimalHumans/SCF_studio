@@ -51,6 +51,19 @@ describe("shot and scene media (proposal 0037)", () => {
     expect(missing[0]!["n"]).toBe(0);
   });
 
+  test("a superseded file names what replaced it; a current one names nothing",
+       async () => {
+    await db.exec(
+      "UPDATE asset SET lifecycle_status = 'superseded', " +
+      "superseded_by_id = ? WHERE id = ?", [assets[1]!, assets[0]!]);
+    await attachMedia(db.exec, shot, [assets[0]!, assets[2]!], "storyboard");
+    const tiles = await loadMedia(db.exec, shot);
+    expect(tiles.map((t) => t.successorName)).toEqual(["b.png", null]);
+    // The join must not leak the successor's columns into the asset.
+    expect(tiles[0]!.asset["name"]).toBe("a.png");
+    expect(tiles[0]!.asset["lifecycle_status"]).toBe("superseded");
+  });
+
   test("a repeated drop adds nothing; the same file for another purpose does", async () => {
     await attachMedia(db.exec, shot, [assets[0]!], "storyboard");
     const again = await attachMedia(db.exec, shot, [assets[0]!], "storyboard");

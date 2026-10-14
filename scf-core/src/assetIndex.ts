@@ -35,12 +35,14 @@ export interface AssetRow {
   path: string | null;
   format: string | null;
   lifecycleStatus: string | null;
+  /** The row that replaced this one, when the chain names it. */
+  supersededById?: number | null;
 }
 
 export async function listAssets(exec: SqlExec): Promise<AssetRow[]> {
   const rows = await exec(
-    `SELECT id, name, identifier, lifecycle_status FROM ${q("asset")} ` +
-    `ORDER BY id`);
+    `SELECT id, name, identifier, lifecycle_status, superseded_by_id ` +
+    `FROM ${q("asset")} ORDER BY id`);
   return rows.map((row) => {
     const raw = row["identifier"] === null || row["identifier"] === undefined
       ? null : String(row["identifier"]);
@@ -56,6 +58,9 @@ export async function listAssets(exec: SqlExec): Promise<AssetRow[]> {
       lifecycleStatus: row["lifecycle_status"] === null ||
         row["lifecycle_status"] === undefined
         ? null : String(row["lifecycle_status"]),
+      supersededById: row["superseded_by_id"] === null ||
+        row["superseded_by_id"] === undefined
+        ? null : Number(row["superseded_by_id"]),
     };
   });
 }

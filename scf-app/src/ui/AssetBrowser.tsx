@@ -44,6 +44,8 @@ import {
 import { exec, registry, useStore } from "../state/store.ts";
 import { AssetThumb } from "./AssetThumb.tsx";
 import { mediaFindingCount } from "../editor/mediaChecks.ts";
+import { assetStanding } from "../editor/assetStanding.ts";
+import { StandingTag } from "./StandingTag.tsx";
 import { MediaChecksPanel, useMediaReport } from "./MediaChecksPanel.tsx";
 
 function Folder({ node, depth, selected, onSelect }: {
@@ -371,6 +373,17 @@ no intent resolves for nothing."
 
 const PAGE = 300;
 
+/** Remembered per browser, like the Shoot tab's filters. */
+const HIDE_HISTORIC = "scf:assets-hide-historic";
+
+function readHideHistoric(): boolean {
+  try {
+    return localStorage.getItem(HIDE_HISTORIC) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function AssetBrowser(): JSX.Element {
   const { openEntityRow, assetPrefix, setAssetPrefix } = useStore();
   const { assets, orphans, loading, reload } = useAssetIndex();
@@ -381,11 +394,41 @@ export function AssetBrowser(): JSX.Element {
   const mediaReport = useMediaReport();
   const mediaCount = mediaFindingCount(mediaReport);
 
-  const facets = useMemo(() => facetsOf(assets, orphans),
-                         [assets, orphans]);
+  const [hideHistoric, setHideHistoricState] = useState(readHideHistoric);
+  const setHideHistoric = (v: boolean): void => {
+    setHideHistoricState(v);
+    try {
+      localStorage.setItem(HIDE_HISTORIC, v ? "1" : "0");
+    } catch {
+      // Not remembered this time; the list still changes.
+    }
+  };
+
+  const byId = useMemo(() => new Map(assets.map((a) => [a.id, a])),
+                       [assets]);
+  const standingOf = (a: AssetRow): ReturnType<typeof assetStanding> => {
+    const next = a.supersededById == null ? undefined
+      : byId.get(a.supersededById);
+    return assetStanding(a.lifecycleStatus, !orphans.has(a.id),
+                         next === undefined ? null
+                           : (next.name ?? next.identifier ?? `#${String(next.id)}`));
+  };
+  const historicIds = useMemo(() => new Set(assets
+    .filter((a) => assetStanding(a.lifecycleStatus, true).historic)
+    .map((a) => a.id)), [assets]);
+  // "Unreferenced" is the rot finder, and a superseded file nothing
+  // points at is not rot — it is the history the chain was kept for.
+  const liveOrphans = useMemo(() => new Set(
+    [...orphans].filter((id) => !historicIds.has(id))),
+  [orphans, historicIds]);
+
+  const facets = useMemo(() => facetsOf(assets, liveOrphans),
+                         [assets, liveOrphans]);
   const shown = useMemo(
-    () => applyFilter(assets, { ...filter, prefix: assetPrefix }, orphans),
-    [assets, filter, assetPrefix, orphans]);
+    () => applyFilter(assets, { ...filter, prefix: assetPrefix },
+                      liveOrphans)
+      .filter((a) => !hideHistoric || !historicIds.has(a.id)),
+    [assets, filter, assetPrefix, liveOrphans, hideHistoric, historicIds]);
 
   if (loading) return <div className="asset-browser">Loading assets…</div>;
 
@@ -427,6 +470,14 @@ no relationship. These are what rot at scale.">
                   onClick={() => toggle("unaddressedOnly")}>
             no identifier {facets.unaddressed}
           </button>
+          {historicIds.size > 0 && (
+            <button className={`tiny${hideHistoric ? " primary" : ""}`}
+                    onClick={() => setHideHistoric(!hideHistoric)}
+                    title="Hide superseded, cut, archived and deprecated
+files: history kept for the record, not the versions meant now.">
+              hide historic {historicIds.size}
+            </button>
+          )}
           <button className={`tiny${showChecks ? " primary" : ""}`}
                   onClick={() => setShowChecks((v) => !v)}
                   title="Bundles bound to nothing, bindings in force at every
@@ -483,8 +534,11 @@ fields that hold no JSON.">
         </div>
 
         <ul className="asset-list">
-          {shown.slice(0, shownCount).map((a) => (
-            <li key={a.id} className="asset-row">
+          {shown.slice(0, shownCount).map((a) => {
+            const standing = standingOf(a);
+            return (
+            <li key={a.id} className={"asset-row" +
+              (standing.historic ? ` asset-row-historic asset-row-${standing.kind}` : "")}>
               <input type="checkbox" className="asset-row-check"
                      aria-label={`select ${a.name ?? a.id}`}
                      checked={selected.has(a.id)}
@@ -513,11 +567,14 @@ fields that hold no JSON.">
                     ? "no decoder" : "not viewable"}
                 </span>
               )}
-              {orphans.has(a.id) && (
-                <span className="asset-row-orphan">unreferenced</span>
-              )}
+              <StandingTag standing={standing}
+                           onOpenSuccessor={a.supersededById == null
+                             ? undefined
+                             : () => void openEntityRow(
+                                 "asset", a.supersededById as number)} />
             </li>
-          ))}
+            );
+          })}
           {shown.length > shownCount && (
             <li className="asset-more">
               <button className="tiny"

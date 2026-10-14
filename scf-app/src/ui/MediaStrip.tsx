@@ -10,6 +10,8 @@ import { registerFiles, withCreatedAssets } from "../editor/mediaOps.ts";
 import type { ChangeUndo } from "../state/undoChange.ts";
 import { fail, FileIntake, type Incoming } from "./workspace/BoardParts.tsx";
 import { AssetThumb } from "./AssetThumb.tsx";
+import { assetStanding } from "../editor/assetStanding.ts";
+import { StandingTag } from "./StandingTag.tsx";
 
 /**
  * MediaStrip — the files a shot or a scene points at, in order.
@@ -114,15 +116,23 @@ function MediaTileView({ tile, index, count, run, onMove, onOpen }: {
   onMove: (delta: -1 | 1) => void;
   onOpen: () => void;
 }): JSX.Element {
+  const { openEntityRow } = useStore();
   const [notes, setNotes] = useState(tile.notes ?? "");
   useEffect(() => { setNotes(tile.notes ?? ""); }, [tile.notes]);
   const identifier = tile.asset["identifier"];
   const name = String(tile.asset["name"] ?? identifier ?? "file");
   const known = (MEDIA_TYPES as readonly string[]).includes(tile.type ?? "");
   const id = `media-${String(tile.linkId)}`;
+  // Attached, so referenced by definition: the tag only ever has
+  // something to say when the file is history.
+  const standing = assetStanding(
+    tile.asset["lifecycle_status"] as string | null, true,
+    tile.successorName);
+  const successorId = tile.asset["superseded_by_id"];
 
   return (
-    <li className={"media-tile media-" + (tile.type ?? "untyped")}>
+    <li className={"media-tile media-" + (tile.type ?? "untyped") +
+                   (standing.historic ? " media-tile-historic" : "")}>
       <div className="media-thumb">
         <AssetThumb identifier={typeof identifier === "string" ? identifier : null}
                     size="md" alt={name} onClick={onOpen} />
@@ -130,6 +140,13 @@ function MediaTileView({ tile, index, count, run, onMove, onOpen }: {
       </div>
       <div className="media-meta">
         <span className="media-name" title={String(identifier ?? "")}>{name}</span>
+        {standing.historic && (
+          <StandingTag standing={standing}
+                       onOpenSuccessor={successorId === null ||
+                         successorId === undefined ? undefined
+                         : () => void openEntityRow(
+                             "asset", Number(successorId))} />
+        )}
         <label className="visually-hidden" htmlFor={id}>
           What {name} is for
         </label>
