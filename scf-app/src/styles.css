@@ -2752,14 +2752,14 @@ button.strip-span-label:hover { color: var(--amber); }
     display: block !important; height: auto !important;
     overflow: visible !important; background: #fff !important;
   }
-  body:has(.shotlist) .topbar,
-  body:has(.shotlist) .activity-bar,
-  body:has(.shotlist) .rail,
-  body:has(.shotlist) .undo-toast,
-  body:has(.shotlist) .error-toast,
+  body:has(.print-surface) .topbar,
+  body:has(.print-surface) .activity-bar,
+  body:has(.print-surface) .rail,
+  body:has(.print-surface) .undo-toast,
+  body:has(.print-surface) .error-toast,
   .sl-controls { display: none !important; }
   .main-panel { padding: 0 !important; }
-  .shotlist { padding: 0; }
+  .shotlist, .screenplay { padding: 0; }
   .sl-sheet { width: auto !important; padding: 0; box-shadow: none; margin: 0; }
   .sl-sheet, .sl-sheet * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
@@ -2887,3 +2887,44 @@ button.strip-span-label:hover { color: var(--amber); }
 .sb-lb-name { font-size: 15px; }
 .sb-lb-caption .sb-lb-keys { font-size: 11px; color: #6d7887; margin-top: 10px; }
 .sb-lb-preload { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+
+/* ── Presentation: screenplay ────────────────────────────────────────
+   A fixed grid: Courier 12pt, ten characters to the inch, six lines to
+   the inch. Rows and their indents come from screenplayLayout.ts; the
+   CSS only places them, so what is drawn is what was paginated. */
+.screenplay { padding-bottom: 60px; }
+.spv-controls .sl-field > span { min-width: 0; }
+.spv-count { font: 600 12px var(--mono); color: var(--paper); min-width: 150px; }
+.spv-export { margin-left: auto; display: inline-flex; gap: 6px; }
+.spv-pages { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.spv-page {
+  position: relative; flex: none; background: #fff; color: #111;
+  width: 8.5in; height: 11in; overflow: hidden;
+  font: 12pt/12pt "Courier Prime", "Courier New", Courier, monospace;
+  box-shadow: 0 2px 18px rgba(0, 0, 0, .45);
+}
+.spv-a4 .spv-page { width: 210mm; height: 297mm; }
+.spv-page-no { position: absolute; top: .5in; right: 1in; }
+.spv-body { position: absolute; top: 1in; left: 1.5in; width: 6in; }
+.spv-row { position: relative; height: 12pt; white-space: pre; }
+.spv-synthetic { color: #111; }
+.spv-section, .spv-synopsis, .spv-note { color: #6a7487; font-style: italic; }
+.spv-scene-no { position: absolute; top: 0; }
+.spv-scene-no-left { left: -.75in; }
+.spv-scene-no-right { left: 6.15in; }
+
+.spv-title-page { display: block; }
+.spv-tp-center {
+  position: absolute; top: 3.5in; left: 1.5in; width: 6in; text-align: center;
+}
+.spv-tp-center > div + div { margin-top: 24pt; }
+.spv-tp-title { text-transform: uppercase; }
+.spv-tp-left, .spv-tp-right { position: absolute; bottom: 1in; }
+.spv-tp-left { left: 1.5in; }
+.spv-tp-right { right: 1in; text-align: right; }
+
+@media print {
+  .spv-pages { display: block; gap: 0; zoom: 1 !important; }
+  .spv-page { box-shadow: none; break-after: page; margin: 0; }
+  .spv-page:last-child { break-after: auto; }
+}

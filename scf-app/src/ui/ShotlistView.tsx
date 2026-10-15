@@ -226,7 +226,7 @@ export function ShotlistView(): JSX.Element {
   };
 
   return (
-    <div className="shotlist">
+    <div className="shotlist print-surface">
       <style>{`@page { size: ${opts.paper} ${opts.orientation}; margin: 10mm; }`}</style>
       <ShotlistControls opts={opts} setOpts={setOpts}
                         scenes={scenesWithShots} />

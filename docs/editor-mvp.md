@@ -655,8 +655,21 @@ visible.
   scene, cut shots in or out — remembered per browser, not in the
   `.scf`. Prints through the browser, which is also the PDF export, so
   the sheet on screen is the page.
-- **Screenplay** — the full script with title page and page breaks,
-  exported as FDX, Fountain or PDF to industry layout.
+- **Screenplay** ✅ (`ScreenplayView.tsx`, logic in
+  `state/screenplayLayout.ts`). The last commit, paged as Final Draft
+  pages it: Courier 12pt on a ten-to-the-inch, six-to-the-inch grid,
+  so pagination is arithmetic and the view draws exactly the rows it
+  computed. Title page laid out by key (centre, bottom left, bottom
+  right); page numbers from page 2; scene numbers in one, both or no
+  margins; headings, cues and parentheticals never end a page; action
+  splits only two-and-two; speeches carry (MORE)/(CONT'D) across a
+  break, and a returning speaker gets (CONT'D) (optional). Fountain
+  emphasis is drawn. Outline material (sections, synopses, notes) is
+  off by default. Exports: FDX (round-trips through our own importer,
+  dual dialogue included), Fountain (the Script tab's writer, now
+  shared), and PDF through the print dialog. Not done: dual dialogue
+  side by side on the page (it prints in sequence), authored page
+  breaks (dropped, as everywhere in v2), revision marks.
 - **Storyboard** ✅ (`StoryboardView.tsx`, logic in
   `state/storyboard.ts`, which builds on the shot list's `buildSheets`
   so the two never disagree on order). Frames in shot order at the

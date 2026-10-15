@@ -15,6 +15,7 @@ import { EditorView } from "@codemirror/view";
 import { EditorState, Transaction } from "@codemirror/state";
 import { exec, registry, useStore } from "../state/store.ts";
 import { suggestExportName } from "../state/saveName.ts";
+import { screenplayFountain } from "../state/screenplayLayout.ts";
 import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
 import { withTransaction } from "@scf-core/db.ts";
@@ -25,7 +26,7 @@ import {
 } from "../editor/sceneOps.ts";
 import { reanchorSpansForMove } from "../editor/structureCommit.ts";
 import {
-  blocksToDoc, blocksToFountain, commitPlan, rowsToBlocks,
+  blocksToDoc, commitPlan, rowsToBlocks,
   sceneSyncFromHeading, type Block,
 } from "../editor/screenplayDoc.ts";
 import {
@@ -928,12 +929,7 @@ export function ScriptView(): JSX.Element {
       sceneId: r.sceneId, characterId: r.characterId,
       locationId: r.locationId, metadata: r.metadata,
     }));
-    let text = "";
-    for (const tp of titlePageRef.current) {
-      text += `${tp.key}: ${tp.value.split("\n").join("\n   ")}\n`;
-    }
-    if (titlePageRef.current.length > 0) text += "\n";
-    text += blocksToFountain(blocks);
+    const text = screenplayFountain(titlePageRef.current, blocks);
     const blob = new Blob([text], { type: "text/plain" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

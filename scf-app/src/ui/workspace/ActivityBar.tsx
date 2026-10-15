@@ -49,9 +49,7 @@ export const SECTION_GROUPS: Array<{
   // Read-only, made to leave the app: printed, exported, put on a
   // screen. No shortcuts — Alt+0 is already the tenth section above.
   { name: "Presentation", sections: [
-    { mode: "screenplay", label: "Screenplay", noShortcut: true,
-      pending: "Screenplay — the full script with title page, as FDX, " +
-               "Fountain or PDF. Not built yet." },
+    { mode: "screenplay", label: "Screenplay", noShortcut: true },
     { mode: "storyboard", label: "Storyboard", noShortcut: true },
     { mode: "shotlist", label: "Shot list", noShortcut: true },
     { mode: "gallery", label: "Gallery", noShortcut: true,
