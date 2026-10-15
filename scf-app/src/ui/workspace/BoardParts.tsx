@@ -18,6 +18,8 @@ import { pickAssetFiles } from "../../files/assetLocator.ts";
 import { AssetThumb } from "../AssetThumb.tsx";
 import { scopeSummary } from "./AnchorScope.tsx";
 import { useQuery } from "../useQuery.ts";
+import { StandingTag } from "../StandingTag.tsx";
+import type { Standing } from "../../editor/assetStanding.ts";
 
 /** Files on their way onto a board or an exception. */
 export interface Incoming {
@@ -194,8 +196,15 @@ const SCOPED: Partial<Record<BoardName, "region" | "clip">> = {
 };
 
 export function BoardTile({ tile, board, owner, purposes, live, onChange,
-                            onOpen, onScope, scoping = false }: {
+                            onOpen, onScope, scoping = false, standing,
+                            reorder }: {
   tile: Tile; board: BoardName; owner: Owner; purposes: Purpose[];
+  /** Current or history (assetStanding.ts); absent where not shown. */
+  standing?: Standing;
+  /** Present on tiles whose link carries an order; a missing side
+   *  means there is nothing that way to trade places with. */
+  reorder?: { earlier?: (() => void) | undefined;
+              later?: (() => void) | undefined } | undefined;
   /** True or false when an "as of" scene is set; null otherwise. */
   live: boolean | null;
   onChange: (c: ChangeUndo) => void; onOpen: () => void;
@@ -220,10 +229,14 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
   };
   const primary = tile.purpose === "identity" && tile.status === "verified" &&
     tile.variant === null;
+  const history = standing?.historic === true ? standing : null;
+  const successorId = tile.asset["superseded_by_id"];
 
   return (
     <li className={"board-tile" + (primary ? " primary" : "") +
-                   (live === false ? " dim" : "")}>
+                   (live === false ? " dim" : "") +
+                   (history !== null
+                     ? ` board-tile-historic board-tile-${history.kind}` : "")}>
       <div className="board-thumb">
         <AssetThumb identifier={typeof identifier === "string" ? identifier : null}
                     size="lg" alt={name} onClick={onOpen}
@@ -233,6 +246,13 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
       </div>
       <div className="board-tile-meta">
         <span className="board-tile-name" title={String(identifier ?? "")}>{name}</span>
+        {history !== null && (
+          <StandingTag standing={history}
+                       onOpenSuccessor={successorId === null ||
+                         successorId === undefined ? undefined
+                         : () => void useStore.getState().openEntityRow(
+                             "asset", Number(successorId))} />
+        )}
         {tile.variant !== null && (
           <span className="ws-chip ws-chip-variant">{tile.variant}</span>
         )}
@@ -294,6 +314,18 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
           </button>
         )}
         <div className="ws-row-actions">
+          {reorder !== undefined && (
+            <>
+              <button className="ghost tiny" title="Earlier"
+                      aria-label={`Move ${name} earlier`}
+                      disabled={reorder.earlier === undefined}
+                      onClick={reorder.earlier}>◀</button>
+              <button className="ghost tiny" title="Later"
+                      aria-label={`Move ${name} later`}
+                      disabled={reorder.later === undefined}
+                      onClick={reorder.later}>▶</button>
+            </>
+          )}
           <button className="ghost tiny" onClick={onOpen}>Show in Assets</button>
           <button className="ghost tiny"
                   onClick={() => run(detach(exec, tile), "Could not remove")}>

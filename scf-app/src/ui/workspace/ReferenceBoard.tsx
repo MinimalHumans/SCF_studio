@@ -2,10 +2,14 @@
 import { useEffect, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
-  loadBoard, purposeHelp, purposeLabel, purposesFor, SharedSetError,
+  canReorder, loadBoard, moveTile, purposeHelp, sameSequence, purposeLabel, purposesFor, SharedSetError,
   type BoardData, type BoardName, type Owner, type Purpose, type Tile,
 } from "../../editor/mediaOps.ts";
 import type { ChangeUndo } from "../../state/undoChange.ts";
+import { assetStanding, type Standing }
+  from "../../editor/assetStanding.ts";
+import { useQuery } from "../useQuery.ts";
+import { useRememberedFlag } from "../useRememberedFlag.ts";
 import { ExceptionList } from "./ExceptionList.tsx";
 import { ClipEditor, RegionEditor } from "./AnchorScope.tsx";
 import {
@@ -63,8 +67,35 @@ export function ReferenceBoard({ owner, board }: {
     }
   };
 
+  // Every tile here is attached, so a historic one is history still in
+  // force — the same reading as a shot's media strip (assetStanding.ts).
+  const successorIds = [...new Set((data?.tiles ?? [])
+    .map((t) => t.asset["superseded_by_id"])
+    .filter((v) => v !== null && v !== undefined)
+    .map(Number))];
+  const successors = useQuery(
+    successorIds.length === 0
+      ? null
+      : "SELECT id, name, identifier FROM asset WHERE id IN (" +
+        successorIds.map(() => "?").join(", ") + ")",
+    successorIds);
+  const successorName = new Map(successors.map((r) => [Number(r["id"]),
+    String(r["name"] ?? r["identifier"] ?? `#${String(r["id"])}`)]));
+  const standingOf = (t: Tile): Standing => {
+    const next = t.asset["superseded_by_id"];
+    return assetStanding(
+      t.asset["lifecycle_status"] as string | null, true,
+      next === null || next === undefined
+        ? null : successorName.get(Number(next)) ?? null);
+  };
+  const [hideHistoric, setHideHistoric] =
+    useRememberedFlag("scf:board-hide-historic");
+  const historicCount = (data?.tiles ?? [])
+    .filter((t) => standingOf(t).historic).length;
+
   const tiles = (data?.tiles ?? []).filter((t) =>
-    filter === "all" || t.purpose === filter);
+    (filter === "all" || t.purpose === filter) &&
+    !(hideHistoric && standingOf(t).historic));
   const counts = new Map<string, number>();
   for (const t of data?.tiles ?? []) {
     counts.set(t.purpose, (counts.get(t.purpose) ?? 0) + 1);
@@ -129,7 +160,23 @@ export function ReferenceBoard({ owner, board }: {
               </button>
             );
           })}
+          {historicCount > 0 && (
+            <button className={"chip chip-historic" + (hideHistoric ? " on" : "")}
+                    aria-pressed={hideHistoric}
+                    title="Hide superseded, cut, archived and deprecated
+files. They are still attached until removed."
+                    onClick={() => setHideHistoric(!hideHistoric)}>
+              hide historic {historicCount}
+            </button>
+          )}
         </div>
+      )}
+
+      {hideHistoric && historicCount > 0 && (
+        <p className="muted board-hidden-note">
+          {historicCount} historic file{historicCount === 1 ? "" : "s"} hidden,
+          still attached. Remove a file to stop it applying.
+        </p>
       )}
 
       {data !== null && data.tiles.length === 0 && (
@@ -140,14 +187,30 @@ export function ReferenceBoard({ owner, board }: {
       )}
 
       <ul className="board-tiles">
-        {tiles.map((t) => (
+        {tiles.map((t, i) => {
+          // Neighbours in the same stored sequence, among the tiles
+          // shown: arrows step over what the filters hide.
+          const prev = tiles.slice(0, i).reverse()
+            .find((x) => sameSequence(t, x));
+          const next = tiles.slice(i + 1).find((x) => sameSequence(t, x));
+          const move = (to: Tile | undefined, d: -1 | 1) => to === undefined
+            ? undefined
+            : () => void moveTile(exec, owner, t, to, d).then((c) => {
+                if (c !== null) done(c);
+              }).catch((e: unknown) => fail("Could not move it", e));
+          return (
           <BoardTile key={t.key} tile={t} board={board} owner={owner}
+                     reorder={canReorder(t)
+                       ? { earlier: move(prev, -1), later: move(next, 1) }
+                       : undefined}
                      purposes={purposes} live={live(t)} onChange={done}
+                     standing={standingOf(t)}
                      onOpen={() => void openEntityRow("asset",
                        Number(t.asset["id"]))}
                      scoping={scoping === t.key}
                      onScope={() => setScoping((k) => k === t.key ? null : t.key)} />
-        ))}
+          );
+        })}
       </ul>
 
       {(() => {

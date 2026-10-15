@@ -2332,6 +2332,19 @@ button.strip-span-label:hover { color: var(--amber); }
   z-index: 0;
 }
 .board-asof { margin: 0; font-size: 12px; color: var(--amber); }
+/* History on a board: the same treatment as a shot's media strip. A
+   superseded "reference" loses its star colour so it cannot pass for
+   the current one. */
+.board-tile-historic { border-style: dashed; }
+.board-tile-historic.primary { border-color: var(--line); }
+.board-tile-historic .board-thumb,
+.board-tile-historic .board-tile-name { opacity: .5; }
+.board-tile-cut .board-tile-name { text-decoration: line-through; }
+.board-hidden-note { margin: 6px 0 0; font-size: 11.5px; }
+/* With the move arrows in the row, let it wrap whole buttons rather
+   than break "Show in Assets" over two lines. */
+.board-tile-meta .ws-row-actions { flex-wrap: wrap; }
+.board-tile-meta .ws-row-actions button { white-space: nowrap; }
 .board-tile.dim, .exc-card.dim { opacity: 0.45; }
 .board-tile.dim:hover, .exc-card.dim:hover { opacity: 0.85; }
 .board-live {

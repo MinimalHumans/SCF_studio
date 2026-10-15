@@ -195,6 +195,8 @@ export interface Tile {
   link: { entity: string; id: number };
   /** bundle_asset.role_in_bundle, for set tiles. */
   role: string | null;
+  /** The bundle a set tile belongs to: its order is per bundle. */
+  bundleId?: number;
   /** entity_anchor.canonical_status, for identity tiles. */
   status: string | null;
   /** The variant an identity anchor belongs to (proposal 0033). */
@@ -342,12 +344,13 @@ async function memberTiles(exec: SqlExec, bundleId: number,
   const members = await exec(
     "SELECT m.id AS link_id, m.role_in_bundle, s.* FROM bundle_asset m " +
     "JOIN asset s ON s.id = m.asset_id WHERE m.bundle_id = ? " +
-    'ORDER BY m."order", m.id', [bundleId]);
+    'ORDER BY m."order" IS NULL, m."order", m.id', [bundleId]);
   return members.map((r) => {
     const { link_id, role_in_bundle, ...asset } = r;
     return {
       key: `bundle_asset:${String(link_id)}`, purpose: "set" as const, label,
       asset, link: { entity: "bundle_asset", id: Number(link_id) },
+      bundleId,
       role: role_in_bundle === null || role_in_bundle === undefined ||
         role_in_bundle === "" ? null : String(role_in_bundle),
       status: null, variant: null, scope: null,
@@ -480,7 +483,8 @@ export async function loadBoard(
     const related = await exec(
       "SELECT r.id AS link_id, r.relationship_type, s.* " +
       "FROM asset_relationship r JOIN asset s ON s.id = r.asset_id " +
-      "WHERE r.entity_type = ? AND r.entity_id = ? ORDER BY r.id",
+      "WHERE r.entity_type = ? AND r.entity_id = ? " +
+      'ORDER BY r."order" IS NULL, r."order", r.id',
       [o.kind, o.id]);
     for (const r of related) {
       const { link_id, relationship_type, ...asset } = r;
@@ -573,10 +577,17 @@ async function attachInto(
         "AND entity_type = ? AND entity_id = ? AND relationship_type = ?",
         [assetId, o.kind, o.id, purpose]);
       if (existing.length > 0) continue;
+      // After everything the owner already has, so a new file lands at
+      // the end of the board rather than at an unordered position.
+      const top = await exec(
+        'SELECT MAX("order") AS m, COUNT(*) AS n FROM asset_relationship ' +
+        "WHERE entity_type = ? AND entity_id = ?", [o.kind, o.id]);
+      const next = Math.max(Number(top[0]?.["m"] ?? 0),
+                            Number(top[0]?.["n"] ?? 0)) + 1;
       await exec(
         "INSERT INTO asset_relationship (uuid, asset_id, entity_type, " +
-        "entity_id, relationship_type) VALUES (?, ?, ?, ?, ?)",
-        [newUuid(), assetId, o.kind, o.id, purpose]);
+        'entity_id, relationship_type, "order") VALUES (?, ?, ?, ?, ?, ?)',
+        [newUuid(), assetId, o.kind, o.id, purpose, next]);
       rec.created("asset_relationship", await lastId());
     }
     return;
@@ -650,6 +661,70 @@ async function copyMembers(rec: ChangeRecorder, exec: SqlExec,
       "SELECT id FROM bundle_asset WHERE bundle_id = ?", [to])) {
     rec.created("bundle_asset", Number(l["id"]));
   }
+}
+
+/**
+ * Whether two tiles share one stored sequence, and so can trade places.
+ *
+ * A board shows three kinds of link, and only two carry an order: a
+ * set's members (`bundle_asset.order`, per bundle) and related files
+ * (`asset_relationship.order`, per owner). Identity anchors have no
+ * order column, so they stay where they are — the reference is chosen
+ * by its status, not its position.
+ */
+export function sameSequence(a: Tile, b: Tile): boolean {
+  if (a.link.entity !== b.link.entity) return false;
+  if (a.link.entity === "asset_relationship") return true;
+  return a.link.entity === "bundle_asset" && a.bundleId !== undefined &&
+    a.bundleId === b.bundleId;
+}
+
+export const canReorder = (t: Tile): boolean =>
+  t.link.entity === "asset_relationship" ||
+  (t.link.entity === "bundle_asset" && t.bundleId !== undefined);
+
+/**
+ * Move a tile one place past `neighbour`, the next tile in the same
+ * sequence that the board is SHOWING. Tiles the board hides (another
+ * purpose filtered out, history hidden, the sound board's half of the
+ * owner's related files) keep their places relative to each other, and
+ * the whole sequence is written back 1..n so rows that had no order
+ * gain one. A shared set's order is the set's, so every subject using
+ * it sees the change.
+ */
+export async function moveTile(exec: SqlExec, owner: OwnerArg, tile: Tile,
+                               neighbour: Tile, delta: -1 | 1):
+    Promise<ChangeUndo | null> {
+  if (!sameSequence(tile, neighbour)) return null;
+  const o = ownerOf(owner);
+  const table = tile.link.entity;
+  const rows = table === "asset_relationship"
+    ? await exec(
+        'SELECT id, "order" AS o FROM asset_relationship ' +
+        "WHERE entity_type = ? AND entity_id = ? " +
+        'ORDER BY "order" IS NULL, "order", id', [o.kind, o.id])
+    : await exec(
+        'SELECT id, "order" AS o FROM bundle_asset WHERE bundle_id = ? ' +
+        'ORDER BY "order" IS NULL, "order", id', [tile.bundleId ?? -1]);
+  const ids = rows.map((r) => Number(r["id"]));
+  if (!ids.includes(tile.link.id) || !ids.includes(neighbour.link.id)) {
+    return null;
+  }
+  const next = ids.filter((id) => id !== tile.link.id);
+  const at = next.indexOf(neighbour.link.id);
+  next.splice(delta < 0 ? at : at + 1, 0, tile.link.id);
+  const was = new Map(rows.map((r) => [Number(r["id"]), r["o"]]));
+  const rec = new ChangeRecorder(`Moved ${String(
+    tile.asset["name"] ?? "a file")} ${delta < 0 ? "earlier" : "later"}`);
+  await withTransaction(exec, async () => {
+    for (const [i, id] of next.entries()) {
+      if (Number(was.get(id)) === i + 1) continue;
+      await rec.snapshot(exec, table, id);
+      await exec(`UPDATE ${q(table)} SET "order" = ?, ` +
+                 "updated_at = datetime('now') WHERE id = ?", [i + 1, id]);
+    }
+  });
+  return rec.result;
 }
 
 /** Take a tile off the board: its link row only. The asset stays. */

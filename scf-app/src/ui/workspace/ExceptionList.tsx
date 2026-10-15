@@ -10,6 +10,7 @@ import { useQuery } from "../useQuery.ts";
 import {
   BoardTile, fail, FileIntake, placeFiles, type InForce,
 } from "./BoardParts.tsx";
+import { assetStanding } from "../../editor/assetStanding.ts";
 import { useStoryScenes } from "./StoryStrip.tsx";
 
 type Kind = When["kind"];
@@ -145,6 +146,9 @@ export function ExceptionList({ owner, board, exceptions, inForce, asOf }: {
                 {x.tiles.map((t) => (
                   <BoardTile key={t.key} tile={t} board={board} owner={owner}
                              purposes={["set"]} live={null} onChange={done}
+                             standing={assetStanding(
+                               t.asset["lifecycle_status"] as string | null,
+                               true)}
                              onOpen={() => void useStore.getState()
                                .openEntityRow("asset", Number(t.asset["id"]))} />
                 ))}

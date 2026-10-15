@@ -19,7 +19,8 @@ import {
   attach, boardForIdentifier, confirmIdentity, detach, loadBoard,
   registerFiles, repurpose, SharedSetError, withCreatedAssets,
   addException, moveException, purposesFor, removeException, updateException,
-  ScopeError, setAnchorClip, setAnchorRegion,
+  ScopeError, setAnchorClip, setAnchorRegion, canReorder, moveTile,
+  type Tile,
 } from "../src/editor/mediaOps.ts";
 import { applyUndoChange } from "../src/state/undoChange.ts";
 import { createCharacter } from "../src/editor/elementOps.ts";
@@ -599,5 +600,66 @@ describe("which part of the file an anchor means", () => {
     await attach(db.exec, registry, id, "look", [g], "concept");
     const b = await loadBoard(db.exec, registry, id, "look");
     expect(b.tiles.map((t) => t.scope)).toEqual([null, null]);
+  });
+});
+
+describe("reordering a board", () => {
+  const names = (tiles: Tile[], purpose: string): string[] =>
+    tiles.filter((t) => t.purpose === purpose)
+      .map((t) => String(t.asset["name"]));
+
+  test("set members trade places, and undo puts them back", async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const files = [await asset(db.exec, "a.png"), await asset(db.exec, "b.png"),
+                   await asset(db.exec, "c.png")];
+    await attach(db.exec, registry, id, "look", files, "set");
+    const tiles = (await loadBoard(db.exec, registry, id, "look")).tiles;
+    expect(names(tiles, "set")).toEqual(["a.png", "b.png", "c.png"]);
+    const change = await moveTile(db.exec, id, tiles[2]!, tiles[1]!, -1);
+    const after = (await loadBoard(db.exec, registry, id, "look")).tiles;
+    expect(names(after, "set")).toEqual(["a.png", "c.png", "b.png"]);
+    await applyUndoChange(db.exec, change!);
+    expect(names((await loadBoard(db.exec, registry, id, "look")).tiles,
+                 "set")).toEqual(["a.png", "b.png", "c.png"]);
+  });
+
+  test("a move steps over a hidden neighbour without disturbing it",
+       async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const files = [await asset(db.exec, "a.png"), await asset(db.exec, "b.png"),
+                   await asset(db.exec, "c.png")];
+    await attach(db.exec, registry, id, "look", files, "concept");
+    const tiles = (await loadBoard(db.exec, registry, id, "look")).tiles;
+    // b.png is hidden; c.png's visible neighbour earlier is a.png.
+    await moveTile(db.exec, id, tiles[2]!, tiles[0]!, -1);
+    expect(names((await loadBoard(db.exec, registry, id, "look")).tiles,
+                 "concept")).toEqual(["c.png", "a.png", "b.png"]);
+  });
+
+  test("new related files land at the end of the order", async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const a = await asset(db.exec, "a.png");
+    const b = await asset(db.exec, "b.png");
+    await attach(db.exec, registry, id, "look", [a], "concept");
+    await attach(db.exec, registry, id, "look", [b], "inspiration");
+    const orders = await db.exec(
+      'SELECT "order" AS o FROM asset_relationship ORDER BY id');
+    expect(orders.map((r) => r["o"])).toEqual([1, 2]);
+  });
+
+  test("identity anchors carry no order and are not offered a move",
+       async () => {
+    const id = await createCharacter(db.exec, "Eleanor Cade");
+    const face = await asset(db.exec, "face.png");
+    const set = await asset(db.exec, "set.png");
+    await attach(db.exec, registry, id, "look", [face], "identity");
+    await attach(db.exec, registry, id, "look", [set], "set");
+    const tiles = (await loadBoard(db.exec, registry, id, "look")).tiles;
+    const anchor = tiles.find((t) => t.purpose === "identity")!;
+    const member = tiles.find((t) => t.purpose === "set")!;
+    expect(canReorder(anchor)).toBe(false);
+    expect(canReorder(member)).toBe(true);
+    // Different sequences never trade places.
+    expect(await moveTile(db.exec, id, member, anchor, -1)).toBeNull();
   });
 });

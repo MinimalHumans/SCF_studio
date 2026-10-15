@@ -46,6 +46,7 @@ import { AssetThumb } from "./AssetThumb.tsx";
 import { mediaFindingCount } from "../editor/mediaChecks.ts";
 import { assetStanding } from "../editor/assetStanding.ts";
 import { StandingTag } from "./StandingTag.tsx";
+import { useRememberedFlag } from "./useRememberedFlag.ts";
 import { MediaChecksPanel, useMediaReport } from "./MediaChecksPanel.tsx";
 
 function Folder({ node, depth, selected, onSelect }: {
@@ -373,17 +374,6 @@ no intent resolves for nothing."
 
 const PAGE = 300;
 
-/** Remembered per browser, like the Shoot tab's filters. */
-const HIDE_HISTORIC = "scf:assets-hide-historic";
-
-function readHideHistoric(): boolean {
-  try {
-    return localStorage.getItem(HIDE_HISTORIC) === "1";
-  } catch {
-    return false;
-  }
-}
-
 export function AssetBrowser(): JSX.Element {
   const { openEntityRow, assetPrefix, setAssetPrefix } = useStore();
   const { assets, orphans, loading, reload } = useAssetIndex();
@@ -394,15 +384,8 @@ export function AssetBrowser(): JSX.Element {
   const mediaReport = useMediaReport();
   const mediaCount = mediaFindingCount(mediaReport);
 
-  const [hideHistoric, setHideHistoricState] = useState(readHideHistoric);
-  const setHideHistoric = (v: boolean): void => {
-    setHideHistoricState(v);
-    try {
-      localStorage.setItem(HIDE_HISTORIC, v ? "1" : "0");
-    } catch {
-      // Not remembered this time; the list still changes.
-    }
-  };
+  const [hideHistoric, setHideHistoric] =
+    useRememberedFlag("scf:assets-hide-historic");
 
   const byId = useMemo(() => new Map(assets.map((a) => [a.id, a])),
                        [assets]);
