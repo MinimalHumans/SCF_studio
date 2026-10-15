@@ -14,8 +14,8 @@
  *  2. Resolution and the drawn raster both come from `thumbnailCache`,
  *     which survives unmount, tab switches and reload, so the second
  *     visit to the assets tab touches no files at all.
- *  3. Images only. Video would need a poster frame, which means
- *     decoding to a canvas; audio and text have no small form at all.
+ *  3. Images, and video as a live frame (VideoThumb, below — streamed,
+ *     not drawn into the cache); audio and text have no small form at all.
  *     Everything else gets a format chip — the SAME SIZE as an image,
  *     because a slot that collapses for the .zip makes every list jump
  *     as it loads, and three of the nine assets in Hollow Creek are
@@ -39,6 +39,7 @@ import type { RegionBox } from "@scf-core/anchors.ts";
 import { resolveCached, thumbnailFor, type Thumbnail }
   from "../files/thumbnailCache.ts";
 import { useStore } from "../state/store.ts";
+import { acquire, release } from "../files/objectUrlCache.ts";
 
 export type ThumbSize = "sm" | "md" | "lg";
 
@@ -153,6 +154,22 @@ export function AssetThumb({ identifier, size = "sm", region = null,
     );
   }
 
+  // A video's poster is a frame of the video itself, streamed rather
+  // than read whole, so size is no bar to showing one.
+  if (cap.kind === "video" && cap.tier === "native" && parsed !== null) {
+    return (
+      <div ref={box}
+           className={`${cls} asset-thumb-video` +
+                      (onClick === undefined ? "" : " asset-thumb-btn")}
+           onClick={onClick}
+           role={onClick === undefined ? undefined : "button"}
+           title={alt}>
+        <VideoThumb root={root} path={parsed.path} alt={alt}
+                    playOnHover={size !== "sm"} />
+      </div>
+    );
+  }
+
   if (!drawable) {
     const why = (resolution.sizeBytes ?? 0) > LARGE_FILE_BYTES
       ? `${Math.round((resolution.sizeBytes ?? 0) / 1024 / 1024)} MB — ` +
@@ -175,5 +192,63 @@ export function AssetThumb({ identifier, size = "sm", region = null,
         <img src={thumb.dataUrl} alt={alt} className="asset-thumb-img" />
       )}
     </div>
+  );
+}
+
+/**
+ * A video thumbnail: the file streamed into a muted <video>, parked on
+ * a frame a little way in (the first is often black), and played while
+ * the pointer is over it where the thumbnail is big enough to watch.
+ *
+ * The URL comes from the shared refcounted cache, like a previewer's:
+ * it is a reference to the file, not a copy, and `preload="metadata"`
+ * reads only what is needed to show one frame until it plays.
+ */
+function VideoThumb({ root, path, alt, playOnHover }: {
+  root: FileSystemDirectoryHandle | null;
+  path: string;
+  alt: string;
+  playOnHover: boolean;
+}): JSX.Element {
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const poster = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const u = await acquire(root, path);
+      if (!cancelled) setUrl(u);
+    })();
+    return () => {
+      cancelled = true;
+      release(root, path);
+    };
+  }, [root, path]);
+
+  if (failed || url === null) {
+    return <span className="asset-thumb-video-chip">{failed ? "!" : ""}</span>;
+  }
+  return (
+    <>
+      <video className="asset-thumb-img" src={url} muted loop playsInline
+             preload="metadata" aria-label={alt}
+             onLoadedMetadata={(e) => {
+               const v = e.currentTarget;
+               poster.current = Number.isFinite(v.duration)
+                 ? Math.min(1, v.duration / 10) : 0;
+               v.currentTime = poster.current;
+             }}
+             onError={() => setFailed(true)}
+             onMouseEnter={playOnHover ? (e) => {
+               void e.currentTarget.play().catch(() => {});
+             } : undefined}
+             onMouseLeave={playOnHover ? (e) => {
+               const v = e.currentTarget;
+               v.pause();
+               v.currentTime = poster.current;
+             } : undefined} />
+      <span className="asset-thumb-play" aria-hidden="true">▶</span>
+    </>
   );
 }

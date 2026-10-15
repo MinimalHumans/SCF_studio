@@ -2985,3 +2985,20 @@ button.strip-span-label:hover { color: var(--amber); }
 .sb-lb-caption .gl-uses { font-size: 12.5px; color: #9fb0c4; }
 .gl-missing .gl-pic { outline: 1px dashed var(--blocker); outline-offset: -1px; }
 .gl-badge-missing { left: 6px; right: auto; background: var(--blocker); }
+
+/* Video thumbnails: a live frame, played on hover where large enough. */
+.asset-thumb-video { position: relative; overflow: hidden; background: #000; }
+.asset-thumb-video video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.media-thumb .asset-thumb-video video,
+.board-thumb .asset-thumb-video video { object-fit: contain; }
+.asset-thumb-play {
+  position: absolute; right: 4px; bottom: 4px; font-size: 9px; line-height: 1;
+  color: #fff; background: rgba(0, 0, 0, .55); border-radius: 2px; padding: 2px 4px;
+  pointer-events: none; transition: opacity .15s;
+}
+.asset-thumb-sm .asset-thumb-play { font-size: 7px; padding: 1px 2px; right: 1px; bottom: 1px; }
+.asset-thumb-video:hover .asset-thumb-play { opacity: 0; }
+.asset-thumb-video-chip {
+  display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+  font: 600 11px var(--mono); color: var(--amber);
+}
