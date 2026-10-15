@@ -2914,8 +2914,12 @@ button.strip-span-label:hover { color: var(--amber); }
 .spv-scene-no-right { left: 6.15in; }
 
 .spv-title-page { display: block; }
+/* Centred on the PAGE, not on the script's text block: the body sits
+   between a 1.5" binding margin and a 1" right one, so centring on it
+   puts the title a quarter inch right of the middle, which reads as a
+   mistake on a page that is otherwise empty. */
 .spv-tp-center {
-  position: absolute; top: 3.5in; left: 1.5in; width: 6in; text-align: center;
+  position: absolute; top: 3.5in; left: 1in; right: 1in; text-align: center;
 }
 .spv-tp-center > div + div { margin-top: 24pt; }
 .spv-tp-title { text-transform: uppercase; }
