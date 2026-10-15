@@ -638,7 +638,7 @@ separate document because it is one surface with its own decisions
 (proposals 0033–0035, the no-copy file rule) and its own open list;
 this document links to it so neither gets lost.
 
-## 7g. Presentation — the film, made to leave the app
+## 7g. ✅ Presentation — the film, made to leave the app
 
 A fifth group in the activity bar, below Tools: read-only views of the
 project made to be printed, exported or put on a screen. Four sections,
@@ -680,9 +680,19 @@ visible.
   app — ← → step, Home/End, F full screen, Esc closes; stops at the
   ends. The frame choice and its loader (`ShotFrame.tsx`) are shared
   with the shot list.
-- **Gallery** — every asset, masonry layout, sorted at random,
-  alphabetically, or by importance (how often it is used, or how much
-  the entities it serves are).
+- **Gallery** ✅ (`GalleryView.tsx`, logic in `state/gallery.ts`).
+  Every current asset as a masonry wall: a grid with a 6px row unit,
+  each tile spanning rows for its picture's own shape, so the sorted
+  order still reads left to right. Sorts: by importance, alphabetical
+  (natural order), newest, random (seeded, reshuffle on demand).
+  Importance is derived, never stored: walk bundle → binding → subject,
+  anchor → subject, and asset_relationship → shot / scene / project;
+  one point per use, plus one and the subject's scene count for each
+  subject reached (the poster counts as in every scene). Filters by
+  what an asset serves, or "not used by anything". Pictures and video
+  by default, other files optionally, older versions optionally.
+  Tiles load only once on screen; a viewer dims the app, steps with
+  the arrow keys and lists what the file is used for.
 
 ## 8. Suggested order
 

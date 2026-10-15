@@ -37,8 +37,9 @@ nothing.
 | Tools | **Queries** | `ui/queries/` | The 16 canonical queries, each with view / JSON / copy-as-context. |
 | Tools | **Schema** | `CategoryTree`, `EntityList` | Every entity type, with row counts. The complete record editor; every workspace section links back to it. |
 | Tools | **Assets** | `AssetBrowser`, `BundleAssets`, `AssetPreview` | Bundles, bindings and anchors, and whether an identifier resolves to bytes. |
-| Presentation | **Shot list** | `ShotlistView`, `state/shotlist.ts` | Read-only. The shots as a printable shot list — frame, code, size, angle, lens, move, seconds, action, Done — with column, page and layout options, printed or saved as PDF through the browser. Gallery sits beside it, not built yet ([`editor-mvp.md` §7g](../docs/editor-mvp.md)). |
+| Presentation | **Shot list** | `ShotlistView`, `state/shotlist.ts` | Read-only. The shots as a printable shot list — frame, code, size, angle, lens, move, seconds, action, Done — with column, page and layout options, printed or saved as PDF through the browser. See [`editor-mvp.md` §7g](../docs/editor-mvp.md). |
 | Presentation | **Screenplay** | `ScreenplayView`, `state/screenplayLayout.ts` | Read-only. The committed script as industry pages — title page, Courier grid, scene numbers, (MORE)/(CONT'D) — exported as FDX, Fountain, or PDF via print. |
+| Presentation | **Gallery** | `GalleryView`, `state/gallery.ts` | Read-only. Every asset as a masonry wall, sorted by importance (derived from what each asset reaches and how much of the film that is), alphabetically, newest or at random, with a viewer stepped by the arrow keys. |
 | Presentation | **Storyboard** | `StoryboardView`, `state/storyboard.ts`, `ShotFrame` | Read-only. Each shot's storyboard panel (else start frame) in shot order, at the project's aspect ratio. Board (scenes as rows or columns, captions below or over the frame) and Lightbox (contact sheet, and a full-screen viewer stepped with the arrow keys). |
 
 ## Architecture

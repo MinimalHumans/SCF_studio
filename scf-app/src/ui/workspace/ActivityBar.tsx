@@ -52,9 +52,7 @@ export const SECTION_GROUPS: Array<{
     { mode: "screenplay", label: "Screenplay", noShortcut: true },
     { mode: "storyboard", label: "Storyboard", noShortcut: true },
     { mode: "shotlist", label: "Shot list", noShortcut: true },
-    { mode: "gallery", label: "Gallery", noShortcut: true,
-      pending: "Gallery — every asset in the project, laid out. " +
-               "Not built yet." },
+    { mode: "gallery", label: "Gallery", noShortcut: true },
   ] },
 ];
 

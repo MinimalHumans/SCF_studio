@@ -2932,3 +2932,56 @@ button.strip-span-label:hover { color: var(--amber); }
   .spv-page { box-shadow: none; break-after: page; margin: 0; }
   .spv-page:last-child { break-after: auto; }
 }
+
+/* ── Presentation: gallery ───────────────────────────────────────────
+   A masonry wall: a grid with a 6px row unit, each tile spanning as
+   many rows as its picture is tall (GalleryView computes the span). */
+.gallery { padding-bottom: 60px; }
+.gl-count { margin-left: auto; font-size: 12px; }
+.gl-note { font-size: 12px; margin: -6px 0 12px; }
+.gl-grid { display: grid; row-gap: 0; align-items: start; }
+.gl-tile {
+  display: block; padding: 0; border: 0; background: none; text-align: left;
+  cursor: zoom-in; min-width: 0;
+}
+.gl-pic {
+  position: relative; width: 100%; overflow: hidden; border-radius: 4px;
+  background: var(--ink-2);
+}
+.gl-pic img, .gl-pic video {
+  width: 100%; height: 100%; display: block; object-fit: cover;
+  transition: transform .35s ease, filter .35s ease;
+}
+.gl-tile:hover .gl-pic img, .gl-tile:hover .gl-pic video { transform: scale(1.035); }
+.gl-tile:focus-visible .gl-pic { outline: 2px solid var(--amber); }
+.gl-chip {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font: 600 13px var(--mono); color: var(--paper-dim); text-transform: uppercase;
+}
+.gl-badge {
+  position: absolute; top: 6px; right: 6px; font-size: 10px; color: #fff;
+  background: rgba(0, 0, 0, .55); border-radius: 2px; padding: 1px 5px;
+}
+.gl-hover-name {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 8px 6px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, .8));
+  color: #fff; font-size: 11.5px; opacity: 0; transition: opacity .2s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gl-tile:hover .gl-hover-name, .gl-tile:focus-visible .gl-hover-name { opacity: 1; }
+.gl-name {
+  display: block; height: 22px; padding-top: 4px; font-size: 11.5px; color: var(--paper-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gl-stage img, .gl-stage video {
+  max-width: 100%; max-height: calc(100vh - 210px); object-fit: contain;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, .6);
+}
+.gl-viewer-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-family: var(--mono); color: #8a96a8;
+}
+.gl-viewer-empty strong { font-size: 28px; color: #c9d1dc; }
+.sb-lb-caption .gl-uses { font-size: 12.5px; color: #9fb0c4; }
+.gl-missing .gl-pic { outline: 1px dashed var(--blocker); outline-offset: -1px; }
+.gl-badge-missing { left: 6px; right: auto; background: var(--blocker); }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo, useState } from "react";
 import { parseIdentifier } from "@scf-core/assets.ts";
-import { previewCapability } from "@scf-core/preview.ts";
+import { previewCapability, type PreviewKind } from "@scf-core/preview.ts";
 import { useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import { resolveCached } from "../files/thumbnailCache.ts";
@@ -36,14 +36,16 @@ export function useShotFrames(): Map<number, string> {
 }
 
 /**
- * An object URL for an image asset, or null while loading or when the
- * identifier does not resolve to a drawable image.
+ * An object URL for an image asset (or another kind, when asked), or
+ * null while loading or when the identifier does not resolve to one.
  *
  * From the file itself rather than the square thumbnail cache: a frame
  * is the point of these views and should print and project sharp.
  * Loaded eagerly, because a print only shows what has already loaded.
  */
-export function useFrameUrl(identifier: string | null): string | null {
+export function useFrameUrl(identifier: string | null,
+                            kinds: readonly PreviewKind[] = ["image"]):
+    string | null {
   const { projectRoot, environmentRevision } = useStore();
   const root = projectRoot as FileSystemDirectoryHandle | null;
   const [url, setUrl] = useState<string | null>(null);
@@ -58,7 +60,8 @@ export function useFrameUrl(identifier: string | null): string | null {
     void (async () => {
       const r = await resolveCached(root, identifier, environmentRevision);
       if (cancelled || r.state !== "resolved") return;
-      if (previewCapability(r.format).kind !== "image") return;
+      const kind = previewCapability(r.format).kind;
+      if (kind === null || !kinds.includes(kind)) return;
       held = true;
       const u = await acquire(root, parsed.path);
       if (!cancelled) setUrl(u);
@@ -67,7 +70,7 @@ export function useFrameUrl(identifier: string | null): string | null {
       cancelled = true;
       if (held) release(root, parsed.path);
     };
-  }, [identifier, root, environmentRevision]);
+  }, [identifier, root, environmentRevision, kinds.join()]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return url;
 }
