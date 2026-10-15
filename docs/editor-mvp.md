@@ -638,6 +638,33 @@ separate document because it is one surface with its own decisions
 (proposals 0033–0035, the no-copy file rule) and its own open list;
 this document links to it so neither gets lost.
 
+## 7g. Presentation — the film, made to leave the app
+
+A fifth group in the activity bar, below Tools: read-only views of the
+project made to be printed, exported or put on a screen. Four sections,
+built one at a time; the unbuilt ones are shown disabled so the shape is
+visible.
+
+- **Shot list** ✅ (`ShotlistView.tsx`, logic in `state/shotlist.ts`).
+  The Shoot tab's shots as paper: storyboard frame (first storyboard
+  panel, else start frame), shot code, size, angle, lens, move, seconds,
+  action, a Done box; Title, Cast, Props and Notes as optional columns.
+  Grouped under beat banners, scene facts above each table (location,
+  scene-level `lighting_design`, cast, props), a size legend after.
+  Landscape or portrait, Letter or A4, one scene or all, page per
+  scene, cut shots in or out — remembered per browser, not in the
+  `.scf`. Prints through the browser, which is also the PDF export, so
+  the sheet on screen is the page.
+- **Screenplay** — the full script with title page and page breaks,
+  exported as FDX, Fountain or PDF to industry layout.
+- **Storyboard** — frames in shot order. A screen layout (rows or
+  columns; image alone or with shot number, name and description
+  overlaid) and a lightbox that dims the app and steps with the arrow
+  keys.
+- **Gallery** — every asset, masonry layout, sorted at random,
+  alphabetically, or by importance (how often it is used, or how much
+  the entities it serves are).
+
 ## 8. Suggested order
 
 1. ✅ **§2 — Q04.** Done in spec 0.49.

@@ -2657,3 +2657,109 @@ button.strip-span-label:hover { color: var(--amber); }
 .tp-foot > div { display: grid; gap: 0.8em; align-content: end; min-width: 0; }
 .tp-foot-right { text-align: right; }
 .tp-empty { margin: auto; color: #8a94a4; text-align: center; }
+
+/* ── Presentation: shot list ─────────────────────────────────────────
+   On screen, a white sheet the width of the chosen page; in print, the
+   sheet is all there is. Paper colours are literal, not theme tokens:
+   this is the page that leaves the app. */
+.shotlist { padding-bottom: 60px; }
+.sl-controls {
+  position: sticky; top: -14px; z-index: 3;
+  background: var(--ink-0); border-bottom: 1px solid var(--line);
+  padding: 8px 0 10px; margin-bottom: 18px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sl-controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.sl-controls-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--paper-dim); min-width: 64px;
+}
+.sl-field { display: flex; align-items: center; gap: 6px; }
+.sl-field > span { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--paper-dim); min-width: 64px; }
+.sl-check { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+.sl-print { margin-left: auto; }
+.sl-empty { max-width: 60ch; }
+
+.sl-sheet {
+  --sl-ink: #111; --sl-rule: #9a9a9a; --sl-dim: #555;
+  background: #fff; color: var(--sl-ink);
+  font: 10.5px/1.4 "Segoe UI", system-ui, -apple-system, sans-serif;
+  padding: 10mm; margin: 0 auto;
+  box-shadow: 0 2px 18px rgba(0, 0, 0, .45);
+}
+.sl-letter.sl-landscape { width: 11in; }
+.sl-letter.sl-portrait { width: 8.5in; }
+.sl-a4.sl-landscape { width: 297mm; }
+.sl-a4.sl-portrait { width: 210mm; }
+
+.sl-doc-head {
+  display: flex; align-items: baseline; gap: 16px;
+  border-bottom: 2px solid var(--sl-ink); padding-bottom: 4px; margin-bottom: 10px;
+}
+.sl-doc-head h1 { font-size: 19px; margin: 0; font-weight: 700; flex: 1; }
+.sl-doc-meta { font-size: 10px; color: var(--sl-dim); white-space: pre; }
+
+.sl-scene + .sl-scene { margin-top: 22px; }
+.sl-page-per-scene .sl-scene + .sl-scene { break-before: page; }
+.sl-scene-head {
+  display: flex; align-items: baseline; gap: 12px;
+  font-size: 13px; margin: 0 0 6px; text-transform: uppercase;
+  break-after: avoid;
+}
+.sl-scene-head > span:first-child { flex: 1; }
+.sl-scene-meta { font-size: 10px; font-weight: 400; color: var(--sl-dim); text-transform: none; white-space: pre; }
+.sl-scene-facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 6px 18px; margin-bottom: 10px; break-inside: avoid;
+}
+.sl-scene-facts p { margin: 1px 0 0; }
+.sl-label {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--sl-dim);
+}
+
+.sl-table { width: 100%; border-collapse: collapse; table-layout: auto; }
+.sl-table th, .sl-table td { border: 1px solid var(--sl-rule); padding: 3px 6px; vertical-align: middle; }
+.sl-table th {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  text-align: left; background: #f0f0f0; white-space: nowrap;
+}
+.sl-table tr { break-inside: avoid; }
+.sl-beat td {
+  background: #111; color: #fff; font-weight: 700; font-size: 9.5px;
+  letter-spacing: .03em; padding: 3px 6px;
+}
+.sl-beat { break-after: avoid; }
+.sl-c-frame { width: 1%; padding: 2px !important; }
+.sl-frame { width: 1.9in; aspect-ratio: 16 / 9; background: #eee; overflow: hidden; }
+.sl-portrait .sl-frame { width: 1.45in; }
+.sl-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sl-c-shot { font-size: 16px; font-weight: 700; text-align: center; white-space: nowrap; width: 1%; }
+.sl-c-size, .sl-c-angle, .sl-c-lens, .sl-c-move, .sl-c-sec { text-align: center; white-space: nowrap; width: 1%; }
+.sl-portrait .sl-c-angle, .sl-portrait .sl-c-move { white-space: normal; }
+.sl-c-title { font-weight: 600; min-width: 1.2in; }
+.sl-c-action { min-width: 2in; }
+.sl-c-cast, .sl-c-props, .sl-c-notes { min-width: .9in; }
+.sl-c-done { width: 1%; text-align: center; }
+.sl-box { display: inline-block; width: 14px; height: 14px; border: 1px solid #333; vertical-align: middle; }
+.sl-cut { display: block; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #a33; }
+.sl-row-cut td { color: #888; }
+.sl-row-cut .sl-frame { opacity: .45; }
+.sl-legend { margin-top: 10px; font-size: 9.5px; }
+
+@media print {
+  html, body, #root, .workbench, .panels, .main-panel {
+    display: block !important; height: auto !important;
+    overflow: visible !important; background: #fff !important;
+  }
+  body:has(.shotlist) .topbar,
+  body:has(.shotlist) .activity-bar,
+  body:has(.shotlist) .rail,
+  body:has(.shotlist) .undo-toast,
+  body:has(.shotlist) .error-toast,
+  .sl-controls { display: none !important; }
+  .main-panel { padding: 0 !important; }
+  .shotlist { padding: 0; }
+  .sl-sheet { width: auto !important; padding: 0; box-shadow: none; margin: 0; }
+  .sl-sheet, .sl-sheet * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

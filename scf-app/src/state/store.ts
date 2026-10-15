@@ -65,7 +65,9 @@ export type NavMode =
   // Where an opened project lands: a neutral page, not any one section.
   "intro" | "project" |
   "subject" | "schema" | "structure" | "queries" | "script" | "shoot" |
-  "assets" | "characters" | "locations" | "props";
+  "assets" | "characters" | "locations" | "props" |
+  // Presentation: read-only views of the film, made to be handed on.
+  "screenplay" | "storyboard" | "shotlist" | "gallery";
 
 export { CHARACTER_TABS, type CharacterTab } from "./characterLayout.ts";
 import type {

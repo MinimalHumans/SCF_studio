@@ -46,6 +46,20 @@ export const SECTION_GROUPS: Array<{
     { mode: "schema", label: "Schema" },
     { mode: "assets", label: "Assets" },
   ] },
+  // Read-only, made to leave the app: printed, exported, put on a
+  // screen. No shortcuts — Alt+0 is already the tenth section above.
+  { name: "Presentation", sections: [
+    { mode: "screenplay", label: "Screenplay", noShortcut: true,
+      pending: "Screenplay — the full script with title page, as FDX, " +
+               "Fountain or PDF. Not built yet." },
+    { mode: "storyboard", label: "Storyboard", noShortcut: true,
+      pending: "Storyboard — frames in shot order, on screen or as a " +
+               "slideshow. Not built yet." },
+    { mode: "shotlist", label: "Shot list", noShortcut: true },
+    { mode: "gallery", label: "Gallery", noShortcut: true,
+      pending: "Gallery — every asset in the project, laid out. " +
+               "Not built yet." },
+  ] },
 ];
 
 /** Alt+1 … Alt+0, in list order. Ctrl+digit is the browser's own. */

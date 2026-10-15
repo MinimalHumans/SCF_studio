@@ -20,7 +20,7 @@ npm run build      # static bundle in dist/
 
 Sections in an always-visible activity bar on the left, grouped in the
 order the work is usually done — the project, the story, then who and
-what is in it, then the tools. `Alt+1` … `Alt+0` switch between the ten
+what is in it, then the tools, then what leaves the app. `Alt+1` … `Alt+0` switch between the ten
 below Project, which has no shortcut so that adding it renumbered
 nothing.
 
@@ -37,6 +37,7 @@ nothing.
 | Tools | **Queries** | `ui/queries/` | The 16 canonical queries, each with view / JSON / copy-as-context. |
 | Tools | **Schema** | `CategoryTree`, `EntityList` | Every entity type, with row counts. The complete record editor; every workspace section links back to it. |
 | Tools | **Assets** | `AssetBrowser`, `BundleAssets`, `AssetPreview` | Bundles, bindings and anchors, and whether an identifier resolves to bytes. |
+| Presentation | **Shot list** | `ShotlistView`, `state/shotlist.ts` | Read-only. The shots as a printable shot list — frame, code, size, angle, lens, move, seconds, action, Done — with column, page and layout options, printed or saved as PDF through the browser. Screenplay, Storyboard and Gallery sit beside it, not built yet ([`editor-mvp.md` §7g](../docs/editor-mvp.md)). |
 
 ## Architecture
 
