@@ -15,6 +15,14 @@ by then; no decision depends on the difference.
 tagged `schema-2.22` — so the release batch §A7 describes is **2.23**,
 and every release-schema reference below says so.
 
+**Since then (2026-10-09 – 10-15):** 0037 (shot and scene media) and
+0038 (the project poster) are committed — `d651077`, `350c181`,
+`54c8cf4` — as **spec 0.65** on **schema 2.23, untagged**; both
+proposals say `implemented`. The rest of the 2.23 batch (§B8) lands
+under the same number. The week's other work was editor-only
+(presentation, storyboard and shot-list tabs, screenplay export,
+gallery, asset statuses) and touches nothing on this list.
+
 ✅ done · ◑ partial · ○ to do · ⚠️ decision needed · 🔒 one-way door
 
 ---
@@ -98,7 +106,7 @@ proposals carry their resolutions; the work the decisions create is
 
 ## B. Defects found in this pass — fix before the tag
 
-### B1. ○ The app's query pages re-derive what scf-core answers
+### B1. ✅ The app's query pages re-derive what scf-core answers
 
 `scf-core` exports a normative `qNNResult()` for **all sixteen**
 queries. The app's query pages call scf-core for Q03 and Q12 and
@@ -121,6 +129,23 @@ the copies have kept bugs the core fixed:
 `qNNResult()` and owns only its markdown. That deletes most of
 `runnersComposed.ts`, and a check — no `ctx.exec` under `ui/queries/` —
 keeps it deleted.
+
+**Done 2026-10-15.** All sixteen pages call `qNNResult()`; the JSON tab
+shows the normative envelope scf-mcp serves, and `runnersComposed.ts`
+is deleted. Rows arrive projected, so the views read `{ uuid, fields }`
+(field order from the registry) and open rows by uuid; the param picker
+carries each row's uuid beside its id for the envelope.
+`runners.test.ts` runs all sixteen against the fixture and fails on any
+`ctx.exec` under `ui/queries/`. Q04 now shows derived lineage, the cut
+filter, presence and variants (sc 25: Marcus *as Marcus, age nine*); Q03
+and Q12 show variants where one is in force. Seven of the eight blessed
+`.expected.md` files are byte-identical; **Q13's** was re-blessed — its
+title no longer prints a row id (`character #1`), and the asset list
+the References section duplicated is gone. Two page-only extras went
+with the copies: Q15's "unattached" list and the anchor's
+`canonical_status` tag on Q13. The `act_id` writes and reads outside the
+query pages (`structureCommit.ts`, `StructureView.tsx`,
+`EntityList.tsx`) stay for §B8.
 
 ### B2. ○ Twenty members empty in every normative result
 
@@ -354,16 +379,15 @@ item that declares something authors a fixture row that exercises it.
   - `audio_offset_*` help text as decided;
   - ✅ `project.synopsis` (0036) — done in `0d65695`, with a synopsis
     authored in the fixture.
-  - ◑ shot and scene media (0037) — in the working tree 2026-10-09,
-    awaiting review: `relationship_type` gains `storyboard`,
+  - ✅ shot and scene media (0037) — committed in `d651077` (editor
+    view `350c181`): `relationship_type` gains `storyboard`,
     `start_frame`, `end_frame`, `previs`; `asset_relationship.order`;
     spec 0.64 §8.6; shot 12-04's panels in the fixture. It moved
     `SCHEMA_VERSION` to 2.23 ahead of the rest of this batch, which
     lands under the same number.
-  - ◑ the project poster (0038) — in the working tree 2026-10-09,
-    awaiting review: `relationship_type` gains `poster`; spec 0.65
-    §8.6 and §12.12; Q00 gains `posters`; the fixture project relates
-    `poster01.png`.
+  - ✅ the project poster (0038) — committed in `54c8cf4`:
+    `relationship_type` gains `poster`; spec 0.65 §8.6 and §12.12; Q00
+    gains `posters`; the fixture project relates `poster01.png`.
 - **Spec text:** §0.6's floor (exactly 2.23, §A8); §12.8's
   `audio_offset_*` sentence (§A9); §12.17's ordered comparison (§A11);
   §1.3.1's finding sentence (§A12); §2.3's clip note (§A1); the

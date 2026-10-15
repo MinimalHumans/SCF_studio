@@ -33,7 +33,10 @@ import { beforeAll, afterAll, describe, expect, test } from "vitest";
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
 import { openNodeDatabase, type NodeDatabase } from "@scf-core/node.ts";
 import type { ScfContext } from "@scf-core/resolution.ts";
-import { QUERIES, type ParamValues } from "../src/ui/queries/runners.ts";
+import {
+  QUERIES, uuidKey, type ParamValues,
+} from "../src/ui/queries/runners.ts";
+import type { Registry } from "@scf-core/registry.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, "..", "..", "fixtures", "expectations");
@@ -45,10 +48,10 @@ const BLESS = import.meta.env.MODE === "bless";
 
 /** Selectors, not ids: each names a fixture row by its content. */
 const SELECTORS: Record<string, string> = {
-  eleanor: "SELECT id FROM character WHERE name LIKE '%Eleanor%'",
-  sc9: "SELECT id FROM scene WHERE scene_number = '9'",
-  sc12: "SELECT id FROM scene WHERE scene_number = '12'",
-  shot1204: "SELECT id FROM shot WHERE name LIKE '%12-04%'",
+  eleanor: "SELECT id, uuid FROM character WHERE name LIKE '%Eleanor%'",
+  sc9: "SELECT id, uuid FROM scene WHERE scene_number = '9'",
+  sc12: "SELECT id, uuid FROM scene WHERE scene_number = '12'",
+  shot1204: "SELECT id, uuid FROM shot WHERE name LIKE '%12-04%'",
 };
 
 const PARAMS: Record<string, Record<string, string>> = {
@@ -66,11 +69,12 @@ const PARAMS: Record<string, Record<string, string>> = {
 
 let db: NodeDatabase;
 let ctx: ScfContext;
-let resolved: Record<string, number>;
+let resolved: Record<string, { id: number; uuid: string }>;
+let registry: Registry;
 let schemaVersion: string;
 
 beforeAll(async () => {
-  const registry = loadRegistry(JSON.parse(
+  registry = loadRegistry(JSON.parse(
     await readFile(REGISTRY, "utf8")) as RegistryJson);
   schemaVersion = registry.schemaVersion;
   db = openNodeDatabase(FIXTURE, { readOnly: true });
@@ -79,9 +83,9 @@ beforeAll(async () => {
   resolved = {};
   for (const [name, sql] of Object.entries(SELECTORS)) {
     const rows = await db.exec(sql);
-    const id = rows[0]?.["id"];
-    if (id === undefined) throw new Error(`selector ${name} matched nothing`);
-    resolved[name] = Number(id);
+    const r = rows[0];
+    if (r === undefined) throw new Error(`selector ${name} matched nothing`);
+    resolved[name] = { id: Number(r["id"]), uuid: String(r["uuid"]) };
   }
   if (BLESS) mkdirSync(OUT, { recursive: true });
 });
@@ -91,7 +95,10 @@ afterAll(() => { db.close(); });
 const valuesFor = (id: string): ParamValues => {
   const out: Record<string, unknown> = {};
   for (const [key, sel] of Object.entries(PARAMS[id] ?? {})) {
-    out[key] = Object.hasOwn(resolved, sel) ? resolved[sel] : sel;
+    // A row parameter carries its id and its uuid, as the picker sets it.
+    const row = Object.hasOwn(resolved, sel) ? resolved[sel] : undefined;
+    out[key] = row === undefined ? sel : row.id;
+    if (row !== undefined) out[uuidKey(key)] = row.uuid;
   }
   return out as ParamValues;
 };
@@ -101,7 +108,8 @@ describe.each(Object.keys(PARAMS))("%s expectations", (id) => {
     const spec = QUERIES.find((s) => s.id === id);
     expect(spec).toBeDefined();
     const values = valuesFor(id);
-    const markdown = spec!.toMarkdown(await spec!.run(ctx, values), values);
+    const markdown = spec!.toMarkdown(await spec!.run(ctx, values),
+                                     registry);
     const path = join(OUT, `${id}.expected.md`);
 
     if (BLESS) {

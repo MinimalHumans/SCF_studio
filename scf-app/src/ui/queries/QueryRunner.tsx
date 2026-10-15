@@ -1,23 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo, useState } from "react";
-import type { Row, SqlValue } from "@scf-core/db.ts";
+import type { SqlValue } from "@scf-core/db.ts";
 import { q } from "@scf-core/db.ts";
-import type { ReadinessReport } from "@scf-core/readiness.ts";
-import { summaryLine } from "@scf-core/mediaReferences.ts";
-import type { MediaPayload } from "./runners.ts";
-import type { ResolvedDescription }
-  from "@scf-core/resolution.ts";
+import type { ProjectedRow, QueryResult } from "@scf-core/queryResult.ts";
+import type {
+  Q00Result, Q01Result, Q02Result, Q03Result, Q04Result, Q05Result,
+  Q07Result, Q09Result, Q10Result, Q11Result, Q12Result, Q13Result,
+  Q14Result, Q15Result,
+} from "@scf-core/canonicalQueries.ts";
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
 import {
   INTENT_OPTIONS, QUERIES, SUBJECT_TYPE_OPTIONS, WALKABLE_TARGETS,
-  type ParamDef, type ParamValues, type Q03Payload, type Q12Payload,
-  type QuerySpec,
+  uuidKey, type ParamDef, type ParamValues, type QuerySpec,
 } from "./runners.ts";
-import type {
-  Q00Payload, Q01Payload, Q02Payload, Q04Payload, Q09Payload,
-  Q10Payload, Q11Payload, Q15Payload,
-} from "./runnersComposed.ts";
+import { authoredEntries, field, nameOf } from "./fields.ts";
 import {
   BriefView, DossierView, ContextStackView, PackageView, ManifestView,
   AccountingView, AudienceView, ProvenanceView,
@@ -52,8 +49,8 @@ export function QueryRunner(): JSX.Element {
     return (
       <div className="empty-main">
         <p>Pick a canonical query. Each answer comes in three forms:
-           a designed view, the raw JSON (the future MCP payload), and a
-           prompt-ready context block.</p>
+           a designed view, the normative JSON result (what scf-mcp
+           serves), and a prompt-ready context block.</p>
       </div>
     );
   }
@@ -72,7 +69,7 @@ function QueryBody({ spec }: { spec: QuerySpec }): JSX.Element {
   // folder was attached keeps its `rootMapped: false` answer on screen.
   const environmentRevision = useStore((s) => s.environmentRevision);
   const [values, setValues] = useState<ParamValues>({});
-  const [payload, setPayload] = useState<unknown>(null);
+  const [payload, setPayload] = useState<QueryResult<unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"human" | "json" | "context">("human");
   const [copied, setCopied] = useState(false);
@@ -103,7 +100,7 @@ function QueryBody({ spec }: { spec: QuerySpec }): JSX.Element {
   }, [JSON.stringify(values), ready, revision, environmentRevision]);
 
   const markdown = payload !== null
-    ? spec.toMarkdown(payload, values) : "";
+    ? spec.toMarkdown(payload, registry) : "";
 
   return (
     <div className="query-runner">
@@ -126,7 +123,8 @@ function QueryBody({ spec }: { spec: QuerySpec }): JSX.Element {
               </button>
             ))}
           </div>
-          {mode === "human" && <HumanView spec={spec} payload={payload} />}
+          {mode === "human" &&
+            <HumanView spec={spec} result={payload.result} />}
           {mode === "json" && (
             <pre className="json-out">
               {JSON.stringify(payload, null, 2)}
@@ -164,8 +162,9 @@ function ParamsBar({ spec, values, onChange }: {
       {spec.params.map((p) => (
         <ParamPicker key={p.key} def={p} value={values[p.key] ?? null}
                      values={values}
-                     onChange={(v) =>
-                       onChange({ ...values, [p.key]: v })} />
+                     onChange={(v, uuid) =>
+                       onChange({ ...values, [p.key]: v,
+                                  [uuidKey(p.key)]: uuid })} />
       ))}
     </div>
   );
@@ -173,7 +172,8 @@ function ParamsBar({ spec, values, onChange }: {
 
 function ParamPicker({ def, value, values, onChange }: {
   def: ParamDef; value: SqlValue; values: ParamValues;
-  onChange: (v: SqlValue) => void;
+  /** A row pick passes its uuid too; the result's envelope needs it. */
+  onChange: (v: SqlValue, uuid: string | null) => void;
 }): JSX.Element {
   const table = def.kind === "character" ? "character"
     : def.kind === "scene" || def.kind === "sceneB" ? "scene"
@@ -209,7 +209,9 @@ function ParamPicker({ def, value, values, onChange }: {
   useEffect(() => {
     if (!isShot || value === null || sceneFilter === null) return;
     if (rows.length === 0) return;
-    if (!rows.some((r) => Number(r["id"]) === Number(value))) onChange(null);
+    if (!rows.some((r) => Number(r["id"]) === Number(value))) {
+      onChange(null, null);
+    }
   }, [isShot, value, sceneFilter, rows]);
 
   const options = useMemo(() => {
@@ -232,15 +234,23 @@ function ParamPicker({ def, value, values, onChange }: {
       {options !== null ? (
         <select value={String(value ?? "")}
                 onChange={(e) =>
-                  onChange(e.target.value === "" ? null : e.target.value)}>
+                  onChange(e.target.value === "" ? null : e.target.value,
+                           null)}>
           <option value="">—</option>
           {options.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       ) : (
         <select value={value === null ? "" : String(value)}
-                onChange={(e) =>
-                  onChange(e.target.value === ""
-                    ? null : Number(e.target.value))}>
+                onChange={(e) => {
+                  if (e.target.value === "") {
+                    onChange(null, null);
+                    return;
+                  }
+                  const id = Number(e.target.value);
+                  const row = rows.find((r) => Number(r["id"]) === id);
+                  const uuid = row?.["uuid"];
+                  onChange(id, typeof uuid === "string" ? uuid : null);
+                }}>
           <option value="">—</option>
           {rows.map((r) => (
             <option key={String(r["id"])} value={String(r["id"])}>
@@ -254,48 +264,42 @@ function ParamPicker({ def, value, values, onChange }: {
 }
 
 // ---------------------------------------------------------------------------
-// Human views
+// Human views — each renders the result body of its query (§12)
 // ---------------------------------------------------------------------------
 
-function HumanView({ spec, payload }: {
-  spec: QuerySpec; payload: unknown;
+function HumanView({ spec, result }: {
+  spec: QuerySpec; result: unknown;
 }): JSX.Element {
   switch (spec.id) {
-    case "Q00": return <BriefView p={payload as Q00Payload} />;
-    case "Q01": return <DossierView p={payload as Q01Payload} />;
-    case "Q02": return <ContextStackView p={payload as Q02Payload} />;
-    case "Q04": return <PackageView p={payload as Q04Payload} />;
-    case "Q09": return <ManifestView p={payload as Q09Payload} />;
-    case "Q10": return <AccountingView p={payload as Q10Payload} />;
-    case "Q11": return <AudienceView p={payload as Q11Payload} />;
-    case "Q15": return <ProvenanceView p={payload as Q15Payload} />;
-    case "Q03": return <Q03View p={payload as Q03Payload} />;
-    case "Q05":
-    case "Q06": return <DescriptionView p={payload as ResolvedDescription} />;
+    case "Q00": return <BriefView p={result as Q00Result} />;
+    case "Q01": return <DossierView p={result as Q01Result} />;
+    case "Q02": return <ContextStackView p={result as Q02Result} />;
+    case "Q03": return <Q03View p={result as Q03Result} />;
+    case "Q04": return <PackageView p={result as Q04Result} />;
+    case "Q05": return <DescriptionView p={result as Q05Result}
+                                        profileEntity="vocal_profile" />;
+    case "Q06": return <DescriptionView p={result as Q05Result}
+                          profileEntity="physical_character_profile" />;
     case "Q07":
-    case "Q08": return <CascadeView p={payload as {
-      leaf: string; layers: Array<[string, Row]>; }} />;
-    case "Q12": return <Q12View p={payload as Q12Payload} />;
-    case "Q13": return <MediaView p={payload as MediaPayload} />;
-    case "Q14": return <ReadinessView p={payload as ReadinessReport} />;
-    default: return <pre>{JSON.stringify(payload, null, 2)}</pre>;
+    case "Q08": return <CascadeView p={result as Q07Result} />;
+    case "Q09": return <ManifestView p={result as Q09Result} />;
+    case "Q10": return <AccountingView p={result as Q10Result} />;
+    case "Q11": return <AudienceView p={result as Q11Result} />;
+    case "Q12": return <Q12View p={result as Q12Result} />;
+    case "Q13": return <MediaView p={result as Q13Result} />;
+    case "Q14": return <ReadinessView p={result as Q14Result} />;
+    case "Q15": return <ProvenanceView p={result as Q15Result} />;
+    default: return <pre>{JSON.stringify(result, null, 2)}</pre>;
   }
 }
 
-export function AuthoredFields({ row, skipRefs = true }: {
-  row: Row; skipRefs?: boolean;
+/** A projected row's authored fields, in the registry's column order. */
+export function AuthoredFields({ entity, row, includeName = false }: {
+  entity: string | null; row: ProjectedRow; includeName?: boolean;
 }): JSX.Element {
-  const skip = new Set(["id", "uuid", "created_at", "updated_at",
-                        "lifecycle_status", "name", "external_id",
-                        "external_id_namespace", "parent_id",
-                        "version_label", "superseded_at",
-                        "superseded_by_id"]);
-  const entries = Object.entries(row).filter(([k, v]) =>
-    !skip.has(k) && v !== null && v !== "" &&
-    (!skipRefs || !k.endsWith("_id")));
   return (
     <dl className="kv-out">
-      {entries.map(([k, v]) => (
+      {authoredEntries(registry, entity, row, includeName).map(([k, v]) => (
         <div key={k}>
           <dt>{k}</dt>
           <dd><FieldValue value={v} /></dd>
@@ -310,11 +314,11 @@ export function AuthoredFields({ row, skipRefs = true }: {
  * is a JSON object or array (emotional_manifestations, verbal_tics)
  * reads as one unbroken serialized line. Arrays collapse to a comma
  * list; objects become nested key/value lines. Anything that does not
- * parse is left exactly as stored.
+ * parse is left exactly as stored. A `string_list` arrives already an
+ * array (§2.5).
  */
-function FieldValue({ value }: { value: SqlValue }): JSX.Element {
-  const text = String(value);
-  const parsed = parseJsonish(text);
+function FieldValue({ value }: { value: unknown }): JSX.Element {
+  const parsed = Array.isArray(value) ? value : parseJsonish(String(value));
   if (Array.isArray(parsed)) {
     return <>{parsed.map((x) => scalarText(x)).join(", ")}</>;
   }
@@ -330,7 +334,7 @@ function FieldValue({ value }: { value: SqlValue }): JSX.Element {
       </ul>
     );
   }
-  return <>{text}</>;
+  return <>{String(value)}</>;
 }
 
 function parseJsonish(text: string):
@@ -360,7 +364,17 @@ function scalarText(value: unknown): string {
   return String(value);
 }
 
-function Q03View({ p }: { p: Q03Payload }): JSX.Element {
+/** Seen is the plain case; heard or mentioned, or a version, is noted. */
+function presenceText(presence: string | null,
+                      variant: ProjectedRow | null): string {
+  const bits = [
+    ...(presence !== null && presence !== "seen" ? [presence] : []),
+    ...(variant !== null ? [`as ${nameOf(variant)}`] : []),
+  ];
+  return bits.length > 0 ? ` (${bits.join(", ")})` : "";
+}
+
+function Q03View({ p }: { p: Q03Result }): JSX.Element {
   return (
     <div className="qview">
       <h3>Characters present</h3>
@@ -369,13 +383,16 @@ function Q03View({ p }: { p: Q03Payload }): JSX.Element {
           <tr><th>character</th><th>states in force</th><th>wearing</th></tr>
         </thead>
         <tbody>
-          {p.characters.map((c) => (
-            <tr key={String(c.character["id"])}>
-              <td>{String(c.character["name"])}</td>
-              <td>{c.states.map((s) => String(s["name"])).join(", ") ||
+          {p.characters.map((c, i) => (
+            <tr key={c.character.uuid ?? i}>
+              <td>{nameOf(c.character)}
+                <span className="muted">
+                  {presenceText(c.presence, c.variant)}
+                </span>
+              </td>
+              <td>{c.states.map((s) => nameOf(s)).join(", ") ||
                    "baseline"}</td>
-              <td>{c.costumes.map((x) => String(x["name"])).join(", ") ||
-                   "—"}</td>
+              <td>{c.costumes.map((x) => nameOf(x)).join(", ") || "—"}</td>
             </tr>
           ))}
         </tbody>
@@ -384,11 +401,15 @@ function Q03View({ p }: { p: Q03Payload }): JSX.Element {
       <table className="qtable">
         <thead><tr><th>prop</th><th>whereabouts</th></tr></thead>
         <tbody>
-          {p.props.map((x) => (
-            <tr key={String(x.prop["id"])}>
-              <td>{String(x.prop["name"])}</td>
-              <td>{String(x.state?.["whereabouts"] ??
-                    "state not yet established")}</td>
+          {p.props.map((x, i) => (
+            <tr key={x.prop.uuid ?? i}>
+              <td>{nameOf(x.prop)}
+                <span className="muted">
+                  {presenceText(x.presence, x.variant)}
+                </span>
+              </td>
+              <td>{field(x.state, "whereabouts") ??
+                   "state not yet established"}</td>
             </tr>
           ))}
         </tbody>
@@ -397,11 +418,11 @@ function Q03View({ p }: { p: Q03Payload }): JSX.Element {
         <>
           <h3>Motifs appearing</h3>
           <ul className="qlist">
-            {p.motifs.map((m) => (
-              <li key={String(m["id"])}>
-                {String(m["name"])}
-                {m["domain"] !== null && (
-                  <span className="scope-tag">{String(m["domain"])}</span>
+            {p.motifs.map((m, i) => (
+              <li key={i}>
+                {m.name}
+                {m.domain !== null && (
+                  <span className="scope-tag">{m.domain}</span>
                 )}
               </li>
             ))}
@@ -412,21 +433,23 @@ function Q03View({ p }: { p: Q03Payload }): JSX.Element {
   );
 }
 
-function DescriptionView({ p }: { p: ResolvedDescription }): JSX.Element {
+function DescriptionView({ p, profileEntity }: {
+  p: Q05Result; profileEntity: string;
+}): JSX.Element {
   return (
     <div className="qview">
       <h3>Baseline</h3>
-      {p.profile !== null
-        ? <AuthoredFields row={p.profile} />
+      {p.baseline !== null
+        ? <AuthoredFields entity={profileEntity} row={p.baseline} />
         : <p className="muted">No baseline profile — a Q14 blocker.</p>}
       <h3>States in force</h3>
       {p.states.length > 0 ? (
         <ul className="qlist">
-          {p.states.map((s) => (
-            <li key={String(s["id"])}>
-              {String(s["name"])}
+          {p.states.map((s, i) => (
+            <li key={s.uuid ?? i}>
+              {nameOf(s)}
               <span className="scope-tag">
-                {String(s["persistence"] ?? "scene_only")}
+                {field(s, "persistence") ?? "scene_only"}
               </span>
             </li>
           ))}
@@ -445,9 +468,10 @@ function DescriptionView({ p }: { p: ResolvedDescription }): JSX.Element {
       <h3>Beats</h3>
       {p.beats.length > 0 ? (
         <ul className="qlist">
-          {p.beats.map((b) => (
-            <li key={String(b["id"])}>
-              <AuthoredFields row={b} />
+          {p.beats.map((b, i) => (
+            <li key={b.uuid ?? i}>
+              <AuthoredFields entity="performance_beat" row={b}
+                              includeName />
             </li>
           ))}
         </ul>
@@ -457,27 +481,25 @@ function DescriptionView({ p }: { p: ResolvedDescription }): JSX.Element {
   );
 }
 
-function CascadeView({ p }: {
-  p: { leaf: string; layers: Array<[string, Row]> };
-}): JSX.Element {
+function CascadeView({ p }: { p: Q07Result }): JSX.Element {
   return (
     <div className="qview">
       <ol className="cascade">
-        {p.layers.map(([entity, row], i) => (
-          <li key={entity}
+        {p.layers.map((l, i) => (
+          <li key={l.entity}
               className={i === p.layers.length - 1 ? "in-force" : ""}>
             <div className="cascade-head">
               <span className="cascade-entity">
-                {registry.entities.get(entity)?.label ?? entity}
+                {registry.entities.get(l.entity)?.label ?? l.entity}
               </span>
               <span className="cascade-name">
-                {String(row["name"] ?? `#${String(row["id"])}`)}
+                {nameOf(l.row, "(unnamed)")}
               </span>
               {i === p.layers.length - 1 && (
                 <span className="in-force-tag">in force</span>
               )}
             </div>
-            <AuthoredFields row={row} />
+            <AuthoredFields entity={l.entity} row={l.row} />
           </li>
         ))}
       </ol>
@@ -488,22 +510,29 @@ function CascadeView({ p }: {
   );
 }
 
-function Q12View({ p }: { p: Q12Payload }): JSX.Element {
+function Q12View({ p }: { p: Q12Result }): JSX.Element {
   const cell = (a: string | null, b: string | null): JSX.Element =>
     a === b
       ? <td className="muted">{a ?? "—"}</td>
       : <td><s className="muted">{a ?? "—"}</s> → <b>{b ?? "—"}</b></td>;
+  const versioned = p.characters.some((c) =>
+    c.variantFrom !== null || c.variantTo !== null) ||
+    p.props.some((x) => x.variantFrom !== null || x.variantTo !== null);
   return (
     <div className="qview">
       <h3>Character states</h3>
       <table className="qtable">
-        <thead><tr><th>character</th><th>change</th></tr></thead>
+        <thead>
+          <tr><th>character</th><th>change</th>
+            {versioned && <th>version</th>}</tr>
+        </thead>
         <tbody>
-          {p.characters.map((c) => (
-            <tr key={String(c.character["id"])}>
-              <td>{String(c.character["name"])}</td>
-              {cell(c.statesA.join(", ") || "baseline",
-                    c.statesB.join(", ") || "baseline")}
+          {p.characters.map((c, i) => (
+            <tr key={c.character.uuid ?? i}>
+              <td>{nameOf(c.character)}</td>
+              {cell(c.statesFrom.join(", ") || "baseline",
+                    c.statesTo.join(", ") || "baseline")}
+              {versioned && cell(c.variantFrom, c.variantTo)}
             </tr>
           ))}
         </tbody>
@@ -512,22 +541,26 @@ function Q12View({ p }: { p: Q12Payload }): JSX.Element {
       <table className="qtable">
         <thead><tr><th>relationship</th><th>stage</th></tr></thead>
         <tbody>
-          {p.relationships.map((r) => (
-            <tr key={String(r.relationship["id"])}>
-              <td>{String(r.relationship["name"] ?? "relationship")}</td>
-              {cell(r.stageA, r.stageB)}
+          {p.relationships.map((r, i) => (
+            <tr key={r.relationship.uuid ?? i}>
+              <td>{nameOf(r.relationship, "relationship")}</td>
+              {cell(r.stageFrom, r.stageTo)}
             </tr>
           ))}
         </tbody>
       </table>
       <h3>Props</h3>
       <table className="qtable">
-        <thead><tr><th>prop</th><th>whereabouts</th></tr></thead>
+        <thead>
+          <tr><th>prop</th><th>whereabouts</th>
+            {versioned && <th>version</th>}</tr>
+        </thead>
         <tbody>
-          {p.props.map((x) => (
-            <tr key={String(x.prop["id"])}>
-              <td>{String(x.prop["name"])}</td>
-              {cell(x.whereA, x.whereB)}
+          {p.props.map((x, i) => (
+            <tr key={x.prop.uuid ?? i}>
+              <td>{nameOf(x.prop)}</td>
+              {cell(x.whereFrom, x.whereTo)}
+              {versioned && cell(x.variantFrom, x.variantTo)}
             </tr>
           ))}
         </tbody>
@@ -536,19 +569,41 @@ function Q12View({ p }: { p: Q12Payload }): JSX.Element {
   );
 }
 
-function MediaView({ p }: { p: MediaPayload }): JSX.Element {
+/** The report line, from the result's counts (§8.3). */
+function q13Summary(p: Q13Result): string {
+  const n = (state: string): number => p.counts[state] ?? 0;
+  if (p.references.length === 0) return "No assets referenced.";
+  const parts = [`${p.references.length} referenced`,
+                 `${n("resolved")} resolved`];
+  if (n("missing") > 0) parts.push(`${n("missing")} missing`);
+  if (n("unmaterialised") > 0) {
+    parts.push(`${n("unmaterialised")} not downloaded`);
+  }
+  if (n("out-of-root") > 0) {
+    parts.push(`${n("out-of-root")} outside the project`);
+  }
+  if (n("unaddressed") > 0) parts.push(`${n("unaddressed")} unresolvable`);
+  const line = parts.join(" · ");
+  return p.rootMapped ? line : `${line} — no project folder attached`;
+}
+
+function MediaView({ p }: { p: Q13Result }): JSX.Element {
   return (
     <div className="qview">
-      <h3>References</h3>
-      <p className="muted">{summaryLine(p.summary, p.has_root)}</p>
+      <h3>References, most specific first</h3>
+      <p className="muted">{q13Summary(p)}</p>
       <ul className="qref-list">
-        {p.references.map((r) => (
-          <li key={r.id}>
-            <span>{r.name ?? `#${r.id}`}</span>
+        {p.references.map((r, i) => (
+          <li key={r.uuid ?? i}>
+            <span>{r.name ?? r.anchorName ?? "asset"}</span>
             <span className="mono muted">
               {r.identifier ?? "no identifier"}
             </span>
-            <span className="muted">{r.provenance}</span>
+            <span className="muted">
+              {r.provenance === "anchor" && r.anchorName !== null
+                ? `anchor: ${r.anchorName}` : r.provenance}
+            </span>
+            {r.role !== null && <span className="scope-tag">{r.role}</span>}
             {r.state !== "resolved" && (
               <span className="qref-bad" title={r.detail ?? ""}>
                 {r.state}
@@ -565,45 +620,14 @@ function MediaView({ p }: { p: MediaPayload }): JSX.Element {
              intent.</p>
         )}
       </ol>
-      <h3>Assets, most specific first</h3>
-      <ul className="qlist">
-        {p.assets_most_specific_first.map((a) => (
-          <li key={String(a["id"])}>
-            {String(a["name"])}
-            {p.override_assets.some((o) => o["id"] === a["id"]) && (
-              <span className="in-force-tag">override</span>
-            )}
-            {a["role_in_bundle"] !== null &&
-             a["role_in_bundle"] !== undefined && (
-              <span className="scope-tag">
-                {String(a["role_in_bundle"])}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
-      <h3>Anchors</h3>
-      <ul className="qlist">
-        {p.anchors.map((a) => (
-          <li key={String(a["id"])}>
-            {String(a["name"] ?? `#${String(a["id"])}`)}
-            <span className="scope-tag">
-              {String(a["canonical_status"] ?? "unverified")}
-            </span>
-          </li>
-        ))}
-        {p.anchors.length === 0 && (
-          <li className="muted">No anchors — identity is unpinned.</li>
-        )}
-      </ul>
     </div>
   );
 }
 
-function ReadinessView({ p }: { p: ReadinessReport }): JSX.Element {
+function ReadinessView({ p }: { p: Q14Result }): JSX.Element {
   return (
     <div className="qview">
-      <p className="muted">{p.meta.description}</p>
+      <p className="muted">Readiness for {p.target} — {p.targetName}</p>
       <ul className="findings standalone">
         {p.findings.map((f, i) => (
           <li key={i} className={`finding sev-${f.severity}`}>

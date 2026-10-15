@@ -1146,6 +1146,22 @@ export function rowName(entity: string, row: Row): string {
   return rowLabel(registry.entities.get(entity), entity, row);
 }
 
+/**
+ * Open a row in the entity form by its uuid. Query results reference
+ * rows by uuid, never by row id (§12.1.2), so a link in a query view
+ * starts from one.
+ */
+export async function openEntityByUuid(
+    entity: string, uuid: string | null): Promise<void> {
+  if (uuid === null || !registry.entities.has(entity)) return;
+  const found = await exec(
+    `SELECT id FROM ${q(entity)} WHERE uuid = ?`, [uuid]);
+  const id = found[0]?.["id"];
+  if (id !== undefined && id !== null) {
+    await useStore.getState().openEntityRow(entity, Number(id));
+  }
+}
+
 export function isDirty(draft: FormDraft | null): boolean {
   if (draft === null) return false;
   return Object.keys(draft.values).some(
