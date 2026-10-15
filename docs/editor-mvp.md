@@ -657,10 +657,16 @@ visible.
   the sheet on screen is the page.
 - **Screenplay** — the full script with title page and page breaks,
   exported as FDX, Fountain or PDF to industry layout.
-- **Storyboard** — frames in shot order. A screen layout (rows or
-  columns; image alone or with shot number, name and description
-  overlaid) and a lightbox that dims the app and steps with the arrow
-  keys.
+- **Storyboard** ✅ (`StoryboardView.tsx`, logic in
+  `state/storyboard.ts`, which builds on the shot list's `buildSheets`
+  so the two never disagree on order). Frames in shot order at the
+  project's `technical_specs.aspect_ratio` (or a chosen one). Board:
+  scenes as rows or as columns, three frame sizes, shot number, name
+  and description below the frame or over it, beats, unboarded and cut
+  shots optional. Lightbox: a contact sheet, and a viewer that dims the
+  app — ← → step, Home/End, F full screen, Esc closes; stops at the
+  ends. The frame choice and its loader (`ShotFrame.tsx`) are shared
+  with the shot list.
 - **Gallery** — every asset, masonry layout, sorted at random,
   alphabetically, or by importance (how often it is used, or how much
   the entities it serves are).

@@ -52,9 +52,7 @@ export const SECTION_GROUPS: Array<{
     { mode: "screenplay", label: "Screenplay", noShortcut: true,
       pending: "Screenplay — the full script with title page, as FDX, " +
                "Fountain or PDF. Not built yet." },
-    { mode: "storyboard", label: "Storyboard", noShortcut: true,
-      pending: "Storyboard — frames in shot order, on screen or as a " +
-               "slideshow. Not built yet." },
+    { mode: "storyboard", label: "Storyboard", noShortcut: true },
     { mode: "shotlist", label: "Shot list", noShortcut: true },
     { mode: "gallery", label: "Gallery", noShortcut: true,
       pending: "Gallery — every asset in the project, laid out. " +

@@ -64,6 +64,7 @@ import { PropWorkspace } from "./workspace/PropWorkspace.tsx";
 import { CharacterWorkspace } from "./workspace/CharacterWorkspace.tsx";
 import { ProjectWorkspace } from "./workspace/ProjectWorkspace.tsx";
 import { ShotlistView } from "./ShotlistView.tsx";
+import { StoryboardView } from "./StoryboardView.tsx";
 
 const RAIL_KEY = "scf:rail-width";
 const RAIL_MIN = 180;
@@ -164,6 +165,8 @@ export function Workbench(): JSX.Element {
       ? <PropWorkspace />
     : navMode === "shotlist"
       ? <ShotlistView />
+    : navMode === "storyboard"
+      ? <StoryboardView />
       // Subjects mode never falls through to the schema list: with no
       // subject picked it showed whichever entity the Schema tab was
       // last on, so switching subject type landed on Story Beats.

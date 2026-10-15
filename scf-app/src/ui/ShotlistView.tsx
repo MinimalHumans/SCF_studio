@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import type { Row } from "@scf-core/db.ts";
 import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "@scf-core/structure.ts";
-import { parseIdentifier } from "@scf-core/assets.ts";
-import { previewCapability } from "@scf-core/preview.ts";
 import { useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
-import { resolveCached } from "../files/thumbnailCache.ts";
-import { acquire, release } from "../files/objectUrlCache.ts";
+import { ShotFrame, useShotFrames } from "./ShotFrame.tsx";
+import { useRememberedOptions } from "./useRememberedOptions.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import {
   actionText, beatBanner, buildSheets, COLUMN_LABEL, runningTime,
@@ -16,30 +14,6 @@ import {
 } from "../state/shotlist.ts";
 
 const OPTIONS_KEY = "scf:shotlist-options";
-
-/** A preference of whoever is printing, not film data: localStorage. */
-function useShotlistOptions(): [ShotlistOptions,
-                                (patch: Partial<ShotlistOptions>) => void] {
-  const [opts, setOpts] = useState<ShotlistOptions>(() => {
-    try {
-      return withDefaults(JSON.parse(localStorage.getItem(OPTIONS_KEY) ?? "null"));
-    } catch {
-      return withDefaults(null);
-    }
-  });
-  const patch = (p: Partial<ShotlistOptions>): void => {
-    setOpts((prev) => {
-      const next = { ...prev, ...p };
-      try {
-        localStorage.setItem(OPTIONS_KEY, JSON.stringify(next));
-      } catch {
-        // Not remembered this time.
-      }
-      return next;
-    });
-  };
-  return [opts, patch];
-}
 
 /** Group rows by a numeric key, keeping their order. */
 function groupNames(rows: Row[], keyField: string,
@@ -70,7 +44,7 @@ function groupNames(rows: Row[], keyField: string,
  */
 export function ShotlistView(): JSX.Element {
   const { projectName } = useStore();
-  const [opts, setOpts] = useShotlistOptions();
+  const [opts, setOpts] = useRememberedOptions(OPTIONS_KEY, withDefaults);
 
   const scenes = useQuery(
     "SELECT s.id, s.scene_number, s.name, s.location_id, s.summary " +
@@ -101,28 +75,7 @@ export function ShotlistView(): JSX.Element {
   const shotProps = useQuery(
     "SELECT sp.shot_id, p.name FROM shot_prop sp " +
     "JOIN prop p ON p.id = sp.prop_id ORDER BY sp.id");
-  // The frame a shot is shown by: its first storyboard panel, else its
-  // start frame. A superseded file loses to the one that replaced it.
-  const frames = useQuery(
-    "SELECT r.entity_id AS shot_id, a.identifier FROM asset_relationship r " +
-    "JOIN asset a ON a.id = r.asset_id " +
-    "WHERE r.entity_type = 'shot' " +
-    "AND r.relationship_type IN ('storyboard', 'start_frame') " +
-    "ORDER BY r.entity_id, " +
-    "CASE r.relationship_type WHEN 'storyboard' THEN 0 ELSE 1 END, " +
-    "a.superseded_by_id IS NOT NULL, " +
-    "r.\"order\" IS NULL, r.\"order\", r.id");
-
-  const frameOf = useMemo(() => {
-    const m = new Map<number, string>();
-    for (const r of frames) {
-      const id = Number(r["shot_id"]);
-      if (!m.has(id) && typeof r["identifier"] === "string") {
-        m.set(id, r["identifier"]);
-      }
-    }
-    return m;
-  }, [frames]);
+  const frameOf = useShotFrames();
   const locationById = useMemo(
     () => new Map(locations.map((l) => [Number(l["id"]), l])), [locations]);
   const lightOf = useMemo(() => {
@@ -189,7 +142,8 @@ export function ShotlistView(): JSX.Element {
     switch (c) {
       case "frame":
         return <td key={c} className="sl-c-frame">
-          <ShotFrame identifier={frameOf.get(id) ?? null}
+          <ShotFrame className="sl-frame"
+                     identifier={frameOf.get(id) ?? null}
                      alt={String(shot["shot_number"] ?? "")} />
         </td>;
       case "shot":
@@ -428,47 +382,6 @@ destination for a PDF.">
                (v) => setOpts({ includeCut: v }),
                "Cut shots keep their numbers; listed, they are marked cut")}
       </div>
-    </div>
-  );
-}
-
-/**
- * One shot's frame, at the frame's own shape (cover-cropped to 16:9),
- * from the file itself rather than the square thumbnail cache: a
- * storyboard panel is the point of the column and should print sharp.
- * Loaded eagerly, because a print only shows what has already loaded.
- */
-function ShotFrame({ identifier, alt }: {
-  identifier: string | null; alt: string;
-}): JSX.Element {
-  const { projectRoot, environmentRevision } = useStore();
-  const root = projectRoot as FileSystemDirectoryHandle | null;
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUrl(null);
-    if (identifier === null) return;
-    const parsed = parseIdentifier(identifier);
-    if (parsed === null) return;
-    let cancelled = false;
-    let held = false;
-    void (async () => {
-      const r = await resolveCached(root, identifier, environmentRevision);
-      if (cancelled || r.state !== "resolved") return;
-      if (previewCapability(r.format).kind !== "image") return;
-      held = true;
-      const u = await acquire(root, parsed.path);
-      if (!cancelled) setUrl(u);
-    })();
-    return () => {
-      cancelled = true;
-      if (held) release(root, parsed.path);
-    };
-  }, [identifier, root, environmentRevision]);
-
-  return (
-    <div className={"sl-frame" + (url === null ? " sl-frame-empty" : "")}>
-      {url !== null && <img src={url} alt={alt} />}
     </div>
   );
 }
