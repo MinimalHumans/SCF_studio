@@ -57,7 +57,7 @@ normative artifact.
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
 | `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. `screenplay-tables.json` (the screenplay infrastructure tables and the `line_type` vocabulary). `api-surface.json` (every name importable from `scf-core`), `entity-reference.md` and `query-reference.md` (generated reading aids, not normative). `ARTIFACTS.md` lists every file the manifest covers — these four documents, the generated artifacts, the canonical query results and the blessed negative reports under `fixtures/` — and says how many. |
-| `docs/` | `what-is-scf.md`, `walkthrough.md`, `authoring-guide.md`, `glossary.md` and `faq.md` (start here if the format is new to you), `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `story-structure-design-record.md`, `release-checklist.md` (what stands between here and 1.0). |
+| `docs/` | `what-is-scf.md`, `walkthrough.md`, `authoring-guide.md`, `glossary.md` and `faq.md` (start here if the format is new to you), `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `release-checklist.md` (what stands between here and 1.0), and the design records for the editor and the MCP server: `editor-mvp.md`, `narrative-workspaces.md`, `story-structure-design-record.md`, `scf-mcp-design.md`. |
 | `site/` | The documentation site. Renders the Markdown above; authors nothing except its own landing page. `npm run build` in `site/`. |
 
 ## Getting started
@@ -104,8 +104,8 @@ Conformance artifacts, all checked on every test run:
 | | |
 |---|---|
 | `fixtures/hollow_creek.scf` | The reference fixture. |
-| `fixtures/negative/` | Eleven deliberately-broken cases with blessed reports, plus `CASES.json` so anyone can rebuild them. |
-| `fixtures/expectations/` | The sixteen canonical queries' normative results, plus rendered markdown for eight of them. The markdown is a convenience and is a contract for none. |
+| `fixtures/negative/` | Fifteen deliberately-broken cases with blessed reports, plus `CASES.json` so anyone can rebuild them. |
+| `fixtures/expectations/` | The sixteen canonical queries' normative results, a normative per-case result wherever one position cannot show a member, and the selectors that say what each was asked; plus rendered markdown for eight of them. The markdown is a convenience and is a contract for none. |
 
 `corpus/private` is not checked in, and the blocks that need it
 (`screenplay.test.ts` stage 3 payoff, `fountain.test.ts` private tier)
@@ -114,13 +114,14 @@ picks up the extra coverage automatically.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml`, three jobs:
+`.github/workflows/ci.yml`, four jobs:
 
 | Job | What fails it |
 |---|---|
-| `artifacts` | A generated file nobody regenerated: `registry.json`, `scf-schema.sql`, `screenplay-tables.json`, `finding-catalog.json`, the negative reports, the corpus expectations, `ARTIFACTS.md`, `SHA256SUMS`. |
-| `core` | Format semantics — typecheck, 500+ tests, and `scf-check` against the fixture. |
+| `artifacts` | A generated file nobody regenerated: `registry.json`, `scf-schema.sql`, `screenplay-tables.json`, `finding-catalog.json`, the negative reports, the corpus expectations, `ARTIFACTS.md`, `SHA256SUMS` — and a schema tag that is not on the remote. |
+| `core` | Format semantics — typecheck, tests, `scf-check` against the fixture, the packaging test, the fixture rebuild, and the docs site build. |
 | `app` | The editor — typecheck, tests (including the blessed query expectations), production build. |
+| `mcp` | The MCP server — typecheck, the `file:` dependency rewrite, build, tests. |
 
 Every artifact step runs in `--check` mode and never in write mode. CI
 must fail on a stale artifact rather than quietly regenerate it and
@@ -147,7 +148,7 @@ states no rules. A rule found only in `docs/conventions.md` is a defect.
 | [`SECURITY.md`](SECURITY.md) | What is in scope, and how to report privately |
 | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Contributor Covenant 2.1 |
 
-A **defect** in the specification is an issue, not a proposal. Three
+A **defect** in the specification is an issue, not a proposal. Five
 independent implementations have been written against this format and
 their authors found dozens of them; every one was worth having quickly
 and without ceremony. Proposals are for changes where the answer is

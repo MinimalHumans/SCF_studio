@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # Frequently asked questions
 
-**Nobody has asked these yet.** SCF is pre-1.0 and has had four
+**Nobody has asked these yet.** SCF is pre-1.0 and has had five
 independent implementers and no users, so this is a first pass at the
 questions the format's shape invites rather than a record of ones
 received. Where a real question arrives and this page answers it badly,
@@ -89,9 +89,9 @@ work.
 ### What can read one today?
 
 The reference implementation, which is TypeScript and unpublished until
-1.0, and whatever you write. **Four independent implementations have
+1.0, and whatever you write. **Five independent implementations have
 been built from the specification by people with no access to the
-reference code**, three of them in Python. That is the honest answer to
+reference code.** That is the honest answer to
 "can this be implemented from the document", and the defects those runs
 found are most of what the specification's recent revisions are about.
 

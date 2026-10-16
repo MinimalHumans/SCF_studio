@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.54 |
+| **Status** | **implemented** — spec 0.54. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Spec §12.14 (Q15); `scf-core` `mentionsRow`; `fixtures/expectations/Q15.result.json`; the conformance fixture |
@@ -128,3 +128,19 @@ may reassign, and Q15 keeps a normative member that nothing tests.
 - **Should a bare `entity` remain a writer-permitted form** meaning
   "about this kind in general"? It is not a row reference, so the
   row-id objection does not apply to it.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.54. §12.14 carries the writer rule
+(`"<entity>:<uuid>"`, never a row id) and the permissive reader,
+including a bare `entity` meaning the kind in general. The fixture
+attaches a decision and a note to scene 12, so Q15's `attached` is
+populated in the published result.
+
+The declared link entity was not chosen; the column stays free-form and
+the reader stays permissive. Both prose-matching defects are closed by
+§12.14's rule that **prose is matched on uuids alone**, so neither
+`scene:1` inside `scene:12` nor `prop` inside "appropriate" attaches
+anything.

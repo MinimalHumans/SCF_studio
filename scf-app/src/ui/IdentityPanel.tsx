@@ -2,9 +2,9 @@
 /**
  * IdentityPanel — the uuid inspector.
  *
- * Row identity has been a framework column on all 99 entities since
- * schema 2.3, backfilled on open, and never once shown. That made it
- * unobservable rather than merely unverified: nothing in the app could
+ * Row identity is a framework column on every entity (spec §6.1),
+ * backfilled on open, and invisible unless something shows it — which
+ * makes it unobservable rather than merely unverified: nothing could
  * tell you whether a backfill reached every table, which row a uuid
  * belongs to, or whether a version chain still agreed with itself.
  *

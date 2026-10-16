@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.53 |
+| **Status** | **implemented** — spec 0.53, schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Spec §6.6; `schema/entity_registry.py` (`scene`, `act`, `sequence`); `registry.json`, `entity-reference.md`; `docs/conventions.md` ("A scene cut from the screenplay") |
@@ -134,3 +134,20 @@ same effect; listed under Unresolved rather than proposed.
   selects in general. That is a wider question than this proposal and
   probably deserves its own — but it is the question a reader of this
   change will ask first.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.53 (§6.6's paragraph) and schema
+2.14 (`cut` removed from the three `status` vocabularies, which now
+share one option list). No published result moved.
+
+The Unresolved questions: the two `draft`s and the `writing_stage`
+rename were not taken up — `status` keeps its name, and its help text
+calls it a writing-process status, distinct from `lifecycle_status`. A select value outside its vocabulary is
+answered generally by §2.4 (0022): a closed field's vocabulary is the
+registry's, and an open one's unlisted value is the value. Since 0.68
+the fixture's scenes carry four writing stages, and scene 12B is
+`locked` and `cut`, so a `status` that disagrees with
+`lifecycle_status` is exercised.

@@ -81,7 +81,8 @@ whatever the asset depicts, not the film's key art.
 
 ## Resolution
 
-*Implemented 2026-10-09 in the working tree, ahead of acceptance, as
-0036 and 0037 were. It joins the untagged 2.23 batch. It is awaiting
-the maintainer's review; the status should become `accepted` or be
-reverted to `draft` then.*
+**Implemented 2026-10-09**, as spec 0.65 on schema 2.23, ahead of
+formal acceptance, as 0036 and 0037 were. Schema 2.23 was tagged and
+pushed with it on 2026-10-12 (`schema-2.23`). The fixture project
+relates `poster01.png` as its poster, and Q00's normative result
+carries it in `posters`.

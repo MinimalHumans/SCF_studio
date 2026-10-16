@@ -193,7 +193,8 @@ class EntityDef:
     # refines: entities one layer up this entity's direction cascade (may be
     #   multiple; the resolver concatenates parents in declared order).
     # queries: canonical query IDs this entity serves (the Rule: must be
-    #   non-empty).
+    #   non-empty). Kept here for the lint only; registry.json does not
+    #   publish it, because nothing checks it against what each query reads.
     subject: str | None = None
     scope: str | None = None
     paired: bool = False

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.53 |
+| **Status** | **implemented** — spec 0.53, schema 2.14. See Resolution |
 | **Author** | Raised from 0018's discussion; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | 16 `select` and `multiselect` fields across 14 entities; `schema/entity_registry.py`; possibly the finding catalog; the editor's select control |
@@ -123,3 +123,18 @@ facts it costs are the unusual ones, which are the ones worth recording.
 - **Multiselect.** Does an open multiselect store unlisted values in the
   same list as listed ones? It should, but the editor's chip control has
   to make the distinction visible.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.53 and schema 2.14. Sixteen
+vocabularies lost `other` and gained `open: true`; §2.4 states the
+reader rule and why the matching axes stay closed;
+`vocabulary.unlisted_value` (`info`) reports the tail, exercised by the
+fixture's `creative_decision` row with `decision_type = "sound"`. Later
+schemas opened one more field, and `entity-reference.md` marks every
+open field.
+
+The Unresolved questions: no near-duplicate finding was added, and
+`varies` is a wildcard on the time axis (§12.17, 0012).

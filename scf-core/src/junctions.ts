@@ -2,8 +2,8 @@
 /**
  * junctions.ts — what makes two link rows the same link.
  *
- * Junctions DO carry row identity: `uuid` is a framework column on all
- * 99 entities since schema 2.3, junctions included, backfilled on open.
+ * Junctions DO carry row identity: `uuid` is a framework column on every
+ * entity (spec §6.1), junctions included, backfilled on open.
  * That answers "is this the same row as before" across export,
  * re-import, and versioning — the lineage question.
  *

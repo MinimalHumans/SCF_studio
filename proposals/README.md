@@ -4,11 +4,11 @@
 
 Where a change to the **format** gets argued before it gets built.
 
-Three independent implementations have been written against this
-specification. Between them their authors produced roughly seventy
-findings — defects, ambiguities, missing rules, things the artifacts
-demonstrated and the text never said. **None of them had anywhere to
-file one.** Two of the three sent prose that was read once and acted on
+Five independent implementations have been written against this
+specification. The first three alone produced roughly seventy findings
+— defects, ambiguities, missing rules, things the artifacts
+demonstrated and the text never said — and **none of their authors had
+anywhere to file one.** Two of the three sent prose that was read once and acted on
 by one person, and the reasoning behind what was accepted and what was
 not exists nowhere. That is the gap this directory closes.
 
@@ -70,8 +70,8 @@ description.
 
 ## Before 1.0
 
-The specification is a draft and, per spec §11.0, **existing `.scf`
-files are disposable until 1.0 ships**. A proposal that would be a
+The specification is a release candidate and, per spec §11.0,
+**existing `.scf` files are disposable until 1.0 ships**. A proposal that would be a
 breaking change today is not therefore a bad proposal — it is much
 cheaper now than it will ever be again. Say plainly what it breaks; do
 not argue that it breaks nothing.
@@ -82,8 +82,8 @@ The seventy-odd findings from the three reader runs are not in this
 directory. They arrived as prose, were triaged by hand, and most were
 fixed directly in the specification — `spec/CHANGELOG.md` records what
 changed and why, revision by revision. What remains open is in
-`spec/stability.md`: the Unstable rows are the honest list of what is
-known to be unfinished.
+`spec/stability.md` — no row is Unstable any more, and the Provisional
+rows say what each still lacks — and in `docs/release-checklist.md`.
 
 Backfilling them as proposals would be writing history rather than
 recording it. Anything still genuinely open and genuinely arguable

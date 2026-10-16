@@ -55,15 +55,17 @@ Specifically:
 - **A file that is merely wrong.** SCF describes; it does not enforce.
   Contradictory data, dangling references, malformed uuids and unknown
   tables are all expected input, and the answer to every one of them is
-  a finding (spec §9), not an error and not a refusal. The eleven
+  a finding (spec §9), not an error and not a refusal. The fifteen
   negative fixtures are exactly this: files that are wrong in a stated
   way, which a conforming reader must read and report on rather than
   reject. **A reader that refuses one of them is the bug.**
 - **`line_type` values outside the published vocabulary** (spec §1.3.1).
-  Deliberately not a finding, and deliberately not a security issue:
-  the column is free `TEXT`, and the rule is on implementations.
-- **The unresolved items in `spec/stability.md`.** They are published as
-  unfinished. Unstable rows are a to-do list, not a disclosure.
+  A finding, `line.type_unknown`, and not a security issue: the column
+  is free `TEXT`, the rule is on implementations, and a reader keeps the
+  line as unknown content.
+- **The gaps `spec/stability.md` publishes.** A row marked *Partly* or
+  Provisional says what it still lacks; it is a to-do list, not a
+  disclosure.
 - **Anything requiring the attacker to already control the machine.**
 
 ## A note on attachments
@@ -80,7 +82,7 @@ donated file.
 
 **Only `main`.** The format is pre-1.0 and, per spec §11.0, existing
 `.scf` files are disposable until 1.0 ships. There are no maintenance
-branches and nothing is backported. `schema-X.Y` tags exist to make
-artifacts addressable and verifiable, not to mark a supported release.
+branches and nothing is backported. `schema-X.Y` and `spec-X.Y` tags
+exist to make artifacts addressable and verifiable, not to mark a supported release.
 
 This changes at 1.0, and this section will change with it.

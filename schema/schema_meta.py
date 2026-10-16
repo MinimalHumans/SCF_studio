@@ -3,10 +3,8 @@
 schema_meta.py — the format's version and the tables outside the
 registry that still carry row identity.
 
-These two constants used to live in the v1 editor's migrations.py,
-which meant regenerating the registry required a file that belonged to
-a retired application. They are facts about the FORMAT, so they live
-with it.
+They are facts about the FORMAT, so they live with it: regenerating
+the registry needs nothing outside `schema/`.
 
 Changing SCHEMA_VERSION is a deliberate act: record what changed in
 docs/schema-changelog.md in the same commit.

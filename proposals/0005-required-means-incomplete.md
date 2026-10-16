@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.54 |
+| **Status** | **implemented** — spec 0.54. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Spec §9.1, §9.4; `finding-catalog.json` (two new codes); `scf-core` report; the conformance fixture (one new row); possibly §4.4 |
@@ -146,3 +146,20 @@ would find this.
   not be read as covering it.
 - **Is `field.` the right area name**, or should the non-link case sit
   under an existing area?
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.54. §9.1 carries the replacement
+wording; `field.required_absent` (`info`) and `junction.endpoint_absent`
+(`warning`) are in the catalog, and a more specific finding replaces
+rather than joins them. The required set is read from the registry. The
+fixture carries the unplaced shot, which raises `field.required_absent`;
+`junction.endpoint_absent` is exercised by the negative case
+`junction-endpoint-absent` since 0.68.
+
+The Unresolved questions: `field.` stayed the area name, and a missing
+`name` stays `info` — severity remained a property of the code, not of
+the field. An unplaced shot's code and dangling required references
+were not taken up.

@@ -34,7 +34,7 @@ Define narrative structure          ← acts, sequences, story beats
         ↓
 Define the shooting script          ← shots, coverage
         ↓
-Define entities and relationships   ← the ninety-seven other tables
+Define entities and relationships   ← everything else the registry holds
         ↓
 A queryable database
 ```
@@ -248,7 +248,7 @@ Everything else is a matter of how far into the film you are.
 ## Next
 
 - [Walkthrough](walkthrough.md) — the same ideas against a real file
-- [Entity reference](../spec/entity-reference.md) — all 99, generated
-  from the registry
+- [Entity reference](../spec/entity-reference.md) — every entity,
+  generated from the registry
 - [Query reference](../spec/query-reference.md) — the sixteen questions
 - [Glossary](glossary.md) — terms this guide assumed

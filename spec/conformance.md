@@ -248,8 +248,8 @@ suites and MUST NOT change.
   lines at all, which left §3.4 — read a scene's text from its heading
   to the next — with no artifact behind it. Scene `11` is now the whole
   of the outline half, so filling it in removes a demonstrated property
-  and MUST update this list. Nine of those scenes carry dialogue as
-  well; the three that do not are silent presences, not omissions.
+  and MUST update this list. Six of those scenes carry dialogue as
+  well; the six that do not are wordless on purpose, not omissions.
 - **Scene 12 is pinned** — its motif manifest, its single sound cue, its
   costume set and its direction chains are asserted exactly. Nothing
   ACTIVE may be added to it. A **cut** row may be, precisely because
@@ -287,7 +287,7 @@ test an arbitrary file, which is what §4 is for.
 
 ### 5.3 Negative fixtures
 
-Eleven cases in `fixtures/negative/`, each a minimal database plus
+Fifteen cases in `fixtures/negative/`, each a minimal database plus
 exactly the damage its name describes, with a blessed report beside it.
 
 Minimal on purpose: a case that trips three findings tells you nothing
@@ -320,26 +320,8 @@ bound to an act renamed since (`structure.section_mismatch`).
 
 ### 5.4 The canonical query expectations
 
-> **Complete.** Spec §12 defines all sixteen queries as result
-> structures, and their `.result.json` files are the normative artifacts: rows by uuid, no row
-> ids, no timestamps, references resolved. For those queries the markdown
-> is a convenience and is not a contract.
->
-> Two earlier revisions described the unspecified remainder by a
-> property that turned out to be false — first that they took no
-> position parameter, then that they were composites building on other
-> queries. Both were wrong, and neither error survived contact with the
-> code. There is no remainder now.
->
-> Q03 and Q12 are blessed **away from scene 12** — at 19, and diffing
-> 19 → 16 — because the rest of the expectations cluster there, and a
-> live ordering bug once sat under a fully passing suite for exactly
-> that reason.
->
-> The rendered markdown in the same directory is a convenience for every
-> query now, and is a contract for none.
-
-`fixtures/expectations/`, blessed and checked on every test run.
+`fixtures/expectations/`, blessed and checked on every test run. Spec
+§12 defines all sixteen queries as result structures.
 
 **`<Q>.result.json` is the normative artifact for every one of the
 sixteen**, and carries nothing file-local: rows by uuid, no row ids, no
@@ -358,7 +340,7 @@ definition (§8.3).
 
 `<Q>.expected.md` accompanies eight of them — the rendered context
 markdown, which is what a consumer of those queries actually receives.
-Names, not ids. It is a convenience and a contract for none of them.
+Names, not ids. It is a convenience, and a contract for none of them.
 
 A third artifact, `shapes.json`, was **retired in 0.30**. It sketched
 the app runners' raw payload structure, predated §12, and recorded a
@@ -389,14 +371,10 @@ had to read the answer in order to learn the question. Both are fixed:
 the selectors are published and Q13's envelope carries what it was
 asked.
 
-**All sixteen have normative `.result.json` files.** Eight also have
-rendered markdown, which those files supersede; the markdown is a
-convenience for every query now and a contract for none.
-
-Two earlier revisions of this paragraph described a remainder that no
-longer exists — first eight queries without results, then eight
-"worth adding; not yet done" after they had been added. The count is
-now stated once, above, and this paragraph does not repeat it.
+Q03 and Q12 are blessed **away from scene 12** — at 19, and diffing
+19 → 16 — because the rest of the expectations cluster there, and a
+live ordering bug once sat under a fully passing suite for exactly
+that reason.
 
 ---
 
@@ -447,7 +425,7 @@ A claim without the reports is a claim about your intentions.
 ### 6.3 What a claim is not
 
 It is not a guarantee, an endorsement, or a licence to use the name for
-anything else (§8's trademark statement, when it exists, governs that).
+anything else (the trademark statement in `NOTICE` governs that).
 It is a statement that on a stated date, against stated artifacts,
 your implementation behaved as described — and a reader can check.
 
@@ -457,7 +435,7 @@ your implementation behaved as described — and a reader can check.
 
 | Implementation | Role claimed | Basis |
 |---|---|---|
-| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all eleven negative fixtures report as blessed. |
+| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all fifteen negative fixtures report as blessed. |
 | `scf-app` | Editor | The app suite passes, including the open→edit→save round trip and third-party content preservation across repeated cycles. |
 | — | Writer | No independent implementation exists. |
 

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.56, schema 2.16 |
+| **Status** | **implemented** — spec 0.56, schema 2.16. See Resolution |
 | **Author** | Found by the `asset.bundle_unbound` finding on the fixture; written up by the maintainers |
 | **Opened** | 2026-09-30 |
 | **Affects** | New entity `costume_asset_binding`; `SUBJECTS` gains `costume`; §8.6; §12.8's subject kinds; the fixture |
@@ -69,3 +69,13 @@ consumer (§8.6's orphan case is what that costs when someone does not).
 
 **Do nothing and document it.** The finding would stay on the fixture
 forever as a known limitation, which is how a gap becomes furniture.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.56 and schema 2.16.
+`costume_asset_binding` is in the registry and `SUBJECTS` includes
+`costume`. Later schemas gave every binding table `combine` (§12.8.2);
+the fixture binds Ada's shawl through it, so the bundle that raised
+`asset.bundle_unbound` is reached.

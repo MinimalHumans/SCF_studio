@@ -10,8 +10,7 @@
  * this is the helper that rule was written for. Every caller that
  * normalises the pair by hand is a place the bug can come back.
  *
- * Note that `character_relationship` is NOT one of the thirteen link
- * entities: its `subject` is `character`, not `link`, so
+ * Note that `character_relationship` is NOT a link entity: its `subject` is `character`, not `link`, so
  * `junctionEntities()` skips it and `duplicateJunctions()` never sees
  * it. That is why §5 singles relationship pairs out as the case where
  * duplication bites, and why the findings below exist separately.

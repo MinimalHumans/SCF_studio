@@ -25,6 +25,11 @@ tag is not reused, as with 2.22. The week's other work was editor-only
 (presentation, storyboard and shot-list tabs, screenplay export,
 gallery, asset statuses) and touches nothing on this list.
 
+**Since then (2026-10-16):** §B8, §B2 and §D3 landed as spec 0.66–0.68,
+and the candidate as **spec 1.0-rc.1** on **schema 2.24**, both tagged
+and pushed (`spec-1.0-rc.1`, `schema-2.24`). A documentation audit
+followed before D1 — §D6.
+
 ✅ done · ◑ partial · ○ to do · ⚠️ decision needed · 🔒 one-way door
 
 ---
@@ -440,7 +445,8 @@ item that declares something authors a fixture row that exercises it.
   when this lands. 0036 is already `implemented`.
 - `editor-mvp.md` §9 answered: the editor is not in 1.0 (§A10).
 
-**Done 2026-10-16, as spec 0.66 on schema 2.24 (untagged).** One
+**Done 2026-10-16, as spec 0.66 on schema 2.24** (tagged with the
+candidate the same day). One
 regeneration: registry, `scf-schema.sql`, `entity-reference.md`, the
 finding catalog, the fixture rebuild, Q04 re-blessed, the negative
 reports and `SHA256SUMS`.
@@ -494,11 +500,12 @@ reports and `SHA256SUMS`.
 
 | | Item | Notes |
 |---|---|---|
-| ○ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twelve spec revisions and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. |
+| ○ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. |
 | ✅ | D2. Fixture: the night kitchen | Scenes 10 and 19 resolve the **day** baseline because the night variant is autumn and they are winter (`narrative-workspaces.md` §11). **Decided (§A11): the rule was wrong** — §12.17 now ranks time of day first. **Done in §B8:** both resolve the night variant, and a test pins it. |
 | ✅ | D3. Rules stated and exercised by nothing | `junction.endpoint_absent`, `structure.section_mismatch`, §12.17's zero-score baseline, `varies`, a `status` that disagrees with `lifecycle_status`, act and sequence renumbering under `derived` (§4.3). **Done 2026-10-16 (spec 0.68), a row each:** negative cases `junction-endpoint-absent` and `section-mismatch`, each raising its finding alone; church and ridge location variants published as `Q02-church-scene16` (`varies` wins on the wildcard alone) and `Q02-ridge-scene21` (nothing agrees, the baseline with three mismatches); scenes 3, 12, 19 at `draft`, `locked`, `revised`, and 12B `locked` and `cut`. Renumbering under `derived` and `fixed` was already tested in `structureCommit.test.ts`; `stability.md` said otherwise and now does not. |
 | ✅ | D4. An unknown `line_type` raises no finding | §1.3.1 closes the vocabulary at fifteen; the column is free text and nothing reports a sixteenth. **Decided (§A12): `line.type_unknown`, severity error.** Done in §B8, with a negative case. |
 | ? | D5. The docs site is live | Could not confirm from here. Settings → Pages → Source = GitHub Actions. |
+| ✅ | D6. A documentation audit before D1 | Stale prose is what past reader runs flagged most, so every hand-written document was read against the tree after the candidate was tagged: the four specification documents, `docs/`, all thirty-eight proposals, the READMEs, `site/`, governance and security, and the source headers that state facts about the format. **Done 2026-10-16.** Fixed: counts (negative cases 11 → 15, link entities, entity totals, independent implementations 3–4 → 5), claims made false by 0.66–0.68 (`line.type_unknown`, the ranked axes, `varies`/`status` exercised, `queries` unpublished, the cascade described as a scope ladder), proposals 0001, 0002, 0027, 0033, 0037 and 0038 brought up to what landed, and a Resolution for each of the thirteen implemented proposals that had none. Two defects beyond prose: **four negative reports were published but not in the manifest** (`bundle-unbound`, `junction-endpoint-absent`, `line-type-unknown`, `section-mismatch`) — added, 58 → 62 artifacts, with a guard in `artifact_manifest.py` so an unlisted report fails; and `readiness-rubrics.json`'s comment contradicted §12.9.1 on optional steps. The specification documents changed editorially only; see the CHANGELOG's re-cut entry. **Decided 2026-10-16:** both tags are re-pointed at the audit commit before D1 launches — nobody had fetched the candidate, so the editorial fixes ship as rc.1 rather than rc.2. |
 
 ---
 
@@ -518,9 +525,10 @@ the prose.
 2. ✅ Schema **2.24** (§A7): every artifact regenerated, the fixture
    rebuilt. *Every `--check` current, the fixture rebuild identical.*
 3. ✅ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
-   *Green except the pin step, which needs step 4's tag.*
-4. ○ Annotated tags, pushed: `schema-2.24` and `spec-1.0-rc.1`. Then
-   `check_pin.py --strict` against the remote. No npm publish.
+   *Green except the pin step until step 4's tag; green with it.*
+4. ✅ Annotated tags, pushed: `schema-2.24` and `spec-1.0-rc.1`. Then
+   `check_pin.py --strict` against the remote. No npm publish. *Done
+   2026-10-16; the pin step passes.*
 5. ○ Launch D1 against the candidate.
 
 **1.0 day — after D1, and after anything it finds is fixed:**

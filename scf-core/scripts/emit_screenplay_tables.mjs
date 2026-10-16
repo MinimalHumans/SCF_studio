@@ -11,9 +11,10 @@
  * That gap costs a silent wrong answer. A reader building against §1.3
  * can see that `screenplay_lines.line_type` exists with nothing to tell
  * it which values are legal, and will guess `scene_heading` for a scene
- * heading. The real value is `heading`, its story order comes out
- * confidently wrong, and NOTHING IS RAISED — `line_type` is a free TEXT
- * column, so no finding fires on an unrecognised value.
+ * heading. The real value is `heading`, and its story order comes out
+ * confidently wrong. `line_type` is a free TEXT column, so the file
+ * cannot refuse the value; the published set is what lets a validator
+ * report it as `line.type_unknown` (§1.3.1).
  *
  * WHAT IS DUMPED AND WHAT IS DECLARED.
  *

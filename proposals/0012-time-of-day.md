@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.53 and 0.56, schema 2.14 and 2.16 |
+| **Status** | **implemented** — spec 0.53 and 0.56, schema 2.14 and 2.16. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `scene.time_of_day`, `location_variant.time_of_day`, `location_asset_binding.time_of_day_filter`; spec §12.17; scf-app's two heading-time maps; the fixture |
@@ -103,3 +103,19 @@ refinement of the heading, not a copy of it.
 - **`continuous` resolved by derivation**: should a reader that needs a
   time for a CONTINUOUS scene take the previous scene's? That is a rule,
   and a derived value, and it might belong in §4.
+
+---
+
+## Resolution
+
+**Implemented** — spec 0.53 and schema 2.14 for items 1–3 and 5, spec
+0.56 and schema 2.16 for item 4: `time_of_day_filter` is a select over
+the scene vocabulary, matched by equality (§12.8.1). Matching stays
+exact, so `day` does not match `morning`.
+
+**Item 5 was later changed.** Since spec 0.66 §12.17 ranks the axes —
+time of day, then weather, then season — rather than counting them
+equally. `varies` still agrees with any scene on the time axis.
+
+The Unresolved questions: no `evening` value was added, and nothing
+derives a time for a CONTINUOUS scene; the word stays in the heading.

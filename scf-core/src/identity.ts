@@ -2,12 +2,11 @@
 /**
  * identity.ts — making row identity observable.
  *
- * `uuid` is a framework column on all 99 entities since schema 2.3
- * (conventions §5), backfilled on open, and until now nothing in the
- * application ever showed one. Identity was therefore not merely
- * unverified but unobservable: a backfill that silently skipped a table,
- * a version chain that forked, a superseded row with no successor — all
- * of it invisible.
+ * `uuid` is a framework column on every entity (spec §6.1), backfilled
+ * on open. Unless something shows it, identity is not merely unverified
+ * but unobservable: a backfill that silently skipped a table, a version
+ * chain that forked, a superseded row with no successor — all of it
+ * invisible.
  *
  * This module answers three questions, and only reports:
  *

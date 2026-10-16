@@ -299,8 +299,8 @@ A writer that binds its own lines never depends on it.
 
 A reader that intends to write MUST tolerate a file lacking columns the
 registry defines, and SHOULD add them on open rather than refusing the
-file. Every schema change to date has been an additive optional field,
-and §11 requires that this remains true.
+file. Outside the changes §11.0 lists, every schema change has been an
+additive optional field, and §11 requires that this remains true.
 
 ---
 
@@ -1013,7 +1013,7 @@ the vocabulary** (§2.1) and currently holds six values:
 |---|---|
 | `active` | In the film. The default. |
 | `draft` | In the film, and not settled. Treated as `active` by every derivation. |
-| `superseded` | Replaced by another row, which §6.4's version chain names. |
+| `superseded` | Replaced by another row, which its version chain names (§12.14). |
 | `deprecated` | Kept for compatibility, discouraged for new authoring. |
 | `cut` | **Not in the film** (§6.6.1). |
 | `archived` | Retained for the record and not in the working film. |
@@ -1975,9 +1975,9 @@ stated there is in **story order** (§4.1).
 silently.** It is a fact about the file rather than about the story, so
 a result that falls back on it is answering with something the story
 does not contain. Where a section needs it — because the rows are
-peers with no story position of their own, as §12.5's `beats` within a
-`beat_order` and §12.10's `manifest` are — that section states it, and
-those are the only two.
+peers with no story position of their own, as §12.2's `beats` within a
+`beat_order`, the `characters` of §12.4 and §12.5, and §12.10's
+`manifest` are — that section states it.
 
 This paragraph read "Nothing in a result is in row order" until 0.40,
 which was flatly contradicted by both of those sections and by a
@@ -2506,7 +2506,7 @@ theme at itself; **an act or a sequence carries it at every scene of its
 derived membership** (§5.1); anything else carries it wherever the file
 places it, which is one of exactly two shapes:
 
-- a **link entity** (§2.2) declaring both `scene_id` and the subject's
+- a **link entity** (§0.7) declaring both `scene_id` and the subject's
   own reference column — `scene_character`, `scene_prop`,
   `motif_appearance`, `costume_scene`;
 - **`scene` declaring a reference to the subject** — `scene.location_id`.
@@ -2659,13 +2659,13 @@ Parameters: `subjectType`, `subject`, `scene`, and `shot` — optional.
 | `locationVariant` | For a location subject: the variant in force and any mismatches. |
 | `propVariant` | For a prop subject: the variant §4.8 puts in force, projected, or null. |
 | `propState` | For a prop subject. |
+| `media` | **Q13's result body**, with `fromQuery: "Q13"`. |
 
 `arcStates` carries the stage in force on each of the character's arcs
 (§4.5), and **not the arcs themselves**: a `character_arc` is a standing
 fact about the character, so it is already in `dossier.groups`, and
 §3.1 asks for it in one place rather than two. What the scene changes is
 which stage is in force.
-| `media` | **Q13's result body**, with `fromQuery: "Q13"`. |
 
 **Fields that do not apply to a subject's kind are null or empty, never
 omitted.** A consumer must be able to tell "not applicable here" from
@@ -2833,8 +2833,8 @@ change to one without the other is a defect.
 | §1.2 file identification | `scf-core/test/fileIdentity.test.ts` |
 | §2.1 registry structure | `scf-core/test/registrySchema.test.ts` |
 | §9.4 finding vocabulary | `scf-core/test/findings.test.ts`, `spec/finding-catalog.json` |
-| §4.3 numbering policy and its deprecation window | `scf-core/test/numbering.test.ts` |
-| §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (11 cases) |
+| §4.3 numbering policy | `scf-core/test/numbering.test.ts` |
+| §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (15 cases) |
 | §9.5 serialised report | `scf-core/test/report.test.ts` |
 | §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |
 | §11.2–11.3 forward and backward compatibility | `scf-core/test/extensibility.test.ts`, `scf-app/test/roundTrip.test.ts` |
@@ -2843,6 +2843,8 @@ change to one without the other is a defect.
 | §6.6 cut rows excluded everywhere | `scf-core/test/conformance.canonical.test.ts`, `scf-core/test/lifecycle.test.ts` |
 | §12.1 result envelope and row projection | `scf-core/test/canonicalQueries.test.ts` |
 | §12.2–12.17 — all sixteen queries | `scf-core/test/canonicalQueries.test.ts`, `fixtures/expectations/*.result.json` |
+| §12.0 case results — every member of every result carries data | `scf-core/test/resultCoverage.test.ts`, `fixtures/expectations/<Q>-<case>.result.json` |
+| §12.17 ranked variant axes | `scf-core/test/conformance.canonical.test.ts` |
 | §11.6 document equality | `scf-core/src/canonical.ts`, exercised by `scf-app/test/roundTrip.test.ts` |
 | Round-trip integrity (`conformance.md` §3) | `scf-app/test/roundTrip.test.ts` |
 | Canonical query expectations (`conformance.md` §5.4) | `scf-app/test/queryExpectations.test.ts`, `fixtures/expectations/` |
@@ -2866,7 +2868,7 @@ change to one without the other is a defect.
 | §8.5 format hint | `scf-core/test/preview.test.ts` |
 | §8.6 orphans | `scf-core/test/assetIndex.test.ts` |
 | §8.7 metadata | `scf-core/test/fileMetadata.test.ts` |
-| §9.4 resolution report | `scf-core/test/mediaReferences.test.ts` |
+| §9.6 resolution report | `scf-core/test/mediaReferences.test.ts` |
 
 Sections with no entry are not yet pinned, and two entries above say
 *unpinned* on purpose: §11.1 and §11.4 are policies about how the format

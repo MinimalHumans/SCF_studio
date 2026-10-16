@@ -51,6 +51,6 @@ to anything already written. What is safe to build against is stated,
 per subject, in [stability](stability.html) — including the things that
 are not.
 
-Three independent implementations have been written from these
+Five independent implementations have been written from these
 documents by people with no access to the reference code. What they got
 wrong is what most of the specification's recent revisions are about.

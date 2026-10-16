@@ -140,7 +140,8 @@ possible by sorting within a type.
 
 ## Resolution
 
-*Implemented 2026-10-09 in the working tree, ahead of acceptance, as
-0036 was. It joins the untagged 2.23 batch. It is awaiting the
-maintainer's review; the status should become `accepted` or be
-reverted to `draft` then.*
+**Implemented 2026-10-09**, as spec 0.64 on schema 2.23, ahead of
+formal acceptance, as 0036 was. Schema 2.23 was tagged and pushed with
+it on 2026-10-12 (`schema-2.23`), which is why the release batch that
+followed is 2.24. Shot 12-04's storyboard panels exercise it in the
+fixture, their `order` running against their row ids.

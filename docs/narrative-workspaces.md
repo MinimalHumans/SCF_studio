@@ -238,10 +238,9 @@ Both open the file through the shared object-URL cache — nothing is
 copied or written beside it — and both are one undo step
 (`setAnchorRegion`, `setAnchorClip`).
 
-The spec still does not give `audio_offset_*` a declared meaning beyond
-the field names. The editor treats them as seconds from the start of the
-file, which is the only plausible reading; promoting that to normative
-text, as was done for `region_box`'s help text, is a format decision.
+Spec §12.8 states what the editor enforces: seconds from the first
+sample of the asset's playable audio, start-inclusive and end-exclusive,
+a null bound open (since spec 0.66).
 
 ## 7. Coexistence
 
@@ -313,15 +312,15 @@ raises no finding.
 
 ## 11. Open
 
+Three items once on this list are closed: the night kitchen (§12.17
+now ranks time of day first, so scenes 10 and 19 resolve the night
+variant — spec 0.66), the fixture's prop variant and prop tag (spec
+0.67), and the `audio_offset_*` semantics (§6.4, spec 0.66).
+
+
 - **Readiness badge and context rail** (§4) — not built.
 - **Shot-level variants** — two versions of one character in a scene.
 - **`shotContext` does not name the variant** in force for a shot.
-- **The fixture's night kitchen** resolves to the day baseline in scenes
-  10 and 19: §12.17 ties toward the baseline when season disagrees
-  (autumn variant, winter scenes). Correct by the rule; the fixture
-  probably meant otherwise.
-- **The fixture has no prop variants and no screenplay prop tags**, so
-  those views are exercised only by tests.
 - **`last_insert_rowid()` after a separate insert** is used in sixteen
   places across the editor. Through the worker it is a second message,
   so another write landing in between returns the wrong id. Harmless
@@ -330,4 +329,3 @@ raises no finding.
 - **The undo toast** stays until dismissed or replaced.
 - **The scene rail** still jumps by `line_order` rather than uuid.
 - **Fonts** load from Google Fonts; offline, the fallback stack applies.
-- **`audio_offset_*` semantics** (§6.4) are unstated in the spec.

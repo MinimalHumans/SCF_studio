@@ -30,7 +30,7 @@ const RANGE_FIELDS = ["line_start_ref", "line_end_ref"];
  * documentation.
  *
  * The footer shows the row's identity. `uuid` is a framework column on
- * all 103 entities (conventions §5) and is what survives export and
+ * every entity (spec §6.1) and is what survives export and
  * re-import, but it is hidden from the field list, so this is the only
  * place to see one short of a SQL client. Read-only — identity is
  * minted, never typed — and one click copies it.

@@ -52,7 +52,7 @@ SCF is where it goes:
 | **Dr. George Moonman** | 175cm, 65kg, 57. Smokey voice. Favours his left side. Short grey hair. |
 | **Moon Base** | Dark side of the moon. As big as a shopping mall. Brutalist. Worn down but functional. |
 
-That is three entity types. **The format defines ninety-nine.** They
+That is three entity types. **The format defines 106 entities.** They
 exist because sixteen questions need them — which is the next section,
 and the more important one.
 
@@ -87,8 +87,8 @@ prompt-ready context block.
 
 **Not a screenplay format.** Fountain and Final Draft describe a
 *document*. SCF describes a *film*. The screenplay lives inside an
-`.scf` because story order comes from it, but it is one table of
-ninety-nine. You export into SCF; you do not stop using your
+`.scf` because story order comes from it, but it is one table among
+more than a hundred. You export into SCF; you do not stop using your
 screenwriting software.
 
 **Not a production database.** Schedules, budgets, who is on set on
@@ -117,7 +117,8 @@ them — is an entity. Each carries four things:
 - **Scope.** Whether it is global or applies only to an act, a sequence,
   a scene, a shot, a moment. A costume might be global; a performance
   beat is a moment.
-- **Query membership.** Which of the sixteen questions it helps answer.
+- **Position pattern.** How a row is in force across the story — the
+  three patterns are below.
 
 ### Tiers
 
@@ -135,10 +136,13 @@ Tiers separate *what a thing is* from *how deeply it is specified*.
 
 ### The direction cascade
 
-Look and sound resolve **root-first, most specific last**: project →
-sequence → scene → shot. The last layer wins, and the query returns the
-whole trail rather than just the answer, so you can see where a decision
-came from.
+Look and sound resolve **root-first, most specific last**: the
+project's rules, narrowed by the scene's, narrowed by the shot's. Which
+layer narrows which is declared in the schema — each entity names the
+ones it refines — rather than read off a fixed project → scene → shot
+ladder. The last layer wins, and the query returns the whole trail
+rather than just the answer, so you can see where a decision came
+from.
 
 The final shot of a film with your protagonist in it is that baseline
 character, plus everything that has happened to them since.
@@ -226,7 +230,7 @@ in the file waiting.
 **A note on status.** SCF is pre-1.0. The specification is a release
 candidate, `1.0-rc.1`,
 [what is safe to build against is stated per subject](../spec/stability.md),
-and until 1.0 there is no migration path for files already written. Four
+and until 1.0 there is no migration path for files already written. Five
 independent implementations have been built from the specification by
 people with no access to the reference code; what they got wrong is what
 most of its recent revisions are about.

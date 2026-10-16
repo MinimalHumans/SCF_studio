@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — schema 2.15 |
+| **Status** | **implemented** — schema 2.15. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | 2 fields removed, 2 entities added; `junction-keys.json` gains an entry; the fixture |
@@ -80,3 +80,14 @@ middle entity. Tidier, and a bigger change than this one.
   needs only `position`.
 - **Fixture content:** which scene gets a costume progression with
   stages? The obvious candidate is Eleanor's, over her three-act change.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — schema 2.15. `costume_progression_state`
+and `staging_beat_character` are in the registry with the fields above,
+both JSON columns are gone, and `junction-keys.json` carries the new
+link. The fixture carries rows of both.
+
+`staging_beat_character` kept its per-character `movement`.

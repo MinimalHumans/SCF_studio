@@ -153,8 +153,7 @@ export function loadRegistry(json: RegistryJson): Registry {
 /**
  * Entities from cascade root(s) to leaf via `refines`, depth-first
  * postorder so parents precede children and the leaf is last. Multi-parent
- * entities contribute parents in declared order.
- * (Port of resolution.py::_cascade_chain.)
+ * entities contribute parents in declared order (spec §7.2).
  */
 export function cascadeChain(registry: Registry, leaf: string): string[] {
   const seen: string[] = [];

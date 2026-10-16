@@ -12,7 +12,7 @@ The build takes **three inputs and no existing fixture**:
 | | |
 |---|---|
 | `spec/scf-schema.sql` | The published DDL — the same artifact a third party gets, generated from `initDatabase()` and checksummed |
-| `hollow_creek.data.json` | The authored entity content: 375 rows across 71 tables |
+| `hollow_creek.data.json` | The authored entity content, every non-empty table but the screenplay lines; its `rowCount` says how many rows |
 | `hollow_creek.fountain` | The screenplay, via `screenplay_body.py` |
 
 `build_fixture.py` writes `fixtures/hollow_creek.scf` and copies it to
@@ -26,7 +26,7 @@ Author in `scf-app` → `dump_fixture.py` → **review the JSON diff** →
 `build_fixture.py` → commit both.
 
 That middle step is the point. The fixture is a conformance artifact
-whose exact content eleven suites assert against, and until 0.35 a pull
+whose exact content the conformance suites assert against, and until 0.35 a pull
 request that changed it showed a single line saying a binary file
 differed. Now it shows which rows moved.
 
@@ -71,4 +71,5 @@ Read [`history/README.md`](history/README.md). Several properties are
 load-bearing and none of them is annotated in the data file: scene 12 is
 pinned, name anchors are relied on by both suites, scene numbers are
 deliberately not sequential, and some gaps exist on purpose. Then read
-`docs/conventions.md` §8.
+`docs/conventions.md` §8 and `spec/conformance.md` §5.1, which lists
+the properties that are normative.

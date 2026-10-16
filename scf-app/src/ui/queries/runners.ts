@@ -9,11 +9,11 @@
  * `fixtures/expectations/*.result.json` files pin; the human views live
  * in QueryRunner.tsx and composedViews.tsx.
  *
- * Nothing here answers a query. Until 0.65 the app re-derived fourteen
- * of the sixteen in its own SQL, and the copies kept bugs scf-core had
- * fixed: Q04's lineage read `scene_sequence` and `sequence.act_id`
- * instead of span boundaries (§5.4), and its cast ignored the cut
- * filter. A query page owns its markdown and nothing else, and
+ * Nothing here answers a query. A page that re-derives one in its own
+ * SQL keeps whatever bugs scf-core has since fixed — a Q04 lineage read
+ * from `scene_sequence` rather than span boundaries (§5.4), a cast that
+ * skips the cut filter (§6.6.1). A query page owns its markdown and
+ * nothing else, and
  * `runners.test.ts` fails if a file under this directory runs SQL
  * through the query context.
  */

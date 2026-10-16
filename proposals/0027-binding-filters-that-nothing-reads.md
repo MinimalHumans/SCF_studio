@@ -80,7 +80,7 @@ recommendation, per column:
    that goes stale when a boundary moves. Anything it can say, the range
    says better.
 5. **`conditions_json` — remove**, as [0025](0025-json-that-duplicates-or-means-nothing.md)
-   already proposes. (It went in schema 2.15, before this proposal
+   already proposes. (It went in schema 2.14, before this proposal
    landed, so 2.16 had five columns to deal with rather than six.)
 
 And, whatever is decided per column: **§12.8 MUST state that a binding
@@ -160,3 +160,8 @@ about, no positional filter is evaluated at all.** Q13 can be asked
 without a scene, and then only baselines apply (§12.8.1) — there is
 nothing to evaluate a filter against, and a baseline that declares one
 is answering a question nobody asked.
+
+**Later:** the character and prop `variant_id` filters came back in
+schema 2.20 with [0033](0033-variants-in-force.md), which states which
+variant is in force (§4.8) — the rule point 1 said they were waiting
+for. All three binding tables now carry one.

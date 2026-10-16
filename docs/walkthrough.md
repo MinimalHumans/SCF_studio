@@ -123,7 +123,7 @@ actor, or a text-to-speech tool all need answered:
 cat ../fixtures/expectations/Q05.result.json
 ```
 
-The rendered form is easier to read:
+The rendered form is easier to read (abridged here):
 
 ```sh
 cat ../fixtures/expectations/Q05.expected.md
@@ -140,6 +140,9 @@ cat ../fixtures/expectations/Q05.expected.md
 - rhythm: halting
 - accent: Flat inland Oregon
 - listening_behavior: Listens with her whole body.
+…
+## Beats
+- you-came-back (line_text: You came back.; pace: slow; volume: soft)
 ```
 
 That is not in the screenplay and could not be. It is what somebody
@@ -265,7 +268,7 @@ sha256sum -c spec/SHA256SUMS
 Every artifact the manifest lists, including the specification
 documents themselves.
 
-**Write your own reader.** Four people have, from the specification
+**Write your own reader.** Five people have, from the specification
 alone. The [query reference](../spec/query-reference.md) is one page,
 and [`spec/conformance.md`](../spec/conformance.md) says what a claim
 requires.

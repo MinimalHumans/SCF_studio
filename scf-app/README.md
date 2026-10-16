@@ -6,7 +6,7 @@ server, Chromium-first. All format knowledge comes from `scf-core`; the
 app never hand-defines an entity.
 
 ```sh
-npm install
+npm ci
 npm run dev        # http://localhost:5173 — Chromium
 npm run typecheck
 npm test
@@ -113,6 +113,6 @@ still open.
 
 ## Conventions
 
-The format's rules, and the reasoning behind them, are in
-`../docs/conventions.md`. Read §2 (derived versus stored) and §4
-(structure) before touching labels or the outline views.
+The format's rules are in `../spec/scf-spec.md`; the reasoning behind
+them is in `../docs/conventions.md`. Read conventions §2 (derived versus
+stored) and §4 (structure) before touching labels or the outline views.

@@ -2,7 +2,7 @@
 # @minimalhumans/scf-mcp
 
 An [MCP](https://modelcontextprotocol.io) server over a Story Context
-Format (`.scf`) file, so an AI assistant can answer questions about a
+Framework (`.scf`) file, so an AI assistant can answer questions about a
 film — and assemble a shot prompt — without being handed a schema and
 told to write SQL.
 

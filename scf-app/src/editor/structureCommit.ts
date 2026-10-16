@@ -193,7 +193,8 @@ export type NumberingMode = "derived" | "fixed";
  */
 export async function numberingMode(exec: SqlExec): Promise<NumberingMode> {
   // Delegates to scf-core, which owns the precedence between
-  // `numbering_policy` and the deprecated `scene_numbering` (spec §4.3).
+  // `numbering_policy` and a removed `scene_numbering` a file may still
+  // carry (spec §4.3).
   // Reading the column directly here is how the two would drift.
   return numberingPolicy(exec);
 }

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.54 |
+| **Status** | **implemented** — spec 0.54. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | Spec §1.3.1, §3, §5; `screenplay_lines.metadata`; possibly the finding catalog; scf-app `structureCommit.ts` |
@@ -100,3 +100,18 @@ re-import.
   `scene.summary`, or independent? Scriptyard's Fountain export writes the
   scene note as a synopsis.
 - **Info or warning** for the mismatch?
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.54. §1.3.1 specifies the uuid
+binding, accepts the legacy `id` form, makes the record the answer and
+the line the handle, and leaves classification to the editor.
+`structure.section_mismatch` is `info`; the fixture's eight section
+lines bind by uuid, and since 0.68 the negative case `section-mismatch`
+raises the finding. Schema 2.15 records the fixture change; the
+registry did not move.
+
+The scene name and synopsis questions were not taken up: `scene.name`
+and `scene.summary` remain authored fields.

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.54, schema 2.15 |
+| **Status** | **implemented** — spec 0.54, schema 2.15. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | 29 fields change `fieldType`; `registry.schema.json`; spec §2 and §12.1.2; scf-app's field renderer |
@@ -96,3 +96,15 @@ guesses.
 - **Duplicates and blanks.** A finding, or left alone?
 - **Case.** Should `asset.tags` be compared case-insensitively? That is a
   query question, not a storage one, but it belongs in §12 if anywhere.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.54 (§2.5, §12.1.2) and schema
+2.15. The 29 fields are `string_list`; Null and `[]` mean nothing; a
+`string_list` is projected as an array, and a malformed value is
+carried as its text rather than dropped (§2.5).
+
+The Unresolved questions — ordering, duplicates and blanks, and case —
+were not taken up; §2.5 states the stored form and nothing more.

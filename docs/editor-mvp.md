@@ -7,6 +7,10 @@ checked against `SCF_studio@main`, 2026-08-26 — spec 0.51, schema 2.13.
 **Updated 2026-10-08** (spec 0.63, schema 2.22): §7b's open decision is
 closed, and §9 is answered — the editor is not part of the format's 1.0
 (`release-checklist.md` §A10).
+**Re-checked 2026-10-16** (spec 1.0-rc.1, schema 2.24): §2's remaining
+duplicate is gone, §3 is mostly closed, §6's proposals are resolved, and
+§7e's costume gap is filled. Sections 7a–7g are the record of work as it
+landed; counts in them describe the fixture at the time.
 
 It lives here rather than as an upload for the same reason rev 11 of the
 release checklist does: *rev 10 lived outside the repository and had
@@ -93,16 +97,15 @@ NOT and a normative member, and still exists in one place.
 
 `Q04.result.json` is re-blessed and carries scene 12's twenty lines.
 
-**One thing this did not fix.** The app's `runnersComposed.ts` builds
-its own Q04 payload rather than calling `q04Result` from `scf-core` —
-it did before this change and it does after. Two descriptions of one
-answer, one of them normative. It has not caused a divergence yet
-because both now share the line derivation, but it is on the same list
-as everything else here.
+**One thing this did not fix, since closed.** The app's
+`runnersComposed.ts` built its own Q04 payload rather than calling
+`q04Result` from `scf-core` — two descriptions of one answer, one of
+them normative. Every query page now renders scf-core's `qNNResult()`
+and `runnersComposed.ts` is deleted (`release-checklist.md` §B1).
 
-## 3. ⚠️ Part 3 features the fixture never shows — the live item
+## 3. ◑ Part 3 features the fixture never showed
 
-Four reader runs have each found at least one defect that no published
+Five reader runs have each found at least one defect that no published
 artifact could catch, because the fixture had no rows of the relevant
 kind. The pattern is now well understood: **a feature the fixture does
 not exercise is a feature no independent implementation ever sees, and
@@ -112,13 +115,16 @@ Proposal 0001 was the last instance — `clip`'s screenplay line columns
 were undetectably wrong while the `clip` table was empty. Adding two
 rows closed it.
 
-The three headline Part 3 features are in that state right now:
+The three headline Part 3 features were in that state. Two are closed
+(`release-checklist.md` §B2, spec 0.67); versions stay unauthored on
+purpose, because §0.4 puts the version tables outside 1.0 and no
+normative result reads them:
 
 | Feature | Code | Fixture | Cost to close |
 |---|---|---|---|
-| **Beat anchoring (G5)** — `performance_beat.line_ref` → a line's uuid | ✅ `features.ts`, wired in `ScriptView` | ○ 14 beats, **0 with `line_ref`** | a few rows |
-| **Prop tags** — line uuid + offsets, revalidated on edit | ✅ `features.ts`, `validateTags` | ○ `screenplay_prop_tags` **empty** | a few rows |
-| **Versions** — publish a snapshot, diff against current | ✅ `publishVersion`, `diffVersionAgainstCurrent` | ○ `screenplay_versions` and both version tables **empty** | one published version |
+| **Beat anchoring (G5)** — `performance_beat.line_ref` → a line's uuid | ✅ `features.ts`, wired in `ScriptView` | ✅ **7 of 14** beats anchored; the other seven quote no script line | done |
+| **Prop tags** — line uuid + offsets, revalidated on edit | ✅ `features.ts`, `validateTags` | ✅ one `screenplay_prop_tags` row | done |
+| **Versions** — publish a snapshot, diff against current | ✅ `publishVersion`, `diffVersionAgainstCurrent` | ○ `screenplay_versions` and both version tables **empty** | one published version; outside 1.0 (§0.4) |
 
 All three are authored *from the editor*, which is why the fixture
 builder never produced them: `hollow_creek.data.json` predates them.
@@ -178,11 +184,14 @@ an oversight — which is the whole reason this document exists.
 Neither blocks the editor MVP; both change what the editor does if
 accepted.
 
-- **0002 — ownership by declaration** (draft, open). Affects how the
-  entity forms decide what belongs to what.
-- **0003 — absolute paths resolve** (draft). Affects `assetLocator.ts`
-  and the Assets tab; roots beyond `@project` are reserved in the
-  grammar and unimplemented.
+- **0002 — ownership by declaration** — implemented in its narrow form
+  in schema 2.24: a clip points at its scene through
+  `clip.slated_scene_id` and outlives it. Moving ownership to
+  declarations is deferred past 1.0.
+- **0003 — absolute paths resolve** — deferred past 1.0, waiting on
+  named-root support in the editor. Affects `assetLocator.ts` and the
+  Assets tab; roots beyond `@project` are reserved in the grammar and
+  unimplemented.
 
 ---
 
@@ -596,8 +605,9 @@ value only (roles, JSON lists); no shape changed.
   that reaches it, with its scope read in story order, and an amber
   warning when nothing does. "Bind to…" binds any character, prop or
   location, optionally over a scene range; a ranged binding is never
-  offered as a baseline. Only the range is offered, because it is the
-  only binding filter the media cascade reads.
+  offered as a baseline. Only the range is offered here. When this was
+  built it was the only binding filter the media cascade read; every
+  filter has been read since schema 2.16 (proposal 0027, spec §12.8.1).
 - **On a bundle's members:** a marker when the media kind contradicts
   the intent (audio in a picture bundle, a picture in a sound bundle —
   never video). Roles suggest the file's existing roles and adopt an
@@ -612,16 +622,17 @@ value only (roles, JSON lists); no shape changed.
   "make it a list"). The same button sits in `JsonField`.
 
 The checks live in `editor/mediaChecks.ts`, headless and tested. The
-reach derivation is `scf-core/bundling.ts` (`bundleReach`,
+reach derivation is `scf-core/src/bundling.ts` (`bundleReach`,
 `unboundBundleIds`, `bindBundle`), reading binding tables from the
 registry's `subject` field rather than a list. `bundling.ts` is a deep
 import, not the public surface, so `api-surface.json` did not move.
 
 ### Deliberately left
 
-- **Ada's Shawl stays unbound.** It is a costume, and costume has no
-  asset binding entity. The fixture's only media-checks finding is that
-  format gap; an `asset_relationship` records what the image shows.
+- **Ada's Shawl stayed unbound** while costume had no asset binding
+  entity. `costume_asset_binding` arrived in schema 2.16 (proposal
+  0029), and the fixture now binds the shawl through it; an
+  `asset_relationship` still records what the image shows.
 - **Both locket rows keep the theme.** Removing the prop's connection
   would hide Q10's prop-carrier defect from the published artifact.
 - **Nothing is enforced.** An unbound bundle can be assembled before
@@ -701,17 +712,16 @@ visible.
    app README at seven tabs, this file checked in.
 3. ✅ **§4 — the deferrals recorded** as decisions rather than left
    implicit.
-4. **§3 — the three unexercised features.** The live item. Highest value
-   per hour on the list: it converts three built-but-invisible features
-   into features an independent reader can see, and it is data, not
-   code.
+4. ◑ **§3 — the three unexercised features.** Beat anchoring and prop
+   tags are in the fixture (spec 0.67); versions stay out with §0.4.
 5. ✅ **§7a — the folder attach.** Done; two latent root-pairing
    defects fixed with it.
 6. ✅ **§7b — thumbnails.** Done; `region_box` read for the first
    time, and the fixture exercises it.
 7. ✅ **§7c — the two review surfaces.** Done; and it narrowed §3's
    fixture pass to two named divergences instead of twelve.
-9. **§6** — whenever the proposals resolve.
+8. ✅ **§6** — both proposals resolved: 0002 implemented in its narrow
+   form, 0003 deferred past 1.0.
 
 ## 9. What "MVP" is being taken to mean here
 

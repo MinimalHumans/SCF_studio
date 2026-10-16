@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — schema 2.15 |
+| **Status** | **implemented** — spec 0.54, schema 2.15. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `schema/entity_registry.py` (two new entities); `registry.json`, `scf-schema.sql`, `entity-reference.md`, `junction-keys.json` if either is a link; the conformance fixture; possibly Q01/Q02/Q12 |
@@ -105,3 +105,17 @@ scene 12?" — which is the kind of question §12 exists to answer.
 - **Scriptyard's side:** its Arc card names its subject in free text.
   Mapping to `character_id` needs a reference on the card, not name
   matching.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — schema 2.15, and spec 0.54 for Q02's
+`arcStates` (§12.16). `character_arc` and
+`character_arc_state` (`latest_wins`) are in the registry with the
+fields above; `direction` is an **open** select with the four suggested
+values (§2.4). Eleanor's arc and its three stages are in the fixture.
+
+The Unresolved questions: arcs stay character-only. Q02 reports the
+stage in force as `arcStates` (§12.16), and not the arcs, which reach
+the dossier through the registry; Q12 does not report them.

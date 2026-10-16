@@ -17,6 +17,51 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.1, re-cut — editorial corrections — 2026-10-16
+
+*Describes schema 2.24.*
+
+**Patch-level: no requirement changes meaning** (§11.5). A
+documentation audit before the sixth reader run (`docs/release-checklist.md`
+§D6) corrected statements the tree had made false. The candidate had
+been tagged and not yet read by anyone, so `spec-1.0-rc.1` and
+`schema-2.24` were re-pointed at the corrected tree rather than spending
+a candidate number on editorial fixes. The candidate the reader run
+reads is this one.
+
+**`scf-spec.md`**
+- §1.4: "every schema change to date has been an additive optional
+  field" is true outside the changes §11.0 lists, and now says so.
+- §6.6: a `superseded` row's version chain is §12.14's, not §6.4's.
+- §12.1.6: the sections that rely on row order are §12.2's `beats`, the
+  `characters` of §12.4 and §12.5, and §12.10's `manifest` — "those are
+  the only two" was false, and "§12.5's `beats`" named the wrong
+  section.
+- §12.11: a link entity is defined in §0.7, not §2.2.
+- §12.16: the `media` row had fallen out of its table, below the
+  paragraph on `arcStates`.
+- Appendix A: fifteen negative cases, not eleven; the resolution report
+  is §9.6; §4.3's "deprecation window" is gone with `scene_numbering`;
+  rows for the per-case results (`resultCoverage.test.ts`) and §12.17's
+  ranked axes.
+
+**`conformance.md`** — fifteen negative cases (§5.3, §7); §5.1's
+dialogue count is six of the twelve scenes with action, not nine; §5.4
+states the expectations once instead of three times; §6.3 points at the
+trademark statement in `NOTICE`, which exists.
+
+**`stability.md`** — the `line_type` row names `line.type_unknown`; the
+summary no longer calls `varies` and `status` unexercised; the proposal
+path, `clip`'s line references (anchors since 2.19), the export report
+(§9.6), the negative-case count and the additive-change rows are
+current; a row for the anchor audio span (§12.8, stated in 0.66).
+
+**This changelog** — the candidate's entry pointed "above" at the
+entries below it. 0.54's entry does not mention that §12.16 gained
+`arcStates` (proposal 0008); it did, in 0.54.
+
+---
+
 ## 1.0-rc.1 — 2026-10-16
 
 *Describes schema 2.24.*
@@ -32,7 +77,7 @@ may still break them; that ends at 1.0, not here. Nothing is published
 to npm.
 
 What the candidate carries since the last reader run read the format
-(0.49), by the entries above: line anchors and ranges (§3.5, §4.7),
+(0.49), by the entries below: line anchors and ranges (§3.5, §4.7),
 presence (§2.4.1), variants (§4.8) and binding filters (§12.8.1–12.8.2),
 open vocabularies and `string_list`, `required` as incompleteness; and
 the 1.0 decisions of 0.66 — exactly schema 2.24 (§0.6),

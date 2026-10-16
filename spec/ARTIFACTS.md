@@ -31,7 +31,7 @@ https://raw.githubusercontent.com/MinimalHumans/SCF_studio/schema-2.24/scf-core/
 sha256sum -c spec/SHA256SUMS
 ```
 
-## Artifacts (58)
+## Artifacts (62)
 
 This list is exhaustive in both directions: everything below is
 published here AND checksummed in `SHA256SUMS`, and nothing is
@@ -43,14 +43,14 @@ them, which is what CI does on every run.
 
 ### The specification
 
-The normative documents. Stamped since 0.31: three independent readers built against this prose, and until now nothing let them confirm they had read the same bytes it was written as.
+The normative documents, checksummed so that a reader built against this prose can confirm it read the bytes that were published.
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `a901e7a8c43a8fc5…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `109fdbfdd775297b…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `4156099b2b613cc0…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `096b4cdfa130e764…` | The specification changelog. Spec §11.5. |
+| `spec/scf-spec.md` | `9f48074176a6c2c3…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/conformance.md` | `4099330eff0be562…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/stability.md` | `90f5becc5ea542ab…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `fa777aecf3b7c15c…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -60,13 +60,13 @@ Generated from `schema/`, which is the source of truth for all of them.
 |---|---|---|
 | `scf-core/registry/registry.json` | `3e422d68d559eccf…` | The normative field set. Spec §2.1. |
 | `spec/scf-schema.sql` | `5326ea48c4d1306e…` | The physical DDL, dumped from initDatabase(). Spec §1.3. |
-| `spec/screenplay-tables.json` | `3dbb3c2730a82f8f…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3. |
+| `spec/screenplay-tables.json` | `3dbb3c2730a82f8f…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3.1. |
 | `spec/entity-reference.md` | `4d29ace3580fc973…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
 | `spec/query-reference.md` | `d8f22f0cc8efca5b…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
 | `spec/api-surface.json` | `93d5d72b440ba9bb…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `cbeb1c0a5e2da22f…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `6670ce8550c1a47c…` | Natural keys for every link entity. Spec §6.3. |
-| `spec/readiness-rubrics.json` | `7ddf6429e83e5957…` | What Q14 assesses, per target query. Spec §12.9.1. |
+| `spec/readiness-rubrics.json` | `eed345a2bb16618c…` | What Q14 assesses, per target query. Spec §12.9.1. |
 | `spec/finding-catalog.json` | `850f3c1e9de1e31c…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
 
 ### The canonical query results
@@ -111,22 +111,26 @@ What each published result was asked, as selectors that resolve against the fixt
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `fixtures/expectations/selectors.json` | `941b58ddda9f17c1…` | The seven selectors and the sixteen queries' parameters. Conformance §5.4. |
+| `fixtures/expectations/selectors.json` | `941b58ddda9f17c1…` | The selectors, and the parameters of every published result. Conformance §5.4. |
 
 ### The negative fixtures
 
-Eleven files that are wrong in a stated way, and the report each MUST produce. Stamped since 0.31: conformance turns on reproducing these reports exactly, so their bytes matter as much as any generated artifact's.
+Minimal files that are wrong in a stated way, and the report each MUST produce. Stamped since 0.31: conformance turns on reproducing these reports exactly, so their bytes matter as much as any generated artifact's.
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `fixtures/negative/CASES.json` | `90f434e150768965…` | The eleven negative fixtures as reproducible recipes. Spec conformance.md §5.3. |
-| `fixtures/negative/asset-absolute.expected.json` | `5c33c0074bab393d…` | An absolute asset path where a rooted one is required. Spec conformance.md §5.3. |
+| `fixtures/negative/CASES.json` | `90f434e150768965…` | Every negative fixture as a reproducible recipe. Spec conformance.md §5.3. |
+| `fixtures/negative/asset-absolute.expected.json` | `5c33c0074bab393d…` | An absolute asset identifier: permitted, non-portable, a warning. Spec conformance.md §5.3. |
 | `fixtures/negative/asset-escapes-root.expected.json` | `4c5ba06a3d677308…` | An asset address that resolves outside the root. Spec conformance.md §5.3. |
+| `fixtures/negative/bundle-unbound.expected.json` | `da4ae75af36905ef…` | A bundle no binding reaches. Spec conformance.md §5.3. |
 | `fixtures/negative/header-unstamped.expected.json` | `403a64be006d811f…` | A file carrying no SCF application id. Spec conformance.md §5.3. |
+| `fixtures/negative/junction-endpoint-absent.expected.json` | `cedd6355c4330f44…` | A link with a missing end. Spec conformance.md §5.3. |
+| `fixtures/negative/line-type-unknown.expected.json` | `a7ebab8e38e4155c…` | A screenplay line whose type is outside the closed set. Spec conformance.md §5.3. |
 | `fixtures/negative/relationship-contradictory.expected.json` | `d30273a70933e6ce…` | Two relationship rows that disagree. Spec conformance.md §5.3. |
 | `fixtures/negative/relationship-directionality-absent.expected.json` | `8ad2883a8b2fe1d0…` | A directional relationship with no direction. Spec conformance.md §5.3. |
 | `fixtures/negative/relationship-endpoint-absent.expected.json` | `51d5de04a58c7030…` | A relationship pointing at a row that is not there. Spec conformance.md §5.3. |
-| `fixtures/negative/span-boundary-dangling.expected.json` | `a36212b8110e2f57…` | A span anchored past the end of its line. Spec conformance.md §5.3. |
+| `fixtures/negative/section-mismatch.expected.json` | `250a8bfa7edbc780…` | A section line bound to an act renamed since. Spec conformance.md §5.3. |
+| `fixtures/negative/span-boundary-dangling.expected.json` | `a36212b8110e2f57…` | An act anchored to a scene that is not present. Spec conformance.md §5.3. |
 | `fixtures/negative/unknown-table.expected.json` | `84a72246bbc5f135…` | A table the registry does not declare. Spec conformance.md §5.3. |
 | `fixtures/negative/uuid-duplicate.expected.json` | `eca85b8e616248b2…` | One uuid on more than one row. Spec conformance.md §5.3. |
 | `fixtures/negative/uuid-malformed.expected.json` | `8a94308b3fae0c20…` | A uuid that is not a uuid. Spec conformance.md §5.3. |
@@ -143,7 +147,7 @@ Full digests are in [`SHA256SUMS`](SHA256SUMS).
 
 ## Releasing a schema version
 
-Step 6 of the change procedure in `docs/conventions.md` §8:
+Steps 6 and 7 of the change procedure in `docs/conventions.md` §8:
 
 ```sh
 python3 schema/artifact_manifest.py

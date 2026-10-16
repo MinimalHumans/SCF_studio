@@ -15,8 +15,9 @@ document mixing rule and reason, because only one of them gets updated.
 If you find a rule stated here and nowhere else, that is a defect —
 move it to the specification and cite it from here.
 
-Section numbers match the specification's where they can. Sections 10
-and 11 have no counterpart there and are the working record.
+Section numbers match the specification's where they can. Sections 8,
+8A and 10 have no counterpart there: 8 and 8A are how the format and
+this repository's code are changed, and 10 is the working record.
 
 ---
 
@@ -56,7 +57,7 @@ The scene label case is the clearest: store `sc 12 — The Kitchen` and a
 rename strands every copy, with nothing to detect it.
 
 The link-label case cost real user-visible damage before it was
-understood. Thirteen of fourteen link entities declare their `nameField`
+understood. Fifteen of sixteen link entities declare their `nameField`
 `hidden`, because the importer parks cue text in that column. Displaying
 it made a character's entire scene list read as that character's own
 name. The fix was not to stop parking text there — the column is useful
@@ -174,9 +175,12 @@ before spans keep working. The boundary is the truth; those rows are its
 shadow.
 
 This is an acknowledged violation of §2 — derived state that is stored —
-kept for compatibility rather than because it is right. `spec/stability.md`
-marks it Unstable for that reason, and 1.0 is the moment to decide
-whether it survives. Rows no boundary explains are counted and reported
+kept for compatibility rather than because it is right. Whether it
+survived 1.0 was decided in spec 0.38: it stays, and no canonical query
+reads it. The defect had never been that the rows exist; it was a
+normative query (Q04) treating a permitted-to-be-stale shadow as truth,
+and `spec §5.4` now requires a conforming reader to derive membership
+from the boundaries. Rows no boundary explains are counted and reported
 rather than deleted, since deleting data to satisfy a derivation is how
 you lose someone's work.
 
@@ -199,8 +203,8 @@ same link. That question needs a **natural key** — the rows joined, plus
 the polymorphic target, plus `domain` where present, since a motif may
 legitimately appear in one scene both visually and sonically.
 
-`junctionKeyFields()` states the key for all fourteen link entities in
-one place, so that merging, de-duplicating and validating cannot
+`junctionKeyFields()` states the key for every link entity in one
+place, so that merging, de-duplicating and validating cannot
 disagree about it. Merge does not exist yet; when it does, this is the
 thing it will stand on.
 
@@ -229,7 +233,7 @@ Schema 2.4 added `directionality` for exactly that, and the seven
 reported cases in `spec §6.5` are the complete enumeration of what the
 two columns plus that flag can mean.
 
-`character_relationship` is not one of the fourteen link entities — its
+`character_relationship` is not a link entity — its
 `subject` is `character` — so junction tooling skips it entirely and
 `relationshipFindings()` covers it separately. That asymmetry surprises
 people, including its author, twice.
@@ -254,9 +258,9 @@ it is a connection, and deleting it loses nothing.
 `spec §6.6.1` settles what `cut` means: the row is not in the film, so
 no resolver may see it. The point of marking something cut rather than
 deleting it is that it stops being considered while remaining
-inspectable — which is two properties, and only the first was ever
-implemented. For a long time `lifecycle_status` was authored on 88
-entities and read by nothing, so "cut" was decorative and every consumer
+inspectable — which is two properties, and for a long time neither
+was implemented: `lifecycle_status` was authored on 88 entities and
+read by nothing, so "cut" was decorative and every consumer
 would have answered the canonical queries differently.
 
 The rule is stated in a form that can be tested: **adding a cut row
@@ -318,8 +322,10 @@ it.
 Fountain **sections** (`# ACT II`) become acts and sequences at commit
 on the same terms as headings becoming scenes: the author typed it, so
 creating what they named is the feature. The section's line metadata
-carries `structureRef {kind, id}` so renaming a section renames its
-entity instead of creating a second one.
+carries a `structureRef` naming its span by uuid (`spec §1.3.1`), so
+renaming a section renames its entity instead of creating a second one.
+It named the span by row id until schema 2.14, and a reader still
+accepts that form; a row id does not survive a rebuild that renumbers.
 
 Section **text is read before depth** — a line saying ACT is an act at
 any depth. `#` = act / `##` = sequence is only the fallback, because
@@ -351,6 +357,9 @@ The procedure:
      && npm run emit-query-reference && npm run emit-finding-catalog \
      && npm run emit-normative-data && npm run bless-negative \
      && npm run bless-queries && cd ..
+   cd scf-app && npm run bless-queries && cd ..
+   python3 schema/artifact_manifest.py
+   ```
 
    If the change alters what the CONFORMANCE FIXTURE contains, edit it in
    `scf-app`, then dump and rebuild before any of the above — the query
@@ -360,9 +369,6 @@ The procedure:
    ```sh
    python3 fixtures/build/dump_fixture.py     # .scf -> reviewable JSON
    python3 fixtures/build/build_fixture.py    # JSON -> .scf, + demo copy
-   ```
-   cd scf-app && npm run bless-queries && cd ..
-   python3 schema/artifact_manifest.py
    ```
 
    The query expectations are blessed here because a schema change can
@@ -402,8 +408,8 @@ exit code gets swallowed by a pipe, and that has happened here.
 
 Steps 2, 3 and 6 are all verified by CI in `--check` mode, so forgetting
 one fails the build rather than shipping a generated file that no longer
-matches its source. That is the whole reason CI exists here: nine
-generated artifacts, each one silently wrong the moment its source moves.
+matches its source. That is the whole reason CI exists here: every
+generated artifact is silently wrong the moment its source moves.
 
 ### Lockfiles
 
@@ -419,9 +425,10 @@ from nothing. The failure is invisible in the place the change is made
 and total in the place it runs, which is the same shape as every other
 failure this document records.
 
-**Prefer additive optional fields.** Every schema change so far has been
-one, which is why no file has ever needed converting. `spec §11.1` now
-makes that a requirement rather than a habit.
+**Prefer additive optional fields.** Every schema change has been one
+except the removals and renames `spec §11.0` lists, taken before 1.0
+while files were disposable. `spec §11.1` makes it a requirement rather
+than a habit from 1.0 on.
 
 ### The rule that keeps this document honest
 
@@ -612,15 +619,13 @@ anchor with no usable region, and the answer is the whole asset. A
 thumbnail that refused to draw because its box was wrong would be worse
 than one that showed too much.
 
-**This is not in the spec, and the registry would be a better home than
-this document.** §2.1 makes the registry the authority on fields, so the
-definition belongs in `region_box`'s help text, where it would be
-generated into `entity-reference.md` and checksummed. It is not there
-for one mechanical reason: `scf-core/registry/registry.json` is the
-artifact pinned to the `schema-2.13` tag, and changing its bytes makes
-`check_pin` fail — a live tag would serve a different file than
-`SHA256SUMS` claims. Moving it needs either a re-cut tag or a schema
-bump, and that is a release decision rather than an editor one.
+**The shape now lives in the registry**, as `region_box`'s help text
+since schema 2.16, generated into `entity-reference.md` and checksummed:
+§2.1 makes the registry the authority on fields. It waited for a schema
+bump because `registry.json` is the artifact pinned to a published tag,
+and changing its bytes under that tag would have served a different
+file than `SHA256SUMS` claims. This section keeps the reasoning; the
+help text is what binds.
 
 ### The other order: the file first
 
@@ -934,7 +939,8 @@ this application), or **both**.
   deleted with it; any other reference to `scene` means the row POINTS AT
   the scene and only loses the pointer. So shots, beats and cues die with
   the scene while a motif's `first_appearance_scene_id` survives with a
-  cleared reference. Act and sequence `start_scene_id` are excluded from
+  cleared reference — and a clip names its scene `slated_scene_id`,
+  because footage outlives the script (`spec §2.3`, proposal 0002). Act and sequence `start_scene_id` are excluded from
   both and re-anchored first. The rule is derived, so adding an entity
   needs no edit.
 - **Version identity** *(schema 2.6)* — `screenplay_version_lines`
@@ -952,15 +958,15 @@ this application), or **both**.
   natural keys (§5), and the point at which uuids stop being enough.
   Matching links requires resolving their endpoints first, which is a
   merge algorithm. It belongs with multi-user work, not before.
-- **A real spec.** *(both)* **In progress.** `spec/scf-spec.md` 0.9 is
-  the normative document, `spec/stability.md` tracks what is safe to
-  build against, and `spec/conformance.md` states the roles. What
-  remains from the original form of this question: the canonical query
-  expectations as DATA rather than as test code, so a third consumer
-  costs an afternoon instead of a port. See `spec/conformance.md` §5.4.
 
 ### Resolved
 
+- **A real spec** *(both)* — `spec/scf-spec.md` is the normative
+  document, `spec/stability.md` tracks what is safe to build against,
+  and `spec/conformance.md` states the roles. The canonical query
+  expectations are published as DATA rather than test code —
+  `fixtures/expectations/`, `spec/conformance.md` §5.4 — so a third
+  consumer costs an afternoon instead of a port.
 - **Junction identity** *(schema)* — junctions already carry `uuid`;
   what they lacked was a stated natural key, now in
   `scf-core/src/junctions.ts`. §5.
@@ -984,8 +990,9 @@ this application), or **both**.
   that list scenes straight from a query. **A consumer that sorts scenes
   by `scene_number` alone will be wrong about both cases.**
 
-  `project.scene_numbering` (`derived` | `fixed`, default `derived`) is
-  the gate, and it sits exactly where this section predicted: the
+  `project.numbering_policy` (`derived` | `fixed`, default `derived`;
+  named `scene_numbering` until schema 2.11) is the gate, and it sits
+  exactly where this section predicted: the
   renumber block in `commitStructure`. `derived` recomputes scene numbers
   from the script's order at every commit and clears them for scenes with
   no heading. `fixed` never touches them — which an import needs, because
@@ -1000,10 +1007,11 @@ this application), or **both**.
   `fixed` freezes scene numbers and shot codes together, which is the
   state a distributed shot list needs.
 
-  Act and sequence numbers are NOT gated: they are structural labels the
-  app has always owned, and no crew holds paper on one. `renumberSpans`
-  is shared by the script commit and the Structure tab, which both move
-  boundaries.
+  Act and sequence numbers were first left ungated, as structural labels
+  the app had always owned. `spec §4.3` (0.17) puts them under the same
+  policy: all four numbers are authored, `derived` recomputes all four
+  and `fixed` preserves all four. `renumberSpans` is shared by the
+  script commit and the Structure tab, which both move boundaries.
 - **A scene cut from the screenplay** *(editor)* — derived and badged,
   never written. The entity survives by design; what it loses is a
   position, so it has no number and belongs to no act. `orphanedScenes`

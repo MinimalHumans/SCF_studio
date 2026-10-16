@@ -72,7 +72,7 @@ if (config.scfPath !== undefined) openProject(config.scfPath, config.roots);
 
 const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
   instructions:
-    "Read-only access to a film's Story Context Format (`.scf`) file. " +
+    "Read-only access to a film's Story Context Framework (`.scf`) file. " +
     "Call `open` once per film, with the path to its `.scf` file, before " +
     "anything else — every other tool reads whichever film was opened " +
     "most recently and errors if nothing has been opened yet. Don't " +

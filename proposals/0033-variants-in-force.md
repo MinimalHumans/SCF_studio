@@ -232,6 +232,9 @@ No other published result changed — which is the reader-run lesson
 again: every normative result sits where no variant is in force, so all
 sixteen read the same whether an implementation honours §4.8 or not. The
 non-normative `Q13-scene25` and `variants.test.ts` are what see it.
+**Closed in spec 0.67:** per-case normative results at scene 25 —
+`Q02-marcus-scene25`, `Q03-scene25`, `Q04-scene25`, the two Q12 cases
+across it, and `Q13-scene25`, promoted — put §4.8 in the graded set.
 
 **One test learned something.** `bindingFilters.test.ts`'s guard probes
 each filter with the ids of the table it references, and `prop_variant`

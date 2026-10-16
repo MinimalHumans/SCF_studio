@@ -202,7 +202,7 @@ it is and deliberately states no rules — a rule found only there would
 be a defect.
 
 **Artifact** — a published file that implementations are checked
-against: the schema, the registry, the sixteen query results, the
-eleven negative reports. All are generated from source and verified by
+against: the schema, the registry, the sixteen query results and their
+per-case companions, the fifteen negative reports. All are generated from source and verified by
 their checksums, so a third party can confirm they have the same bytes
 the project published.

@@ -118,9 +118,13 @@ python3 tools/add_spdx_headers.py --check     # reports what is missing
 python3 tools/add_spdx_headers.py --apply     # writes the headers
 ```
 
+The tool is idempotent, skips generated artifacts that are checksummed, and
+runs without git if it has to.
+
 ## First run
 
-Node 22 or newer (`nvm use` reads [`.nvmrc`](.nvmrc)). Each package has
+Node 22.6 or newer — scf-core's scripts run with
+`--experimental-strip-types` (`nvm use` reads [`.nvmrc`](.nvmrc)). Each package has
 its own lockfile, so install in the one you are working on, with
 `npm ci` rather than `npm install`, which can rewrite the lockfile:
 
@@ -139,13 +143,10 @@ siblings. A build is for publishing. Connecting an MCP client is in
 
 ```sh
 python3 tools/verify.py            # everything CI runs, one exit code
-python3 tools/verify.py --fast     # skips the packaging test and app build
+python3 tools/verify.py --fast     # skips the slow steps: packaging, the builds, scf-mcp's tests
 ```
 
 Run it rather than assembling the commands by hand. A chain like
 `npm test | tail -1 && npm run build` reports the exit code of `tail`,
 so a failing step scrolls past as one quiet line — which is how a broken
 packaging test once reached `main` with a green local check.
-
-The tool is idempotent, skips generated artifacts that are checksummed, and
-runs without git if it has to.

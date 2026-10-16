@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.53 |
+| **Status** | **implemented** — spec 0.53, schema 2.14. See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | `thematic_connection.entity_type`; spec §12.11 (Q10); the fixture |
@@ -63,3 +63,17 @@ stored derivation, and it goes stale as soon as a scene moves act.
 - **Should a span carrier count separately** in Q10's spine from
   scene-level carriers? A scene reached only through its act is a
   different fact from one that carries the theme itself.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.53 and schema 2.14: `act` and
+`sequence` are members of `thematic_connection.entity_type`, and §12.11
+carries a span's theme at every scene of its derived membership. The
+fixture connects Forgiveness to Act 2.
+
+The Unresolved questions: structural beats fell away with 0009, which
+was declined. A span carrier counts in Q10's spine like any other
+carrier; each carrier is listed in `carriers` with its target, so the
+two kinds stay distinguishable there.

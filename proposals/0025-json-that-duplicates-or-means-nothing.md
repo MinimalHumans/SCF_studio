@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — schema 2.15 (removals) and 2.16 (the documentation half) |
+| **Status** | **implemented** — schema 2.14 (removals); spec 0.56, schema 2.16 (the documentation half). See Resolution |
 | **Author** | Found while mapping Scriptyard's `.scf` export; written up by the maintainers |
 | **Opened** | 2026-09-20 |
 | **Affects** | 7 fields removed across 6 entities; §2 documentation for the 3 structured maps that stay |
@@ -88,3 +88,18 @@ range and `act_id`).
 - **Is a scene's musical-theme association really derivable from
   `music_cue`?** If a theme can be present in a scene without a cue, the
   removal needs a `scene_musical_theme` link instead.
+
+---
+
+## Resolution
+
+**Implemented** — the removals in schema 2.14 (all seven fields:
+`project.themes`, `theme.motifs`, `staging_beat.characters_involved`,
+`scene_music_design.themes_used` and the three `conditions_json`
+columns), the documentation half in spec 0.56 and schema 2.16: the
+structured maps that stay state their shapes in their help text, and a
+reader MUST preserve an unrecognised shape (§10.1).
+
+The Unresolved questions: `theme.character_connections` and
+`theme.scene_connections` stay, as prose; no `scene_musical_theme` link
+was added.

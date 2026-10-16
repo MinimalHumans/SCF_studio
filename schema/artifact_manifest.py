@@ -47,9 +47,9 @@ REPO = "https://raw.githubusercontent.com/MinimalHumans/SCF_studio"
 # regenerating them, which is what --check does and what CI runs.
 GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
     ("The specification",
-     "The normative documents. Stamped since 0.31: three independent "
-     "readers built against this prose, and until now nothing let "
-     "them confirm they had read the same bytes it was written as.",
+     "The normative documents, checksummed so that a reader built "
+     "against this prose can confirm it read the bytes that were "
+     "published.",
      [
         ("spec/scf-spec.md",
          "The specification. Everything normative about the format is "
@@ -73,7 +73,7 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "The physical DDL, dumped from initDatabase(). Spec §1.3."),
         ("spec/screenplay-tables.json",
          "The screenplay infrastructure tables and the `line_type` "
-         "vocabulary. Spec §1.3."),
+         "vocabulary. Spec §1.3.1."),
         ("spec/entity-reference.md",
          "Every entity and field, generated from the registry. Not "
          "normative — a reading aid over `registry.json`."),
@@ -165,33 +165,41 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
      "against the fixture by content rather than by row id.",
      [
         ("fixtures/expectations/selectors.json",
-         "The seven selectors and the sixteen queries' parameters. "
+         "The selectors, and the parameters of every published result. "
          "Conformance §5.4."),
      ]),
 
     ("The negative fixtures",
-     "Eleven files that are wrong in a stated way, and the report "
+     "Minimal files that are wrong in a stated way, and the report "
      "each MUST produce. Stamped since 0.31: conformance turns on "
      "reproducing these reports exactly, so their bytes matter as "
      "much as any generated artifact's.",
      [
         ("fixtures/negative/CASES.json",
-         "The eleven negative fixtures as reproducible recipes. Spec "
+         "Every negative fixture as a reproducible recipe. Spec "
          "conformance.md §5.3."),
         ("fixtures/negative/asset-absolute.expected.json",
-         "An absolute asset path where a rooted one is required. Spec conformance.md §5.3."),
+         "An absolute asset identifier: permitted, non-portable, a warning. Spec conformance.md §5.3."),
         ("fixtures/negative/asset-escapes-root.expected.json",
          "An asset address that resolves outside the root. Spec conformance.md §5.3."),
+        ("fixtures/negative/bundle-unbound.expected.json",
+         "A bundle no binding reaches. Spec conformance.md §5.3."),
         ("fixtures/negative/header-unstamped.expected.json",
          "A file carrying no SCF application id. Spec conformance.md §5.3."),
+        ("fixtures/negative/junction-endpoint-absent.expected.json",
+         "A link with a missing end. Spec conformance.md §5.3."),
+        ("fixtures/negative/line-type-unknown.expected.json",
+         "A screenplay line whose type is outside the closed set. Spec conformance.md §5.3."),
         ("fixtures/negative/relationship-contradictory.expected.json",
          "Two relationship rows that disagree. Spec conformance.md §5.3."),
         ("fixtures/negative/relationship-directionality-absent.expected.json",
          "A directional relationship with no direction. Spec conformance.md §5.3."),
         ("fixtures/negative/relationship-endpoint-absent.expected.json",
          "A relationship pointing at a row that is not there. Spec conformance.md §5.3."),
+        ("fixtures/negative/section-mismatch.expected.json",
+         "A section line bound to an act renamed since. Spec conformance.md §5.3."),
         ("fixtures/negative/span-boundary-dangling.expected.json",
-         "A span anchored past the end of its line. Spec conformance.md §5.3."),
+         "An act anchored to a scene that is not present. Spec conformance.md §5.3."),
         ("fixtures/negative/unknown-table.expected.json",
          "A table the registry does not declare. Spec conformance.md §5.3."),
         ("fixtures/negative/uuid-duplicate.expected.json",
@@ -214,6 +222,19 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
 ]
 
 ARTIFACTS = [item for _, _, items in GROUPS for item in items]
+
+# Families a conformance claim is graded against file by file, so the
+# list must hold every member. A blessed report left off it is published
+# without a digest, and --check cannot notice: it compares the manifest
+# with the list, and the list is what is missing the file.
+COVERED = ["fixtures/negative/*.expected.json",
+           "fixtures/expectations/Q[0-9][0-9]*.result.json"]
+
+
+def unlisted() -> list[str]:
+    listed = {rel for rel, _ in ARTIFACTS}
+    return sorted(rel for pattern in COVERED for p in ROOT.glob(pattern)
+                  if (rel := p.relative_to(ROOT).as_posix()) not in listed)
 
 
 def sha256(path: Path) -> str:
@@ -293,7 +314,7 @@ def render() -> str:
         "",
         "## Releasing a schema version",
         "",
-        "Step 6 of the change procedure in `docs/conventions.md` §8:",
+        "Steps 6 and 7 of the change procedure in `docs/conventions.md` §8:",
         "",
         "```sh",
         "python3 schema/artifact_manifest.py",
@@ -323,6 +344,12 @@ def main() -> int:
     ap.add_argument("--check", action="store_true",
                     help="verify without writing; non-zero if stale")
     args = ap.parse_args()
+
+    missing = unlisted()
+    if missing:
+        print("[artifacts] published and not in the manifest — add each "
+              "to GROUPS:\n  " + "\n  ".join(missing), file=sys.stderr)
+        return 1
 
     manifest, sums = render()
     sums_path = ROOT / "spec" / "SHA256SUMS"

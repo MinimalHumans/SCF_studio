@@ -23,7 +23,8 @@ with 2.16.)*
 ## 2.24
 
 **The release schema** (release checklist §A7): the 1.0 decisions'
-registry changes. Untagged until RC day. It is 2.24 rather than 2.23
+registry changes. Tagged `schema-2.24` on 2026-10-16, beside
+`spec-1.0-rc.1`. It is 2.24 rather than 2.23
 because `schema-2.23` was tagged and pushed on 2026-10-12, carrying
 0037 and 0038, and a published tag is not reused — as with 2.22.
 

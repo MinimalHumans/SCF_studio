@@ -5,7 +5,7 @@
  *
  * Both are cited by MUSTs that a third party cannot otherwise satisfy:
  *
- *   §6.3  the natural key for each of the thirteen link entities. Cited
+ *   §6.3  the natural key for each link entity. Cited
  *         as `junctionKeyFields()` — a function, not an artifact — a
  *         third party cannot compute a natural key, so it cannot
  *         de-duplicate, merge or validate a junction.
@@ -118,8 +118,9 @@ const rubricDoc = {
     "Q14 assesses a target query against, spec/scf-spec.md §12.9. Each " +
     "step names an entity the target depends on and how much it depends " +
     "on it; a missing `required` step is a blocker, a missing " +
-    "`recommended` step a warning, a missing `optional` step a " +
-    "suggestion, and a present step an `ok`.",
+    "`recommended` step a warning, a missing `optional` step `ok` " +
+    "unless its absence is notable at the position, then a " +
+    "suggestion (§12.9.1), and a present step an `ok`.",
   specSection: "§12.9",
   schemaVersion: registry.schemaVersion,
   requirementToSeverity: {

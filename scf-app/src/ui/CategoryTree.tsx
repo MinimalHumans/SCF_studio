@@ -10,7 +10,7 @@ export function CategoryTree(): JSX.Element {
   const { selectedEntityType, selectEntityType, schemaCollapsed,
           setSchemaCollapsed } = useStore();
   const groups = useMemo(() => entitiesByCategory(registry), []);
-  // A fresh project starts collapsed — ~99 entities across the
+  // A fresh project starts collapsed — over a hundred entities across the
   // categories is a wall — but the expansion then belongs to the
   // session, so switching tabs does not undo it. The store holds a
   // sentinel until the tree resolves it against the real names.

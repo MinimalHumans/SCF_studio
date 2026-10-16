@@ -61,8 +61,9 @@ function asNum(v: SqlValue | undefined): number | null {
  * inspectable, so every resolver — and therefore every canonical query
  * — must not see it. Cut rows are read back through `rowsIncludingCut`.
  *
- * The filter is applied in JS rather than in SQL on purpose: 88 of 99
- * entities declare `lifecycle_status` and eleven do not, so a SQL
+ * The filter is applied in JS rather than in SQL on purpose: most
+ * entities declare `lifecycle_status` and the link entities mostly do
+ * not, so a SQL
  * predicate would have to probe for the column on every table it
  * touched. A missing column reads as undefined and keeps the row, which
  * is the correct answer for an entity that has no notion of being cut.

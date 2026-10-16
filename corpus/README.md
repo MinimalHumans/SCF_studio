@@ -1,7 +1,6 @@
 # SCF parser corpus
 
-The golden corpus for the Part 2 parser (design doc: "the real fix for
-'not even most'"). Every parser change runs the whole set; a fix that
+The golden corpus for the Part 2 parser (`docs/editor-mvp.md` §1). Every parser change runs the whole set; a fix that
 breaks another script is visible before merge.
 
 ## Tiers

@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — narrow form, spec 0.66, schema 2.24 (untagged); declarations deferred past 1.0. See Resolution |
+| **Status** | **implemented** — narrow form, spec 0.66, schema 2.24 (tagged 2026-10-16); declarations deferred past 1.0. See Resolution |
 | **Author** | Found by the fifth independent reader run (G-28); written up by the maintainers |
 | **Opened** | 2026-08-25 |
 | **Affects** | Spec §2.3, `schema/entity_registry.py`, `registry.json`, Editor conformance (`conformance.md` §2.3) |
@@ -133,8 +133,8 @@ something it happens to cascade with.
 
 ## Resolution
 
-**Accepted in its narrow form, 2026-10-08, for schema 2.23, the release
-schema.** Settled in the 1.0 decision pass (`docs/release-checklist.md`
+**Accepted in its narrow form, 2026-10-08, for the release schema** —
+then numbered 2.23; it landed as 2.24. Settled in the 1.0 decision pass (`docs/release-checklist.md`
 §A).
 
 **A clip is not deleted with its scene.** That was the question this
@@ -170,8 +170,7 @@ What does not: **step 1 and step 2 — populating `parentEntity` on the
 thirty-three and rewriting §2.3 to read declarations only — are
 deferred past 1.0.** Done entity by entity, that move can reproduce
 today's behaviour exactly, so after 1.0 it is non-breaking. The lint
-makes sure no thirty-eighth `scene_id` arrives by accident in the
-meantime.
+makes sure no new `scene_id` arrives by accident in the meantime.
 
 Before this resolution the proposal was open. 0.47 implemented 0001
 and an adjacent defect — §2.3's asset-usage rule could not see a

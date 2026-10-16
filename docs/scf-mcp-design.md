@@ -73,8 +73,8 @@ it belongs.
 
 **Why `scf-mcp` is a separate package and not a folder in `scf-core`.**
 `scf-core` is what a conforming implementation is graded on, and its
-`index.ts` is an explicit 226-name public surface with a CI check over
-it. An MCP server has no conformance status. Mixing them makes that
+`index.ts` is an explicit public surface, recorded in
+`spec/api-surface.json` with a CI check over it. An MCP server has no conformance status. Mixing them makes that
 check mean less than it does today.
 
 ---
@@ -179,10 +179,10 @@ chooses from the trail then a normative resolution has been moved into a
 nondeterministic component and two runs will disagree.
 
 Any line of resolution logic inside `shotContext` is a second
-description of a normative answer. There is already one of those in the
-tree — `scf-app/src/ui/queries/runnersComposed.ts` assembles its own Q04
-payload rather than calling `q04Result`. It has not diverged yet. A
-composite with six members has six chances to.
+description of a normative answer. The editor's query pages once held
+exactly that — their own Q04 payload rather than a call to `q04Result` —
+and now render scf-core's `qNNResult()` instead. A composite with six
+members has six chances to diverge.
 
 ### 4.2 It does the fan-out because the fan-out is expensive
 
@@ -383,7 +383,7 @@ against a resolution per subject per intent, by hand.
 Transport is **stdio**. `scf-core/node` supplies `openNodeDatabase`,
 which is what conformance CI and the scripts already use.
 
-### 5.1 Root mapping is configuration, and its absence is an answer
+### 5.2 Root mapping is configuration, and its absence is an answer
 
 `q13Result` already takes a `FileLocator` and a `rootMapped` flag, so
 the seam exists — the server's job is to supply it from config:
@@ -434,7 +434,7 @@ opinions about video generators. Keep the server returning film facts.
 ### 7.1 Do (1) and (2) and stop for a moment
 
 Pointing an agent at the query layer and asking it for a shot prompt is
-**a sixth reader run, and the most adversarial one so far.** It will
+**a reader run of its own, and the most adversarial kind.** It will
 find shape gaps of exactly the kind runs 4 and 5 found by hand — a
 member whose form cannot be inferred, a parameter that cannot be
 supplied, an empty answer that reads as an error — in minutes, and for
@@ -445,11 +445,13 @@ feature.
 
 ---
 
-## 8. Two things standing in the way
+## 8. What stands in the way
 
 - **`scf-core` is `"private": true`** and held until 1.0, because npm
-  blocks unpublish after 72 hours. `scf-mcp` can depend on a workspace
-  path locally; nobody outside can install it until that changes.
+  blocks unpublish after 72 hours. `scf-mcp` depends on
+  `file:../scf-core` in the repository, rewritten to a version range
+  when it is packed (`tools/pack_with_ranges.mjs`); nobody outside can
+  install it until both are published.
 
 ---
 
@@ -465,5 +467,5 @@ feature.
   error — but it is a product decision, not a technical one.
 - **How much of Q04's screenplay member belongs in a shot prompt?**
   Answered by spec §4.7: a shot names the lines it covers, and the
-  payload carries them as `lines`. The scene's whole text stays in
-  `scene` for a caller that wants it.
+  payload carries them as `lines`. The scene's whole text is Q04's
+  (`scene_package`), one call away for a caller that wants it.

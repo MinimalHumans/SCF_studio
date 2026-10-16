@@ -272,8 +272,8 @@ const CASES = [
 
 /**
  * Record every statement a case issues, so the damage can be PUBLISHED
- * rather than only performed. A third party can build eleven damaged
- * databases from eleven descriptions; they cannot guess eleven reports.
+ * rather than only performed. A third party can build each damaged
+ * database from its description; it cannot guess the report.
  */
 function recordingExec(exec, log) {
   return async (sql, params = []) => {
@@ -318,7 +318,7 @@ for (const { name, about, damage } of CASES) {
 }
 
 // The recipe file. Everything a third party needs to reconstruct the
-// eleven databases without this repository: start from a database
+// databases without this repository: start from a database
 // created per spec/scf-schema.sql, apply these statements, compare
 // against the blessed report.
 const recipe = `${JSON.stringify({

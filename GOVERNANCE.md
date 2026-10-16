@@ -9,7 +9,7 @@ Either can accept a change. Either can ask for a second opinion, and
 neither has to.
 
 That is the whole structure, and stating it plainly is the point. This
-is a two-person project with three outside implementers and no
+is a two-person project with five outside implementers and no
 foundation, no steering committee and no vote. A governance document
 describing a process that does not exist would be worse than none,
 because someone would rely on it.
@@ -18,7 +18,7 @@ because someone would rely on it.
 are made by people who wrote most of the code, and the bus factor is
 two. If that is a risk for what you are building, it is a real one and
 you should weigh it. The mitigation on offer is that the format is
-specified, checksummed and independently implementable — three people
+specified, checksummed and independently implementable — five people
 have implemented it — so the specification outlives the maintainers'
 attention in a way the code does not.
 
@@ -70,7 +70,7 @@ rewritten before the answer is needed rather than after.
 ## If this project stops
 
 The specification, its artifacts and their checksums are published under
-`schema-X.Y` tags and are enough to implement the format without the
+`schema-X.Y` and `spec-X.Y` tags and are enough to implement the format without the
 maintainers. `spec/` is licensed CC BY 4.0 precisely so that someone
 else can carry it on, including under a different name. Nothing here is
 contingent on this repository continuing to exist.

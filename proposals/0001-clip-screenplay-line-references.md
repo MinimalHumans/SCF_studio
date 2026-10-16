@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — schema 2.13, spec 0.47 |
+| **Status** | **implemented** — schema 2.13, spec 0.47; **superseded by [0032](0032-lines-in-a-shot.md)** (schema 2.19), which replaced both columns with line anchors |
 | **Author** | Found by the fifth independent reader run (G-04); written up by the maintainers |
 | **Opened** | 2026-08-25 |
 | **Affects** | `schema/entity_registry.py`, `registry.json`, spec §12.1.2 (no wording change), `Q13`/`Q15` results for any file with `clip` rows |
@@ -152,3 +152,10 @@ The open questions resolved as follows:
 which the change is worthless without: `clip` was empty, so the defect
 was invisible to all sixteen published results. Disabling the fix now
 changes the blessed output.
+
+**Superseded by [0032](0032-lines-in-a-shot.md)**, spec 0.59, schema
+2.19. Both columns were removed: a clip now names its lines with the
+line anchors `line_start_ref` and `line_end_ref` (spec §3.5, §4.7),
+which hold a line's uuid rather than its row id. The rule this proposal
+recorded in §12.1.2 — a reference may target a `uuidExtraTable` — still
+stands; no registry column uses it for a screenplay line any more.

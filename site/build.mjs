@@ -22,9 +22,8 @@
  *
  * §-REFERENCES BECOME LINKS. The specification cross-references itself
  * constantly — "(§12.1.2)", "spec §6.6.1", "§4.5 pattern 2" — and in
- * plain Markdown every one of those is dead text. Three independent
- * implementations have been written by people reading this document,
- * and all three of them navigated it by scrolling.
+ * plain Markdown every one of those is dead text, and a reader
+ * implementing from this document navigates it by scrolling.
  *
  * AND A DANGLING REFERENCE FAILS THE BUILD. Resolving them means
  * knowing which sections exist, which means knowing when one does not.

@@ -80,3 +80,11 @@ change.
 **Link the prop row to the motif row** so one resolves through the
 other. That is a different proposal — it says the same object modelled
 twice should be joined — and it does not fix costumes or locations.
+
+---
+
+## Resolution
+
+**Implemented as proposed** — spec 0.55. §12.11 states the four cases,
+reads cases 3 and 4 from the registry, and says why a describing row is
+not a placing one. Q10's published result moved with it.

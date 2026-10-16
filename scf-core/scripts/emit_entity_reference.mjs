@@ -9,7 +9,7 @@
  * WHY THIS IS GENERATED.
  *
  * A hand-written entity reference would be a second description of the
- * registry: ninety-nine entities' worth of prose, correct on the day it
+ * registry: over a hundred entities' worth of prose, correct on the day it
  * was written and drifting from the schema by the following week. Every
  * recurring defect this project has found has that shape — one rule
  * described in two places, disagreeing.

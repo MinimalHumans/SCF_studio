@@ -7,8 +7,10 @@ which put a second document called a spec next to the real one.
 
 Status: phases 1-4 built and shipped. This document is kept as the
 design record — how the model was arrived at and what was rejected. The
-rules as they now stand are in `docs/conventions.md` §4, which is the
-one to read for current behaviour.
+rules as they now stand are spec §4.3 and §5, with their reasons in
+`docs/conventions.md` §4; read those for current behaviour. Where this
+record and they disagree, they are current — the notes marked
+*Superseded* below say where.
 
 Original status note: phases 1-4 built (rounds 20, 21, 22). Decisions marked
 **[open]** below were resolved as follows: section text is read before
@@ -19,8 +21,8 @@ and reported, never deleted.
 
 ## 1. The problem
 
-Defining an act currently requires inventing a sequence, because a scene
-reaches an act only through `scene_sequence → sequence.act_id`. There is
+Defining an act required inventing a sequence, because a scene reached
+an act only through `scene_sequence → sequence.act_id`. There is
 no way to say "scenes 32 to 54 are Act II". Separately, shots have
 nowhere to be authored, and the script tab is a narrative document that
 should not become a shooting script.
@@ -33,7 +35,7 @@ The hierarchy is mostly there. It is the *reachability* and the
 | Entity | Key fields | Notes |
 |---|---|---|
 | `act` | `act_number`, `function`, `dramatic_question`, `shift` | tier 0, scope act |
-| `sequence` | `sequence_number`, `act_id`, `goal`, `conflict`, `outcome`, `turning_point` | tier 0, scope sequence |
+| `sequence` | `sequence_number`, `act_id` (removed in 2.24), `goal`, `conflict`, `outcome`, `turning_point` | tier 0, scope sequence |
 | `scene` | `scene_number`, `location_id` | tier 0 |
 | `scene_sequence` | `scene_id`, `sequence_id`, `order_in_sequence` | junction, hidden name |
 | `story_beat` | `scene_id`, `beat_order`, `beat_type`, `description`, `pov_character_id` | tier 0, scope scene |
@@ -126,6 +128,12 @@ Creek fixture, whose gaps the canonical suite addresses scenes by.
 
 A writer who calls something "Act 2A" is served by the NAME, which is
 never touched. The number is the position.
+
+*Superseded.* Spec §4.3 (0.17) puts all four numbers — act, sequence,
+scene and shot — under one policy, and `project.scene_numbering` became
+`project.numbering_policy` (2.11; the old column went in 2.12). Under
+`derived` the app renumbers all four at commit; under `fixed` it
+renumbers none, act and sequence numbers included.
 
 ## 4. Schema delta
 
@@ -227,7 +235,8 @@ paperwork that exists on paper.
 *Narrowed.* The paragraph above assumed a script that is always locked,
 and nobody holds paper on an unlocked one: `42A` sitting in a scene now
 numbered 43 is not a stable identifier, it is a stale one. Shot codes are
-therefore under the same `project.scene_numbering` flag as scene numbers.
+therefore under the same flag as scene numbers, now
+`project.numbering_policy` (spec §4.4.4).
 `derived` restamps the numeric prefix and keeps the letter (`2A` -> `1A`,
 `restampShotNumber` in `scf-core/src/shots.ts`); `fixed` freezes scene
 numbers and shot codes together, which is exactly the state a distributed
@@ -254,16 +263,13 @@ explains. Safer default: surface them once, delete on confirmation.
 New readiness findings, none of them blocking:
 
 - ~~`sequence.act_id` disagrees with the act derived from its boundary~~
-  — no longer possible. `act_id` was READ at commit and never written,
-  so it sat null on every sequence the app created: a stored field
-  consumers would reasonably trust, empty all along. `renumberSpans` now
-  maintains it from the act the sequence's START scene falls in, which is
-  how a crossing sequence is attributed everywhere else. This is a second
-  copy of a derivable truth, admitted on the same grounds as
-  `scene_sequence` above: the field already exists in the format and
-  readers already reach for it, so leaving it permanently null serves
-  nobody. The alternative — removing it — is a schema deletion and is
-  noted as open
+  — no longer possible. `act_id` was read at commit and never written,
+  so it sat null on every sequence the app created, and was later kept
+  in step from the act the sequence's start scene falls in. It was a
+  second copy of a derivable truth, and schema 2.24 removed it: a
+  sequence's act is derived from the boundaries like every other
+  membership. A sequence that crosses an act is
+  `structure.sequence_act_mismatch` (`info`, spec §5.3)
 - a sequence's start scene precedes its act's start scene
 - two acts anchored to the same scene
 - an act or sequence with no boundary at all (invisible in the outline)
@@ -289,7 +295,8 @@ independent of each other. Phase 4 depends on 1 only.
 ## 10. Explicitly out of scope
 
 - Non-contiguous acts or sequences (§3)
-- Shot lists as a printable/exportable document
+- Shot lists as a printable/exportable document (built later, as the
+  editor's Presentation shot list — `editor-mvp.md` §7g)
 - Any second screenplay document — the shoot tab is a view over the same
   scenes, never a parallel text
 - Reordering scenes from the shoot tab

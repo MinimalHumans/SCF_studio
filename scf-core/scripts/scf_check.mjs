@@ -96,9 +96,8 @@ const registry = loadRegistry(JSON.parse(readFileSync(
  *
  * Uses `rowsIncludingCut` — the one function in the library that reads
  * past §6.6.1's exclusion — and filters to the cut ones. Only entities
- * the registry says carry `lifecycle_status` are asked: eleven of
- * thirteen link entities do not, and a cut link is a state they cannot
- * be in.
+ * the registry says carry `lifecycle_status` are asked: most link
+ * entities do not, and a cut link is a state they cannot be in.
  *
  * Row identity survives being cut (§6.1), so each row is named by uuid.
  * That is what makes this a usable audit view rather than a curiosity:
