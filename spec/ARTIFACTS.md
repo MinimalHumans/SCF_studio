@@ -31,7 +31,7 @@ https://raw.githubusercontent.com/MinimalHumans/SCF_studio/schema-2.24/scf-core/
 sha256sum -c spec/SHA256SUMS
 ```
 
-## Artifacts (62)
+## Artifacts (64)
 
 This list is exhaustive in both directions: everything below is
 published here AND checksummed in `SHA256SUMS`, and nothing is
@@ -47,10 +47,10 @@ The normative documents, checksummed so that a reader built against this prose c
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `9f48074176a6c2c3…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `4099330eff0be562…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `90f5becc5ea542ab…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `fa777aecf3b7c15c…` | The specification changelog. Spec §11.5. |
+| `spec/scf-spec.md` | `170ea71f64787efb…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/conformance.md` | `243aff3afa9720b8…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/stability.md` | `88c3864693f79fb9…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `237e82321fdf597b…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -63,7 +63,7 @@ Generated from `schema/`, which is the source of truth for all of them.
 | `spec/screenplay-tables.json` | `3dbb3c2730a82f8f…` | The screenplay infrastructure tables and the `line_type` vocabulary. Spec §1.3.1. |
 | `spec/entity-reference.md` | `4d29ace3580fc973…` | Every entity and field, generated from the registry. Not normative — a reading aid over `registry.json`. |
 | `spec/query-reference.md` | `d8f22f0cc8efca5b…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
-| `spec/api-surface.json` | `93d5d72b440ba9bb…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
+| `spec/api-surface.json` | `7ee9620618a76cc9…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/registry.schema.json` | `cbeb1c0a5e2da22f…` | JSON Schema for registry.json, so it can be consumed without running the reference implementation. |
 | `spec/junction-keys.json` | `6670ce8550c1a47c…` | Natural keys for every link entity. Spec §6.3. |
 | `spec/readiness-rubrics.json` | `eed345a2bb16618c…` | What Q14 assesses, per target query. Spec §12.9.1. |
@@ -78,31 +78,31 @@ One normative result per query, spec §12, and a normative result per case where
 | `fixtures/expectations/Q00.result.json` | `052279b52dfdb1c5…` | Q00's normative result. Spec §12.12. |
 | `fixtures/expectations/Q03.result.json` | `da77705bef730edf…` | Q03's normative result. Spec §12.4. |
 | `fixtures/expectations/Q01.result.json` | `246f09f5b2e0950a…` | Q01's normative result. Spec §12.15. |
-| `fixtures/expectations/Q02.result.json` | `cbe07e7d3ed5ceca…` | Q02's normative result. Spec §12.16. |
-| `fixtures/expectations/Q04.result.json` | `aa10a1d6d7536962…` | Q04's normative result. Spec §12.17. |
+| `fixtures/expectations/Q02.result.json` | `dcea39e023571163…` | Q02's normative result. Spec §12.16. |
+| `fixtures/expectations/Q04.result.json` | `4e57af670d5ca52e…` | Q04's normative result. Spec §12.17. |
 | `fixtures/expectations/Q05.result.json` | `45e751cdc5f46468…` | Q05's normative result. Spec §12.2. |
-| `fixtures/expectations/Q07.result.json` | `e68fcfb0ccf02b43…` | Q07's normative result. Spec §12.3. |
+| `fixtures/expectations/Q07.result.json` | `1710ef32cc5de966…` | Q07's normative result. Spec §12.3. |
 | `fixtures/expectations/Q06.result.json` | `218ad575fff69d86…` | Q06's normative result. Spec §12.6. |
 | `fixtures/expectations/Q08.result.json` | `b07a24ee73ea6729…` | Q08's normative result. Spec §12.7. |
 | `fixtures/expectations/Q09.result.json` | `23d77af18e959243…` | Q09's normative result. Spec §12.10. |
 | `fixtures/expectations/Q10.result.json` | `92ed66efef52ea3c…` | Q10's normative result. Spec §12.11. |
 | `fixtures/expectations/Q11.result.json` | `f2bf908193a64a5d…` | Q11's normative result. Spec §12.13. |
 | `fixtures/expectations/Q12.result.json` | `cd4ae08c989c6fc4…` | Q12's normative result. Spec §12.5. |
-| `fixtures/expectations/Q13.result.json` | `b95721eef61479df…` | Q13's normative result. Spec §12.8. |
+| `fixtures/expectations/Q13.result.json` | `646aa96e672eff5e…` | Q13's normative result. Spec §12.8. |
 | `fixtures/expectations/Q14.result.json` | `622a8bb4c8285cf6…` | Q14's normative result. Spec §12.9. |
 | `fixtures/expectations/Q15.result.json` | `12ef1e593a3e3ba3…` | Q15's normative result. Spec §12.14. |
-| `fixtures/expectations/Q02-marcus-scene25.result.json` | `670f40f5f00f1910…` | Q02 for a character in a variant (§4.8). Spec §12.16. |
-| `fixtures/expectations/Q02-locket-scene25.result.json` | `e8b6630fffdf4765…` | Q02 for a prop: its variant and state. Spec §12.16. |
-| `fixtures/expectations/Q02-kitchen-scene10.result.json` | `6fca03d4ee4da1ed…` | Q02 for a location: §12.17's ranked axes. Spec §12.16. |
-| `fixtures/expectations/Q02-church-scene16.result.json` | `4625218b49ae71a7…` | Q02 for a location: `varies` agrees on time. Spec §12.16. |
-| `fixtures/expectations/Q02-ridge-scene21.result.json` | `413f8d4646f83563…` | Q02 for a location: nothing agrees, so the baseline. Spec §12.16. |
+| `fixtures/expectations/Q02-marcus-scene25.result.json` | `7379b69351d68e06…` | Q02 for a character in a variant (§4.8). Spec §12.16. |
+| `fixtures/expectations/Q02-locket-scene25.result.json` | `9e63a0f491d37d76…` | Q02 for a prop: its variant and state. Spec §12.16. |
+| `fixtures/expectations/Q02-kitchen-scene10.result.json` | `4c732533991c04a4…` | Q02 for a location: §12.17's ranked axes. Spec §12.16. |
+| `fixtures/expectations/Q02-church-scene16.result.json` | `2d8f85b2ff1f737a…` | Q02 for a location: `varies` agrees on time. Spec §12.16. |
+| `fixtures/expectations/Q02-ridge-scene21.result.json` | `9b21c4f633a4fd4a…` | Q02 for a location: nothing agrees, so the baseline. Spec §12.16. |
 | `fixtures/expectations/Q03-scene25.result.json` | `83100235c32066b3…` | Q03 where variants are in force. Spec §12.4. |
-| `fixtures/expectations/Q04-scene25.result.json` | `909c7944b3acb739…` | Q04 where variants are in force. Spec §12.17. |
+| `fixtures/expectations/Q04-scene25.result.json` | `32bcd0d1587a2aff…` | Q04 where variants are in force. Spec §12.17. |
 | `fixtures/expectations/Q05-scene19.result.json` | `fcdf74eaf38b8ccd…` | Q05 where a vocal state is in force. Spec §12.2. |
 | `fixtures/expectations/Q12-scene24-25.result.json` | `e67821440f5630cc…` | Q12 into a variant. Spec §12.5. |
 | `fixtures/expectations/Q12-scene25-24.result.json` | `c461e8cae816ba70…` | Q12 out of a variant. Spec §12.5. |
-| `fixtures/expectations/Q13-scene3.result.json` | `58cec428d419a87a…` | Q13 where a filtered binding is excluded. Spec §12.8. |
-| `fixtures/expectations/Q13-scene25.result.json` | `58e7b56148d57434…` | Q13 where a variant replaces the baseline. Spec §12.8. |
+| `fixtures/expectations/Q13-scene3.result.json` | `45c585ab357a3dce…` | Q13 where a filtered binding is excluded. Spec §12.8. |
+| `fixtures/expectations/Q13-scene25.result.json` | `53508507ed7b87d9…` | Q13 where a variant replaces the baseline. Spec §12.8. |
 | `fixtures/expectations/Q15-plate-v2.result.json` | `17418acaa621640b…` | Q15 on a versioned row: its chain (§6.1). Spec §12.14. |
 
 ### The canonical query parameters
@@ -119,8 +119,9 @@ Minimal files that are wrong in a stated way, and the report each MUST produce. 
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `fixtures/negative/CASES.json` | `90f434e150768965…` | Every negative fixture as a reproducible recipe. Spec conformance.md §5.3. |
+| `fixtures/negative/CASES.json` | `78fe5658ff9cd080…` | Every negative fixture as a reproducible recipe. Spec conformance.md §5.3. |
 | `fixtures/negative/asset-absolute.expected.json` | `5c33c0074bab393d…` | An absolute asset identifier: permitted, non-portable, a warning. Spec conformance.md §5.3. |
+| `fixtures/negative/asset-orphans-two.expected.json` | `232a7bda4c9a227a…` | Two orphans, one finding with count 2 (§9.5's grain). Spec conformance.md §5.3. |
 | `fixtures/negative/asset-escapes-root.expected.json` | `4c5ba06a3d677308…` | An asset address that resolves outside the root. Spec conformance.md §5.3. |
 | `fixtures/negative/bundle-unbound.expected.json` | `da4ae75af36905ef…` | A bundle no binding reaches. Spec conformance.md §5.3. |
 | `fixtures/negative/header-unstamped.expected.json` | `403a64be006d811f…` | A file carrying no SCF application id. Spec conformance.md §5.3. |
@@ -132,9 +133,9 @@ Minimal files that are wrong in a stated way, and the report each MUST produce. 
 | `fixtures/negative/section-mismatch.expected.json` | `250a8bfa7edbc780…` | A section line bound to an act renamed since. Spec conformance.md §5.3. |
 | `fixtures/negative/span-boundary-dangling.expected.json` | `a36212b8110e2f57…` | An act anchored to a scene that is not present. Spec conformance.md §5.3. |
 | `fixtures/negative/unknown-table.expected.json` | `84a72246bbc5f135…` | A table the registry does not declare. Spec conformance.md §5.3. |
-| `fixtures/negative/uuid-duplicate.expected.json` | `eca85b8e616248b2…` | One uuid on more than one row. Spec conformance.md §5.3. |
-| `fixtures/negative/uuid-malformed.expected.json` | `8a94308b3fae0c20…` | A uuid that is not a uuid. Spec conformance.md §5.3. |
-| `fixtures/negative/uuid-missing.expected.json` | `d38b807e6c7b3102…` | A row carrying no uuid at all. Spec conformance.md §5.3. |
+| `fixtures/negative/uuid-duplicate.expected.json` | `62564de343be45aa…` | One uuid on more than one row. Spec conformance.md §5.3. |
+| `fixtures/negative/uuid-malformed.expected.json` | `e713916928098653…` | A uuid that is not a uuid. Spec conformance.md §5.3. |
+| `fixtures/negative/uuid-missing.expected.json` | `d94d5679380b19d0…` | A row carrying no uuid at all. Spec conformance.md §5.3. |
 
 ### File identification and the fixture
 
@@ -142,6 +143,7 @@ Minimal files that are wrong in a stated way, and the report each MUST produce. 
 |---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
 | `fixtures/hollow_creek.scf` | `9491ddee6647276d…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.report.json` | `9701a631c60d6db3…` | The report a validator MUST produce for the fixture. Spec conformance.md §6.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

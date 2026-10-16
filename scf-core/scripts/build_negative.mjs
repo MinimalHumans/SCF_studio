@@ -215,6 +215,19 @@ const CASES = [
     },
   },
   {
+    name: "asset-orphans-two",
+    about:
+      "Two assets nothing references. One condition on one table is one " +
+      "finding (§9.5): `asset.orphan` once, with `count` 2 and both rows " +
+      "in `rowIds` — not two findings, and not one row.",
+    damage: async (exec) => {
+      for (const [i, name] of [[1, "plate_a.exr"], [2, "plate_b.exr"]]) {
+        await exec("INSERT INTO asset (name, identifier, uuid) " +
+                   "VALUES (?, ?, ?)", [name, `@project/${name}`, uuid(i)]);
+      }
+    },
+  },
+  {
     name: "section-mismatch",
     about:
       "A section line bound to an act whose record has since been renamed. " +
@@ -317,6 +330,27 @@ for (const { name, about, damage } of CASES) {
   }
 }
 
+// The fixture's own report: what a validator says about the conformance
+// fixture, so a third party has a whole-file report to compare against
+// and not only single-fault files (conformance.md §6.1 step 1).
+{
+  const FIXTURE = join(HERE, "..", "..", "fixtures", "hollow_creek.scf");
+  const db = openNodeDatabase(FIXTURE, { readOnly: true });
+  const report = await validationReport(db.exec, registry, {
+    source: "fixtures/hollow_creek.scf",
+  });
+  db.close();
+  const path = join(HERE, "..", "..", "fixtures", "hollow_creek.report.json");
+  const text = `${JSON.stringify(report, null, 2)}\n`;
+  if (check) {
+    if ((existsSync(path) ? readFileSync(path, "utf8") : "") !== text) {
+      stale.push("hollow_creek.report.json");
+    }
+  } else {
+    writeFileSync(path, text, "utf8");
+  }
+}
+
 // The recipe file. Everything a third party needs to reconstruct the
 // databases without this repository: start from a database
 // created per spec/scf-schema.sql, apply these statements, compare
@@ -327,8 +361,11 @@ const recipe = `${JSON.stringify({
     "fixtures of spec/conformance.md §5.3. Each case: start from an " +
     "empty conforming database (spec/scf-schema.sql, plus the header " +
     "stamps and _scf_meta.schema_version of §1.2), apply `statements` " +
-    "in order, then validate. The result must match the case's " +
-    "<name>.expected.json.",
+    "in order, then validate. A statement ending `-- params: [...]` " +
+    "binds that JSON array to its `?` placeholders. Compare against " +
+    "the case's <name>.expected.json as conformance.md §6.1 says: each " +
+    "finding's code, severity, table, count and rowIds; message, title " +
+    "and spec are for people.",
   schemaVersion: registry.schemaVersion,
   caseCount: CASES.length,
   cases: casesDoc,

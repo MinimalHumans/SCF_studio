@@ -15,7 +15,9 @@
       "code": "identity.uuid_missing",
       "severity": "error",
       "table": "scene",
-      "rowIds": [],
+      "rowIds": [
+        1
+      ],
       "message": "1 row(s) in scene have no uuid; the open-time backfill did not reach them",
       "count": 1,
       "spec": "§6.1",

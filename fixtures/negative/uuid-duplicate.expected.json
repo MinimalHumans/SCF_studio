@@ -15,7 +15,10 @@
       "code": "identity.uuid_duplicate",
       "severity": "error",
       "table": "scene",
-      "rowIds": [],
+      "rowIds": [
+        1,
+        2
+      ],
       "message": "1 uuid(s) in scene appear on more than one row",
       "count": 1,
       "spec": "§6.1",

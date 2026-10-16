@@ -16,7 +16,11 @@
           "fields": {
             "lifecycle_status": "active",
             "name": "Project Color Palette",
-            "primary_colors": "[\"desaturated earth\", \"hearth amber\", \"creek slate\"]",
+            "primary_colors": [
+              "desaturated earth",
+              "hearth amber",
+              "creek slate"
+            ],
             "saturation_philosophy": "desaturated",
             "temperature_approach": "journey",
             "temperature_associations": "Warm: hearth, forgiveness. Cool: the creek, the unsaid."
@@ -42,7 +46,10 @@
         "row": {
           "uuid": "b31e2758-f9f6-4657-83f2-68b7ff16994e",
           "fields": {
-            "key_colors": "[\"hearth amber\", \"storm blue\"]",
+            "key_colors": [
+              "hearth amber",
+              "storm blue"
+            ],
             "lifecycle_status": "active",
             "name": "First warmth",
             "palette_shift": "First true warmth enters at the kitchen — hearth amber vs. storm blue; warmth must feel earned, not gifted.",
@@ -57,7 +64,10 @@
           "uuid": "0c1b2c32-4594-4e6e-a966-1ef60b3de479",
           "fields": {
             "color_contrast_level": "high",
-            "dominant_colors": "[\"#C88A3C amber\", \"#5A6B7A slate\"]",
+            "dominant_colors": [
+              "#C88A3C amber",
+              "#5A6B7A slate"
+            ],
             "focal_color": "hearth amber",
             "lifecycle_status": "active",
             "name": "Sc 12 palette",

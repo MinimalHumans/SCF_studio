@@ -91,11 +91,12 @@ export {
 // Spec §4.5 (position patterns) and §7 (cascades, root-first).
 export {
   type ResolvedDescription, type ResolvedMedia, type SceneOrder,
-  type ScfContext,
+  type ScfContext, type TrailEntry, type TrailExclusion,
+  type TrailExclusionCode,
   excludeCut, latestState, mergedModulations, motifStateAt, propStateAt,
   relationshipStateAt, resolveDescription, resolveDirection, resolveMedia,
   rows, rowsIncludingCut, sceneOrder, selectLocationVariant, statesInForce,
-  variantInForce,
+  trailEntryLine, trailLine, variantInForce,
 } from "./resolution.ts";
 
 export {
@@ -145,6 +146,7 @@ export {
   type Q03Result, type Q04Result, type Q05Result, type Q07Layer,
   type Q07Result, type Q09Result, type Q10Result, type Q11Result,
   type Q12Composition, type Q12Result, type Q13Reference, type Q13Result,
+  type Q13TrailEntry,
   type Q14Result, type Q15Result,
   MOTIF_DENSITY_THRESHOLD,
   Q00_LAYERS, Q04_DETAIL, Q07_SCENE_LEAF, Q07_SHOT_LEAF, Q08_LEAF,

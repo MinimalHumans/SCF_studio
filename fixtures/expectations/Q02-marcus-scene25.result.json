@@ -279,9 +279,48 @@
       "subjectKind": "character",
       "intent": "visual_identity",
       "trail": [
-        "binding Marcus visual baseline -> bundle Marcus Visual Core: EXCLUDED, replaced by Marcus as a boy",
-        "binding Marcus as a boy -> bundle Marcus Age Nine Visual",
-        "anchor Young Marcus Face"
+        {
+          "layer": "binding",
+          "uuid": "5b792d71-97cd-466a-a1f8-68e9293b16a0",
+          "name": "Marcus visual baseline",
+          "bundle": {
+            "uuid": "8c4417d0-e653-4f48-8fe3-c903107a7d18",
+            "name": "Marcus Visual Core"
+          },
+          "excluded": {
+            "by": "replaced",
+            "value": "00000000-0000-4000-8000-003300000007",
+            "reason": "replaced by Marcus as a boy"
+          }
+        },
+        {
+          "layer": "binding",
+          "uuid": "00000000-0000-4000-8000-003300000007",
+          "name": "Marcus as a boy",
+          "bundle": {
+            "uuid": "00000000-0000-4000-8000-003300000005",
+            "name": "Marcus Age Nine Visual"
+          },
+          "excluded": null
+        },
+        {
+          "layer": "anchor",
+          "uuid": "68d30189-9bbd-49bf-b001-71bea6064f24",
+          "name": "Marcus Face Anchor",
+          "bundle": null,
+          "excluded": {
+            "by": "canonical_status",
+            "value": "candidate",
+            "reason": "canonical_status \"candidate\", not verified"
+          }
+        },
+        {
+          "layer": "anchor",
+          "uuid": "00000000-0000-4000-8000-003300000008",
+          "name": "Young Marcus Face",
+          "bundle": null,
+          "excluded": null
+        }
       ],
       "references": [
         {

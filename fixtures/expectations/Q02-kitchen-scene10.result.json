@@ -143,7 +143,19 @@
       "fromQuery": "Q13",
       "subjectKind": "location",
       "intent": "environment",
-      "trail": [],
+      "trail": [
+        {
+          "layer": "anchor",
+          "uuid": "60213e83-fbad-4ebb-aa09-171bb75471e9",
+          "name": "Farmhouse Kitchen",
+          "bundle": null,
+          "excluded": {
+            "by": "canonical_status",
+            "value": "candidate",
+            "reason": "canonical_status \"candidate\", not verified"
+          }
+        }
+      ],
       "references": [],
       "counts": {
         "resolved": 0,

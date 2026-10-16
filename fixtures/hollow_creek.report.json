@@ -1,0 +1,86 @@
+{
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.24",
+  "fileSchemaVersion": "2.24",
+  "source": "fixtures/hollow_creek.scf",
+  "counts": {
+    "error": 0,
+    "warning": 0,
+    "info": 6
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "asset.orphan",
+      "severity": "info",
+      "table": "asset",
+      "rowIds": [
+        54
+      ],
+      "message": "Asset 54 is referenced by nothing.",
+      "count": 1,
+      "spec": "§8.6",
+      "title": "Asset referenced by nothing"
+    },
+    {
+      "code": "field.required_absent",
+      "severity": "info",
+      "table": "shot",
+      "rowIds": [
+        31
+      ],
+      "message": "shot.scene_id is absent on 1 row(s). The row is incomplete, not invalid — nothing is rejected on write (§9.1).",
+      "count": 1,
+      "spec": "§9.1",
+      "title": "Required value absent"
+    },
+    {
+      "code": "structure.scene_not_in_script",
+      "severity": "info",
+      "table": "scene",
+      "rowIds": [
+        15
+      ],
+      "message": "INT. HOLLOW CREEK CHURCH - VESTRY - DAY has no heading in the screenplay, so it has no story position and belongs to no act. It sorts after every scene that does (§4.1). Its record and everything linked to it are untouched.",
+      "count": 1,
+      "spec": "§4.1",
+      "title": "Scene has no heading in the screenplay"
+    },
+    {
+      "code": "structure.sequence_act_mismatch",
+      "severity": "info",
+      "table": "sequence",
+      "rowIds": [
+        1
+      ],
+      "message": "The Reckoning spans Act 2 — The Thaw and Act 3 — The Truth. That is legal (§5.3); a presenter showing acts and sequences as nested must split it into the part belonging to each.",
+      "count": 1,
+      "spec": "§5.3",
+      "title": "Sequence crosses an act boundary"
+    },
+    {
+      "code": "vocabulary.unlisted_value",
+      "severity": "info",
+      "table": "asset_relationship",
+      "rowIds": [
+        1
+      ],
+      "message": "asset_relationship.relationship_type carries \"derived_from\", which is not among its known values. Open vocabulary: this is the value, not an error.",
+      "count": 1,
+      "spec": "§2.4",
+      "title": "Value outside an open vocabulary's known set"
+    },
+    {
+      "code": "vocabulary.unlisted_value",
+      "severity": "info",
+      "table": "creative_decision",
+      "rowIds": [
+        1
+      ],
+      "message": "creative_decision.decision_type carries \"sound\", which is not among its known values. Open vocabulary: this is the value, not an error.",
+      "count": 1,
+      "spec": "§2.4",
+      "title": "Value outside an open vocabulary's known set"
+    }
+  ]
+}

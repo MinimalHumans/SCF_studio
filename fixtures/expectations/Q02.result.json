@@ -454,10 +454,43 @@
       "subjectKind": "character",
       "intent": "visual_identity",
       "trail": [
-        "binding Eleanor visual baseline -> bundle Eleanor Visual Core",
-        "binding Eleanor while wounded -> bundle Eleanor - lamplit, wounded",
-        "anchor Eleanor Face Anchor",
-        "shot override 12-04 Eleanor override"
+        {
+          "layer": "binding",
+          "uuid": "795f848e-60d4-4e0b-a472-c0cc8efa5085",
+          "name": "Eleanor visual baseline",
+          "bundle": {
+            "uuid": "90496d86-456f-4293-b149-4cfeea6e26c3",
+            "name": "Eleanor Visual Core"
+          },
+          "excluded": null
+        },
+        {
+          "layer": "binding",
+          "uuid": "00000000-0000-4000-8000-0000000c0001",
+          "name": "Eleanor while wounded",
+          "bundle": {
+            "uuid": "bb841029-c354-46b2-bc99-b8568949f480",
+            "name": "Eleanor - lamplit, wounded"
+          },
+          "excluded": null
+        },
+        {
+          "layer": "anchor",
+          "uuid": "770f365a-62aa-4831-99d7-3d248710cc0c",
+          "name": "Eleanor Face Anchor",
+          "bundle": null,
+          "excluded": null
+        },
+        {
+          "layer": "shot override",
+          "uuid": "5e52f62a-8e0d-4787-aee2-fd3a3a8e518c",
+          "name": "12-04 Eleanor override",
+          "bundle": {
+            "uuid": "bb841029-c354-46b2-bc99-b8568949f480",
+            "name": "Eleanor - lamplit, wounded"
+          },
+          "excluded": null
+        }
       ],
       "references": [
         {

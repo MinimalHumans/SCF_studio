@@ -83,13 +83,13 @@
       "motifCarriage": [
         {
           "appearance": {
-            "uuid": "2e8f0e72-0977-4bc9-9017-349371d332e6",
+            "uuid": "63e4af67-a45f-434d-b781-fb9e665dd6ec",
             "fields": {
               "domain": "visual",
               "entity_type": "prop",
-              "manifestation_notes": "Revealed with the confession.",
+              "manifestation_notes": "Moved, not shown to anyone.",
               "motif_uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
-              "scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+              "scene_uuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6"
             }
           },
           "motif": {
@@ -107,13 +107,13 @@
         },
         {
           "appearance": {
-            "uuid": "63e4af67-a45f-434d-b781-fb9e665dd6ec",
+            "uuid": "2e8f0e72-0977-4bc9-9017-349371d332e6",
             "fields": {
               "domain": "visual",
               "entity_type": "prop",
-              "manifestation_notes": "Moved, not shown to anyone.",
+              "manifestation_notes": "Revealed with the confession.",
               "motif_uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
-              "scene_uuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6"
+              "scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
             }
           },
           "motif": {
@@ -202,8 +202,23 @@
       "subjectKind": "prop",
       "intent": "visual_identity",
       "trail": [
-        "binding Ada's Locket -> bundle Ada's Locket",
-        "anchor Locket"
+        {
+          "layer": "binding",
+          "uuid": "ed88c302-b25a-4bd6-b5fb-bb2ab83f7c8c",
+          "name": "Ada's Locket",
+          "bundle": {
+            "uuid": "0c726aa8-edef-4e80-a2cd-07e682adaa30",
+            "name": "Ada's Locket"
+          },
+          "excluded": null
+        },
+        {
+          "layer": "anchor",
+          "uuid": "41a1741c-d99f-4154-bd8f-fcbfd8e316ae",
+          "name": "Locket",
+          "bundle": null,
+          "excluded": null
+        }
       ],
       "references": [
         {

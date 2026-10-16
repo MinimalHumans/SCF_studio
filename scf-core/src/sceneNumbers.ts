@@ -81,9 +81,9 @@ export function sceneNumberSortKey(
 }
 
 /**
- * Compare two scene numbers per §4.2.2. Absent sorts after present,
- * opaque sorts after both, and two opaque labels compare equal so the
- * caller's next fallback decides — never by string, which would put
+ * Compare two scene numbers per §4.2.2 and §4.2.3: conforming numbers
+ * first, then opaque ones, then absent ones. Two opaque labels, like two
+ * absent ones, compare equal so the caller's next fallback decides — never by string, which would put
  * "pickup-3" in a position the spec does not define.
  */
 export function compareSceneNumbers(

@@ -59,6 +59,11 @@ export interface IdentityFinding {
   table: string;
   /** Row id where the finding is row-specific; null when table-wide. */
   id: number | null;
+  /**
+   * Every row at fault, for a condition that spans rows of one table:
+   * the rows with no uuid, a malformed one, or a shared one (§9.5).
+   */
+  ids?: number[];
   count: number;
   detail: string;
 }
@@ -208,9 +213,13 @@ export async function auditIdentity(
       `WHERE uuid IS NOT NULL AND uuid <> '' ` +
       `GROUP BY uuid HAVING COUNT(*) > 1)`))[0], "n");
 
+    const idsWhere = async (where: string, params: string[] = []) =>
+      (await exec(`SELECT id FROM ${q(table)} WHERE ${where} ORDER BY id`,
+                  params)).map((r) => num(r, "id"));
     if (entry.missingUuid > 0) {
       findings.push({
         kind: "missing-uuid", table, id: null, count: entry.missingUuid,
+        ids: await idsWhere("uuid IS NULL OR uuid = ''"),
         detail: `${entry.missingUuid} row(s) in ${table} have no uuid; ` +
                 `the open-time backfill did not reach them`,
       });
@@ -218,6 +227,8 @@ export async function auditIdentity(
     if (entry.malformed > 0) {
       findings.push({
         kind: "malformed-uuid", table, id: null, count: entry.malformed,
+        ids: await idsWhere(
+          "uuid IS NOT NULL AND uuid <> '' AND uuid NOT GLOB ?", [pattern]),
         detail: `${entry.malformed} row(s) in ${table} hold a uuid that ` +
                 `is not in canonical 8-4-4-4-12 form`,
       });
@@ -225,6 +236,9 @@ export async function auditIdentity(
     if (entry.duplicated > 0) {
       findings.push({
         kind: "duplicate-uuid", table, id: null, count: entry.duplicated,
+        ids: await idsWhere(
+          `uuid IN (SELECT uuid FROM ${q(table)} WHERE uuid IS NOT NULL ` +
+          "AND uuid <> '' GROUP BY uuid HAVING COUNT(*) > 1)"),
         detail: `${entry.duplicated} uuid(s) in ${table} appear on more ` +
                 `than one row`,
       });

@@ -26,6 +26,7 @@ import { collectFindings } from "../src/findings.ts";
 import { openNodeDatabase } from "../src/node.ts";
 import {
   resolveMedia, variantInForce, type ScfContext,
+  trailEntryLine,
 } from "../src/resolution.ts";
 import { FIXTURE_PATH, openFixture, registry, type Fixture } from "./setup.ts";
 
@@ -158,11 +159,11 @@ describe("§12.8.1 — the variant filter on a binding", () => {
        "elsewhere", async () => {
     const at25 = await resolveMedia(fx.ctx, "character", n("marcus"),
                                     "visual_identity", n("scene25"));
-    expect(at25.trail).toContain(
+    expect(at25.trail.map(trailEntryLine)).toContain(
       "binding Marcus as a boy -> bundle Marcus Age Nine Visual");
     const at9 = await resolveMedia(fx.ctx, "character", n("marcus"),
                                    "visual_identity", n("scene9"));
-    expect(at9.trail).toContain(
+    expect(at9.trail.map(trailEntryLine)).toContain(
       "binding Marcus as a boy -> bundle Marcus Age Nine Visual: " +
       "EXCLUDED, variant filter, no variant in force here");
     expect(names(at9.assets_most_specific_first))
@@ -186,7 +187,7 @@ describe("§12.8.1 — the variant filter on a binding", () => {
       const line = async (): Promise<string | undefined> =>
         (await resolveMedia(ctx, "prop", n("chime"), "visual_identity",
                             n("scene24")))
-          .trail.find((l) => l.startsWith("binding Bent -> "));
+          .trail.map(trailEntryLine).find((l) => l.startsWith("binding Bent -> "));
       expect(await line()).toMatch(/EXCLUDED, variant filter/);
       // Name the variant at scene 24 — linking the chime there if the
       // fixture does not — and the binding applies.
@@ -213,7 +214,7 @@ describe("§12.8 — anchors honour subject_variant_id", () => {
       const m = await resolveMedia(fx.ctx, "character", n("marcus"),
                                    "visual_identity", scene);
       expect(names(m.anchors)).not.toContain("Young Marcus Face");
-      expect(m.trail).toContain(
+      expect(m.trail.map(trailEntryLine)).toContain(
         "anchor Young Marcus Face: EXCLUDED, its variant is not in force " +
         "here");
     }
@@ -234,7 +235,7 @@ describe("§12.8 — anchors honour subject_variant_id", () => {
       const at25 = await resolveMedia(ctx, "character", n("marcus"),
                                       "visual_identity", n("scene25"));
       expect(names(at25.anchors)).toEqual(["Young Marcus Face"]);
-      expect(at25.trail).toContain(
+      expect(at25.trail.map(trailEntryLine)).toContain(
         "anchor Marcus Face Anchor: EXCLUDED, displaced by variant " +
         "\"Marcus, age nine\"");
     });
@@ -277,7 +278,8 @@ describe("proposal 0035 — the cast says who appears as which version", () => {
        async () => {
     const q04 = await q04Result(fx.ctx, uuid["scene25"] as string,
                                 n("scene25"));
-    const marcus04 = q04.result.cast.find((c) => c["uuid"] === uuid["marcus"]);
+    const marcus04 = q04.result.cast
+      .find((c) => c.character["uuid"] === uuid["marcus"]);
     expect(marcus04?.variant?.["uuid"]).toBe(uuid["boy"]);
     const q03 = await q03Result(fx.ctx, uuid["scene25"] as string,
                                 n("scene25"));

@@ -87,10 +87,10 @@ const published = new Map();
 for (const file of readdirSync(EXPECT)) {
   if (!file.endsWith(".result.json")) continue;
   const doc = JSON.parse(readFileSync(join(EXPECT, file), "utf8"));
-  // Only the canonical `QNN.result.json` is a query's normative result.
-  // Other results for the same query (e.g. ShotContext-readiness, which
-  // is a Q14 envelope) are composite-API fixtures; without this they
-  // would silently replace the normative one depending on readdir order.
+  // This page indexes each query by its own `QNN.result.json`. Its case
+  // results (`QNN-<case>.result.json`, conformance.md §5.4) are normative
+  // too, but without this one of them would replace the query's own
+  // depending on readdir order.
   if (file !== `${doc.query}.result.json`) continue;
   // A parameter the envelope carries as NULL was not asked for. §12.7
   // says Q08 takes "No shot … `shot` is always null in the envelope",

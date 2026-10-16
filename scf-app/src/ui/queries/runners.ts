@@ -30,8 +30,9 @@ import {
   type Q00Result, type Q01Result, type Q02Result, type Q03Result,
   type Q04Result, type Q05Result, type Q07Result, type Q09Result,
   type Q10Result, type Q11Result, type Q12Result, type Q13Result,
-  type Q14Result, type Q15Result,
+  type Q14Result, type Q15Result, type Q13TrailEntry,
 } from "@scf-core/canonicalQueries.ts";
+import { trailLine } from "@scf-core/resolution.ts";
 import {
   referencesMarkdown, type AssetReference, type Provenance,
   type ResolutionSummary,
@@ -382,10 +383,10 @@ const q04: QuerySpec = {
         (field(b, "value_shift") !== null
           ? ` — ${field(b, "value_shift")}` : ""))),
       section("Cast", p.cast.map((c) =>
-        `- ${nameOf(c)}` + presenceNote(
+        `- ${nameOf(c.character)}` + presenceNote(
           c.presence, c.variant === null ? null : nameOf(c.variant)))),
       section("Props", p.props.map((x) =>
-        `- ${nameOf(x)}` + presenceNote(
+        `- ${nameOf(x.prop)}` + presenceNote(
           x.presence, x.variant === null ? null : nameOf(x.variant)))),
       section("Location", p.location !== null
         ? [`- ${nameOf(p.location)}` +
@@ -651,6 +652,13 @@ const q12: QuerySpec = {
 // Q13 — Media resolution (§12.8)
 // ---------------------------------------------------------------------------
 
+/** A trail entry as one line: the result's members, rendered. */
+function q13TrailLine(t: Q13TrailEntry): string {
+  return trailLine({ layer: t.layer, name: t.name,
+                     bundleName: t.bundle?.name ?? null,
+                     reason: t.excluded?.reason ?? null });
+}
+
 /**
  * The references section, from the result. `referencesMarkdown` takes
  * the resolver's shape, which carries row ids; a result carries none,
@@ -701,7 +709,7 @@ const q13: QuerySpec = {
   toMarkdown: (payload) => {
     const p = body<Q13Result>(payload);
     return `# Media resolution — ${p.subjectKind}, ${p.intent}\n` +
-      section("Resolution trail", p.trail.map((t) => `- ${t}`)) +
+      section("Resolution trail", p.trail.map((t) => `- ${q13TrailLine(t)}`)) +
       section("Anchors", p.references
         .filter((r) => r.provenance === "anchor")
         .map((r) => `- ${r.anchorName ?? r.name ?? "anchor"}`)) +

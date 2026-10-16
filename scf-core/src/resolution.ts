@@ -106,7 +106,10 @@ export function excludeCut(rows: Row[]): Row[] {
 export async function rowsIncludingCut(
     exec: SqlExec, table: string, where = "",
     params: SqlValue[] = []): Promise<Row[]> {
-  const sql = `SELECT * FROM ${q(table)}` + (where ? ` WHERE ${where}` : "");
+  // In row order, stated rather than left to the query plan: §12.1.6
+  // and §12.17's ties name row order, and an index scan need not give it.
+  const sql = `SELECT * FROM ${q(table)}` + (where ? ` WHERE ${where}` : "") +
+    " ORDER BY rowid";
   return exec(sql, params);
 }
 
@@ -569,32 +572,37 @@ const sameText = (a: SqlValue | undefined, b: SqlValue | undefined): boolean =>
 async function bindingApplies(
     ctx: ScfContext, subject: string, subjectId: number, binding: Row,
     sceneId: number | null, order: SceneOrder,
-): Promise<{ applies: boolean; reason?: string }> {
+): Promise<BindingVerdict> {
   if (sceneId === null) {
     return pyTruthy(binding["is_baseline"])
-      ? { applies: true } : { applies: false, reason: "not a baseline" };
+      ? { applies: true }
+      : { applies: false, by: "not_baseline", value: null,
+          reason: "not a baseline" };
   }
   const here = order.get(sceneId);
   const start = order.get(asNum(binding["scene_range_start_id"]) ?? -1);
   const end = order.get(asNum(binding["scene_range_end_id"]) ?? -1);
   if (start !== undefined && (here === undefined || here < start)) {
-    return { applies: false, reason: "before its scene range" };
+    return { applies: false, by: "before_scene_range", value: null,
+             reason: "before its scene range" };
   }
   if (end !== undefined && (here === undefined || here > end)) {
-    return { applies: false, reason: "after its scene range" };
+    return { applies: false, by: "after_scene_range", value: null,
+             reason: "after its scene range" };
   }
 
   // time_of_day_filter (location): equal to the scene's, on §12.17's
   // axis and 0012's closed vocabulary.
   if (pyTruthy(binding["time_of_day_filter"])) {
     const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0];
+    const value = String(binding["time_of_day_filter"]);
     if (scene === undefined || !pyTruthy(scene["time_of_day"])) {
-      return { applies: false,
+      return { applies: false, by: "time_of_day_filter", value,
                reason: `time_of_day_filter ` +
                  `"${String(binding["time_of_day_filter"])}", scene says nothing` };
     }
     if (!sameText(scene["time_of_day"], binding["time_of_day_filter"])) {
-      return { applies: false,
+      return { applies: false, by: "time_of_day_filter", value,
                reason: `time_of_day_filter ` +
                  `"${String(binding["time_of_day_filter"])}" vs scene ` +
                  `"${String(scene["time_of_day"])}"` };
@@ -608,7 +616,12 @@ async function bindingApplies(
     const inForce = await variantInForce(ctx, subject, subjectId, sceneId);
     const wanted = asNum(binding["variant_id"]);
     if (inForce === null || asNum(inForce["id"]) !== wanted) {
-      return { applies: false,
+      const table = VARIANT_ENTITY[subject];
+      const filtered = table === undefined ? undefined
+        : (await rows(ctx.exec, table, "id = ?", [wanted]))[0];
+      return { applies: false, by: "variant_id",
+               value: filtered === undefined
+                 ? null : String(filtered["uuid"] ?? ""),
                reason: inForce === null
                  ? "variant filter, no variant in force here"
                  : `variant filter vs "${String(inForce["name"])}" in force` };
@@ -630,13 +643,73 @@ async function bindingApplies(
     // description is a sentence and nobody will retype one.
     const hit = states.some((st) => sameText(st["name"], binding[column]));
     if (!hit) {
-      return { applies: false,
+      return { applies: false, by: column, value: String(binding[column]),
                reason: `${column} "${String(binding[column])}", no such ` +
                  `${modality} state in force` };
     }
   }
 
   return { applies: true };
+}
+
+/**
+ * Why a layer of the media cascade did not contribute (§12.8). A closed
+ * vocabulary: `by` and `value` are compared, `reason` is prose.
+ */
+export type TrailExclusionCode =
+  | "not_baseline" | "before_scene_range" | "after_scene_range"
+  | "time_of_day_filter" | "variant_id" | "physical_state_filter"
+  | "vocal_state_filter" | "replaced" | "variant_not_in_force"
+  | "displaced" | "canonical_status";
+
+export interface TrailExclusion {
+  by: TrailExclusionCode;
+  /**
+   * What excluded it: a filter's value, an anchor's status, or the uuid
+   * of the binding that replaced it, the variant a filter names, or the
+   * variant in force. Null where the code says everything.
+   */
+  value: string | null;
+  /** Prose for a person. MUST NOT be parsed or compared. */
+  reason: string;
+}
+
+/**
+ * A trail entry as one line for a person — `binding Eleanor while wounded
+ * -> bundle …: EXCLUDED, …`. A rendering, not part of any result: the
+ * entry's members are the answer (§12.8).
+ */
+export function trailLine(e: {
+  layer: string; name: string | null; bundleName: string | null;
+  reason: string | null;
+}): string {
+  return `${e.layer} ${e.name ?? "(unnamed)"}` +
+    (e.bundleName !== null ? ` -> bundle ${e.bundleName}` : "") +
+    (e.reason !== null ? `: EXCLUDED, ${e.reason}` : "");
+}
+
+/** `trailLine` for an entry as the cascade returns it. */
+export function trailEntryLine(e: TrailEntry): string {
+  const label = (r: Row | null): string | null =>
+    r === null ? null
+      : String(pyTruthy(r["name"]) ? r["name"] : r["id"]);
+  return trailLine({ layer: e.layer, name: label(e.row),
+                     bundleName: label(e.bundle),
+                     reason: e.excluded?.reason ?? null });
+}
+
+type BindingVerdict =
+  | { applies: true }
+  | ({ applies: false } & TrailExclusion);
+
+/** One layer the cascade considered, broadest first (§12.8). */
+export interface TrailEntry {
+  layer: "binding" | "anchor" | "shot override";
+  /** The binding, anchor or shot override row. */
+  row: Row;
+  /** The bundle it brings, for a binding or a shot override. */
+  bundle: Row | null;
+  excluded: TrailExclusion | null;
 }
 
 async function bundleAssets(
@@ -680,12 +753,11 @@ export interface ResolvedMedia {
   anchor_assets: Array<Row | null>;
   base_assets: Row[];
   assets_most_specific_first: Row[];
-  trail: string[];
+  trail: TrailEntry[];
   /**
-   * Every binding of the requested intent and whether it applied, as
-   * data. `trail` says the same in prose a consumer MUST NOT parse; an
-   * editor that marks which of a character's exceptions are in force at
-   * a scene needs the verdict itself. Not part of any published result.
+   * Every binding of the requested intent and whether it applied, by row
+   * id, for an editor that marks which of a character's exceptions are in
+   * force at a scene. Not part of any published result.
    */
   binding_verdicts: Array<{ id: number; applies: boolean;
                             reason: string | null }>;
@@ -702,7 +774,7 @@ export async function resolveMedia(
     shotId: number | null = null): Promise<ResolvedMedia> {
   const order = await sceneOrder(ctx);
   const idField = `${subject}_id`;
-  const trail: string[] = [];
+  const trail: TrailEntry[] = [];
 
   // Base bundles via bindings, filtered to intent, in §12.8.2's order:
   // precedence highest first, equal precedence by row id, lower first.
@@ -714,10 +786,11 @@ export async function resolveMedia(
   const baseAssets: Row[] = [];
   // Built highest precedence first, and reversed into `trail`, which runs
   // broadest first (§12.8).
-  const bindingLines: string[] = [];
+  const bindingLines: TrailEntry[] = [];
   // The first `replace` binding in force: everything below its precedence
   // is excluded. Equal precedence is ordered, never replaced.
-  let replacer: { name: string; precedence: number } | null = null;
+  let replacer: { name: string; uuid: string; precedence: number } | null =
+    null;
   const verdicts: ResolvedMedia["binding_verdicts"] = [];
   for (const b of bindings) {
     const bundles = await rows(ctx.exec, "bundle", "id = ?",
@@ -725,44 +798,57 @@ export async function resolveMedia(
     const bundle = bundles[0];
     if (bundle === undefined || bundle["intent"] !== intent) continue;
     const name = String(pyTruthy(b["name"]) ? b["name"] : b["id"]);
-    const line = `binding ${name} -> bundle ${String(bundle["name"])}`;
+    const entry = (excluded: TrailExclusion | null): TrailEntry =>
+      ({ layer: "binding", row: b, bundle, excluded });
     const verdict = await bindingApplies(ctx, subject, subjectId, b,
                                          sceneId, order);
     if (!verdict.applies) {
       // An absence with a reason. A binding excluded silently is how a
       // filter nothing read went unnoticed for two schema versions.
-      bindingLines.push(`${line}: EXCLUDED, ${verdict.reason ?? "filtered"}`);
-      verdicts.push({ id: asNum(b["id"]) ?? -1, applies: false,
-                      reason: verdict.reason ?? "filtered" });
+      const { by, value, reason } = verdict;
+      bindingLines.push(entry({ by, value, reason }));
+      verdicts.push({ id: asNum(b["id"]) ?? -1, applies: false, reason });
       continue;
     }
     const precedence = asNum(b["precedence"]) ?? 0;
     if (replacer !== null && precedence < replacer.precedence) {
-      bindingLines.push(`${line}: EXCLUDED, replaced by ${replacer.name}`);
-      verdicts.push({ id: asNum(b["id"]) ?? -1, applies: false,
-                      reason: `replaced by ${replacer.name}` });
+      const reason = `replaced by ${replacer.name}`;
+      bindingLines.push(entry({ by: "replaced", value: replacer.uuid,
+                                reason }));
+      verdicts.push({ id: asNum(b["id"]) ?? -1, applies: false, reason });
       continue;
     }
-    bindingLines.push(line);
+    bindingLines.push(entry(null));
     verdicts.push({ id: asNum(b["id"]) ?? -1, applies: true, reason: null });
     baseAssets.push(
       ...await bundleAssets(ctx, asNum(b["bundle_id"]) ?? -1));
     if (replacer === null && sameText(b["combine"], "replace")) {
-      replacer = { name, precedence };
+      replacer = { name, uuid: String(b["uuid"] ?? ""), precedence };
     }
   }
   trail.push(...bindingLines.reverse());
 
-  // Anchors for the subject, matching the intent's anchor type.
+  // Anchors for the subject, of the intent's anchor type (§12.8's
+  // table). One of another type answers a different question and is not
+  // considered; one of this type that is not verified is considered,
+  // excluded, and says so.
   const anchorType = ANCHOR_TYPE_FOR_INTENT[intent];
-  let anchors = (await rows(
+  const ofType = (await rows(
     ctx.exec, "entity_anchor", "subject_type = ? AND subject_id = ?",
     [subject, subjectId]))
     .filter((a) => anchorType === undefined ||
                    a["anchor_type"] === anchorType);
-  anchors = anchors.filter((a) =>
+  const verified = (a: Row): boolean =>
     a["canonical_status"] === null || a["canonical_status"] === undefined ||
-    a["canonical_status"] === "" || a["canonical_status"] === "verified");
+    a["canonical_status"] === "" || a["canonical_status"] === "verified";
+  for (const a of ofType) {
+    if (verified(a)) continue;
+    const status = String(a["canonical_status"]);
+    trail.push({ layer: "anchor", row: a, bundle: null, excluded: {
+      by: "canonical_status", value: status,
+      reason: `canonical_status "${status}", not verified` } });
+  }
+  let anchors = ofType.filter(verified);
 
   // Variant anchors (§12.8, proposal 0033). An anchor naming a variant
   // contributes only where that variant is in force; where it does and
@@ -773,28 +859,26 @@ export async function resolveMedia(
   // variant's face came back as the subject's in every scene.
   const variant = await variantInForce(ctx, subject, subjectId, sceneId);
   const variantId = variant === null ? null : asNum(variant["id"]);
-  const anchorName = (a: Row): string =>
-    String(pyTruthy(a["name"]) ? a["name"] : a["id"]);
   const ofVariant = anchors.filter((a) =>
     variantId !== null && asNum(a["subject_variant_id"]) === variantId);
   const own = anchors.filter((a) => !pyTruthy(a["subject_variant_id"]));
   const kept = ofVariant.length > 0 ? ofVariant : own;
+  const inForce = variant === null ? null : String(variant["uuid"] ?? "");
   for (const a of anchors) {
     if (kept.includes(a)) continue;
-    if (pyTruthy(a["subject_variant_id"])) {
-      trail.push(`anchor ${anchorName(a)}: EXCLUDED, ` +
-        (variant === null
-          ? "its variant is not in force here"
-          : `its variant is not "${String(variant["name"])}"`));
-    } else {
-      trail.push(`anchor ${anchorName(a)}: EXCLUDED, ` +
-        `displaced by variant "${String(variant?.["name"])}"`);
-    }
+    trail.push({ layer: "anchor", row: a, bundle: null,
+      excluded: pyTruthy(a["subject_variant_id"])
+        ? { by: "variant_not_in_force", value: inForce,
+            reason: variant === null
+              ? "its variant is not in force here"
+              : `its variant is not "${String(variant["name"])}"` }
+        : { by: "displaced", value: inForce,
+            reason: `displaced by variant "${String(variant?.["name"])}"` } });
   }
   anchors = kept;
   const anchorAssets: Array<Row | null> = [];
   for (const a of anchors) {
-    trail.push(`anchor ${pyTruthy(a["name"]) ? a["name"] : a["id"]}`);
+    trail.push({ layer: "anchor", row: a, bundle: null, excluded: null });
     const assetId = Number(a["asset_id"]);
     anchorAssets.push(Number.isFinite(assetId)
       ? (await rows(ctx.exec, "asset", "id = ?", [assetId]))[0] ?? null
@@ -809,8 +893,14 @@ export async function resolveMedia(
       `shot_id = ? AND ${idField} = ?`, [shotId, subjectId]);
     for (const o of overrides) {
       if (pyTruthy(o["bundle_override_id"])) {
-        trail.push(
-          `shot override ${pyTruthy(o["name"]) ? o["name"] : o["id"]}`);
+        const bundle = (await rows(ctx.exec, "bundle", "id = ?",
+                                   [o["bundle_override_id"] ?? null]))[0]
+          ?? null;
+        // Of the intent asked about, like a binding's bundle: an override
+        // of the face is not an answer about the voice.
+        if (bundle === null || bundle["intent"] !== intent) continue;
+        trail.push({ layer: "shot override", row: o, bundle,
+                     excluded: null });
         overrideAssets.push(
           ...await bundleAssets(ctx, asNum(o["bundle_override_id"]) ?? -1));
       }

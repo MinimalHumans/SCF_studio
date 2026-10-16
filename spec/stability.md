@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 1.0-rc.1 / schema 2.24. This document is expected
+Current as of specification 1.0-rc.2 / schema 2.24. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -125,7 +125,8 @@ about it is ceremonial.
 | §12's closed vocabularies | §12.1.5 | Provisional | Partly | Stated in 0.29: §8.3's states, §12.9's severities, §12.8's `provenance`. `provenance` is the only one §12 introduces, and 0.29 states its three members in §12.8 rather than leaving them in `mediaReferences.ts`. Partly, because unlike the other two it has no published artifact behind it — a fourth layer would be a spec edit with nothing to check it against. |
 | Label lists | §12.1.5 | Provisional | Yes | Stated in 0.29, with the source column named per query. Q12 only. |
 | Q09 relatedness is one hop | §12.10 | Provisional | Yes | Stated in 0.29. Non-transitive, deliberately. |
-| Report `clean`, `rowIds`, `count` | §9.5 | Provisional | Yes | Stated in 0.29. `clean` was listed in §9.5 and never defined; the semantics lived only in `findings.ts`. |
+| Report `clean`, `rowIds`, `count` | §9.5 | Provisional | Yes | Stated in 0.29. `clean` was listed in §9.5 and never defined; the semantics lived only in `findings.ts`. Since 1.0-rc.2 one code on one table is one finding with every row at fault in `rowIds`, pinned by the negative case `asset-orphans-two` and the identity cases, and the fixture's own report is published (`fixtures/hollow_creek.report.json`). |
+| The media trail as records | §12.8 | Provisional | Yes | Since 1.0-rc.2 each `trail` entry is a derived record with a closed `excluded.by`, and only `excluded.reason` is prose. Exercised by Q13, `Q13-scene3` (a filter), `Q13-scene25` (a replacement and an unverified anchor) and the Q02 cases. `displaced` and `variant_not_in_force` are unexercised by a published result: the fixture's displaced anchor is also unverified, and `canonical_status` is reported first. |
 | The screenplay tables are published | §1.3.1 | Provisional | Yes | `screenplay-tables.json`, dumped from `initDatabase()` on `scf-schema.sql`'s reasoning. Columns, nullability, defaults and a purpose per table. |
 | `line_type` is a closed vocabulary | §1.3.1 | Provisional | Yes | Fifteen values. `LINE_TYPES` in `fountain/types.ts` is a runtime array, the artifact is generated from it, and `screenplayTables.test.ts` checks the artifact back. The column — free TEXT — cannot enforce the closure, so a validator reports a value outside the set as `line.type_unknown` (`error`, since 0.66), exercised by the negative case `line-type-unknown`. Provisional because no second implementation has written the column. |
 | All sixteen queries | §12.2–12.17 | Provisional | Yes | Specified and blessed as `fixtures/expectations/*.result.json`. Q03 and Q12 are blessed away from scene 12 — at 19, and diffing 19 → 16 — so the suite can now tell a §4.1-conforming resolver from one ordering by `scene_number`. Reintroducing the old ordering fails four tests; before 0.22 it failed none. |

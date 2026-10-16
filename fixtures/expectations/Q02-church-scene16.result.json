@@ -115,7 +115,19 @@
       "fromQuery": "Q13",
       "subjectKind": "location",
       "intent": "environment",
-      "trail": [],
+      "trail": [
+        {
+          "layer": "anchor",
+          "uuid": "699e6d00-1414-442e-9bb7-b928cb0fcf16",
+          "name": "Hollow Creek Church",
+          "bundle": null,
+          "excluded": {
+            "by": "canonical_status",
+            "value": "candidate",
+            "reason": "canonical_status \"candidate\", not verified"
+          }
+        }
+      ],
       "references": [],
       "counts": {
         "resolved": 0,

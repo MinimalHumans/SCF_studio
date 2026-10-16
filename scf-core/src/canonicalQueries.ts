@@ -13,6 +13,7 @@
 import type { ScfContext } from "./resolution.ts";
 import {
   resolveDescription, resolveDirection, resolveMedia,
+  type TrailExclusionCode,
 } from "./resolution.ts";
 import { mediaReferences } from "./mediaReferences.ts";
 import { presenceAtScene, type Presence } from "./presence.ts";
@@ -156,21 +157,18 @@ async function directionResult(
 ): Promise<QueryResult<Q07Result>> {
   const layers = await resolveDirection(ctx, leaf, sceneId, shotId);
 
-  // Every entity in the chain, so a layer's own references resolve.
-  const entities = [...new Set(layers.map(([entity]) => entity))];
   const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
-  const refs: Record<string, string> = {
-    scene_id: "scene", shot_id: "shot",
-    project_id: "project", sequence_id: "sequence",
-  };
-
+  // Each layer projects by its OWN entity's column roles, like every
+  // other result. A hand-written map here resolved four reference names
+  // and knew nothing of `string_list`, so a palette's colours came out
+  // as JSON text in Q07 and as an array in Q00 (§2.5).
   return envelope(query, ctx.registry,
     { scene: sceneUuid, shot: shotUuid },
     {
       leaf,
       layers: layers.map(([entity, row]) => ({
-        entity, row: projectRow(row, refs, lookup),
+        entity, row: projectRow(row, refs(ctx, entity), lookup),
       })),
     });
 }
@@ -496,6 +494,21 @@ export interface Q13Reference {
   sizeBytes: number | null;
 }
 
+/**
+ * One layer the cascade considered (§12.8): a binding, an anchor or a
+ * shot override, by identity, with the bundle it brings and, when it
+ * did not contribute, why. `excluded.reason` is prose and is not
+ * compared (conformance.md §6.1); everything else is.
+ */
+export interface Q13TrailEntry {
+  layer: "binding" | "anchor" | "shot override";
+  uuid: string | null;
+  name: string | null;
+  bundle: { uuid: string | null; name: string | null } | null;
+  excluded: { by: TrailExclusionCode; value: string | null;
+              reason: string } | null;
+}
+
 export interface Q13Result {
   /**
    * The subject's KIND — "character", "location", "prop" — not its uuid.
@@ -513,7 +526,7 @@ export interface Q13Result {
    * root-first convention. Runs opposite to `references` below, which
    * is most specific first so the opinion in force is at the top.
    */
-  trail: string[];
+  trail: Q13TrailEntry[];
   references: Q13Reference[];
   /** How many references landed in each resolution state (§8.3). */
   counts: Record<string, number>;
@@ -524,6 +537,9 @@ export interface Q13Result {
    */
   rootMapped: boolean;
 }
+
+const str = (v: unknown): string | null =>
+  v === null || v === undefined || v === "" ? null : String(v);
 
 /** Resolves nothing. The state of a `.scf` opened on its own (§0.3). */
 const NO_ROOT: FileLocator = async () => undefined;
@@ -550,7 +566,14 @@ export async function q13Result(
   }, {
     subjectKind: subject,
     intent,
-    trail: media.trail,
+    trail: media.trail.map((t) => ({
+      layer: t.layer,
+      uuid: str(t.row["uuid"]),
+      name: str(t.row["name"]),
+      bundle: t.bundle === null ? null
+        : { uuid: str(t.bundle["uuid"]), name: str(t.bundle["name"]) },
+      excluded: t.excluded === null ? null : { ...t.excluded },
+    })),
     references: refs.references.map((r) => ({
       // The uuid comes from the reference itself, never from looking
       // its row id up in a table. An anchor's row id resolved against
@@ -1207,10 +1230,18 @@ export async function composeDossier(
     if (found.length > 0) groups.push({ entity: name, rows: found });
   }
 
-  const motifCarriage: DossierComposition["motifCarriage"] = [];
-  for (const appearance of await rows(
+  // Appearances have scenes, so carriage is in story order (§12.1.6):
+  // by the scene's position, then row id; one with no position last.
+  const order = await sceneOrder(ctx);
+  const at = (r: Row): number =>
+    order.get(asId(r["scene_id"]) ?? -1) ?? Number.MAX_SAFE_INTEGER;
+  const carried = (await rows(
       ctx.exec, "motif_appearance", "entity_type = ? AND entity_id = ?",
-      [subjectType, subjectId])) {
+      [subjectType, subjectId]))
+    .sort((a, b) => (at(a) - at(b)) ||
+                    ((asId(a["id"]) ?? 0) - (asId(b["id"]) ?? 0)));
+  const motifCarriage: DossierComposition["motifCarriage"] = [];
+  for (const appearance of carried) {
     const motifId = asId(appearance["motif_id"]);
     motifCarriage.push({
       appearance,
@@ -1447,12 +1478,15 @@ export interface Q04Result {
   /** Act and sequence, broadest first. */
   lineage: Array<{ entity: string; row: ProjectedRow }>;
   storyBeats: ProjectedRow[];
-  /** Each with its presence here, §2.4.1: a `mentioned` character is
-   *  in the cast and not on screen. */
-  cast: Array<ProjectedRow & { presence: Presence;
-                                variant: ProjectedRow | null }>;
-  props: Array<ProjectedRow & { presence: Presence;
-                                 variant: ProjectedRow | null }>;
+  /**
+   * Each with its presence here (§2.4.1: a `mentioned` character is in
+   * the cast and not on screen) and the variant in force (§4.8). Derived
+   * records with the row as a member, as Q03's are (§12.1.2, §12.1.4).
+   */
+  cast: Array<{ character: ProjectedRow; presence: Presence;
+                variant: ProjectedRow | null }>;
+  props: Array<{ prop: ProjectedRow; presence: Presence;
+                 variant: ProjectedRow | null }>;
   location: ProjectedRow | null;
   locationVariant:
     { variant: ProjectedRow | null; mismatches: string[] };
@@ -1569,13 +1603,13 @@ export async function q04Result(
     storyBeats: storyBeats.map(
       (b) => projectRow(b, refs(ctx, "story_beat"), lookup)),
     cast: castVariants.map(([c, v]) => ({
-      ...projectRow(c, refs(ctx, "character"), lookup),
+      character: projectRow(c, refs(ctx, "character"), lookup),
       presence: atScene.character.get(Number(c["id"])) ?? "seen",
       variant: v === null
         ? null : projectRow(v, refs(ctx, "character_variant"), lookup),
     })),
     props: propVariants.map(([p, v]) => ({
-      ...projectRow(p, refs(ctx, "prop"), lookup),
+      prop: projectRow(p, refs(ctx, "prop"), lookup),
       presence: atScene.prop.get(Number(p["id"])) ?? "seen",
       variant: v === null
         ? null : projectRow(v, refs(ctx, "prop_variant"), lookup),

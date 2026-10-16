@@ -63,13 +63,21 @@ beforeAll(async () => {
     "SELECT id, uuid, shot_number FROM shot WHERE name LIKE '%12-04%'");
   shot1204 = { id: Number(shotRow["id"]), uuid: String(shotRow["uuid"]),
                shotNumber: String(shotRow["shot_number"]) };
-  if (BLESS) mkdirSync(OUT, { recursive: true });
+  if (BLESS) mkdirSync(OWN, { recursive: true });
 });
 
 afterAll(() => { fx.close(); });
 
+/**
+ * Composite-API results are blessed beside the tests, not among the
+ * published canonical results: they are not one of §12's queries, and a
+ * reader told to reproduce every result in `fixtures/expectations/` must
+ * not find one there that no section defines.
+ */
+const OWN = join(dirname(fileURLToPath(import.meta.url)), "expectations");
+
 const blessOrCheck = (name: string, value: unknown): void => {
-  const path = join(OUT, `${name}.result.json`);
+  const path = join(OWN, `${name}.result.json`);
   const text = `${JSON.stringify(value, null, 2)}\n`;
   if (BLESS) { writeFileSync(path, text, "utf8"); return; }
   expect(existsSync(path), `${name}.result.json missing — bless first`)
@@ -193,7 +201,7 @@ describe("shotMedia — what to attach", () => {
       r.parameters["subject"] === chime?.uuid &&
       r.result.intent === "visual_identity");
     expect(visual?.result.references).toEqual([]);
-    expect(visual?.result.trail.join(" ")).toMatch(/EXCLUDED/);
+    expect(visual?.result.trail.some((t) => t.excluded !== null)).toBe(true);
     expect(chime?.empty).not.toContain("visual_identity");
   });
 

@@ -31,7 +31,7 @@ import {
 import {
   POLYMORPHIC, QUERY_RESULT_FORMAT, projectRow, columnRoles,
 } from "../src/queryResult.ts";
-import { sceneOrder } from "../src/resolution.ts";
+import { sceneOrder, trailLine } from "../src/resolution.ts";
 import { openFixture, registry, type Fixture } from "./setup.ts";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)),
@@ -86,6 +86,14 @@ beforeAll(async () => {
 });
 
 afterAll(() => { fx.close(); });
+
+/** Q13's structured trail, rendered one line per entry for assertions. */
+const q13Lines = (r: { result: { trail: Array<{
+  layer: string; name: string | null; bundle: { name: string | null } | null;
+  excluded: { reason: string } | null; }> } }): string[] =>
+  r.result.trail.map((t) => trailLine({
+    layer: t.layer, name: t.name, bundleName: t.bundle?.name ?? null,
+    reason: t.excluded?.reason ?? null }));
 
 const blessOrCheck = (name: string, value: unknown): void => {
   const path = join(OUT, `${name}.result.json`);
@@ -386,7 +394,7 @@ describe("§12.8 Q13 — media resolution", () => {
       fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
       scene3.uuid, scene3.id, shot3B.uuid, shot3B.id);
     blessOrCheck("Q13-scene3", r);
-    expect(r.result.trail).toContain(
+    expect(q13Lines(r)).toContain(
       "binding Eleanor while wounded -> bundle Eleanor - lamplit, wounded: " +
       "EXCLUDED, physical_state_filter \"wounded\", no such physical " +
       "state in force");
@@ -405,7 +413,7 @@ describe("§12.8 Q13 — media resolution", () => {
       fx.ctx, "character", marcusId.uuid, marcusId.id, "visual_identity",
       scene25.uuid, scene25.id, null, null);
     blessOrCheck("Q13-scene25", r);
-    expect(r.result.trail).toContain(
+    expect(q13Lines(r)).toContain(
       "binding Marcus visual baseline -> bundle Marcus Visual Core: " +
       "EXCLUDED, replaced by Marcus as a boy");
     expect(r.result.references.map((x) => x.name))
@@ -440,8 +448,8 @@ describe("§12.8 Q13 — media resolution", () => {
       fx.ctx, "character", eleanor.uuid, eleanor.id, "visual_identity",
       scene12.uuid, scene12.id, shot1204.uuid, shot1204.id);
     expect(r.result.references[0]?.provenance).toBe("shot override");
-    expect(r.result.trail[0]).toContain("binding");
-    expect(r.result.trail.at(-1)).toContain("override");
+    expect(q13Lines(r)[0]).toContain("binding");
+    expect(q13Lines(r).at(-1)).toContain("override");
   });
 
   test("names assets by uuid, never by row id", async () => {

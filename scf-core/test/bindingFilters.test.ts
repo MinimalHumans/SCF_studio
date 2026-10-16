@@ -35,6 +35,7 @@ import { bindingSubjects } from "../src/bundling.ts";
 import { openNodeDatabase } from "../src/node.ts";
 import {
   resolveMedia, type ResolvedMedia, type ScfContext,
+  trailEntryLine,
 } from "../src/resolution.ts";
 import { FIXTURE_PATH, openFixture, registry, type Fixture } from "./setup.ts";
 
@@ -65,9 +66,9 @@ async function withCopy<T>(
 
 /** The trail line for one binding; every binding of the intent has one. */
 function trailLine(media: ResolvedMedia, binding: string): string {
-  const line = media.trail.find((l) => l.startsWith(`binding ${binding} -> `));
+  const line = media.trail.map(trailEntryLine).find((l) => l.startsWith(`binding ${binding} -> `));
   expect(line, `no trail line for binding "${binding}":\n` +
-                 media.trail.join("\n")).toBeDefined();
+                 media.trail.map(trailEntryLine).join("\n")).toBeDefined();
   return line ?? "";
 }
 

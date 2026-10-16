@@ -4,7 +4,7 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: release candidate (specification 1.0-rc.1).** Every section is specified. What is known to be
+**Status: release candidate (specification 1.0-rc.2).** Every section is specified. What is known to be
 unfinished is tracked in [stability.md](stability.md); the one check the
 validator cannot yet make is named in §4.
 
@@ -231,7 +231,7 @@ suites and MUST NOT change.
   number.
 - **Screenplay order, scene-number order and row-id order are three
   DIFFERENT orders**, and MUST stay that way. `12A` sits mid-script with
-  the highest row id; `16` follows `19` in the script and keeps its
+  a higher row id than the scenes either side of it; `16` follows `19` in the script and keeps its
   number, which is legal because the project is `fixed` (§4.3). Until
   0.17 the three coincided, and a reader ordering by `scene_number`
   alone — the one thing §4.1 forbids — passed every blessed expectation.
@@ -255,8 +255,8 @@ suites and MUST NOT change.
   ACTIVE may be added to it. A **cut** row may be, precisely because
   §6.6.1 requires it to change nothing: the pin and the cut row test
   each other.
-- **Five assets have no file behind them, on purpose.** The costume
-  `.zip`, two `.wav`s, the `.exr` plate and the locket `.glb` are the
+- **Six assets have no file behind them, on purpose.** The costume
+  `.zip`, two `.wav`s, the two `.exr` plates and the locket `.glb` are the
   only non-`png`/`mp4` entries in an otherwise real folder tree, and
   they are what keeps `zip`, `exr` and `glb` in the derived format set,
   the `sound/` folder in the path tree, and something in the file that
@@ -390,18 +390,26 @@ are runnable, which is the whole mechanism.
 
 1. `scf-check` the fixture. It MUST exit 0, reporting findings whose
    codes and severities come from
-   [`finding-catalog.json`](finding-catalog.json).
+   [`finding-catalog.json`](finding-catalog.json), and its report MUST
+   match [`hollow_creek.report.json`](../fixtures/hollow_creek.report.json)
+   as step 3 compares a report.
 2. Reproduce the canonical query expectations in
    `fixtures/expectations/` for the queries you implement. For each
    query, compare against its `.result.json` and every
-   `<Q>-<case>.result.json`. The rendered markdown is **not** a contract
-   for any query.
+   `<Q>-<case>.result.json`, as JSON values (§12.1.6). **Two members are
+   prose and are compared as present strings, not by content**: a
+   reference's `detail` and a trail entry's `excluded.reason` (§12.8);
+   both are null in the same places. Q14 is compared as §12.9 says. The
+   rendered markdown is **not** a contract for any query.
 3. Build the negative fixtures from
    [`CASES.json`](../fixtures/negative/CASES.json) — an empty conforming
    database per `scf-schema.sql`, then each case's statements in order —
-   and validate each. Report the codes in its blessed report at the
-   severities the catalog gives them. Extra findings are permitted and
-   MUST be disclosed; missing ones are a failure.
+   and validate each. Compare each finding of its blessed report by
+   `code`, `severity`, `table`, `count` and `rowIds` (spec §9.5); its
+   `message`, `title` and `spec` are for people and are not compared.
+   Extra findings are permitted and MUST be disclosed; missing ones are a
+   failure. A statement ending `-- params: [...]` binds that JSON array to
+   its `?` placeholders.
 
 **Writer.** Everything above, plus:
 

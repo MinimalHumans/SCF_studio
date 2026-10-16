@@ -15,6 +15,7 @@ import {
   uuidKey, type ParamDef, type ParamValues, type QuerySpec,
 } from "./runners.ts";
 import { authoredEntries, field, nameOf } from "./fields.ts";
+import { trailLine } from "@scf-core/resolution.ts";
 import {
   BriefView, DossierView, ContextStackView, PackageView, ManifestView,
   AccountingView, AudienceView, ProvenanceView,
@@ -614,7 +615,17 @@ function MediaView({ p }: { p: Q13Result }): JSX.Element {
       </ul>
       <h3>Resolution trail</h3>
       <ol className="trail">
-        {p.trail.map((t, i) => <li key={i}>{t}</li>)}
+        {p.trail.map((t, i) => (
+          <li key={t.uuid ?? i}
+              className={t.excluded !== null ? "muted" : ""}>
+            {trailLine({ layer: t.layer, name: t.name,
+                         bundleName: t.bundle?.name ?? null,
+                         reason: t.excluded?.reason ?? null })}
+            {t.excluded !== null && (
+              <span className="scope-tag">{t.excluded.by}</span>
+            )}
+          </li>
+        ))}
         {p.trail.length === 0 && (
           <p className="muted">Nothing resolves — no binding for this
              intent.</p>

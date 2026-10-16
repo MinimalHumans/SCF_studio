@@ -180,6 +180,8 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "conformance.md §5.3."),
         ("fixtures/negative/asset-absolute.expected.json",
          "An absolute asset identifier: permitted, non-portable, a warning. Spec conformance.md §5.3."),
+        ("fixtures/negative/asset-orphans-two.expected.json",
+         "Two orphans, one finding with count 2 (§9.5's grain). Spec conformance.md §5.3."),
         ("fixtures/negative/asset-escapes-root.expected.json",
          "An asset address that resolves outside the root. Spec conformance.md §5.3."),
         ("fixtures/negative/bundle-unbound.expected.json",
@@ -218,6 +220,9 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("fixtures/hollow_creek.scf",
          "The conformance fixture. Its load-bearing properties are "
          "enumerated in spec/conformance.md §5.1."),
+        ("fixtures/hollow_creek.report.json",
+         "The report a validator MUST produce for the fixture. Spec "
+         "conformance.md §6.1."),
      ]),
 ]
 

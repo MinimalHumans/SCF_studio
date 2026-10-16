@@ -126,7 +126,19 @@
       "fromQuery": "Q13",
       "subjectKind": "location",
       "intent": "environment",
-      "trail": [],
+      "trail": [
+        {
+          "layer": "anchor",
+          "uuid": "1666157a-6184-4a1f-aa75-2833da85fc25",
+          "name": "Ridge Forest",
+          "bundle": null,
+          "excluded": {
+            "by": "canonical_status",
+            "value": "candidate",
+            "reason": "canonical_status \"candidate\", not verified"
+          }
+        }
+      ],
       "references": [],
       "counts": {
         "resolved": 0,

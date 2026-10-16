@@ -50,6 +50,35 @@ export interface ValidationReport {
   generatedAt?: string;
 }
 
+/**
+ * One finding per condition per table (§9.5): every finding of one code
+ * on one table becomes one, its `rowIds` the sorted union, its `count`
+ * the sum, so a validator that reports per row and one that reports per
+ * table publish the same report. In first-seen order. The editor's
+ * panels keep `collectFindings`' per-row findings; this is the published
+ * form.
+ */
+export function oneConditionOneFinding(findings: Finding[]): Finding[] {
+  const groups = new Map<string, Finding[]>();
+  for (const f of findings) {
+    const key = `${f.code}\u0000${f.table ?? ""}`;
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [f]); else group.push(f);
+  }
+  return [...groups.values()].map((group) => {
+    const first = group[0] as Finding;
+    if (group.length === 1) return first;
+    return {
+      ...first,
+      rowIds: [...new Set(group.flatMap((f) => f.rowIds))]
+        .sort((a, b) => a - b),
+      count: group.reduce((n, f) => n + f.count, 0),
+      message: `${first.message} And ${String(group.length - 1)} more ` +
+               "like it.",
+    };
+  });
+}
+
 export interface ReportOptions {
   /** Path or label for the file. Appears verbatim in `source`. */
   source: string;
@@ -61,18 +90,22 @@ export async function validationReport(
     exec: SqlExec, registry: Registry,
     opts: ReportOptions): Promise<ValidationReport> {
   const collected = await collectFindings(exec, registry);
-  const findings: ReportFinding[] = collected.findings.map((f) => ({
+  const findings: ReportFinding[] = oneConditionOneFinding(
+    collected.findings).map((f) => ({
     ...f,
     spec: FINDING_CATALOG[f.code].spec,
     title: FINDING_CATALOG[f.code].title,
   }));
+  const counts: Record<FindingSeverity, number> =
+    { error: 0, warning: 0, info: 0 };
+  for (const f of findings) counts[f.severity] += 1;
 
   const report: ValidationReport = {
     reportFormat: REPORT_FORMAT_VERSION,
     toolSchemaVersion: registry.schemaVersion,
     fileSchemaVersion: collected.schemaVersion,
     source: opts.source,
-    counts: collected.counts,
+    counts,
     clean: collected.clean,
     findings,
   };

@@ -566,7 +566,7 @@ export async function collectFindings(
     if (code === undefined) continue;
     out.push(make(code, f.detail, {
       table: f.table,
-      rowIds: f.id === null ? [] : [f.id],
+      rowIds: f.ids ?? (f.id === null ? [] : [f.id]),
       count: f.count,
     }));
   }

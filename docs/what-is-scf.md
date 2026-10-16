@@ -188,11 +188,15 @@ Nothing uploads. Nothing needs a server.
 A film in progress is missing most of itself most of the time, and a
 format that refused to answer until every field was filled would be
 useless exactly when it is needed. So SCF **describes; it does not
-enforce.** Every derivation stays useful on incomplete data and reports
-what is missing alongside the answer rather than instead of it.
+enforce.** Every derivation stays useful on incomplete data: a query
+answers with what is there, and what is missing is reported beside it —
+by the readiness query (Q14) and the validator's findings — rather than
+in place of the answer.
 
-A file with contradictory data is not an error. It is a file about a
-film where two people disagree, which is a normal Tuesday.
+A file with contradictory data is not a reason to refuse it. It is a
+file about a film where two people disagree, which is a normal Tuesday;
+the validator reports the contradiction, and a reader still opens the
+file.
 
 ---
 
@@ -228,7 +232,7 @@ in the file waiting.
 | Implement the format | [The specification](../spec/scf-spec.md) |
 
 **A note on status.** SCF is pre-1.0. The specification is a release
-candidate, `1.0-rc.1`,
+candidate, `1.0-rc.2`,
 [what is safe to build against is stated per subject](../spec/stability.md),
 and until 1.0 there is no migration path for files already written. Five
 independent implementations have been built from the specification by

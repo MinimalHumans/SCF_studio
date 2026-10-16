@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 1.0-rc.1 — release candidate.**
+**Version 1.0-rc.2 — release candidate.**
 Describes schema version **2.24**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -201,7 +201,9 @@ are an identification aid, never a gate.
 
 Where the header's `user_version` and `_scf_meta.schema_version`
 disagree, `_scf_meta` is the authority and the disagreement is a finding
-(§9).
+(§9). **A `user_version` of 0 is an absent stamp, not a disagreement**:
+it is SQLite's default, and every file written before the stamp existed
+carries it.
 
 The registered `magic(5)` stanza ships as [`scf.magic`](scf.magic).
 
@@ -264,7 +266,7 @@ resemblance is not a rule: a scene heading is `heading`, and
 The column is declared `TEXT` and SQLite enforces nothing, so the file
 cannot carry the constraint. **A validator MUST report a line whose
 `line_type` is outside the published set as `line.type_unknown`**, at
-severity `error` (§9.5), naming the line's uuid and the value; the line
+severity `error` (§9.4), naming the line's uuid and the value; the line
 is still kept as unknown content. Story order is derived from this table
 (§4.1), so a reader that guesses wrong produces a wrong answer
 confidently, and the finding is what keeps it from being silent. Only
@@ -282,6 +284,11 @@ are file-local and a writer may renumber them (§6.2, §12.1.2), and a
 binding that survives a rebuild has to be keyed to something that does.
 A reader MUST accept the legacy form `{"kind": …, "id": <row id>}`,
 which is what schema 2.14 and earlier wrote.
+
+**The line's label is its text after the leading `#` marks and
+surrounding whitespace**, compared exactly and case-sensitively with the
+span's `name`, also trimmed; that comparison is what
+`structure.section_mismatch` reports (§9.4).
 
 **The record answers; the line is the handle.** `start_scene_id` and
 `name` on the `act` or `sequence` row are the stored facts (§5.1), and a
@@ -330,7 +337,7 @@ all sixteen queries on one page. Both are derived and checked in CI.
 Where either disagrees with this document or with the registry, they are
 wrong. **The manifest covers this document and
 the other three specification documents**, so a reader can verify that
-the prose it built against is the prose that was published — three
+the prose it built against is the prose that was published — five
 independent implementations have now been written from these files, and
 until 0.31 nothing let them confirm they had read the same bytes.
 
@@ -424,9 +431,9 @@ A subject at a position is there in one of three ways. This is its
 
 **A vocabulary that says whether a subject is on screen declares each
 value's presence in the registry**, as the field's `optionPresence`
-(§2.1). It is total over the options. As of 2.17 three fields declare
+(§2.1). It is total over the options. Four columns declare
 one: `scene_character.role_in_scene`, `scene_prop.significance`, and
-`framing` on `shot_character` and `shot_prop` (§4.6). The mapping is
+`framing` on both `shot_character` and `shot_prop` (§4.6). The mapping is
 published in [entity-reference.md](entity-reference.md), generated from
 the registry, and is not restated here. So, for example, a `mentioned`
 character is `named` and a `voiceover` is `heard`.
@@ -503,6 +510,12 @@ written before the threading existed.
 heading line linked to that scene and take every line up to the next
 heading.
 
+**A heading names its scene by its own `scene_id`, and on a `heading`
+line that column is authoritative**: it is the link this section and
+§4.1 mean by "the heading linked to that scene", written when the
+heading is. The rule above is about every other line type, whose
+`scene_id` is threaded onto it after the fact.
+
 ### 3.5 Line anchors
 
 **A line anchor names a screenplay line by its uuid.** It is stored as
@@ -543,6 +556,11 @@ interleaved, only concatenated, and the script is what §4.1 says order
 comes from. A scene with no heading is one nothing has placed yet, and
 placing it after everything that has been placed is the reading that
 does not invent a position for it.
+
+**`structure.scene_not_in_script` reports such a scene**, at `info`,
+**only where the file has a screenplay** — at least one `heading` line.
+A file with no heading at all has placed nothing; its scenes are ordered
+by number (§4.2) and none of them is out of place.
 
 The full comparison, in order: whether the scene has a screenplay
 position at all (those that do, first); then that position; then
@@ -596,6 +614,12 @@ which is the convention the notation exists to express.
 A `scene_number` that does not match §4.2.1 is **opaque**. It is valid
 data and MUST NOT be rejected (§9.1). Implementations MUST NOT order it
 by §4.2.2 and MUST fall through to the next term in §4.1's chain.
+
+**Where §4.1 orders by number, three groups follow one another**:
+conforming numbers by §4.2.2, then opaque ones, then scenes with no
+number. Within each of the last two, the next term — row id — decides.
+An opaque label says something about the scene; an absent one says
+nothing, so it goes last.
 
 > **Registry note.** Schema 2.9 declares `scene_number` as text, so the
 > declared type and this grammar agree. Files written before 2.9 carry an
@@ -724,7 +748,9 @@ MUST apply the one the registry declares.
 what is written. No inference.
 
 **Pattern 2 — persistence.** A state row is keyed at a scene and carries
-`persistence`:
+`persistence`. **Its position is its `scene_id`**: a row with none — one
+recorded against a shot alone — has no position and is in force
+nowhere by this pattern.
 
 **`persistence` is a closed set of two values**, and the registry
 declares them:
@@ -931,6 +957,10 @@ migration.
 An act with no boundary, a boundary on a deleted scene, two acts on one
 scene, and scenes before the first act are all valid file states. Each
 MUST produce a usable structure and a finding.
+
+**Two spans of one kind starting at one scene** are ordered by row id,
+and the later one takes the scenes: the earlier is empty, and that is
+what `structure.boundary_shared` reports.
 
 ---
 
@@ -1236,7 +1266,8 @@ absolute identifier is legal, `asset.identifier_absolute` is a
 **warning** rather than an error, and a conforming implementation MUST
 NOT refuse a file for carrying one. A path containing `..` is the
 different case: it is an error (§9.4) and MUST NOT be resolved, because
-where it lands depends on where its root happens to sit.
+where it lands depends on where its root happens to sit; its §8.3 state
+is `out-of-root`, whatever the session's roots.
 
 An implementation **MAY** attempt to locate an absolute path and report
 its size, and MUST keep the state at `out-of-root` if it does — the
@@ -1565,7 +1596,16 @@ routinely: a finding standing for one duplicated uuid across two rows
 has a `count` of 1 and two entries in `rowIds`. A finding MUST NOT be
 raised more than once for the same condition on the same table — that is
 what `count` is for — and `count` is **1** for a finding that stands for
-a single occurrence, never 0.
+a single occurrence, never 0. **One code on one table is one
+condition**: two orphaned assets are one `asset.orphan` with `count` 2
+and both rows in `rowIds`, ascending — not two findings, and not one
+row. A finding about particular rows names every one of them; only a
+finding about a table or the file has an empty `rowIds`.
+
+**Findings are computed over every row, cut ones included.** §6.6.1 says
+what a query answers, not what a validator reads: a reference from a cut
+row still uses its asset, and a link to a cut scene is still a link. A
+cut row is not itself a finding (§6.6.2).
 
 A report MUST be byte-identical across two runs over an unchanged file.
 Any volatile field — a timestamp above all — MUST be omitted by default,
@@ -1703,7 +1743,7 @@ a minor version at minimum, and MUST be recorded in the specification
 changelog.
 
 A **release candidate** carries `-rc.N` after the version it precedes:
-`1.0-rc.1` is the first candidate for 1.0. Its requirements are the
+`1.0-rc.1` was the first candidate for 1.0, and `1.0-rc.2` the second. Its requirements are the
 release's unless a later candidate changes them, and each candidate is
 recorded in the changelog like any version. §11.0 holds until the
 release itself, so a defect found in a candidate is fixed in the next
@@ -1764,7 +1804,9 @@ Every canonical query returns:
 | `result` | The query's own structure, defined per query below. |
 
 `parameters` makes a result self-describing: a reader handed one can
-tell which question it answers without being told.
+tell which question it answers without being told. **Every parameter
+the query declares appears**, and an optional one that was not supplied
+is **null** — never omitted, so a result asked without a shot says so.
 
 #### 12.1.2 Rows in a result
 
@@ -1804,9 +1846,12 @@ would notice.
 - `id`, `created_at` and `updated_at` MUST be omitted. They differ
   between two files that say the same thing.
 - **A value that is null, absent, or the empty string MUST be omitted**,
-  so absence is unambiguous. **Zero and `false` are values, not
-  absences**, and MUST be kept — a `false` dropped as empty would be
-  read back as unauthored.
+  so absence is unambiguous, and so is a `string_list` holding `[]`
+  (§2.5). **Zero and `false` are values, not absences**, and MUST be
+  kept — a `false` dropped as empty would be read back as unauthored.
+- **A `boolean` column is carried as stored**: the SQLite integer, `0`
+  or `1`. SQLite has no boolean type and the file holds the integer;
+  `true` and `false` would be one implementation's reading of it.
 - A column holding JSON is carried **as stored**, as the column's text,
   unparsed. The registry declares a column's type, not a schema for its
   contents, so a parsed value would be one implementation's reading of
@@ -1842,7 +1887,7 @@ named by a line anchor (§3.5), whose stored value is already its uuid.
 **A column whose name merely ends `_id` MUST NOT be dropped on that
 basis.** Until 0.40 this section said the opposite, and the difference
 is not academic: `external_id` (§6.3) is a declared, authored field on
-ten entities, and the clip's two line references of the time were
+sixteen entities, and the clip's two line references of the time were
 ordinary references whose target was a screenplay table rather than a
 registry entity. The old rule silently deleted twelve legitimate
 columns from every projected row.
@@ -1914,11 +1959,14 @@ role from a reference whose role it failed to parse. This is why
 `role` on a projected row is simply gone.
 
 **A derived record that carries a projected row names that member for
-the entity**: §12.10's manifest entries carry `motif`, `appearance` and
-`state`; §12.11's carriers carry `connection`. A section MAY name it
-otherwise and then MUST say so — §12.13's `identification` and §12.14's
-top-level row both use `row`, because neither carries an entity a name
-would identify.
+the entity**: §12.4's entries carry `character` and `prop`; §12.10's
+manifest entries carry `motif`, `appearance` and `state`; §12.11's
+carriers carry `connection`. **A section MAY name it otherwise and then
+MUST say so**, and every section that does is listed here: §12.5's
+`relationship`, §12.13's `beat` and `arc` and its `identification`'s
+`row`, §12.15's `appearance`, and §12.17's `lineage`, whose entries are
+`{entity, row}` because one array holds two kinds. §12.14's top-level
+row is `row`, because it may be of any entity.
 
 This was unstated until 0.40, and it is the member every derived record
 has. A reader could see from §12.1.2 that a projected row has exactly
@@ -1969,7 +2017,10 @@ section below MUST name the column the labels are taken from.
 
 **Every array in a result is ordered, and each query's section below
 states the order for each of its arrays.** An array whose order is not
-stated there is in **story order** (§4.1).
+stated there is in **story order** (§4.1) where its members have a
+story position — a scene, or a row keyed to one — by that position and
+then row id; and where they have none, in **row order**, or registry
+order for an array of entities.
 
 **Row order is never the default, and a section MUST NOT rely on it
 silently.** It is a fact about the file rather than about the story, so
@@ -2087,7 +2138,7 @@ Parameters: `from`, `to`.
 |---|---|
 | `from`, `to` | The two scenes, projected. |
 | `characters` | Each character present at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link them), `variantFrom` and `variantTo`, and `statesFrom` and `statesTo`. In the row order of the `scene_character` rows at the two positions, first appearance first — these are peers with no story position of their own (§12.1.6). |
-| `relationships` | Each relationship with a stage at either position, projected, with `stageFrom` and `stageTo`. |
+| `relationships` | Each relationship with a stage at either position: `{relationship, stageFrom, stageTo}`, the relationship projected, each stage its `stage_label` or null. In row order. |
 | `props` | Each prop with a state at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link it), `variantFrom` and `variantTo`, and `whereFrom` and `whereTo`. |
 
 A row appears when it has something to say at **either** position, so an
@@ -2147,7 +2198,7 @@ what question it answered.
 |---|---|
 | `subjectKind` | The subject's KIND — `character`, `location`, `prop`, `costume` — echoing `subjectType`. **Not its uuid**, which the envelope's `subject` carries. It was itself named `subject` until 0.41, four lines from an envelope member of the same name meaning something else. |
 | `intent` | The intent asked for, echoed. |
-| `trail` | The resolution trail, **broadest first**, matching §7.4's root-first convention. |
+| `trail` | Every layer the cascade considered, **broadest first**, matching §7.4's root-first convention: one derived record per binding, anchor and shot override, below. |
 | `references` | Each asset in force, **most specific first** — shot overrides, then anchors, then bundles in §12.8.2's order. |
 | `counts` | References per resolution state, keyed by §8.3's states. Every state is a key, including those with a count of zero. |
 | `rootMapped` | Whether the session had a root mapping at all. |
@@ -2176,6 +2227,35 @@ asset both overridden at the shot and present in the bundle appears once,
 as `shot override`. Reporting it twice would make `counts` disagree with
 the number of distinct assets a consumer has to fetch.
 
+**Each trail entry is a derived record** (§12.1.4):
+
+| Member | Kind | |
+|---|---|---|
+| `layer` | **Closed vocabulary** | `binding`, `anchor` or `shot override`. |
+| `uuid`, `name` | Identity, stored value | The binding, anchor or override row's. |
+| `bundle` | Derived record or null | `{uuid, name}` of the bundle a binding or an override brings; null for an anchor. |
+| `excluded` | Derived record or null | Null when the layer contributed. Otherwise `{by, value, reason}`. |
+
+`excluded.by` is a **closed vocabulary**, one code per reason a layer
+does not contribute:
+
+| `by` | `value` | |
+|---|---|---|
+| `not_baseline` | null | No position was asked about, and the binding is not a baseline. |
+| `before_scene_range`, `after_scene_range` | null | The position is outside the binding's scene range. |
+| `time_of_day_filter`, `physical_state_filter`, `vocal_state_filter` | The filter's value | The filter does not hold here (§12.8.1). |
+| `variant_id` | The filtered variant's uuid | The variant the binding names is not in force (§4.8). |
+| `replaced` | The replacing binding's uuid | A `replace` binding of higher precedence is in force (§12.8.2). |
+| `variant_not_in_force` | The variant in force's uuid, or null | An anchor naming a variant that is not the one in force. |
+| `displaced` | The variant in force's uuid | A subject's own anchor, set aside by its variant's anchor of the same type. |
+| `canonical_status` | The anchor's status | An anchor that is not verified. |
+
+**`excluded.reason` is prose**, written for a person, and like
+`detail` it MUST NOT be parsed and is not compared (`conformance.md`
+§6.1); `by` and `value` are the answer. A binding or override whose
+bundle is of another intent, and an anchor of another anchor type, is
+not considered and has no entry.
+
 **`trail` and `references` run in opposite directions**, and both are
 deliberate: the trail reads as an explanation, broadest first, the way
 §7.4 returns a cascade; the references read as an answer, most specific
@@ -2187,6 +2267,21 @@ region — and carries no identifier of its own, so reporting the anchor
 row as the reference would produce something that can never resolve.
 The reference carries the asset's identity and the anchor's name in
 `anchorName`.
+
+**An intent is answered by anchors of one type**, and only anchors of
+that type are considered:
+
+| `intent` | `anchor_type` |
+|---|---|
+| `visual_identity`, `surface`, `environment` | `visual` |
+| `voice_identity`, `acoustic` | `audio` |
+| `motion`, `performance` | `motion` |
+
+**Only a verified anchor contributes**: one whose `canonical_status` is
+`verified` or unset. Any other status — `candidate`, `deprecated` — is
+an anchor still being decided, and identity cannot rest on it. It is
+considered, does not contribute, and appears in `trail` excluded by
+`canonical_status`.
 
 **An anchor naming a variant contributes only where that variant is in
 force (§4.8).** `entity_anchor.subject_variant_id` names it; an anchor
@@ -2202,6 +2297,18 @@ with the reason, as an excluded binding does (§12.8.1).
 Until 0.60 `subject_variant_id` was declared and read by nothing, so an
 anchor recorded for a variant was returned as the subject's own at every
 position, and no published result could show it.
+
+**A bundle contributes its assets in `bundle_asset` order**: by
+`order` ascending, rows without one last, then by row id — §8.6's rule,
+applied to a bundle's members. Each reference's `role` is that
+`bundle_asset` row's `role_in_bundle`.
+
+**A shot override contributes its `bundle_override_id` bundle**, at the
+shot asked about, when that bundle's intent is the one asked for; its
+`role`s come from the bundle as above. `override_types`,
+`variant_target_id` and the `*_delta` columns describe the override for
+a reader and change nothing Q13 returns: no shot-level variant is put in
+force by one (§4.8).
 
 **An anchor has no state filter.** It applies wherever this section
 says, and its `condition_description` describes the asset for a reader;
@@ -2385,11 +2492,20 @@ with `character_id` is narrowed to the character asked about, one with
 `scene_id` to the scene, and so on for each parameter the query
 received. A step naming several entities is narrowed the same way for
 each. Where the step carries a `filter`, it applies on top. Where it
-carries an `intent`, the step is satisfied by a bundle of that intent
-carrying at least one asset.
+carries an `intent`, the step is satisfied when **the subject asked
+about** has at least one reference of that intent in force at the
+position — its own Q13 answer (§12.8) at the query's scene and shot. A
+bundle bound to some other subject does not satisfy it.
 
-An entity declaring none of the query's parameters as a column is
-assessed across the file, because there is nothing to narrow it by.
+**A step over an entity with a position pattern (§4.5) is narrowed by
+that pattern**, not by `scene_id` equality: a `performance_state` that
+persists from an earlier scene is in force here and satisfies the step,
+and one keyed to this scene that has since been resolved does not exist
+here.
+
+An entity declaring none of the query's parameters as a column, and
+neither of the two cases above, is assessed across the file, because
+there is nothing to narrow it by.
 
 **An absent `optional` step is `ok` by default.** That is what optional
 means, and a report that raised a `suggestion` every time one was absent
@@ -2562,8 +2678,8 @@ Parameter: `scene`.
 |---|---|
 | `scene` | The scene, projected. |
 | `information` | The information strategy here, or null. |
-| `identification` | The identification strategy, or null: `row` (projected), `primary`, `secondary`. Named `row` rather than for an entity, per §12.1.4, because the strategy is what the record is about. |
-| `emotionalBeats` | Each beat with the arc it belongs to. |
+| `identification` | The identification strategy, or null: `{row, primary, secondary}` — the strategy, and the characters its two references name, each projected, either character null where unset. Named `row` rather than for an entity, per §12.1.4, because the strategy is what the record is about. |
+| `emotionalBeats` | Each beat with the arc it belongs to: `{beat, arc}`, each projected, `arc` null where none. In row order. |
 | `toneMarkers` | Tone markers at this position. |
 | `emotionalCascade` | The direction cascade for leaf `scene_emotional_target`, root first (§7). |
 
@@ -2624,7 +2740,7 @@ Parameters: `subjectType` — a literal — and `subject`.
 |---|---|
 | `subjectType`, `subject` | The subject and its kind. |
 | `groups` | Entities authored about this subject, each `{ entity, rows }`. |
-| `motifCarriage` | Motif appearances that name this subject, with the motif. |
+| `motifCarriage` | Motif appearances that name this subject: `{appearance, motif}`, each projected, the motif null where it is absent. **In story order** by the appearance's scene, then row id; one with no story position last. |
 | `thematicConnections` | Thematic connections that name it. |
 
 **`groups` is derived, not listed.** A group is any entity whose
@@ -2659,7 +2775,7 @@ Parameters: `subjectType`, `subject`, `scene`, and `shot` — optional.
 | `locationVariant` | For a location subject: the variant in force and any mismatches. |
 | `propVariant` | For a prop subject: the variant §4.8 puts in force, projected, or null. |
 | `propState` | For a prop subject. |
-| `media` | **Q13's result body**, with `fromQuery: "Q13"`. |
+| `media` | **Q13's result body**, with `fromQuery: "Q13"`, asked at this scene and shot for intent **`environment`** for a location subject and **`visual_identity`** for any other. |
 
 `arcStates` carries the stage in force on each of the character's arcs
 (§4.5), and **not the arcs themselves**: a `character_arc` is a standing
@@ -2684,9 +2800,9 @@ Parameter: `scene`.
 | Field | |
 |---|---|
 | `scene` | Projected. |
-| `lineage` | Act and sequence, **broadest first**. |
+| `lineage` | Act and sequence the scene belongs to by §5.1, **broadest first**: `{entity, row}`, `entity` being `act` or `sequence` and `row` projected. A scene in no act or no sequence has no entry for it. |
 | `storyBeats` | In `beat_order`. |
-| `cast`, `props` | Present by authored link, not inference. Each projected row also carries `presence` (§2.4.1) and `variant`: the variant in force (§4.8), projected, or null. |
+| `cast`, `props` | Present by authored link, not inference: `{character, presence, variant}` and `{prop, presence, variant}`, as §12.4's entries are — the subject projected, its `presence` (§2.4.1), and `variant`, the variant in force (§4.8), projected, or null. |
 | `location`, `locationVariant` | The location, and `{ variant, mismatches }` — see below. |
 | `detail` | Scene-level design entities, each `{ entity, rows }`, empty groups omitted. |
 | `blocking`, `stagingBeats` | Staging, beats in `beat_order`. **`blocking` is an array** — a scene may carry several — and both hold projected rows. |
@@ -2721,10 +2837,11 @@ best describes this scene*:
    winter-morning baseline does. Counting the axes equally made those
    two tie, and the tie went to the morning.
 3. Between variants equal on all three, prefer `is_baseline`, then the
-   first such row.
-4. **If the winner agrees on no axis, take the first `is_baseline`
-   variant.** Nothing agreed, so agreement is not what chose it, and
-   the baseline is the honest answer.
+   lowest row id.
+4. **If the winner agrees on no axis, take the `is_baseline` variant
+   with the lowest row id.** Nothing agreed, so agreement is not what
+   chose it, and the baseline is the honest answer. A location with no
+   baseline keeps the step 2–3 winner.
 
 **`time_of_day` is a light axis** — what the camera sees: `day`,
 `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`. It is not the

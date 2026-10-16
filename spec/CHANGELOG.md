@@ -17,6 +17,89 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.2 — 2026-10-16
+
+*Describes schema 2.24.*
+
+**The second release candidate**, from the sixth independent reader run
+(`docs/release-checklist.md` §D1): four results that contradicted the
+text or could not be produced from it, and thirteen rules an implementer
+needed and the text did not state. No schema change. **Breaking for
+Q13, Q02 and Q04 results**, taken under §11.0, which still holds.
+
+### §12.8 — the trail is structured (breaking)
+
+`trail` was English sentences that conformance compared byte for byte,
+so no reader could reproduce Q13 or Q02 from the text. Each entry is now
+a derived record — `layer`, `uuid`, `name`, `bundle`, and `excluded`
+with a closed `by` vocabulary and a `value` — and only
+`excluded.reason` is prose. Conformance compares `reason` and a
+reference's `detail` as present strings only.
+
+### §12.8 — which anchors are considered, and which contribute
+
+The intent → `anchor_type` table is now in the text. **Only a verified
+anchor contributes** (`canonical_status` `verified` or unset); any other
+is considered, excluded and in `trail`. The reference had dropped
+unverified anchors silently, which is why a displaced candidate anchor
+was missing from `Q13-scene25`'s trail against §12.8's MUST. A shot
+override contributes its bundle only for the intent asked about, as a
+binding does; a bundle's assets come in `bundle_asset` order; and an
+override's other columns change nothing Q13 returns.
+
+### §12.17 — Q04's cast and props are derived records (breaking)
+
+`{character, presence, variant}` and `{prop, presence, variant}`, as
+Q03's are. Q04 had put `presence` and `variant` beside a projected row's
+`uuid` and `fields`, which §12.1.2 forbids.
+
+### Results that contradicted the text
+
+- **Q07** projected `string_list` columns as JSON text; it now projects
+  each cascade layer by its own entity's column roles, as §2.5 and
+  every other result do.
+- **Motif carriage** (§12.15) is in story order, which §12.1.6 required
+  and the reference did not do.
+
+### Rules now stated
+
+- §1.2: a `user_version` of 0 is an absent stamp, not a disagreement.
+- §1.3.1: how a section line's label is compared with its span.
+- §3.4: a heading names its scene by its own `scene_id`, authoritatively.
+- §4.1: `structure.scene_not_in_script` only where the file has a
+  screenplay. §4.2.3: conforming numbers, then opaque, then absent.
+- §4.5: a pattern-2 state with no `scene_id` is in force nowhere.
+- §5.5: two spans on one scene — the later by row id takes the scenes.
+- §8.2: a path with `..` is `out-of-root`.
+- §9.5: **one code on one table is one finding**, every row at fault in
+  `rowIds`; findings are computed over every row, cut ones included.
+  The identity findings now carry their rows, and the published report
+  merges per condition.
+- §12.1.1: an optional parameter not supplied is null.
+- §12.1.2: a `boolean` column is carried as the stored 0 or 1; an empty
+  `string_list` is omitted.
+- §12.1.4: every section that names a derived record's row member other
+  than for its entity is listed; §12.5, §12.13 and §12.17 name theirs.
+- §12.1.6: an array with no story position is in row order.
+- §12.9.1: a media step is narrowed through the subject's own Q13 answer,
+  a positioned step by its pattern.
+- §12.16: Q02's media intent, per subject kind.
+- §12.17: ties go to the lowest row id.
+
+### Artifacts
+
+- `fixtures/hollow_creek.report.json`: the fixture's own report, which a
+  validator MUST match (`conformance.md` §6.1).
+- Negative case `asset-orphans-two` pins §9.5's grain.
+- `conformance.md` §6.1 says exactly what is compared in a report and a
+  result, and how `CASES.json`'s `-- params:` suffix binds.
+- `ShotContext-readiness.result.json` is not a canonical result and has
+  left `fixtures/expectations/`.
+- Stale counts in §2.1, §2.4.1, §12.1.2 and `conformance.md` §5.1, and
+  two sentences in `what-is-scf.md` §7.
+
+---
+
 ## 1.0-rc.1, re-cut — editorial corrections — 2026-10-16
 
 *Describes schema 2.24.*

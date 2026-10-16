@@ -500,7 +500,7 @@ reports and `SHA256SUMS`.
 
 | | Item | Notes |
 |---|---|---|
-| ○ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. |
+| ◑ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. **Run 6 done 2026-10-16 against `spec-1.0-rc.1`: 4 critical, 13 major, 15 minor; rc.1 cannot be cut as 1.0.** 21 of 28 comparable results reproduced from the text alone, 15 of 15 negatives with three guesses. All addressed in **1.0-rc.2** (see below); a seventh run reads rc.2. |
 | ✅ | D2. Fixture: the night kitchen | Scenes 10 and 19 resolve the **day** baseline because the night variant is autumn and they are winter (`narrative-workspaces.md` §11). **Decided (§A11): the rule was wrong** — §12.17 now ranks time of day first. **Done in §B8:** both resolve the night variant, and a test pins it. |
 | ✅ | D3. Rules stated and exercised by nothing | `junction.endpoint_absent`, `structure.section_mismatch`, §12.17's zero-score baseline, `varies`, a `status` that disagrees with `lifecycle_status`, act and sequence renumbering under `derived` (§4.3). **Done 2026-10-16 (spec 0.68), a row each:** negative cases `junction-endpoint-absent` and `section-mismatch`, each raising its finding alone; church and ridge location variants published as `Q02-church-scene16` (`varies` wins on the wildcard alone) and `Q02-ridge-scene21` (nothing agrees, the baseline with three mismatches); scenes 3, 12, 19 at `draft`, `locked`, `revised`, and 12B `locked` and `cut`. Renumbering under `derived` and `fixed` was already tested in `structureCommit.test.ts`; `stability.md` said otherwise and now does not. |
 | ✅ | D4. An unknown `line_type` raises no finding | §1.3.1 closes the vocabulary at fifteen; the column is free text and nothing reports a sixteenth. **Decided (§A12): `line.type_unknown`, severity error.** Done in §B8, with a negative case. |
@@ -529,7 +529,48 @@ the prose.
 4. ✅ Annotated tags, pushed: `schema-2.24` and `spec-1.0-rc.1`. Then
    `check_pin.py --strict` against the remote. No npm publish. *Done
    2026-10-16; the pin step passes.*
-5. ○ Launch D1 against the candidate.
+5. ✅ Launch D1 against the candidate. *Run 6, 2026-10-16: an rc.2 is
+   needed.*
+
+**1.0-rc.2 — from run 6, prepared 2026-10-16.** No schema change.
+Decisions 2026-10-16: Q13's `trail` becomes derived records with a
+closed `excluded.by` (C1); Q04's cast and props nest as Q03's (M1);
+booleans stay the stored 0/1, now stated (M2).
+
+- **Criticals.** C1 as above, with `reason` and `detail` compared as
+  present strings only. C2: Q07's cascade projected by a hand-written
+  map and lost `string_list`; each layer now projects by its own
+  entity. C3: the resolver dropped unverified anchors silently; they
+  now appear in `trail` excluded by `canonical_status`, and §12.8 says
+  only a verified anchor contributes. C4: motif carriage in story order.
+- **Majors** are mostly sentences the reference already behaved by:
+  the intent → anchor-type table (M3), Q02's media intent (M4), what a
+  shot override contributes — and it now matches the intent, as a
+  binding does (M5) — bundle order (M6), the heading's `scene_id`
+  (M7), `scene_not_in_script` (M9), the zero `user_version` (M10), Q14's
+  narrowing (M11), every derived-record member name (M13). M8 and M12
+  changed artifacts: identity findings carry their rows, the published
+  report merges one code on one table into one finding, findings are
+  computed over every row, and the fixture's own report is published.
+- **Minors**: row order for position-less arrays (and `rows()` now
+  orders by rowid rather than trusting the plan), ties, opaque vs absent
+  scene numbers, two spans on one scene, null optional parameters,
+  `CASES.json`'s params suffix, section-line comparison, `..`,
+  `ShotContext-readiness` moved out of the published directory, stale
+  counts, `what-is-scf.md` §7, empty `string_list`, shot-only states,
+  and `asset-orphans-two` for §9.5's grain.
+- **m14, for run 7:** export only `spec/`, `docs/what-is-scf.md`,
+  `README.md`, `fixtures/hollow_creek.scf`, `fixtures/hollow_creek.report.json`,
+  `fixtures/expectations/` and `fixtures/negative/` — not
+  `fixtures/build/`, which is reference-adjacent code.
+
+**rc.2 day:**
+
+1. ✅ Spec `1.0-rc.2`: CHANGELOG, headers, every artifact re-blessed.
+2. ○ Commit, then tag `spec-1.0-rc.2`. **`schema-2.24` must move to the
+   same commit**: `ARTIFACTS.md` addresses every artifact, spec text
+   included, by the schema tag, and the registry bytes are unchanged.
+3. ○ `check_pin.py --strict`, then launch run 7 against `spec-1.0-rc.2`.
 
 **1.0 day — after D1, and after anything it finds is fixed:**
 

@@ -22,6 +22,7 @@ import { collectFindings } from "../src/findings.ts";
 import { openNodeDatabase } from "../src/node.ts";
 import {
   resolveMedia, type ResolvedMedia, type ScfContext,
+  trailEntryLine,
 } from "../src/resolution.ts";
 import { FIXTURE_PATH, openFixture, registry, type Fixture } from "./setup.ts";
 
@@ -50,8 +51,8 @@ async function withCopy<T>(
 }
 
 const line = (m: ResolvedMedia, binding: string): string => {
-  const l = m.trail.find((t) => t.startsWith(`binding ${binding} -> `));
-  expect(l, `no trail line for "${binding}":\n${m.trail.join("\n")}`)
+  const l = m.trail.map(trailEntryLine).find((t) => t.startsWith(`binding ${binding} -> `));
+  expect(l, `no trail line for "${binding}":\n${m.trail.map(trailEntryLine).join("\n")}`)
     .toBeDefined();
   return l ?? "";
 };
@@ -154,7 +155,7 @@ describe("§12.8.2 — the orders", () => {
     expect(plate).toBeGreaterThanOrEqual(0);
     expect(plate).toBeLessThan(baseline);
     // The trail runs broadest first: the baseline opens it.
-    const bindingLines = m.trail.filter((t) => t.startsWith("binding "));
+    const bindingLines = m.trail.map(trailEntryLine).filter((t) => t.startsWith("binding "));
     expect(bindingLines[0]).toMatch(/^binding Farmhouse Kitchen -> /);
     expect(bindingLines.at(-1)).toMatch(/^binding (Scene 03|Kitchen storm)/);
   });
@@ -162,7 +163,7 @@ describe("§12.8.2 — the orders", () => {
   test("equal precedence is ordered by row id, lower first", async () => {
     // Scene 03 (row 1) and the storm build (row 8) share precedence 2.
     const m = await kitchenAt(fx.ctx, "3");
-    const bindingLines = m.trail.filter((t) => t.startsWith("binding "));
+    const bindingLines = m.trail.map(trailEntryLine).filter((t) => t.startsWith("binding "));
     // Reversed in the trail, so the higher row id comes first there.
     const storm = bindingLines.findIndex((t) => t.includes("storm-night"));
     const plate = bindingLines.findIndex((t) => t.includes("Scene 03"));

@@ -319,14 +319,14 @@ export function PackageView({ p }: { p: Q04Result }): JSX.Element {
       <h3>Cast & props</h3>
       <ul className="qlist">
         {p.cast.map((c, i) => (
-          <li key={`c${c.uuid ?? i}`}>
-            <RowLink entity="character" row={c} />
+          <li key={`c${c.character.uuid ?? i}`}>
+            <RowLink entity="character" row={c.character} />
             <PresenceTags presence={c.presence} variant={c.variant} />
           </li>
         ))}
         {p.props.map((x, i) => (
-          <li key={`p${x.uuid ?? i}`}>
-            <RowLink entity="prop" row={x} />
+          <li key={`p${x.prop.uuid ?? i}`}>
+            <RowLink entity="prop" row={x.prop} />
             <span className="scope-tag">prop</span>
             <PresenceTags presence={x.presence} variant={x.variant} />
           </li>

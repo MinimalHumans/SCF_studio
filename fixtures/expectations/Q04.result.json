@@ -102,53 +102,57 @@
     ],
     "cast": [
       {
-        "uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
-        "fields": {
-          "age": "61",
-          "arc_description": "From a woman who answers questions with tasks to a woman who says the thing and lets it cost her.",
-          "archetype": "the keeper of the house",
-          "backstory": "Came west at nineteen. Buried a husband at forty-two and a daughter at fifty-four. Has not left the valley since.",
-          "casting_status": "tbd",
-          "core_belief": "Work is what love looks like when you can't speak.",
-          "external_goal": "Get the homestead through the winter.",
-          "flaw": "Mistakes silence for mercy — to others and to herself.",
-          "gender": "female",
-          "greatest_fear": "That saying it aloud makes it true forever.",
-          "internal_goal": "To stop blaming her son without having to forgive him.",
-          "lifecycle_status": "active",
-          "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
-          "name": "Eleanor Cade",
-          "notes": "Written older than most leads on purpose. If casting pushes younger the drowning has to move with her.",
-          "occupation": "Homesteader; midwife to the valley",
-          "pronouns": "she/her",
-          "role": "protagonist",
-          "skills_abilities": "Midwifery, horse handling, reading weather",
-          "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
+        "character": {
+          "uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "fields": {
+            "age": "61",
+            "arc_description": "From a woman who answers questions with tasks to a woman who says the thing and lets it cost her.",
+            "archetype": "the keeper of the house",
+            "backstory": "Came west at nineteen. Buried a husband at forty-two and a daughter at fifty-four. Has not left the valley since.",
+            "casting_status": "tbd",
+            "core_belief": "Work is what love looks like when you can't speak.",
+            "external_goal": "Get the homestead through the winter.",
+            "flaw": "Mistakes silence for mercy — to others and to herself.",
+            "gender": "female",
+            "greatest_fear": "That saying it aloud makes it true forever.",
+            "internal_goal": "To stop blaming her son without having to forgive him.",
+            "lifecycle_status": "active",
+            "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
+            "name": "Eleanor Cade",
+            "notes": "Written older than most leads on purpose. If casting pushes younger the drowning has to move with her.",
+            "occupation": "Homesteader; midwife to the valley",
+            "pronouns": "she/her",
+            "role": "protagonist",
+            "skills_abilities": "Midwifery, horse handling, reading weather",
+            "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
+          }
         },
         "presence": "seen",
         "variant": null
       },
       {
-        "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
-        "fields": {
-          "age": "34",
-          "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
-          "archetype": "the returning prodigal",
-          "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
-          "casting_status": "tbd",
-          "core_belief": "A debt can be worked off if you work hard enough.",
-          "external_goal": "Winter over at the homestead and mend what he can.",
-          "flaw": "Confesses only when cornered, then calls it honesty.",
-          "gender": "male",
-          "greatest_fear": "That his mother already knows.",
-          "internal_goal": "Absolution he cannot ask for directly.",
-          "lifecycle_status": "active",
-          "motivation": "To be told he is not what he believes he is.",
-          "name": "Marcus Cade",
-          "occupation": "Railroad surveyor",
-          "pronouns": "he/him",
-          "role": "deuteragonist",
-          "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+        "character": {
+          "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "fields": {
+            "age": "34",
+            "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+            "archetype": "the returning prodigal",
+            "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+            "casting_status": "tbd",
+            "core_belief": "A debt can be worked off if you work hard enough.",
+            "external_goal": "Winter over at the homestead and mend what he can.",
+            "flaw": "Confesses only when cornered, then calls it honesty.",
+            "gender": "male",
+            "greatest_fear": "That his mother already knows.",
+            "internal_goal": "Absolution he cannot ask for directly.",
+            "lifecycle_status": "active",
+            "motivation": "To be told he is not what he believes he is.",
+            "name": "Marcus Cade",
+            "occupation": "Railroad surveyor",
+            "pronouns": "he/him",
+            "role": "deuteragonist",
+            "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+          }
         },
         "presence": "seen",
         "variant": null
@@ -156,35 +160,39 @@
     ],
     "props": [
       {
-        "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
-        "fields": {
-          "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
-          "description": "Brass locket holding Ada's portrait.",
-          "first_appearance": "sc 11, saddlebag",
-          "key_moments": "sc 11 pocketed · sc 19 on the table",
-          "lifecycle_status": "active",
-          "name": "Ada's locket",
-          "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
-          "prop_type": "hand prop",
-          "realization_status": "sourced",
-          "story_function": "macguffin",
-          "symbolism": "What Marcus took from the creek and could not put down."
+        "prop": {
+          "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+          "fields": {
+            "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+            "description": "Brass locket holding Ada's portrait.",
+            "first_appearance": "sc 11, saddlebag",
+            "key_moments": "sc 11 pocketed · sc 19 on the table",
+            "lifecycle_status": "active",
+            "name": "Ada's locket",
+            "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "macguffin",
+            "symbolism": "What Marcus took from the creek and could not put down."
+          }
         },
         "presence": "seen",
         "variant": null
       },
       {
-        "uuid": "a63ce1c6-17e5-448b-8abb-9956cf2b4fcb",
-        "fields": {
-          "associated_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
-          "first_appearance": "sc 3",
-          "lifecycle_status": "active",
-          "name": "The Kettle",
-          "narrative_significance": "Eleanor's answer to every question she will not take.",
-          "prop_type": "hand prop",
-          "realization_status": "sourced",
-          "story_function": "character extension",
-          "symbolism": "Work as a way of not speaking."
+        "prop": {
+          "uuid": "a63ce1c6-17e5-448b-8abb-9956cf2b4fcb",
+          "fields": {
+            "associated_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+            "first_appearance": "sc 3",
+            "lifecycle_status": "active",
+            "name": "The Kettle",
+            "narrative_significance": "Eleanor's answer to every question she will not take.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "character extension",
+            "symbolism": "Work as a way of not speaking."
+          }
         },
         "presence": "seen",
         "variant": null

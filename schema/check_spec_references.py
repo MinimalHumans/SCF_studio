@@ -60,7 +60,7 @@ EXTENSIONS = {
 #: Report and result members that share the `a.b` shape.
 #: Small, and each one is a member this specification defines itself.
 MEMBERS = {"counts.error", "counts.warning", "counts.info", "area.condition",
-           "dossier.groups"}
+           "dossier.groups", "excluded.by", "excluded.reason"}
 
 #: Names that are not registry identifiers and legitimately appear in
 #: backticks. Everything else on the legal side is DERIVED — entity
@@ -74,6 +74,10 @@ NOT_REGISTRY_NAMES = {
     "sqlite3_js_db_export",
     # §1.3.1 names this deliberately, as the value that is NOT correct.
     "scene_heading",
+    # §12.8's closed `excluded.by` vocabulary, where it is not already a
+    # column name. Defined by the specification, not the registry.
+    "not_baseline", "before_scene_range", "after_scene_range",
+    "variant_not_in_force",
 }
 
 #: Columns that EXISTED and were REMOVED. A reference to one is history
