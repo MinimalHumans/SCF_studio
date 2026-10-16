@@ -1,13 +1,13 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.68 (draft) — not a release.**
+**Version 1.0-rc.1 — release candidate.**
 Describes schema version **2.24**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
 |---|---|
-| Status | Draft. Section stability is stated in [stability.md](stability.md). |
+| Status | Release candidate for 1.0. §11.0's pre-1.0 clause holds until the release. Section stability is stated in [stability.md](stability.md). |
 | Conformance | Roles and requirements in [conformance.md](conformance.md). |
 | Changelog | [CHANGELOG.md](CHANGELOG.md). |
 | Rationale | Design record: [../docs/conventions.md](../docs/conventions.md). |
@@ -1701,6 +1701,13 @@ Editorial changes to this document that do not change a requirement
 increment the patch component only. Any change to a MUST or MUST NOT is
 a minor version at minimum, and MUST be recorded in the specification
 changelog.
+
+A **release candidate** carries `-rc.N` after the version it precedes:
+`1.0-rc.1` is the first candidate for 1.0. Its requirements are the
+release's unless a later candidate changes them, and each candidate is
+recorded in the changelog like any version. §11.0 holds until the
+release itself, so a defect found in a candidate is fixed in the next
+candidate rather than carried as a compatibility cost.
 
 ### 11.6 Document equality
 

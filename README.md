@@ -17,7 +17,7 @@
 <p align="center">
   <a href="https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml"><img src="https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://minimalhumans.github.io/SCF_studio/"><img src="https://img.shields.io/badge/docs-minimalhumans.github.io-1b6393" alt="Documentation"></a>
-  <a href="spec/stability.md"><img src="https://img.shields.io/badge/spec-pre--1.0%20draft-ef393b" alt="Specification: pre-1.0 draft"></a>
+  <a href="spec/stability.md"><img src="https://img.shields.io/badge/spec-1.0--rc.1-ef393b" alt="Specification: 1.0 release candidate"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-1b6393" alt="Code licence: Apache-2.0"></a>
   <a href="spec/LICENSE"><img src="https://img.shields.io/badge/prose-CC%20BY%204.0-f4af3f" alt="Prose licence: CC BY 4.0"></a>
 </p>
@@ -40,7 +40,8 @@ scene, what is in force here, what a shot is for.
 An `.scf` file is a SQLite database. The schema is generated from one
 declaration; every consumer reads the generated registry.
 
-**Status: pre-1.0.** The specification is a draft at `spec/scf-spec.md`,
+**Status: pre-1.0, release candidate.** The specification is at
+`spec/scf-spec.md`, as candidate `1.0-rc.1`,
 and `spec/stability.md` states what is safe to build against. Until 1.0
 ships, existing `.scf` files are disposable — there is no migration path
 and no backward compatibility owed to anything already written (spec

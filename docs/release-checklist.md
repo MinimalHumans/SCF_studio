@@ -510,12 +510,15 @@ the prose.
 
 **RC day — every door stays shut:**
 
-1. ○ Spec **`1.0-rc.1`**: CHANGELOG entry; §0.6 rewritten (exactly
+1. ✅ Spec **`1.0-rc.1`**: CHANGELOG entry; §0.6 rewritten (exactly
    schema 2.24); stability and conformance headers. §11.0 stays in
-   force.
-2. ○ Schema **2.24** (§A7): every artifact regenerated, the fixture
-   rebuilt.
-3. ○ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
+   force. *Done 2026-10-16, with §11.5's sentence on what a candidate
+   is, and the README badge, README, site and `what-is-scf.md` status
+   lines.*
+2. ✅ Schema **2.24** (§A7): every artifact regenerated, the fixture
+   rebuilt. *Every `--check` current, the fixture rebuild identical.*
+3. ✅ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
+   *Green except the pin step, which needs step 4's tag.*
 4. ○ Annotated tags, pushed: `schema-2.24` and `spec-1.0-rc.1`. Then
    `check_pin.py --strict` against the remote. No npm publish.
 5. ○ Launch D1 against the candidate.

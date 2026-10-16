@@ -17,6 +17,39 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.1 — 2026-10-16
+
+*Describes schema 2.24.*
+
+**The first release candidate for 1.0.** No requirement changes from
+0.68; this entry names the candidate and adds §11.5's sentence on what
+a candidate is. It is tagged `spec-1.0-rc.1`, beside `schema-2.24`, and
+is what the sixth independent reader run reads
+(`docs/release-checklist.md` §D1).
+
+**§11.0 stays in force.** Files are still disposable and the candidate
+may still break them; that ends at 1.0, not here. Nothing is published
+to npm.
+
+What the candidate carries since the last reader run read the format
+(0.49), by the entries above: line anchors and ranges (§3.5, §4.7),
+presence (§2.4.1), variants (§4.8) and binding filters (§12.8.1–12.8.2),
+open vocabularies and `string_list`, `required` as incompleteness; and
+the 1.0 decisions of 0.66 — exactly schema 2.24 (§0.6),
+`line.type_unknown` (§1.3.1), a clip outliving its scene (§2.3),
+`sequence.act_id` removed, the audio-offset semantics (§12.8) and the
+ranked variant axes (§12.17). Since 0.67–0.68 every member of every
+published result carries data, through per-case normative results, and
+every rule `stability.md` named as unexercised has a row.
+
+### §11.5 — release candidates
+
+A candidate is `<version>-rc.N`. Its requirements are the release's
+unless a later candidate changes them, and a defect found in one is
+fixed in the next.
+
+---
+
 ## 0.68 — 2026-10-16
 
 *Describes schema 2.24.*

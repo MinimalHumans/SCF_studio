@@ -44,7 +44,8 @@ answer, and any conforming implementation produces it.
 
 ## Status
 
-**Pre-1.0 and honest about it.** The specification is a draft, and until
+**Pre-1.0 and honest about it.** The specification is a release
+candidate, `1.0-rc.1`, and until
 1.0 ships there is no migration path and no backward compatibility owed
 to anything already written. What is safe to build against is stated,
 per subject, in [stability](stability.html) — including the things that
