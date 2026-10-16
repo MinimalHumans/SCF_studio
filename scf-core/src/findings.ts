@@ -119,7 +119,8 @@ export type FindingCode =
   // How bindings combine — spec §12.8.2
   | "binding.baseline_replaces"
   | "binding.replace_tie"
-  // Line anchors and ranges — spec §3.5, §4.7
+  // Lines, line anchors and ranges — spec §1.3.1, §3.5, §4.7
+  | "line.type_unknown"
   | "line.anchor_orphaned"
   | "line.range_outside_scene"
   | "line.range_reversed"
@@ -367,6 +368,11 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     spec: "§12.8.2",
   },
 
+  "line.type_unknown": {
+    severity: "error",
+    title: "Screenplay line has a line_type outside the published set",
+    spec: "§1.3.1",
+  },
   "line.anchor_orphaned": {
     severity: "warning",
     title: "Line anchor names no line of the screenplay",
@@ -840,7 +846,7 @@ export async function collectFindings(
                   { table: p.table, rowIds: [p.rowId] }));
   }
 
-  // --- line anchors and ranges (§3.5, §4.7) ---
+  // --- line types, anchors and ranges (§1.3.1, §3.5, §4.7) ---
   for (const p of await lineProblems({ exec, registry })) {
     out.push(make(p.code, p.message,
                   { table: p.table, rowIds: [p.rowId] }));

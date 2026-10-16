@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 0.65 / schema 2.23. This document is expected
+Current as of specification 0.66 / schema 2.24. This document is expected
 to change on most rounds; the specification is not.
 
 ---
@@ -74,7 +74,7 @@ about it is ceremonial.
 | Rubric steps scoped to the query's position | §12.9.1 | Provisional | Yes | Stated in 0.41. A step asks about the position the query was asked about, not the file. |
 | **Rubric steps resolve to entities** | §12.9.1 | Provisional | Yes | **Closed in 0.38.** A step now carries `entities` (registry names, checked against the registry at generation time), an optional `filter` and `intent`, and a `label` derived from them for display only. `readinessRubric.test.ts` additionally pins that every entity Q14 reports is one the rubric declares — `readiness.ts` assesses by hand rather than walking the rubric, so the two were free to drift and nothing checked them. |
 | Q04 carries the scene's text | §12.17.1 | Provisional | Yes | Added in 0.49. `screenplay_lines` is a `uuidExtraTable`, so the section declares its own reference columns and its own bounds; the empty case is exercised by fixture scene 17, which has no heading line. Provisional until a second implementation has produced the member from the text alone. |
-| Location variant selection | §12.17 | Provisional | Yes | Stated in 0.41 and **exercised since 0.42**: scene 12's kitchen dressing was built for autumn and reused in winter, so it still wins on two axes and the published Q04 result carries a non-empty `mismatches`. The zero-score baseline fallback remains unexercised. |
+| Location variant selection | §12.17 | Provisional | Yes | Stated in 0.41 and **exercised since 0.42**: scene 12's kitchen dressing was built for autumn and reused in winter, so it still wins on two axes and the published Q04 result carries a non-empty `mismatches`. The axes rank in order since 0.66 — time of day, then weather, then season — and scenes 10 and 19, winter nights, exercise it: the autumn night variant wins over the winter-morning baseline (`conformance.canonical.test.ts`). The fallback when the winner agrees on no axis remains unexercised. |
 | `time_of_day` is a light axis | §12.17 | Provisional | Partly | Stated in 0.53 (proposal 0012). `day` added, `continuous` removed — it could never match a variant. Partly: the fixture authors refined times against DAY headings, which is the case the rule exists for, but no fixture scene carries `day` itself. |
 | `varies` is a wildcard on the time axis | §12.17 | Provisional | Yes | Stated in 0.53, and implemented in `resolution.ts`. `varies` scored as an ordinary value could never agree, making the one value meaning "holds at any hour" the one that never won. **Not exercised:** no fixture variant uses it. |
 | Dossier group reference column | §12.15 | Provisional | Yes | `<subject>_id`, stated in 0.41. |

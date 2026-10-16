@@ -17,9 +17,11 @@ and every release-schema reference below says so.
 
 **Since then (2026-10-09 – 10-15):** 0037 (shot and scene media) and
 0038 (the project poster) are committed — `d651077`, `350c181`,
-`54c8cf4` — as **spec 0.65** on **schema 2.23, untagged**; both
-proposals say `implemented`. The rest of the 2.23 batch (§B8) lands
-under the same number. The week's other work was editor-only
+`54c8cf4` — as **spec 0.65** on **schema 2.23**, which was then
+**tagged and pushed** as `schema-2.23` on 2026-10-12 (`50624af`); both
+proposals say `implemented`. So the rest of the batch (§B8) landed as
+**schema 2.24**, the release schema, decided 2026-10-16: a published
+tag is not reused, as with 2.22. The week's other work was editor-only
 (presentation, storyboard and shot-list tabs, screenplay export,
 gallery, asset statuses) and touches nothing on this list.
 
@@ -90,9 +92,9 @@ proposals carry their resolutions; the work the decisions create is
 | ✅ | 2 | **0003 — absolute paths resolve.** | **Deferred** until the editor has named-root support. Behavioural and additive. |
 | ✅ | 3 | **0014, 0019.** | **Declined**, reasons written into each file. |
 | ✅ | 4 | **0015 — one location per scene.** | **Deferred.** `scene.location_id` stays and stays the primary; that is what keeps a later `scene_location` link additive. |
-| ✅ | 5 | **`sequence.act_id`** — stored, derivable, unspecified, undefined for a sequence that crosses an act. | **Removed** in 2.23 under §11.0. Acts derive from boundaries. The app's writes and reads go (`structureCommit.ts`, `StructureView.tsx`, `EntityList.tsx`; Q04's goes with §B1), and so does the finding that only checked it, `structure.sequence_act_mismatch`. |
-| ✅ | 6 | **The registry's `queries` field** — wrong in both directions since rev 6, checked by nothing. | **Unpublished.** Dropped from `registry.json` and `registry.schema.json` in 2.23. The Python ontology keeps it, because `entity_registry.py`'s lint uses it to enforce that every entity serves a canonical query. Generating a true list from what each `qNNResult()` reads is additive and can come after 1.0. |
-| ✅ | 7 | **One schema bump, not four.** | **2.23 is the release schema**, carrying every registry change in this table — the clip rename, `act_id`, `queries` and the `audio_offset_*` help text. `project.synopsis` already shipped on its own as **2.22** (§A14), tagged before this pass settled the numbering; that tag stays as published rather than being reused, so the release batch is 2.23. Numbering stays `2.x`; no 3.0. |
+| ✅ | 5 | **`sequence.act_id`** — stored, derivable, unspecified, undefined for a sequence that crosses an act. | **Removed** in 2.24 under §11.0. Acts derive from boundaries. The app's writes and reads go (`structureCommit.ts`, `StructureView.tsx`, `EntityList.tsx`; Q04's goes with §B1), ~~and so does the finding that only checked it, `structure.sequence_act_mismatch`~~ — **corrected 2026-10-16:** the finding never read `act_id` (it reports a span crossing an act) and stays. |
+| ✅ | 6 | **The registry's `queries` field** — wrong in both directions since rev 6, checked by nothing. | **Unpublished.** Dropped from `registry.json` and `registry.schema.json` in 2.24. The Python ontology keeps it, because `entity_registry.py`'s lint uses it to enforce that every entity serves a canonical query. Generating a true list from what each `qNNResult()` reads is additive and can come after 1.0. |
+| ✅ | 7 | **One schema bump, not four.** | **2.23 is the release schema** *(2.24 since 2026-10-16 — see the top)*, carrying every registry change in this table — the clip rename, `act_id`, `queries` and the `audio_offset_*` help text. `project.synopsis` already shipped on its own as **2.22** (§A14), tagged before this pass settled the numbering; that tag stays as published rather than being reused, so the release batch is 2.23. Numbering stays `2.x`; no 3.0. |
 | ✅ | 8 | **The schema floor.** §0.6's "2.12 and later" is false. | §0.6 says the spec describes **exactly schema 2.23** — no "and later". Later compatible 2.x revisions are governed by §11, not by the floor sentence. |
 | ✅ | 9 | **`entity_anchor.audio_offset_*` has no stated meaning.** | **Specified, matching what the editor already enforces** (`mediaOps.ts`): non-negative seconds from the start of the asset's playable audio (t = 0 at the first sample); the span is start-inclusive, end-exclusive, and end MUST exceed start; a null bound is open (null start = from the beginning, null end = to the end, both null = the whole recording); meaningless on an asset without audio, where a reader MUST ignore them. In the help text and in §12.8. |
 | ✅ | 10 | **Does 1.0 include the editor?** | **No.** 1.0 is the format, its artifacts and `scf-core`; the editor ships as the reference editor on its own version line. **`scf-mcp` is published to npm at 0.x** after `scf-core`, with a version range on it and no 1.0 stability promise. `editor-mvp.md` §9 should say so. |
@@ -358,14 +360,14 @@ recreated annotated at their own commits (`b1bdc18`, `fd371dd`), so every
 schema tag from 2.12 to 2.22 is annotated, and `check_pin` still
 passes.
 
-### B8. ○ Work the §A decisions add
+### B8. ✅ Work the §A decisions add
 
-Everything here except the finding lands in the **one 2.23
+Everything here except the finding lands in the **one 2.24
 regeneration** — registry, `scf-schema.sql`, `entity-reference.md`,
 every artifact, the fixture rebuild — so do it in one change, and each
 item that declares something authors a fixture row that exercises it.
 
-- **Schema 2.23** (§A1, A5, A6, A7, A9; §A14 already in 2.22):
+- **Schema 2.24** (§A1, A5, A6, A7, A9; §A14 already in 2.22; 0037/0038 tagged as 2.23):
   - rename `clip.scene_id` to a pointer; the delete-a-scene test now
     expects the clip kept with the reference cleared, and
     `canonicalDump` after a scene delete changes accordingly;
@@ -383,12 +385,12 @@ item that declares something authors a fixture row that exercises it.
     view `350c181`): `relationship_type` gains `storyboard`,
     `start_frame`, `end_frame`, `previs`; `asset_relationship.order`;
     spec 0.64 §8.6; shot 12-04's panels in the fixture. It moved
-    `SCHEMA_VERSION` to 2.23 ahead of the rest of this batch, which
-    lands under the same number.
+    `SCHEMA_VERSION` to 2.23 ahead of the rest of this batch; 2.23 was
+    then tagged, so the rest is 2.24.
   - ✅ the project poster (0038) — committed in `54c8cf4`:
     `relationship_type` gains `poster`; spec 0.65 §8.6 and §12.12; Q00
     gains `posters`; the fixture project relates `poster01.png`.
-- **Spec text:** §0.6's floor (exactly 2.23, §A8); §12.8's
+- **Spec text:** §0.6's floor (exactly 2.24, §A8); §12.8's
   `audio_offset_*` sentence (§A9); §12.17's ordered comparison (§A11);
   §1.3.1's finding sentence (§A12); §2.3's clip note (§A1); the
   CHANGELOG naming each break taken under §11.0.
@@ -401,6 +403,40 @@ item that declares something authors a fixture row that exercises it.
 - **Proposal statuses:** 0002 moves from `accepted` to `implemented`
   when this lands. 0036 is already `implemented`.
 - `editor-mvp.md` §9 answered: the editor is not in 1.0 (§A10).
+
+**Done 2026-10-16, as spec 0.66 on schema 2.24 (untagged).** One
+regeneration: registry, `scf-schema.sql`, `entity-reference.md`, the
+finding catalog, the fixture rebuild, Q04 re-blessed, the negative
+reports and `SHA256SUMS`.
+
+- **`clip.scene_id` → `clip.slated_scene_id`** (§A1; the name settled
+  2026-10-16), no longer required. A clip's line range reads its scene
+  through `rangeSceneField()` in `lines.ts`; `sceneOps.test.ts` asserts
+  a scene delete clears the pointer and keeps the clip.
+- **The lint** is `lint_ownership_by_name()` in `lint_registry.py`,
+  scoped to `scene_id`, the one name §2.3 matches on. It records the
+  thirty-three owners in `DELIBERATE_SCENE_OWNERS` and fails on a new
+  one, or a stale entry.
+- **`sequence.act_id` removed** with the app's write
+  (`structureCommit.ts`) and reads (`StructureView.tsx`; `EntityList.tsx`
+  now derives a sequence's act from the boundaries). **Correction to
+  §A5:** `structure.sequence_act_mismatch` never read the column — since
+  0.44 it reports a span that crosses an act — so it **stays**, decided
+  2026-10-16. The catalog is 52 + `line.type_unknown` = **53**, and the
+  walkthrough's `scf-check` output changed only in its schema number.
+- **`queries`** dropped from `registry.json`, `registry.schema.json` and
+  the TypeScript `EntityDef`; kept in `entity_registry.py` for the lint.
+- **`audio_offset_*`** help text and the §12.8 paragraph, as decided.
+- **§12.17** compares the axes in rank order. Scenes 10 and 19 resolve
+  the night variant, pinned in `conformance.canonical.test.ts` (and it
+  fails under the old rule). Q04's result at scene 12 is unchanged by
+  the rule; it loses the sequence's `act_uuid`.
+- **`line.type_unknown`**, error, in `lines.ts`, the catalog and
+  `scf-check`, with the negative case `line-type-unknown` raising it
+  alone.
+- **Spec 0.66:** §0.6 (exactly 2.24), §1.3.1, §2.3, §11.0's list of
+  breaks, §12.8, §12.17, a CHANGELOG entry naming the three breaks, and
+  `stability.md`'s variant row. 0002 is `implemented`.
 
 ---
 
@@ -423,9 +459,9 @@ item that declares something authors a fixture row that exercises it.
 | | Item | Notes |
 |---|---|---|
 | ○ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twelve spec revisions and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. |
-| ○ | D2. Fixture: the night kitchen | Scenes 10 and 19 resolve the **day** baseline because the night variant is autumn and they are winter (`narrative-workspaces.md` §11). **Decided (§A11): the rule was wrong** — §12.17 now ranks time of day first. What remains is the work in §B8, after which these scenes resolve the night variant and exercise the new order. |
+| ✅ | D2. Fixture: the night kitchen | Scenes 10 and 19 resolve the **day** baseline because the night variant is autumn and they are winter (`narrative-workspaces.md` §11). **Decided (§A11): the rule was wrong** — §12.17 now ranks time of day first. **Done in §B8:** both resolve the night variant, and a test pins it. |
 | ○ | D3. Rules stated and exercised by nothing | `junction.endpoint_absent`, `structure.section_mismatch`, §12.17's zero-score baseline, `varies`, a `status` that disagrees with `lifecycle_status`, act and sequence renumbering under `derived` (§4.3). A row each where cheap; otherwise list them in `stability.md` as known-unexercised — which is a Provisional statement, not a blocker. |
-| ○ | D4. An unknown `line_type` raises no finding | §1.3.1 closes the vocabulary at fifteen; the column is free text and nothing reports a sixteenth. **Decided (§A12): `line.type_unknown`, severity error.** Work in §B8. |
+| ✅ | D4. An unknown `line_type` raises no finding | §1.3.1 closes the vocabulary at fifteen; the column is free text and nothing reports a sixteenth. **Decided (§A12): `line.type_unknown`, severity error.** Done in §B8, with a negative case. |
 | ? | D5. The docs site is live | Could not confirm from here. Settings → Pages → Source = GitHub Actions. |
 
 ---
@@ -439,12 +475,12 @@ the prose.
 **RC day — every door stays shut:**
 
 1. ○ Spec **`1.0-rc.1`**: CHANGELOG entry; §0.6 rewritten (exactly
-   schema 2.23); stability and conformance headers. §11.0 stays in
+   schema 2.24); stability and conformance headers. §11.0 stays in
    force.
-2. ○ Schema **2.23** (§A7): every artifact regenerated, the fixture
+2. ○ Schema **2.24** (§A7): every artifact regenerated, the fixture
    rebuilt.
 3. ○ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
-4. ○ Annotated tags, pushed: `schema-2.23` and `spec-1.0-rc.1`. Then
+4. ○ Annotated tags, pushed: `schema-2.24` and `spec-1.0-rc.1`. Then
    `check_pin.py --strict` against the remote. No npm publish.
 5. ○ Launch D1 against the candidate.
 
@@ -453,7 +489,7 @@ the prose.
 1. ○ Spec **1.0**: CHANGELOG entry; §11.0 changed from "becomes binding
    at 1.0" to binding; headers.
 2. ○ If D1 forced a registry change, a new schema version and a
-   regeneration; otherwise 2.23 stands.
+   regeneration; otherwise 2.24 stands.
 3. ○ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
 4. ○ 🔒 Annotated tag `spec-1.0`, pushed; `check_pin.py --strict`.
 5. ○ 🔒 `npm publish --access public` for `scf-core`, after `pack-test`
@@ -481,7 +517,7 @@ Listed so an unstated deferral cannot be mistaken for an oversight.
   additive that arrives later.
 - **Proposal 0002's declaration move** — `parentEntity`/`parentField` on
   the thirty-three and §2.3 reading declarations only. Non-breaking if
-  it reproduces 2.23's behaviour, which it must.
+  it reproduces 2.24's behaviour, which it must.
 - **Proposal 0015** — intercut, as an additive `scene_location` link;
   `scene.location_id` stays the primary.
 - **A generated `queries` member** in `registry.json`, from what each
@@ -516,14 +552,14 @@ publish, B7 and C (B5 is done). It is one change across many files.
 `act_id` (§B8) falls out of it: Q04's read goes with the runner, and the
 structure views derive acts from boundaries.
 
-**Day 2, morning — 2.23 and the fixture.** §B8's schema and spec
+**Day 2, morning — 2.24 and the fixture.** §B8's schema and spec
 changes, then B2: bless Q03/Q04/Q12 at scene 25, author the anchored
 beats, prop tags, a published version, a prop variant, a vocal state
 and the synopsis at blessed positions; rebuild; re-bless, including Q04
 under the new §12.17 order. One regeneration.
 
 **Day 2, afternoon — the candidate.** RC day as written in §E: tag
-`spec-1.0-rc.1` and `schema-2.23`, hold the npm publish and §11.0, and
+`spec-1.0-rc.1` and `schema-2.24`, hold the npm publish and §11.0, and
 **launch D1 against the candidate**. Cut 1.0 when it returns quiet. The
 RC loses nothing; publishing a format the sixth reader then finds a
 critical in would.

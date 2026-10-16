@@ -18,7 +18,7 @@ import { asPolicy, NumberingPolicyConfirm } from "./NumberingPolicyConfirm.tsx";
 import {
   DEFAULT_NUMBERING_POLICY, type NumberingPolicy,
 } from "@scf-core/numbering.ts";
-import { rangeEntities } from "@scf-core/lines.ts";
+import { rangeEntities, rangeSceneField } from "@scf-core/lines.ts";
 
 const RANGE_FIELDS = ["line_start_ref", "line_end_ref"];
 
@@ -61,6 +61,7 @@ export function EntityForm(): JSX.Element | null {
   // Shot and clip, found rather than listed: the two line anchors are
   // edited together, against the row's scene, as one picker.
   const hasRange = rangeEntities(registry).includes(openRow.entity);
+  const rangeScene = rangeSceneField(registry, openRow.entity) ?? "scene_id";
 
   return (
     <div className="entity-form">
@@ -149,7 +150,7 @@ export function EntityForm(): JSX.Element | null {
           <div className="field">
             <label>Lines covered</label>
             <LineRangePicker
-              sceneId={draft.values["scene_id"] ?? null}
+              sceneId={draft.values[rangeScene] ?? null}
               start={draft.values["line_start_ref"] ?? null}
               end={draft.values["line_end_ref"] ?? null}
               onChange={(field, v) => {

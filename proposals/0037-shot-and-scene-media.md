@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.64, schema 2.23 (untagged). See Resolution |
+| **Status** | **implemented** — spec 0.64, schema 2.23 (tagged 2026-10-12). See Resolution |
 | **Author** | Found while storyboarding a project in the editor; drafted with Claude |
 | **Opened** | 2026-10-09 |
 | **Affects** | `schema/entity_registry.py` (`asset_relationship`); `registry.json`, `scf-schema.sql`, `entity-reference.md`; §8.6; `shotContext`'s `related` member and its published result |

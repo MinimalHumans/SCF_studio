@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **implemented** — spec 0.65, schema 2.23 (untagged). See Resolution |
+| **Status** | **implemented** — spec 0.65, schema 2.23 (tagged 2026-10-12). See Resolution |
 | **Author** | Found while laying out the editor's Project tab; drafted with Claude |
 | **Opened** | 2026-10-09 |
 | **Affects** | `schema/entity_registry.py` (`asset_relationship.relationship_type`); `registry.json`, `entity-reference.md`; §8.6; §12.12 and Q00's published result |

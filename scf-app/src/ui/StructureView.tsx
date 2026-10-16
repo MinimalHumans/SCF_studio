@@ -32,7 +32,7 @@ export function StructureView(): JSX.Element {
   const acts = useQuery(
     "SELECT id, name, act_number, start_scene_id FROM act ORDER BY id");
   const sequences = useQuery(
-    "SELECT id, name, sequence_number, act_id, start_scene_id " +
+    "SELECT id, name, sequence_number, start_scene_id " +
     "FROM sequence ORDER BY id");
 
   // Same rule as the rail: when a screenplay exists it owns scene order.

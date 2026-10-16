@@ -133,7 +133,7 @@ describe("§4.7 — the lines a shot covers", () => {
     ] as const) {
       const c = (await fx.ctx.exec("SELECT * FROM clip WHERE name = ?",
                                    [name]))[0] ?? {};
-      const v = await rangeLines(fx.ctx.exec, Number(c["scene_id"]),
+      const v = await rangeLines(fx.ctx.exec, Number(c["slated_scene_id"]),
                                  c["line_start_ref"], c["line_end_ref"]);
       expect(v.kind, name).toBe("lines");
       if (v.kind === "lines") {

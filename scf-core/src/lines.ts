@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * lines.ts — line anchors (spec §3.5) and the lines a shot or clip covers
- * (§4.7).
+ * lines.ts — line anchors (spec §3.5), the lines a shot or clip covers
+ * (§4.7), and the closed `line_type` set (§1.3.1) as findings.
  *
  * A line anchor is a text field holding a screenplay line's uuid. The
  * registry marks every one (`lineAnchor`), and this module reads them from
@@ -20,6 +20,7 @@ import type { Row, SqlExec } from "./db.ts";
 import type { Registry } from "./registry.ts";
 import { rows, type ScfContext } from "./resolution.ts";
 import { sceneScriptLines } from "./screenplay/sceneScript.ts";
+import { LINE_TYPES } from "./fountain/types.ts";
 
 /** One line anchor field. */
 export interface LineAnchorField {
@@ -44,8 +45,22 @@ export function lineAnchorFields(registry: Registry): LineAnchorField[] {
 }
 
 /**
+ * The field placing a row in a scene, for its range: `scene_id` where the
+ * row belongs to the scene, otherwise its one other reference to `scene`
+ * (a clip's `slated_scene_id`, which points without owning, §2.3). Null
+ * when there is none, or more than one to choose between.
+ */
+export function rangeSceneField(registry: Registry,
+                                entity: string): string | null {
+  const fields = registry.entities.get(entity)?.fields ?? [];
+  if (fields.some((f) => f.name === "scene_id")) return "scene_id";
+  const refs = fields.filter((f) => f.referenceEntity === "scene");
+  return refs.length === 1 ? refs[0]!.name : null;
+}
+
+/**
  * The entities that carry a range: both range anchors and a scene to
- * belong to. Derived, so `shot` and `clip` are found rather than listed.
+ * cover. Derived, so `shot` and `clip` are found rather than listed.
  */
 export function rangeEntities(registry: Registry): string[] {
   const anchors = lineAnchorFields(registry);
@@ -53,8 +68,7 @@ export function rangeEntities(registry: Registry): string[] {
     anchors.some((a) => a.entity === entity && a.field === field);
   return registry.order.filter((name) =>
     has(name, "line_start_ref") && has(name, "line_end_ref") &&
-    (registry.entities.get(name)?.fields ?? [])
-      .some((f) => f.name === "scene_id"));
+    rangeSceneField(registry, name) !== null);
 }
 
 const text = (v: unknown): string | null =>
@@ -141,10 +155,11 @@ export async function rangeLines(
   return { kind: "lines", lines: scene.slice(first, last + 1) };
 }
 
-/** A line problem, for the finding catalog (§3.5, §4.7). */
+/** A line problem, for the finding catalog (§1.3.1, §3.5, §4.7). */
 export interface LineProblem {
   code: "line.anchor_orphaned" | "line.range_outside_scene"
-    | "line.range_reversed" | "line.end_without_start";
+    | "line.range_reversed" | "line.end_without_start"
+    | "line.type_unknown";
   table: string;
   rowId: number;
   message: string;
@@ -157,6 +172,22 @@ export interface LineProblem {
  */
 export async function lineProblems(ctx: ScfContext): Promise<LineProblem[]> {
   const out: LineProblem[] = [];
+  // §1.3.1: the set is closed and `line_type` is free TEXT, so a value
+  // outside it is a writer's error the file cannot prevent. Story order
+  // is derived from these lines (§4.1); a reader guessing that
+  // `scene_heading` means `heading` answers wrongly and in silence.
+  // The version tables are not read (§0), so only the screenplay is.
+  const known = new Set<string>(LINE_TYPES);
+  for (const r of await safe(ctx.exec,
+      "SELECT id, uuid, line_type FROM screenplay_lines ORDER BY line_order")) {
+    const type = String(r["line_type"] ?? "");
+    if (known.has(type)) continue;
+    out.push({ code: "line.type_unknown", table: "screenplay_lines",
+      rowId: Number(r["id"]),
+      message: `Line ${String(r["uuid"] ?? r["id"])} has line_type ` +
+        `${JSON.stringify(type)}, which is not in the published set; it ` +
+        `is unknown content and maps to nothing.` });
+  }
   const orphaned = await orphanedAnchors(ctx.exec, ctx.registry);
   for (const o of orphaned) {
     out.push({ code: "line.anchor_orphaned", table: o.entity,
@@ -165,10 +196,13 @@ export async function lineProblems(ctx: ScfContext): Promise<LineProblem[]> {
         `not in the screenplay.` });
   }
   for (const entity of rangeEntities(ctx.registry)) {
+    const sceneField = rangeSceneField(ctx.registry, entity) ?? "scene_id";
     let found: Row[];
     try { found = await rows(ctx.exec, entity); } catch { continue; }
     for (const r of found) {
-      const sceneId = Number(r["scene_id"]);
+      // A clip whose scene was deleted has no scene to cover.
+      if (r[sceneField] === null || r[sceneField] === undefined) continue;
+      const sceneId = Number(r[sceneField]);
       if (!Number.isFinite(sceneId)) continue;
       const v = await rangeLines(ctx.exec, sceneId, r["line_start_ref"],
                                  r["line_end_ref"]);

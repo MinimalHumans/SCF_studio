@@ -88,7 +88,6 @@ export interface EntityDef {
   paired: boolean;
   positionPattern: PositionPattern;
   refines: string[];
-  queries: string[];
   fields: FieldDef[];
 }
 

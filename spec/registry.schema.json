@@ -83,7 +83,7 @@
         "name", "label", "labelPlural", "icon", "nameField", "category",
         "description", "sortOrder", "tier", "parentEntity", "parentField",
         "versionable", "hasLifecycleStatus", "hasExternalId", "subject",
-        "scope", "paired", "positionPattern", "refines", "queries", "fields"
+        "scope", "paired", "positionPattern", "refines", "fields"
       ],
       "additionalProperties": false,
       "properties": {
@@ -137,11 +137,6 @@
           "description": "Entities this one adds detail to. Empty for most.",
           "type": "array",
           "items": { "$ref": "#/$defs/entityName" }
-        },
-        "queries": {
-          "description": "Canonical queries this entity serves. Informative: the linter requires it to be non-empty, since an entity no query reaches is unreachable data.",
-          "type": "array",
-          "items": { "type": "string" }
         },
         "fields": {
           "type": "array",

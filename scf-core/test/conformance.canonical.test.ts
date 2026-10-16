@@ -236,6 +236,25 @@ describe("G4: location variant selection", () => {
     expect(mismatches[0]).toContain("winter");
     expect(mismatches[0]).toContain("autumn");
   });
+
+  test("ranks time of day above season: the night kitchen", async () => {
+    // Scenes 10 and 19 are winter nights with no weather. The night
+    // variant agrees on time and is wrong about the season; the day
+    // baseline agrees on season and is wrong about the light. Counted
+    // equally they tie and the baseline dressed a night scene in
+    // morning light. §12.17 ranks the axes, so the night variant wins.
+    for (const n of [10, 19]) {
+      const [variant, mismatches] = await selectLocationVariant(fx.ctx,
+                                                                sc[n]!);
+      expect(str(variant!["name"]).toLowerCase()).toContain("night");
+      expect(mismatches).toEqual(
+        ['season: scene="winter" variant="autumn"']);
+    }
+    // A winter morning still takes the day baseline, which agrees on both.
+    const [morning, none] = await selectLocationVariant(fx.ctx, sc[3]!);
+    expect(str(morning!["name"]).toLowerCase()).toContain("day baseline");
+    expect(none).toEqual([]);
+  });
 });
 
 describe("pattern 3 (latest-wins) state tables — Phase C", () => {
@@ -502,10 +521,7 @@ describe("fixture invariants", () => {
       "SELECT act_number FROM act ORDER BY act_number");
     expect(acts.map((r) => r["act_number"])).toEqual([1, 2, 3]);
     const seqs = await fx.ctx.exec(
-      "SELECT sequence_number, act_id FROM sequence " +
-      "ORDER BY sequence_number");
+      "SELECT sequence_number FROM sequence ORDER BY sequence_number");
     expect(seqs.map((r) => r["sequence_number"])).toEqual([1, 2, 3, 4, 5]);
-    // act_id is maintained at commit now; the fixture already agrees.
-    expect(seqs.map((r) => r["act_id"])).toEqual([1, 2, 2, 3, 3]);
   });
 });

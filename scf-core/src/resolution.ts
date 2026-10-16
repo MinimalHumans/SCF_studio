@@ -389,6 +389,13 @@ export async function resolveDirection(
 // Location variant selection (G4, resolver-first)
 // ---------------------------------------------------------------------------
 
+/**
+ * The axes a variant is matched on, IN RANK ORDER (§12.17): agreeing on
+ * an earlier axis outweighs agreeing on every later one. Light is what
+ * the camera sees first, so a night variant built for autumn dresses a
+ * winter night before a winter morning does. Counting the axes equally
+ * let that morning tie and win on the baseline.
+ */
 const VARIANT_AXES: Array<[string, string]> = [
   ["time_of_day", "time_of_day"],
   ["weather_conditions", "weather"],
@@ -396,11 +403,11 @@ const VARIANT_AXES: Array<[string, string]> = [
 ];
 
 /**
- * Select the location_variant in force for a scene per the documented
- * convention: match the scene's narrative state axes against variant state
- * axes; best match wins; baseline is the fallback. Returns
- * [variant, mismatches] — mismatches list axes where the winning variant
- * disagrees with the scene, for tools to surface rather than hide.
+ * Select the location_variant in force for a scene (§12.17): compare the
+ * variants axis by axis in rank order; a full tie goes to the baseline,
+ * then to the first row; if the winner agrees on no axis, the baseline.
+ * Returns [variant, mismatches] — mismatches list axes where the winning
+ * variant disagrees with the scene, for tools to surface rather than hide.
  */
 export async function selectLocationVariant(
     ctx: ScfContext,
@@ -430,29 +437,30 @@ export async function selectLocationVariant(
     if (variantAxis === "time_of_day" && norm(vv) === "varies") return true;
     return norm(sv) === norm(vv);
   };
-  const score = (v: Row): number => {
-    let s = 0;
-    for (const [sceneAxis, variantAxis] of VARIANT_AXES) {
-      if (agrees(sceneAxis, variantAxis, v)) s += 1;
+  // One flag per axis in rank order, then is_baseline: compared
+  // lexicographically, so the first maximal row wins a full tie.
+  const key = (v: Row): number[] => [
+    ...VARIANT_AXES.map(([sceneAxis, variantAxis]) =>
+      agrees(sceneAxis, variantAxis, v) ? 1 : 0),
+    pyTruthy(v["is_baseline"]) ? 1 : 0,
+  ];
+  const beats = (a: number[], b: number[]): boolean => {
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return (a[i] ?? 0) > (b[i] ?? 0);
     }
-    return s;
+    return false;
   };
 
-  // max() with key (score, is_baseline): first maximal element wins ties,
-  // as in Python.
   let best = variants[0] as Row;
-  let bestKey: [number, number] = [score(best),
-                                   pyTruthy(best["is_baseline"]) ? 1 : 0];
+  let bestKey = key(best);
   for (const v of variants.slice(1)) {
-    const key: [number, number] = [score(v),
-                                   pyTruthy(v["is_baseline"]) ? 1 : 0];
-    if (key[0] > bestKey[0] ||
-        (key[0] === bestKey[0] && key[1] > bestKey[1])) {
+    const k = key(v);
+    if (beats(k, bestKey)) {
       best = v;
-      bestKey = key;
+      bestKey = k;
     }
   }
-  if (score(best) === 0) {
+  if (bestKey.slice(0, VARIANT_AXES.length).every((x) => x === 0)) {
     const baselines = variants.filter((v) => pyTruthy(v["is_baseline"]));
     best = baselines[0] ?? best;
   }

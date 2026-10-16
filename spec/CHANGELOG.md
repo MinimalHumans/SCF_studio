@@ -17,6 +17,70 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.66 — 2026-10-16
+
+*Describes schema 2.24.*
+
+**Minor.** The 1.0 decisions (`docs/release-checklist.md` §A). Three
+changes would break a conforming implementation after 1.0 and are taken
+under §11.0 now: `clip.scene_id` is renamed, `sequence.act_id` removed,
+and `registry.json`'s per-entity `queries` unpublished. They land as
+schema 2.24: `schema-2.23` was tagged on 2026-10-12 with proposals 0037
+and 0038, and stays as published.
+
+### §0.6 — exactly schema 2.24
+
+"Describes schema 2.12 and later" was false, and is gone. The
+specification describes schema 2.24; a file at any other version is
+governed by §11.
+
+### §1.3.1 — an unknown `line_type` is a finding
+
+A line whose `line_type` is outside the published set MUST be reported
+as `line.type_unknown`, at `error`, naming the line's uuid and the
+value. It was deliberately silent, and the reason given for the
+requirement — a reader that guesses wrong answers wrongly and in
+silence — is the case for the finding. Only `screenplay_lines` is
+checked. The negative fixtures gain `line-type-unknown`.
+
+### §2.3 — a clip is not deleted with its scene
+
+Footage outlives the script (proposal 0002). `clip.scene_id` becomes
+`clip.slated_scene_id`, which points at the scene rather than belonging
+to it, so deleting the scene clears it and keeps the clip. An editor
+that deleted clips with their scene now clears the reference instead,
+and `canonicalDump` after a scene delete changes accordingly.
+
+### §5 — `sequence.act_id` removed
+
+A sequence's act is derived from the span boundaries; the stored
+column was derivable, unspecified, and undefined for a sequence that
+crosses an act. `structure.sequence_act_mismatch` is unchanged: it
+reports a crossing span and never read the column.
+
+### §12.8 — what an anchor's audio offsets mean
+
+`audio_offset_start_sec` and `audio_offset_end_sec` are seconds from the
+first sample of the asset's playable audio, start-inclusive and
+end-exclusive, the end MUST exceed the start, a null bound is open, and
+a reader MUST ignore them on an asset without audio.
+
+### §12.17 — the variant axes are ranked
+
+The location variant in force is chosen by comparing the axes in order
+— `time_of_day`, then weather, then season — rather than by counting
+agreements. Scenes 10 and 19, winter nights, now resolve the autumn
+night variant instead of the winter-morning baseline. The baseline
+still breaks a full tie and still wins when the winner agrees on
+nothing, and `varies` still agrees on time. Q04's published result, at
+scene 12, is unchanged by the rule; it loses the sequence's `act_uuid`.
+
+### §11.0 — the breaks taken
+
+The list of changes taken under §11.0 names schema 2.24's three.
+
+---
+
 ## 0.65 — 2026-10-09
 
 *Describes schema 2.23.*

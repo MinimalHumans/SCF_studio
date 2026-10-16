@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.23",
+  "schemaVersion": "2.24",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -64,9 +64,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00"
-      ],
       "fields": [
         {
           "name": "name",
@@ -306,10 +303,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q02"
-      ],
       "fields": [
         {
           "name": "name",
@@ -576,10 +569,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q02"
-      ],
       "fields": [
         {
           "name": "name",
@@ -738,10 +727,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q02"
-      ],
       "fields": [
         {
           "name": "name",
@@ -939,10 +924,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q04",
-        "Q10"
-      ],
       "fields": [
         {
           "name": "name",
@@ -1098,10 +1079,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q04",
-        "Q10"
-      ],
       "fields": [
         {
           "name": "name",
@@ -1120,16 +1097,6 @@
           "required": false,
           "tab": "General",
           "autoInjected": false
-        },
-        {
-          "name": "act_id",
-          "label": "Act",
-          "fieldType": "reference",
-          "sqlType": "INTEGER",
-          "required": false,
-          "tab": "General",
-          "autoInjected": false,
-          "referenceEntity": "act"
         },
         {
           "name": "start_scene_id",
@@ -1285,10 +1252,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q03",
-        "Q04"
-      ],
       "fields": [
         {
           "name": "name",
@@ -1592,10 +1555,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q04",
-        "Q10"
-      ],
       "fields": [
         {
           "name": "name",
@@ -1754,10 +1713,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q10"
-      ],
       "fields": [
         {
           "name": "name",
@@ -1897,11 +1852,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q03",
-        "Q04"
-      ],
       "fields": [
         {
           "name": "name",
@@ -2000,10 +1950,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q03",
-        "Q04"
-      ],
       "fields": [
         {
           "name": "name",
@@ -2100,10 +2046,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q07",
-        "Q14"
-      ],
       "fields": [
         {
           "name": "name",
@@ -2215,10 +2157,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q07",
-        "Q14"
-      ],
       "fields": [
         {
           "name": "name",
@@ -2315,9 +2253,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q04"
-      ],
       "fields": [
         {
           "name": "name",
@@ -2380,9 +2315,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00"
-      ],
       "fields": [
         {
           "name": "name",
@@ -2602,10 +2534,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -2766,10 +2694,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -3042,10 +2966,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -3206,10 +3126,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -3407,10 +3323,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -3574,10 +3486,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -3759,10 +3667,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -3945,10 +3849,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q00",
-        "Q02"
-      ],
       "fields": [
         {
           "name": "name",
@@ -4068,12 +3968,6 @@
       "paired": true,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q02",
-        "Q03",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -4310,11 +4204,6 @@
       "paired": true,
       "positionPattern": "latest_wins",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q03",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -4415,9 +4304,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02"
-      ],
       "fields": [
         {
           "name": "name",
@@ -4547,9 +4433,6 @@
       "paired": false,
       "positionPattern": "latest_wins",
       "refines": [],
-      "queries": [
-        "Q02"
-      ],
       "fields": [
         {
           "name": "name",
@@ -4650,11 +4533,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q02",
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -4994,10 +4872,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q05"
-      ],
       "fields": [
         {
           "name": "name",
@@ -5351,11 +5225,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q02",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -5534,11 +5403,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q02",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -5740,10 +5604,6 @@
       "paired": false,
       "positionPattern": "explicit",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -5815,10 +5675,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -5943,10 +5799,6 @@
       "paired": false,
       "positionPattern": "latest_wins",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -6055,10 +5907,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -6208,10 +6056,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -6309,10 +6153,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -6448,10 +6288,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -6652,11 +6488,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q12",
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -6756,10 +6587,6 @@
       "paired": false,
       "positionPattern": "latest_wins",
       "refines": [],
-      "queries": [
-        "Q03",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -6869,10 +6696,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q01",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -7114,11 +6937,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q04",
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -7292,9 +7110,6 @@
       "refines": [
         "project_color_palette"
       ],
-      "queries": [
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -7434,9 +7249,6 @@
       "refines": [
         "sonic_identity"
       ],
-      "queries": [
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -7570,9 +7382,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -7744,9 +7553,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -7827,9 +7633,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -7998,9 +7801,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -8149,9 +7949,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -8289,9 +8086,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -8459,9 +8253,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -8579,7 +8370,8 @@
           "sqlType": "REAL",
           "required": false,
           "tab": "Scope",
-          "autoInjected": false
+          "autoInjected": false,
+          "helpText": "Seconds from the first sample of the asset's playable audio (t = 0), non-negative; the span is start-inclusive. Null is open: from the beginning. Meaningless on an asset without audio, where a reader MUST ignore it (§12.8)."
         },
         {
           "name": "audio_offset_end_sec",
@@ -8588,7 +8380,8 @@
           "sqlType": "REAL",
           "required": false,
           "tab": "Scope",
-          "autoInjected": false
+          "autoInjected": false,
+          "helpText": "Seconds from the first sample, end-exclusive, and MUST exceed the start. Null is open: to the end; both null is the whole recording. Meaningless on an asset without audio, where a reader MUST ignore it (§12.8)."
         },
         {
           "name": "condition_description",
@@ -8666,9 +8459,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -8792,9 +8582,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -8877,9 +8664,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9004,9 +8788,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9191,9 +8972,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9280,9 +9058,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9304,14 +9079,15 @@
           "referenceEntity": "take"
         },
         {
-          "name": "scene_id",
-          "label": "Scene",
+          "name": "slated_scene_id",
+          "label": "Slated Scene",
           "fieldType": "reference",
           "sqlType": "INTEGER",
-          "required": true,
+          "required": false,
           "tab": "General",
           "autoInjected": false,
-          "referenceEntity": "scene"
+          "referenceEntity": "scene",
+          "helpText": "The scene this footage was shot for. Deleting the scene clears this and keeps the clip."
         },
         {
           "name": "clip_in_timecode",
@@ -9461,9 +9237,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9541,9 +9314,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9621,10 +9391,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13",
-        "Q14"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9772,9 +9538,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -9984,9 +9747,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -10194,9 +9954,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -10406,10 +10163,6 @@
       "refines": [
         "project_tone"
       ],
-      "queries": [
-        "Q04",
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -10540,10 +10293,6 @@
       "refines": [
         "color_script_entry"
       ],
-      "queries": [
-        "Q04",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -10672,10 +10421,6 @@
       "positionPattern": "none",
       "refines": [
         "look_development"
-      ],
-      "queries": [
-        "Q04",
-        "Q07"
       ],
       "fields": [
         {
@@ -10901,10 +10646,6 @@
       "refines": [
         "sonic_identity"
       ],
-      "queries": [
-        "Q04",
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -11052,9 +10793,6 @@
       "refines": [
         "project_tone"
       ],
-      "queries": [
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -11185,10 +10923,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q04",
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -11316,10 +11050,6 @@
       "refines": [
         "sonic_identity"
       ],
-      "queries": [
-        "Q05",
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -11436,10 +11166,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q07",
-        "Q09"
-      ],
       "fields": [
         {
           "name": "name",
@@ -11610,10 +11336,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q09",
-        "Q10"
-      ],
       "fields": [
         {
           "name": "name",
@@ -11828,10 +11550,6 @@
       "paired": false,
       "positionPattern": "latest_wins",
       "refines": [],
-      "queries": [
-        "Q09",
-        "Q10"
-      ],
       "fields": [
         {
           "name": "name",
@@ -11937,10 +11655,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q08",
-        "Q09"
-      ],
       "fields": [
         {
           "name": "name",
@@ -12047,11 +11761,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q05",
-        "Q10",
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -12189,9 +11898,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q10"
-      ],
       "fields": [
         {
           "name": "name",
@@ -12336,10 +12042,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q07",
-        "Q09"
-      ],
       "fields": [
         {
           "name": "name",
@@ -12455,9 +12157,6 @@
       "positionPattern": "none",
       "refines": [
         "project_color_palette"
-      ],
-      "queries": [
-        "Q07"
       ],
       "fields": [
         {
@@ -12583,9 +12282,6 @@
       "refines": [
         "color_script"
       ],
-      "queries": [
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -12690,9 +12386,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -12787,9 +12480,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -12907,9 +12597,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13027,9 +12714,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q11"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13143,10 +12827,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q07",
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13387,9 +13067,6 @@
         "scene_color_palette",
         "lighting_design"
       ],
-      "queries": [
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13537,9 +13214,6 @@
       "refines": [
         "cinematographic_philosophy"
       ],
-      "queries": [
-        "Q07"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13652,10 +13326,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q04",
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13763,9 +13433,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13875,9 +13542,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -13958,9 +13622,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -14090,9 +13751,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -14164,13 +13822,6 @@
       "paired": false,
       "positionPattern": "sparse_persistence",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q03",
-        "Q05",
-        "Q06",
-        "Q12"
-      ],
       "fields": [
         {
           "name": "name",
@@ -14327,10 +13978,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q05",
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -14555,9 +14202,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q05"
-      ],
       "fields": [
         {
           "name": "name",
@@ -14660,10 +14304,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q02",
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -14778,9 +14418,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q06"
-      ],
       "fields": [
         {
           "name": "name",
@@ -14887,9 +14524,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15002,9 +14636,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15130,9 +14761,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15262,10 +14890,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q05",
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15369,10 +14993,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q05",
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15511,9 +15131,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q08"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15617,9 +15234,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q15"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15744,9 +15358,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q15"
-      ],
       "fields": [
         {
           "name": "name",
@@ -15868,9 +15479,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",
@@ -16065,9 +15673,6 @@
       "paired": false,
       "positionPattern": "none",
       "refines": [],
-      "queries": [
-        "Q13"
-      ],
       "fields": [
         {
           "name": "name",

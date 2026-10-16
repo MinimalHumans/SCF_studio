@@ -44,6 +44,16 @@ describe("sceneCascade", () => {
     expect(cascade.owned.map((o) => o.table)).not.toContain("motif");
   });
 
+  test("a clip outlives its scene", () => {
+    // Footage outlives the script (proposal 0002): the clip points at
+    // the scene it was slated for, so deleting the scene clears that
+    // and keeps the clip.
+    const cascade = sceneCascade(registry);
+    expect(cascade.pointing.map((p) => `${p.table}.${p.field}`))
+      .toContain("clip.slated_scene_id");
+    expect(cascade.owned.map((o) => o.table)).not.toContain("clip");
+  });
+
   test("act and sequence boundaries are excluded from both", () => {
     // They are re-anchored before the delete instead — an act whose
     // anchor scene is deleted vanishes from the derived structure and

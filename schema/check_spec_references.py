@@ -91,6 +91,8 @@ REMOVED = {
     "asset_type",                #   ...
     "asset.file_path",           # removed in 2.8
     "file_path",                 #   ...
+    "sequence.act_id",                    # removed in 2.24 (§A5)
+    "clip.scene_id",                      # renamed in 2.24 (0002)
     "entity_anchor.physical_state",       # removed in 2.21 (0034)
     "physical_state",                     #   ... named bare in §12.8
     "entity_anchor.vocal_state",          # removed in 2.21 (0034)

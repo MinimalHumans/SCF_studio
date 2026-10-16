@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.23** — **106 entities**.
+Schema **2.24** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -56,7 +56,6 @@ A major structural division of the story.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (1) | `sequence.act_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -531,7 +530,7 @@ A single scene in the story.
 | Versionable | no |
 | `lifecycle_status` | yes — a `cut` row appears in no result (§6.6.1) |
 | `external_id` | yes (§6.3) |
-| Referenced by (51) | `act.start_scene_id`, `sequence.start_scene_id`, `story_beat.scene_id`, `scene_character.scene_id`, `scene_prop.scene_id`, `scene_sequence.scene_id`, `relationship_state.scene_id`, `character_arc_state.scene_id`, `costume_scene.scene_id`, `costume_progression_state.scene_id`, `makeup_hair_design.scene_id`, `prop_state.scene_id`, `character_asset_binding.scene_range_start_id`, `character_asset_binding.scene_range_end_id`, `prop_asset_binding.scene_range_start_id`, `prop_asset_binding.scene_range_end_id`, `costume_asset_binding.scene_range_start_id`, `costume_asset_binding.scene_range_end_id`, `location_asset_binding.scene_range_start_id`, `location_asset_binding.scene_range_end_id`, `take_scene.scene_id`, `clip.scene_id`, `scene_emotional_target.scene_id`, `scene_color_palette.scene_id`, `lighting_design.scene_id`, `scene_music_design.scene_id`, `tone_marker.scene_id`, `set_dressing.scene_id`, `dialogue_sound_design.scene_id`, `motif.first_appearance_scene_id`, `motif_state.scene_id`, `motif_appearance.scene_id`, `subtext.scene_id`, `color_script_entry.scene_id`, `emotional_beat.scene_id`, `information_strategy.scene_id`, `identification_strategy.scene_id`, `shot.scene_id`, `shot_language.scene_id`, `scene_blocking.scene_id`, `action_sequence.scene_id`, `performance_state.scene_id`, `performance_state.resolved_at_scene_id`, `performance_beat.scene_id`, `dialogue_rhythm.scene_id`, `movement_choreography.scene_id`, `sound_cue.scene_id`, `music_cue.scene_id`, `sound_perspective.scene_id`, `voiceover_design.scene_id`, `music_sound_relationship.scene_id` |
+| Referenced by (51) | `act.start_scene_id`, `sequence.start_scene_id`, `story_beat.scene_id`, `scene_character.scene_id`, `scene_prop.scene_id`, `scene_sequence.scene_id`, `relationship_state.scene_id`, `character_arc_state.scene_id`, `costume_scene.scene_id`, `costume_progression_state.scene_id`, `makeup_hair_design.scene_id`, `prop_state.scene_id`, `character_asset_binding.scene_range_start_id`, `character_asset_binding.scene_range_end_id`, `prop_asset_binding.scene_range_start_id`, `prop_asset_binding.scene_range_end_id`, `costume_asset_binding.scene_range_start_id`, `costume_asset_binding.scene_range_end_id`, `location_asset_binding.scene_range_start_id`, `location_asset_binding.scene_range_end_id`, `take_scene.scene_id`, `clip.slated_scene_id`, `scene_emotional_target.scene_id`, `scene_color_palette.scene_id`, `lighting_design.scene_id`, `scene_music_design.scene_id`, `tone_marker.scene_id`, `set_dressing.scene_id`, `dialogue_sound_design.scene_id`, `motif.first_appearance_scene_id`, `motif_state.scene_id`, `motif_appearance.scene_id`, `subtext.scene_id`, `color_script_entry.scene_id`, `emotional_beat.scene_id`, `information_strategy.scene_id`, `identification_strategy.scene_id`, `shot.scene_id`, `shot_language.scene_id`, `scene_blocking.scene_id`, `action_sequence.scene_id`, `performance_state.scene_id`, `performance_state.resolved_at_scene_id`, `performance_beat.scene_id`, `dialogue_rhythm.scene_id`, `movement_choreography.scene_id`, `sound_cue.scene_id`, `music_cue.scene_id`, `sound_perspective.scene_id`, `voiceover_design.scene_id`, `music_sound_relationship.scene_id` |
 
 | Field | Type | Req | |
 |---|---|---|---|
@@ -659,7 +658,6 @@ A group of related scenes forming a narrative unit.
 |---|---|---|---|
 | `name` | text | **yes** |  |
 | `sequence_number` | integer |  |  |
-| `act_id` | reference |  | → `act` (resolves to `act_uuid` in a result, §12.1.2) |
 | `start_scene_id` | reference |  | → `scene` (resolves to `start_scene_uuid` in a result, §12.1.2). The scene this sequence begins at. It runs until the next sequence begins. |
 | `summary` | textarea |  |  |
 | `goal` | textarea |  |  |
@@ -1428,7 +1426,7 @@ A meaningful within-scene segment of a take. Plates are clips with clip_type=atm
 |---|---|---|---|
 | `name` | text | **yes** |  |
 | `take_id` | reference | **yes** | → `take` (resolves to `take_uuid` in a result, §12.1.2) |
-| `scene_id` | reference | **yes** | → `scene` (resolves to `scene_uuid` in a result, §12.1.2) |
+| `slated_scene_id` | reference |  | → `scene` (resolves to `slated_scene_uuid` in a result, §12.1.2). The scene this footage was shot for. Deleting the scene clears this and keeps the clip. |
 | `clip_in_timecode` | text |  |  |
 | `clip_out_timecode` | text |  |  |
 | `duration_seconds` | integer |  |  |
@@ -1595,8 +1593,8 @@ Known-good single frame, audio segment, or motion sample marked as canonical ref
 | `timecode` | text |  |  |
 | `region_box` | json |  | Declared shape: {x, y, w, h} in pixels, origin top-left, naming the part of the asset this anchor points at. A reader that does not recognise a shape MUST preserve it (§10.1) rather than discard it. |
 | `region_label` | text |  |  |
-| `audio_offset_start_sec` | float |  |  |
-| `audio_offset_end_sec` | float |  |  |
+| `audio_offset_start_sec` | float |  | Seconds from the first sample of the asset's playable audio (t = 0), non-negative; the span is start-inclusive. Null is open: from the beginning. Meaningless on an asset without audio, where a reader MUST ignore it (§12.8). |
+| `audio_offset_end_sec` | float |  | Seconds from the first sample, end-exclusive, and MUST exceed the start. Null is open: to the end; both null is the whole recording. Meaningless on an asset without audio, where a reader MUST ignore it (§12.8). |
 | `condition_description` | textarea |  | What state the subject is in, in this asset — for a reader. Not a filter: the anchor applies wherever §12.8 says. Scope by state with a binding's state filter, or by design with a variant. |
 | `canonical_status` | select |  | one of `verified`, `candidate`, `rejected`. default `candidate`. Verification axis distinct from lifecycle_status. |
 | `notes` | textarea |  |  |

@@ -1,7 +1,7 @@
 {
   "query": "Q04",
   "resultFormat": "1.0",
-  "schemaVersion": "2.23",
+  "schemaVersion": "2.24",
   "parameters": {
     "scene": "06857531-3e91-41a9-95dd-3262407d8132"
   },
@@ -50,7 +50,6 @@
         "row": {
           "uuid": "ec338c64-c596-4360-8300-37f160a9a9d3",
           "fields": {
-            "act_uuid": "17528f38-4fcd-428f-853d-38a57291f6a4",
             "conflict": "Neither will speak first; the storm keeps them there.",
             "goal": "Get through one evening in the same room.",
             "lifecycle_status": "active",

@@ -20,11 +20,58 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.24
+
+**The release schema** (release checklist §A7): the 1.0 decisions'
+registry changes. Untagged until RC day. It is 2.24 rather than 2.23
+because `schema-2.23` was tagged and pushed on 2026-10-12, carrying
+0037 and 0038, and a published tag is not reused — as with 2.22.
+
+The 1.0 decisions: release checklist §A1, §A5, §A6 and §A9. Each break
+below is taken under spec §11.0, before 1.0 makes it a major change.
+
+**Renamed:**
+
+- `clip.scene_id` → `clip.slated_scene_id`, and no longer required.
+  §2.3 deletes a row whose column is named `scene_id` with its scene,
+  and footage outlives the script: the clip now points at the scene it
+  was slated for, and deleting the scene clears the pointer and keeps
+  the clip (proposal 0002). A clip's line range is read against this
+  scene.
+
+**Removed:**
+
+- `sequence.act_id`. Stored, derivable and unspecified, and undefined
+  for a sequence that crosses an act. A sequence's act is derived from
+  the span boundaries (spec §5.1). `structure.sequence_act_mismatch`
+  stays: it reports a span crossing an act boundary, and never read the
+  column.
+
+**Unpublished:** the per-entity `queries` member of `registry.json` and
+`registry.schema.json`. Hand-maintained, wrong in both directions, and
+checked by nothing. `schema/entity_registry.py` keeps it for the lint
+that requires every entity to serve a canonical query.
+
+**Help text:** `entity_anchor.audio_offset_start_sec` and
+`audio_offset_end_sec` state what the editor already enforces (spec
+§12.8): seconds from the first sample, start-inclusive, end-exclusive,
+null bounds open.
+
+**Lint:** `schema/lint_registry.py` requires every `scene_id` on an
+entity that declares no parent to be recorded as deliberately owned by
+its scene — thirty-three are — so a new one cannot arrive without a
+decision.
+
+**Fixture:** the five sequences lose `act_id`, and both clips carry
+`slated_scene_id`. Q04's normative result no longer carries the
+sequence's `act_uuid`.
+
+Not schema: the finding catalog gains `line.type_unknown` (error,
+spec §1.3.1), with a negative case, `line-type-unknown`.
+
 ## 2.23
 
-**The release schema** (release checklist §A7): every registry change
-in the 1.0 batch lands under this one number. Untagged until RC day.
-What has landed so far:
+Tagged `schema-2.23` on 2026-10-12. Proposals 0037 and 0038.
 
 Shot and scene media: proposal 0037.
 

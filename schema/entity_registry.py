@@ -568,7 +568,6 @@ register(EntityDef(
     fields=[
         FieldDef("name", "Sequence Name", required=True),
         FieldDef("sequence_number", "Sequence Number", "integer"),
-        FieldDef("act_id", "Act", "reference", reference_entity="act"),
         FieldDef("start_scene_id", "Starts At Scene", "reference",
                  reference_entity="scene",
                  help_text="The scene this sequence begins at. It runs "
@@ -2199,8 +2198,18 @@ register(EntityDef(
                            "rather than discard it.", tab="Scope",
                  placeholder='{"x": 420, "y": 180, "w": 480, "h": 600}'),
         FieldDef("region_label", "Region Label", "text", tab="Scope"),
-        FieldDef("audio_offset_start_sec", "Audio Offset Start (sec)", "float", tab="Scope"),
-        FieldDef("audio_offset_end_sec", "Audio Offset End (sec)", "float", tab="Scope"),
+        FieldDef("audio_offset_start_sec", "Audio Offset Start (sec)", "float",
+                 help_text="Seconds from the first sample of the asset's playable "
+                           "audio (t = 0), non-negative; the span is start-"
+                           "inclusive. Null is open: from the beginning. "
+                           "Meaningless on an asset without audio, where a reader "
+                           "MUST ignore it (§12.8).", tab="Scope"),
+        FieldDef("audio_offset_end_sec", "Audio Offset End (sec)", "float",
+                 help_text="Seconds from the first sample, end-exclusive, and "
+                           "MUST exceed the start. Null is open: to the end; "
+                           "both null is the whole recording. Meaningless on an "
+                           "asset without audio, where a reader MUST ignore it "
+                           "(§12.8).", tab="Scope"),
         # Proposal 0034 removed physical_state, vocal_state and
         # environmental_state: free text that §12.8 never read, so an
         # anchor "scoped" by one applied everywhere. State-specific media
@@ -2360,7 +2369,14 @@ register(EntityDef(
     fields=[
         FieldDef("name", "Clip Name", required=True),
         FieldDef("take_id", "Take", "reference", reference_entity="take", required=True),
-        FieldDef("scene_id", "Scene", "reference", reference_entity="scene", required=True),
+        # Not `scene_id`: §2.3 deletes a row named that way with its
+        # scene, and footage outlives the script (proposal 0002). A clip
+        # POINTS AT the scene it was slated for; deleting the scene
+        # clears this and keeps the clip.
+        FieldDef("slated_scene_id", "Slated Scene", "reference",
+                 reference_entity="scene",
+                 help_text="The scene this footage was shot for. Deleting "
+                           "the scene clears this and keeps the clip."),
         FieldDef("clip_in_timecode", "Clip In", "text"),
         FieldDef("clip_out_timecode", "Clip Out", "text"),
         FieldDef("duration_seconds", "Duration (seconds)", "integer"),

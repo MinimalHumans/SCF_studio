@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Status** | **accepted** — narrow form for 1.0 (`clip` only, plus the lint); declarations deferred. See Resolution |
+| **Status** | **implemented** — narrow form, spec 0.66, schema 2.24 (untagged); declarations deferred past 1.0. See Resolution |
 | **Author** | Found by the fifth independent reader run (G-28); written up by the maintainers |
 | **Opened** | 2026-08-25 |
 | **Affects** | Spec §2.3, `schema/entity_registry.py`, `registry.json`, Editor conformance (`conformance.md` §2.3) |
@@ -157,6 +157,14 @@ What lands before the tag:
 2. **Step 3's lint lands as written:** any column named
    `<entity>_id` on an entity that declares no parent must be recorded
    as deliberate in `schema/lint_registry.py`.
+
+**Implemented in spec 0.66, schema 2.24** — the release batch moved to 2.24 when `schema-2.23` turned out to be tagged already. The column is
+`clip.slated_scene_id` — the scene on the footage's slate — and is no
+longer required, since deleting the scene clears it. A clip's line range
+is read against it (`rangeSceneField`, `scf-core/src/lines.ts`). The
+lint is `lint_ownership_by_name()` in `schema/lint_registry.py`, scoped
+to `scene_id`, the one name §2.3 matches on; the thirty-three it records
+are `DELIBERATE_SCENE_OWNERS`.
 
 What does not: **step 1 and step 2 — populating `parentEntity` on the
 thirty-three and rewriting §2.3 to read declarations only — are

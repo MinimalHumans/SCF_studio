@@ -9,7 +9,7 @@ hand-defines an entity — everything it knows about the format's shape comes
 from this file.
 
 Emitted per entity: every EntityDef attribute including the Phase A ontology
-(subject, scope, paired, refines, queries, position_pattern) and the full
+(subject, scope, paired, refines, position_pattern) and the full
 field list with effective SQL types. Framework columns (id, uuid,
 created_at, updated_at) are implicit on every table and documented once at
 the top level rather than repeated per entity.
@@ -101,7 +101,10 @@ def entity_to_json(e) -> dict:
         "paired": e.paired,
         "positionPattern": e.position_pattern,
         "refines": list(e.refines),
-        "queries": list(e.queries),
+        # `queries` stays in entity_registry.py, where the lint uses it to
+        # require that every entity serves a canonical query. It is not
+        # published: hand-maintained, it was wrong in both directions and
+        # nothing could check it (release checklist §A6).
         "fields": [field_to_json(f) for f in e.fields],
     }
 

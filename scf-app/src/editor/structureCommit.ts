@@ -113,8 +113,7 @@ export async function renumberSpans(
     const acts = await exec(
       "SELECT id, name, act_number, start_scene_id FROM act");
     const sequences = await exec(
-      "SELECT id, name, sequence_number, start_scene_id, act_id " +
-      "FROM sequence");
+      "SELECT id, name, sequence_number, start_scene_id FROM sequence");
     const headings = await exec(
       "SELECT scene_id, line_order FROM screenplay_lines " +
       "WHERE line_type = 'heading' ORDER BY line_order");
@@ -137,21 +136,6 @@ export async function renumberSpans(
                  "AND (sequence_number IS NULL OR sequence_number != ?)",
                  [i + 1, span.id, i + 1]);
     }
-  }
-
-  /*
-   * `sequence.act_id` is WRITTEN here, not merely read. Left unwritten
-   * it sits null on every sequence the app makes — a stored field a
-   * consumer would reasonably trust, empty. Act membership is derived
-   * from the boundaries, so it can simply be recorded: a sequence
-   * belongs to the act its START scene falls in, which is how a
-   * sequence crossing a boundary is attributed everywhere else.
-   */
-  for (const span of derived.sequences) {
-    const actId = derived.actOfScene.get(span.startSceneId) ?? null;
-    await exec(
-      "UPDATE sequence SET act_id = ? WHERE id = ? AND " +
-      "(act_id IS NULL OR act_id != ?)", [actId, span.id, actId]);
   }
 }
 

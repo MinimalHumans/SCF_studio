@@ -187,6 +187,20 @@ const CASES = [
     },
   },
   {
+    name: "line-type-unknown",
+    about:
+      "A screenplay line typed `scene_heading`, which is not in §1.3.1's " +
+      "closed set. A reader must keep it as unknown content and must not " +
+      "read it as a heading, so story order would silently lose a scene; " +
+      "an error, because two readers that disagree here disagree about " +
+      "the story.",
+    damage: async (exec) => {
+      await exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, uuid) " +
+        "VALUES (1, 'scene_heading', 'INT. KITCHEN - NIGHT', ?)", [uuid(1)]);
+    },
+  },
+  {
     name: "bundle-unbound",
     about:
       "A bundle with an asset in it and no binding anywhere. Its asset " +

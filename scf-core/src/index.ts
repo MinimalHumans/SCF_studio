@@ -182,7 +182,7 @@ export {
 export {
   type LineAnchorField, type LineProblem, type OrphanedAnchor,
   type RangeVerdict, lineAnchorFields, lineProblems, liveLineUuids,
-  orphanedAnchors, rangeEntities, rangeLines,
+  orphanedAnchors, rangeEntities, rangeLines, rangeSceneField,
 } from "./lines.ts";
 
 export {

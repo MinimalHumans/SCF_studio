@@ -421,12 +421,10 @@ export function structureFindings(
   // A sequence whose SPAN crosses an act boundary.
   //
   // Membership is derived per §5.1 and every scene in the span tested.
-  // Testing the START SCENE alone — whether the stored `act_id` matches
-  // the act derived for the sequence's first scene — is a different
-  // condition, and is the comparison §5.3 explicitly calls incorrect:
-  // "Grouping by 'sequences whose start falls in this act' is
-  // incorrect." It also misses the fixture's own crossing, which is
-  // filed under act 2, starts in act 2, and runs on into act 3.
+  // Testing the START SCENE alone is a different condition, and is the
+  // comparison §5.3 explicitly calls incorrect: "Grouping by 'sequences
+  // whose start falls in this act' is incorrect." It would also miss the
+  // fixture's own crossing, which starts in act 2 and runs into act 3.
   //
   // §5.3 says a crossing is LEGAL and MUST NOT be rejected, which is
   // why the catalog rates it `info`: it is a note to whoever presents

@@ -1,8 +1,8 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.65 (draft) — not a release.**
-Describes schema version **2.23**.
+**Version 0.66 (draft) — not a release.**
+Describes schema version **2.24**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
 | | |
@@ -112,9 +112,9 @@ Three numbers, deliberately independent:
 - **Implementation version** — any given tool's own release number. Not
   governed here.
 
-This specification describes schema **2.12 and later**. A conforming
-reader MUST accept any file whose schema version is greater than or
-equal to the minimum it declares support for, subject to §11.
+This specification describes schema **2.24**, exactly. What a reader
+does with a file at another schema version — an older one, or a later
+compatible 2.x revision — is governed by §11, not by this section.
 
 ### 0.7 Terminology
 
@@ -261,13 +261,14 @@ encountering one MUST treat that line as unknown content (§10.1) and
 resemblance is not a rule: a scene heading is `heading`, and
 `scene_heading` is not a synonym for it.
 
-The column is declared `TEXT` and SQLite enforces nothing, so this is a
-requirement on implementations rather than a constraint the file can
-carry. **No finding is raised for an unrecognised `line_type`**, which
-is deliberate and is why the requirement is stated here: story order is
-derived from this table (§4.1), so a reader that guesses wrong produces
-a wrong answer confidently and in silence. That is not hypothetical — it
-is how this subsection came to exist.
+The column is declared `TEXT` and SQLite enforces nothing, so the file
+cannot carry the constraint. **A validator MUST report a line whose
+`line_type` is outside the published set as `line.type_unknown`**, at
+severity `error` (§9.5), naming the line's uuid and the value; the line
+is still kept as unknown content. Story order is derived from this table
+(§4.1), so a reader that guesses wrong produces a wrong answer
+confidently, and the finding is what keeps it from being silent. Only
+`screenplay_lines` is checked: the version tables are not read (§0).
 
 **A `section` line MAY name the span it declares.** It does so in its
 `metadata`, as
@@ -360,7 +361,11 @@ them the same way, so that adding an entity requires no code change:
   means the row POINTS AT the scene and MUST retain its identity with
   the reference cleared. `act.start_scene_id` and
   `sequence.start_scene_id` are excluded from both and MUST be
-  re-anchored (§5.4).
+  re-anchored (§5.4). **A clip is not deleted with its scene**: footage
+  outlives the script, so `clip.slated_scene_id` is named to point, and
+  deleting the scene clears it and keeps the clip. Until 2.24 the column
+  was `clip.scene_id`, and this rule deleted recorded footage because of
+  how a column was spelled (proposal 0002).
 - **Link labels.** Where a link entity declares its `nameField` as
   `hidden: true`, that column is not a name and MUST NOT be displayed as
   one (§3.2).
@@ -399,8 +404,8 @@ while discarding the value that would have said how. A production
 shooting 12K stored `other` and lost the number.
 
 **The closed vocabularies are closed for a reason, and it is the same
-reason in every case: something resolves over them.** §12.17 scores a
-location variant by counting agreements on `time_of_day`, `weather` and
+reason in every case: something resolves over them.** §12.17 ranks a
+location variant by its agreements on `time_of_day`, `weather` and
 `season`; §6.6.1 excludes a row on `lifecycle_status`; §9.4's severities
 and §12's own vocabularies decide result shapes. A finite set is what
 makes those answers the same in two implementations. An open vocabulary
@@ -1651,7 +1656,10 @@ otherwise require:
 - schema 2.15 replaced two JSON columns with rows
   (`costume_progression.progression_stages`,
   `staging_beat.character_positions`);
-- schema 2.21 removed `entity_anchor`'s three state columns.
+- schema 2.21 removed `entity_anchor`'s three state columns;
+- schema 2.24 removed `sequence.act_id`, renamed `clip.scene_id` to
+  `clip.slated_scene_id` so that a clip outlives its scene, and dropped
+  the per-entity `queries` member from `registry.json`.
 
 `docs/schema-changelog.md` records each in full.
 
@@ -2194,6 +2202,16 @@ different design of the subject is a variant (§4.8). Until 0.61
 `environmental_state`, free text that nothing read, so an anchor
 "scoped" by one applied everywhere; they were removed (proposal 0034).
 
+**An anchor's audio span** is `audio_offset_start_sec` and
+`audio_offset_end_sec`: non-negative seconds from the start of the
+asset's playable audio, t = 0 at its first sample. The span is
+start-inclusive and end-exclusive, and where both are set the end MUST
+exceed the start. A null bound is open — a null start runs from the
+beginning, a null end to the end, and both null are the whole recording.
+On an asset with no audio the two are meaningless and a reader MUST
+ignore them. They locate the part of the recording the anchor names;
+like the region, they do not change which references are in force.
+
 #### 12.8.1 A binding applies where every filter it declares is satisfied
 
 A `*_asset_binding` row may narrow when it applies. **A binding is in
@@ -2675,21 +2693,28 @@ is: `scene_emotional_target`, `scene_color_palette`, `lighting_design`,
 keyed to a scene at all — so "in force" here means *the variant that
 best describes this scene*:
 
-1. Score each variant of the scene's location by how many of three axes
-   it agrees with the scene on: `scene.time_of_day` against
-   `location_variant.time_of_day`, `scene.weather_conditions` against
-   `weather`, and `scene.season` against `season`. An axis counts only
-   where **both** sides carry a value, compared case-insensitively and
-   trimmed. An absent value on either side is not a disagreement.
-   **A variant whose `time_of_day` is `varies` agrees with any scene on
-   that axis**: it is a wildcard, not a time, and scoring it as a
-   mismatch made the only value that says "this dressing holds at any
-   hour" the one value that could never win.
-2. Take the highest score, breaking a tie in favour of `is_baseline`
-   and then in favour of the first such row.
-3. **If the best score is zero, take the first `is_baseline` variant.**
-   Nothing agreed, so agreement is not what chose it, and the baseline
-   is the honest answer.
+1. For each variant of the scene's location, note which of three axes,
+   **in this order**, it agrees with the scene on: `scene.time_of_day`
+   against `location_variant.time_of_day`, then
+   `scene.weather_conditions` against `weather`, then `scene.season`
+   against `season`. An axis agrees only where **both** sides carry a
+   value, compared case-insensitively and trimmed. An absent value on
+   either side is not a disagreement. **A variant whose `time_of_day` is
+   `varies` agrees with any scene on that axis**: it is a wildcard, not
+   a time, and scoring it as a mismatch made the only value that says
+   "this dressing holds at any hour" the one value that could never win.
+2. **Compare the variants axis by axis, in that order.** A variant that
+   agrees on an earlier axis beats one that does not, whatever either
+   says about the later ones; only between variants equal on an axis
+   does the next one decide. Light is what the camera sees first: a
+   night variant built for autumn dresses a winter night before a
+   winter-morning baseline does. Counting the axes equally made those
+   two tie, and the tie went to the morning.
+3. Between variants equal on all three, prefer `is_baseline`, then the
+   first such row.
+4. **If the winner agrees on no axis, take the first `is_baseline`
+   variant.** Nothing agreed, so agreement is not what chose it, and
+   the baseline is the honest answer.
 
 **`time_of_day` is a light axis** — what the camera sees: `day`,
 `dawn`, `morning`, `midday`, `afternoon`, `dusk`, `night`. It is not the

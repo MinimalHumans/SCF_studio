@@ -8,7 +8,9 @@ import {
 } from "../state/displayName.ts";
 import { useQuery } from "./useQuery.ts";
 import { useRefNames } from "./useRefNames.ts";
-import { storyOrder } from "@scf-core/structure.ts";
+import {
+  deriveStructure, sceneOrderHint, storyOrder,
+} from "@scf-core/structure.ts";
 import {
   ORDER_FALLBACKS, STORY_ORDERED, listTable, sceneRefFor,
 } from "../state/listOrder.ts";
@@ -25,6 +27,40 @@ import {
  * itself.
  */
 
+
+/**
+ * The number of the act each sequence starts in, by sequence id.
+ *
+ * Derived from the span boundaries (§5.1), because act membership is
+ * stored nowhere: a sequence belongs to the act its start scene falls
+ * in. Queries nothing unless `enabled`, so other lists pay nothing.
+ */
+function useSequenceActNumbers(enabled: boolean): Map<number, string> {
+  const scenes = useQuery(enabled
+    ? "SELECT id, scene_number, name FROM scene" : null);
+  const headings = useQuery(enabled
+    ? "SELECT scene_id, line_order FROM screenplay_lines " +
+      "WHERE line_type = 'heading' ORDER BY line_order" : null);
+  const acts = useQuery(enabled
+    ? "SELECT id, name, act_number, start_scene_id FROM act" : null);
+  const sequences = useQuery(enabled
+    ? "SELECT id, name, sequence_number, start_scene_id FROM sequence"
+    : null);
+  return useMemo(() => {
+    const out = new Map<number, string>();
+    if (!enabled) return out;
+    const structure = deriveStructure(scenes, acts, sequences,
+                                      sceneOrderHint(headings));
+    const actNumber = new Map(acts.map((a) =>
+      [Number(a["id"]), a["act_number"]]));
+    for (const span of structure.sequences) {
+      const act = structure.actOfScene.get(span.startSceneId);
+      const n = act === undefined ? undefined : actNumber.get(act);
+      if (typeof n === "number") out.set(span.id, String(n));
+    }
+    return out;
+  }, [enabled, scenes, headings, acts, sequences]);
+}
 
 export function EntityList({ entity }: { entity: string }): JSX.Element {
   const edef = registry.entities.get(entity);
@@ -56,10 +92,7 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
   // derives it — the A-Z list needs the column too, to show the scene.
   const table = listTable(entity);
 
-  // A sequence shows the act it starts in, so the join comes along.
-  const extraSelect = entity === "sequence"
-    ? ", (SELECT act_number FROM act WHERE act.id = t.act_id) " +
-      "AS _act_number" : "";
+  const actNumberOf = useSequenceActNumbers(entity === "sequence");
 
   const rows = useQuery(
     edef === undefined ? null :
@@ -69,12 +102,12 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
             alias: "t", sceneRef: orderSpec!.sceneRef,
             fallbacks: orderSpec!.fallbacks,
           });
-          return `SELECT t.*${extraSelect} FROM ${table} t ` +
+          return `SELECT t.* FROM ${table} t ` +
             `${order.join} ${order.orderBy} LIMIT 500`;
         })()
     : composedEntity
       ? `SELECT * FROM ${q(entity)} ORDER BY id LIMIT 500`
-      : `SELECT t.*${extraSelect} FROM ${table} t ` +
+      : `SELECT t.* FROM ${table} t ` +
         `ORDER BY t.${q(nameField)} LIMIT 500`);
 
   /**
@@ -90,7 +123,7 @@ export function EntityList({ entity }: { entity: string }): JSX.Element {
     if (entity === "sequence") {
       const seq = n(r["sequence_number"]);
       if (seq === null) return null;
-      const act = n(r["_act_number"]);
+      const act = actNumberOf.get(Number(r["id"])) ?? null;
       return act === null ? seq : `${act}.${seq}`;
     }
     return null;

@@ -74,7 +74,7 @@ npm run scf-check -- ../fixtures/hollow_creek.scf
 ```
 
 ```
-../fixtures/hollow_creek.scf  (schema 2.22)
+../fixtures/hollow_creek.scf  (schema 2.24)
 
   info     field.required_absent  [shot 31]
            shot.scene_id is absent on 1 row(s). The row is incomplete,

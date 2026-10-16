@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.23",
+ "schemaVersion": "2.24",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.23"
+    "value": "2.24"
    },
    {
     "key": "updated_at",
@@ -1878,7 +1878,7 @@
     "updated_at": "2026-10-01 12:00:00",
     "name": "You came back",
     "take_id": 1,
-    "scene_id": 7,
+    "slated_scene_id": 7,
     "clip_type": "dialogue",
     "line_start_ref": "00000000-0000-4000-9000-000000000083",
     "line_end_ref": "00000000-0000-4000-9000-000000000084",
@@ -1892,7 +1892,7 @@
     "updated_at": "2026-10-01 12:00:00",
     "name": "I came back",
     "take_id": 1,
-    "scene_id": 7,
+    "slated_scene_id": 7,
     "clip_type": "dialogue",
     "line_start_ref": "00000000-0000-4000-9000-000000000086",
     "line_end_ref": "00000000-0000-4000-9000-000000000087",
@@ -5172,7 +5172,6 @@
     "updated_at": "2026-07-16 06:01:31",
     "name": "The Reckoning",
     "sequence_number": 3,
-    "act_id": 2,
     "start_scene_id": 7,
     "goal": "Get through one evening in the same room.",
     "conflict": "Neither will speak first; the storm keeps them there.",
@@ -5189,7 +5188,6 @@
     "updated_at": "2026-07-16 06:01:31",
     "name": "The Storm",
     "sequence_number": 4,
-    "act_id": 3,
     "start_scene_id": 10,
     "goal": "Bring the horses in before the ridge floods.",
     "conflict": "The weather, and what he is trying to work off.",
@@ -5206,7 +5204,6 @@
     "updated_at": "2026-08-05 13:24:02",
     "name": "The Return",
     "sequence_number": 1,
-    "act_id": 1,
     "start_scene_id": 1,
     "goal": "Cross the last mile and get through the door.",
     "conflict": "Seven years of not writing.",
@@ -5223,7 +5220,6 @@
     "updated_at": "2026-08-05 13:24:02",
     "name": "The Thaw",
     "sequence_number": 2,
-    "act_id": 2,
     "start_scene_id": 4,
     "goal": "Survive the crossing.",
     "conflict": "Her body fails at the worst moment.",
@@ -5240,7 +5236,6 @@
     "updated_at": "2026-08-05 13:24:02",
     "name": "The Open Door",
     "sequence_number": 5,
-    "act_id": 3,
     "start_scene_id": 11,
     "goal": "Say the thing that has no task attached to it.",
     "conflict": "Habit.",
