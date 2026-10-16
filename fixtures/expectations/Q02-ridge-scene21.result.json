@@ -1,0 +1,141 @@
+{
+  "query": "Q02",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "subjectType": "location",
+    "subject": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+    "scene": "0ab2d511-97de-4090-8d4c-dedf55536222",
+    "shot": null
+  },
+  "result": {
+    "subjectType": "location",
+    "subject": {
+      "uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+      "fields": {
+        "geography": "Willamette foothills, Oregon",
+        "key_features": "Doug fir, no path, the sound of water always somewhere below",
+        "lifecycle_status": "active",
+        "location_type": "exterior",
+        "name": "Ridge Forest",
+        "realization_status": "plate_captured",
+        "setting": "The timber above the homestead",
+        "time_period": "1889"
+      }
+    },
+    "scene": {
+      "uuid": "0ab2d511-97de-4090-8d4c-dedf55536222",
+      "fields": {
+        "emotional_beat": "Fear for him, which is forgiveness starting",
+        "estimated_duration": "3:00",
+        "int_ext": "exterior",
+        "lifecycle_status": "active",
+        "location_uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+        "name": "EXT. RIDGE FOREST - NIGHT (STORM)",
+        "purpose": "Action as penance; he goes out into it.",
+        "scene_number": "21",
+        "season": "winter",
+        "status": "outline",
+        "summary": "Marcus pursues the runaway horses.",
+        "tension_level": "high",
+        "time_of_day": "night",
+        "tone": "chaotic",
+        "weather_conditions": "storm"
+      }
+    },
+    "dossier": {
+      "subjectType": "location",
+      "subject": {
+        "uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+        "fields": {
+          "geography": "Willamette foothills, Oregon",
+          "key_features": "Doug fir, no path, the sound of water always somewhere below",
+          "lifecycle_status": "active",
+          "location_type": "exterior",
+          "name": "Ridge Forest",
+          "realization_status": "plate_captured",
+          "setting": "The timber above the homestead",
+          "time_period": "1889"
+        }
+      },
+      "groups": [
+        {
+          "entity": "location_variant",
+          "rows": [
+            {
+              "uuid": "00000000-0000-4000-8000-00d300000003",
+              "fields": {
+                "is_baseline": 0,
+                "lifecycle_status": "active",
+                "location_uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+                "name": "Ridge — summer, dry",
+                "physical_differences": "Dust on the trail; bracken high",
+                "season": "summer",
+                "time_of_day": "afternoon",
+                "weather": "dry"
+              }
+            },
+            {
+              "uuid": "00000000-0000-4000-8000-00d300000004",
+              "fields": {
+                "is_baseline": 1,
+                "lifecycle_status": "active",
+                "location_uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+                "name": "Ridge — autumn baseline",
+                "physical_differences": "Leaf litter; the trail clear",
+                "season": "autumn",
+                "time_of_day": "morning",
+                "weather": "overcast"
+              }
+            }
+          ]
+        }
+      ],
+      "motifCarriage": [],
+      "thematicConnections": []
+    },
+    "costumes": [],
+    "relationshipStates": [],
+    "arcStates": [],
+    "performanceStates": [],
+    "beats": [],
+    "characterVariant": null,
+    "locationVariant": {
+      "variant": {
+        "uuid": "00000000-0000-4000-8000-00d300000004",
+        "fields": {
+          "is_baseline": 1,
+          "lifecycle_status": "active",
+          "location_uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+          "name": "Ridge — autumn baseline",
+          "physical_differences": "Leaf litter; the trail clear",
+          "season": "autumn",
+          "time_of_day": "morning",
+          "weather": "overcast"
+        }
+      },
+      "mismatches": [
+        "time_of_day: scene=\"night\" variant=\"morning\"",
+        "weather_conditions: scene=\"storm\" variant=\"overcast\"",
+        "season: scene=\"winter\" variant=\"autumn\""
+      ]
+    },
+    "propVariant": null,
+    "propState": null,
+    "media": {
+      "fromQuery": "Q13",
+      "subjectKind": "location",
+      "intent": "environment",
+      "trail": [],
+      "references": [],
+      "counts": {
+        "resolved": 0,
+        "missing": 0,
+        "unmaterialised": 0,
+        "out-of-root": 0,
+        "unaddressed": 0
+      },
+      "rootMapped": false
+    }
+  }
+}

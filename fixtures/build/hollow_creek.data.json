@@ -3276,6 +3276,58 @@
     "emotional_shift": "A place to play, before it was anything else",
     "notes": "The creek as it was, for the scene 25 flashback (proposal 0033). Baseline, so it is also the fallback for any creek scene no variant scores against.",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 6,
+    "uuid": "00000000-0000-4000-8000-00d300000001",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "Church — bare, between services",
+    "location_id": 4,
+    "is_baseline": 1,
+    "physical_differences": "Pews pushed back; no candles",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 7,
+    "uuid": "00000000-0000-4000-8000-00d300000002",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "Church — candles lit, any hour",
+    "location_id": 4,
+    "is_baseline": 0,
+    "time_of_day": "varies",
+    "physical_differences": "Every candle lit along the nave",
+    "lighting_differences": "Warm pools on the floor; the windows dark or bright as the hour has it",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 8,
+    "uuid": "00000000-0000-4000-8000-00d300000003",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "Ridge — summer, dry",
+    "location_id": 5,
+    "is_baseline": 0,
+    "time_of_day": "afternoon",
+    "weather": "dry",
+    "season": "summer",
+    "physical_differences": "Dust on the trail; bracken high",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 9,
+    "uuid": "00000000-0000-4000-8000-00d300000004",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "Ridge — autumn baseline",
+    "location_id": 5,
+    "is_baseline": 1,
+    "time_of_day": "morning",
+    "weather": "overcast",
+    "season": "autumn",
+    "physical_differences": "Leaf litter; the trail clear",
+    "lifecycle_status": "active"
    }
   ],
   "look_development": [
@@ -4356,7 +4408,7 @@
     "season": "winter",
     "summary": "Marcus arrives. Eleanor leaves the door ajar behind him without deciding to.",
     "purpose": "Establish Eleanor's competence as armour, and the door she does not close.",
-    "status": "outline",
+    "status": "draft",
     "character_dynamics": "She gives him tasks instead of answers.",
     "emotional_beat": "Recognition refused",
     "tone": "held breath",
@@ -4460,7 +4512,7 @@
     "goal": "Marcus wants Eleanor to say the drowning was not his fault.",
     "conflict": "She will not lie to comfort him, and cannot say the true thing either.",
     "outcome": "He gets a confession instead of absolution, and it is worse.",
-    "status": "outline",
+    "status": "locked",
     "tone": "held breath",
     "tension_level": "high",
     "estimated_duration": "3:40",
@@ -4498,7 +4550,7 @@
     "season": "winter",
     "summary": "Marcus confesses he was at the creek the day Ada drowned. The locket revealed.",
     "purpose": "The confession, and the locket revealed.",
-    "status": "outline",
+    "status": "revised",
     "emotional_beat": "The worst thing said aloud",
     "tone": "rupture",
     "tension_level": "high",
@@ -4571,7 +4623,7 @@
     "location_id": 3,
     "time_of_day": "night",
     "summary": "Marcus almost leaves. Cut in the edit — the beat is carried by his hand stopping on the door in 12A.",
-    "status": "outline",
+    "status": "locked",
     "lifecycle_status": "cut"
    },
    {
@@ -7069,5 +7121,5 @@
    }
   ]
  },
- "rowCount": 547
+ "rowCount": 551
 }

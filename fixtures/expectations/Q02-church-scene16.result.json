@@ -1,0 +1,130 @@
+{
+  "query": "Q02",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "subjectType": "location",
+    "subject": "69650632-3455-4d51-bb68-b69c3e320a81",
+    "scene": "e4fa4c60-5f66-4b81-942f-6a026ab56c62",
+    "shot": null
+  },
+  "result": {
+    "subjectType": "location",
+    "subject": {
+      "uuid": "69650632-3455-4d51-bb68-b69c3e320a81",
+      "fields": {
+        "geography": "Willamette foothills, Oregon",
+        "key_features": "Cold light through plain glass; Ada's name on a plaque nobody looks at",
+        "lifecycle_status": "active",
+        "location_type": "interior",
+        "name": "Hollow Creek Church",
+        "realization_status": "real_location",
+        "setting": "Clapboard chapel, twenty pews",
+        "time_period": "1889"
+      }
+    },
+    "scene": {
+      "uuid": "e4fa4c60-5f66-4b81-942f-6a026ab56c62",
+      "fields": {
+        "emotional_beat": "Eleanor's refusal hardens",
+        "estimated_duration": "2:10",
+        "int_ext": "interior",
+        "lifecycle_status": "active",
+        "location_uuid": "69650632-3455-4d51-bb68-b69c3e320a81",
+        "name": "INT. HOLLOW CREEK CHURCH - DAY",
+        "purpose": "An outside voice names the thing wrongly.",
+        "scene_number": "16",
+        "season": "winter",
+        "status": "outline",
+        "tension_level": "medium",
+        "time_of_day": "morning",
+        "tone": "well-meant, unbearable"
+      }
+    },
+    "dossier": {
+      "subjectType": "location",
+      "subject": {
+        "uuid": "69650632-3455-4d51-bb68-b69c3e320a81",
+        "fields": {
+          "geography": "Willamette foothills, Oregon",
+          "key_features": "Cold light through plain glass; Ada's name on a plaque nobody looks at",
+          "lifecycle_status": "active",
+          "location_type": "interior",
+          "name": "Hollow Creek Church",
+          "realization_status": "real_location",
+          "setting": "Clapboard chapel, twenty pews",
+          "time_period": "1889"
+        }
+      },
+      "groups": [
+        {
+          "entity": "location_variant",
+          "rows": [
+            {
+              "uuid": "00000000-0000-4000-8000-00d300000001",
+              "fields": {
+                "is_baseline": 1,
+                "lifecycle_status": "active",
+                "location_uuid": "69650632-3455-4d51-bb68-b69c3e320a81",
+                "name": "Church — bare, between services",
+                "physical_differences": "Pews pushed back; no candles"
+              }
+            },
+            {
+              "uuid": "00000000-0000-4000-8000-00d300000002",
+              "fields": {
+                "is_baseline": 0,
+                "lifecycle_status": "active",
+                "lighting_differences": "Warm pools on the floor; the windows dark or bright as the hour has it",
+                "location_uuid": "69650632-3455-4d51-bb68-b69c3e320a81",
+                "name": "Church — candles lit, any hour",
+                "physical_differences": "Every candle lit along the nave",
+                "time_of_day": "varies"
+              }
+            }
+          ]
+        }
+      ],
+      "motifCarriage": [],
+      "thematicConnections": []
+    },
+    "costumes": [],
+    "relationshipStates": [],
+    "arcStates": [],
+    "performanceStates": [],
+    "beats": [],
+    "characterVariant": null,
+    "locationVariant": {
+      "variant": {
+        "uuid": "00000000-0000-4000-8000-00d300000002",
+        "fields": {
+          "is_baseline": 0,
+          "lifecycle_status": "active",
+          "lighting_differences": "Warm pools on the floor; the windows dark or bright as the hour has it",
+          "location_uuid": "69650632-3455-4d51-bb68-b69c3e320a81",
+          "name": "Church — candles lit, any hour",
+          "physical_differences": "Every candle lit along the nave",
+          "time_of_day": "varies"
+        }
+      },
+      "mismatches": []
+    },
+    "propVariant": null,
+    "propState": null,
+    "media": {
+      "fromQuery": "Q13",
+      "subjectKind": "location",
+      "intent": "environment",
+      "trail": [],
+      "references": [],
+      "counts": {
+        "resolved": 0,
+        "missing": 0,
+        "unmaterialised": 0,
+        "out-of-root": 0,
+        "unaddressed": 0
+      },
+      "rootMapped": false
+    }
+  }
+}

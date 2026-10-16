@@ -1,0 +1,27 @@
+{
+  "about": "A section line bound to an act whose record has since been renamed. The record answers queries and the line is the authoring handle (§1.3.1), so this is info: between commits the two may differ, and a line that has drifted is how an editor renames the wrong act.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.24",
+  "fileSchemaVersion": "2.24",
+  "source": "fixtures/negative/build/section-mismatch.scf",
+  "counts": {
+    "error": 0,
+    "warning": 0,
+    "info": 1
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "structure.section_mismatch",
+      "severity": "info",
+      "table": "screenplay_lines",
+      "rowIds": [
+        1
+      ],
+      "message": "The section line reads \"The Arrival\" and the act it names is \"The Thaw\". The record answers queries (§1.3.1).",
+      "count": 1,
+      "spec": "§1.3.1",
+      "title": "Section line disagrees with the span it names"
+    }
+  ]
+}

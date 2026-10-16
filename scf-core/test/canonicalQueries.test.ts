@@ -757,7 +757,8 @@ describe("§12.15 Q01, §12.16 Q02, §12.17 Q04", () => {
  * any of them reproduced every published result byte for byte.
  */
 const CASES = [
-  "Q05-scene19", "Q02-marcus-scene25", "Q02-locket-scene25", "Q02-kitchen-scene10",
+  "Q05-scene19", "Q02-marcus-scene25", "Q02-church-scene16",
+  "Q02-ridge-scene21", "Q02-locket-scene25", "Q02-kitchen-scene10",
   "Q03-scene25", "Q04-scene25", "Q12-scene24-25", "Q12-scene25-24", "Q13-scene3",
   "Q13-scene25", "Q15-plate-v2",
 ] as const;
@@ -813,6 +814,37 @@ describe("per-case results — what one position cannot show", () => {
       .toContain("night");
     expect(r.result.locationVariant?.mismatches).toEqual(
       ['season: scene="winter" variant="autumn"']);
+  });
+
+  test("Q02 for a location: `varies` agrees on any hour, scene 16",
+       async () => {
+    // §12.17's wildcard. The candles variant carries nothing but
+    // `time_of_day: varies`; it beats the bare baseline only because
+    // the wildcard agrees with a morning service.
+    const church = await sel(
+      "SELECT id, uuid FROM location WHERE name = 'Hollow Creek Church'");
+    const r = await q02Result(fx.ctx, "location", church.uuid, church.id,
+      scene16.uuid, scene16.id, null, null);
+    blessOrCheck("Q02-church-scene16", r);
+    expect(String(r.result.locationVariant?.variant?.fields["name"]))
+      .toContain("candles");
+    expect(r.result.locationVariant?.mismatches).toEqual([]);
+  });
+
+  test("Q02 for a location: nothing agrees, so the baseline, scene 21",
+       async () => {
+    // §12.17 step 4. Neither ridge variant agrees with a winter storm
+    // night on any axis; the baseline is chosen, and is wrong on all
+    // three, which the mismatches say.
+    const ridge = await sel(
+      "SELECT id, uuid FROM location WHERE name = 'Ridge Forest'");
+    const scene21 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '21'");
+    const r = await q02Result(fx.ctx, "location", ridge.uuid, ridge.id,
+      scene21.uuid, scene21.id, null, null);
+    blessOrCheck("Q02-ridge-scene21", r);
+    expect(r.result.locationVariant?.variant?.fields["is_baseline"]).toBe(1);
+    expect(r.result.locationVariant?.mismatches).toHaveLength(3);
   });
 
   test("Q03 and Q04 where a variant is in force, scene 25", async () => {

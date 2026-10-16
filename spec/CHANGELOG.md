@@ -17,6 +17,29 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.68 — 2026-10-16
+
+*Describes schema 2.24.*
+
+**Minor.** Rules stated and exercised by nothing now have a row each
+(`docs/release-checklist.md` §D3). No requirement changes; the artifacts
+a conforming reader is graded on grow.
+
+- **§12.17's wildcard and fallback** in two new normative case results:
+  `Q02-church-scene16`, where a variant whose `time_of_day` is `varies`
+  wins on the wildcard alone, and `Q02-ridge-scene21`, where no variant
+  agrees on any axis and the baseline is chosen with three mismatches.
+- **`junction.endpoint_absent`** and **`structure.section_mismatch`**:
+  negative cases `junction-endpoint-absent` and `section-mismatch`, each
+  raising its finding alone.
+- **§6.6's writing stage:** the fixture's scenes carry `draft`, `locked`
+  and `revised`, and scene 12B is `locked` and `cut` — a `status` that
+  disagrees with `lifecycle_status`, excluded by the latter everywhere.
+- **§4.3's span renumbering** under `derived` and `fixed` was already
+  tested in the editor; `stability.md` now says so.
+
+---
+
 ## 0.67 — 2026-10-16
 
 *Describes schema 2.24.*

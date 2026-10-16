@@ -104,6 +104,19 @@ const SELECTORS = {
     sql: "SELECT id, uuid FROM location WHERE name = 'Farmhouse Kitchen'",
     note: "The location with ranked variants.",
   },
+  scene21: {
+    sql: "SELECT id, uuid FROM scene WHERE scene_number = '21'",
+    note: "A winter storm night on the ridge: no variant agrees on any "
+        + "axis, so §12.17 takes the baseline.",
+  },
+  church: {
+    sql: "SELECT id, uuid FROM location WHERE name = 'Hollow Creek Church'",
+    note: "A location whose variant is `varies` on time (§12.17).",
+  },
+  ridge: {
+    sql: "SELECT id, uuid FROM location WHERE name = 'Ridge Forest'",
+    note: "A location whose variants all disagree with scene 21.",
+  },
   plateV2: {
     sql: "SELECT id, uuid FROM asset "
        + "WHERE name = 'kitchen_night_plate_v2.exr'",
@@ -142,6 +155,12 @@ const PARAMETERS = {
     shot: { literal: null } },
   "Q02-kitchen-scene10": { subjectType: { literal: "location" },
     subject: { selector: "kitchen" }, scene: { selector: "scene10" },
+    shot: { literal: null } },
+  "Q02-church-scene16": { subjectType: { literal: "location" },
+    subject: { selector: "church" }, scene: { selector: "scene16" },
+    shot: { literal: null } },
+  "Q02-ridge-scene21": { subjectType: { literal: "location" },
+    subject: { selector: "ridge" }, scene: { selector: "scene21" },
     shot: { literal: null } },
   "Q03-scene25": { scene: { selector: "scene25" } },
   "Q04-scene25": { scene: { selector: "scene25" } },

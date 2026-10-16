@@ -201,6 +201,43 @@ const CASES = [
     },
   },
   {
+    name: "junction-endpoint-absent",
+    about:
+      "A cast link with no character. A link with a missing end connects " +
+      "nothing; the row is kept and reported (§9.1), as " +
+      "`junction.endpoint_absent` rather than `field.required_absent`, " +
+      "because what is missing is half of a relationship.",
+    damage: async (exec) => {
+      await exec("INSERT INTO scene (name, scene_number, uuid) " +
+                 "VALUES ('INT. KITCHEN', '1', ?)", [uuid(1)]);
+      await exec("INSERT INTO scene_character (scene_id, character_id, uuid) " +
+                 "VALUES (1, NULL, ?)", [uuid(2)]);
+    },
+  },
+  {
+    name: "section-mismatch",
+    about:
+      "A section line bound to an act whose record has since been renamed. " +
+      "The record answers queries and the line is the authoring handle " +
+      "(§1.3.1), so this is info: between commits the two may differ, and " +
+      "a line that has drifted is how an editor renames the wrong act.",
+    damage: async (exec) => {
+      await exec("INSERT INTO scene (name, scene_number, uuid) " +
+                 "VALUES ('INT. KITCHEN', '1', ?)", [uuid(1)]);
+      await exec("INSERT INTO act (name, act_number, start_scene_id, uuid) " +
+                 "VALUES ('The Thaw', 1, 1, ?)", [uuid(2)]);
+      await exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+        "metadata, uuid) VALUES (1, 'section', '# The Arrival', ?, ?)",
+        [JSON.stringify({ structureRef: { kind: "act", uuid: uuid(2) } }),
+         uuid(3)]);
+      await exec(
+        "INSERT INTO screenplay_lines (line_order, line_type, content, " +
+        "scene_id, uuid) VALUES (2, 'heading', 'INT. KITCHEN - NIGHT', 1, ?)",
+        [uuid(4)]);
+    },
+  },
+  {
     name: "bundle-unbound",
     about:
       "A bundle with an asset in it and no binding anywhere. Its asset " +

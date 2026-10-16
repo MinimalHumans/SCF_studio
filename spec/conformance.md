@@ -313,8 +313,10 @@ Covered: missing, malformed and duplicate uuids; a relationship endpoint
 that is absent, a contradictory pair, and one with no directionality; a
 span boundary on a scene that is not present; an asset identifier that
 escapes its root and one that is absolute; a bundle no binding reaches;
-an unknown table; an unstamped header; and a screenplay line whose
-`line_type` is outside the published set (`line.type_unknown`).
+an unknown table; an unstamped header; a screenplay line whose
+`line_type` is outside the published set (`line.type_unknown`); a link
+with a missing end (`junction.endpoint_absent`); and a section line
+bound to an act renamed since (`structure.section_mismatch`).
 
 ### 5.4 The canonical query expectations
 
