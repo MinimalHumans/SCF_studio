@@ -567,10 +567,14 @@ booleans stay the stored 0/1, now stated (M2).
 **rc.2 day:**
 
 1. ✅ Spec `1.0-rc.2`: CHANGELOG, headers, every artifact re-blessed.
-2. ○ Commit, then tag `spec-1.0-rc.2`. **`schema-2.24` must move to the
-   same commit**: `ARTIFACTS.md` addresses every artifact, spec text
-   included, by the schema tag, and the registry bytes are unchanged.
-3. ○ `check_pin.py --strict`, then launch run 7 against `spec-1.0-rc.2`.
+2. ✅ Addressing split (conventions §8 step 7): `ARTIFACTS.md` now
+   addresses the registry and what is generated from it alone by
+   `schema-2.24`, and everything else by `spec-1.0-rc.2`; `check_pin.py`
+   checks each file against its own tag. **`schema-2.24` does not move**
+   — its seven files are byte-identical where it already points.
+3. ○ Commit, then the annotated tag `spec-1.0-rc.2` on that commit,
+   pushed. No schema tag.
+4. ○ `check_pin.py --strict`, then launch run 7 against `spec-1.0-rc.2`.
 
 **1.0 day — after D1, and after anything it finds is fixed:**
 
@@ -579,7 +583,9 @@ booleans stay the stored 0/1, now stated (M2).
 2. ○ If D1 forced a registry change, a new schema version and a
    regeneration; otherwise 2.24 stands.
 3. ○ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
-4. ○ 🔒 Annotated tag `spec-1.0`, pushed; `check_pin.py --strict`.
+4. ○ 🔒 Annotated tag `spec-1.0`, pushed — and, only if step 2 made a
+   new schema version, its `schema-X.Y` on the same commit. No existing
+   tag moves. Then `check_pin.py --strict`.
 5. ○ 🔒 `npm publish --access public` for `scf-core`, after `pack-test`
    confirms the licence is in the tarball. Then `scf-mcp` **at 0.x**,
    with **`npm run publish:release`**, which publishes it depending on
