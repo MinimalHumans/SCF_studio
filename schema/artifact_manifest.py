@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 """
-artifact_manifest.py — record the published artifacts for a schema
-version, with checksums.
+artifact_manifest.py — record the published artifacts, with checksums,
+and the tag each one is addressed by.
 
 The registry, the physical DDL and the fixture need to be fetchable BY
 VERSION and verifiable once fetched. The obvious way to do that is to
@@ -13,9 +13,17 @@ question of which copy is real.
 Git already versions files. What was missing is an addressing scheme and
 a way to check that what you downloaded is what was published. So:
 
-  - a `schema-X.Y` tag pins the tree,
+  - a tag pins the tree,
   - the raw URL at that tag is the artifact's address,
   - this manifest carries the SHA-256 so a consumer can verify it.
+
+There are two tags, because there are two versions (spec §11.5 and
+conventions §8). `schema-X.Y` addresses what cannot change without a
+SCHEMA_VERSION bump: the registry and what is generated from it alone.
+`spec-X.Y` addresses everything else — the prose, the blessed results,
+the fixture — which changes with every specification release, schema
+change or not. A schema tag that addressed the prose would have to move
+whenever the prose did, and a pin that moves is not a pin.
 
     python3 schema/artifact_manifest.py            # write
     python3 schema/artifact_manifest.py --check    # verify, for CI
@@ -27,6 +35,7 @@ gives, applied to publication rather than generation.
 import argparse
 import hashlib
 import pathlib
+import re
 import sys
 from pathlib import Path
 
@@ -37,6 +46,28 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "spec" / "ARTIFACTS.md"
 REPO = "https://raw.githubusercontent.com/MinimalHumans/SCF_studio"
 
+
+def spec_version() -> str:
+    """The version line of spec/scf-spec.md, which §11.5 governs.
+
+    Read from the document rather than declared here: a second copy of
+    the version would be a second thing to forget at release time.
+    """
+    text = (ROOT / "spec" / "scf-spec.md").read_text(encoding="utf-8")
+    m = re.search(r"^\*\*Version (\d+\.\d+(?:\.\d+)?(?:-rc\.\d+)?)\b",
+                  text, re.M)
+    if not m:
+        raise SystemExit("spec/scf-spec.md: no '**Version X.Y' line")
+    return m.group(1)
+
+
+SPEC_VERSION = spec_version()
+
+# The tag each pin names. A group's pin is the version whose bump is
+# REQUIRED before any of its files may change; anything that can change
+# without a schema bump is pinned by the spec.
+TAGS = {"schema": f"schema-{SCHEMA_VERSION}", "spec": f"spec-{SPEC_VERSION}"}
+
 # Two lists would drift, so there is one. Everything named here is
 # BOTH published in ARTIFACTS.md and checksummed in SHA256SUMS —
 # there is no third category of file that is stamped but not
@@ -45,8 +76,10 @@ REPO = "https://raw.githubusercontent.com/MinimalHumans/SCF_studio"
 # ARTIFACTS.md and SHA256SUMS are themselves absent, necessarily: a
 # file cannot carry its own digest. They are verified by
 # regenerating them, which is what --check does and what CI runs.
-GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
-    ("The specification",
+#
+# Each group is (title, pin, note, items); pin is a key of TAGS.
+GROUPS: list[tuple[str, str, str, list[tuple[str, str]]]] = [
+    ("The specification", "spec",
      "The normative documents, checksummed so that a reader built "
      "against this prose can confirm it read the bytes that were "
      "published.",
@@ -63,9 +96,10 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "The specification changelog. Spec §11.5."),
      ]),
 
-    ("Schema and registry",
-     "Generated from `schema/`, which is the source of truth for all "
-     "of them.",
+    ("Schema and registry", "schema",
+     "The registry and what is generated from it, from `schema/`, which "
+     "is the source of truth for all of them. None of these can change "
+     "without a new schema version.",
      [
         ("scf-core/registry/registry.json",
          "The normative field set. Spec §2.1."),
@@ -77,17 +111,27 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("spec/entity-reference.md",
          "Every entity and field, generated from the registry. Not "
          "normative — a reading aid over `registry.json`."),
+        ("spec/registry.schema.json",
+         "JSON Schema for registry.json, so it can be consumed without "
+         "running the reference implementation."),
+        ("spec/junction-keys.json",
+         "Natural keys for every link entity. Spec §6.3."),
+        ("spec/scf.magic",
+         "magic(5) stanza for file(1). Spec §1.2."),
+     ]),
+
+    ("Generated from the specification", "spec",
+     "Generated, but from the specification's sections and the "
+     "reference implementation rather than from `schema/` alone, so "
+     "they can change between specification versions with no schema "
+     "change.",
+     [
         ("spec/query-reference.md",
          "All sixteen queries in one page, generated from §12, the "
          "published results and `queryPaths.ts`. Not normative."),
         ("spec/api-surface.json",
          "Every name importable from `@minimalhumans/scf-core`, per "
          "entry point, with its kind."),
-        ("spec/registry.schema.json",
-         "JSON Schema for registry.json, so it can be consumed without "
-         "running the reference implementation."),
-        ("spec/junction-keys.json",
-         "Natural keys for every link entity. Spec §6.3."),
         ("spec/readiness-rubrics.json",
          "What Q14 assesses, per target query. Spec §12.9.1."),
         ("spec/finding-catalog.json",
@@ -95,7 +139,7 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "severity to come from here."),
      ]),
 
-    ("The canonical query results",
+    ("The canonical query results", "spec",
      "One normative result per query, spec §12, and a normative result "
      "per case where one position cannot show a member. Rows by uuid, "
      "no row ids, no timestamps.",
@@ -160,7 +204,7 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "Q15 on a versioned row: its chain (§6.1). Spec §12.14."),
      ]),
 
-    ("The canonical query parameters",
+    ("The canonical query parameters", "spec",
      "What each published result was asked, as selectors that resolve "
      "against the fixture by content rather than by row id.",
      [
@@ -169,7 +213,7 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "Conformance §5.4."),
      ]),
 
-    ("The negative fixtures",
+    ("The negative fixtures", "spec",
      "Minimal files that are wrong in a stated way, and the report "
      "each MUST produce. Stamped since 0.31: conformance turns on "
      "reproducing these reports exactly, so their bytes matter as "
@@ -212,11 +256,9 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "A row carrying no uuid at all. Spec conformance.md §5.3."),
      ]),
 
-    ("File identification and the fixture",
+    ("The fixture", "spec",
      "",
      [
-        ("spec/scf.magic",
-         "magic(5) stanza for file(1). Spec §1.2."),
         ("fixtures/hollow_creek.scf",
          "The conformance fixture. Its load-bearing properties are "
          "enumerated in spec/conformance.md §5.1."),
@@ -226,7 +268,11 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
      ]),
 ]
 
-ARTIFACTS = [item for _, _, items in GROUPS for item in items]
+ARTIFACTS = [item for _, _, _, items in GROUPS for item in items]
+
+# Every published path, mapped to the tag that addresses it. check_pin.py
+# verifies each file against this tag, and fails on a path with none.
+PINS = {rel: TAGS.get(pin) for _, pin, _, items in GROUPS for rel, _ in items}
 
 # Families a conformance claim is graded against file by file, so the
 # list must hold every member. A blessed report left off it is published
@@ -251,7 +297,9 @@ def sha256(path: Path) -> str:
 
 
 def render() -> str:
-    tag = f"schema-{SCHEMA_VERSION}"
+    schema_tag, spec_tag = TAGS["schema"], TAGS["spec"]
+    counts = {tag: sum(1 for t in PINS.values() if t == tag)
+              for tag in TAGS.values()}
     lines = [
         # Generated prose, so the header is emitted here rather than by
         # tools/add_spdx_headers.py — which skips this file for exactly
@@ -262,7 +310,8 @@ def render() -> str:
         "",
         "GENERATED by `schema/artifact_manifest.py`. Do not hand-edit.",
         "",
-        f"Schema version **{SCHEMA_VERSION}**, tag `{tag}`.",
+        f"Specification **{SPEC_VERSION}**, tag `{spec_tag}`. "
+        f"Schema version **{SCHEMA_VERSION}**, tag `{schema_tag}`.",
         "",
         "## Addressing",
         "",
@@ -271,19 +320,44 @@ def render() -> str:
         "the history, and a second copy in the working tree would only",
         "raise the question of which one is real.",
         "",
+        "There are two tags, because there are two versions. Each group",
+        "below names the tag that addresses it:",
+        "",
+        f"- **`{schema_tag}`** ({counts[schema_tag]} files) — the registry",
+        "  and what is generated from it alone. None of them can change",
+        "  without a new schema version, so this tag never moves.",
+        f"- **`{spec_tag}`** ({counts[spec_tag]} files) — everything else:",
+        "  the specification documents, the blessed results and reports,",
+        "  and the fixture. These change with every specification release,",
+        "  including candidates that change no schema.",
+        "",
         "```",
-        f"{REPO}/{tag}/<path>",
+        f"{REPO}/{schema_tag}/<path>",
+        f"{REPO}/{spec_tag}/<path>",
         "```",
         "",
         "So the registry for this version is:",
         "",
         "```",
-        f"{REPO}/{tag}/scf-core/registry/registry.json",
+        f"{REPO}/{schema_tag}/scf-core/registry/registry.json",
         "```",
+        "",
+        "and the specification is:",
+        "",
+        "```",
+        f"{REPO}/{spec_tag}/spec/scf-spec.md",
+        "```",
+        "",
+        "Every file is also present, unchanged, at the spec tag: a",
+        "specification release carries the schema it describes. The",
+        "schema tag is the address that stays put across specification",
+        "releases.",
         "",
         "`main` is a moving target and MUST NOT be used to pin a version.",
         "",
         "## Verification",
+        "",
+        "In a checkout of the spec tag:",
         "",
         "```sh",
         "sha256sum -c spec/SHA256SUMS",
@@ -297,12 +371,16 @@ def render() -> str:
         "",
         "`ARTIFACTS.md` and `SHA256SUMS` are necessarily absent — a file",
         "cannot carry its own digest. They are verified by regenerating",
-        "them, which is what CI does on every run.",
+        "them, which is what CI does on every run, and are fetched from",
+        f"`{spec_tag}`.",
         "",
     ]
     sums = []
-    for group, note, items in GROUPS:
-        lines += [f"### {group}", ""]
+    for group, pin, note, items in GROUPS:
+        if pin not in TAGS:
+            raise SystemExit(f"group {group!r}: pin {pin!r} is not one of "
+                             f"{sorted(TAGS)}")
+        lines += [f"### {group}", "", f"Tag: `{TAGS[pin]}`.", ""]
         if note:
             lines += [note, ""]
         lines += ["| Artifact | SHA-256 | What it is |", "|---|---|---|"]
@@ -317,18 +395,37 @@ def render() -> str:
     lines += [
         "Full digests are in [`SHA256SUMS`](SHA256SUMS).",
         "",
-        "## Releasing a schema version",
+        "## Releasing",
         "",
-        "Steps 6 and 7 of the change procedure in `docs/conventions.md` §8:",
+        "Steps 6 and 7 of the change procedure in `docs/conventions.md` §8.",
+        "Every release creates NEW tags; none moves one.",
+        "",
+        "A specification release — every candidate included — tags the",
+        "spec:",
         "",
         "```sh",
         "python3 schema/artifact_manifest.py",
-        f"git tag -a {tag} -m 'schema {SCHEMA_VERSION}'",
-        f"git push origin {tag}",
+        f"git tag -a {spec_tag} -m 'spec {SPEC_VERSION}'",
+        f"git push origin {spec_tag}",
         "```",
         "",
-        "The tag is what makes the URLs above resolve. Until it exists,",
-        "this manifest describes an address that 404s.",
+        "A release that also bumps `SCHEMA_VERSION` tags the schema on the",
+        "same commit:",
+        "",
+        "```sh",
+        f"git tag -a {schema_tag} -m 'schema {SCHEMA_VERSION}'",
+        f"git push origin {schema_tag}",
+        "```",
+        "",
+        "A schema version is only ever released inside a specification",
+        "release (conventions §8 step 5a), so a schema tag always has a",
+        "spec tag beside it. A specification release with no schema",
+        "change leaves the existing schema tag where it is.",
+        "",
+        "Then `python3 schema/check_pin.py --strict`, which verifies",
+        "every file above against its own tag and fails if any file is",
+        "unpinned. The tags are what make the URLs above resolve; until",
+        "they exist, this manifest describes addresses that 404.",
         "",
         "An **annotated** tag, not a signed one. A signed tag would add",
         "provenance — proof the tag came from whoever holds the key —",
@@ -406,7 +503,7 @@ def main() -> int:
             print("  run: python3 schema/artifact_manifest.py")
             return 1
         print(f"[artifacts] up to date ({len(ARTIFACTS)} artifacts, "
-              f"schema {SCHEMA_VERSION}).")
+              f"spec {SPEC_VERSION}, schema {SCHEMA_VERSION}).")
         return 0
 
     # newline="\n" on purpose: in text mode Python on Windows writes CRLF,
@@ -415,7 +512,7 @@ def main() -> int:
     OUT.write_text(manifest, encoding="utf-8", newline="\n")
     sums_path.write_text(sums, encoding="utf-8", newline="\n")
     print(f"[artifacts] wrote {len(ARTIFACTS)} artifacts, "
-          f"schema {SCHEMA_VERSION}.")
+          f"spec {SPEC_VERSION}, schema {SCHEMA_VERSION}.")
     return 0
 
 

@@ -131,14 +131,14 @@ jobs:
 
       # Everything above verifies bytes in the checkout. This verifies
       # the one thing ARTIFACTS.md asks of a consumer who has none of
-      # them: that the tag it says to pin to exists on the remote, and
-      # serves the bytes SHA256SUMS claims.
+      # them: that each tag it says to pin to exists on the remote, and
+      # serves, file by file, the bytes SHA256SUMS claims.
       #
       # main only. A tag cannot point at a commit that has not been
       # pushed, so on a branch this would be red for a reason the author
       # cannot fix — and a check that is unfixably red is a check people
       # route around.
-      - name: the pinned schema tag resolves
+      - name: the pinned schema and spec tags resolve
         if: github.ref == 'refs/heads/main'
         run: python3 schema/check_pin.py --strict
 

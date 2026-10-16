@@ -118,7 +118,7 @@ picks up the extra coverage automatically.
 
 | Job | What fails it |
 |---|---|
-| `artifacts` | A generated file nobody regenerated: `registry.json`, `scf-schema.sql`, `screenplay-tables.json`, `finding-catalog.json`, the negative reports, the corpus expectations, `ARTIFACTS.md`, `SHA256SUMS` — and a schema tag that is not on the remote. |
+| `artifacts` | A generated file nobody regenerated: `registry.json`, `scf-schema.sql`, `screenplay-tables.json`, `finding-catalog.json`, the negative reports, the corpus expectations, `ARTIFACTS.md`, `SHA256SUMS` — and a schema or spec tag that is not on the remote, or that serves different bytes than `SHA256SUMS` claims. |
 | `core` | Format semantics — typecheck, tests, `scf-check` against the fixture, the packaging test, the fixture rebuild, and the docs site build. |
 | `app` | The editor — typecheck, tests (including the blessed query expectations), production build. |
 | `mcp` | The MCP server — typecheck, the `file:` dependency rewrite, build, tests. |

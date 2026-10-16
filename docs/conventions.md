@@ -375,12 +375,29 @@ The procedure:
    alter what a runner returns without any test failing on its own
    terms.
 
-7. Tag it, which is what makes the published URLs resolve:
+7. Tag it, which is what makes the published URLs resolve. Two tags,
+   because there are two versions: `schema-X.Y` addresses the registry
+   and what is generated from it alone, and `spec-X.Y` addresses
+   everything else `ARTIFACTS.md` lists — the prose, the results, the
+   reports and the fixture. Every specification release, candidates
+   included, takes a new spec tag; only a release that bumped
+   `SCHEMA_VERSION` takes a schema tag too, on the same commit:
 
    ```sh
-   git tag -a schema-X.Y -m 'schema X.Y'
+   git tag -a spec-X.Y -m 'spec X.Y'
+   git push origin spec-X.Y
+   git tag -a schema-X.Y -m 'schema X.Y'    # only if SCHEMA_VERSION moved
    git push origin schema-X.Y
+   python3 schema/check_pin.py --strict
    ```
+
+   **No tag is ever moved.** The schema tag addressing everything was
+   the trap: a candidate that changed only prose then had to move a
+   published schema tag to keep `SHA256SUMS` true, and a pin that moves
+   is not a pin. If `check_pin.py` reports a published tag serving
+   different bytes, the change belongs to the next version under a new
+   tag. `schema/artifact_manifest.py` assigns each file its tag; a file
+   that can change without a schema bump is pinned by the spec.
 
    Annotated, not signed. `-s` was written here before anyone had tried
    it, and it needs a configured signing key that this project does not

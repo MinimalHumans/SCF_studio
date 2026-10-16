@@ -327,8 +327,10 @@ consumer can read the field set without running the reference
 implementation. That document constrains shape only — which entities
 exist is the registry, and what they mean is this specification.
 
-Each schema version's artifacts are addressable and checksummed; see
-[ARTIFACTS.md](ARTIFACTS.md).
+Every published artifact is addressable by tag and checksummed: the
+registry and what is generated from it alone by the schema version's
+tag, `schema-X.Y`, and everything else by the specification version's,
+`spec-X.Y`. See [ARTIFACTS.md](ARTIFACTS.md).
 
 Two generated reading aids accompany this document and are **not
 normative**: [entity-reference.md](entity-reference.md), every entity

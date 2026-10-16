@@ -221,6 +221,12 @@ tell it has not been designed.
 
 ## 5. Test artifacts
 
+Every artifact this section names is published at the specification
+version's tag and checksummed in `SHA256SUMS`. Fetch them from
+`spec-<version>` — for this document, `spec-1.0-rc.2` — never from
+`main`; [ARTIFACTS.md](ARTIFACTS.md) gives each file's address, and
+which files the schema tag addresses as well.
+
 ### 5.1 The fixture
 
 `fixtures/hollow_creek.scf` is not sample data. It is a normative
@@ -424,8 +430,10 @@ role; it is a description, and it should read as one.
 
 ### 6.2 The claim
 
-A claim states: the **role**, the **specification version**, the
-**schema version range** accepted, and any **disclosed divergences**.
+A claim states: the **role**, the **specification version** — whose
+`spec-<version>` tag holds the artifacts the reports were produced
+against (§5) — the **schema version range** accepted, and any
+**disclosed divergences**.
 Publish it where your users will find it, and link the reports.
 
 A claim without the reports is a claim about your intentions.

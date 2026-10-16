@@ -97,6 +97,13 @@ Q03's are. Q04 had put `presence` and `variant` beside a projected row's
   left `fixtures/expectations/`.
 - Stale counts in §2.1, §2.4.1, §12.1.2 and `conformance.md` §5.1, and
   two sentences in `what-is-scf.md` §7.
+- **Addressing by two tags.** `ARTIFACTS.md` addressed every artifact by
+  the schema tag, so a candidate that changed only prose and results had
+  to move a published tag. The registry and what is generated from it
+  alone stay at `schema-2.24`, which no longer moves; the specification
+  documents, results, reports, fixture and the spec-derived artifacts
+  are fetched from `spec-1.0-rc.2` (§2.1, `conformance.md` §5).
+  `check_pin.py` verifies every file against its own tag.
 
 ---
 
