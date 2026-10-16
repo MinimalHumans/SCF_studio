@@ -1,0 +1,230 @@
+{
+  "query": "Q12",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "from": "774518cf-1a5e-4129-8830-eff14222a770",
+    "to": "00000000-0000-4000-8000-003300000001"
+  },
+  "result": {
+    "from": {
+      "uuid": "774518cf-1a5e-4129-8830-eff14222a770",
+      "fields": {
+        "emotional_beat": "Release",
+        "estimated_duration": "1:30",
+        "int_ext": "exterior",
+        "lifecycle_status": "active",
+        "location_uuid": "a78d4cac-e717-4758-b955-520cc3e1c1b1",
+        "name": "EXT. FARMHOUSE PORCH - DAWN",
+        "purpose": "The door, open, chosen this time.",
+        "scene_number": "24",
+        "season": "winter",
+        "status": "outline",
+        "summary": "The embrace at the open door.",
+        "tension_level": "low",
+        "time_of_day": "dawn",
+        "tone": "earned quiet"
+      }
+    },
+    "to": {
+      "uuid": "00000000-0000-4000-8000-003300000001",
+      "fields": {
+        "emotional_beat": "Absorption; a held breath let go",
+        "int_ext": "exterior",
+        "lifecycle_status": "active",
+        "location_uuid": "aeb81bee-5944-44d2-b885-ad03f5954173",
+        "name": "EXT. CREEK CROSSING - DAY (FLASHBACK)",
+        "purpose": "End on the place as it was: the one image of before that the film allows itself.",
+        "scene_number": "25",
+        "season": "summer",
+        "status": "outline",
+        "summary": "Marcus as a boy, building a dam across the shallows. The creek before anything happened there.",
+        "tension_level": "low",
+        "time_of_day": "afternoon",
+        "tone": "still, warm, unhurried"
+      }
+    },
+    "characters": [
+      {
+        "character": {
+          "uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "fields": {
+            "age": "61",
+            "arc_description": "From a woman who answers questions with tasks to a woman who says the thing and lets it cost her.",
+            "archetype": "the keeper of the house",
+            "backstory": "Came west at nineteen. Buried a husband at forty-two and a daughter at fifty-four. Has not left the valley since.",
+            "casting_status": "tbd",
+            "core_belief": "Work is what love looks like when you can't speak.",
+            "external_goal": "Get the homestead through the winter.",
+            "flaw": "Mistakes silence for mercy — to others and to herself.",
+            "gender": "female",
+            "greatest_fear": "That saying it aloud makes it true forever.",
+            "internal_goal": "To stop blaming her son without having to forgive him.",
+            "lifecycle_status": "active",
+            "motivation": "To keep the place standing, and to not have to say aloud what she believes about the day Ada died.",
+            "name": "Eleanor Cade",
+            "notes": "Written older than most leads on purpose. If casting pushes younger the drowning has to move with her.",
+            "occupation": "Homesteader; midwife to the valley",
+            "pronouns": "she/her",
+            "role": "protagonist",
+            "skills_abilities": "Midwifery, horse handling, reading weather",
+            "summary": "Sixty-one, widowed, running the Cade homestead alone since her daughter drowned. Competence is how she holds grief at arm's length."
+          }
+        },
+        "presenceFrom": "seen",
+        "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
+        "statesFrom": [
+          "wounded"
+        ],
+        "statesTo": [
+          "wounded"
+        ]
+      },
+      {
+        "character": {
+          "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "fields": {
+            "age": "34",
+            "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+            "archetype": "the returning prodigal",
+            "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+            "casting_status": "tbd",
+            "core_belief": "A debt can be worked off if you work hard enough.",
+            "external_goal": "Winter over at the homestead and mend what he can.",
+            "flaw": "Confesses only when cornered, then calls it honesty.",
+            "gender": "male",
+            "greatest_fear": "That his mother already knows.",
+            "internal_goal": "Absolution he cannot ask for directly.",
+            "lifecycle_status": "active",
+            "motivation": "To be told he is not what he believes he is.",
+            "name": "Marcus Cade",
+            "occupation": "Railroad surveyor",
+            "pronouns": "he/him",
+            "role": "deuteragonist",
+            "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+          }
+        },
+        "presenceFrom": "seen",
+        "presenceTo": "seen",
+        "variantFrom": null,
+        "variantTo": "Marcus, age nine",
+        "statesFrom": [],
+        "statesTo": []
+      }
+    ],
+    "relationships": [
+      {
+        "relationship": {
+          "uuid": "59905336-6c9a-4cc5-9349-3950aa91703c",
+          "fields": {
+            "character_a_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+            "character_b_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+            "directionality": "mutual",
+            "emotional_valence": "complex",
+            "eye_contact_pattern": "She looks away first.",
+            "lifecycle_status": "active",
+            "name": "Eleanor - Marcus",
+            "physical_evolution": "Arm's length -> post-accident thaw (sc 10) -> ruptured by the truth (sc 19) -> the embrace at the door (sc 24).",
+            "power_dynamic": "Power held by silence.",
+            "relationship_type": "family",
+            "touch_comfort": "reserved"
+          }
+        },
+        "stageFrom": "reconciled",
+        "stageTo": "reconciled"
+      }
+    ],
+    "props": [
+      {
+        "prop": {
+          "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+          "fields": {
+            "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+            "description": "Brass locket holding Ada's portrait.",
+            "first_appearance": "sc 11, saddlebag",
+            "key_moments": "sc 11 pocketed · sc 19 on the table",
+            "lifecycle_status": "active",
+            "name": "Ada's locket",
+            "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "macguffin",
+            "symbolism": "What Marcus took from the creek and could not put down."
+          }
+        },
+        "presenceFrom": null,
+        "presenceTo": "seen",
+        "variantFrom": null,
+        "variantTo": "Ada's locket, new",
+        "whereFrom": "revealed, on the kitchen table",
+        "whereTo": "on the creek bank"
+      },
+      {
+        "prop": {
+          "uuid": "a63ce1c6-17e5-448b-8abb-9956cf2b4fcb",
+          "fields": {
+            "associated_character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+            "first_appearance": "sc 3",
+            "lifecycle_status": "active",
+            "name": "The Kettle",
+            "narrative_significance": "Eleanor's answer to every question she will not take.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "character extension",
+            "symbolism": "Work as a way of not speaking."
+          }
+        },
+        "presenceFrom": null,
+        "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
+        "whereFrom": "stove",
+        "whereTo": "stove"
+      },
+      {
+        "prop": {
+          "uuid": "900960f7-f1de-4182-b536-9af27792add2",
+          "fields": {
+            "description": "Ada hung it by the porch door the spring before she died. Irregular, slightly flat.",
+            "first_appearance": "sc 3",
+            "lifecycle_status": "active",
+            "name": "Brass wind chime",
+            "narrative_significance": "Sounds when a door opens. Down in the mud by sc 24.",
+            "prop_type": "set dressing",
+            "realization_status": "built",
+            "story_function": "symbol",
+            "symbolism": "Ada's presence in the house."
+          }
+        },
+        "presenceFrom": "seen",
+        "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
+        "whereFrom": "in the mud below the step",
+        "whereTo": "in the mud below the step"
+      },
+      {
+        "prop": {
+          "uuid": "a09f2920-eb3d-4c6d-b6c9-900c799ab781",
+          "fields": {
+            "description": "The kitchen's only light after dark.",
+            "lifecycle_status": "active",
+            "name": "Oil lamp",
+            "narrative_significance": "Carried up the ridge in sc 21.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "atmosphere"
+          }
+        },
+        "presenceFrom": null,
+        "presenceTo": null,
+        "variantFrom": null,
+        "variantTo": null,
+        "whereFrom": "carried, ridge",
+        "whereTo": "carried, ridge"
+      }
+    ]
+  }
+}

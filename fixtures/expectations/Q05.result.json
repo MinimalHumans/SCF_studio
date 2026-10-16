@@ -51,6 +51,7 @@
             "back"
           ],
           "lifecycle_status": "active",
+          "line_ref": "00000000-0000-4000-9000-000000000084",
           "line_text": "You came back.",
           "modality": "vocal",
           "name": "you-came-back",

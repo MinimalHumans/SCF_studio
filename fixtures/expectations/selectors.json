@@ -37,6 +37,46 @@
       "sql": "SELECT id, uuid FROM theme WHERE name LIKE '%Forgiveness%'",
       "note": "The theme Q10 traces.",
       "uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+    },
+    "scene3": {
+      "sql": "SELECT id, uuid FROM scene WHERE scene_number = '3'",
+      "note": "Day, before the injury: a filtered binding must be excluded.",
+      "uuid": "20a9cb61-89eb-4649-b209-9ec9486a7fa1"
+    },
+    "shot3B": {
+      "sql": "SELECT id, uuid FROM shot WHERE shot_number = '3B'",
+      "note": "A shot in scene 3.",
+      "uuid": "e9a73271-d1bd-48eb-98f1-afd3f28511e6"
+    },
+    "scene10": {
+      "sql": "SELECT id, uuid FROM scene WHERE scene_number = '10'",
+      "note": "A winter night in the kitchen: §12.17 ranks time of day first, so the autumn night variant wins.",
+      "uuid": "0fbb19d1-bddc-4e73-9637-9871367ddfe0"
+    },
+    "scene24": {
+      "sql": "SELECT id, uuid FROM scene WHERE scene_number = '24'",
+      "note": "The present, either side of the flashback.",
+      "uuid": "774518cf-1a5e-4129-8830-eff14222a770"
+    },
+    "scene25": {
+      "sql": "SELECT id, uuid FROM scene WHERE scene_number = '25'",
+      "note": "The flashback: Marcus and the locket each in a variant (§4.8).",
+      "uuid": "00000000-0000-4000-8000-003300000001"
+    },
+    "locket": {
+      "sql": "SELECT id, uuid FROM prop WHERE name LIKE '%locket%'",
+      "note": "The prop with a variant and a state at scene 25.",
+      "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6"
+    },
+    "kitchen": {
+      "sql": "SELECT id, uuid FROM location WHERE name = 'Farmhouse Kitchen'",
+      "note": "The location with ranked variants.",
+      "uuid": "5559995a-7944-495a-ad6f-8352f381a296"
+    },
+    "plateV2": {
+      "sql": "SELECT id, uuid FROM asset WHERE name = 'kitchen_night_plate_v2.exr'",
+      "note": "A versioned asset: v1 superseded by v2 (§6.1).",
+      "uuid": "16961c0a-8df6-475c-80f5-6eb4abfc7137"
     }
   },
   "$parameters": "Per query: each parameter is either a `selector` naming one of the above, or a `literal` carried as-is. A null literal means the parameter was supplied as absent.",
@@ -166,6 +206,124 @@
       },
       "row": {
         "selector": "scene12"
+      }
+    },
+    "Q02-marcus-scene25": {
+      "subjectType": {
+        "literal": "character"
+      },
+      "subject": {
+        "selector": "marcus"
+      },
+      "scene": {
+        "selector": "scene25"
+      },
+      "shot": {
+        "literal": null
+      }
+    },
+    "Q02-locket-scene25": {
+      "subjectType": {
+        "literal": "prop"
+      },
+      "subject": {
+        "selector": "locket"
+      },
+      "scene": {
+        "selector": "scene25"
+      },
+      "shot": {
+        "literal": null
+      }
+    },
+    "Q02-kitchen-scene10": {
+      "subjectType": {
+        "literal": "location"
+      },
+      "subject": {
+        "selector": "kitchen"
+      },
+      "scene": {
+        "selector": "scene10"
+      },
+      "shot": {
+        "literal": null
+      }
+    },
+    "Q03-scene25": {
+      "scene": {
+        "selector": "scene25"
+      }
+    },
+    "Q04-scene25": {
+      "scene": {
+        "selector": "scene25"
+      }
+    },
+    "Q05-scene19": {
+      "character": {
+        "selector": "eleanor"
+      },
+      "scene": {
+        "selector": "scene19"
+      }
+    },
+    "Q12-scene24-25": {
+      "from": {
+        "selector": "scene24"
+      },
+      "to": {
+        "selector": "scene25"
+      }
+    },
+    "Q12-scene25-24": {
+      "from": {
+        "selector": "scene25"
+      },
+      "to": {
+        "selector": "scene24"
+      }
+    },
+    "Q13-scene3": {
+      "subjectType": {
+        "literal": "character"
+      },
+      "subject": {
+        "selector": "eleanor"
+      },
+      "intent": {
+        "literal": "visual_identity"
+      },
+      "scene": {
+        "selector": "scene3"
+      },
+      "shot": {
+        "selector": "shot3B"
+      }
+    },
+    "Q13-scene25": {
+      "subjectType": {
+        "literal": "character"
+      },
+      "subject": {
+        "selector": "marcus"
+      },
+      "intent": {
+        "literal": "visual_identity"
+      },
+      "scene": {
+        "selector": "scene25"
+      },
+      "shot": {
+        "literal": null
+      }
+    },
+    "Q15-plate-v2": {
+      "entityType": {
+        "literal": "asset"
+      },
+      "row": {
+        "selector": "plateV2"
       }
     }
   }

@@ -1,0 +1,158 @@
+{
+  "query": "Q02",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "subjectType": "location",
+    "subject": "5559995a-7944-495a-ad6f-8352f381a296",
+    "scene": "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+    "shot": null
+  },
+  "result": {
+    "subjectType": "location",
+    "subject": {
+      "uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+      "fields": {
+        "geography": "Willamette foothills, Oregon",
+        "key_features": "Cast-iron stove; a long table with one chair nobody uses; a door to the porch that never quite latches",
+        "lifecycle_status": "active",
+        "location_type": "interior",
+        "name": "Farmhouse Kitchen",
+        "notes": "Eleanor's arena. She moves through it without looking.",
+        "realization_status": "built",
+        "setting": "The heart of the Cade homestead",
+        "time_period": "1889"
+      }
+    },
+    "scene": {
+      "uuid": "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+      "fields": {
+        "emotional_beat": "Tenderness misfiled as practicality",
+        "estimated_duration": "1:20",
+        "int_ext": "interior",
+        "lifecycle_status": "active",
+        "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+        "name": "INT. FARMHOUSE KITCHEN - NIGHT (AFTER)",
+        "purpose": "Grief made visible as an object.",
+        "scene_number": "10",
+        "season": "winter",
+        "status": "outline",
+        "summary": "Eleanor takes up Ada's shawl.",
+        "tension_level": "medium",
+        "time_of_day": "night",
+        "tone": "quiet after violence"
+      }
+    },
+    "dossier": {
+      "subjectType": "location",
+      "subject": {
+        "uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+        "fields": {
+          "geography": "Willamette foothills, Oregon",
+          "key_features": "Cast-iron stove; a long table with one chair nobody uses; a door to the porch that never quite latches",
+          "lifecycle_status": "active",
+          "location_type": "interior",
+          "name": "Farmhouse Kitchen",
+          "notes": "Eleanor's arena. She moves through it without looking.",
+          "realization_status": "built",
+          "setting": "The heart of the Cade homestead",
+          "time_period": "1889"
+        }
+      },
+      "groups": [
+        {
+          "entity": "location_variant",
+          "rows": [
+            {
+              "uuid": "db48da79-8f1f-478f-afcb-27e866126b6c",
+              "fields": {
+                "is_baseline": 1,
+                "lifecycle_status": "active",
+                "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+                "name": "Kitchen — day baseline",
+                "season": "winter",
+                "time_of_day": "morning"
+              }
+            },
+            {
+              "uuid": "b351c883-d82d-4fc9-912b-d1c132a8c424",
+              "fields": {
+                "is_baseline": 0,
+                "lifecycle_status": "active",
+                "lighting_differences": "Single oil lamp; storm-blue window fill.",
+                "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+                "name": "Kitchen — night, storm (autumn build)",
+                "notes": "Autumn on purpose. Every kitchen scene is winter, so scene 12 resolves this variant with a season mismatch: the one §12.17 mismatch the published Q04 shows (R92). Correcting the season to winter empties it.",
+                "season": "autumn",
+                "time_of_day": "night",
+                "weather": "storm"
+              }
+            }
+          ]
+        },
+        {
+          "entity": "location_sound_profile",
+          "rows": [
+            {
+              "uuid": "18eedcbe-b798-4ff0-9226-3c433ee15ced",
+              "fields": {
+                "constant_sounds": [
+                  "Mantel clock",
+                  "stove tick"
+                ],
+                "lifecycle_status": "active",
+                "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+                "name": "Kitchen sound",
+                "variable_sounds": "Storm heavily muffled by log walls."
+              }
+            }
+          ]
+        }
+      ],
+      "motifCarriage": [],
+      "thematicConnections": []
+    },
+    "costumes": [],
+    "relationshipStates": [],
+    "arcStates": [],
+    "performanceStates": [],
+    "beats": [],
+    "characterVariant": null,
+    "locationVariant": {
+      "variant": {
+        "uuid": "b351c883-d82d-4fc9-912b-d1c132a8c424",
+        "fields": {
+          "is_baseline": 0,
+          "lifecycle_status": "active",
+          "lighting_differences": "Single oil lamp; storm-blue window fill.",
+          "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+          "name": "Kitchen — night, storm (autumn build)",
+          "notes": "Autumn on purpose. Every kitchen scene is winter, so scene 12 resolves this variant with a season mismatch: the one §12.17 mismatch the published Q04 shows (R92). Correcting the season to winter empties it.",
+          "season": "autumn",
+          "time_of_day": "night",
+          "weather": "storm"
+        }
+      },
+      "mismatches": [
+        "season: scene=\"winter\" variant=\"autumn\""
+      ]
+    },
+    "propVariant": null,
+    "propState": null,
+    "media": {
+      "fromQuery": "Q13",
+      "subjectKind": "location",
+      "intent": "environment",
+      "trail": [],
+      "references": [],
+      "counts": {
+        "resolved": 0,
+        "missing": 0,
+        "unmaterialised": 0,
+        "out-of-root": 0,
+        "unaddressed": 0
+      },
+      "rootMapped": false
+    }
+  }
+}

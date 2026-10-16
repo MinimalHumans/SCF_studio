@@ -1,0 +1,285 @@
+{
+  "query": "Q02",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "subjectType": "prop",
+    "subject": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+    "scene": "00000000-0000-4000-8000-003300000001",
+    "shot": null
+  },
+  "result": {
+    "subjectType": "prop",
+    "subject": {
+      "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+      "fields": {
+        "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+        "description": "Brass locket holding Ada's portrait.",
+        "first_appearance": "sc 11, saddlebag",
+        "key_moments": "sc 11 pocketed · sc 19 on the table",
+        "lifecycle_status": "active",
+        "name": "Ada's locket",
+        "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
+        "prop_type": "hand prop",
+        "realization_status": "sourced",
+        "story_function": "macguffin",
+        "symbolism": "What Marcus took from the creek and could not put down."
+      }
+    },
+    "scene": {
+      "uuid": "00000000-0000-4000-8000-003300000001",
+      "fields": {
+        "emotional_beat": "Absorption; a held breath let go",
+        "int_ext": "exterior",
+        "lifecycle_status": "active",
+        "location_uuid": "aeb81bee-5944-44d2-b885-ad03f5954173",
+        "name": "EXT. CREEK CROSSING - DAY (FLASHBACK)",
+        "purpose": "End on the place as it was: the one image of before that the film allows itself.",
+        "scene_number": "25",
+        "season": "summer",
+        "status": "outline",
+        "summary": "Marcus as a boy, building a dam across the shallows. The creek before anything happened there.",
+        "tension_level": "low",
+        "time_of_day": "afternoon",
+        "tone": "still, warm, unhurried"
+      }
+    },
+    "dossier": {
+      "subjectType": "prop",
+      "subject": {
+        "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+        "fields": {
+          "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "description": "Brass locket holding Ada's portrait.",
+          "first_appearance": "sc 11, saddlebag",
+          "key_moments": "sc 11 pocketed · sc 19 on the table",
+          "lifecycle_status": "active",
+          "name": "Ada's locket",
+          "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
+          "prop_type": "hand prop",
+          "realization_status": "sourced",
+          "story_function": "macguffin",
+          "symbolism": "What Marcus took from the creek and could not put down."
+        }
+      },
+      "groups": [
+        {
+          "entity": "prop_variant",
+          "rows": [
+            {
+              "uuid": "00000000-0000-4000-8000-00b200000002",
+              "fields": {
+                "context": "The scene 25 flashback, years before the creek took Ada",
+                "lifecycle_status": "active",
+                "name": "Ada's locket, new",
+                "notes": "Proposal 0033: in force where a scene_prop link names it — scene 25 only.",
+                "physical_differences": "Bright and untarnished, the clasp still tight",
+                "prop_uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6"
+              }
+            }
+          ]
+        }
+      ],
+      "motifCarriage": [
+        {
+          "appearance": {
+            "uuid": "2e8f0e72-0977-4bc9-9017-349371d332e6",
+            "fields": {
+              "domain": "visual",
+              "entity_type": "prop",
+              "manifestation_notes": "Revealed with the confession.",
+              "motif_uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+              "scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+            }
+          },
+          "motif": {
+            "uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+            "fields": {
+              "first_appearance_scene_uuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+              "lifecycle_status": "active",
+              "literal_function": "Holds Ada's portrait.",
+              "modality": "visual",
+              "name": "Ada's locket",
+              "recurrence": "standalone",
+              "symbolic_meaning": "The absent daughter."
+            }
+          }
+        },
+        {
+          "appearance": {
+            "uuid": "63e4af67-a45f-434d-b781-fb9e665dd6ec",
+            "fields": {
+              "domain": "visual",
+              "entity_type": "prop",
+              "manifestation_notes": "Moved, not shown to anyone.",
+              "motif_uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+              "scene_uuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6"
+            }
+          },
+          "motif": {
+            "uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+            "fields": {
+              "first_appearance_scene_uuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+              "lifecycle_status": "active",
+              "literal_function": "Holds Ada's portrait.",
+              "modality": "visual",
+              "name": "Ada's locket",
+              "recurrence": "standalone",
+              "symbolic_meaning": "The absent daughter."
+            }
+          }
+        },
+        {
+          "appearance": {
+            "uuid": "55dc742e-fbc3-4d01-9104-fedadbe928e5",
+            "fields": {
+              "domain": "visual",
+              "entity_type": "prop",
+              "manifestation_notes": "Left on the table, behind them.",
+              "motif_uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+              "scene_uuid": "774518cf-1a5e-4129-8830-eff14222a770"
+            }
+          },
+          "motif": {
+            "uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+            "fields": {
+              "first_appearance_scene_uuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+              "lifecycle_status": "active",
+              "literal_function": "Holds Ada's portrait.",
+              "modality": "visual",
+              "name": "Ada's locket",
+              "recurrence": "standalone",
+              "symbolic_meaning": "The absent daughter."
+            }
+          }
+        }
+      ],
+      "thematicConnections": [
+        {
+          "uuid": "5587cce8-7fb1-439f-9602-bab776235d06",
+          "fields": {
+            "entity_type": "prop",
+            "intended_perception": "must recognize",
+            "lifecycle_status": "active",
+            "name": "The locket puts the withheld truth on the table.",
+            "nature_of_connection": "represents",
+            "subtlety_level": "clear",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        }
+      ]
+    },
+    "costumes": [],
+    "relationshipStates": [],
+    "arcStates": [],
+    "performanceStates": [],
+    "beats": [],
+    "characterVariant": null,
+    "locationVariant": null,
+    "propVariant": {
+      "uuid": "00000000-0000-4000-8000-00b200000002",
+      "fields": {
+        "context": "The scene 25 flashback, years before the creek took Ada",
+        "lifecycle_status": "active",
+        "name": "Ada's locket, new",
+        "notes": "Proposal 0033: in force where a scene_prop link names it — scene 25 only.",
+        "physical_differences": "Bright and untarnished, the clasp still tight",
+        "prop_uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6"
+      }
+    },
+    "propState": {
+      "uuid": "00000000-0000-4000-8000-00b200000004",
+      "fields": {
+        "lifecycle_status": "active",
+        "name": "locket on the bank",
+        "prop_uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+        "scene_uuid": "00000000-0000-4000-8000-003300000001",
+        "whereabouts": "on the creek bank"
+      }
+    },
+    "media": {
+      "fromQuery": "Q13",
+      "subjectKind": "prop",
+      "intent": "visual_identity",
+      "trail": [
+        "binding Ada's Locket -> bundle Ada's Locket",
+        "anchor Locket"
+      ],
+      "references": [
+        {
+          "uuid": "5270bc9e-9e8a-4ff3-b81a-39ea7f95b851",
+          "anchorName": "Locket",
+          "name": "locket_scan_v1.glb",
+          "identifier": "@project/assets/props/locket_scan_v1.glb",
+          "format": "glb",
+          "role": null,
+          "intent": "visual_identity",
+          "provenance": "anchor",
+          "state": "unaddressed",
+          "detail": "no root named @project is configured in this session",
+          "sizeBytes": null
+        },
+        {
+          "uuid": "1869343e-d6b5-4a4e-9460-535b4724766c",
+          "anchorName": null,
+          "name": "ada_locket_saddlebag.png",
+          "identifier": "@project/assets/props/ada_locket/ada_locket_saddlebag.png",
+          "format": "png",
+          "role": "design in context",
+          "intent": "visual_identity",
+          "provenance": "bundle",
+          "state": "unaddressed",
+          "detail": "no root named @project is configured in this session",
+          "sizeBytes": null
+        },
+        {
+          "uuid": "ae574d0f-2627-4ec4-9e2b-b5d8e2fcd9a5",
+          "anchorName": null,
+          "name": "ada_locket_reveal.png",
+          "identifier": "@project/assets/props/ada_locket/ada_locket_reveal.png",
+          "format": "png",
+          "role": "design in context",
+          "intent": "visual_identity",
+          "provenance": "bundle",
+          "state": "unaddressed",
+          "detail": "no root named @project is configured in this session",
+          "sizeBytes": null
+        },
+        {
+          "uuid": "44f2249b-114e-4b6b-9e07-82fa6cd0f0f1",
+          "anchorName": null,
+          "name": "ada_locket_coat_pocket.png",
+          "identifier": "@project/assets/props/ada_locket/ada_locket_coat_pocket.png",
+          "format": "png",
+          "role": "design in context",
+          "intent": "visual_identity",
+          "provenance": "bundle",
+          "state": "unaddressed",
+          "detail": "no root named @project is configured in this session",
+          "sizeBytes": null
+        },
+        {
+          "uuid": "2ed29664-fb95-414f-9fc1-b93e8d553ca3",
+          "anchorName": null,
+          "name": "ada_locket_closed.png",
+          "identifier": "@project/assets/props/ada_locket/ada_locket_closed.png",
+          "format": "png",
+          "role": "design in context",
+          "intent": "visual_identity",
+          "provenance": "bundle",
+          "state": "unaddressed",
+          "detail": "no root named @project is configured in this session",
+          "sizeBytes": null
+        }
+      ],
+      "counts": {
+        "resolved": 0,
+        "missing": 0,
+        "unmaterialised": 0,
+        "out-of-root": 0,
+        "unaddressed": 5
+      },
+      "rootMapped": false
+    }
+  }
+}

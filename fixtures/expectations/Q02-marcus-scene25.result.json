@@ -1,0 +1,311 @@
+{
+  "query": "Q02",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "subjectType": "character",
+    "subject": "145417ca-e8e5-4946-aba0-e83575dad182",
+    "scene": "00000000-0000-4000-8000-003300000001",
+    "shot": null
+  },
+  "result": {
+    "subjectType": "character",
+    "subject": {
+      "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+      "fields": {
+        "age": "34",
+        "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+        "archetype": "the returning prodigal",
+        "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+        "casting_status": "tbd",
+        "core_belief": "A debt can be worked off if you work hard enough.",
+        "external_goal": "Winter over at the homestead and mend what he can.",
+        "flaw": "Confesses only when cornered, then calls it honesty.",
+        "gender": "male",
+        "greatest_fear": "That his mother already knows.",
+        "internal_goal": "Absolution he cannot ask for directly.",
+        "lifecycle_status": "active",
+        "motivation": "To be told he is not what he believes he is.",
+        "name": "Marcus Cade",
+        "occupation": "Railroad surveyor",
+        "pronouns": "he/him",
+        "role": "deuteragonist",
+        "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+      }
+    },
+    "scene": {
+      "uuid": "00000000-0000-4000-8000-003300000001",
+      "fields": {
+        "emotional_beat": "Absorption; a held breath let go",
+        "int_ext": "exterior",
+        "lifecycle_status": "active",
+        "location_uuid": "aeb81bee-5944-44d2-b885-ad03f5954173",
+        "name": "EXT. CREEK CROSSING - DAY (FLASHBACK)",
+        "purpose": "End on the place as it was: the one image of before that the film allows itself.",
+        "scene_number": "25",
+        "season": "summer",
+        "status": "outline",
+        "summary": "Marcus as a boy, building a dam across the shallows. The creek before anything happened there.",
+        "tension_level": "low",
+        "time_of_day": "afternoon",
+        "tone": "still, warm, unhurried"
+      }
+    },
+    "dossier": {
+      "subjectType": "character",
+      "subject": {
+        "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+        "fields": {
+          "age": "34",
+          "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+          "archetype": "the returning prodigal",
+          "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+          "casting_status": "tbd",
+          "core_belief": "A debt can be worked off if you work hard enough.",
+          "external_goal": "Winter over at the homestead and mend what he can.",
+          "flaw": "Confesses only when cornered, then calls it honesty.",
+          "gender": "male",
+          "greatest_fear": "That his mother already knows.",
+          "internal_goal": "Absolution he cannot ask for directly.",
+          "lifecycle_status": "active",
+          "motivation": "To be told he is not what he believes he is.",
+          "name": "Marcus Cade",
+          "occupation": "Railroad surveyor",
+          "pronouns": "he/him",
+          "role": "deuteragonist",
+          "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+        }
+      },
+      "groups": [
+        {
+          "entity": "physical_character_profile",
+          "rows": [
+            {
+              "uuid": "e7206b8f-2326-43a2-ab8b-bc7205e848b1",
+              "fields": {
+                "center_of_gravity": "high",
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "emotional_manifestations": "{\"guilt\": {\"face\": \"flickers at the word 'back'\", \"body\": \"turns a quarter away\"}, \"relief\": {\"body\": \"shoulders drop two inches\"}}",
+                "energy_quality": "restless",
+                "expressiveness_level": "mobile",
+                "eye_contact_patterns": "Holds too long, then breaks first",
+                "lifecycle_status": "active",
+                "movement_economy": "wasteful",
+                "movement_fluidity": "smooth",
+                "movement_speed": "quick",
+                "movement_weight": "light",
+                "name": "Marcus physicality",
+                "physical_comfort": "disconnected",
+                "physical_notes": "Hands never idle: hat brim, coat button, the locket through the cloth of a pocket",
+                "posture": "asymmetric",
+                "resting_face": "pleasant, alert",
+                "smile_authenticity": "Reaches the mouth before the eyes",
+                "spatial_presence": "minimizes self",
+                "tension_level": "variable"
+              }
+            }
+          ]
+        },
+        {
+          "entity": "vocal_profile",
+          "rows": [
+            {
+              "uuid": "6a439e37-bb70-4076-a431-4797d73a7972",
+              "fields": {
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "delivery_style": "theatrical",
+                "lifecycle_status": "active",
+                "name": "Marcus voice"
+              }
+            }
+          ]
+        },
+        {
+          "entity": "costume",
+          "rows": [
+            {
+              "uuid": "e4b23aee-ea7b-43fd-8c6a-a498d5032abf",
+              "fields": {
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "condition": "worn",
+                "continuity_notes": "The locket lives in the right pocket from sc 11",
+                "description": "City coat, wrong for the valley.",
+                "fabrics": "Worsted wool",
+                "key_garments": [
+                  "Coat",
+                  "waistcoat"
+                ],
+                "lifecycle_status": "active",
+                "name": "Travelling coat",
+                "primary_color_hex": "#4A3B2E",
+                "primary_color_name": "bark brown",
+                "silhouette": "Long, fitted",
+                "social_signals": "Money, or the appearance of it",
+                "what_reveals": "Seven years of somewhere else"
+              }
+            },
+            {
+              "uuid": "bd8f42c0-645b-4e75-b35f-23f3060ef09c",
+              "fields": {
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "condition": "worn",
+                "description": "Borrowed from a hook in the porch.",
+                "emotional_state_reflected": "Belonging attempted",
+                "lifecycle_status": "active",
+                "name": "Work shirt",
+                "primary_color_name": "unbleached",
+                "silhouette": "Loose",
+                "what_reveals": "He has started doing the work"
+              }
+            }
+          ]
+        },
+        {
+          "entity": "character_variant",
+          "rows": [
+            {
+              "uuid": "00000000-0000-4000-8000-003300000002",
+              "fields": {
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "context": "The scene 25 flashback, years before Ada drowned",
+                "emotional_state": "Unguarded — wholly absorbed in play",
+                "lifecycle_status": "active",
+                "name": "Marcus, age nine",
+                "notes": "Cast and dressed separately from adult Marcus. Proposal 0033: in force where a scene_character link names it — scene 25 only.",
+                "physical_differences": "A boy of about nine: barefoot, sunburnt, hair cut short for summer"
+              }
+            }
+          ]
+        },
+        {
+          "entity": "physical_habit",
+          "rows": [
+            {
+              "uuid": "360c4d86-f5df-49a3-963b-227819584442",
+              "fields": {
+                "body_parts_involved": "left hand",
+                "character_awareness": "sometimes aware",
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "description": "Presses the coat pocket flat through the cloth.",
+                "frequency": "frequent",
+                "habit_trigger": "any mention of Ada",
+                "lifecycle_status": "active",
+                "meaning": "The locket, and whether it shows.",
+                "name": "Pocket check"
+              }
+            }
+          ]
+        },
+        {
+          "entity": "character_environment_physicality",
+          "rows": [
+            {
+              "uuid": "eb67f4aa-8617-4a1e-ad55-7d52656a8402",
+              "fields": {
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "comfort_level": "estranged",
+                "interaction_pattern": "Seven years gone: he no longer knows this land; he hesitates at the crossing where a local wouldn't.",
+                "lifecycle_status": "active",
+                "location_uuid": "aeb81bee-5944-44d2-b885-ad03f5954173",
+                "name": "Marcus in the forest"
+              }
+            },
+            {
+              "uuid": "1c410607-cc39-4195-85ce-614883205124",
+              "fields": {
+                "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+                "comfort_level": "alert",
+                "interaction_pattern": "Waits to be told where to sit; stands too long.",
+                "lifecycle_status": "active",
+                "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+                "name": "Marcus in the kitchen",
+                "object_interaction": "Handles things and puts them back wrong.",
+                "spatial_use": "Keeps the table between them."
+              }
+            }
+          ]
+        }
+      ],
+      "motifCarriage": [],
+      "thematicConnections": [
+        {
+          "uuid": "b3cf1aa4-6d01-42c9-8b98-fd86eda8c2b5",
+          "fields": {
+            "entity_type": "character",
+            "intended_perception": "must recognize",
+            "lifecycle_status": "active",
+            "name": "Marcus asks for forgiveness eleven years too late.",
+            "nature_of_connection": "explores",
+            "subtlety_level": "clear",
+            "theme_uuid": "5a2a0ae1-097e-4273-a50e-b4843904e55d"
+          }
+        }
+      ]
+    },
+    "costumes": [],
+    "relationshipStates": [
+      {
+        "uuid": "b55045a6-6c24-46a8-8117-2e6d5ea8f44b",
+        "fields": {
+          "character_relationship_uuid": "59905336-6c9a-4cc5-9349-3950aa91703c",
+          "description": "The embrace at the open door.",
+          "lifecycle_status": "active",
+          "name": "reconciled",
+          "scene_uuid": "774518cf-1a5e-4129-8830-eff14222a770",
+          "stage_label": "reconciled"
+        }
+      }
+    ],
+    "arcStates": [],
+    "performanceStates": [],
+    "beats": [],
+    "characterVariant": {
+      "uuid": "00000000-0000-4000-8000-003300000002",
+      "fields": {
+        "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+        "context": "The scene 25 flashback, years before Ada drowned",
+        "emotional_state": "Unguarded — wholly absorbed in play",
+        "lifecycle_status": "active",
+        "name": "Marcus, age nine",
+        "notes": "Cast and dressed separately from adult Marcus. Proposal 0033: in force where a scene_character link names it — scene 25 only.",
+        "physical_differences": "A boy of about nine: barefoot, sunburnt, hair cut short for summer"
+      }
+    },
+    "locationVariant": null,
+    "propVariant": null,
+    "propState": null,
+    "media": {
+      "fromQuery": "Q13",
+      "subjectKind": "character",
+      "intent": "visual_identity",
+      "trail": [
+        "binding Marcus visual baseline -> bundle Marcus Visual Core: EXCLUDED, replaced by Marcus as a boy",
+        "binding Marcus as a boy -> bundle Marcus Age Nine Visual",
+        "anchor Young Marcus Face"
+      ],
+      "references": [
+        {
+          "uuid": "00000000-0000-4000-8000-003300000004",
+          "anchorName": "Young Marcus Face",
+          "name": "marcus_age9_ref.png",
+          "identifier": "@project/assets/characters/marcus_age9_ref.png",
+          "format": "png",
+          "role": null,
+          "intent": "visual_identity",
+          "provenance": "anchor",
+          "state": "unaddressed",
+          "detail": "no root named @project is configured in this session",
+          "sizeBytes": null
+        }
+      ],
+      "counts": {
+        "resolved": 0,
+        "missing": 0,
+        "unmaterialised": 0,
+        "out-of-root": 0,
+        "unaddressed": 1
+      },
+      "rootMapped": false
+    }
+  }
+}

@@ -75,6 +75,40 @@ const SELECTORS = {
     sql: "SELECT id, uuid FROM theme WHERE name LIKE '%Forgiveness%'",
     note: "The theme Q10 traces.",
   },
+  scene3: {
+    sql: "SELECT id, uuid FROM scene WHERE scene_number = '3'",
+    note: "Day, before the injury: a filtered binding must be excluded.",
+  },
+  shot3B: {
+    sql: "SELECT id, uuid FROM shot WHERE shot_number = '3B'",
+    note: "A shot in scene 3.",
+  },
+  scene10: {
+    sql: "SELECT id, uuid FROM scene WHERE scene_number = '10'",
+    note: "A winter night in the kitchen: §12.17 ranks time of day first, "
+        + "so the autumn night variant wins.",
+  },
+  scene24: {
+    sql: "SELECT id, uuid FROM scene WHERE scene_number = '24'",
+    note: "The present, either side of the flashback.",
+  },
+  scene25: {
+    sql: "SELECT id, uuid FROM scene WHERE scene_number = '25'",
+    note: "The flashback: Marcus and the locket each in a variant (§4.8).",
+  },
+  locket: {
+    sql: "SELECT id, uuid FROM prop WHERE name LIKE '%locket%'",
+    note: "The prop with a variant and a state at scene 25.",
+  },
+  kitchen: {
+    sql: "SELECT id, uuid FROM location WHERE name = 'Farmhouse Kitchen'",
+    note: "The location with ranked variants.",
+  },
+  plateV2: {
+    sql: "SELECT id, uuid FROM asset "
+       + "WHERE name = 'kitchen_night_plate_v2.exr'",
+    note: "A versioned asset: v1 superseded by v2 (§6.1).",
+  },
 };
 
 /** What each query was asked, per its published result. */
@@ -99,6 +133,32 @@ const PARAMETERS = {
   Q14: { target: { literal: "Q05" }, character: { selector: "eleanor" },
          scene: { selector: "scene12" }, shot: { literal: null } },
   Q15: { entityType: { literal: "scene" }, row: { selector: "scene12" } },
+  // Per-case results: where one position cannot show a member at all.
+  "Q02-marcus-scene25": { subjectType: { literal: "character" },
+    subject: { selector: "marcus" }, scene: { selector: "scene25" },
+    shot: { literal: null } },
+  "Q02-locket-scene25": { subjectType: { literal: "prop" },
+    subject: { selector: "locket" }, scene: { selector: "scene25" },
+    shot: { literal: null } },
+  "Q02-kitchen-scene10": { subjectType: { literal: "location" },
+    subject: { selector: "kitchen" }, scene: { selector: "scene10" },
+    shot: { literal: null } },
+  "Q03-scene25": { scene: { selector: "scene25" } },
+  "Q04-scene25": { scene: { selector: "scene25" } },
+  "Q05-scene19": { character: { selector: "eleanor" },
+    scene: { selector: "scene19" } },
+  "Q12-scene24-25": { from: { selector: "scene24" },
+    to: { selector: "scene25" } },
+  "Q12-scene25-24": { from: { selector: "scene25" },
+    to: { selector: "scene24" } },
+  "Q13-scene3": { subjectType: { literal: "character" },
+    subject: { selector: "eleanor" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene3" }, shot: { selector: "shot3B" } },
+  "Q13-scene25": { subjectType: { literal: "character" },
+    subject: { selector: "marcus" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene25" }, shot: { literal: null } },
+  "Q15-plate-v2": { entityType: { literal: "asset" },
+    row: { selector: "plateV2" } },
 };
 
 // ── Resolve, and check every selector actually matches ───────────────

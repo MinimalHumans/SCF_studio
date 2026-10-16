@@ -747,13 +747,135 @@ describe("§12.15 Q01, §12.16 Q02, §12.17 Q04", () => {
   });
 });
 
+/**
+ * Every published result: one per query, plus the per-case results.
+ *
+ * A case result exists where the query's one position cannot show a
+ * member at all. Q02's prop and location members fill only for a prop or
+ * a location subject; Q15's version chain only for a versionable row; a
+ * variant only where one is in force. Without these, a reader ignoring
+ * any of them reproduced every published result byte for byte.
+ */
+const CASES = [
+  "Q05-scene19", "Q02-marcus-scene25", "Q02-locket-scene25", "Q02-kitchen-scene10",
+  "Q03-scene25", "Q04-scene25", "Q12-scene24-25", "Q12-scene25-24", "Q13-scene3",
+  "Q13-scene25", "Q15-plate-v2",
+] as const;
+const PUBLISHED = [
+  "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
+  "Q10", "Q11", "Q12", "Q13", "Q14", "Q15", ...CASES,
+];
+
+describe("per-case results — what one position cannot show", () => {
+  const sel = (sql: string) => pick(sql);
+
+  test("Q05 where a vocal state is in force: Eleanor, scene 19",
+       async () => {
+    // Scene 12 has none, deliberately (the injury raises a suggestion
+    // there). After the confession her voice has gone thin.
+    const r = await q05Result(fx.ctx, eleanor.uuid, scene19.uuid,
+                              eleanor.id, scene19.id);
+    blessOrCheck("Q05-scene19", r);
+    expect(r.result.states.map((x) => x.fields["name"])).toEqual(["wrung-out"]);
+    expect(r.result.modulations).toEqual({ volume: "quieter" });
+  });
+
+  test("Q02 for a character in a variant: Marcus as a boy, scene 25",
+       async () => {
+    const r = await q02Result(fx.ctx, "character", marcusId.uuid,
+      marcusId.id, scene25.uuid, scene25.id, null, null);
+    blessOrCheck("Q02-marcus-scene25", r);
+    expect(r.result.characterVariant?.fields["name"]).toBe("Marcus, age nine");
+  });
+
+  test("Q02 for a prop: the locket's variant and state, scene 25",
+       async () => {
+    const locket = await sel("SELECT id, uuid FROM prop WHERE name LIKE '%locket%'");
+    const r = await q02Result(fx.ctx, "prop", locket.uuid, locket.id,
+      scene25.uuid, scene25.id, null, null);
+    blessOrCheck("Q02-locket-scene25", r);
+    expect(r.result.propVariant?.fields["name"]).toBe("Ada's locket, new");
+    expect(r.result.propState?.fields["whereabouts"]).toBe("on the creek bank");
+  });
+
+  test("Q02 for a location: the kitchen at scene 10, ranked axes",
+       async () => {
+    // §12.17's axis order in a published result: a winter night takes
+    // the autumn night variant, and says it is wrong about the season.
+    const kitchen = await sel(
+      "SELECT id, uuid FROM location WHERE name = 'Farmhouse Kitchen'");
+    const scene10 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '10'");
+    const r = await q02Result(fx.ctx, "location", kitchen.uuid, kitchen.id,
+      scene10.uuid, scene10.id, null, null);
+    blessOrCheck("Q02-kitchen-scene10", r);
+    expect(String(r.result.locationVariant?.variant?.fields["name"]))
+      .toContain("night");
+    expect(r.result.locationVariant?.mismatches).toEqual(
+      ['season: scene="winter" variant="autumn"']);
+  });
+
+  test("Q03 and Q04 where a variant is in force, scene 25", async () => {
+    const q03 = await q03Result(fx.ctx, scene25.uuid, scene25.id);
+    blessOrCheck("Q03-scene25", q03);
+    expect(q03.result.characters[0]?.variant?.fields["name"])
+      .toBe("Marcus, age nine");
+    expect(q03.result.props[0]?.variant?.fields["name"])
+      .toBe("Ada's locket, new");
+    const q04 = await q04Result(fx.ctx, scene25.uuid, scene25.id);
+    blessOrCheck("Q04-scene25", q04);
+    expect(q04.result.cast[0]?.variant).not.toBeNull();
+    expect(q04.result.props[0]?.variant).not.toBeNull();
+  });
+
+  test("Q12 into the flashback: versions change, scene 24 to 25",
+       async () => {
+    const scene24 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '24'");
+    const r = await q12Result(fx.ctx, scene24.uuid, scene25.uuid,
+                              scene24.id, scene25.id);
+    blessOrCheck("Q12-scene24-25", r);
+    const marcus = r.result.characters.find(
+      (c) => c.character.uuid === marcusId.uuid);
+    expect([marcus?.variantFrom, marcus?.variantTo])
+      .toEqual([null, "Marcus, age nine"]);
+    const locket = r.result.props.find(
+      (p) => String(p.prop.fields["name"]).includes("locket"));
+    expect(locket?.variantTo).toBe("Ada's locket, new");
+  });
+
+  test("Q12 back out of the flashback: scene 25 to 24", async () => {
+    // The cut back to the present. Each position resolves at its own
+    // story place (§4.1), so the pair may run against the script.
+    const scene24 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '24'");
+    const r = await q12Result(fx.ctx, scene25.uuid, scene24.uuid,
+                              scene25.id, scene24.id);
+    blessOrCheck("Q12-scene25-24", r);
+    const marcus = r.result.characters.find(
+      (c) => c.character.uuid === marcusId.uuid);
+    expect([marcus?.variantFrom, marcus?.variantTo])
+      .toEqual(["Marcus, age nine", null]);
+  });
+
+  test("Q15 on a versioned asset: the plate's chain, oldest first",
+       async () => {
+    const plate = await sel(
+      "SELECT id, uuid FROM asset WHERE name = 'kitchen_night_plate_v2.exr'");
+    const r = await q15Result(fx.ctx, "asset", plate.uuid, plate.id,
+                              mentionsRow);
+    blessOrCheck("Q15-plate-v2", r);
+    expect(r.result.versionChain.map((v) => v.fields["version_label"]))
+      .toEqual(["v1", "v2"]);
+    expect(r.result.attached.notes.length).toBe(1);
+  });
+});
+
 describe("the results are portable", () => {
   test("no row id or timestamp appears anywhere in either", async () => {
     // The property the whole section rests on, asserted over the real
     // serialised output rather than over a projection in isolation.
-    for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
-                        "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
-                        "Q14", "Q15", "Q13-scene3", "Q13-scene25"]) {
+    for (const name of PUBLISHED) {
       const text = readFileSync(join(OUT, `${name}.result.json`), "utf8");
       const parsed = JSON.parse(text) as unknown;
       const walk = (v: unknown, path: string): void => {
@@ -776,9 +898,7 @@ describe("the results are portable", () => {
   });
 
   test("both declare the same result format", () => {
-    for (const name of ["Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06",
-                        "Q07", "Q08", "Q09", "Q10", "Q11", "Q12", "Q13",
-                        "Q14", "Q15", "Q13-scene3", "Q13-scene25"]) {
+    for (const name of PUBLISHED) {
       const r = JSON.parse(
         readFileSync(join(OUT, `${name}.result.json`), "utf8")) as {
           resultFormat: string; parameters: Record<string, unknown>;

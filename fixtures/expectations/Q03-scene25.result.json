@@ -1,0 +1,113 @@
+{
+  "query": "Q03",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "scene": "00000000-0000-4000-8000-003300000001"
+  },
+  "result": {
+    "scene": {
+      "uuid": "00000000-0000-4000-8000-003300000001",
+      "fields": {
+        "emotional_beat": "Absorption; a held breath let go",
+        "int_ext": "exterior",
+        "lifecycle_status": "active",
+        "location_uuid": "aeb81bee-5944-44d2-b885-ad03f5954173",
+        "name": "EXT. CREEK CROSSING - DAY (FLASHBACK)",
+        "purpose": "End on the place as it was: the one image of before that the film allows itself.",
+        "scene_number": "25",
+        "season": "summer",
+        "status": "outline",
+        "summary": "Marcus as a boy, building a dam across the shallows. The creek before anything happened there.",
+        "tension_level": "low",
+        "time_of_day": "afternoon",
+        "tone": "still, warm, unhurried"
+      }
+    },
+    "characters": [
+      {
+        "character": {
+          "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "fields": {
+            "age": "34",
+            "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+            "archetype": "the returning prodigal",
+            "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+            "casting_status": "tbd",
+            "core_belief": "A debt can be worked off if you work hard enough.",
+            "external_goal": "Winter over at the homestead and mend what he can.",
+            "flaw": "Confesses only when cornered, then calls it honesty.",
+            "gender": "male",
+            "greatest_fear": "That his mother already knows.",
+            "internal_goal": "Absolution he cannot ask for directly.",
+            "lifecycle_status": "active",
+            "motivation": "To be told he is not what he believes he is.",
+            "name": "Marcus Cade",
+            "occupation": "Railroad surveyor",
+            "pronouns": "he/him",
+            "role": "deuteragonist",
+            "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+          }
+        },
+        "presence": "seen",
+        "variant": {
+          "uuid": "00000000-0000-4000-8000-003300000002",
+          "fields": {
+            "character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+            "context": "The scene 25 flashback, years before Ada drowned",
+            "emotional_state": "Unguarded — wholly absorbed in play",
+            "lifecycle_status": "active",
+            "name": "Marcus, age nine",
+            "notes": "Cast and dressed separately from adult Marcus. Proposal 0033: in force where a scene_character link names it — scene 25 only.",
+            "physical_differences": "A boy of about nine: barefoot, sunburnt, hair cut short for summer"
+          }
+        },
+        "states": [],
+        "costumes": []
+      }
+    ],
+    "props": [
+      {
+        "prop": {
+          "uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+          "fields": {
+            "associated_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+            "description": "Brass locket holding Ada's portrait.",
+            "first_appearance": "sc 11, saddlebag",
+            "key_moments": "sc 11 pocketed · sc 19 on the table",
+            "lifecycle_status": "active",
+            "name": "Ada's locket",
+            "narrative_significance": "The object that carries the confession. It moves three times and is only spoken about once.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "macguffin",
+            "symbolism": "What Marcus took from the creek and could not put down."
+          }
+        },
+        "presence": "seen",
+        "variant": {
+          "uuid": "00000000-0000-4000-8000-00b200000002",
+          "fields": {
+            "context": "The scene 25 flashback, years before the creek took Ada",
+            "lifecycle_status": "active",
+            "name": "Ada's locket, new",
+            "notes": "Proposal 0033: in force where a scene_prop link names it — scene 25 only.",
+            "physical_differences": "Bright and untarnished, the clasp still tight",
+            "prop_uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6"
+          }
+        },
+        "state": {
+          "uuid": "00000000-0000-4000-8000-00b200000004",
+          "fields": {
+            "lifecycle_status": "active",
+            "name": "locket on the bank",
+            "prop_uuid": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+            "scene_uuid": "00000000-0000-4000-8000-003300000001",
+            "whereabouts": "on the creek bank"
+          }
+        }
+      }
+    ],
+    "motifs": []
+  }
+}

@@ -87,7 +87,7 @@ describe("the fixture's mix", () => {
       // these still cannot, and no count of png files changes that.
       // 44 since 2.20: the flashback's reference sheet for Marcus at nine.
       expect(tiers.filter((t) => t === "native").length).toBe(44);
-      expect(tiers.filter((t) => t === "decoded").length).toBe(2); // exr, glb
+      expect(tiers.filter((t) => t === "decoded").length).toBe(3); // 2 exr, glb
       expect(tiers.filter((t) => t === "named").length).toBe(1);   // zip
       expect(tiers.filter((t) => t !== "native").length)
         .toBeGreaterThanOrEqual(3);

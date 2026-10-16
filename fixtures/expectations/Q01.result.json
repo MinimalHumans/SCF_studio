@@ -241,7 +241,31 @@
         ]
       }
     ],
-    "motifCarriage": [],
+    "motifCarriage": [
+      {
+        "appearance": {
+          "uuid": "2ea3bf7b-4c7b-4056-a10c-661a76bd9f55",
+          "fields": {
+            "domain": "dialogue",
+            "entity_type": "character",
+            "manifestation_notes": "The one sentence he finishes.",
+            "motif_uuid": "6a3d2ee3-b109-40f8-8aec-918acc9f1a31",
+            "scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+          }
+        },
+        "motif": {
+          "uuid": "6a3d2ee3-b109-40f8-8aec-918acc9f1a31",
+          "fields": {
+            "lifecycle_status": "active",
+            "modality": "verbal",
+            "name": "Unfinished sentences",
+            "recurrence": "recurring",
+            "related_motif_uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+            "symbolic_meaning": "What this family cannot say."
+          }
+        }
+      }
+    ],
     "thematicConnections": [
       {
         "uuid": "7a068809-522f-445d-bd89-b53f43f318b4",

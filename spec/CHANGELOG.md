@@ -17,6 +17,44 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 0.67 — 2026-10-16
+
+*Describes schema 2.24.*
+
+**Minor.** Every member of a published result now carries data
+(`docs/release-checklist.md` §B2).
+
+### §12 and `conformance.md` §5.4 — per-case normative results
+
+Twenty members were empty in every published result, so a reader that
+ignored variants, vocal states, prop state, motif carriage, motif
+candidates or version chains reproduced all sixteen byte for byte. Some
+could be filled by authoring rows; others no single position can show —
+Q02's prop and location members need a prop or a location subject, and
+Q15's version chain needs a versionable row. `<Q>-<case>.result.json`
+files are now normative beside each query's own, with published
+selectors; a conforming reader compares against all of them:
+`Q02-marcus-scene25`, `Q02-locket-scene25`, `Q02-kitchen-scene10`,
+`Q03-scene25`, `Q04-scene25`, `Q05-scene19`, `Q12-scene24-25`,
+`Q12-scene25-24`, `Q15-plate-v2`, and the two Q13 cases that were
+published as examples, `Q13-scene3` and `Q13-scene25`.
+
+`scf-core/test/resultCoverage.test.ts` fails if any member is empty in
+every result of its query, except the two environment-dependent
+`sizeBytes` (§8.3).
+
+### The fixture
+
+Rows authored for it, no schema change: the locket in a variant and a
+state at scene 25; a motif carried by Eleanor and a related motif not
+placed at scene 12; kitchen set dressing at scene 12; the night plate's
+superseded v1 and a note attached to v2; seven performance beats
+anchored to their lines; and a screenplay prop tag. `scf-check` now
+reports six infos — the superseded v1 is an asset nothing references
+(`asset.orphan`).
+
+---
+
 ## 0.66 — 2026-10-16
 
 *Describes schema 2.24.*

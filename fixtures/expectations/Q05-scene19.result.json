@@ -1,0 +1,62 @@
+{
+  "query": "Q05",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "scene": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8"
+  },
+  "result": {
+    "modality": "vocal",
+    "baseline": {
+      "uuid": "7abc0a5b-e86e-49a3-835e-1334423dff69",
+      "fields": {
+        "accent": "Flat inland Oregon",
+        "accent_authenticity": "native",
+        "articulation": "precise",
+        "breathiness_level": "slight",
+        "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+        "class_markers": "Plain, unornamented",
+        "delivery_style": "minimalist",
+        "emotional_access": "controlled",
+        "fluency": "filled pauses",
+        "interruption_tendencies": "Never interrupts; waits a beat too long",
+        "lifecycle_status": "active",
+        "listening_behavior": "Listens with her whole body.",
+        "name": "Eleanor voice",
+        "pace": "measured",
+        "pitch_range": "low",
+        "rhythm": "halting",
+        "speech_pattern": "Answers a question with an instruction",
+        "subtext_playing": "hides",
+        "timbre": "warm",
+        "verbal_tics": [
+          "answers questions with tasks"
+        ],
+        "vocal_habits": "Drops the ends of sentences she does not want to finish",
+        "voice_quality": "Low and unhurried; the voice of someone used to being obeyed by animals",
+        "volume_tendency": "soft"
+      }
+    },
+    "states": [
+      {
+        "uuid": "834f49fa-f2da-485c-b766-a3fae7a8be7c",
+        "fields": {
+          "character_uuid": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+          "emotional_coloring": "hollowed",
+          "lifecycle_status": "active",
+          "modality": "vocal",
+          "modulations": "{\"volume\": \"quieter\"}",
+          "name": "wrung-out",
+          "persistence": "scene_only",
+          "scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+          "state_description": "Voice gone thin after the confession."
+        }
+      }
+    ],
+    "modulations": {
+      "volume": "quieter"
+    },
+    "beats": []
+  }
+}

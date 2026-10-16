@@ -1,0 +1,84 @@
+{
+  "query": "Q15",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.24",
+  "parameters": {
+    "entityType": "asset",
+    "row": "16961c0a-8df6-475c-80f5-6eb4abfc7137"
+  },
+  "result": {
+    "entityType": "asset",
+    "row": {
+      "uuid": "16961c0a-8df6-475c-80f5-6eb4abfc7137",
+      "fields": {
+        "description": "Night interior plate, storm outside.",
+        "identifier": "@project/assets/locations/kitchen_night_plate_v2.exr",
+        "lifecycle_status": "active",
+        "name": "kitchen_night_plate_v2.exr",
+        "parent_uuid": "00000000-0000-4000-8000-00b200000006",
+        "source": "Plate unit",
+        "tags": [
+          "location",
+          "kitchen",
+          "night"
+        ],
+        "version_label": "v2"
+      }
+    },
+    "versionChain": [
+      {
+        "uuid": "00000000-0000-4000-8000-00b200000006",
+        "fields": {
+          "description": "First night plate; the storm reads too faint.",
+          "identifier": "@project/assets/locations/kitchen_night_plate_v1.exr",
+          "lifecycle_status": "active",
+          "name": "kitchen_night_plate_v1.exr",
+          "source": "Plate unit",
+          "superseded_at": "2026-09-16 12:00:00",
+          "superseded_by_uuid": "16961c0a-8df6-475c-80f5-6eb4abfc7137",
+          "tags": [
+            "location",
+            "kitchen",
+            "night"
+          ],
+          "version_label": "v1"
+        }
+      },
+      {
+        "uuid": "16961c0a-8df6-475c-80f5-6eb4abfc7137",
+        "fields": {
+          "description": "Night interior plate, storm outside.",
+          "identifier": "@project/assets/locations/kitchen_night_plate_v2.exr",
+          "lifecycle_status": "active",
+          "name": "kitchen_night_plate_v2.exr",
+          "parent_uuid": "00000000-0000-4000-8000-00b200000006",
+          "source": "Plate unit",
+          "tags": [
+            "location",
+            "kitchen",
+            "night"
+          ],
+          "version_label": "v2"
+        }
+      }
+    ],
+    "attached": {
+      "decisions": [],
+      "notes": [
+        {
+          "uuid": "00000000-0000-4000-8000-00b200000007",
+          "fields": {
+            "affected_entities": "[\"asset:16961c0a-8df6-475c-80f5-6eb4abfc7137\"]",
+            "author": "director",
+            "content": "v1 lost the storm against the lamp. v2 keeps the window darker than the room so the rain carries.",
+            "lifecycle_status": "active",
+            "name": "Night plate v2: regraded for the storm",
+            "note_date": "2026-09-16",
+            "note_type": "for VFX",
+            "priority": "normal"
+          }
+        }
+      ]
+    }
+  }
+}

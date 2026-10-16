@@ -62,8 +62,10 @@ async function carriersOf(
 describe("a carrier reaches the scenes it is placed in (§12.11)", () => {
   test("a prop reaches its scene_prop scenes, like a motif its appearances",
        async () => {
+    // The prop is linked in four scenes, the scene 25 flashback among
+    // them; the motif appears in three.
     const carriers = await carriersOf("baseline", null);
-    expect(carriers.get("prop:Ada's locket")).toBe(3);
+    expect(carriers.get("prop:Ada's locket")).toBe(4);
     expect(carriers.get("motif:Ada's locket")).toBe(3);
   });
 
@@ -74,7 +76,7 @@ describe("a carrier reaches the scenes it is placed in (§12.11)", () => {
       "SELECT 1, 1, 'aaaaaaaa-0000-4000-8000-00000000c001' " +
       "WHERE NOT EXISTS (SELECT 1 FROM scene_prop " +
       "                  WHERE scene_id = 1 AND prop_id = 1)");
-    expect(carriers.get("prop:Ada's locket")).toBe(4);
+    expect(carriers.get("prop:Ada's locket")).toBe(5);
   });
 
   test("describing a character in a scene does NOT place them there",
@@ -97,7 +99,7 @@ describe("a carrier reaches the scenes it is placed in (§12.11)", () => {
     const [scene] = [...(await placedScenes())];
     const carriers = await carriersOf("cut-scene",
       `UPDATE scene SET lifecycle_status = 'cut' WHERE id = ${scene ?? 0}`);
-    expect(carriers.get("prop:Ada's locket")).toBe(2);
+    expect(carriers.get("prop:Ada's locket")).toBe(3);
   });
 });
 

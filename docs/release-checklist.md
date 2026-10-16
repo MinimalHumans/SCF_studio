@@ -35,7 +35,7 @@ gallery, asset statuses) and touches nothing on this list.
 all 28 steps plus the published checksums: scf-core **762 passed / 6
 skipped** (46 files), scf-app **373 / 1** (32), scf-mcp **27** (2),
 45 artifacts, 275 public exports, 52 finding codes, 106 entities.
-`scf-check` reads the fixture with 0 errors, 0 warnings, 5 info.
+`scf-check` reads the fixture with 0 errors, 0 warnings, 5 info *(6 since §B2)*.
 `schema-2.21` resolves at its tag and matches `SHA256SUMS`.
 
 **What is not green is everything nothing checks.** Since rev 13 the
@@ -149,7 +149,7 @@ with the copies: Q15's "unattached" list and the anchor's
 query pages (`structureCommit.ts`, `StructureView.tsx`,
 `EntityList.tsx`) stay for §B8.
 
-### B2. ○ Twenty members empty in every normative result
+### B2. ✅ Twenty members empty in every normative result
 
 Measured by walking the sixteen `fixtures/expectations/Q??.result.json`.
 For each, a reader that never produces the member at all is
@@ -181,6 +181,42 @@ force for props) and **`set_dressing`**, which `Q04_DETAIL` lists.
 Twenty-five of 113 fixture tables are empty in all. Most are unread
 design entities and can stay that way; the ones above are the ones a
 normative query reads.
+
+**Done 2026-10-16, as spec 0.67** (fixture content only; schema stays
+2.24). The cheapest close was not enough: one position cannot show
+Q02's prop and location members or Q15's version chain at all. Decided
+2026-10-16: **per-case normative results**, `<Q>-<case>.result.json`
+beside each query's own, with published selectors, in the manifest, and
+named in `conformance.md` §5.4 and §6.1. Every existing position stays
+— scene 12, the 19 → 16 reorder — because each was chosen to show
+something.
+
+- **Cases:** `Q02-marcus-scene25`, `Q02-locket-scene25`,
+  `Q02-kitchen-scene10` (§12.17's ranked axes, now in a published
+  result), `Q03-scene25`, `Q04-scene25`, `Q05-scene19`,
+  `Q12-scene24-25`, `Q12-scene25-24`, `Q15-plate-v2`; `Q13-scene3` and
+  `Q13-scene25` promoted from examples. 56 manifest files.
+- **Rows authored:** the locket's variant, a scene 25 `scene_prop` naming
+  it and a state there; `motif_appearance` 14 carried by Eleanor;
+  *Unfinished sentences* related to *Ada's locket* (Q09's candidate);
+  kitchen `set_dressing` at scene 12; the night plate's v1, superseded
+  by v2, and a note attached to v2; **7 of 14** beats anchored by
+  `line_ref` (the other seven quote no script line, on purpose); one
+  `screenplay_prop_tags` row.
+- **Not authored:** `screenplay_versions` and its line table. §0.4 puts
+  them outside 1.0 and readers MUST ignore them, so no normative result
+  reads them; Q15's version chain is §6.1's and is now exercised by the
+  asset. Left for `editor-mvp.md` §3.
+- **The vocal state** came from Eleanor at scene 19 (*wrung-out*), not a
+  new row at scene 12: scene 12 has none on purpose, so the injury raises
+  Q14's suggestion there.
+- **The check for the class:** `scf-core/test/resultCoverage.test.ts`
+  fails if any member is empty in every result of its query; only the
+  two `sizeBytes` are excused (§8.3), and an excuse that stops being
+  true fails too. Against the old results it reports the gaps.
+- `scf-check` reads the fixture with **6 infos**: the superseded v1 is
+  `asset.orphan`, which is true and now exercised. The walkthrough says
+  so.
 
 ### B3. ✅ Eight proposals implemented but still `draft`
 

@@ -96,6 +96,7 @@
             "modality": "verbal",
             "name": "Unfinished sentences",
             "recurrence": "recurring",
+            "related_motif_uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
             "symbolic_meaning": "What this family cannot say."
           }
         },
@@ -111,7 +112,20 @@
         "state": null
       }
     ],
-    "candidates": [],
+    "candidates": [
+      {
+        "uuid": "ae7aef4b-39dd-49ef-8adb-196e8669d2ba",
+        "fields": {
+          "first_appearance_scene_uuid": "85484bb0-3fdb-458b-abf8-baba22d2c3d6",
+          "lifecycle_status": "active",
+          "literal_function": "Holds Ada's portrait.",
+          "modality": "visual",
+          "name": "Ada's locket",
+          "recurrence": "standalone",
+          "symbolic_meaning": "The absent daughter."
+        }
+      }
+    ],
     "dense": false,
     "densityThreshold": 3
   }

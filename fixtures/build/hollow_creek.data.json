@@ -115,7 +115,9 @@
     "description": "Night interior plate, storm outside.",
     "tags": "[\"location\",\"kitchen\",\"night\"]",
     "source": "Plate unit",
-    "lifecycle_status": "active"
+    "lifecycle_status": "active",
+    "parent_id": 54,
+    "version_label": "v2"
    },
    {
     "id": 7,
@@ -682,6 +684,21 @@
     "description": "Casting and costume reference for Marcus as a boy.",
     "source": "Casting",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 54,
+    "uuid": "00000000-0000-4000-8000-00b200000006",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "kitchen_night_plate_v1.exr",
+    "identifier": "@project/assets/locations/kitchen_night_plate_v1.exr",
+    "description": "First night plate; the storm reads too faint.",
+    "tags": "[\"location\",\"kitchen\",\"night\"]",
+    "source": "Plate unit",
+    "lifecycle_status": "active",
+    "version_label": "v1",
+    "superseded_at": "2026-09-16 12:00:00",
+    "superseded_by_id": 6
    }
   ],
   "asset_relationship": [
@@ -1913,6 +1930,20 @@
     "affected_entities": "[\"scene:06857531-3e91-41a9-95dd-3262407d8132\"]",
     "author": "director",
     "note_date": "2026-09-21",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 2,
+    "uuid": "00000000-0000-4000-8000-00b200000007",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "Night plate v2: regraded for the storm",
+    "note_type": "for VFX",
+    "content": "v1 lost the storm against the lamp. v2 keeps the window darker than the room so the rain carries.",
+    "priority": "normal",
+    "affected_entities": "[\"asset:16961c0a-8df6-475c-80f5-6eb4abfc7137\"]",
+    "author": "director",
+    "note_date": "2026-09-16",
     "lifecycle_status": "active"
    }
   ],
@@ -3300,6 +3331,7 @@
     "modality": "verbal",
     "recurrence": "recurring",
     "symbolic_meaning": "What this family cannot say.",
+    "related_motif_id": 4,
     "lifecycle_status": "active"
    },
    {
@@ -3466,6 +3498,8 @@
     "updated_at": "2026-08-05 13:24:02",
     "motif_id": 3,
     "scene_id": 9,
+    "entity_type": "character",
+    "entity_id": 1,
     "domain": "dialogue",
     "manifestation_notes": "The one sentence he finishes."
    },
@@ -3587,6 +3621,7 @@
     "modality": "vocal",
     "emotional_subtext": "Played: disbelief. Underneath: don't leave again — must not surface.",
     "line_text": "You came back.",
+    "line_ref": "00000000-0000-4000-9000-000000000084",
     "emphasis_words": "[\"back\"]",
     "pace": "slow",
     "volume": "soft",
@@ -3604,6 +3639,7 @@
     "modality": "facial",
     "description": "Guilt flickers at the word 'back'.",
     "trigger": "the word 'back'",
+    "line_ref": "00000000-0000-4000-9000-000000000092",
     "visibility": "subtle",
     "lifecycle_status": "active"
    },
@@ -3618,6 +3654,7 @@
     "beat_order": 5,
     "modality": "vocal",
     "line_text": "a dry laugh",
+    "line_ref": "00000000-0000-4000-9000-000000000087",
     "delivery_notes": "humorless",
     "lifecycle_status": "active"
    },
@@ -3647,6 +3684,7 @@
     "beat_order": 2,
     "modality": "vocal",
     "line_text": "I didn't know you were —",
+    "line_ref": "00000000-0000-4000-9000-000000000032",
     "emphasis_words": "[\"know\"]",
     "pace": "fast",
     "volume": "soft",
@@ -3663,6 +3701,7 @@
     "character_id": 1,
     "beat_order": 1,
     "modality": "physical",
+    "line_ref": "00000000-0000-4000-9000-000000000058",
     "physical_action": "Reaches for the rope line and misses.",
     "body_part_focus": "hands",
     "visibility": "clearly seen",
@@ -3680,6 +3719,7 @@
     "modality": "vocal",
     "emotional_subtext": "Relief disguised as confession.",
     "line_text": "I was at the creek.",
+    "line_ref": "00000000-0000-4000-9000-000000000116",
     "emphasis_words": "[\"was\"]",
     "pace": "slow",
     "volume": "soft",
@@ -3697,6 +3737,7 @@
     "modality": "facial",
     "description": "Nothing moves. That is the choice.",
     "trigger": "the word 'creek'",
+    "line_ref": "00000000-0000-4000-9000-000000000118",
     "visibility": "subtle",
     "lifecycle_status": "active"
    },
@@ -4203,6 +4244,31 @@
     "scene_id": 11,
     "condition": "cord snapped",
     "whereabouts": "in the mud below the step",
+    "lifecycle_status": "active"
+   },
+   {
+    "id": 8,
+    "uuid": "00000000-0000-4000-8000-00b200000004",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "locket on the bank",
+    "prop_id": 1,
+    "scene_id": 16,
+    "whereabouts": "on the creek bank",
+    "lifecycle_status": "active"
+   }
+  ],
+  "prop_variant": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00b200000002",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "Ada's locket, new",
+    "prop_id": 1,
+    "physical_differences": "Bright and untarnished, the clasp still tight",
+    "context": "The scene 25 flashback, years before the creek took Ada",
+    "notes": "Proposal 0033: in force where a scene_prop link names it — scene 25 only.",
     "lifecycle_status": "active"
    }
   ],
@@ -5002,6 +5068,16 @@
     "prop_id": 3,
     "usage_note": "Down in the mud, still sounding.",
     "significance": "key"
+   },
+   {
+    "id": 13,
+    "uuid": "00000000-0000-4000-8000-00b200000003",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "scene_id": 16,
+    "prop_id": 1,
+    "usage_note": "On the bank where Ada left it while she waded",
+    "variant_id": 1
    }
   ],
   "scene_sequence": [
@@ -5132,6 +5208,18 @@
     "order_in_sequence": 2
    }
   ],
+  "screenplay_prop_tags": [
+   {
+    "id": 1,
+    "tagged_text": "the locket",
+    "prop_id": 1,
+    "created_at": "2026-10-16 12:00:00",
+    "line_uuid": "00000000-0000-4000-9000-000000000113",
+    "start_offset": 27,
+    "end_offset": 37,
+    "uuid": "00000000-0000-4000-8000-00b200000008"
+   }
+  ],
   "screenplay_title_page": [
    {
     "id": 96,
@@ -5243,6 +5331,22 @@
     "purpose": "Release.",
     "turning_point": "She does not go inside first.",
     "status": "outline",
+    "lifecycle_status": "active"
+   }
+  ],
+  "set_dressing": [
+   {
+    "id": 1,
+    "uuid": "00000000-0000-4000-8000-00b200000005",
+    "created_at": "2026-10-16 12:00:00",
+    "updated_at": "2026-10-16 12:00:00",
+    "name": "Kitchen, the storm night",
+    "scene_id": 7,
+    "location_id": 1,
+    "hero_objects": "[\"Ada's chair, empty\", \"the oil lamp\"]",
+    "atmospheric_objects": "Rain on the window; the stove ticking as it cools",
+    "practical_objects": "One lamp, the stove",
+    "continuity_requirements": "Ada's shawl is on Eleanor, never on the chair",
     "lifecycle_status": "active"
    }
   ],
@@ -6965,5 +7069,5 @@
    }
   ]
  },
- "rowCount": 540
+ "rowCount": 547
 }

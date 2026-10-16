@@ -96,8 +96,9 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
      ]),
 
     ("The canonical query results",
-     "One normative result per query, spec §12. Rows by uuid, no row "
-     "ids, no timestamps.",
+     "One normative result per query, spec §12, and a normative result "
+     "per case where one position cannot show a member. Rows by uuid, "
+     "no row ids, no timestamps.",
      [
         ("fixtures/expectations/Q00.result.json",
          "Q00's normative result. Spec §12.12."),
@@ -131,6 +132,28 @@ GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
          "Q14's normative result. Spec §12.9."),
         ("fixtures/expectations/Q15.result.json",
          "Q15's normative result. Spec §12.14."),
+        ("fixtures/expectations/Q02-marcus-scene25.result.json",
+         "Q02 for a character in a variant (§4.8). Spec §12.16."),
+        ("fixtures/expectations/Q02-locket-scene25.result.json",
+         "Q02 for a prop: its variant and state. Spec §12.16."),
+        ("fixtures/expectations/Q02-kitchen-scene10.result.json",
+         "Q02 for a location: §12.17's ranked axes. Spec §12.16."),
+        ("fixtures/expectations/Q03-scene25.result.json",
+         "Q03 where variants are in force. Spec §12.4."),
+        ("fixtures/expectations/Q04-scene25.result.json",
+         "Q04 where variants are in force. Spec §12.17."),
+        ("fixtures/expectations/Q05-scene19.result.json",
+         "Q05 where a vocal state is in force. Spec §12.2."),
+        ("fixtures/expectations/Q12-scene24-25.result.json",
+         "Q12 into a variant. Spec §12.5."),
+        ("fixtures/expectations/Q12-scene25-24.result.json",
+         "Q12 out of a variant. Spec §12.5."),
+        ("fixtures/expectations/Q13-scene3.result.json",
+         "Q13 where a filtered binding is excluded. Spec §12.8."),
+        ("fixtures/expectations/Q13-scene25.result.json",
+         "Q13 where a variant replaces the baseline. Spec §12.8."),
+        ("fixtures/expectations/Q15-plate-v2.result.json",
+         "Q15 on a versioned row: its chain (§6.1). Spec §12.14."),
      ]),
 
     ("The canonical query parameters",

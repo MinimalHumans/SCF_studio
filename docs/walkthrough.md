@@ -76,6 +76,8 @@ npm run scf-check -- ../fixtures/hollow_creek.scf
 ```
 ../fixtures/hollow_creek.scf  (schema 2.24)
 
+  info     asset.orphan  [asset 54]
+           Asset 54 is referenced by nothing.
   info     field.required_absent  [shot 31]
            shot.scene_id is absent on 1 row(s). The row is incomplete,
            not invalid — nothing is rejected on write (§9.1).
@@ -93,11 +95,12 @@ npm run scf-check -- ../fixtures/hollow_creek.scf
   info     vocabulary.unlisted_value  [creative_decision 1]
            creative_decision.decision_type carries "sound", …
 
-  0 error, 0 warning, 5 info
+  0 error, 0 warning, 6 info
   This file is readable. Findings above are worth fixing, none prevent reading.
 ```
 
-**Read those, because they are the format's whole disposition.** A shot
+**Read those, because they are the format's whole disposition.** A
+superseded plate is kept and nothing uses it any more. A shot
 has been planned before it was given a scene. A scene has been outlined
 and not yet written. A sequence runs across an act boundary, which is
 legal and which anyone drawing this film as a tree needs to know about.
@@ -259,7 +262,8 @@ are byte-identical.
 sha256sum -c spec/SHA256SUMS
 ```
 
-Forty-five artifacts, including the specification documents themselves.
+Every artifact the manifest lists, including the specification
+documents themselves.
 
 **Write your own reader.** Four people have, from the specification
 alone. The [query reference](../spec/query-reference.md) is one page,

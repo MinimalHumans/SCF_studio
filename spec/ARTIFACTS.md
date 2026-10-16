@@ -31,7 +31,7 @@ https://raw.githubusercontent.com/MinimalHumans/SCF_studio/schema-2.24/scf-core/
 sha256sum -c spec/SHA256SUMS
 ```
 
-## Artifacts (45)
+## Artifacts (56)
 
 This list is exhaustive in both directions: everything below is
 published here AND checksummed in `SHA256SUMS`, and nothing is
@@ -47,10 +47,10 @@ The normative documents. Stamped since 0.31: three independent readers built aga
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `spec/scf-spec.md` | `a3515a6da1b48499…` | The specification. Everything normative about the format is here or cited from here. |
-| `spec/conformance.md` | `7ab18d3a68a22b4f…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `d810cdc5c46b2cd3…` | What is safe to build against and what is not, per subject. |
-| `spec/CHANGELOG.md` | `022c64eb65dd9ecb…` | The specification changelog. Spec §11.5. |
+| `spec/scf-spec.md` | `9d25aa46f0bdedc6…` | The specification. Everything normative about the format is here or cited from here. |
+| `spec/conformance.md` | `ada817a908e0f83b…` | What a conforming implementation must do, per role, and how a claim is made. |
+| `spec/stability.md` | `980527e175d627d8…` | What is safe to build against and what is not, per subject. |
+| `spec/CHANGELOG.md` | `35ba69af0c4708a7…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
 
@@ -71,26 +71,37 @@ Generated from `schema/`, which is the source of truth for all of them.
 
 ### The canonical query results
 
-One normative result per query, spec §12. Rows by uuid, no row ids, no timestamps.
+One normative result per query, spec §12, and a normative result per case where one position cannot show a member. Rows by uuid, no row ids, no timestamps.
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `fixtures/expectations/Q00.result.json` | `052279b52dfdb1c5…` | Q00's normative result. Spec §12.12. |
 | `fixtures/expectations/Q03.result.json` | `2d66e968a0c59c41…` | Q03's normative result. Spec §12.4. |
-| `fixtures/expectations/Q01.result.json` | `55179f9f41848be8…` | Q01's normative result. Spec §12.15. |
-| `fixtures/expectations/Q02.result.json` | `f2eb7192256ac1d8…` | Q02's normative result. Spec §12.16. |
-| `fixtures/expectations/Q04.result.json` | `c0cbf28f0e740dca…` | Q04's normative result. Spec §12.17. |
-| `fixtures/expectations/Q05.result.json` | `6b9f8a3bbe2845fd…` | Q05's normative result. Spec §12.2. |
+| `fixtures/expectations/Q01.result.json` | `246f09f5b2e0950a…` | Q01's normative result. Spec §12.15. |
+| `fixtures/expectations/Q02.result.json` | `5b9c29f939d0aae9…` | Q02's normative result. Spec §12.16. |
+| `fixtures/expectations/Q04.result.json` | `720d73d43e87b7d0…` | Q04's normative result. Spec §12.17. |
+| `fixtures/expectations/Q05.result.json` | `45e751cdc5f46468…` | Q05's normative result. Spec §12.2. |
 | `fixtures/expectations/Q07.result.json` | `e68fcfb0ccf02b43…` | Q07's normative result. Spec §12.3. |
 | `fixtures/expectations/Q06.result.json` | `218ad575fff69d86…` | Q06's normative result. Spec §12.6. |
 | `fixtures/expectations/Q08.result.json` | `b07a24ee73ea6729…` | Q08's normative result. Spec §12.7. |
-| `fixtures/expectations/Q09.result.json` | `f314b0329948fec5…` | Q09's normative result. Spec §12.10. |
-| `fixtures/expectations/Q10.result.json` | `176e4770e23237ec…` | Q10's normative result. Spec §12.11. |
+| `fixtures/expectations/Q09.result.json` | `4ccf39493a38efe6…` | Q09's normative result. Spec §12.10. |
+| `fixtures/expectations/Q10.result.json` | `92ed66efef52ea3c…` | Q10's normative result. Spec §12.11. |
 | `fixtures/expectations/Q11.result.json` | `7eacfc69f869e77b…` | Q11's normative result. Spec §12.13. |
 | `fixtures/expectations/Q12.result.json` | `acc678f18f712163…` | Q12's normative result. Spec §12.5. |
 | `fixtures/expectations/Q13.result.json` | `b95721eef61479df…` | Q13's normative result. Spec §12.8. |
 | `fixtures/expectations/Q14.result.json` | `622a8bb4c8285cf6…` | Q14's normative result. Spec §12.9. |
 | `fixtures/expectations/Q15.result.json` | `436085f062e9b1fe…` | Q15's normative result. Spec §12.14. |
+| `fixtures/expectations/Q02-marcus-scene25.result.json` | `670f40f5f00f1910…` | Q02 for a character in a variant (§4.8). Spec §12.16. |
+| `fixtures/expectations/Q02-locket-scene25.result.json` | `e8b6630fffdf4765…` | Q02 for a prop: its variant and state. Spec §12.16. |
+| `fixtures/expectations/Q02-kitchen-scene10.result.json` | `6fca03d4ee4da1ed…` | Q02 for a location: §12.17's ranked axes. Spec §12.16. |
+| `fixtures/expectations/Q03-scene25.result.json` | `83100235c32066b3…` | Q03 where variants are in force. Spec §12.4. |
+| `fixtures/expectations/Q04-scene25.result.json` | `909c7944b3acb739…` | Q04 where variants are in force. Spec §12.17. |
+| `fixtures/expectations/Q05-scene19.result.json` | `fcdf74eaf38b8ccd…` | Q05 where a vocal state is in force. Spec §12.2. |
+| `fixtures/expectations/Q12-scene24-25.result.json` | `e67821440f5630cc…` | Q12 into a variant. Spec §12.5. |
+| `fixtures/expectations/Q12-scene25-24.result.json` | `c461e8cae816ba70…` | Q12 out of a variant. Spec §12.5. |
+| `fixtures/expectations/Q13-scene3.result.json` | `58cec428d419a87a…` | Q13 where a filtered binding is excluded. Spec §12.8. |
+| `fixtures/expectations/Q13-scene25.result.json` | `58e7b56148d57434…` | Q13 where a variant replaces the baseline. Spec §12.8. |
+| `fixtures/expectations/Q15-plate-v2.result.json` | `17418acaa621640b…` | Q15 on a versioned row: its chain (§6.1). Spec §12.14. |
 
 ### The canonical query parameters
 
@@ -98,7 +109,7 @@ What each published result was asked, as selectors that resolve against the fixt
 
 | Artifact | SHA-256 | What it is |
 |---|---|---|
-| `fixtures/expectations/selectors.json` | `2e5184f1c0cdbd05…` | The seven selectors and the sixteen queries' parameters. Conformance §5.4. |
+| `fixtures/expectations/selectors.json` | `ee50abeae9f6de30…` | The seven selectors and the sixteen queries' parameters. Conformance §5.4. |
 
 ### The negative fixtures
 
@@ -124,7 +135,7 @@ Eleven files that are wrong in a stated way, and the report each MUST produce. S
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/scf.magic` | `95f9a444f4d42de8…` | magic(5) stanza for file(1). Spec §1.2. |
-| `fixtures/hollow_creek.scf` | `0bf3a4337f35b58a…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
+| `fixtures/hollow_creek.scf` | `997cb63a88e79042…` | The conformance fixture. Its load-bearing properties are enumerated in spec/conformance.md §5.1. |
 
 Full digests are in [`SHA256SUMS`](SHA256SUMS).
 

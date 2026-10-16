@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 0.66 (draft) — not a release.**
+**Version 0.67 (draft) — not a release.**
 Describes schema version **2.24**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -1736,8 +1736,11 @@ structure, and shipping the questions is that description. Defining them
 does not preclude anyone asking others.
 
 **All sixteen are specified below**, each with a normative result
-published in `fixtures/expectations/`. The rendered markdown in the same
-directory is a convenience and is not a contract for any of them.
+published in `fixtures/expectations/`, and with a normative case result
+(`<Q>-<case>.result.json`) wherever one position cannot show a member —
+a variant, a vocal state, a prop or location subject, a version chain
+(`conformance.md` §5.4). The rendered markdown in the same directory is
+a convenience and is not a contract for any of them.
 
 ### 12.1 What a query returns
 

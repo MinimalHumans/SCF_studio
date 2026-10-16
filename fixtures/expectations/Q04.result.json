@@ -321,6 +321,27 @@
         ]
       },
       {
+        "entity": "set_dressing",
+        "rows": [
+          {
+            "uuid": "00000000-0000-4000-8000-00b200000005",
+            "fields": {
+              "atmospheric_objects": "Rain on the window; the stove ticking as it cools",
+              "continuity_requirements": "Ada's shawl is on Eleanor, never on the chair",
+              "hero_objects": [
+                "Ada's chair, empty",
+                "the oil lamp"
+              ],
+              "lifecycle_status": "active",
+              "location_uuid": "5559995a-7944-495a-ad6f-8352f381a296",
+              "name": "Kitchen, the storm night",
+              "practical_objects": "One lamp, the stove",
+              "scene_uuid": "06857531-3e91-41a9-95dd-3262407d8132"
+            }
+          }
+        ]
+      },
+      {
         "entity": "tone_marker",
         "rows": [
           {
