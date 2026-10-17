@@ -44,7 +44,7 @@ import { paginationFor } from "../editor/extensions.ts";
 import { ImportFlow } from "./ImportFlow.tsx";
 import { IntegrityPanel } from "./IntegrityPanel.tsx";
 import { useQuery } from "./useQuery.ts";
-import { scanIntegrity } from "../editor/integrity.ts";
+import { scanIntegrity } from "@scf-core/ops/integrity.ts";
 
 const touch = (): void => {
   useStore.setState((s) => ({ revision: s.revision + 1 }));

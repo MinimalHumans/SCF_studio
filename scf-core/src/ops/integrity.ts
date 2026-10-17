@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * editor/integrity.ts — links that outlived the text they described.
+ * ops/integrity.ts — links that outlived the text they described.
  *
  * writeScreenplay replaces the whole line table on every commit, so a
  * deleted line's uuid simply stops existing. Three things point at line
@@ -30,13 +30,13 @@
  * and are left out of the generic list rather than reported twice.
  */
 
-import type { Row, SqlExec } from "@scf-core/db.ts";
+import type { Row, SqlExec } from "../db.ts";
 import {
   lineAnchorFields, orphanedAnchors, type OrphanedAnchor,
-} from "@scf-core/lines.ts";
-import type { Registry } from "@scf-core/registry.ts";
+} from "../lines.ts";
+import type { Registry } from "../registry.ts";
 import { sceneNumberOrderJoin, sceneNumberOrderTerms }
-  from "@scf-core/sceneNumbers.ts";
+  from "../sceneNumbers.ts";
 
 export interface DetachedTag {
   id: number;

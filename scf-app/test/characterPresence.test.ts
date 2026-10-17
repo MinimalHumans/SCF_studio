@@ -5,7 +5,7 @@ import { openNodeDatabase } from "@scf-core/node.ts";
 import {
   presenceByScene, QUIET_ROLES, readScriptPresence,
 } from "../src/editor/characterPresence.ts";
-import { scanIntegrity } from "../src/editor/integrity.ts";
+import { scanIntegrity } from "@scf-core/ops/integrity.ts";
 
 const FIXTURE = fileURLToPath(new URL(
   "../../fixtures/hollow_creek.scf", import.meta.url));

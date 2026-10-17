@@ -9,7 +9,7 @@ import { loadRegistry, type Registry, type RegistryJson }
 import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
 import {
   deleteSceneCharacter, scanIntegrity, unanchor, unanchorBeat,
-} from "../src/editor/integrity.ts";
+} from "@scf-core/ops/integrity.ts";
 import { syncPropSceneLinks, tagPropRange }
   from "../src/editor/features.ts";
 
