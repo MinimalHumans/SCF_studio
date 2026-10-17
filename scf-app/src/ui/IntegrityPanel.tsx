@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 import {
   EMPTY_REPORT, deleteBeat, deletePropTag, deleteSceneCharacter,
   scanIntegrity, unanchor, unanchorBeat, type IntegrityReport,
-} from "../editor/integrity.ts";
+} from "@scf-core/ops/integrity.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 
 export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
