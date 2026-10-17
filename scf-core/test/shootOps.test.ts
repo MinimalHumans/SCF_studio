@@ -2,16 +2,16 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { openNodeDatabase } from "@scf-core/node.ts";
-import { initDatabase } from "@scf-core/db.ts";
-import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
+import { openNodeDatabase } from "../src/node.ts";
+import { initDatabase, type Row, type SqlValue } from "../src/db.ts";
+import { loadRegistry, type RegistryJson } from "../src/registry.ts";
 import {
   addBeat, addShot, isCut, moveShot, removeBeat, removeShot,
   renumberForScene, setShotCut, summarize,
-} from "../src/editor/shootOps.ts";
+} from "../src/ops/shootOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
-  "../../scf-core/registry/registry.json", import.meta.url));
+  "../registry/registry.json", import.meta.url));
 
 describe("what a collapsed scene row says", () => {
   test("beats count as work, so a broken-down scene is not 'nothing'",
@@ -50,7 +50,7 @@ describe("shoot operations", () => {
       "SELECT last_insert_rowid() AS id"))[0]!["id"]);
   });
 
-  const shots = async (): Promise<Array<Record<string, unknown>>> =>
+  const shots = async (): Promise<Row[]> =>
     db.exec("SELECT id, shot_number, shot_order, story_beat_id FROM shot " +
             "ORDER BY shot_order, id");
 
@@ -148,9 +148,9 @@ describe("shoot operations", () => {
        async () => {
     await addShot(db.exec, sceneId, null);
     const id = Number((await shots())[0]!["id"]);
-    const status = async (): Promise<unknown> => (await db.exec(
+    const status = async (): Promise<SqlValue> => (await db.exec(
       "SELECT lifecycle_status FROM shot WHERE id = ?", [id]))[0]!
-      ["lifecycle_status"];
+      ["lifecycle_status"] ?? null;
     await setShotCut(db.exec, id, true);
     expect(await status()).toBe("cut");
     expect(isCut({ lifecycle_status: await status() })).toBe(true);

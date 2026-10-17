@@ -9,7 +9,7 @@
  * is the failure this project keeps paying for.
  *
  * Headless on purpose: no view imports, so tests run it against a real
- * SQLite database without the worker (see shootOps.ts for the pattern).
+ * SQLite database without the worker (see scf-core/src/ops/shootOps.ts for the pattern).
  * Each function writes ordinary SCF rows that a hand-authored file could
  * contain; nothing here is app-only state.
  *

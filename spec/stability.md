@@ -89,7 +89,7 @@ about it is ceremonial.
 | Absolute identifiers are permitted | §8.2 | Provisional | Yes | Stated explicitly in 0.48: a warning, never a refusal, and `..` is the error instead. Whether an implementation may resolve one to bytes is 0003 and open. |
 | The proposal path | — | Provisional | Yes | `proposals/` since 0.32. Thirty-eight filed: thirty-three implemented, three declined, two deferred past 1.0 (0003, 0015). `check_proposal_status.py` fails if a changelog records a proposal that still reads `draft`. |
 | Framework columns | §2.2 | Stable | Yes | |
-| Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `sceneOps.ts`. Derived, so new entities are covered without an edit. |
+| Ownership rule (`scene_id` belongs vs points at) | §2.3 | Stable | Yes | `scf-core/src/ops/sceneOps.ts`. Derived, so new entities are covered without an edit. |
 | Hidden `nameField` rule | §2.3 | Stable | Yes | |
 | Registry-derived asset usage | §2.3 | Provisional | Yes | Correct as written; only one implementation has ever applied it. |
 | Tier bands 0–6 | §0.7 | Provisional | Yes | Descriptive only. Carries no semantics, which is why it is not Stable — if a tier ever gains meaning, this changes. |

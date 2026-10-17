@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * editor/sceneOps.ts — removing and duplicating a scene from the rail.
+ * ops/sceneOps.ts — removing and duplicating a scene from the rail.
  *
  * Both are DATABASE operations that happen to move text. The rail is
  * where you work on the film's structure; the page is one projection of
@@ -27,9 +27,9 @@
  * it held with it.
  */
 
-import type { SqlExec } from "@scf-core/db.ts";
-import { newUuid, q } from "@scf-core/db.ts";
-import type { Registry } from "@scf-core/registry.ts";
+import type { SqlExec } from "../db.ts";
+import { newUuid, q } from "../db.ts";
+import type { Registry } from "../registry.ts";
 
 export interface SceneCascade {
   /** Table -> field, for rows that die with the scene. */

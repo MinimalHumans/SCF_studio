@@ -93,7 +93,8 @@ two-descriptions-drift failure mode this project has paid for twice.
 The derivation moved from `scf-app/src/editor/shootOps.ts` into
 `scf-core/src/screenplay/sceneScript.ts`, and the app re-exports it. It
 described a MUST NOT and existed in one place; now it describes a MUST
-NOT and a normative member, and still exists in one place.
+NOT and a normative member, and still exists in one place. (`shootOps.ts`
+itself has since moved to `scf-core/src/ops/`.)
 
 `Q04.result.json` is re-blessed and carries scene 12's twenty lines.
 
