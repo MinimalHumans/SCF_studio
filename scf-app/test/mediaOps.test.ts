@@ -22,7 +22,7 @@ import {
   ScopeError, setAnchorClip, setAnchorRegion, canReorder, moveTile,
   type Tile,
 } from "../src/editor/mediaOps.ts";
-import { applyUndoChange } from "../src/state/undoChange.ts";
+import { applyUndoChange } from "@scf-core/ops/undoChange.ts";
 import { createCharacter } from "../src/editor/elementOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(

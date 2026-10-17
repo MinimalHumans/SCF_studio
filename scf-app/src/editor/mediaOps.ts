@@ -49,7 +49,7 @@ import {
 } from "@scf-core/assetImport.ts";
 import { previewCapability } from "@scf-core/preview.ts";
 import { parseRegionBox, type RegionBox } from "@scf-core/anchors.ts";
-import { ChangeRecorder, type ChangeUndo } from "../state/undoChange.ts";
+import { ChangeRecorder, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 
 export const BOARDS = {
   look: { intent: "visual_identity", anchorType: "visual", noun: "look" },

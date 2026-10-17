@@ -5,7 +5,7 @@ import {
   canReorder, loadBoard, moveTile, purposeHelp, sameSequence, purposeLabel, purposesFor, SharedSetError,
   type BoardData, type BoardName, type Owner, type Purpose, type Tile,
 } from "../../editor/mediaOps.ts";
-import type { ChangeUndo } from "../../state/undoChange.ts";
+import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { assetStanding, type Standing }
   from "../../editor/assetStanding.ts";
 import { useQuery } from "../useQuery.ts";

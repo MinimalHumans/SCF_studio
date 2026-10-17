@@ -21,7 +21,7 @@
 import {
   newUuid, q, withTransaction, type Row, type SqlExec,
 } from "@scf-core/db.ts";
-import { ChangeRecorder, type ChangeUndo } from "../state/undoChange.ts";
+import { ChangeRecorder, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 
 /** What a related file can be about. */
 export type MediaOwnerKind = "shot" | "scene" | "project";

@@ -11,7 +11,7 @@ import {
   addException, loadBoard, type Exception, type Owner,
 } from "../../editor/mediaOps.ts";
 import { useQuery } from "../useQuery.ts";
-import { mergeChanges, type ChangeUndo } from "../../state/undoChange.ts";
+import { mergeChanges, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { AutoField } from "./AutoField.tsx";
 import { RowFields } from "./ProfileRowFields.tsx";
 import {

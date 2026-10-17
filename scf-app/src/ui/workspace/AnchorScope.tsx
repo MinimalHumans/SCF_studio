@@ -27,7 +27,7 @@ import { makeLocator } from "../../files/assetLocator.ts";
 import {
   ScopeError, setAnchorClip, setAnchorRegion, type Tile,
 } from "../../editor/mediaOps.ts";
-import type { ChangeUndo } from "../../state/undoChange.ts";
+import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 
 /** "0:02.12" — minutes, seconds, hundredths. */
 export function clock(sec: number): string {
