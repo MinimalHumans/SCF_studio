@@ -10,7 +10,7 @@ import { SearchBox } from "./SearchBox.tsx";
 import { QueryIndex, QueryRunner } from "./queries/QueryRunner.tsx";
 import { ScriptView } from "./ScriptView.tsx";
 import { StructureView } from "./StructureView.tsx";
-import { undoSummary } from "../state/undoDelete.ts";
+import { undoSummary } from "@scf-core/ops/undoDelete.ts";
 import { ShootView } from "./ShootView.tsx";
 import { ScriptReader } from "./ScriptReader.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";

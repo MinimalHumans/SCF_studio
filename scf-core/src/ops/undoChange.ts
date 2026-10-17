@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * undoChange.ts — one undo step for a write that touched several rows.
+ * ops/undoChange.ts — one undo step for a write that touched several rows.
  *
  * A workspace intent is often four rows: "use this file as her look" can
  * be an asset, a bundle, a binding and a membership. The writer did one
@@ -16,7 +16,7 @@
  * Session only, one level, like undoDelete — stated in the same toast.
  */
 
-import { q, type Row, type SqlExec, type SqlValue } from "@scf-core/db.ts";
+import { q, type Row, type SqlExec, type SqlValue } from "../db.ts";
 
 export interface ChangeUndo {
   /** What the toast says: "Added 2 files to Eleanor's look". */

@@ -7,7 +7,7 @@ import {
   type MediaOwner, type MediaTile,
 } from "../editor/relatedMediaOps.ts";
 import { registerFiles, withCreatedAssets } from "../editor/mediaOps.ts";
-import type { ChangeUndo } from "../state/undoChange.ts";
+import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { fail, FileIntake, type Incoming } from "./workspace/BoardParts.tsx";
 import { AssetThumb } from "./AssetThumb.tsx";
 import { assetStanding } from "../editor/assetStanding.ts";

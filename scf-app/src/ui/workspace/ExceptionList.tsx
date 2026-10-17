@@ -5,7 +5,7 @@ import {
   addException, moveException, removeException, updateException,
   type BoardName, type Exception, type Owner, type When,
 } from "../../editor/mediaOps.ts";
-import type { ChangeUndo } from "../../state/undoChange.ts";
+import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { useQuery } from "../useQuery.ts";
 import {
   BoardTile, fail, FileIntake, placeFiles, type InForce,

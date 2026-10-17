@@ -12,7 +12,7 @@ import {
   repurpose, setTileRole, SharedSetError, withCreatedAssets,
   type BoardName, type Owner, type Purpose, type Tile,
 } from "../../editor/mediaOps.ts";
-import type { ChangeUndo } from "../../state/undoChange.ts";
+import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { addressHandles, beginDrop } from "../../files/dropIntake.ts";
 import { pickAssetFiles } from "../../files/assetLocator.ts";
 import { AssetThumb } from "../AssetThumb.tsx";

@@ -105,7 +105,7 @@ little that differs (entity, noun, variant table, presence query, tabs).
   directly. `resolveMedia` gained `binding_verdicts` (which binding
   applies, and why) so the board never re-derives the answer.
 - **Undo.** Every multi-row action records one `ChangeUndo`
-  (`state/undoChange.ts`); the toast undoes it as one step. Session-only,
+  (`scf-core/src/ops/undoChange.ts`); the toast undoes it as one step. Session-only,
   one level, like delete-undo.
 
 *Not built:* the readiness badge in the header (Q14/Q01 findings for the

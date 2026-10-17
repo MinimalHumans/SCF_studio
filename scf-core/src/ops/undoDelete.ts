@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * undoDelete.ts — make a delete recoverable.
+ * ops/undoDelete.ts — make a delete recoverable.
  *
  * A delete is otherwise final and silent, and it takes dependent rows
  * with it — a sequence's scene_sequence rows, say. So a delete first
@@ -16,8 +16,8 @@
  *    sessions is a different feature (and a versioning one).
  */
 
-import { q, type Row, type SqlExec, type SqlValue } from "@scf-core/db.ts";
-import type { Registry } from "@scf-core/registry.ts";
+import { q, type Row, type SqlExec, type SqlValue } from "../db.ts";
+import type { Registry } from "../registry.ts";
 
 export interface UndoEntry {
   entity: string;

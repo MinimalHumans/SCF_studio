@@ -24,8 +24,8 @@ import { reanchorSpansForMove } from "../editor/structureCommit.ts";
 import { rowLabel } from "./displayName.ts";
 import {
   captureForUndo, restoreFromUndo, type UndoEntry,
-} from "./undoDelete.ts";
-import { applyUndoChange, type ChangeUndo } from "./undoChange.ts";
+} from "@scf-core/ops/undoDelete.ts";
+import { applyUndoChange, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { withTransaction } from "@scf-core/db.ts";
 import {
   forgetHandle, forgetRoot, recallHandle, recallPairFor, recallRoot,

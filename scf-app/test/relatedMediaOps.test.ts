@@ -9,7 +9,7 @@ import {
   attachMedia, detachMedia, loadMedia, mediaCounts, mediaLabel, moveMedia,
   setMediaType, loadPosters, setPoster, type MediaOwner,
 } from "../src/editor/relatedMediaOps.ts";
-import { applyUndoChange } from "../src/state/undoChange.ts";
+import { applyUndoChange } from "@scf-core/ops/undoChange.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../../scf-core/registry/registry.json", import.meta.url));
