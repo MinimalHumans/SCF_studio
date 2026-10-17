@@ -95,7 +95,7 @@ React UI (registry-driven)
 **A test must not import a view.** Importing anything that reaches
 `state/store.ts` constructs the SQLite worker, which fails outside a
 browser. Logic that deserves a test lives in a module the view imports —
-`editor/shootOps.ts`, `state/displayName.ts`, `state/subjectStats.ts`,
+`scf-core/src/ops/shootOps.ts`, `state/displayName.ts`, `state/subjectStats.ts`,
 `state/undoDelete.ts` — not in the component.
 
 ## Where it is going

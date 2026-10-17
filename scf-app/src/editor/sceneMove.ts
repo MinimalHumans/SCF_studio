@@ -16,7 +16,7 @@
  *
  * A scene BLOCK is a heading plus everything down to the next heading —
  * the same "slugline to slugline" definition SCENE_SCRIPT_SQL uses in
- * shootOps.ts, and what a scene means anyway. Lines before the first
+ * ops/shootOps.ts, and what a scene means anyway. Lines before the first
  * heading are a preamble and belong to no block; they never move and
  * nothing can be moved above them.
  *

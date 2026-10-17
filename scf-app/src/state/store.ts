@@ -39,7 +39,7 @@ import { revokeAll } from "../files/objectUrlCache.ts";
 import { clearResolutions } from "../files/thumbnailCache.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
 import type { RootMode, RootPermission } from "../files/fileAdapter.ts";
-import { renumberForScene } from "../editor/shootOps.ts";
+import { renumberForScene } from "@scf-core/ops/shootOps.ts";
 
 export { suggestSaveAsName };
 

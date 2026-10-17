@@ -23,7 +23,7 @@ import { lineState, loadLines, mintLineId } from "../editor/lineState.ts";
 import { planSceneMove, sceneBlocks } from "../editor/sceneMove.ts";
 import {
   duplicateSceneRow, removeSceneCascade,
-} from "../editor/sceneOps.ts";
+} from "@scf-core/ops/sceneOps.ts";
 import { reanchorSpansForMove } from "../editor/structureCommit.ts";
 import {
   blocksToDoc, commitPlan, rowsToBlocks,

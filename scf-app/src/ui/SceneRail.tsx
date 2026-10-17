@@ -26,7 +26,7 @@ import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import {
   describeChildren, planSceneRemoval, type RemovalImpact,
-} from "../editor/sceneOps.ts";
+} from "@scf-core/ops/sceneOps.ts";
 import { scriptViewHandle } from "./ScriptView.tsx";
 
 type FilterKind = "character" | "prop" | "location";

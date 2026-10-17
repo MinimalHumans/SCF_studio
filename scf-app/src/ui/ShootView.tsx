@@ -8,7 +8,7 @@ import { shotCode } from "@scf-core/shots.ts";
 import {
   addBeat, addShot, isCut, moveShot, removeBeat, removeShot,
   SCENE_SCRIPT_SQL, setShotCut, summarize, updateField,
-} from "../editor/shootOps.ts";
+} from "@scf-core/ops/shootOps.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";

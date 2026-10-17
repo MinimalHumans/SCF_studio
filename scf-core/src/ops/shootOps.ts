@@ -10,8 +10,8 @@
  * plans coverage against the script's spine; it never edits it.
  */
 
-import { newUuid, type Row, type SqlExec } from "@scf-core/db.ts";
-import { nextShotNumber } from "@scf-core/shots.ts";
+import { newUuid, type Row, type SqlExec } from "../db.ts";
+import { nextShotNumber } from "../shots.ts";
 
 const beatLetter = (i: number): string =>
   String.fromCharCode(65 + (i % 26));
@@ -47,7 +47,7 @@ export const isCut = (shot: Row): boolean =>
  * same rule. It is re-exported here so the Shoot tab's call sites do
  * not change and so there is exactly one description of a MUST NOT.
  */
-export { SCENE_SCRIPT_SQL } from "@scf-core/screenplay/sceneScript.ts";
+export { SCENE_SCRIPT_SQL } from "../screenplay/sceneScript.ts";
 
 export async function addBeat(exec: SqlExec,
                               sceneId: number): Promise<void> {
