@@ -9,7 +9,7 @@ import { CharacterFace } from "./CharacterFace.tsx";
 import { KINDS, type SubjectKind } from "../../state/subjectKinds.ts";
 import {
   cleanName, createSubject, subjectsNamed,
-} from "../../editor/elementOps.ts";
+} from "@scf-core/ops/elementOps.ts";
 
 /**
  * Every character, with a way to make another at the top.

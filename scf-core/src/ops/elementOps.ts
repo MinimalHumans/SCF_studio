@@ -19,8 +19,8 @@
  */
 
 import { newUuid, q, type Row, type SqlExec, type SqlValue } from
-  "@scf-core/db.ts";
-import type { Registry } from "@scf-core/registry.ts";
+  "../db.ts";
+import type { Registry } from "../registry.ts";
 
 const insertedId = async (exec: SqlExec): Promise<number> =>
   Number((await exec("SELECT last_insert_rowid() AS id"))[0]?.["id"]);

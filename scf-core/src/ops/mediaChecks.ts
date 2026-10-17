@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * editor/mediaChecks.ts — media authoring that looks complete and isn't.
+ * ops/mediaChecks.ts — media authoring that looks complete and isn't.
  *
  * Each check here is something the first MCP session hit while writing a
  * shot prompt, and each one was silent in the file: a bundle nobody
@@ -14,13 +14,13 @@
  * is the whole-file sweep the Assets tab shows.
  */
 
-import type { SqlExec } from "@scf-core/db.ts";
-import { q } from "@scf-core/db.ts";
-import type { Registry } from "@scf-core/registry.ts";
-import { formatOf } from "@scf-core/assets.ts";
+import type { SqlExec } from "../db.ts";
+import { q } from "../db.ts";
+import type { Registry } from "../registry.ts";
+import { formatOf } from "../assets.ts";
 import {
   bindingSubjects, unboundBundleIds,
-} from "@scf-core/bundling.ts";
+} from "../bundling.ts";
 
 export type MediaKind = "image" | "video" | "audio" | "model" | "other";
 

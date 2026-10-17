@@ -5,7 +5,7 @@ import type { NumberingPolicy } from "@scf-core/numbering.ts";
 import { exec } from "../state/store.ts";
 import {
   previewDerivedNumbering, type NumberingPreview,
-} from "../editor/structureCommit.ts";
+} from "@scf-core/ops/structureCommit.ts";
 
 /**
  * The warning before `project.numbering_policy` changes (spec §4.3).

@@ -4,7 +4,7 @@ import { exec, registry, useStore } from "../../state/store.ts";
 import {
   canReorder, loadBoard, moveTile, purposeHelp, sameSequence, purposeLabel, purposesFor, SharedSetError,
   type BoardData, type BoardName, type Owner, type Purpose, type Tile,
-} from "../../editor/mediaOps.ts";
+} from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { assetStanding, type Standing }
   from "../../editor/assetStanding.ts";

@@ -4,7 +4,7 @@ import { exec, registry, useStore } from "../../state/store.ts";
 import {
   addException, moveException, removeException, updateException,
   type BoardName, type Exception, type Owner, type When,
-} from "../../editor/mediaOps.ts";
+} from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { useQuery } from "../useQuery.ts";
 import {

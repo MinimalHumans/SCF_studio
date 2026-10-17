@@ -30,7 +30,7 @@ import { readScreenplay } from "@scf-core/screenplay/rowModel.ts";
 import { diffScreenplay, type ReimportDiff }
   from "@scf-core/screenplay/reimport.ts";
 import { commitStructure, planCommitStructure }
-  from "./structureCommit.ts";
+  from "@scf-core/ops/structureCommit.ts";
 import { cueMatchesEntity } from "./cueMatch.ts";
 import type { LineEvent } from "./lineState.ts";
 import type { Block } from "./screenplayDoc.ts";

@@ -2,21 +2,21 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { openNodeDatabase } from "@scf-core/node.ts";
-import { initDatabase } from "@scf-core/db.ts";
+import { openNodeDatabase } from "../src/node.ts";
+import { initDatabase } from "../src/db.ts";
 import {
   loadRegistry, type Registry, type RegistryJson,
-} from "@scf-core/registry.ts";
+} from "../src/registry.ts";
 import {
   addArc, addStage, addVariant, castActor, charactersNamed, cleanName,
   createCharacter, fromPointOfView, loadProfile, reassignActor, relate,
   setDirection, setField, addCostume, wearIn, ensureProgression,
   addMakeupFor, addHabit, addPlaceFor,
   createSubject, subjectsNamed, addVariantOf, linkPropToScene,
-} from "../src/editor/elementOps.ts";
+} from "../src/ops/elementOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
-  "../../scf-core/registry/registry.json", import.meta.url));
+  "../registry/registry.json", import.meta.url));
 
 let db: ReturnType<typeof openNodeDatabase>;
 let registry: Registry;

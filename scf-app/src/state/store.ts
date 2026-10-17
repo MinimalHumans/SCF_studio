@@ -20,7 +20,7 @@ import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef,
          type NavigableSubject } from "./registryGraph.ts";
 import { suggestSaveAsName } from "./saveName.ts";
-import { reanchorSpansForMove } from "../editor/structureCommit.ts";
+import { reanchorSpansForMove } from "@scf-core/ops/structureCommit.ts";
 import { rowLabel } from "./displayName.ts";
 import {
   captureForUndo, restoreFromUndo, type UndoEntry,

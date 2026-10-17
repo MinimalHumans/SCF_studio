@@ -26,7 +26,7 @@ import { acquire, release } from "../../files/objectUrlCache.ts";
 import { makeLocator } from "../../files/assetLocator.ts";
 import {
   ScopeError, setAnchorClip, setAnchorRegion, type Tile,
-} from "../../editor/mediaOps.ts";
+} from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 
 /** "0:02.12" — minutes, seconds, hundredths. */

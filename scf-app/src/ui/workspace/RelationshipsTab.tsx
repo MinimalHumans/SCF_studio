@@ -4,7 +4,7 @@ import type { Row } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
   cleanName, createCharacter, fromPointOfView, relate, setDirection,
-} from "../../editor/elementOps.ts";
+} from "@scf-core/ops/elementOps.ts";
 import { RELATIONSHIP_SECTIONS } from "../../state/characterLayout.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";

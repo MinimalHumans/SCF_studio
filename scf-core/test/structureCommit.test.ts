@@ -4,23 +4,23 @@ import {
 } from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { openNodeDatabase } from "@scf-core/node.ts";
-import { initDatabase } from "@scf-core/db.ts";
-import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
+import { openNodeDatabase } from "../src/node.ts";
+import { initDatabase } from "../src/db.ts";
+import { loadRegistry, type RegistryJson } from "../src/registry.ts";
 import {
   SCENE_ORDER_BY, SCENE_ORDER_JOIN, deriveStructure, sceneOrderHint,
   scenePositions,
-} from "@scf-core/structure.ts";
-import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
+} from "../src/structure.ts";
+import type { ScreenplayRow } from "../src/screenplay/rowModel.ts";
 import {
   classifySection, commitStructure, planCommitStructure,
   previewDerivedNumbering, reanchorSpansForMove, renumberSpans,
   setNumberingMode,
-} from "../src/editor/structureCommit.ts";
-import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
+} from "../src/ops/structureCommit.ts";
+import { initScreenplayTables } from "../src/screenplay/rowModel.ts";
 
 const REGISTRY = fileURLToPath(new URL(
-  "../../scf-core/registry/registry.json", import.meta.url));
+  "../registry/registry.json", import.meta.url));
 
 async function freshDb(): Promise<ReturnType<typeof openNodeDatabase>> {
   const registry = loadRegistry(JSON.parse(

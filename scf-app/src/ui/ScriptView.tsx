@@ -24,7 +24,7 @@ import { planSceneMove, sceneBlocks } from "../editor/sceneMove.ts";
 import {
   duplicateSceneRow, removeSceneCascade,
 } from "@scf-core/ops/sceneOps.ts";
-import { reanchorSpansForMove } from "../editor/structureCommit.ts";
+import { reanchorSpansForMove } from "@scf-core/ops/structureCommit.ts";
 import {
   blocksToDoc, commitPlan, rowsToBlocks,
   sceneSyncFromHeading, type Block,

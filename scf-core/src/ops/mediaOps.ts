@@ -38,18 +38,18 @@
 
 import {
   newUuid, q, withTransaction, type Row, type SqlExec, type SqlValue,
-} from "@scf-core/db.ts";
-import type { Registry } from "@scf-core/registry.ts";
+} from "../db.ts";
+import type { Registry } from "../registry.ts";
 import {
   applyBundleAdd, bindBundle, bindingSubjects, createBundle, planBundleAdd,
-} from "@scf-core/bundling.ts";
-import { formatOf } from "@scf-core/assets.ts";
+} from "../bundling.ts";
+import { formatOf } from "../assets.ts";
 import {
   applyAssetImport, planAssetImport, type ImportCandidate,
-} from "@scf-core/assetImport.ts";
-import { previewCapability } from "@scf-core/preview.ts";
-import { parseRegionBox, type RegionBox } from "@scf-core/anchors.ts";
-import { ChangeRecorder, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
+} from "../assetImport.ts";
+import { previewCapability } from "../preview.ts";
+import { parseRegionBox, type RegionBox } from "../anchors.ts";
+import { ChangeRecorder, type ChangeUndo } from "./undoChange.ts";
 
 export const BOARDS = {
   look: { intent: "visual_identity", anchorType: "visual", noun: "look" },

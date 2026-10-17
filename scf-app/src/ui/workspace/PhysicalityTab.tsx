@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useState } from "react";
 import { exec, useStore } from "../../state/store.ts";
-import { addHabit, addPlaceFor, cleanName } from "../../editor/elementOps.ts";
+import { addHabit, addPlaceFor, cleanName } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import { ProfileRowFields, RowFields } from "./ProfileRowFields.tsx";

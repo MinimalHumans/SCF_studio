@@ -6,10 +6,10 @@ import { useEffect, useState } from "react";
 import { q } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import { KINDS, type SubjectKind } from "../../state/subjectKinds.ts";
-import { addVariantOf, cleanName } from "../../editor/elementOps.ts";
+import { addVariantOf, cleanName } from "@scf-core/ops/elementOps.ts";
 import {
   addException, loadBoard, type Exception, type Owner,
-} from "../../editor/mediaOps.ts";
+} from "@scf-core/ops/mediaOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { mergeChanges, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { AutoField } from "./AutoField.tsx";
