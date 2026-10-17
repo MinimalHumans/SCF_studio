@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { variantInForce } from "@scf-core/resolution.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import { LOCATION_TABS } from "../../state/subjectKinds.ts";
-import { setField } from "../../editor/elementOps.ts";
+import { setField } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { MainRowFields, VariantsTab } from "./ElementTabs.tsx";
 import { ProfileRowFields } from "./ProfileRowFields.tsx";

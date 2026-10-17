@@ -5,8 +5,8 @@ import {
   attachMedia, detachMedia, loadMedia, MEDIA_HELP, MEDIA_LABEL, MEDIA_TYPES,
   mediaLabel, moveMedia, setMediaNotes, setMediaType,
   type MediaOwner, type MediaTile,
-} from "../editor/relatedMediaOps.ts";
-import { registerFiles, withCreatedAssets } from "../editor/mediaOps.ts";
+} from "@scf-core/ops/relatedMediaOps.ts";
+import { registerFiles, withCreatedAssets } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { fail, FileIntake, type Incoming } from "./workspace/BoardParts.tsx";
 import { AssetThumb } from "./AssetThumb.tsx";

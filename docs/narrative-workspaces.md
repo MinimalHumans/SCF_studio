@@ -152,8 +152,8 @@ Notes on what was built:
 
 ## 6. The wiring layer
 
-`editor/mediaOps.ts` (boards, exceptions, anchors) and
-`editor/elementOps.ts` (everything else) are headless: no view imports,
+`scf-core/src/ops/mediaOps.ts` (boards, exceptions, anchors) and
+`scf-core/src/ops/elementOps.ts` (everything else) are headless: no view imports,
 tested against the fixture with the Node SQLite driver.
 
 ### 6.1 Intent → rows

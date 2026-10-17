@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import { PROP_TABS } from "../../state/subjectKinds.ts";
 import { layoutStages, stageAt } from "../../state/storyStrip.ts";
-import { linkPropToScene, setField } from "../../editor/elementOps.ts";
+import { linkPropToScene, setField } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { MainRowFields, VariantsTab } from "./ElementTabs.tsx";
 import { ProfileRowFields } from "./ProfileRowFields.tsx";

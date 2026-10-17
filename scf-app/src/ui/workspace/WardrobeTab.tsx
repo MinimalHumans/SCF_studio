@@ -4,7 +4,7 @@ import type { Row } from "@scf-core/db.ts";
 import { exec, useStore } from "../../state/store.ts";
 import {
   addCostume, addMakeupFor, cleanName, ensureProgression, wearIn,
-} from "../../editor/elementOps.ts";
+} from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import { ProfileRowFields, RowFields } from "./ProfileRowFields.tsx";

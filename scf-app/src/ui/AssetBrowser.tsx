@@ -43,7 +43,7 @@ import {
 } from "@scf-core/bundling.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { AssetThumb } from "./AssetThumb.tsx";
-import { mediaFindingCount } from "../editor/mediaChecks.ts";
+import { mediaFindingCount } from "@scf-core/ops/mediaChecks.ts";
 import { assetStanding } from "../editor/assetStanding.ts";
 import { StandingTag } from "./StandingTag.tsx";
 import { useRememberedFlag } from "./useRememberedFlag.ts";

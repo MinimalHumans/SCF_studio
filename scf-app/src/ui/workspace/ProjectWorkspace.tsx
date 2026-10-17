@@ -5,7 +5,7 @@ import {
   DEFAULT_NUMBERING_POLICY, type NumberingPolicy,
 } from "@scf-core/numbering.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
-import { setField } from "../../editor/elementOps.ts";
+import { setField } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { Field } from "../fields/Field.tsx";
 import { asPolicy, NumberingPolicyConfirm } from "../NumberingPolicyConfirm.tsx";
@@ -14,8 +14,8 @@ import { fail, FileIntake, type Incoming } from "./BoardParts.tsx";
 import { AssetPreview } from "../AssetPreview.tsx";
 import {
   detachMedia, loadPosters, setPoster, type MediaTile,
-} from "../../editor/relatedMediaOps.ts";
-import { registerFiles, withCreatedAssets } from "../../editor/mediaOps.ts";
+} from "@scf-core/ops/relatedMediaOps.ts";
+import { registerFiles, withCreatedAssets } from "@scf-core/ops/mediaOps.ts";
 
 /**
  * ProjectWorkspace — the baseline of the film, in one place.

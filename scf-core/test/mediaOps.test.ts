@@ -5,28 +5,28 @@ import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openNodeDatabase } from "@scf-core/node.ts";
-import { initDatabase, newUuid, type SqlExec } from "@scf-core/db.ts";
+import { openNodeDatabase } from "../src/node.ts";
+import { initDatabase, newUuid, type SqlExec } from "../src/db.ts";
 import {
   loadRegistry, type Registry, type RegistryJson,
-} from "@scf-core/registry.ts";
+} from "../src/registry.ts";
 import {
   applyBundleAdd, bindBundle, createBundle,
-} from "@scf-core/bundling.ts";
-import { resolveMedia } from "@scf-core/resolution.ts";
-import { visualAnchorFor } from "@scf-core/anchors.ts";
+} from "../src/bundling.ts";
+import { resolveMedia } from "../src/resolution.ts";
+import { visualAnchorFor } from "../src/anchors.ts";
 import {
   attach, boardForIdentifier, confirmIdentity, detach, loadBoard,
   registerFiles, repurpose, SharedSetError, withCreatedAssets,
   addException, moveException, purposesFor, removeException, updateException,
   ScopeError, setAnchorClip, setAnchorRegion, canReorder, moveTile,
   type Tile,
-} from "../src/editor/mediaOps.ts";
-import { applyUndoChange } from "@scf-core/ops/undoChange.ts";
-import { createCharacter } from "../src/editor/elementOps.ts";
+} from "../src/ops/mediaOps.ts";
+import { applyUndoChange } from "../src/ops/undoChange.ts";
+import { createCharacter } from "../src/ops/elementOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(
-  "../../scf-core/registry/registry.json", import.meta.url));
+  "../registry/registry.json", import.meta.url));
 const FIXTURE = fileURLToPath(new URL(
   "../../fixtures/hollow_creek.scf", import.meta.url));
 
@@ -292,7 +292,7 @@ describe("exceptions", () => {
     await db.exec(
       "INSERT INTO performance_state (uuid, name, character_id, scene_id, " +
       "modality, persistence) VALUES (?, 'wounded', ?, ?, 'physical', " +
-      "'scene_only')", [newUuid(), id, scenes[1]]);
+      "'scene_only')", [newUuid(), id, scenes[1] ?? null]);
     const base = await asset(db.exec, "base.png");
     const hurt = await asset(db.exec, "hurt.png");
     await attach(db.exec, registry, id, "look", [base], "set");

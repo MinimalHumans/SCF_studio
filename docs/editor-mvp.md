@@ -622,7 +622,7 @@ value only (roles, JSON lists); no shape changed.
   (with a one-click "use X"), and `json` fields holding non-JSON (with
   "make it a list"). The same button sits in `JsonField`.
 
-The checks live in `editor/mediaChecks.ts`, headless and tested. The
+The checks live in `scf-core/src/ops/mediaChecks.ts`, headless and tested. The
 reach derivation is `scf-core/src/bundling.ts` (`bundleReach`,
 `unboundBundleIds`, `bindBundle`), reading binding tables from the
 registry's `subject` field rather than a list. `bundling.ts` is a deep

@@ -14,14 +14,14 @@
  * docs/story-structure-design-record.md for why.
  */
 
-import { newUuid, type Row, type SqlExec } from "@scf-core/db.ts";
-import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
+import { newUuid, type Row, type SqlExec } from "../db.ts";
+import type { ScreenplayRow } from "../screenplay/rowModel.ts";
 import {
   deriveStructure, sceneOrderHint, scenePositions, type Structure,
-} from "@scf-core/structure.ts";
-import { restampShotNumber } from "@scf-core/shots.ts";
+} from "../structure.ts";
+import { restampShotNumber } from "../shots.ts";
 import { numberingPolicy, setNumberingPolicy }
-  from "@scf-core/numbering.ts";
+  from "../numbering.ts";
 
 export type StructureKind = "act" | "sequence";
 

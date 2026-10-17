@@ -26,7 +26,7 @@ import { listAssets, type AssetRow } from "@scf-core/assetIndex.ts";
 import { q } from "@scf-core/db.ts";
 import {
   adoptSpelling, columnValues, intentConflict, mediaKindOf,
-} from "../editor/mediaChecks.ts";
+} from "@scf-core/ops/mediaChecks.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { AssetThumb } from "./AssetThumb.tsx";
 import { BundleReachSection } from "./BundleReach.tsx";

@@ -19,7 +19,7 @@
  */
 
 import type { SqlExec } from "@scf-core/db.ts";
-import { setNumberingMode } from "./structureCommit.ts";
+import { setNumberingMode } from "@scf-core/ops/structureCommit.ts";
 import { newUuid, q, withTransaction } from "@scf-core/db.ts";
 import { parseFountain, serialize } from "@scf-core/fountain/index.ts";
 import { repairConversionArtifacts, type RepairRecord }

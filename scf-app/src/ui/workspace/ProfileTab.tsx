@@ -5,7 +5,7 @@ import { exec, registry, useStore } from "../../state/store.ts";
 import {
   addVariant, castActor, cleanName, loadProfile, reassignActor,
   type CharacterProfile,
-} from "../../editor/elementOps.ts";
+} from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import { PROFILE_SECTIONS } from "../../state/characterLayout.ts";

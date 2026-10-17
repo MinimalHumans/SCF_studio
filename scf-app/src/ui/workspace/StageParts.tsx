@@ -4,7 +4,7 @@ import { q } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
   addStage, STAGE_LABEL, STAGE_PARENT,
-} from "../../editor/elementOps.ts";
+} from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import type { MarkLane, StripScene } from "./StoryStrip.tsx";

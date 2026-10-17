@@ -14,7 +14,7 @@ import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
 import { MediaStrip } from "./MediaStrip.tsx";
-import type { MediaOwnerKind } from "../editor/relatedMediaOps.ts";
+import type { MediaOwnerKind } from "@scf-core/ops/relatedMediaOps.ts";
 
 /**
  * ShootView — the shooting surface.

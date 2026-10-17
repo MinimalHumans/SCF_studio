@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { FieldDef } from "@scf-core/registry.ts";
 import type { SqlValue } from "@scf-core/db.ts";
-import { commaListToJson } from "../../editor/mediaChecks.ts";
+import { commaListToJson } from "@scf-core/ops/mediaChecks.ts";
 
 /**
  * JSON fields have known shapes, documented in each field's help text:

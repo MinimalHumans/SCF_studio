@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { SqlValue } from "@scf-core/db.ts";
 import type { FieldDef } from "@scf-core/registry.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
-import { setField } from "../../editor/elementOps.ts";
+import { setField } from "@scf-core/ops/elementOps.ts";
 import { Field } from "../fields/Field.tsx";
 
 /** Quiet time after the last keystroke before a text field is written. */

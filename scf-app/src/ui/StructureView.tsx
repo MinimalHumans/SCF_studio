@@ -7,7 +7,7 @@ import {
 } from "@scf-core/structure.ts";
 import { sceneLabel } from "../state/displayName.ts";
 import { exec, useStore } from "../state/store.ts";
-import { renumberSpans } from "../editor/structureCommit.ts";
+import { renumberSpans } from "@scf-core/ops/structureCommit.ts";
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
 

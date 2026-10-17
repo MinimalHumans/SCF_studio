@@ -6,7 +6,7 @@ import { exec, registry, useStore } from "../../state/store.ts";
 import {
   presenceByScene, readScriptPresence, type ScriptPresence,
 } from "../../editor/characterPresence.ts";
-import { linkToScene, setField } from "../../editor/elementOps.ts";
+import { linkToScene, setField } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import {
   StoryStrip, useStoryScenes, type MarkLane, type StripScene,

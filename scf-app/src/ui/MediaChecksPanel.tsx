@@ -4,7 +4,7 @@
  *
  * The Assets tab already shows §8.6 orphans. This is the level above:
  * the bundle graph around the assets. Each list comes from
- * `editor/mediaChecks.ts` and each entry gets a verb — open the row, or
+ * `scf-core/src/ops/mediaChecks.ts` and each entry gets a verb — open the row, or
  * for the two mechanical repairs (a spelling, a comma list in a JSON
  * field) apply it. Nothing changes until the author clicks
  * (conventions §1: SCF reports, it does not enforce).
@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import { q } from "@scf-core/db.ts";
 import {
   EMPTY_MEDIA_REPORT, mediaFindingCount, scanMedia, type MediaReport,
-} from "../editor/mediaChecks.ts";
+} from "@scf-core/ops/mediaChecks.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 
 /** Loads the report; shared by the toggle's count and the panel. */

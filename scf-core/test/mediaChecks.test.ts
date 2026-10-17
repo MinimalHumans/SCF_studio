@@ -11,17 +11,17 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { openNodeDatabase } from "@scf-core/node.ts";
-import { initDatabase } from "@scf-core/db.ts";
+import { openNodeDatabase } from "../src/node.ts";
+import { initDatabase } from "../src/db.ts";
 import { loadRegistry, type Registry, type RegistryJson }
-  from "@scf-core/registry.ts";
+  from "../src/registry.ts";
 import {
   adoptSpelling, commaListToJson, intentConflict, lookalikeGroups,
   mediaFindingCount, mediaKindOf, scanMedia,
-} from "../src/editor/mediaChecks.ts";
+} from "../src/ops/mediaChecks.ts";
 
 const REGISTRY = fileURLToPath(new URL(
-  "../../scf-core/registry/registry.json", import.meta.url));
+  "../registry/registry.json", import.meta.url));
 const FIXTURE = fileURLToPath(new URL(
   "../../fixtures/hollow_creek.scf", import.meta.url));
 
