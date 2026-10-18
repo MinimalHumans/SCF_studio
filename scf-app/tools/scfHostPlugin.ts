@@ -117,36 +117,12 @@ export function scfHostPlugin(options: ScfHostPluginOptions = {}): Plugin {
 
     const dir = options.hostDir ?? registryFile.defaultHostDir();
     if (dir !== false) {
-      const other = registryFile.readHostEntry(dir);
-      if (other !== null) {
-        // A host a tool started is idle and will exit by itself soon,
-        // but the page cannot use it (it does not allow this origin),
-        // so ask it to go. One with clients — the MCP mid-conversation,
-        // another editor — is not ours to stop.
-        const connect = await server.ssrLoadModule(
-          `${HOST_SOURCE}/nodeConnect.ts`) as
-          typeof import("../../scf-host/src/nodeConnect.ts");
-        try {
-          const client = await connect.connectToEntry(
-            other, { name: "dev-server" });
-          await client.shutdown();
-          await client.dispose();
-        } catch {
-          throw new Error(
-            `An SCF host is already running (pid ${String(other.pid)}, ` +
-            `port ${String(other.port)}) and is in use, so the dev ` +
-            "server cannot replace it. Stop it, or wait until nothing " +
-            "is using it, and start the dev server again.");
-        }
-        for (let i = 0; i < 100; i += 1) {
-          if (registryFile.readHostEntry(dir) === null) break;
-          await new Promise((r) => setTimeout(r, 100));
-        }
-        if (registryFile.readHostEntry(dir) !== null) {
-          throw new Error(
-            "The running SCF host was asked to exit and has not yet.");
-        }
-      }
+      // A running host does not allow this origin, so the page could
+      // not use it.
+      const connect = await server.ssrLoadModule(
+        `${HOST_SOURCE}/nodeConnect.ts`) as
+        typeof import("../../scf-host/src/nodeConnect.ts");
+      await connect.replaceIdleHost(dir, { name: "dev-server" });
     }
     const host = await mod.startHost({
       allowedOrigins: origins,
