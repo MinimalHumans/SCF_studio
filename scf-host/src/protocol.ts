@@ -20,6 +20,8 @@ export type ErrorCode =
   | "not_scf"          // the file is not a .scf
   | "bad_query"        // `query` was not a single read statement
   | "read_only"        // the connection opened the film read-only
+  | "outside_roots"    // a path the host may not list or create under
+  | "exists"           // create/saveAs would overwrite a file
   | "stale_revision"   // the caller's view of the file is out of date
   | "external_change"  // the file changed on disk under the host
   | "failed";          // the operation itself failed
@@ -27,6 +29,23 @@ export type ErrorCode =
 export interface HostError {
   code: ErrorCode;
   message: string;
+  /**
+   * The thrown error's class name and own JSON-safe fields, so a client
+   * can tell a `SharedSetError` from any other failure and read what it
+   * carried. Present only for `failed`.
+   */
+  name?: string;
+  data?: Record<string, unknown>;
+}
+
+export interface DirEntry {
+  name: string;
+  /** A folder to descend into, or a `.scf` to open. */
+  kind: "dir" | "scf";
+  /** Absolute, as the host spells it. */
+  path: string;
+  size?: number;
+  modified?: string;
 }
 
 export interface HostRequest {
@@ -65,8 +84,27 @@ export interface FilmInfo {
 export interface HostMethods {
   hello: [{ client: string; protocol?: number },
           { protocol: number; version: string }];
-  open: [{ path: string; readOnly?: boolean; migrate?: boolean },
+  open: [{ path: string; readOnly?: boolean; migrate?: boolean;
+           /** Stamped into the file when migrating. */
+           editorVersion?: string },
          { path: string; revision: number; readOnly: boolean }];
+  /**
+   * Make a new `.scf` and open it. With `bytes` (base64) the file is
+   * those bytes, checked to be an SCF; without, it is an empty film.
+   * Never overwrites, and only under the host's roots.
+   */
+  create: [{ path: string; bytes?: string; editorVersion?: string },
+           { path: string; revision: number; readOnly: boolean }];
+  /**
+   * Copy the open film to a new path and move this connection there.
+   * The old file is left as it was. Never overwrites; roots only.
+   */
+  saveAs: [{ path: string },
+           { path: string; revision: number; readOnly: boolean }];
+  /** Folders and `.scf` files under the roots. No path lists the roots. */
+  list: [{ path?: string },
+         { path: string | null; parent: string | null;
+           entries: DirEntry[] }];
   close: [Record<string, never>, null];
   /** Re-read the file after an `external_change`. Revisions keep rising. */
   reload: [Record<string, never>, { revision: number }];
@@ -75,6 +113,9 @@ export interface HostMethods {
   ops: [Record<string, never>, OpInfo[]];
   op: [{ name: string; args?: unknown; expectedRevision?: number },
        { result: unknown; revision: number }];
+  /** A function from the window's call table (`scf-core` ops/calls.ts). */
+  call: [{ name: string; args?: unknown[]; expectedRevision?: number },
+         { result: unknown; revision: number }];
   status: [Record<string, never>, { films: FilmInfo[]; current: string | null }];
 }
 

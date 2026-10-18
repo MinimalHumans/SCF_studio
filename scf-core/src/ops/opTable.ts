@@ -22,13 +22,13 @@
  * by adding a plain-data wrapper, not by loosening the schema.
  */
 
-import type { Row, SqlValue } from "../db.ts";
+import type { SqlValue } from "../db.ts";
 import type { Session } from "../session.ts";
 export { StaleRevisionError } from "../session.ts";
 import type { ScfContext } from "../resolution.ts";
 import { createRecord, deleteRecord, updateRecord } from "./recordOps.ts";
 import {
-  addBeat, addShot, moveShot, removeBeat, removeShot, setShotCut,
+  addBeat, addShot, moveShotInScene, removeBeat, removeShot, setShotCut,
 } from "./shootOps.ts";
 import { setTitleKey } from "./titlePageOps.ts";
 
@@ -260,19 +260,12 @@ const OPS: readonly OpDef[] = [
                 description: "Shot ids to step over (e.g. cut shots)." },
     },
     run: async (ctx, a) => {
-      const id = a["id"] as number;
       const delta = a["delta"] as number;
       if (delta !== -1 && delta !== 1) {
         throw new OpArgumentError("delta: expected -1 or 1");
       }
-      const own = await ctx.exec(
-        "SELECT scene_id FROM shot WHERE id = ?", [id]);
-      if (own[0] === undefined) throw new Error(`no shot with id ${id}`);
-      const siblings: Row[] = await ctx.exec(
-        "SELECT id, shot_order FROM shot WHERE scene_id = ? " +
-        "ORDER BY shot_order, id", [own[0]["scene_id"] as SqlValue]);
-      await moveShot(ctx.exec, id, siblings, delta,
-                     new Set((a["hidden"] ?? []) as number[]));
+      await moveShotInScene(ctx.exec, a["id"] as number, delta,
+                            (a["hidden"] ?? []) as number[]);
       return null;
     },
   }),

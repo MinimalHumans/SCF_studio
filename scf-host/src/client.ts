@@ -18,8 +18,10 @@
  *    never SQL.
  */
 
-import type { Registry, Row, ScfContext, SqlExec, SqlValue }
-  from "@minimalhumans/scf-core";
+import type {
+  CallArgs, CallName, CallResult, Registry, Row, ScfContext, SqlExec,
+  SqlValue,
+} from "@minimalhumans/scf-core";
 import {
   PROTOCOL_VERSION,
   type ErrorCode, type FilmInfo, type HostEvent, type HostMethods,
@@ -40,10 +42,17 @@ export interface HostTransport {
 
 export class HostClientError extends Error {
   readonly code: ErrorCode | "disconnected";
-  constructor(code: ErrorCode | "disconnected", message: string) {
+  /** For `failed`: the class name of the error the host caught. */
+  readonly remoteName: string | undefined;
+  /** For `failed`: that error's own JSON fields. */
+  readonly data: Record<string, unknown> | undefined;
+  constructor(code: ErrorCode | "disconnected", message: string,
+              remote: { name?: string; data?: Record<string, unknown> } = {}) {
     super(message);
     this.name = "HostClientError";
     this.code = code;
+    this.remoteName = remote.name;
+    this.data = remote.data;
   }
 }
 
@@ -115,7 +124,12 @@ export function connectWebSocket(
       if (p === undefined) return;
       pending.delete(m.id);
       if (m.ok) p.resolve(m.result);
-      else p.reject(new HostClientError(m.error.code, m.error.message));
+      else {
+        p.reject(new HostClientError(m.error.code, m.error.message, {
+          ...(m.error.name === undefined ? {} : { name: m.error.name }),
+          ...(m.error.data === undefined ? {} : { data: m.error.data }),
+        }));
+      }
     }) as (ev: never) => void);
     sock.addEventListener("close", () => {
       if (!opened) reject(new HostClientError(
@@ -154,6 +168,15 @@ function decodeRow(row: JsonRow): Row {
     }
   }
   return out;
+}
+
+function toBase64(bytes: Uint8Array): string {
+  let bin = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
 }
 
 function encodeParam(v: SqlValue): string | number | null {
@@ -222,7 +245,8 @@ export class HostClient {
   }
 
   async open(path: string, options: { readOnly?: boolean;
-                                      migrate?: boolean } = {}):
+                                      migrate?: boolean;
+                                      editorVersion?: string } = {}):
       Promise<{ path: string; revision: number; readOnly: boolean }> {
     const r = await this.send("open", { path, ...options });
     this.film = r.path;
@@ -242,10 +266,10 @@ export class HostClient {
     return r.revision;
   }
 
-  /** Write: one named op. Arguments are plain data. */
-  async call(name: string, args: unknown = {},
-             options: CallOptions = {}): Promise<{ result: unknown;
-                                                   revision: number }> {
+  /** Write: one named op from the curated table (the MCP's surface). */
+  async op(name: string, args: unknown = {},
+           options: CallOptions = {}): Promise<{ result: unknown;
+                                                 revision: number }> {
     const r = await this.send("op", {
       name, args,
       ...(options.expectedRevision === undefined
@@ -253,6 +277,58 @@ export class HostClient {
     });
     if (r.revision > this.rev) this.rev = r.revision;
     return r;
+  }
+
+  /**
+   * Write: one function from the window's call table, with its own
+   * positional arguments. Typed from the table, so a wrong call does
+   * not compile. Returns the function's result.
+   */
+  async call<K extends CallName>(
+      name: K, args: CallArgs<K>,
+      options: CallOptions = {}): Promise<CallResult<K>> {
+    // JSON turns a trailing `undefined` into `null`, which a default
+    // parameter does not treat as missing.
+    const list: unknown[] = [...args];
+    while (list.length > 0 && list[list.length - 1] === undefined) {
+      list.pop();
+    }
+    const r = await this.send("call", {
+      name, args: list,
+      ...(options.expectedRevision === undefined
+        ? {} : { expectedRevision: options.expectedRevision }),
+    });
+    if (r.revision > this.rev) this.rev = r.revision;
+    return r.result as CallResult<K>;
+  }
+
+  /** Make a new film (empty, or from `bytes`) and open it. */
+  async create(path: string, options: { bytes?: Uint8Array;
+                                        editorVersion?: string } = {}):
+      Promise<{ path: string; revision: number; readOnly: boolean }> {
+    const r = await this.send("create", {
+      path,
+      ...(options.bytes === undefined
+        ? {} : { bytes: toBase64(options.bytes) }),
+      ...(options.editorVersion === undefined
+        ? {} : { editorVersion: options.editorVersion }),
+    });
+    this.film = r.path;
+    this.rev = r.revision;
+    return r;
+  }
+
+  /** Copy the open film to `path` and move this client there. */
+  async saveAs(path: string):
+      Promise<{ path: string; revision: number; readOnly: boolean }> {
+    const r = await this.send("saveAs", { path });
+    this.film = r.path;
+    this.rev = r.revision;
+    return r;
+  }
+
+  list(path?: string): Promise<HostMethods["list"][1]> {
+    return this.send("list", path === undefined ? {} : { path });
   }
 
   ops(): Promise<OpInfo[]> {

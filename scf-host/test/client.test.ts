@@ -62,7 +62,7 @@ function contract(label: string, setup: () => Promise<{
     test("writes through call() and reads through exec", async () => {
       const c = await client();
       await c.open(ws.newFilm());
-      const made = await c.call("record.create", {
+      const made = await c.op("record.create", {
         entity: "character", values: { name: "ELEANOR" } });
       expect(typeof made.result).toBe("number");
       expect(c.revision).toBe(made.revision);
@@ -77,7 +77,7 @@ function contract(label: string, setup: () => Promise<{
       await c.open(ws.newFilm());
       const ctx = c.context(registry);
       const { listEntities } = await import("@minimalhumans/scf-core");
-      await c.call("record.create", {
+      await c.op("record.create", {
         entity: "character", values: { name: "MARCUS" } });
       const list = await listEntities(ctx, "character");
       expect(JSON.stringify(list)).toContain("MARCUS");
@@ -86,7 +86,7 @@ function contract(label: string, setup: () => Promise<{
     test("a refused call surfaces as a typed error", async () => {
       const c = await client();
       await c.open(ws.newFilm());
-      await expect(c.call("nope.nope")).rejects.toMatchObject({
+      await expect(c.op("nope.nope")).rejects.toMatchObject({
         name: "HostClientError", code: "unknown_op" });
       await expect(c.exec("DELETE FROM character")).rejects.toMatchObject({
         code: "bad_query" });
@@ -99,9 +99,9 @@ function contract(label: string, setup: () => Promise<{
       await a.open(film);
       await b.open(film);
       const seen = a.revision;
-      await b.call("record.create", {
+      await b.op("record.create", {
         entity: "character", values: { name: "B" } });
-      await expect(a.call("record.create", {
+      await expect(a.op("record.create", {
         entity: "character", values: { name: "A" } },
         { expectedRevision: seen })).rejects.toMatchObject({
         code: "stale_revision" });
@@ -116,7 +116,7 @@ function contract(label: string, setup: () => Promise<{
       await b.open(film);
       const heard: HostEvent[] = [];
       a.subscribe((e) => heard.push(e));
-      const made = await b.call("record.create", {
+      const made = await b.op("record.create", {
         entity: "character", values: { name: "X" } });
       await a.exec("SELECT 1");
       await new Promise((r) => setTimeout(r, 20));

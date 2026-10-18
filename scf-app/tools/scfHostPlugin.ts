@@ -26,7 +26,10 @@
  * with the window instead of starting a second one.
  */
 
+import { existsSync } from "node:fs";
 import type { IncomingMessage } from "node:http";
+import { homedir } from "node:os";
+import { delimiter } from "node:path";
 import type { AddressInfo } from "node:net";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,9 +45,25 @@ export interface HostConnectionInfo {
   token: string;
 }
 
+/**
+ * Folders the dev host will let the page browse and create files in:
+ * the user's home and the repository's own `fixtures/` and
+ * `templates/`, so the sample films are one click away.
+ * `SCF_HOST_ROOTS` (a path-delimited list) replaces the default.
+ */
+export function devRoots(env: NodeJS.ProcessEnv = process.env): string[] {
+  const configured = env["SCF_HOST_ROOTS"];
+  if (configured !== undefined && configured !== "") {
+    return configured.split(delimiter).filter((r) => r !== "");
+  }
+  return [homedir(), resolve(here, "../../fixtures"),
+          resolve(here, "../../templates")].filter((p) => existsSync(p));
+}
+
 export interface ScfHostPluginOptions {
   /** Where the discovery file goes; `false` to publish none (tests). */
   hostDir?: string | false;
+  roots?: readonly string[];
 }
 
 interface Running {
@@ -100,6 +119,7 @@ export function scfHostPlugin(options: ScfHostPluginOptions = {}): Plugin {
     }
     const host = await mod.startHost({
       allowedOrigins: origins,
+      roots: options.roots ?? devRoots(),
       ...(options.hostDir === undefined ? {} : { hostDir: options.hostDir }),
     });
     // Ctrl-C ends the process without waiting for async cleanup; the
