@@ -77,7 +77,7 @@ The normative documents, checksummed so that a reader built against this prose c
 |---|---|---|
 | `spec/scf-spec.md` | `7ef17d95badb976a…` | The specification. Everything normative about the format is here or cited from here. |
 | `spec/conformance.md` | `40180c6938709372…` | What a conforming implementation must do, per role, and how a claim is made. |
-| `spec/stability.md` | `66663f0b19307995…` | What is safe to build against and what is not, per subject. |
+| `spec/stability.md` | `aa0ce81ce86eb160…` | What is safe to build against and what is not, per subject. |
 | `spec/CHANGELOG.md` | `b37f23bf8c4eb10c…` | The specification changelog. Spec §11.5. |
 
 ### Schema and registry
@@ -105,7 +105,7 @@ Generated, but from the specification's sections and the reference implementatio
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/query-reference.md` | `d8f22f0cc8efca5b…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
-| `spec/api-surface.json` | `7ee9620618a76cc9…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
+| `spec/api-surface.json` | `38b44970566c93df…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/readiness-rubrics.json` | `eed345a2bb16618c…` | What Q14 assesses, per target query. Spec §12.9.1. |
 | `spec/finding-catalog.json` | `850f3c1e9de1e31c…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
 

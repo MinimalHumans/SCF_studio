@@ -228,6 +228,15 @@ jobs:
           cache: npm
           cache-dependency-path: scf-app/package-lock.json
 
+      # The editor's tests start a real host through the dev-server
+      # plugin, which loads scf-host and scf-core from source, so both
+      # need their dependencies installed.
+      - run: npm ci
+        working-directory: scf-core
+
+      - run: npm ci
+        working-directory: scf-host
+
       - run: npm ci
         working-directory: scf-app
 
@@ -245,6 +254,43 @@ jobs:
       - name: production build
         run: npm run build
         working-directory: scf-app
+
+  host:
+    name: scf-host
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scf-host/package-lock.json
+
+      # scf-host depends on scf-core by file path and resolves it through
+      # its build, so core is built first.
+      - run: npm ci
+        working-directory: scf-core
+
+      - run: npm run build
+        working-directory: scf-core
+
+      - run: npm ci
+        working-directory: scf-host
+
+      - name: typecheck
+        run: npm run typecheck
+        working-directory: scf-host
+
+      # A real socket, a real host, real files: the protocol, the
+      # safeguards (snapshot, integrity gate, journal) and the client.
+      - name: test
+        run: npm test
+        working-directory: scf-host
+
+      - name: build
+        run: npm run build
+        working-directory: scf-host
 
   mcp:
     name: scf-mcp
@@ -265,6 +311,14 @@ jobs:
 
       - run: npm run build
         working-directory: scf-core
+
+      # scf-mcp is a client of scf-host (also a file dependency), and
+      # starts one on demand, so it must be built too.
+      - run: npm ci
+        working-directory: scf-host
+
+      - run: npm run build
+        working-directory: scf-host
 
       - run: npm ci
         working-directory: scf-mcp

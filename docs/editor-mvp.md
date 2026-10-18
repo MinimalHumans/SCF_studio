@@ -542,7 +542,7 @@ per blocking, so A-Z printed three scenes shuffled together with nothing
 to tell one row from another — and no scene shown beside them either,
 since that label is also driven by holding a `scene_id`.
 
-Fixed in `state/listOrder.ts` rather than in the view. `STORY_ORDERED`
+Fixed in `scf-core/src/listOrder.ts` (it was `state/listOrder.ts` in the editor) rather than in the view. `STORY_ORDERED`
 gains an optional `from`: a subquery deriving the scene through
 whichever parent the row has, so `storyOrder` still sees an ordinary
 `scene_id` column and ONE ordering rule covers every list. `listTable`
@@ -667,7 +667,7 @@ project made to be printed, exported or put on a screen. Four sections,
 built one at a time; the unbuilt ones are shown disabled so the shape is
 visible.
 
-- **Shot list** ✅ (`ShotlistView.tsx`, logic in `state/shotlist.ts`).
+- **Shot list** ✅ (`ShotlistView.tsx`, logic in `scf-core/src/shotlist.ts`).
   The Shoot tab's shots as paper: storyboard frame (first storyboard
   panel, else start frame), shot code, size, angle, lens, move, seconds,
   action, a Done box; Title, Cast, Props and Notes as optional columns.
@@ -693,7 +693,7 @@ visible.
   side by side on the page (it prints in sequence), authored page
   breaks (dropped, as everywhere in v2), revision marks.
 - **Storyboard** ✅ (`StoryboardView.tsx`, logic in
-  `state/storyboard.ts`, which builds on the shot list's `buildSheets`
+  `scf-core/src/storyboard.ts`, which builds on the shot list's `buildSheets`
   so the two never disagree on order). Frames in shot order at the
   project's `technical_specs.aspect_ratio` (or a chosen one). Board:
   scenes as rows or as columns, three frame sizes, shot number, name
@@ -702,7 +702,7 @@ visible.
   app — ← → step, Home/End, F full screen, Esc closes; stops at the
   ends. The frame choice and its loader (`ShotFrame.tsx`) are shared
   with the shot list.
-- **Gallery** ✅ (`GalleryView.tsx`, logic in `state/gallery.ts`).
+- **Gallery** ✅ (`GalleryView.tsx`, logic in `scf-core/src/gallery.ts`).
   Every current asset as a masonry wall: a grid with a 6px row unit,
   each tile spanning rows for its picture's own shape, so the sorted
   order still reads left to right. Sorts: by importance, alphabetical

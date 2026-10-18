@@ -144,7 +144,7 @@ Notes on what was built:
   explicitly in the grid, so the as-of column cannot shift the others.
 - **Scenes & Lines** reads presence from two sources — the authored
   links and the script's cues — using the §3.4 heading walk
-  (`editor/characterPresence.ts`), and shows where they disagree inline:
+  (`scf-core/src/characterPresence.ts`), and shows where they disagree inline:
   *silent* (linked, written, no cue) and *unlinked* (speaks, not
   linked). Mentioned and background presence are never asked about.
   "Open in script" opens the Script at the line by uuid.
