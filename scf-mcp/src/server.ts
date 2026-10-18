@@ -71,11 +71,9 @@ import { err, ok, text } from "./toolResult.ts";
 
 const configStore = makeNodeConfigStore();
 setConfigStore(configStore);
-loadRecent((await configStore.read()).recentFiles);
 
 const config = parseConfig(process.argv.slice(2));
 setReadOnly(config.readOnly);
-if (config.scfPath !== undefined) openProject(config.scfPath, config.roots);
 
 
 const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
@@ -405,5 +403,17 @@ server.registerTool("readiness", {
   }
 });
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+// Started from a function, not with top-level awaits, so the desktop
+// app can bundle this as CommonJS (scf-app/tools/buildSidecar.mjs).
+async function start(): Promise<void> {
+  // Recent files first: opening the `--scf` film puts it at their head.
+  loadRecent((await configStore.read()).recentFiles);
+  if (config.scfPath !== undefined) openProject(config.scfPath, config.roots);
+  await server.connect(new StdioServerTransport());
+}
+
+start().catch((e: unknown) => {
+  process.stderr.write(
+    `scf-mcp: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.exit(1);
+});
