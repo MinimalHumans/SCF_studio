@@ -1,0 +1,58 @@
+{
+  "name": "@minimalhumans/scf-host",
+  "version": "0.1.0",
+  "description": "The process that owns open .scf files and serves them to the app and the MCP (docs/scf-write-ownership.md).",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MinimalHumans/SCF_studio.git",
+    "directory": "scf-host"
+  },
+  "exports": {
+    ".": {
+      "scf-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./protocol": {
+      "scf-source": "./src/protocol.ts",
+      "types": "./dist/protocol.d.ts",
+      "default": "./dist/protocol.js"
+    },
+    "./registryFile": {
+      "scf-source": "./src/registryFile.ts",
+      "types": "./dist/registryFile.d.ts",
+      "default": "./dist/registryFile.js"
+    },
+    "./host": {
+      "scf-source": "./src/host.ts",
+      "types": "./dist/host.d.ts",
+      "default": "./dist/host.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "start": "node --experimental-strip-types --conditions=scf-source src/serve.ts"
+  },
+  "dependencies": {
+    "@minimalhumans/scf-core": "file:../scf-core",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "bin": {
+    "scf-host": "./dist/serve.js"
+  }
+}
