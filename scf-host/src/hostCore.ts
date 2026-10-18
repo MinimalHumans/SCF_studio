@@ -15,14 +15,15 @@
  */
 
 import {
-  existsSync, mkdirSync, readdirSync, realpathSync, statSync, writeFileSync,
-  rmSync,
+  appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync,
+  realpathSync, statSync, writeFileSync, rmSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { basename, dirname, join, relative, resolve, isAbsolute }
   from "node:path";
 import {
   argsJsonSchema, callFn, callOp, fileIdentity, initDatabase, listOps,
-  UnknownCallError,
+  IntegrityGateError, UnknownCallError,
   OpArgumentError, StaleRevisionError, UnknownOpError,
   type Registry, type Row, type Session,
 } from "@minimalhumans/scf-core";
@@ -32,7 +33,7 @@ import {
 import {
   PROTOCOL_VERSION,
   type DirEntry, type ErrorCode, type HostError, type HostEvent,
-  type HostMethods,
+  type HostMethods, type JournalEntry,
   type JsonRow, type MethodName, type SqlJson,
 } from "./protocol.ts";
 import { refuseQuery } from "./readGuard.ts";
@@ -59,6 +60,16 @@ export interface HostCoreOptions {
    * a client cannot browse or write anywhere else.
    */
   roots?: readonly string[];
+  /**
+   * Where a snapshot of a film is kept before the first agent write to
+   * it. Without it no snapshot is taken (tests); with it, a write that
+   * cannot be preceded by one is refused.
+   */
+  snapshotDir?: string;
+  /** Where the write journal is appended, one file per film. */
+  journalDir?: string;
+  /** Snapshots kept per film. */
+  snapshotsKept?: number;
 }
 
 interface Film {
@@ -68,6 +79,9 @@ interface Film {
   connections: Set<ConnectionImpl>;
   /** Added to the session's revision, so a reload never repeats one. */
   base: number;
+  /** A snapshot has been taken for this open. */
+  snapshotted: boolean;
+  journal: JournalEntry[];
 }
 
 export interface HostConnection {
@@ -145,6 +159,10 @@ function failure(e: unknown): HostError {
   if (e instanceof StaleRevisionError) {
     return { code: "stale_revision", message: e.message };
   }
+  if (e instanceof IntegrityGateError) {
+    return { code: "integrity_gate", message: e.message,
+             data: { added: e.added } };
+  }
   const message = e instanceof Error ? e.message : String(e);
   if (!(e instanceof Error)) return { code: "failed", message };
   // Own fields that survive JSON, so a client can read what a typed
@@ -206,6 +224,9 @@ class HostCoreImpl implements HostCore {
   private readonly version: string;
   private readonly busyTimeoutMs: number;
   private readonly roots: string[];
+  private readonly snapshotDir: string | undefined;
+  private readonly journalDir: string | undefined;
+  private readonly snapshotsKept: number;
   /** Opens of one path wait for each other, so it is opened once. */
   private readonly opening = new Map<string, Promise<Film>>();
 
@@ -214,6 +235,67 @@ class HostCoreImpl implements HostCore {
     this.version = options.version ?? "0.0.0";
     this.busyTimeoutMs = options.busyTimeoutMs ?? 2000;
     this.roots = (options.roots ?? []).map(canonicalPath);
+    this.snapshotDir = options.snapshotDir;
+    this.journalDir = options.journalDir;
+    this.snapshotsKept = options.snapshotsKept ?? 10;
+  }
+
+  /** A short stable name for a film's files in a shared directory. */
+  private slug(path: string): string {
+    const hash = createHash("sha1").update(path).digest("hex").slice(0, 10);
+    return `${basename(path).replace(/[^\w.-]+/g, "_")}-${hash}`;
+  }
+
+  private readJournalTail(path: string): JournalEntry[] {
+    if (this.journalDir === undefined) return [];
+    try {
+      const lines = readFileSync(
+        join(this.journalDir, `${this.slug(path)}.jsonl`), "utf8")
+        .split("\n").filter((l) => l !== "");
+      return lines.slice(-200).map((l) => JSON.parse(l) as JournalEntry);
+    } catch {
+      return [];
+    }
+  }
+
+  private record(film: Film, entry: JournalEntry): void {
+    film.journal.push(entry);
+    if (film.journal.length > 200) film.journal.shift();
+    if (this.journalDir === undefined) return;
+    try {
+      mkdirSync(this.journalDir, { recursive: true });
+      appendFileSync(join(this.journalDir, `${this.slug(film.path)}.jsonl`),
+                     `${JSON.stringify(entry)}\n`);
+    } catch {
+      // A journal that cannot be written must not lose the write it
+      // describes; the in-memory copy still serves `journal`.
+    }
+  }
+
+  /**
+   * A copy of the committed file, taken before an agent's first write to
+   * it. Through the READ connection, so it neither waits in the write
+   * queue nor moves the revision a caller is about to check.
+   */
+  private async snapshot(film: Film): Promise<string | undefined> {
+    if (this.snapshotDir === undefined || film.snapshotted) return undefined;
+    const dir = join(this.snapshotDir, this.slug(film.path));
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const target = join(dir, `${stamp}.scf`);
+    try {
+      mkdirSync(dir, { recursive: true });
+      await film.reader.exec("VACUUM INTO ?", [target]);
+    } catch (e) {
+      rmSync(target, { force: true });
+      throw new HostFailure("failed", `could not take a snapshot first, ` +
+        `so nothing was written: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    film.snapshotted = true;
+    const old = readdirSync(dir).filter((n) => n.endsWith(".scf")).sort();
+    for (const n of old.slice(0, Math.max(0, old.length - this.snapshotsKept))) {
+      rmSync(join(dir, n), { force: true });
+    }
+    return target;
   }
 
   /** Is `path` at or below one of the roots (links resolved)? */
@@ -333,6 +415,7 @@ class HostCoreImpl implements HostCore {
     await session.exec(`PRAGMA busy_timeout = ${String(this.busyTimeoutMs)}`);
     const film: Film = {
       path: key, session, reader, connections: new Set(), base: 0,
+      snapshotted: false, journal: this.readJournalTail(key),
     };
     this.films.set(key, film);
     return film;
@@ -392,9 +475,10 @@ class HostCoreImpl implements HostCore {
    */
   private async write(
       c: ConnectionImpl, p: Record<string, unknown>,
+      what: { via: "op" | "call"; name: string; snapshot: boolean },
       run: (film: Film, expected: number | undefined) =>
         Promise<{ result: unknown; revision: number }>):
-      Promise<{ result: unknown; revision: number }> {
+      Promise<{ result: unknown; revision: number; snapshot?: string }> {
     const film = this.requireFilm(c);
     if (c.readOnly) {
       throw new HostFailure(
@@ -410,13 +494,33 @@ class HostCoreImpl implements HostCore {
       throw new HostFailure(
         "bad_request", "expectedRevision: expected a number");
     }
+    // A stale caller is turned away BEFORE the snapshot: a refusal
+    // should cost nothing, and the snapshot is of the state the caller
+    // meant to change.
+    if (expected !== undefined && expected !== this.revisionOf(film)) {
+      throw new StaleRevisionError(expected, this.revisionOf(film));
+    }
+    const snapshot = what.snapshot ? await this.snapshot(film) : undefined;
     const before = this.revisionOf(film);
+    let failure: unknown;
     try {
       const out = await run(
         film, expected === undefined ? undefined : expected - film.base);
-      return { result: out.result, revision: film.base + out.revision };
+      return { result: out.result, revision: film.base + out.revision,
+               ...(snapshot === undefined ? {} : { snapshot }) };
+    } catch (e) {
+      failure = e;
+      throw e;
     } finally {
       const revision = this.revisionOf(film);
+      this.record(film, {
+        at: new Date().toISOString(), revision, by: c.name,
+        via: what.via, name: what.name,
+        args: JSON.stringify(p["args"] ?? null).slice(0, 500),
+        ok: failure === undefined,
+        ...(failure === undefined ? {} : { error: failure instanceof Error
+          ? failure.message.slice(0, 300) : String(failure) }),
+      });
       if (revision !== before) {
         this.broadcast(film, {
           event: "revision", path: film.path, revision, by: c.name,
@@ -533,15 +637,30 @@ class HostCoreImpl implements HostCore {
         }));
       case "op": {
         const name = need<string>(p, "name", "string");
-        return this.write(c, p, (film, expected) => callOp(
-          film.session, name, p["args"] ?? {},
-          expected === undefined ? {} : { expectedRevision: expected }));
+        // The curated table is what a tool calls, so it is held to the
+        // stricter rules: a snapshot first, and no new integrity finding
+        // unless the caller says it has a person watching.
+        const gate = p["integrityGate"] !== false;
+        return this.write(
+          c, p, { via: "op", name, snapshot: true },
+          (film, expected) => callOp(
+            film.session, name, p["args"] ?? {},
+            { ...(expected === undefined ? {} : { expectedRevision: expected }),
+              integrityGate: gate }));
       }
       case "call": {
         const name = need<string>(p, "name", "string");
-        return this.write(c, p, (film, expected) => callFn(
-          film.session, name, p["args"] ?? [],
-          expected === undefined ? {} : { expectedRevision: expected }));
+        return this.write(
+          c, p, { via: "call", name, snapshot: false },
+          (film, expected) => callFn(
+            film.session, name, p["args"] ?? [],
+            expected === undefined ? {} : { expectedRevision: expected }));
+      }
+      case "journal": {
+        const film = this.requireFilm(c);
+        const limit = typeof p["limit"] === "number"
+          ? Math.max(1, Math.min(200, Math.floor(p["limit"]))) : 50;
+        return { entries: film.journal.slice(-limit) };
       }
       case "status": {
         const out: HostMethods["status"][1] = {

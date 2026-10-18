@@ -30,6 +30,7 @@ import { createRecord, deleteRecord, updateRecord } from "./recordOps.ts";
 import {
   addBeat, addShot, moveShotInScene, removeBeat, removeShot, setShotCut,
 } from "./shootOps.ts";
+import { withIntegrityGate } from "./integrityGate.ts";
 import { setTitleKey } from "./titlePageOps.ts";
 
 // ── argument schema ────────────────────────────────────────────────
@@ -334,6 +335,11 @@ export interface CallOptions {
    * cannot overwrite a change it never saw.
    */
   expectedRevision?: number;
+  /**
+   * Refuse (and roll back) a write that adds an integrity finding the
+   * file did not already have. For callers with no person watching.
+   */
+  integrityGate?: boolean;
 }
 
 export interface OpResult {
@@ -355,7 +361,9 @@ export async function callOp(
   const op = getOp(name);
   const args = validateArgs(op.args, rawArgs ?? {});
   const result = await session.write(
-    (ctx) => op.run(ctx, args),
+    (ctx) => options.integrityGate === true
+      ? withIntegrityGate(ctx, (inner) => op.run(inner, args))
+      : op.run(ctx, args),
     options.expectedRevision === undefined
       ? {} : { expectedRevision: options.expectedRevision });
   return { result: result ?? null, revision: session.revision };

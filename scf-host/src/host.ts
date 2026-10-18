@@ -8,7 +8,7 @@
  */
 
 import { homedir } from "node:os";
-import { delimiter } from "node:path";
+import { delimiter, join } from "node:path";
 import {
   loadRegistry, type Registry, type RegistryJson,
 } from "@minimalhumans/scf-core";
@@ -55,9 +55,16 @@ export async function startHost(
   const registry = options.registry ??
     loadRegistry(registryJson as unknown as RegistryJson);
   const roots = options.roots ?? defaultRoots();
-  const core = createHostCore({ registry, version, roots });
   const dir = options.hostDir === false
     ? null : (options.hostDir ?? defaultHostDir());
+  // Snapshots and the journal live beside the discovery file, so one
+  // directory holds everything a host leaves behind.
+  const core = createHostCore({
+    registry, version, roots,
+    ...(dir === null ? {} : {
+      snapshotDir: join(dir, "snapshots"), journalDir: join(dir, "journal"),
+    }),
+  });
   const server = await startHostServer({
     core, version,
     ...(options.port === undefined ? {} : { port: options.port }),

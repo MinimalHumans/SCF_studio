@@ -20,6 +20,7 @@ export type ErrorCode =
   | "not_scf"          // the file is not a .scf
   | "bad_query"        // `query` was not a single read statement
   | "read_only"        // the connection opened the film read-only
+  | "integrity_gate"   // the write would have added integrity findings
   | "outside_roots"    // a path the host may not list or create under
   | "exists"           // create/saveAs would overwrite a file
   | "stale_revision"   // the caller's view of the file is out of date
@@ -36,6 +37,22 @@ export interface HostError {
    */
   name?: string;
   data?: Record<string, unknown>;
+}
+
+/** One write, as the host recorded it. */
+export interface JournalEntry {
+  at: string;
+  /** The film's revision after the write. */
+  revision: number;
+  /** The client's own name, e.g. "window" or "mcp: Claude Desktop". */
+  by: string;
+  via: "op" | "call";
+  name: string;
+  /** The arguments, cut short. Enough to read, not to replay. */
+  args: string;
+  ok: boolean;
+  /** For a failed write, why. */
+  error?: string;
 }
 
 export interface DirEntry {
@@ -111,8 +128,15 @@ export interface HostMethods {
   query: [{ sql: string; params?: (string | number | null)[] },
           JsonRow[]];
   ops: [Record<string, never>, OpInfo[]];
-  op: [{ name: string; args?: unknown; expectedRevision?: number },
-       { result: unknown; revision: number }];
+  op: [{ name: string; args?: unknown; expectedRevision?: number;
+         /** Refuse a write that adds an integrity finding (default on
+          *  for `op`; pass false to opt out). */
+         integrityGate?: boolean },
+       { result: unknown; revision: number;
+         /** Set on the first write that took a snapshot of the file. */
+         snapshot?: string }];
+  /** Recent writes to the open film, newest last, with who made them. */
+  journal: [{ limit?: number }, { entries: JournalEntry[] }];
   /** A function from the window's call table (`scf-core` ops/calls.ts). */
   call: [{ name: string; args?: unknown[]; expectedRevision?: number },
          { result: unknown; revision: number }];

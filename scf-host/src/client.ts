@@ -25,7 +25,8 @@ import type {
 import {
   PROTOCOL_VERSION,
   type ErrorCode, type FilmInfo, type HostEvent, type HostMethods,
-  type HostResponse, type JsonRow, type MethodName, type OpInfo,
+  type HostResponse, type JournalEntry, type JsonRow, type MethodName,
+  type OpInfo,
 } from "./protocol.ts";
 
 // ── transport ──────────────────────────────────────────────────────
@@ -150,6 +151,11 @@ export interface CallOptions {
   expectedRevision?: number;
 }
 
+export interface OpOptions extends CallOptions {
+  /** Pass false to allow a write that adds integrity findings. */
+  integrityGate?: boolean;
+}
+
 export interface HostClientOptions {
   /** Who is asking; shown to other clients as the author of a change. */
   name: string;
@@ -271,12 +277,15 @@ export class HostClient {
 
   /** Write: one named op from the curated table (the MCP's surface). */
   async op(name: string, args: unknown = {},
-           options: CallOptions = {}): Promise<{ result: unknown;
-                                                 revision: number }> {
+           options: OpOptions = {}): Promise<{ result: unknown;
+                                               revision: number;
+                                               snapshot?: string }> {
     const r = await this.send("op", {
       name, args,
       ...(options.expectedRevision === undefined
         ? {} : { expectedRevision: options.expectedRevision }),
+      ...(options.integrityGate === undefined
+        ? {} : { integrityGate: options.integrityGate }),
     });
     if (r.revision > this.rev) this.rev = r.revision;
     return r;
@@ -332,6 +341,12 @@ export class HostClient {
 
   list(path?: string): Promise<HostMethods["list"][1]> {
     return this.send("list", path === undefined ? {} : { path });
+  }
+
+  /** Recent writes to the open film and who made them. */
+  async journal(limit?: number): Promise<JournalEntry[]> {
+    return (await this.send("journal",
+      limit === undefined ? {} : { limit })).entries;
   }
 
   ops(): Promise<OpInfo[]> {
