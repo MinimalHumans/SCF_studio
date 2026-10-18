@@ -20,27 +20,27 @@ import { readScreenplay, writeScreenplay, type TitlePageRow }
   from "@scf-core/screenplay/rowModel.ts";
 import { withTransaction } from "@scf-core/db.ts";
 import { lineState, loadLines, mintLineId } from "../editor/lineState.ts";
-import { planSceneMove, sceneBlocks } from "../editor/sceneMove.ts";
+import { planSceneMove, sceneBlocks } from "@scf-core/screenplay/sceneMove.ts";
 import {
   duplicateSceneRow, removeSceneCascade, syncSceneFromHeading,
   unlinkLineScene,
 } from "@scf-core/ops/sceneOps.ts";
 import { reanchorSpansForMove } from "@scf-core/ops/structureCommit.ts";
 import {
-  blocksToDoc, commitPlan, rowsToBlocks,
-  sceneSyncFromHeading, type Block,
-} from "../editor/screenplayDoc.ts";
+  blocksToDoc, rowsToBlocks, sceneSyncFromHeading, type Block,
+  type LineEvent,
+} from "@scf-core/screenplay/blocks.ts";
+import { commitPlan } from "../editor/screenplayDoc.ts";
 import {
   screenplayExtensions, setAnnotations, type LineAnnotation,
 } from "../editor/extensions.ts";
-import { lineEntries, lineEvents, type LineEvent }
-  from "../editor/lineState.ts";
+import { lineEntries, lineEvents } from "../editor/lineState.ts";
 import {
   createBeatForLine, diffVersionAgainstCurrent, linkAndCreateAtCommit,
   planCommitLinks, publishVersion, reanchorForEvents, syncPropSceneLinks,
   createEditorProp, tagPropRange,
   validateTags, type CommitPlanInfo,
-} from "../editor/features.ts";
+} from "@scf-core/ops/features.ts";
 import { paginationFor } from "../editor/extensions.ts";
 import { ImportFlow } from "./ImportFlow.tsx";
 import { IntegrityPanel } from "./IntegrityPanel.tsx";

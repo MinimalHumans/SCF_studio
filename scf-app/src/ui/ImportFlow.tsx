@@ -16,7 +16,7 @@ import { exec } from "../state/store.ts";
 import {
   applyImport, defaultAcceptance, prepareImport, titleCase,
   type ImportResult, type PreparedImport,
-} from "../editor/importPipeline.ts";
+} from "@scf-core/ops/importPipeline.ts";
 import type { CharacterProposal } from "@scf-core/proposals/propose.ts";
 
 interface CharRow {

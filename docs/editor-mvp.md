@@ -47,6 +47,12 @@ It landed. `scf-app/src/editor/` is 4,907 lines across eleven modules
 `extensions`, `integrity`), `ScriptView.tsx` is 1,448 lines, and the
 Script tab is the first tab in the app.
 
+*Since then the editor-independent modules have moved to `scf-core`
+(`src/ops/`, `src/screenplay/`); `scf-app/src/editor/` keeps
+`lineState`, `extensions`, `pasteLines`, the `EditorState` wrapper in
+`screenplayDoc`, and two read helpers (`assetStanding`,
+`characterPresence`).*
+
 **Nothing is waiting on "Part 3" any more.** Where the phrase still
 appears in a comment it is a historical reference and should be read as
 one; where it appears in *output*, it is a bug — see §2.
@@ -123,8 +129,8 @@ normative result reads them:
 
 | Feature | Code | Fixture | Cost to close |
 |---|---|---|---|
-| **Beat anchoring (G5)** — `performance_beat.line_ref` → a line's uuid | ✅ `features.ts`, wired in `ScriptView` | ✅ **7 of 14** beats anchored; the other seven quote no script line | done |
-| **Prop tags** — line uuid + offsets, revalidated on edit | ✅ `features.ts`, `validateTags` | ✅ one `screenplay_prop_tags` row | done |
+| **Beat anchoring (G5)** — `performance_beat.line_ref` → a line's uuid | ✅ `scf-core/src/ops/features.ts`, wired in `ScriptView` | ✅ **7 of 14** beats anchored; the other seven quote no script line | done |
+| **Prop tags** — line uuid + offsets, revalidated on edit | ✅ `scf-core/src/ops/features.ts`, `validateTags` | ✅ one `screenplay_prop_tags` row | done |
 | **Versions** — publish a snapshot, diff against current | ✅ `publishVersion`, `diffVersionAgainstCurrent` | ○ `screenplay_versions` and both version tables **empty** | one published version; outside 1.0 (§0.4) |
 
 All three are authored *from the editor*, which is why the fixture
@@ -454,7 +460,7 @@ into the fixture.
 
 Fixed in two independent places, deliberately:
 
-- `editor/cueMatch.ts` — `cueMatchesEntity`, agreement by a contiguous
+- `scf-core/src/screenplay/cueMatch.ts` — `cueMatchesEntity`, agreement by a contiguous
   run of **whole words** in the entity's name. `ELEANOR`, `CADE` and
   `ELEANOR CADE` agree with `Eleanor Cade`; `JORGE` does not agree with
   `George Wells`, and `OLD ELEANOR` does not agree with `Eleanor Cade`

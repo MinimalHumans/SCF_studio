@@ -18,21 +18,21 @@
  *    stays in the heading text and the field stays null — no guessing).
  */
 
-import type { SqlExec } from "@scf-core/db.ts";
-import { setNumberingMode } from "@scf-core/ops/structureCommit.ts";
-import { newUuid, q, withTransaction } from "@scf-core/db.ts";
-import { parseFountain, serialize } from "@scf-core/fountain/index.ts";
+import type { SqlExec } from "../db.ts";
+import { setNumberingMode } from "./structureCommit.ts";
+import { newUuid, q, withTransaction } from "../db.ts";
+import { parseFountain, serialize } from "../fountain/index.ts";
 import { repairConversionArtifacts, type RepairRecord }
-  from "@scf-core/fountain/repair.ts";
-import { parseFdx } from "@scf-core/fdx/parser.ts";
-import type { FountainDocument } from "@scf-core/fountain/types.ts";
+  from "../fountain/repair.ts";
+import { parseFdx } from "../fdx/parser.ts";
+import type { FountainDocument } from "../fountain/types.ts";
 import {
   applyAssignments, linesToRows, writeScreenplay, type ScreenplayRows,
-} from "@scf-core/screenplay/rowModel.ts";
+} from "../screenplay/rowModel.ts";
 import {
   normalizeCue, propose, type ProposalSet,
-} from "@scf-core/proposals/propose.ts";
-import { rowsToBlocks } from "./screenplayDoc.ts";
+} from "../proposals/propose.ts";
+import { rowsToBlocks } from "../screenplay/blocks.ts";
 
 export interface PreparedImport {
   kind: "fountain" | "fdx";

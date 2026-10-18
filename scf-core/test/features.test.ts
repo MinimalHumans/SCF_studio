@@ -9,21 +9,21 @@ import { beforeAll, afterAll, describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
-import { openNodeDatabase, type NodeDatabase } from "@scf-core/node.ts";
-import { initDatabase } from "@scf-core/db.ts";
-import { parseFountain } from "@scf-core/fountain/index.ts";
+import { loadRegistry, type RegistryJson } from "../src/registry.ts";
+import { openNodeDatabase, type NodeDatabase } from "../src/node.ts";
+import { initDatabase } from "../src/db.ts";
+import { parseFountain } from "../src/fountain/index.ts";
 import { linesToRows, writeScreenplay }
-  from "@scf-core/screenplay/rowModel.ts";
+  from "../src/screenplay/rowModel.ts";
 import {
   beatAnchoredLineIds, beatsForLine, createBeatForLine, createEditorProp,
   diffVersionAgainstCurrent, listVersions, publishVersion,
   reanchorForEvents, syncPropSceneLinks, tagPropRange, validateTags,
-} from "../src/editor/features.ts";
-import { rowsToBlocks } from "../src/editor/screenplayDoc.ts";
+} from "../src/ops/features.ts";
+import { rowsToBlocks } from "../src/screenplay/blocks.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REGISTRY = join(HERE, "../../scf-core/registry/registry.json");
+const REGISTRY = join(HERE, "../registry/registry.json");
 
 const SCRIPT = `INT. KITCHEN - NIGHT
 

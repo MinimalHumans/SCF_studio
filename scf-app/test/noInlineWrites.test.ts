@@ -6,10 +6,8 @@
  * same rules as the editor. This pins that: a view or store that issues
  * INSERT/UPDATE/DELETE fails here, and the fix is a named op in core.
  *
- * The two files below are the remaining exceptions. They are tied to the
- * CodeMirror document and move when that code is split (see
- * docs/scf-write-ownership.md); take a file off this list when it goes,
- * never add one.
+ * There are no exceptions. If one is ever unavoidable, name the file in
+ * ALLOWED with the reason beside it.
  */
 
 import { describe, expect, test } from "vitest";
@@ -19,10 +17,7 @@ import { join, relative } from "node:path";
 
 const SRC = fileURLToPath(new URL("../src", import.meta.url));
 
-const ALLOWED = new Set([
-  "editor/features.ts",
-  "editor/importPipeline.ts",
-]);
+const ALLOWED = new Set<string>();
 
 const WRITE_SQL =
   /INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE\s+[$\{\w".]+\s+SET|DELETE\s+FROM|REPLACE\s+INTO/i;
@@ -34,18 +29,11 @@ function sources(dir: string): string[] {
 }
 
 describe("the app issues no write SQL of its own", () => {
-  test("only the listed files contain INSERT, UPDATE or DELETE", () => {
+  test("no source file contains INSERT, UPDATE or DELETE", () => {
     const offenders = sources(SRC)
       .map((f) => relative(SRC, f).replaceAll("\\", "/"))
       .filter((f) => !ALLOWED.has(f))
       .filter((f) => WRITE_SQL.test(readFileSync(join(SRC, f), "utf8")));
     expect(offenders).toEqual([]);
-  });
-
-  test("the allowlist has no stale entries", () => {
-    for (const f of ALLOWED) {
-      expect(WRITE_SQL.test(readFileSync(join(SRC, f), "utf8")), f)
-        .toBe(true);
-    }
   });
 });

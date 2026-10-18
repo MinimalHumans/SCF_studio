@@ -31,25 +31,9 @@
 import {
   StateEffect, StateField, type EditorState, type Transaction,
 } from "@codemirror/state";
-
-/** Editor block types: Stage-1 line types minus blank/boneyard/title
- * (blanks are never stored; boneyard/notes survive as their own blocks;
- * the title page is edited outside the script surface). */
-export type BlockType =
-  | "heading" | "action" | "character" | "dialogue" | "parenthetical"
-  | "transition" | "centered" | "lyric" | "section" | "synopsis"
-  | "note";
-
-export interface LineEntry {
-  /** Stable identity. For rows loaded from the database this is the row
-   * uuid; author-created lines get fresh uuids at creation. */
-  id: string;
-  type: BlockType;
-}
-
-export type LineEvent =
-  | { kind: "split"; originalId: string; newIds: string[] }
-  | { kind: "merge"; survivorId: string; absorbedIds: string[] };
+import type {
+  BlockType, LineEntry, LineEvent,
+} from "@scf-core/screenplay/blocks.ts";
 
 export interface LineStateValue {
   entries: readonly LineEntry[];

@@ -18,10 +18,10 @@ import { readScreenplay } from "@scf-core/screenplay/rowModel.ts";
 import { parseFountain } from "@scf-core/fountain/index.ts";
 import {
   applyImport, defaultAcceptance, prepareImport,
-} from "../src/editor/importPipeline.ts";
+} from "@scf-core/ops/importPipeline.ts";
 import {
   blocksToFountain, rowsToBlocks,
-} from "../src/editor/screenplayDoc.ts";
+} from "@scf-core/screenplay/blocks.ts";
 import { subjectStatsSql } from "../src/state/subjectStats.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));

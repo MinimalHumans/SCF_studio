@@ -25,9 +25,11 @@ import {
 } from "@codemirror/autocomplete";
 import {
   TYPE_CYCLE, lineEntries, lineState, loadLines, mintLineId,
-  setLineType, type BlockType, type LineEntry,
+  setLineType,
 } from "./lineState.ts";
-import { blankBetween } from "./screenplayDoc.ts";
+import {
+  blankBetween, type BlockType, type LineEntry,
+} from "@scf-core/screenplay/blocks.ts";
 import { planPasteEntries } from "./pasteLines.ts";
 
 /**

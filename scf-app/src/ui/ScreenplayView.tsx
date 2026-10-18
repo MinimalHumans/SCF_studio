@@ -5,7 +5,7 @@ import { readScreenplay, type ScreenplayRows }
 import { exec, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import { useRememberedOptions } from "./useRememberedOptions.ts";
-import { rowsToBlocks } from "../editor/screenplayDoc.ts";
+import { rowsToBlocks } from "@scf-core/screenplay/blocks.ts";
 import { suggestExportName } from "../state/saveName.ts";
 import {
   BOLD, ITALIC, layoutScreenplay, runs, screenplayFdx, screenplayFountain,
