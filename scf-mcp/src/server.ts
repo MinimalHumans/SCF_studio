@@ -54,18 +54,19 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import {
-  listEntities, q00Result, resolveNaturalKey, shotContext, shotMedia,
-  shotReadiness, whereUsed,
+  listEntities, q00Result, queryMarkdown, resolveNaturalKey, shotContext,
+  shotMedia, shotReadiness, whereUsed,
 } from "@minimalhumans/scf-core";
 import { parseConfig } from "./config.ts";
 import { registerJournalTool, registerWriteTools } from "./writeTools.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
 import { makeNodeConfigStore } from "./nodeConfigStore.ts";
 import {
-  loadRecent, openProject, recentProjects, setAgentName, setConfigStore,
-  setReadOnly, setRoots, withProject,
+  loadRecent, openProject, recentProjects, registry, setAgentName,
+  setConfigStore, setReadOnly, setRoots, withProject,
 } from "./projectCache.ts";
-import { registerQueryTools } from "./queryTools.ts";
+import { FORMAT, registerQueryTools } from "./queryTools.ts";
+import { registerReadTools } from "./readTools.ts";
 import { err, ok, text } from "./toolResult.ts";
 
 const configStore = makeNodeConfigStore();
@@ -111,6 +112,13 @@ const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
     "`continuity`, `media_resolution`, and `provenance` tools each " +
     "answer one canonical query (spec/scf-spec.md §12) — reach for one " +
     "of these directly when the shot calls don't cover what's asked.\n" +
+    "- `shot_list` is the printed shot list (every shot in story order, " +
+    "under its scene and beat), `gallery` ranks every asset by how much " +
+    "it is carrying (and finds what nothing uses), and " +
+    "`character_presence` compares the scenes a character is linked to " +
+    "with the scenes where the script gives them a cue.\n" +
+    "- Every canonical-query tool takes `format: \"markdown\"` for a " +
+    "prompt-ready block of the same facts instead of the JSON.\n" +
     "- `readiness` is pre-flight: what's thin for a target query " +
     "(voice_direction, physical_direction, look_resolution, soundscape, " +
     "media_resolution, or subject_in_context) at a given position, " +
@@ -355,6 +363,7 @@ server.registerTool("shot_readiness", {
 });
 
 registerQueryTools(server);
+registerReadTools(server);
 registerJournalTool(server);
 if (!config.readOnly) registerWriteTools(server);
 
@@ -379,15 +388,18 @@ server.registerTool("readiness", {
       .optional().describe(
         "The target's own params by name — see the tool description " +
         "for which ones queryId needs."),
+    format: FORMAT,
   },
-}, async ({ queryId, params }) => {
+}, async ({ queryId, params, format }) => {
   try {
     const merged: QueryParams = { ...(params ?? {}), target: queryId };
-    return ok(await withProject(async (p) => {
+    const result = await withProject(async (p) => {
       const q14 = buildDispatch(p.locate, p.rootMapped)["Q14"];
       if (q14 === undefined) throw new Error("internal: Q14 dispatch missing");
       return q14(p.ctx, merged);
-    }));
+    });
+    if (format === "markdown") return text(queryMarkdown("Q14", result, registry));
+    return ok(result);
   } catch (e) {
     return err(e);
   }
