@@ -287,3 +287,46 @@ describe("asking the host to exit", () => {
     await host.shutdown();
   });
 });
+
+describe("different films at the same time", () => {
+  test("each has its own queue, revision, events, snapshot and journal",
+      async () => {
+    const state = join(ws.dir, `multi${String(Math.random()).slice(2, 8)}`);
+    const host = createHostCore({
+      registry, snapshotDir: join(state, "snapshots"),
+      journalDir: join(state, "journal") });
+    const [a, b] = [ws.newFilm(), ws.newFilm()];
+    const window = host.connect();
+    const agent = host.connect();
+    await window.handle("hello", { client: "window" });
+    await agent.handle("hello", { client: "mcp: agent" });
+    await window.handle("open", { path: a });
+    await agent.handle("open", { path: b });
+    const heardByWindow: unknown[] = [];
+    window.onEvent((e) => heardByWindow.push(e));
+
+    const wr = await window.handle("call", { name: "record.create",
+      args: ["character", { name: "IN A" }] });
+    const ar = await agent.handle("op", { name: "record.create",
+      args: { entity: "character", values: { name: "IN B" } } });
+    expect(wr.ok && ar.ok).toBe(true);
+
+    const names = async (c: typeof window) => (await c.handle("query",
+      { sql: "SELECT name FROM character" }) as unknown as
+      { result: { name: string }[] }).result.map((r) => r.name);
+    expect(await names(window)).toEqual(["IN A"]);
+    expect(await names(agent)).toEqual(["IN B"]);
+    // The window heard its own write, and nothing about the agent's film.
+    expect(heardByWindow).toEqual([expect.objectContaining(
+      { by: "window", path: expect.stringContaining(a.split("/").pop()!) })]);
+    // Revisions are per film; snapshots and journals too.
+    const status = (await window.handle("status", {}) as unknown as
+      { result: { films: { path: string; revision: number }[] } }).result;
+    expect(status.films).toHaveLength(2);
+    expect(await window.handle("journal", {}) ).toMatchObject(
+      { ok: true, result: { entries: [expect.objectContaining({ by: "window" })] } });
+    expect(await agent.handle("journal", {})).toMatchObject(
+      { ok: true, result: { entries: [expect.objectContaining({ by: "mcp: agent" })] } });
+    await host.shutdown();
+  }, 60_000);
+});
