@@ -21,7 +21,7 @@ import { Fragment, useMemo, useState } from "react";
 import {
   actOutline, deriveStructure, orphanedScenes, sceneOrderHint,
 } from "@scf-core/structure.ts";
-import { sceneLabel } from "../state/displayName.ts";
+import { sceneLabel } from "@scf-core/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import {

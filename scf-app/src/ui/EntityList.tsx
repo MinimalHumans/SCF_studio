@@ -5,7 +5,7 @@ import type { Row } from "@scf-core/db.ts";
 import { registry, rowName, useStore } from "../state/store.ts";
 import {
   isComposedLink, linkLabel, linkQualifiers, referenceFields,
-} from "../state/displayName.ts";
+} from "@scf-core/displayName.ts";
 import { useQuery } from "./useQuery.ts";
 import { useRefNames } from "./useRefNames.ts";
 import {

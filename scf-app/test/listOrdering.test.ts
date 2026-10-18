@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
-import { isComposedLink } from "../src/state/displayName.ts";
+import { isComposedLink } from "@scf-core/displayName.ts";
 import { STORY_ORDERED, listTable, sceneRefFor }
   from "../src/state/listOrder.ts";
 import { storyOrder } from "@scf-core/structure.ts";

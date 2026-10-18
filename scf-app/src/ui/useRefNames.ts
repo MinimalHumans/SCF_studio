@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { q, type Row } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../state/store.ts";
-import { rowLabel, type NameLookup } from "../state/displayName.ts";
+import { rowLabel, type NameLookup } from "@scf-core/displayName.ts";
 
 /**
  * Labels for the rows a set of reference fields point at.

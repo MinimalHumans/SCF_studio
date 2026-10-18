@@ -14,7 +14,7 @@
  * docs/story-structure-design-record.md for why.
  */
 
-import { newUuid, type Row, type SqlExec } from "../db.ts";
+import { newUuid, withTransaction, type Row, type SqlExec } from "../db.ts";
 import type { ScreenplayRow } from "../screenplay/rowModel.ts";
 import {
   deriveStructure, sceneOrderHint, scenePositions, type Structure,
@@ -583,4 +583,24 @@ export async function commitStructure(
     !wanted.has(`${String(r["scene_id"])}:${String(r["sequence_id"])}`))
     .length;
   return result;
+}
+
+/**
+ * Start an act or sequence at a scene.
+ *
+ * NOT "Act 3". A stored name built from a count is a label that starts
+ * true and becomes a lie the moment a boundary moves — the exact
+ * denormalization the number is there to avoid. The number is derived
+ * and kept beside the name; the name is a title.
+ */
+export async function createSpan(
+    exec: SqlExec, table: "act" | "sequence",
+    sceneId: number): Promise<void> {
+  const label = table === "act" ? "Untitled act" : "Untitled sequence";
+  await withTransaction(exec, async () => {
+    await exec(
+      `INSERT INTO ${table} (uuid, name, start_scene_id) VALUES (?, ?, ?)`,
+      [newUuid(), label, sceneId]);
+    await renumberSpans(exec);
+  });
 }

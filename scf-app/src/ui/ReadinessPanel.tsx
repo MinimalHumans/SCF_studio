@@ -5,7 +5,7 @@ import { readinessReport, type ReadinessFinding, type ReadinessReport,
          type Severity }
   from "@scf-core/readiness.ts";
 import { exec, registry, useStore } from "../state/store.ts";
-import { sceneLabel } from "../state/displayName.ts";
+import { sceneLabel } from "@scf-core/displayName.ts";
 
 /**
  * Readiness woven in, not bolted on: findings surface where the authoring

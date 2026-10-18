@@ -8,7 +8,7 @@ import { referenceGraph, registry, rowName, useStore }
 import {
   isComposedLink, linkLabel, linkQualifiers, referenceFields,
   sceneLabel, sceneShort, shotLabel,
-} from "../state/displayName.ts";
+} from "@scf-core/displayName.ts";
 import { useRefNames } from "./useRefNames.ts";
 import { ANCHOR_SUBJECTS, AnchorThumb } from "./AnchorThumb.tsx";
 import { scopeRank } from "../state/registryGraph.ts";

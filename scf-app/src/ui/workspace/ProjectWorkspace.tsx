@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useRef, useState } from "react";
-import { newUuid, q, type Row, type SqlValue } from "@scf-core/db.ts";
+import { q, type Row, type SqlValue } from "@scf-core/db.ts";
+import { createRecord } from "@scf-core/ops/recordOps.ts";
+import {
+  TITLE_KEYS, setTitleKey, titleSlot, type TitleKeyDef,
+} from "@scf-core/ops/titlePageOps.ts";
 import {
   DEFAULT_NUMBERING_POLICY, type NumberingPolicy,
 } from "@scf-core/numbering.ts";
@@ -61,10 +65,8 @@ function useSingleton(entity: string, defaultName: () => string): {
   const ensure = (): Promise<number> => {
     if (creating.current === null) {
       creating.current = (async () => {
-        await exec(`INSERT INTO ${q(entity)} (uuid, name) VALUES (?, ?)`,
-                   [newUuid(), defaultName()]);
-        const made = Number((await exec(
-          "SELECT last_insert_rowid() AS id"))[0]?.["id"]);
+        const made = await createRecord(
+          exec, registry, entity, { name: defaultName() });
         useStore.getState().noteWrite();
         return made;
       })();
@@ -319,86 +321,39 @@ function SpecsSection(): JSX.Element {
 // Title page
 // ---------------------------------------------------------------------------
 
-interface TitleKey {
-  key: string;
-  /** Other spellings a file may carry for the same slot. */
-  aliases?: string[];
+interface TitleKey extends TitleKeyDef {
   multiline?: boolean;
   hint: string;
 }
 
-/** Fountain's title-page keys, in the order a title page reads. */
-const TITLE_KEYS: TitleKey[] = [
-  { key: "Title", hint: "THE FILM'S TITLE" },
-  { key: "Credit", hint: "Written by" },
-  { key: "Author", aliases: ["Authors"], hint: "Writer name(s)" },
-  { key: "Source", hint: "Based on the novel by …" },
-  { key: "Draft date", hint: "e.g. 7 October 2026" },
-  { key: "Contact", multiline: true,
-    hint: "Name\nAgency or address\nphone · email" },
-  { key: "Copyright", hint: "© 2026 Name. All rights reserved." },
-  { key: "Notes", multiline: true, hint: "Anything else for the page" },
-];
+/** What the form says about each key; the order and spellings are core's. */
+const TITLE_HINTS: Record<string, { hint: string; multiline?: boolean }> = {
+  Title: { hint: "THE FILM'S TITLE" },
+  Credit: { hint: "Written by" },
+  Author: { hint: "Writer name(s)" },
+  Source: { hint: "Based on the novel by …" },
+  "Draft date": { hint: "e.g. 7 October 2026" },
+  Contact: { multiline: true,
+             hint: "Name\nAgency or address\nphone · email" },
+  Copyright: { hint: "© 2026 Name. All rights reserved." },
+  Notes: { multiline: true, hint: "Anything else for the page" },
+};
 
-const same = (a: string, b: string): boolean =>
-  a.trim().toLowerCase() === b.trim().toLowerCase();
+const TITLE_FIELDS: TitleKey[] = TITLE_KEYS.map((k) => ({
+  ...k, hint: "", ...TITLE_HINTS[k.key],
+}));
 
-function slotOf(rows: Row[], k: TitleKey): Row | undefined {
-  return rows.find((r) => [k.key, ...(k.aliases ?? [])]
-    .some((name) => same(String(r["key"]), name)));
-}
+const slotOf = (rows: Row[], k: TitleKey): Row | undefined =>
+  titleSlot(rows, k);
 
-/**
- * Write one title-page key. An emptied key is removed rather than kept
- * blank: an exported `Draft date:` with nothing after it is a line on the
- * page that says nothing.
- */
 async function writeTitleKey(k: TitleKey, value: string): Promise<void> {
-  const rows = await exec(
-    "SELECT id, key, sort_order FROM screenplay_title_page");
-  const existing = slotOf(rows, k);
-  if (value.trim() === "") {
-    if (existing !== undefined) {
-      await exec("DELETE FROM screenplay_title_page WHERE id = ?",
-                 [Number(existing["id"])]);
-    }
-  } else if (existing !== undefined) {
-    await exec("UPDATE screenplay_title_page SET value = ? WHERE id = ?",
-               [value, Number(existing["id"])]);
-  } else {
-    // In its place in the standard order, not at the end: a Source added
-    // later belongs under the author, not after the contact block. It
-    // goes after the last row of a key that comes before it; the rows
-    // after that move down one.
-    const rank = (key: string): number => TITLE_KEYS.findIndex((t) =>
-      [t.key, ...(t.aliases ?? [])].some((n) => same(n, key)));
-    const mine = TITLE_KEYS.indexOf(k);
-    const sorted = [...rows].sort((a, b) =>
-      Number(a["sort_order"] ?? 0) - Number(b["sort_order"] ?? 0));
-    const before = sorted.filter((r) => {
-      const at = rank(String(r["key"]));
-      return at >= 0 && at < mine;
-    }).at(-1);
-    const at = before === undefined
-      ? (mine < 0 ? Math.max(-1, ...sorted.map((r) =>
-          Number(r["sort_order"] ?? 0))) + 1 : 0)
-      : Number(before["sort_order"] ?? 0) + 1;
-    await exec("UPDATE screenplay_title_page SET sort_order = sort_order + 1 " +
-               "WHERE sort_order >= ?", [at]);
-    // Fountain keys are case-blind, but a page that says `title:` and
-    // then `Copyright:` reads as two hands. Follow the file's own habit.
-    const lower = rows.length > 0 && rows.every((r) => {
-      const key = String(r["key"]);
-      return key === key.toLowerCase();
-    });
-    await exec(
-      "INSERT INTO screenplay_title_page (key, value, sort_order) " +
-      "VALUES (?, ?, ?)", [lower ? k.key.toLowerCase() : k.key, value, at]);
-  }
+  await setTitleKey(exec, k.key, value);
   useStore.getState().noteWrite();
 }
 
 const SETTLE_MS = 700;
+
+/** One title-page key, saved as const SETTLE_MS = 700;
 
 /** One title-page key, saved as you type (like AutoField). */
 function TitleField({ k, stored, placeholder }: {
@@ -469,8 +424,8 @@ function TitlePageSection(): JSX.Element {
   // Keys a file brought that are not one of the standard eight — kept,
   // exported, and shown so nothing on the page is invisible here.
   const others = rows.filter((r) =>
-    !TITLE_KEYS.some((k) => slotOf([r], k) !== undefined));
-  const title = TITLE_KEYS[0]!;
+    !TITLE_FIELDS.some((k) => slotOf([r], k) !== undefined));
+  const title = TITLE_FIELDS[0]!;
 
   return (
     <section className="ws-section">
@@ -487,7 +442,7 @@ function TitlePageSection(): JSX.Element {
               Use the project name, “{projectTitle}”, as the title
             </button>
           )}
-          {TITLE_KEYS.map((k) => (
+          {TITLE_FIELDS.map((k) => (
             <TitleField key={k.key} k={k} stored={value(k)} />
           ))}
           {others.map((r) => {
@@ -498,7 +453,7 @@ function TitlePageSection(): JSX.Element {
           })}
         </div>
         <TitlePagePreview get={(key) =>
-          value(TITLE_KEYS.find((k) => k.key === key)!)} />
+          value(TITLE_FIELDS.find((k) => k.key === key)!)} />
       </div>
     </section>
   );
@@ -514,7 +469,7 @@ function TitlePagePreview({ get }: { get: (key: string) => string }):
     const v = get(key);
     return v === "" ? null : <p className={`tp-${cls || "line"}`}>{v}</p>;
   };
-  const empty = TITLE_KEYS.every((k) => get(k.key) === "");
+  const empty = TITLE_FIELDS.every((k) => get(k.key) === "");
   return (
     <div className="tp-preview" aria-label="Title page preview">
       {empty

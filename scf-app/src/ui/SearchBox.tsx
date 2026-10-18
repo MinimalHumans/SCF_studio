@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { q, type Row } from "@scf-core/db.ts";
 import { exec, registry, rowName, useStore } from "../state/store.ts";
-import { isComposedLink } from "../state/displayName.ts";
+import { isComposedLink } from "@scf-core/displayName.ts";
 
 interface Hit {
   entity: string;

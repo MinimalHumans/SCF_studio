@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useState } from "react";
 import type { FieldDef } from "@scf-core/registry.ts";
-import { newUuid, q, type Row, type SqlValue } from "@scf-core/db.ts";
+import { q, type Row, type SqlValue } from "@scf-core/db.ts";
+import { createRecord } from "@scf-core/ops/recordOps.ts";
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
-import { sceneShort } from "../../state/displayName.ts";
+import { sceneShort } from "@scf-core/displayName.ts";
 import { useQuery } from "../useQuery.ts";
 
 /** The owning scene, joined in under names no entity column can take. */
@@ -75,16 +76,11 @@ export function ReferenceField({ def, value, onChange }: {
   const createInline = async (): Promise<void> => {
     const name = filter.trim();
     if (name === "") return;
-    await exec(
-      `INSERT INTO ${q(target)} (${q(nameField)}, uuid) VALUES (?, ?)`,
-      [name, newUuid()]);
-    const idRow = await exec("SELECT last_insert_rowid() AS id");
-    const id = idRow[0]?.["id"];
-    if (typeof id === "number") {
-      onChange(id);
-      setOpen(false);
-      setFilter("");
-    }
+    const id = await createRecord(exec, registry, target,
+                                  { [nameField]: name });
+    onChange(id);
+    setOpen(false);
+    setFilter("");
   };
 
   return (

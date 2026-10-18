@@ -205,3 +205,60 @@ export function describeChildren(
     })
     .join(", ");
 }
+
+/**
+ * Detach a screenplay line from its scene. The line stays in the
+ * script; it just stops claiming a scene it no longer belongs to.
+ */
+export async function unlinkLineScene(
+    exec: SqlExec, lineUuid: string): Promise<void> {
+  await exec(
+    "UPDATE screenplay_lines SET scene_id = NULL WHERE uuid = ?",
+    [lineUuid]);
+}
+
+/** What a heading says about its scene, as `sceneSyncFromHeading` reads it. */
+export interface HeadingFields {
+  name: string;
+  int_ext: string | null;
+  time_of_day: string | null;
+  location: string | null;
+}
+
+const INT_EXT_VALUES: Record<string, string> = {
+  INT: "interior", EXT: "exterior", "INT/EXT": "int/ext",
+};
+
+/**
+ * Bring a scene's own fields in line with its heading as typed.
+ *
+ * The location moves with it: without that, INT. KITCHEN -> INT. GARAGE
+ * renamed the scene and left it pointing at the Kitchen location. A
+ * location that does not exist yet is left alone rather than created —
+ * this is a repair, and entity creation belongs to the commit review
+ * where it can be seen first. Returns the location id it resolved, or
+ * null when it found none.
+ */
+export async function syncSceneFromHeading(
+    exec: SqlExec, sceneId: number,
+    fields: HeadingFields): Promise<number | null> {
+  let locationId: number | null = null;
+  if (fields.location !== null) {
+    const hit = await exec(
+      "SELECT id FROM location WHERE upper(name) = upper(?)",
+      [fields.location.trim()]);
+    locationId = (hit[0]?.["id"] as number | undefined) ?? null;
+  }
+  await exec(
+    "UPDATE scene SET name = ?, " +
+    "int_ext = COALESCE(?, int_ext), " +
+    "time_of_day = COALESCE(?, time_of_day), " +
+    "location_id = COALESCE(?, location_id), " +
+    "updated_at = datetime('now') WHERE id = ?",
+    [fields.name,
+     fields.int_ext !== null ? INT_EXT_VALUES[fields.int_ext] ?? null : null,
+     fields.time_of_day !== null ? fields.time_of_day.toLowerCase() : null,
+     locationId,
+     sceneId]);
+  return locationId;
+}

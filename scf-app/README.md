@@ -73,7 +73,7 @@ React UI (registry-driven)
 
 ## Patterns worth knowing before changing anything
 
-- **Display labels are derived, never stored.** `state/displayName.ts`
+- **Display labels are derived, never stored.** `scf-core/src/displayName.ts`
   is the single place: scenes lead with their number, shots with their
   shot number, and a link entity whose `nameField` is hidden gets a
   label composed from the rows it points at. Adding a column to a list
@@ -95,7 +95,7 @@ React UI (registry-driven)
 **A test must not import a view.** Importing anything that reaches
 `state/store.ts` constructs the SQLite worker, which fails outside a
 browser. Logic that deserves a test lives in a module the view imports —
-`scf-core/src/ops/shootOps.ts`, `state/displayName.ts`, `state/subjectStats.ts`,
+`scf-core/src/ops/shootOps.ts`, `scf-core/src/displayName.ts`, `state/subjectStats.ts`,
 `scf-core/src/ops/undoDelete.ts` — not in the component.
 
 ## Where it is going
