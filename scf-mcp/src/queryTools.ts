@@ -43,8 +43,18 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z, type ZodRawShape } from "zod";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
-import { withProject } from "./projectCache.ts";
-import { err, ok } from "./toolResult.ts";
+import { queryMarkdown, type QueryId } from "@minimalhumans/scf-core";
+import { registry, withProject } from "./projectCache.ts";
+import { err, ok, text } from "./toolResult.ts";
+
+/**
+ * Every query tool also takes `format`. JSON is the normative result
+ * (spec §12); markdown is the prompt-ready block the editor copies as
+ * context, rendered by the same scf-core code.
+ */
+export const FORMAT = z.enum(["json", "markdown"]).optional().describe(
+  "\"json\" (default) is the normative result; \"markdown\" is a " +
+  "prompt-ready block of the same facts.");
 
 export interface QueryToolSpec {
   id: string;
@@ -155,16 +165,22 @@ export function registerQueryTools(server: McpServer): void {
     server.registerTool(toolNameFor(spec.title), {
       description: `${spec.title} (${spec.id}, spec ${spec.section}). ` +
         `${spec.summary}${note}`,
-      inputSchema: { ...spec.shape },
+      inputSchema: { ...spec.shape, format: FORMAT },
     }, async (args) => {
       try {
-        return ok(await withProject(async (p) => {
+        const { format, ...params } = args as QueryParams & {
+          format?: "json" | "markdown" };
+        const result = await withProject(async (p) => {
           const run = buildDispatch(p.locate, p.rootMapped)[spec.id];
           if (run === undefined) {
             throw new Error(`internal: no dispatch entry for "${spec.id}"`);
           }
-          return run(p.ctx, args as QueryParams);
-        }));
+          return run(p.ctx, params as QueryParams);
+        });
+        if (format === "markdown") {
+          return text(queryMarkdown(spec.id as QueryId, result, registry));
+        }
+        return ok(result);
       } catch (e) {
         return err(e);
       }

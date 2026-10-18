@@ -16,7 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { CATALOG, toolNameFor } from "../src/queryTools.ts";
-import { FIXTURE, startServer, type Server } from "./helpers.ts";
+import { FIXTURE, callTool, startServer, type Server } from "./helpers.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SCENE12 = "06857531-3e91-41a9-95dd-3262407d8132";
@@ -36,8 +36,9 @@ describe("scf-mcp server — a default project set at startup", () => {
       { tools: Array<{ name: string }> };
     expect(result.tools.map((t) => t.name).sort()).toEqual([
       ...QUERY_TOOL_NAMES,
-      "add_shot", "create_row", "delete_row", "find", "list", "move_shot",
-      "open", "readiness", "recent_changes", "recent_files", "set_root",
+      "add_shot", "character_presence", "create_row", "delete_row", "find",
+      "gallery", "list", "move_shot", "open", "readiness", "recent_changes",
+      "recent_files", "set_root", "shot_list",
       "set_shot_cut", "set_title_page_key", "shot_context", "shot_media",
       "shot_readiness", "update_row", "where_used",
     ].sort());
@@ -222,6 +223,71 @@ describe("scf-mcp server — a default project set at startup", () => {
     }) as { content: Array<{ text: string }>; isError?: boolean };
     expect(result.isError).toBeUndefined();
   });
+
+  test("shot_list is the editor's shot list: scenes in story order, " +
+      "shots under them", async () => {
+    const r = await callTool(server, "shot_list", {});
+    expect(r.isError).toBe(false);
+    const list = r.json as { shotCount: number; runningTime: string;
+      scenes: Array<{ scene: { uuid: string; number: string };
+        shotCount: number;
+        groups: Array<{ shots: Array<{ uuid: string; cut: boolean }> }> }> };
+    expect(list.shotCount).toBeGreaterThan(0);
+    expect(list.scenes.reduce((n, s) => n + s.shotCount, 0))
+      .toBe(list.shotCount);
+    expect(list.scenes.every((s) => s.groups.every(
+      (g) => g.shots.every((x) => !x.cut)))).toBe(true);
+    const one = await callTool(server, "shot_list", { sceneUuid: SCENE12 });
+    const only = one.json as { scenes: Array<{ scene: { uuid: string } }> };
+    expect(only.scenes.map((s) => s.scene.uuid)).toEqual([SCENE12]);
+    expect((await callTool(server, "shot_list",
+      { sceneUuid: "nope" })).isError).toBe(true);
+  }, 60_000);
+
+  test("gallery ranks assets by what they carry, and finds the unused",
+      async () => {
+    const r = await callTool(server, "gallery", { limit: 5 });
+    const g = r.json as { total: number; shown: number;
+      assets: Array<{ score: number; uses: string[] }> };
+    expect(g.shown).toBe(5);
+    expect(g.assets.map((a) => a.score)).toEqual(
+      [...g.assets.map((a) => a.score)].sort((a, b) => b - a));
+    // "Unused" is a subset, and what is left carries less than the best.
+    const everything = (await callTool(server, "gallery",
+      { limit: 500 })).json as { total: number };
+    const unused = (await callTool(server, "gallery",
+      { filter: "unused", limit: 500 })).json as
+      { total: number; assets: Array<{ score: number }> };
+    expect(unused.total).toBeLessThan(everything.total);
+    expect(Math.max(0, ...unused.assets.map((a) => a.score)))
+      .toBeLessThan(g.assets[0]!.score);
+  }, 60_000);
+
+  test("character_presence compares links with the script's cues",
+      async () => {
+    const r = await callTool(server, "character_presence",
+      { characterUuid: ELEANOR });
+    expect(r.isError).toBe(false);
+    const p = r.json as { speeches: number; scenes: Array<{
+      linked: boolean; speeches: number; mismatch: string | null }> };
+    expect(p.speeches).toBeGreaterThan(0);
+    expect(p.scenes.reduce((n, s) => n + s.speeches, 0)).toBe(p.speeches);
+    expect((await callTool(server, "character_presence",
+      { characterUuid: "nope" })).isError).toBe(true);
+  }, 60_000);
+
+  test("a query tool can return its prompt-ready markdown", async () => {
+    const md = await callTool(server, "scene_package",
+      { scene: SCENE12, format: "markdown" });
+    expect(md.isError).toBe(false);
+    expect(md.text.startsWith("# Scene package")).toBe(true);
+    // The same facts as the JSON, from the same query.
+    const json = await callTool(server, "scene_package", { scene: SCENE12 });
+    expect((json.json as { query: string }).query).toBe("Q04");
+    const ready = await callTool(server, "readiness", {
+      queryId: "Q07", params: { scene: SCENE12 }, format: "markdown" });
+    expect(ready.text.startsWith("# Readiness")).toBe(true);
+  }, 60_000);
 
   test("set_root maps a root onto the already-open film, no scfPath",
       async () => {
