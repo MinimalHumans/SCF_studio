@@ -169,7 +169,7 @@ export function VariantsTab({ kind, id, note }: {
           <form className="ws-add-row" onSubmit={(e) => {
             e.preventDefault();
             call("element.addVariantOf", kind, id, name).then(() => {
-              useStore.getState().noteWrite(); setName("");
+              setName("");
             }).catch((err: unknown) => fail("Could not add the variant", err));
           }}>
             <label htmlFor={`ws-add-${kind}-variant`} className="visually-hidden">

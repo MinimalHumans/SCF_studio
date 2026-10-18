@@ -2,7 +2,7 @@
 import { call } from "../../state/api.ts";
 import { useEffect, useRef, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
-import { exec, registry, useStore } from "../../state/store.ts";
+import { registry, useStore } from "../../state/store.ts";
 import { cleanName, fromPointOfView } from "@scf-core/ops/elementOps.ts";
 import { RELATIONSHIP_SECTIONS } from "../../state/characterLayout.ts";
 import { useQuery } from "../useQuery.ts";
@@ -62,7 +62,6 @@ export function RelationshipsTab({ characterId }: { characterId: number }):
     call("element.relate", characterId, otherId).then(({ id }) => {
       justMade.current = id;
       setSelected(id);
-      useStore.getState().noteWrite();
     }).catch((e: unknown) => useStore.setState({
       errorMessage: `Could not relate them: ${
         e instanceof Error ? e.message : String(e)}` }));
@@ -286,7 +285,6 @@ function RelationshipEditor({ row, viewerId, nameOf, onOpen, onRemove }: {
 
   const point = (d: "mutual" | number): void => {
     call("element.setDirection", id, d === "mutual" ? "mutual" : { fromId: d })
-      .then(() => useStore.getState().noteWrite())
       .catch((e: unknown) => useStore.setState({
         errorMessage: `Could not change the direction: ${
           e instanceof Error ? e.message : String(e)}` }));

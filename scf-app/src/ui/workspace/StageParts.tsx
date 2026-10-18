@@ -2,7 +2,7 @@
 import { call } from "../../state/api.ts";
 import { useEffect, useMemo, useState } from "react";
 import { q } from "@scf-core/db.ts";
-import { exec, registry, useStore } from "../../state/store.ts";
+import { registry, useStore } from "../../state/store.ts";
 import { STAGE_LABEL, STAGE_PARENT } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
@@ -31,7 +31,6 @@ export function AddStageForm({ pending, scenes, onDone, onCancel }: {
             e.preventDefault();
             call("element.addStage", pending.table, pending.parentId, pending.sceneId,
                      label).then((id) => {
-              useStore.getState().noteWrite();
               onDone(id);
             }).catch((err: unknown) => useStore.setState({
               errorMessage: `Could not add the stage: ${

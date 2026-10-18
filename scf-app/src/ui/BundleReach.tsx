@@ -60,7 +60,7 @@ function rangeText(reach: Reach, scenes: readonly SceneOption[]): string {
 export function BundleReachSection({ bundleId }: {
   bundleId: number;
 }): JSX.Element {
-  const { openEntityRow, noteWrite, revision } = useStore();
+  const { openEntityRow, revision } = useStore();
   const [reach, setReach] = useState<Reach[] | null>(null);
   const [scenes, setScenes] = useState<SceneOption[]>([]);
   const [binding, setBinding] = useState(false);
@@ -112,7 +112,6 @@ export function BundleReachSection({ bundleId }: {
         <BindForm bundleId={bundleId} scenes={scenes}
                   onDone={(wrote) => {
                     setBinding(false);
-                    if (wrote) noteWrite();
                   }} />
       )}
     </section>

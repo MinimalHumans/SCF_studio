@@ -31,12 +31,11 @@ export function useMediaReport(): MediaReport {
 export function MediaChecksPanel({ report }: {
   report: MediaReport;
 }): JSX.Element {
-  const { openEntityRow, noteWrite } = useStore();
+  const { openEntityRow } = useStore();
 
   const act = (write: () => Promise<void>): void => {
     void (async () => {
       await write();
-      noteWrite();
     })();
   };
 

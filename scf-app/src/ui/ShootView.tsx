@@ -8,7 +8,7 @@ import {
 import { shotCode } from "@scf-core/shots.ts";
 import { isCut, SCENE_SCRIPT_SQL, summarize } from "@scf-core/ops/shootOps.ts";
 import { sceneLabel } from "@scf-core/displayName.ts";
-import { exec, registry, useStore } from "../state/store.ts";
+import { registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
 import { MediaStrip } from "./MediaStrip.tsx";
@@ -87,7 +87,6 @@ export function ShootView(): JSX.Element {
   };
 
   const bump = (): void => {
-    useStore.getState().noteWrite();
   };
   const toggle = (key: string): void => {
     const next = new Set(useStore.getState().shootView.open);

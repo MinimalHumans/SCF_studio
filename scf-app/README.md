@@ -1,20 +1,27 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # scf-app
 
-The SCF editor: React + Vite + TypeScript + Zustand, local-first, no
-server, Chromium-first. All format knowledge comes from `scf-core`; the
-app never hand-defines an entity.
+The SCF editor: React + Vite + TypeScript + Zustand, local-first,
+Chromium-first. All format knowledge comes from `scf-core`; the app
+never hand-defines an entity. Files are opened, read and written by
+**one local host process** (`../scf-host`), shared with the MCP, so
+"local-first" means your files stay on your machine, not that there is
+no process: `npm run dev` starts the host with the dev server.
 
 ```sh
 npm ci
-npm run dev        # http://localhost:5173 — Chromium
+npm run dev        # http://localhost:5173 — Chromium; starts the host too
 npm run typecheck
 npm test
-npm run build      # static bundle in dist/
+npm run build      # static bundle in dist/ (needs a host to open files)
 ```
 
-`scf-core` is consumed as TypeScript source via a Vite alias
-(`@scf-core -> ../scf-core/src`), so keep the directories siblings.
+`scf-core` and `scf-host`'s client are consumed as TypeScript source via
+Vite aliases (`@scf-core -> ../scf-core/src`, `@scf-host ->
+../scf-host/src`), so keep the directories siblings. The host's folders
+default to your home directory plus the repository's `fixtures/` and
+`templates/`; set `SCF_HOST_ROOTS` (a path-delimited list) to change
+them.
 
 ## Where the work happens
 
@@ -45,31 +52,41 @@ nothing.
 ## Architecture
 
 ```
-main thread                              worker
-───────────                              ──────
-FsAccessAdapter (files/fileAdapter.ts)   @sqlite.org/sqlite-wasm
-  open / save / saveAs                     opfs-sahpool VFS
-        │  bytes                                │
-        ▼                                       ▼
-OPFS working copy  ◄────────────────────   SQLite database
-        │  postMessage {sql, params} → rows
-        ▼
-Zustand store (state/store.ts) ── exec: scf-core's SqlExec seam
-        │
+browser window                             host process (scf-host)
+──────────────                             ───────────────────────
 React UI (registry-driven)
+   │ reads:  exec(sql)  ───────────────►   read-only connection
+   │ writes: call(name, ...args) ──────►   scf-core call table, one write
+   │                                       queue per file, then the .scf
+Zustand store (state/store.ts)             ◄── revision events (also for
+   │                                           the MCP's writes)
+HostClient (@scf-host/client)  ── WebSocket on 127.0.0.1, token + Origin
 ```
 
-- **Edits stream continuously into the OPFS working copy**, which is why
-  a crash or a refresh loses nothing. **Save** exports a live snapshot
-  and writes it through the `FileAdapter` to the user's `.scf`. The
-  distinction matters in the UI: the Save button carries an accent light
-  while the working database is ahead of the file.
-- **Reload resumes.** The OPFS copy always survived; the file handle now
-  survives too, in IndexedDB (`files/handleStore.ts`). Chromium re-asks
-  for write permission once after a reload — unavoidable, and correct.
-  An explicit Close sets `scf:auto-resume=0` so closed stays closed.
-- **`FileAdapter`** is the desktop-wrapper seam: a Tauri build later is
-  packaging, not a refactor.
+- **Write-through.** Every change is in the `.scf` as soon as it is
+  made. There is no Save button; **Save as…** copies the film to a new
+  path and carries on there. Undo is the safety net.
+- **The window holds no write function and issues no write SQL.**
+  Everything that changes the film is a named call from
+  `scf-core/src/ops/calls.ts`, made through `call()` in
+  `state/api.ts`; a test (`test/noInlineWrites.test.ts`) pins both.
+- **Reload resumes.** The film's path is in browser storage, and the
+  host still has the file, so a refresh walks straight back in. An
+  explicit Close sets `scf:auto-resume=0` so closed stays closed.
+- **Choosing a file** goes through `ProjectChooser`
+  (`files/projectChooser.ts`): today a dialog listing folders from the
+  host (`ChooserDialog`), later the operating system's own dialog. The
+  **asset folder** is still acquired in the browser (`FileAdapter`,
+  `files/fileAdapter.ts`) as a read-only directory handle, remembered
+  per project path in IndexedDB (`files/handleStore.ts`); Chromium
+  re-asks for permission after a reload, which is unavoidable and
+  correct.
+- **One window at a time.** A second tab is refused (a Web Lock):
+  two windows would each commit their own copy of the script over the
+  other's.
+- **Transport is swappable.** `HostClient` talks to a `HostTransport`;
+  the WebSocket is one implementation, and a desktop shell would supply
+  another without touching a view.
 
 ## Patterns worth knowing before changing anything
 
@@ -82,8 +99,10 @@ React UI (registry-driven)
 - **Structure is derived from boundaries** (`@scf-core/structure.ts`).
   Anything drawing acts and sequences as nested must group by
   `actOutline()`, because a sequence may cross an act boundary.
-- **`useQuery(sql, params)` re-runs on the store's `revision`.** Any
-  write must bump it or the UI will not notice.
+- **`useQuery(sql, params)` re-runs on the store's `revision`.** That is
+  the host's revision: it moves after any write by any client, so a
+  change the MCP makes shows up here exactly like a local edit. Writes
+  go through `call()`, which keeps it current; do not write around it.
 - **Findings, never enforcement.** Duplicates, dangling boundaries and
   contradictions are reported; nothing is rejected on write.
 
@@ -93,8 +112,10 @@ React UI (registry-driven)
 (`../fixtures/hollow_creek.scf`) using the Node SQLite driver.
 
 **A test must not import a view.** Importing anything that reaches
-`state/store.ts` constructs the SQLite worker, which fails outside a
-browser. Logic that deserves a test lives in a module the view imports —
+`state/store.ts` connects to a host, and needs a browser's globals.
+`test/windowOnHost.test.ts` shows the one sanctioned way to do it: a
+real host started through the dev-server plugin, with the file chooser
+stubbed. Logic that deserves a test lives in a module the view imports —
 `scf-core/src/ops/shootOps.ts`, `scf-core/src/displayName.ts`, `state/subjectStats.ts`,
 `scf-core/src/ops/undoDelete.ts` — not in the component.
 

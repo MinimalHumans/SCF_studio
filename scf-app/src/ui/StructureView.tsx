@@ -7,7 +7,7 @@ import {
   type Structure,
 } from "@scf-core/structure.ts";
 import { sceneLabel } from "@scf-core/displayName.ts";
-import { exec, useStore } from "../state/store.ts";
+import { useStore } from "../state/store.ts";
 
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
@@ -55,13 +55,11 @@ export function StructureView(): JSX.Element {
   const setBoundary = async (table: "act" | "sequence", id: number,
                              sceneId: number | null): Promise<void> => {
     await call("structure.setBoundary", table, id, sceneId);
-    useStore.getState().noteWrite();
   };
 
   const create = async (table: "act" | "sequence",
                         sceneId: number): Promise<void> => {
     await call("structure.createSpan", table, sceneId);
-    useStore.getState().noteWrite();
   };
 
   if (scenes.length === 0) {

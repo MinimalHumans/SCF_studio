@@ -23,8 +23,7 @@
  * Keyed on path + mtime + size, so a file edited outside the app
  * regenerates rather than showing a stale picture. Persisted to
  * IndexedDB, which is browser storage and not the user's folder —
- * conventions §9's read-only rule is about the project directory, and
- * the working database already lives in OPFS.
+ * conventions §9's read-only rule is about the project directory.
  *
  * Everything here is best-effort. A cache that fails must cost a
  * repeated decode, never a blank thumbnail: every persistence path

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { call } from "../../state/api.ts";
 import { useMemo, useState } from "react";
-import { exec, useStore } from "../../state/store.ts";
+import { useStore } from "../../state/store.ts";
 import { cleanName } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
@@ -151,7 +151,6 @@ export function ArcTab({ characterId }: { characterId: number }):
                 onSubmit={(e) => {
                   e.preventDefault();
                   call("element.addArc", characterId, newAxis).then(() => {
-                    useStore.getState().noteWrite();
                     setNewAxis("");
                   }).catch((err: unknown) => useStore.setState({
                     errorMessage: `Could not add the arc: ${
