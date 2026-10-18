@@ -30,6 +30,16 @@
       "scf-source": "./src/host.ts",
       "types": "./dist/host.d.ts",
       "default": "./dist/host.js"
+    },
+    "./client": {
+      "scf-source": "./src/client.ts",
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./node": {
+      "scf-source": "./src/nodeConnect.ts",
+      "types": "./dist/nodeConnect.d.ts",
+      "default": "./dist/nodeConnect.js"
     }
   },
   "scripts": {
