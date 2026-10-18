@@ -63,8 +63,14 @@ export interface Session {
   /** Writes since the last successful persist. */
   readonly dirty: boolean;
 
-  /** Run a mutation. Serialised; bumps the revision when it settles. */
-  write<T>(fn: (ctx: ScfContext) => Promise<T>): Promise<T>;
+  /**
+   * Run a mutation. Serialised; bumps the revision when it settles.
+   * With `expectedRevision`, a session that has moved on refuses with
+   * `StaleRevisionError` before running `fn`, and the refusal is not a
+   * write: the revision does not change.
+   */
+  write<T>(fn: (ctx: ScfContext) => Promise<T>,
+           options?: WriteOptions): Promise<T>;
   /**
    * Record a write made outside `write()` — the app's views call ops
    * directly. Bumps the revision.
@@ -84,6 +90,23 @@ export interface Session {
   hasExternalChange(): Promise<boolean>;
   subscribe(listener: (state: SessionState) => void): () => void;
   close(): Promise<void>;
+}
+
+export interface WriteOptions {
+  expectedRevision?: number;
+}
+
+/** The caller's view of the file is out of date. */
+export class StaleRevisionError extends Error {
+  readonly expected: number;
+  readonly actual: number;
+  constructor(expected: number, actual: number) {
+    super(`the file changed since revision ${expected} ` +
+          `(now ${actual}); read it again before writing`);
+    this.name = "StaleRevisionError";
+    this.expected = expected;
+    this.actual = actual;
+  }
 }
 
 export interface SessionOptions {
@@ -130,9 +153,16 @@ export function createSession(
     get savedRevision() { return savedRevision; },
     get dirty() { return revision !== savedRevision; },
 
-    write<T>(fn: (c: ScfContext) => Promise<T>): Promise<T> {
+    write<T>(fn: (c: ScfContext) => Promise<T>,
+             writeOptions: WriteOptions = {}): Promise<T> {
       if (readOnly) return Promise.reject(refused());
       const run = queue.then(async () => {
+        // Checked here, in the queue, so it compares against the
+        // revision this write would really start from.
+        const expected = writeOptions.expectedRevision;
+        if (expected !== undefined && expected !== revision) {
+          throw new StaleRevisionError(expected, revision);
+        }
         try {
           return await fn(ctx);
         } finally {
