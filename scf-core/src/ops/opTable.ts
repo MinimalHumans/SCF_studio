@@ -30,7 +30,9 @@ import { createRecord, deleteRecord, updateRecord } from "./recordOps.ts";
 import {
   addBeat, addShot, moveShotInScene, removeBeat, removeShot, setShotCut,
 } from "./shootOps.ts";
-import { withIntegrityGate } from "./integrityGate.ts";
+import {
+  dryRunThroughGate, withIntegrityGate, type GateFinding,
+} from "./integrityGate.ts";
 import { setTitleKey } from "./titlePageOps.ts";
 
 // ── argument schema ────────────────────────────────────────────────
@@ -340,6 +342,11 @@ export interface CallOptions {
    * file did not already have. For callers with no person watching.
    */
   integrityGate?: boolean;
+  /**
+   * Run it, report what it would do, and roll it back: nothing changes
+   * and the revision does not move.
+   */
+  dryRun?: boolean;
 }
 
 export interface OpResult {
@@ -347,6 +354,8 @@ export interface OpResult {
   result: unknown;
   /** The session's revision after the write. */
   revision: number;
+  /** For a dry run: the integrity findings the write would add. */
+  dryRun?: { added: GateFinding[] };
 }
 
 /**
@@ -360,6 +369,15 @@ export async function callOp(
     options: CallOptions = {}): Promise<OpResult> {
   const op = getOp(name);
   const args = validateArgs(op.args, rawArgs ?? {});
+  if (options.dryRun === true) {
+    const dry = await session.write(
+      (ctx) => dryRunThroughGate(ctx, (inner) => op.run(inner, args)),
+      { counts: false,
+        ...(options.expectedRevision === undefined
+          ? {} : { expectedRevision: options.expectedRevision }) });
+    return { result: dry.result ?? null, revision: session.revision,
+             dryRun: { added: dry.added } };
+  }
   const result = await session.write(
     (ctx) => options.integrityGate === true
       ? withIntegrityGate(ctx, (inner) => op.run(inner, args))

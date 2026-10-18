@@ -142,3 +142,31 @@ export async function withIntegrityGate<T>(
     throw e;
   }
 }
+
+/**
+ * What `run` would do, without doing it: its result and the findings it
+ * would add. Always rolled back. Must be called from `Session.write`
+ * with `counts: false`, so the revision does not move.
+ */
+export async function dryRunThroughGate<T>(
+    ctx: ScfContext,
+    run: (inner: ScfContext) => Promise<T>): Promise<{
+      result: T; added: GateFinding[] }> {
+  await ctx.exec("BEGIN IMMEDIATE");
+  try {
+    const before = await currentFindings(ctx);
+    const result = await run({
+      exec: savepointExec(ctx.exec), registry: ctx.registry });
+    const after = await currentFindings(ctx);
+    return {
+      result,
+      added: [...after.values()].filter((f) => !before.has(f.key)),
+    };
+  } finally {
+    try {
+      await ctx.exec("ROLLBACK");
+    } catch {
+      // nothing was changed; there is nothing to lose
+    }
+  }
+}

@@ -41,6 +41,7 @@ const host = await startHost({
   ...(port === undefined ? {} : { port }),
   ...(dir === undefined ? {} : { hostDir: dir }),
   allowedOrigins: origins,
+  onShutdown: () => { stop(); },
   ...(idleExit === undefined ? {} : {
     onIdle: () => {
       // Re-armed each time the last client leaves; at the deadline a

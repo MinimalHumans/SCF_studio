@@ -9,11 +9,23 @@ import {
   HostClient, HostClientError, connectWebSocket, type WebSocketConstructor,
   type HostClientOptions,
 } from "./client.ts";
-import { defaultHostDir, readHostEntry } from "./registryFile.ts";
+import {
+  defaultHostDir, readHostEntry, type HostEntry,
+} from "./registryFile.ts";
 
 export interface ConnectOptions extends HostClientOptions {
   /** Discovery directory; defaults to the user's. */
   hostDir?: string;
+}
+
+/** Connect to the host a discovery entry describes. */
+export async function connectToEntry(
+    entry: HostEntry, options: HostClientOptions): Promise<HostClient> {
+  const url = `ws://127.0.0.1:${String(entry.port)}/?token=${
+    encodeURIComponent(entry.token)}`;
+  const transport = await connectWebSocket(
+    url, WebSocket as unknown as WebSocketConstructor);
+  return HostClient.connect(transport, options);
 }
 
 /** Connect to the host that is already running, or fail saying so. */
@@ -23,8 +35,5 @@ export async function connectToHost(
   if (entry === null) {
     throw new HostClientError("disconnected", "no SCF host is running");
   }
-  const url = `ws://127.0.0.1:${String(entry.port)}/?token=${entry.token}`;
-  const transport = await connectWebSocket(
-    url, WebSocket as unknown as WebSocketConstructor);
-  return HostClient.connect(transport, options);
+  return connectToEntry(entry, options);
 }

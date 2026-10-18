@@ -94,6 +94,12 @@ export interface Session {
 
 export interface WriteOptions {
   expectedRevision?: number;
+  /**
+   * False for a write that is rolled back by design (a dry run): it
+   * changes nothing, so it must not move the revision, which would
+   * invalidate the very plan it was checking.
+   */
+  counts?: boolean;
 }
 
 /** The caller's view of the file is out of date. */
@@ -163,13 +169,16 @@ export function createSession(
         if (expected !== undefined && expected !== revision) {
           throw new StaleRevisionError(expected, revision);
         }
+        const counts = writeOptions.counts !== false;
         try {
           return await fn(ctx);
         } finally {
           // Even a write that threw may have changed rows, so it counts.
-          revision += 1;
-          notify();
-          await refreshFingerprint();
+          if (counts) {
+            revision += 1;
+            notify();
+            await refreshFingerprint();
+          }
         }
       });
       queue = run.catch(() => undefined);

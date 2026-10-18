@@ -154,6 +154,8 @@ export interface CallOptions {
 export interface OpOptions extends CallOptions {
   /** Pass false to allow a write that adds integrity findings. */
   integrityGate?: boolean;
+  /** Report what the write would do and roll it back. */
+  dryRun?: boolean;
 }
 
 export interface HostClientOptions {
@@ -277,15 +279,14 @@ export class HostClient {
 
   /** Write: one named op from the curated table (the MCP's surface). */
   async op(name: string, args: unknown = {},
-           options: OpOptions = {}): Promise<{ result: unknown;
-                                               revision: number;
-                                               snapshot?: string }> {
+           options: OpOptions = {}): Promise<HostMethods["op"][1]> {
     const r = await this.send("op", {
       name, args,
       ...(options.expectedRevision === undefined
         ? {} : { expectedRevision: options.expectedRevision }),
       ...(options.integrityGate === undefined
         ? {} : { integrityGate: options.integrityGate }),
+      ...(options.dryRun === undefined ? {} : { dryRun: options.dryRun }),
     });
     if (r.revision > this.rev) this.rev = r.revision;
     return r;
@@ -347,6 +348,11 @@ export class HostClient {
   async journal(limit?: number): Promise<JournalEntry[]> {
     return (await this.send("journal",
       limit === undefined ? {} : { limit })).entries;
+  }
+
+  /** Ask the host to exit; refused while anyone else is connected. */
+  async shutdown(): Promise<void> {
+    await this.send("shutdown", {});
   }
 
   ops(): Promise<OpInfo[]> {

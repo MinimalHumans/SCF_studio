@@ -245,6 +245,23 @@ describe("the integrity gate", () => {
     expect(row[0]!["c"]).toBe(person);
   });
 
+  test("a dry run reports the finding, changes nothing, and keeps the " +
+      "revision", async () => {
+    const { scene, person } = await scriptedScene();
+    const at = session.revision;
+    const r = await callOp(session, "record.create", link(scene, person),
+      { dryRun: true });
+    expect(r.dryRun!.added.map((f) => f.kind)).toEqual(["unjustified_link"]);
+    expect(session.revision).toBe(at);
+    expect(await session.exec("SELECT id FROM scene_character")).toEqual([]);
+    // And a clean one reports nothing to add.
+    const clean = await callOp(session, "record.create", {
+      entity: "character", values: { name: "MARCUS" } }, { dryRun: true });
+    expect(clean.dryRun!.added).toEqual([]);
+    expect(await session.exec(
+      "SELECT id FROM character WHERE name = 'MARCUS'")).toEqual([]);
+  });
+
   test("an op that fails on its own still rolls back and releases",
       async () => {
     await expect(callOp(session, "record.create", {
