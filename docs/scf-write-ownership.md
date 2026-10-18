@@ -227,16 +227,48 @@ Done on branch `fileio`:
   host methods + connection retry + chooser, every write moved to
   `call()`, then the cutover and deletions.
 
+- ✅ **MCP** (`scf-mcp`): a client of the host. It finds a running host
+  or starts one (a lock directory so two servers do not both spawn; the
+  host exits by itself after `--idle-exit`); every tool call has its own
+  connection, so no film outlives a call. Read tools are unchanged for
+  the caller. Seven write tools, each plan → confirm → apply (§5):
+  - a *plan* is deterministic (exact field diffs, risks, a `planId`
+    hashed from the film, revision and changes), made with a host **dry
+    run** that runs the write, measures the integrity findings it would
+    add, and rolls back without moving the revision;
+  - *apply* re-plans, applies only an identical plan, and sends the
+    revision it was planned at as `expectedRevision`; where the client
+    can elicit, the person is asked directly as well;
+  - the host adds the **integrity gate** (the write runs in one outer
+    transaction whose inner transactions are savepoints; any new
+    finding, by identity, rolls it all back), a **snapshot** before an
+    agent's write (once per ten minutes per film, last ten kept) and a
+    **journal** of who made every write (`journal`, `recent_changes`; the
+    editor shows "edited by …");
+  - revisions carry on across a film being closed and reopened, so a
+    plan's revision still means something at apply;
+  - `--read-only` registers no write tool and opens films read-only; a
+    film on an older schema is refused with "open it once in the
+    editor".
+
 To do:
 
-6. **MCP**: tools become `HostClient` calls; add write tools with §5.
 7. **Phase 4 reads**: promote the app-only queries to core so the host
    serves one read surface.
-8. **Docs**: update `scf-mcp-design.md` §1 once the MCP is a client
-   (the READMEs, `conventions.md` §9 and the editor notes are done).
+8. **Docs**: done for the MCP, the READMEs, `conventions.md` §9 and the
+   editor notes.
 
 Known limits of the window migration: the import dialog no longer shows
 per-step progress (a call returns once); a change the MCP makes to the
 script text updates lists and records but not an editor that is already
 open on that script, which re-reads when it is next opened; a second
 browser tab is refused rather than shared.
+
+Known limits of the MCP migration: the write tools cover records, shots,
+cuts, shot order and the title page — the curated op table — not media,
+structure or script text, which stay in the editor until a case for them
+is made; there is no tool to restore a snapshot (it is a file to open in
+the editor); the host compares protocol versions on connect but does not
+yet restart an idle host that is an older build; and session keys are
+paths, so under WSL a host and a client that spell one file `F:\…` and
+`/mnt/f/…` do not share a session.

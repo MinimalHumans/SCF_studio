@@ -3023,3 +3023,6 @@ button.strip-span-label:hover { color: var(--amber); }
 .chooser-entry.selected { background: var(--ink-1); color: var(--amber); }
 .chooser-entry:disabled { opacity: .45; cursor: default; }
 .chooser-name { display: flex; flex-direction: column; gap: 4px; }
+
+/* another client's change, attributed */
+.topbar-agent { color: var(--amber); }

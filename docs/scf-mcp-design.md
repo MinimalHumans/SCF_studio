@@ -46,8 +46,15 @@ only if it becomes a fact about the film — a character sheet generated
 from SCF descriptions and then adopted as the reference is a film fact;
 the prompt that produced it is not.
 
-This server therefore **reads**. It has no write tools. If that changes
-later it is a different document.
+This server therefore **reads**, and writes only the facts about the
+film that someone asked it to. *(This section used to say it had no
+write tools. It now has seven, held to the rules in
+[`scf-write-ownership.md`](scf-write-ownership.md): a plan before
+anything changes, an apply that is refused if the film has moved or the
+change would add an integrity finding, a snapshot before an agent's
+change, and a journal of who wrote what. `--read-only` removes them.
+Prompts, notes on how a shot was made and other workflow still belong in
+the tool that produced them.)*
 
 ---
 
@@ -337,14 +344,23 @@ the per-subject call is the room left for growth.
 
 ## 5. The server
 
+*(The server is a client of the SCF host — `scf-host`, found or started
+on demand by `hostLink.ts` — not a process that opens files itself.
+Reads are SQL on the host's read-only connection; writes are the host's
+named ops. The write tools, their plan/confirm protocol and the host's
+safeguards are in `writeTools.ts` and `docs/scf-write-ownership.md`.)*
+
 The shipped server is wider than this section first planned; where the
 two disagree, `scf-mcp/src/server.ts` is what runs.
 
 ### 5.1 No handle outlives a call
 
 `open` remembers a film's path and roots, and opens nothing. Each tool
-call opens the file read-only, answers, and closes it, however the call
-ends (`withProject`, `projectCache.ts`).
+call connects to the SCF host on a connection of its own, has the host
+open the film for it, answers, and disconnects, however the call ends
+(`withProject`, `projectCache.ts`). The host lets go of a film when its
+last client does, so the effect is the same as before the host existed:
+nothing is held open between calls.
 
 The server is a process the client keeps for its whole session. Holding
 a file open for that long is holding it locked: on Windows an open

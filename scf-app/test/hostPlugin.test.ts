@@ -118,3 +118,40 @@ describe("the dev-server host plugin", () => {
     expect(gone).toBe(true);
   }, 60_000);
 });
+
+describe("a host a tool started earlier", () => {
+  test("is replaced when it is idle", async () => {
+    const hostDir = mkdtempSync(join(tmpdir(), "scf-dev-host-"));
+    // Stands in for a host an MCP server started: same directory, able
+    // to be asked to exit.
+    const { startHost } = await import("../../scf-host/src/host.ts");
+    let exited = false;
+    const tool = await startHost({
+      hostDir, onShutdown: () => { exited = true; void tool.stop(); } });
+    let dev: ViteDevServer | undefined;
+    try {
+      dev = await createServer({
+        configFile: false, root: join(__dirname, ".."), logLevel: "silent",
+        server: { port: 0, host: "127.0.0.1" },
+        plugins: [scfHostPlugin({ hostDir })],
+      });
+      await dev.listen();
+      const port = (dev.httpServer!.address() as { port: number }).port;
+      let info: HostConnectionInfo | undefined;
+      for (let i = 0; i < 200 && info === undefined; i += 1) {
+        const r = await get(port, HOST_ENDPOINT, {
+          host: `127.0.0.1:${String(port)}`,
+          "sec-fetch-site": "same-origin" });
+        if (r.status === 200) info = JSON.parse(r.body) as HostConnectionInfo;
+        else await new Promise((res) => setTimeout(res, 100));
+      }
+      expect(exited).toBe(true);
+      expect(info).toBeDefined();
+      expect(info!.url).not.toBe(tool.url);
+    } finally {
+      await dev?.close();
+      await tool.stop().catch(() => undefined);
+      rmSync(hostDir, { recursive: true, force: true });
+    }
+  }, 60_000);
+});
