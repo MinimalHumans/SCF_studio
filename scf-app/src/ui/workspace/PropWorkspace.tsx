@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { call } from "../../state/api.ts";
 import { useMemo, useState } from "react";
-import { exec, registry, useStore } from "../../state/store.ts";
+import { registry, useStore } from "../../state/store.ts";
 import { PROP_TABS } from "../../state/subjectKinds.ts";
 import { layoutStages, stageAt } from "../../state/storyStrip.ts";
 
@@ -194,7 +194,6 @@ function PropScenes({ id }: { id: number }): JSX.Element {
   const save = (linkId: number, field: string, value: string): void => {
     call("element.setField", "scene_prop", linkId, field,
              value === "" ? null : field === "variant_id" ? Number(value) : value)
-      .then(() => useStore.getState().noteWrite())
       .catch((e: unknown) => fail("Could not save", e));
   };
 
@@ -274,7 +273,6 @@ function PropScenes({ id }: { id: number }): JSX.Element {
                   setPick("");
                   if (v === "") return;
                   call("element.linkPropToScene", id, Number(v))
-                    .then(() => useStore.getState().noteWrite())
                     .catch((err: unknown) => fail("Could not link", err));
                 }}>
           <option value="">+ add to a scene</option>

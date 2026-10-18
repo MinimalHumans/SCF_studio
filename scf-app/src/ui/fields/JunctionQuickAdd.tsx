@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { EntityDef } from "@scf-core/registry.ts";
 import { q } from "@scf-core/db.ts";
 
-import { exec, registry, rowName, useStore } from "../../state/store.ts";
+import { registry, rowName, useStore } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
 import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "@scf-core/structure.ts";
 
@@ -55,7 +55,6 @@ export function JunctionQuickAdd({ edef, anchorField, anchorId }: {
                        { [anchorField]: anchorId, [other.name]: otherId });
     setOpen(false);
     setFilter("");
-    useStore.getState().noteWrite();
   };
 
   return (

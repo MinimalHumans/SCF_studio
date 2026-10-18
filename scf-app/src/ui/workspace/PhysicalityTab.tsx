@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { call } from "../../state/api.ts";
 import { useState } from "react";
-import { exec, useStore } from "../../state/store.ts";
+import { useStore } from "../../state/store.ts";
 import { cleanName } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
@@ -86,7 +86,7 @@ export function PhysicalityTab({ characterId }: { characterId: number }):
           <form className="ws-add-row" onSubmit={(e) => {
             e.preventDefault();
             call("element.addHabit", characterId, habit).then(() => {
-              useStore.getState().noteWrite(); setHabit("");
+              setHabit("");
             }).catch((err: unknown) => fail("Could not add the habit", err));
           }}>
             <label htmlFor="ws-add-habit" className="visually-hidden">
@@ -141,7 +141,6 @@ export function PhysicalityTab({ characterId }: { characterId: number }):
                     setPlace("");
                     if (v === "") return;
                     call("element.addPlaceFor", characterId, Number(v))
-                      .then(() => useStore.getState().noteWrite())
                       .catch((err: unknown) => fail("Could not add it", err));
                   }}>
             <option value="">+ a place</option>

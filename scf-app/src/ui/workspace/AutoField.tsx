@@ -3,7 +3,7 @@ import { call } from "../../state/api.ts";
 import { useEffect, useRef, useState } from "react";
 import type { SqlValue } from "@scf-core/db.ts";
 import type { FieldDef } from "@scf-core/registry.ts";
-import { exec, registry, useStore } from "../../state/store.ts";
+import { registry } from "../../state/store.ts";
 import { Field } from "../fields/Field.tsx";
 
 /** Quiet time after the last keystroke before a text field is written. */
@@ -70,7 +70,6 @@ export function AutoField({ entity, id, ensure, field, value, inputId,
       await call("element.setField", entity, target, field, next);
       saved.current = next;
       setFailed(null);
-      useStore.getState().noteWrite();
     } catch (e) {
       // Shown beside the field, and the stored value put back: a field
       // that silently keeps text the file does not have is worse than

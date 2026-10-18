@@ -36,7 +36,7 @@ import { BundleReachSection } from "./BundleReach.tsx";
 export function BundleAssets({ bundleId }: {
   bundleId: number;
 }): JSX.Element {
-  const { openEntityRow, noteWrite, revision } = useStore();
+  const { openEntityRow, revision } = useStore();
   const [members, setMembers] = useState<BundleMember[]>([]);
   const [all, setAll] = useState<AssetRow[]>([]);
   const [picking, setPicking] = useState(false);
@@ -82,7 +82,6 @@ export function BundleAssets({ bundleId }: {
       setChosen(new Set());
       setPicking(false);
       setRole("");
-      noteWrite();
     })();
   };
 
@@ -141,7 +140,6 @@ export function BundleAssets({ bundleId }: {
                        if (typed === (m.role ?? "")) return;
                        await call("bundle.setMemberRole", m.linkId, typed);
                        setMembers(await bundleMembers(exec, bundleId));
-                       noteWrite();
                      })();
                    }} />
             <button className="ghost tiny"
@@ -150,7 +148,6 @@ export function BundleAssets({ bundleId }: {
                       void (async () => {
                         await call("bundle.removeMember", m.linkId);
                         setMembers(await bundleMembers(exec, bundleId));
-                        noteWrite();
                       })();
                     }}>×</button>
           </li>

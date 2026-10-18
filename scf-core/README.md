@@ -40,11 +40,16 @@ type SqlExec = (sql: string, params?: SqlValue[]) => Promise<Row[]>;
 ```
 
 Everything in scf-core speaks SQLite through this async seam. The browser
-app supplies a **sqlite-wasm/OPFS** implementation; Node (conformance CI,
-scripts, the MCP server) supplies `node:sqlite` via `scf-core/node`. Async
-was chosen because the browser's OPFS VFS is async-facing — sync drivers wrap
-for free, the reverse refactor would not. Driver errors must surface as
-rejections, never synchronous throws.
+app's reads go to the host (`scf-host`) over a socket, and the host itself
+(like conformance CI, scripts and the MCP server) uses `node:sqlite` via
+`scf-core/node`. Async was chosen because a remote or browser-side driver is
+async-facing — sync drivers wrap for free, the reverse refactor would not.
+Driver errors must surface as rejections, never synchronous throws.
+
+Writes are not SQL from a client: they are named functions run by the host.
+`ops/calls.ts` is the table of what the editor may call (positional,
+plain-data arguments, typed from the functions themselves) and
+`ops/opTable.ts` the small schema-checked set meant for tools.
 
 ## Conformance
 

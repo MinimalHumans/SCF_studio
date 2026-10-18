@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { FieldDef } from "@scf-core/registry.ts";
 import { q, type Row, type SqlValue } from "@scf-core/db.ts";
 
-import { exec, registry, rowName, useStore } from "../../state/store.ts";
+import { registry, rowName, useStore } from "../../state/store.ts";
 import { sceneShort } from "@scf-core/displayName.ts";
 import { useQuery } from "../useQuery.ts";
 

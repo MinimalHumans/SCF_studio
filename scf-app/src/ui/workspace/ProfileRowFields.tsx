@@ -3,7 +3,7 @@ import { call } from "../../state/api.ts";
 import { useRef } from "react";
 import { q } from "@scf-core/db.ts";
 
-import { exec, registry, useStore } from "../../state/store.ts";
+import { registry } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 
@@ -58,7 +58,6 @@ export function ProfileRowFields({ entity, characterId, titles,
       creating.current = (async () => {
         const made = await call(
           "record.create", entity, { [ownerColumn]: characterId });
-        useStore.getState().noteWrite();
         return made;
       })();
     }

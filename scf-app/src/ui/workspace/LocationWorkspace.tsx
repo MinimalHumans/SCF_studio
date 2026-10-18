@@ -198,7 +198,6 @@ function LocationScenes({ id }: { id: number }): JSX.Element {
                   setPick("");
                   if (v === "") return;
                   call("element.setField", "scene", Number(v), "location_id", id)
-                    .then(() => useStore.getState().noteWrite())
                     .catch((err: unknown) => fail("Could not set the location", err));
                 }}>
           <option value="">+ set another scene here</option>

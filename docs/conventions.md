@@ -575,9 +575,15 @@ This subsection is about why the *editor* asks for a folder anyway.
 The File System Access API cannot return a parent directory from a file
 handle — there is no `getParent()`, by design. A `.scf` opened on its
 own therefore cannot see what sits beside it, which is why an asset next
-to the file is unreachable through the file. One directory-picker
-gesture yields the root, the `.scf` within it, and the whole asset tree
-under a single grant.
+to the file is unreachable through the file.
+
+The editor now opens the `.scf` through its host, which works in paths,
+so the file and the folder arrive separately: the file first, then the
+asset folder in a second gesture, accepted only if it holds a file with
+the project's name at its root. The sections below that describe a
+single folder gesture and a folder scan are the rules for
+`chooseProjectFile()` and for any tool that lists a folder; the editor
+no longer scans.
 
 Discovery scans the root only, non-recursive, for `*.scf`. Exactly one
 is a valid project; zero or several is reported for the user to resolve
@@ -602,12 +608,11 @@ handle, so the rule holds without a browser. It carries `seen` — every
 root file the scan found — so "no .scf here" can show its evidence
 rather than being an unarguable assertion.
 
-Folder-first is granted **readwrite**, not read. SCF writes exactly one
-file, the `.scf` itself, and on this route that handle comes out of the
-root, so a read-only grant produces a project that cannot be saved. The
-platform offers no unit narrower than the folder, which is why the
-read-only rule below is a discipline in the code rather than a sandbox
-around it — on this route.
+A folder-first open used to be granted **readwrite**, because the `.scf`
+was saved through a handle taken from the root. That route is gone: the
+host writes the `.scf`, and the editor asks the browser for the asset
+folder **read-only**, so the read-only rule below is a sandbox rather
+than a discipline.
 
 ### `entity_anchor.region_box`
 

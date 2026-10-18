@@ -560,6 +560,10 @@ Now three buttons: New Project, Open an SCF File, Open Hollow Creek
 Demo. Resume and the folder-first open are gone, along with the
 folder-choice panel that only `openProjectFolder` could raise.
 
+*(Superseded: the OPFS working copy no longer exists. The window is a
+client of the host, a refresh reopens the file by path, and Close lets go
+of it. What follows describes the earlier design.)*
+
 Worth knowing what that costs. A refresh still walks straight back into
 the working database — `App`'s resume effect does that, and it is
 untouched. What no longer has a route back is an explicit **Close

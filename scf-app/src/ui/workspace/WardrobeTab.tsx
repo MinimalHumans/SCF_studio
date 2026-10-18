@@ -2,7 +2,7 @@
 import { call } from "../../state/api.ts";
 import { useMemo, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
-import { exec, useStore } from "../../state/store.ts";
+import { useStore } from "../../state/store.ts";
 import { cleanName } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
@@ -51,7 +51,7 @@ export function WardrobeTab({ characterId }: { characterId: number }):
           <form className="ws-add-row" onSubmit={(e) => {
             e.preventDefault();
             call("element.addCostume", characterId, newName).then(() => {
-              useStore.getState().noteWrite(); setNewName("");
+              setNewName("");
             }).catch((err: unknown) => fail("Could not add the costume", err));
           }}>
             <label htmlFor="ws-add-costume" className="visually-hidden">
@@ -139,7 +139,6 @@ function CostumeCard({ costume, scenes, worn, open }: {
                       setPick("");
                       if (v === "") return;
                       call("element.wearIn", id, Number(v))
-                        .then(() => useStore.getState().noteWrite())
                         .catch((err: unknown) => fail("Could not add the scene", err));
                     }}>
               <option value="">+ scene</option>
@@ -212,7 +211,6 @@ function WardrobeStory({ characterId, scenes, costumes, worn }: {
       setSelected(null);
       // The progression the stages hang from is made on first need.
       call("element.ensureProgression", characterId).then((id) => {
-        if (progressionId === null) useStore.getState().noteWrite();
         setPending({ table: "costume_progression_state", parentId: id,
                      sceneId, laneLabel: "the wardrobe" });
       }).catch((e: unknown) => fail("Could not start the stage", e));
@@ -305,7 +303,6 @@ function Makeup({ characterId, scenes }: {
                     setPick("");
                     if (v === "") return;
                     call("element.addMakeupFor", characterId, Number(v))
-                      .then(() => useStore.getState().noteWrite())
                       .catch((err: unknown) => fail("Could not add it", err));
                   }}>
             <option value="">+ a scene where it differs</option>

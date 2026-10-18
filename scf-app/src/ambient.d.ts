@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Ambient declarations: wa-sqlite example modules (shipped untyped), the
- * File System Access API (Chromium; not yet in lib.dom), and the build
- * identity Vite injects.
+ * Ambient declarations: the File System Access API (Chromium; not yet in
+ * lib.dom) and the build identity Vite injects.
  */
 
 /** Build identity, replaced at build time by vite.config.ts. */
@@ -11,11 +10,6 @@ declare const __APP_VERSION__: string;
 declare const __APP_COMMIT__: string;
 /** Build date, YYYY-MM-DD. */
 declare const __APP_BUILT__: string;
-
-declare module "wa-sqlite/src/examples/OriginPrivateFileSystemVFS.js" {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  export class OriginPrivateFileSystemVFS { constructor(...args: any[]); }
-}
 
 interface FilePickerAcceptType {
   description?: string;
@@ -28,16 +22,9 @@ interface OpenFilePickerOptions {
   multiple?: boolean;
 }
 
-interface SaveFilePickerOptions {
-  types?: FilePickerAcceptType[];
-  suggestedName?: string;
-}
-
 interface Window {
   showOpenFilePicker(
     options?: OpenFilePickerOptions): Promise<FileSystemFileHandle[]>;
-  showSaveFilePicker(
-    options?: SaveFilePickerOptions): Promise<FileSystemFileHandle>;
 }
 
 /* P2: the folder half of the API. `entries()` is the async iterator the

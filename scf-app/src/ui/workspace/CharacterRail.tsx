@@ -82,7 +82,6 @@ export function SubjectRail({ kind }: { kind: SubjectKind }): JSX.Element {
     }
     try {
       const id = await call("element.createSubject", kind, name);
-      useStore.getState().noteWrite();
       setCreating(false);
       setDraftName("");
       setClash([]);

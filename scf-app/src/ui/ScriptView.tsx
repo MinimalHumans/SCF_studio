@@ -42,7 +42,6 @@ import { IntegrityPanel } from "./IntegrityPanel.tsx";
 import { useQuery } from "./useQuery.ts";
 import { scanIntegrity } from "@scf-core/ops/integrity.ts";
 
-const touch = (): void => { useStore.getState().noteWrite(); };
 
 /**
  * Every async path here must check this before touching the database.
@@ -352,7 +351,6 @@ export function ScriptView(): JSX.Element {
         return [...merged.values()];
       });
     }
-    touch();
     await refreshAnnotations();
     // The Commit light was only ever recomputed at mount and after an
     // EXPLICIT commit, so typing a new character cue left it dark until
@@ -397,7 +395,6 @@ export function ScriptView(): JSX.Element {
         }]));
         setCommitNote(created.scenesCreated > 0
           ? `created ${String(created.scenesCreated)} scene(s)` : "");
-        touch();
         await refreshAnnotations();
       }
       setDirty(false);
@@ -466,7 +463,6 @@ export function ScriptView(): JSX.Element {
       ? `created ${parts.join(", ")}` : "");
     setReview(null);
     setDirty(false);
-    touch();
     await refreshAnnotations();
     await updateDirty();
   };
@@ -853,7 +849,6 @@ export function ScriptView(): JSX.Element {
     const block = prevBlocksRef.current.get(notice.uuid);
     if (block !== undefined) block.sceneId = null;
     setStale((old) => old.filter((x) => x.uuid !== notice.uuid));
-    touch();
     await refreshAnnotations();
   };
 
@@ -875,7 +870,6 @@ export function ScriptView(): JSX.Element {
     say(fields.location !== null && locationId === null
       ? `renamed — "${fields.location}" is not a location yet, so Commit will offer to create it`
       : "scene updated from the heading");
-    touch();
     await updateDirty();
   };
 
@@ -1041,13 +1035,11 @@ export function ScriptView(): JSX.Element {
           <IntegrityPanel liveLineIds={liveLineIds}
                           onClose={() => setShowIntegrity(false)}
                           onChanged={() => {
-                            touch();
                             void refreshAnnotations();
                           }} />
         )}
         {showVersions && (
-          <VersionsPanel onPublished={() => touch()}
-                         onImport={() => setImporting(true)}
+          <VersionsPanel onImport={() => setImporting(true)}
                          onExport={exportFountain}
                          exportDisabled={empty} />
         )}
@@ -1202,7 +1194,6 @@ export function ScriptView(): JSX.Element {
             const sp = await readScreenplay(exec);
             titlePageRef.current = sp.titlePage;
             loadIntoEditor(rowsToBlocks(sp.lines));
-            touch();
           }}
         />
       )}
@@ -1290,9 +1281,8 @@ function TagControl({ selection, onTagged }: {
   );
 }
 
-function VersionsPanel({ onPublished, onImport, onExport,
+function VersionsPanel({ onImport, onExport,
                          exportDisabled }: {
-  onPublished: () => void;
   onImport: () => void;
   onExport: () => void;
   exportDisabled: boolean;
@@ -1331,7 +1321,6 @@ function VersionsPanel({ onPublished, onImport, onExport,
                   void call("script.publishVersion", description).then(() => {
                     setDescription("");
                     setBusy(false);
-                    onPublished();
                   });
                 }}>
           Publish

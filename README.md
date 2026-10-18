@@ -52,7 +52,8 @@ normative artifact.
 |---|---|
 | `schema/` | **The source of truth for the format.** Entity and field declarations, the version, the registry generator and linter. |
 | `scf-core/` | The semantics, in TypeScript: resolution, structure, readiness, screenplay parsing, proposals. Environment-agnostic. |
-| `scf-app/` | The editor — a browser application over the same core, SQLite in OPFS, CodeMirror screenplay editor, canonical query pages. |
+| `scf-app/` | The editor — a browser application over the same core, talking to the local host, with a CodeMirror screenplay editor and canonical query pages. |
+| `scf-host/` | The one local process that opens `.scf` files and serves them to the editor and the MCP: read-only queries, named writes from `scf-core`, loopback WebSocket with a token. See `docs/scf-write-ownership.md`. |
 | `scf-mcp/` | An MCP server over a `.scf` file, for AI assistants: a local stdio process with one tool per canonical query, plus lookup and the shot-prompt composite. Read-only by design. See `docs/scf-mcp-design.md`. |
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |

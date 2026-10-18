@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { call } from "../../state/api.ts";
 import { useEffect, useState } from "react";
-import { exec, registry, useStore } from "../../state/store.ts";
+import { registry, useStore } from "../../state/store.ts";
 import {
   type BoardName, type Exception, type Owner, type When,
 } from "@scf-core/ops/mediaOps.ts";

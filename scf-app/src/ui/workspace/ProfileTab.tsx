@@ -130,7 +130,6 @@ function Casting({ characterId, roles }: {
               e.preventDefault();
               if (cleanName(adding) === null) return;
               call("element.castActor", characterId, adding, roleType).then(() => {
-                useStore.getState().noteWrite();
                 setAdding("");
               }).catch((err: unknown) => fail("Could not cast", err));
             }}>
@@ -172,7 +171,6 @@ function ActorName({ roleId, value, onError }: {
       return;
     }
     call("element.reassignActor", roleId, clean).then(() => {
-      useStore.getState().noteWrite();
     }).catch((e: unknown) => onError("Could not change the actor", e));
   };
   const id = `ws-role-actor-${String(roleId)}`;
@@ -241,7 +239,6 @@ function Variants({ characterId, variants }: {
               e.preventDefault();
               if (cleanName(name) === null) return;
               call("element.addVariant", characterId, name).then(() => {
-                useStore.getState().noteWrite();
                 setName("");
               }).catch((err: unknown) => useStore.setState({
                 errorMessage: `Could not add the variant: ${

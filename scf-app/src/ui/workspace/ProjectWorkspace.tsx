@@ -68,7 +68,6 @@ function useSingleton(entity: string, defaultName: () => string): {
       creating.current = (async () => {
         const made = await call(
           "record.create", entity, { name: defaultName() });
-        useStore.getState().noteWrite();
         return made;
       })();
     }
@@ -148,7 +147,6 @@ function NumberingPolicyField({ single, value }: {
                 await call("element.setField", "project", target,
                                "numbering_policy", to);
                 setFailed(null);
-                useStore.getState().noteWrite();
               } catch (e) {
                 setFailed(e instanceof Error ? e.message : String(e));
               }
@@ -349,7 +347,6 @@ const slotOf = (rows: Row[], k: TitleKey): Row | undefined =>
 
 async function writeTitleKey(k: TitleKey, value: string): Promise<void> {
   await call("titlePage.setKey", k.key, value);
-  useStore.getState().noteWrite();
 }
 
 const SETTLE_MS = 700;

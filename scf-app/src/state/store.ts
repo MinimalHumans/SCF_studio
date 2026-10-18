@@ -198,10 +198,6 @@ interface AppState {
   lastSession: string | null;
   closeProject: () => Promise<void>;
   setAssetPrefix: (prefix: string) => void;
-  /** Retired: a write bumps `revision` itself now. Kept as a no-op
-   *  until its call sites are removed. */
-  noteWrite: () => void;
-  markChanged: () => void;
   openFromPicker: () => Promise<void>;
   /** Attach the asset folder to the film that is open. Must run
    *  inside a click: it opens a picker. */
@@ -701,10 +697,6 @@ export const useStore = create<AppState>((set, get) => ({
   dismissAttachError: () => set({ attachError: null }),
 
   setAssetPrefix: (assetPrefix) => set({ assetPrefix }),
-
-  noteWrite: () => undefined,
-
-  markChanged: () => undefined,
 
   resolveAssets: async () => {
     const root = get().projectRoot as FileSystemDirectoryHandle | null;

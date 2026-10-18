@@ -62,7 +62,6 @@ export function ReferenceBoard({ owner, board }: {
         const ids = (e as SharedSetError & { assetIds: number[] }).assetIds;
         setIncoming({ candidates: [], assetIds: ids, names: incoming.names });
         setShared({ purpose, role, names: e.sharedWith });
-        useStore.getState().noteWrite();
         return;
       }
       fail("Could not add to the board", e);

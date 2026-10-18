@@ -84,8 +84,6 @@ function Folder({ node, depth, selected, onSelect }: {
 function Relink({ prefix, onDone }: {
   prefix: string; onDone: () => void;
 }): JSX.Element {
-  const { noteWrite } = useStore();
-  const { markChanged } = useStore();
   const [to, setTo] = useState(prefix);
   const [plan, setPlan] = useState<RelinkChange[] | null>(null);
   const [applied, setApplied] = useState(0);
@@ -119,7 +117,6 @@ function Relink({ prefix, onDone }: {
                     void (async () => {
                       setApplied(await call("assets.applyRelink", plan));
                       setPlan(null);
-                      markChanged();
                       onDone();
                     })();
                   }}>
@@ -213,7 +210,7 @@ export function AssetPathRail(): JSX.Element {
  * rows is not one anybody wants to discover afterwards.
  */
 function ImportAssets({ onDone }: { onDone: () => void }): JSX.Element {
-  const { projectRoot, markChanged } = useStore();
+  const { projectRoot } = useStore();
   const [plan, setPlan] = useState<ImportPlan | null>(null);
   const [outside, setOutside] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -273,7 +270,6 @@ function ImportAssets({ onDone }: { onDone: () => void }): JSX.Element {
                         setCreated(n);
                         setPlan(null);
                         setBusy(false);
-                        markChanged();
                         onDone();
                       })();
                     }}>
@@ -300,7 +296,6 @@ function ImportAssets({ onDone }: { onDone: () => void }): JSX.Element {
 function AddToBundle({ ids, onDone }: {
   ids: number[]; onDone: () => void;
 }): JSX.Element {
-  const { noteWrite } = useStore();
   const [bundles, setBundles] = useState<BundleSummary[]>([]);
   const [target, setTarget] = useState<string>("");
   const [role, setRole] = useState("");
@@ -329,7 +324,6 @@ function AddToBundle({ ids, onDone }: {
         (plan.already.length > 0
           ? `, ${plan.already.length} already there` : ""));
       setBundles(await listBundles(exec));
-      noteWrite();
       onDone();
     })();
   };

@@ -23,7 +23,7 @@ import {
 } from "@scf-core/assets.ts";
 import { LARGE_FILE_BYTES, previewCapability } from "@scf-core/preview.ts";
 import type { RegionBox } from "@scf-core/anchors.ts";
-import { exec, useStore } from "../../state/store.ts";
+import { useStore } from "../../state/store.ts";
 import { acquire, release } from "../../files/objectUrlCache.ts";
 import { makeLocator } from "../../files/assetLocator.ts";
 import { ScopeError, type Tile } from "@scf-core/ops/mediaOps.ts";

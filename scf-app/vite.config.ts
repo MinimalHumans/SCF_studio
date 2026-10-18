@@ -55,6 +55,4 @@ export default defineConfig({
     __APP_COMMIT__: JSON.stringify(gitCommit()),
     __APP_BUILT__: JSON.stringify(new Date().toISOString().slice(0, 10)),
   },
-  worker: { format: "es" },
-  optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
 });

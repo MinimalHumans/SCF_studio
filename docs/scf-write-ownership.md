@@ -204,26 +204,39 @@ Done on branch `fileio`:
   watermark, external-change token, serialised writes; `openNodeSession`
   is the file-backed driver.
 
-- ✅ **Op registry** (`scf-core/src/ops/opTable.ts`): named ops,
-  validated plain-data arguments, `callOp` with an expected-revision
-  check. Covers records, shots, beats and title page so far; ops that
-  take live objects get plain-data wrappers as the window needs them.
+- ✅ **Op tables** in core. `ops/opTable.ts` is the small curated set
+  for tools: named, schema-checked arguments, `callOp` with an
+  expected-revision check. `ops/calls.ts` is the window's broader write
+  surface: every function the editor used to run itself, by name, with
+  its own positional arguments, typed from the functions. Wrappers
+  exist where a function took something that cannot cross a process
+  (`script.commit` for the link-then-store pair the editor ran in one
+  transaction, `import.apply` which re-parses the text host-side,
+  `undo.change`).
 - ✅ **`scf-host`**: transport-free core, WebSocket server with token,
   `Host` and `Origin` checks, discovery file. Tested with a real socket.
 - ✅ **`HostClient`** (`@minimalhumans/scf-host/client`) over a
   `HostTransport`; WebSocket adapter, plus a Node `connectToHost`. A
   Tauri `invoke()` adapter implements the same four-method interface.
 - ✅ **Dev integration**: the Vite plugin above.
+- ✅ **Window migration**: the window opens, creates, copies and
+  reads/writes through the host; every write is a named call from
+  `ops/calls.ts` (`state/api.ts`); the file chooser is a
+  `ProjectChooser` backed by the host's `list`; the SQLite worker, OPFS
+  copy, Save and Resume-from-OPFS are deleted. Done in three steps:
+  host methods + connection retry + chooser, every write moved to
+  `call()`, then the cutover and deletions.
 
 To do:
 
-5. **Window migration**: replace the SQLite worker, OPFS copy and Save
-   with the host; add the file chooser; delete the worker driver and
-   working-copy code; update README ("local-first, no server" becomes
-   "local-first, one local host").
 6. **MCP**: tools become `HostClient` calls; add write tools with §5.
 7. **Phase 4 reads**: promote the app-only queries to core so the host
    serves one read surface.
-8. **Docs**: update `scf-mcp-design.md` §1 and `conventions.md` §9, which
-   describe the MCP and the filesystem as read-only, and the
-   "no server" claims in the READMEs.
+8. **Docs**: update `scf-mcp-design.md` §1 once the MCP is a client
+   (the READMEs, `conventions.md` §9 and the editor notes are done).
+
+Known limits of the window migration: the import dialog no longer shows
+per-step progress (a call returns once); a change the MCP makes to the
+script text updates lists and records but not an editor that is already
+open on that script, which re-reads when it is next opened; a second
+browser tab is refused rather than shared.

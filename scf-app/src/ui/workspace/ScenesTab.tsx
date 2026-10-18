@@ -113,7 +113,6 @@ function SceneList({ characterId, scenes, rows, script }: {
   const save = (linkId: number, field: string, value: string): void => {
     call("element.setField", "scene_character", linkId, field,
              value === "" ? null : field === "variant_id" ? Number(value) : value)
-      .then(() => useStore.getState().noteWrite())
       .catch((e: unknown) => fail("Could not save", e));
   };
 
@@ -162,7 +161,6 @@ function SceneList({ characterId, scenes, rows, script }: {
                   {link === null || linkId === null ? (
                     <button className="tiny" onClick={() => {
                       call("element.linkToScene", characterId, r.sceneId)
-                        .then(() => useStore.getState().noteWrite())
                         .catch((e: unknown) => fail("Could not link", e));
                     }}>Link to scene</button>
                   ) : (
@@ -223,7 +221,6 @@ function SceneList({ characterId, scenes, rows, script }: {
                 setPick("");
                 if (v === "") return;
                 call("element.linkToScene", characterId, Number(v))
-                  .then(() => useStore.getState().noteWrite())
                   .catch((err: unknown) => fail("Could not link", err));
               }}>
         <option value="">+ add to a scene</option>
