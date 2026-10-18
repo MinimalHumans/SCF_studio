@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useMemo, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
 import { statesInForce } from "@scf-core/resolution.ts";
@@ -6,7 +7,7 @@ import { exec, registry, useStore } from "../../state/store.ts";
 import {
   presenceByScene, readScriptPresence, type ScriptPresence,
 } from "../../editor/characterPresence.ts";
-import { linkToScene, setField } from "@scf-core/ops/elementOps.ts";
+
 import { useQuery } from "../useQuery.ts";
 import {
   StoryStrip, useStoryScenes, type MarkLane, type StripScene,
@@ -110,7 +111,7 @@ function SceneList({ characterId, scenes, rows, script }: {
   const states = useStatesByScene(characterId, rows.map((r) => r.sceneId));
 
   const save = (linkId: number, field: string, value: string): void => {
-    setField(exec, registry, "scene_character", linkId, field,
+    call("element.setField", "scene_character", linkId, field,
              value === "" ? null : field === "variant_id" ? Number(value) : value)
       .then(() => useStore.getState().noteWrite())
       .catch((e: unknown) => fail("Could not save", e));
@@ -160,7 +161,7 @@ function SceneList({ characterId, scenes, rows, script }: {
                 <td>
                   {link === null || linkId === null ? (
                     <button className="tiny" onClick={() => {
-                      linkToScene(exec, characterId, r.sceneId)
+                      call("element.linkToScene", characterId, r.sceneId)
                         .then(() => useStore.getState().noteWrite())
                         .catch((e: unknown) => fail("Could not link", e));
                     }}>Link to scene</button>
@@ -221,7 +222,7 @@ function SceneList({ characterId, scenes, rows, script }: {
                 const v = e.target.value;
                 setPick("");
                 if (v === "") return;
-                linkToScene(exec, characterId, Number(v))
+                call("element.linkToScene", characterId, Number(v))
                   .then(() => useStore.getState().noteWrite())
                   .catch((err: unknown) => fail("Could not link", err));
               }}>

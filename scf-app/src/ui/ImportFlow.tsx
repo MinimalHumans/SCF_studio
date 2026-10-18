@@ -12,9 +12,9 @@
  */
 
 import { useMemo, useState } from "react";
-import { exec } from "../state/store.ts";
+import { call } from "../state/api.ts";
 import {
-  applyImport, defaultAcceptance, prepareImport, titleCase,
+  defaultAcceptance, prepareImport, titleCase,
   type ImportResult, type PreparedImport,
 } from "@scf-core/ops/importPipeline.ts";
 import type { CharacterProposal } from "@scf-core/proposals/propose.ts";
@@ -39,7 +39,11 @@ export function ImportFlow({ onClose, onDone }: {
     confidence: string; score: number; scenes: number; signals: string[];
   }>>([]);
   const [busy, setBusy] = useState(false);
-  const [busyStep, setBusyStep] = useState("");
+  // What was read, kept so the import can hand it to the host: the host
+  // parses it again, which keeps the staged proposals and the import in
+  // agreement without sending a parsed document across.
+  const [source, setSource] =
+    useState<{ text: string; kind: "fountain" | "fdx" } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [showRepairs, setShowRepairs] = useState(false);
@@ -66,6 +70,7 @@ export function ImportFlow({ onClose, onDone }: {
     }
     setFileName(file.name);
     setPrepared(p);
+    setSource({ text, kind });
     const defaults = defaultAcceptance(p.proposals);
     setChars(p.proposals.characters
       .slice()
@@ -89,7 +94,7 @@ export function ImportFlow({ onClose, onDone }: {
   };
 
   const doImport = async (): Promise<void> => {
-    if (prepared === null) return;
+    if (prepared === null || source === null) return;
     setBusy(true);
     setError(null);
     const characterNames = new Map<string, string>();
@@ -105,9 +110,14 @@ export function ImportFlow({ onClose, onDone }: {
       }
     }
     try {
-      const r = await applyImport(exec, prepared, {
-        scenes: true, characterNames, props: propNames,
-      }, setBusyStep);
+      const r = await call("import.apply", {
+        raw: source.text, kind: source.kind,
+        accepted: {
+          scenes: true,
+          characterNames: [...characterNames],
+          props: [...propNames],
+        },
+      });
       setResult(r);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -333,7 +343,7 @@ export function ImportFlow({ onClose, onDone }: {
               <button onClick={onClose}>Cancel</button>
               <button className="primary" disabled={busy}
                       onClick={() => void doImport()}>
-                {busy ? `Importing… ${busyStep}` : "Import"}
+                {busy ? "Importing…" : "Import"}
               </button>
             </div>
           </div>

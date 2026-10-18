@@ -1,25 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useRef, useState } from "react";
 import { q, type Row, type SqlValue } from "@scf-core/db.ts";
-import { createRecord } from "@scf-core/ops/recordOps.ts";
+
 import {
-  TITLE_KEYS, setTitleKey, titleSlot, type TitleKeyDef,
+  TITLE_KEYS, titleSlot, type TitleKeyDef,
 } from "@scf-core/ops/titlePageOps.ts";
 import {
   DEFAULT_NUMBERING_POLICY, type NumberingPolicy,
 } from "@scf-core/numbering.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
-import { setField } from "@scf-core/ops/elementOps.ts";
+
 import { useQuery } from "../useQuery.ts";
 import { Field } from "../fields/Field.tsx";
-import { asPolicy, NumberingPolicyConfirm } from "../NumberingPolicyConfirm.tsx";
+import {
+  asPolicy, NumberingPolicyConfirm,
+} from "../NumberingPolicyConfirm.tsx";
 import { AutoField } from "./AutoField.tsx";
 import { fail, FileIntake, type Incoming } from "./BoardParts.tsx";
 import { AssetPreview } from "../AssetPreview.tsx";
-import {
-  detachMedia, loadPosters, setPoster, type MediaTile,
-} from "@scf-core/ops/relatedMediaOps.ts";
-import { registerFiles, withCreatedAssets } from "@scf-core/ops/mediaOps.ts";
+import { loadPosters, type MediaTile } from "@scf-core/ops/relatedMediaOps.ts";
+import { withCreatedAssets } from "@scf-core/ops/mediaOps.ts";
 
 /**
  * ProjectWorkspace — the baseline of the film, in one place.
@@ -65,8 +66,8 @@ function useSingleton(entity: string, defaultName: () => string): {
   const ensure = (): Promise<number> => {
     if (creating.current === null) {
       creating.current = (async () => {
-        const made = await createRecord(
-          exec, registry, entity, { name: defaultName() });
+        const made = await call(
+          "record.create", entity, { name: defaultName() });
         useStore.getState().noteWrite();
         return made;
       })();
@@ -144,7 +145,7 @@ function NumberingPolicyField({ single, value }: {
             void (async () => {
               try {
                 const target = single.id ?? await single.ensure();
-                await setField(exec, registry, "project", target,
+                await call("element.setField", "project", target,
                                "numbering_policy", to);
                 setFailed(null);
                 useStore.getState().noteWrite();
@@ -227,12 +228,12 @@ function ProjectPoster({ single }: {
 
   const take = async (incoming: Incoming): Promise<void> => {
     try {
-      const { assetIds, created } = await registerFiles(
-        exec, incoming.candidates);
+      const { assetIds, created } = await call(
+        "media.registerFiles", incoming.candidates);
       const first = [...incoming.assetIds, ...assetIds][0];
       if (first === undefined) return;
       const projectId = single.id ?? await single.ensure();
-      const change = await setPoster(exec, projectId, first);
+      const change = await call("relatedMedia.setPoster", projectId, first);
       useStore.getState().recordChange(withCreatedAssets(change, created));
       setAdding(false);
     } catch (e) {
@@ -278,7 +279,7 @@ function ProjectPoster({ single }: {
                       "asset", Number(poster.asset["id"]))}>Open</button>
             <button className="ghost tiny"
                     title="Take it off the project. The asset stays."
-                    onClick={() => void detachMedia(exec, poster)
+                    onClick={() => void call("relatedMedia.detach", poster)
                       .then((c) => useStore.getState().recordChange(c))
                       .catch((e: unknown) => fail("Could not remove it", e))}>
               Remove
@@ -347,7 +348,7 @@ const slotOf = (rows: Row[], k: TitleKey): Row | undefined =>
   titleSlot(rows, k);
 
 async function writeTitleKey(k: TitleKey, value: string): Promise<void> {
-  await setTitleKey(exec, k.key, value);
+  await call("titlePage.setKey", k.key, value);
   useStore.getState().noteWrite();
 }
 

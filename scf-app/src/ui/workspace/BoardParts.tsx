@@ -3,14 +3,14 @@
  * BoardParts.tsx — the pieces a reference board and its exception cards
  * share: how files arrive, a tile, and what is in force "as of" a scene.
  */
+import { call } from "../../state/api.ts";
 import { useEffect, useMemo, useState } from "react";
 import type { ImportCandidate } from "@scf-core/assetImport.ts";
 import { resolveMedia } from "@scf-core/resolution.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
-  attach, BOARDS, confirmIdentity, detach, purposeLabel, registerFiles,
-  repurpose, setTileRole, SharedSetError, withCreatedAssets,
-  type BoardName, type Owner, type Purpose, type Tile,
+  BOARDS, purposeLabel, SharedSetError, withCreatedAssets, type BoardName,
+  type Owner, type Purpose, type Tile,
 } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { addressHandles, beginDrop } from "../../files/dropIntake.ts";
@@ -174,9 +174,10 @@ export async function placeFiles(
     incoming: Incoming, owner: Owner, board: BoardName, purpose: Purpose,
     options: { role?: string; shared?: "both" | "split"; bundleId?: number },
 ): Promise<ChangeUndo> {
-  const { assetIds, created } = await registerFiles(exec, incoming.candidates);
+  const { assetIds, created } = await call(
+    "media.registerFiles", incoming.candidates);
   try {
-    const change = await attach(exec, registry, owner, board,
+    const change = await call("media.attach", owner, board,
                                 [...incoming.assetIds, ...assetIds], purpose,
                                 options);
     return withCreatedAssets(change, created);
@@ -267,7 +268,7 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
                       ? "A variant's reference: edit it in Schema for now"
                       : undefined}
                     onChange={(e) => {
-                      run(repurpose(exec, registry, owner, board, tile,
+                      run(call("media.repurpose", owner, board, tile,
                                     e.target.value as Purpose),
                           "Could not change what it is for");
                     }}>
@@ -285,7 +286,7 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
                  onChange={(e) => setRole(e.target.value)}
                  onBlur={() => {
                    if (role.trim() === (tile.role ?? "")) return;
-                   run(setTileRole(exec, tile.link.id, role),
+                   run(call("media.setTileRole", tile.link.id, role),
                        "Could not set the role");
                  }}
                  onKeyDown={(e) => {
@@ -295,7 +296,7 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
         {tile.purpose === "identity" && tile.status !== "verified" && (
           <button className="tiny"
                   title="Proposed, not yet confirmed. Tools ignore it until it is."
-                  onClick={() => run(confirmIdentity(exec, tile.link.id),
+                  onClick={() => run(call("media.confirmIdentity", tile.link.id),
                                      "Could not confirm")}>
             Confirm ({tile.status ?? "unconfirmed"})
           </button>
@@ -328,7 +329,7 @@ export function BoardTile({ tile, board, owner, purposes, live, onChange,
           )}
           <button className="ghost tiny" onClick={onOpen}>Show in Assets</button>
           <button className="ghost tiny"
-                  onClick={() => run(detach(exec, tile), "Could not remove")}>
+                  onClick={() => run(call("media.detach", tile), "Could not remove")}>
             Remove
           </button>
         </div>

@@ -14,10 +14,11 @@
  * would produce a binding that looks scoped and applies everywhere.
  */
 
+import { call } from "../state/api.ts";
 import { useEffect, useState } from "react";
 import {
-  bindingSubjects, bindBundle, bundleReach,
-  type BindingSubject, type BundleReach as Reach,
+  bindingSubjects, bundleReach, type BindingSubject,
+  type BundleReach as Reach,
 } from "@scf-core/bundling.ts";
 import { sceneOrder } from "@scf-core/resolution.ts";
 import { q } from "@scf-core/db.ts";
@@ -154,7 +155,7 @@ function BindForm({ bundleId, scenes, onDone }: {
   const submit = (): void => {
     if (subjectId === null) return;
     void (async () => {
-      const id = await bindBundle(exec, registry, subjectType, subjectId,
+      const id = await call("bundle.bind", subjectType, subjectId,
                                   bundleId, {
         isBaseline: ranged ? false : baseline,
         sceneRangeStartId: start, sceneRangeEndId: end,

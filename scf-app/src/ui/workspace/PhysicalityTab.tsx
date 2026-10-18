@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useState } from "react";
 import { exec, useStore } from "../../state/store.ts";
-import { addHabit, addPlaceFor, cleanName } from "@scf-core/ops/elementOps.ts";
+import { cleanName } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import { ProfileRowFields, RowFields } from "./ProfileRowFields.tsx";
@@ -84,7 +85,7 @@ export function PhysicalityTab({ characterId }: { characterId: number }):
           ))}
           <form className="ws-add-row" onSubmit={(e) => {
             e.preventDefault();
-            addHabit(exec, characterId, habit).then(() => {
+            call("element.addHabit", characterId, habit).then(() => {
               useStore.getState().noteWrite(); setHabit("");
             }).catch((err: unknown) => fail("Could not add the habit", err));
           }}>
@@ -139,7 +140,7 @@ export function PhysicalityTab({ characterId }: { characterId: number }):
                     const v = e.target.value;
                     setPlace("");
                     if (v === "") return;
-                    addPlaceFor(exec, characterId, Number(v))
+                    call("element.addPlaceFor", characterId, Number(v))
                       .then(() => useStore.getState().noteWrite())
                       .catch((err: unknown) => fail("Could not add it", err));
                   }}>

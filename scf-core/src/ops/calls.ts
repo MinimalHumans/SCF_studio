@@ -41,7 +41,9 @@ import {
 } from "../screenplay/rowModel.ts";
 import * as element from "./elementOps.ts";
 import * as features from "./features.ts";
-import { applyImport } from "./importPipeline.ts";
+import {
+  applyImport, prepareImport, type ImportResult,
+} from "./importPipeline.ts";
 import * as integrity from "./integrity.ts";
 import { unifySpelling } from "./mediaChecks.ts";
 import * as media from "./mediaOps.ts";
@@ -107,6 +109,29 @@ async function commitScript(
   });
 }
 
+export interface ScriptImport {
+  /** The file as text; the host parses it again, so the staging
+   *  screen's proposals and the import cannot disagree. */
+  raw: string;
+  kind: "fountain" | "fdx";
+  accepted: {
+    scenes: boolean;
+    /** Cue key → final display name. */
+    characterNames: [string, string][];
+    /** Prop key → final display name. */
+    props: [string, string][];
+  };
+}
+
+async function importScreenplay(
+    exec: SqlExec, p: ScriptImport): Promise<ImportResult> {
+  return applyImport(exec, prepareImport(p.raw, p.kind), {
+    scenes: p.accepted.scenes,
+    characterNames: new Map(p.accepted.characterNames),
+    props: new Map(p.accepted.props),
+  });
+}
+
 function undoChange(exec: SqlExec, change: ChangeUndo): Promise<void> {
   return withTransaction(exec, () => applyUndoChange(exec, change));
 }
@@ -130,11 +155,7 @@ export const CALLS = {
   "script.tagProp": withExec(features.tagPropRange),
   "script.linkPropToLine": withExec(features.linkPropToLineScene),
   "script.publishVersion": withExec(features.publishVersion),
-  "import.apply": withExec(
-    (exec: SqlExec,
-     prepared: Parameters<typeof applyImport>[1],
-     accepted: Parameters<typeof applyImport>[2]) =>
-      applyImport(exec, prepared, accepted)),
+  "import.apply": withExec(importScreenplay),
   "titlePage.setKey": withExec(setTitleKey),
 
   // scenes and structure
@@ -225,7 +246,7 @@ export type CallName = keyof typeof CALLS;
 export type CallArgs<K extends CallName> =
   (typeof CALLS)[K] extends Callable<infer A, unknown> ? A : never;
 export type CallResult<K extends CallName> =
-  (typeof CALLS)[K] extends Callable<never[], infer R> ? R : never;
+  (typeof CALLS)[K] extends Callable<infer _A, infer R> ? R : never;
 
 /** Thrown for a name that is not in the table. */
 export class UnknownCallError extends Error {

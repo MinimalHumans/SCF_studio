@@ -13,10 +13,10 @@
  * enforce).
  */
 
+import { call } from "../state/api.ts";
 import { useEffect, useState } from "react";
 import {
-  EMPTY_REPORT, deleteBeat, deletePropTag, deleteSceneCharacter,
-  scanIntegrity, unanchor, unanchorBeat, type IntegrityReport,
+  EMPTY_REPORT, scanIntegrity, type IntegrityReport,
 } from "@scf-core/ops/integrity.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 
@@ -84,7 +84,7 @@ export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
                 </button>
                 <button className="ghost tiny"
                         title="Remove the tag. The prop and its other tags stay."
-                        onClick={() => act(() => deletePropTag(exec, t.id))}>
+                        onClick={() => act(() => call("integrity.deletePropTag", t.id))}>
                   remove tag
                 </button>
               </li>
@@ -119,11 +119,11 @@ export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
                 )}
                 <button className="ghost tiny"
                         title="Keep the beat, drop its dead line anchor."
-                        onClick={() => act(() => unanchorBeat(exec, b.id))}>
+                        onClick={() => act(() => call("integrity.unanchorBeat", b.id))}>
                   keep, unanchor
                 </button>
                 <button className="ghost tiny"
-                        onClick={() => act(() => deleteBeat(exec, b.id))}>
+                        onClick={() => act(() => call("integrity.deleteBeat", b.id))}>
                   delete beat
                 </button>
               </li>
@@ -151,7 +151,7 @@ export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
                 </button>
                 <button className="ghost tiny"
                         title="Keep the row, drop its dead line anchor."
-                        onClick={() => act(() => unanchor(exec, registry, a))}>
+                        onClick={() => act(() => call("integrity.unanchor", a))}>
                   keep, unanchor
                 </button>
               </li>
@@ -188,7 +188,7 @@ export function IntegrityPanel({ liveLineIds, onClose, onChanged }: {
                 </button>
                 <button className="ghost tiny"
                         onClick={() =>
-                          act(() => deleteSceneCharacter(exec, l.id))}>
+                          act(() => call("integrity.deleteSceneCharacter", l.id))}>
                   remove link
                 </button>
               </li>

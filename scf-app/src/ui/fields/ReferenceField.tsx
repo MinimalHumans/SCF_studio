@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useState } from "react";
 import type { FieldDef } from "@scf-core/registry.ts";
 import { q, type Row, type SqlValue } from "@scf-core/db.ts";
-import { createRecord } from "@scf-core/ops/recordOps.ts";
+
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
 import { sceneShort } from "@scf-core/displayName.ts";
 import { useQuery } from "../useQuery.ts";
@@ -76,7 +77,7 @@ export function ReferenceField({ def, value, onChange }: {
   const createInline = async (): Promise<void> => {
     const name = filter.trim();
     if (name === "") return;
-    const id = await createRecord(exec, registry, target,
+    const id = await call("record.create", target,
                                   { [nameField]: name });
     onChange(id);
     setOpen(false);

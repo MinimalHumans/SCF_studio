@@ -21,13 +21,9 @@ import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef,
          type NavigableSubject } from "./registryGraph.ts";
 import { suggestSaveAsName } from "./saveName.ts";
-import {
-  createRecord, deleteRecord, updateRecord,
-} from "@scf-core/ops/recordOps.ts";
 import { rowLabel } from "@scf-core/displayName.ts";
-import { restoreFromUndo, type UndoEntry } from "@scf-core/ops/undoDelete.ts";
-import { applyUndoChange, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
-import { withTransaction } from "@scf-core/db.ts";
+import { type UndoEntry } from "@scf-core/ops/undoDelete.ts";
+import { type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import {
   forgetHandle, forgetRoot, recallHandle, recallPairFor, recallRoot,
   rememberHandle, rememberPair, rememberRoot,
@@ -36,6 +32,7 @@ import type { ProjectFinding } from "@scf-core/project.ts";
 import { resolveAllAssets, type ResolutionReport }
   from "@scf-core/assets.ts";
 import { makeLocator } from "../files/assetLocator.ts";
+import { call } from "./api.ts";
 import { revokeAll } from "../files/objectUrlCache.ts";
 import { clearResolutions } from "../files/thumbnailCache.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
@@ -986,15 +983,12 @@ export const useStore = create<AppState>((set, get) => ({
     const edef = registry.entities.get(draft.entity);
     if (edef === undefined) return null;
     if (draft.id === null) {
-      const newId = await createRecord(
-        exec, registry, draft.entity, draft.values);
-      session.noteWrite();
+      const newId = await call("record.create", draft.entity, draft.values);
       await get().openEntityRow(draft.entity, newId);
       return newId;
     }
 
-    await updateRecord(exec, registry, draft.entity, draft.id, draft.values);
-    session.noteWrite();
+    await call("record.update", draft.entity, draft.id, draft.values);
     await get().openEntityRow(draft.entity, draft.id);
     return draft.id;
    } catch (e) {
@@ -1007,14 +1001,13 @@ export const useStore = create<AppState>((set, get) => ({
   deleteRow: async (entity, id) => {
     let undo: UndoEntry | null = null;
     try {
-      undo = await deleteRecord(exec, registry, entity, id);
+      undo = await call("record.delete", entity, id);
     } catch (e) {
       set({ errorMessage: `Delete failed: ${
         e instanceof Error ? e.message : String(e)}` });
       return;
     }
     const { openRow } = get();
-    session.noteWrite();
     set({
       undo,
       lastChange: null,
@@ -1027,8 +1020,7 @@ export const useStore = create<AppState>((set, get) => ({
     const undo = get().undo;
     if (undo === null) return;
     try {
-      await restoreFromUndo(exec, undo);
-      session.noteWrite();
+      await call("undo.delete", undo);
       set({ undo: null });
     } catch (e) {
       set({ errorMessage: `Undo failed: ${
@@ -1048,8 +1040,7 @@ export const useStore = create<AppState>((set, get) => ({
     const change = get().lastChange;
     if (change === null) return;
     try {
-      await withTransaction(exec, () => applyUndoChange(exec, change));
-      session.noteWrite();
+      await call("undo.change", change);
       set({ lastChange: null });
     } catch (e) {
       set({ errorMessage: `Undo failed: ${

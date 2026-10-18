@@ -17,10 +17,11 @@
  * is marked, because retrieval is by intent and the miss is silent.
  */
 
+import { call } from "../state/api.ts";
 import { useEffect, useMemo, useState } from "react";
 import {
-  applyBundleAdd, bundleMembers, bundlesForAsset, planBundleAdd,
-  removeBundleMember, setMemberRole, unboundBundleIds, type BundleMember,
+  bundleMembers, bundlesForAsset, planBundleAdd, unboundBundleIds,
+  type BundleMember,
 } from "@scf-core/bundling.ts";
 import { listAssets, type AssetRow } from "@scf-core/assetIndex.ts";
 import { q } from "@scf-core/db.ts";
@@ -76,7 +77,7 @@ export function BundleAssets({ bundleId }: {
     void (async () => {
       const plan = await planBundleAdd(exec, bundleId, [...chosen]);
       const typed = adoptSpelling(role, roles);
-      await applyBundleAdd(exec, bundleId, plan.add,
+      await call("bundle.addAssets", bundleId, plan.add,
                            typed === "" ? null : typed);
       setChosen(new Set());
       setPicking(false);
@@ -138,7 +139,7 @@ export function BundleAssets({ bundleId }: {
                      void (async () => {
                        const typed = adoptSpelling(e.target.value, roles);
                        if (typed === (m.role ?? "")) return;
-                       await setMemberRole(exec, m.linkId, typed);
+                       await call("bundle.setMemberRole", m.linkId, typed);
                        setMembers(await bundleMembers(exec, bundleId));
                        noteWrite();
                      })();
@@ -147,7 +148,7 @@ export function BundleAssets({ bundleId }: {
                     title="Remove from this bundle. The asset itself stays."
                     onClick={() => {
                       void (async () => {
-                        await removeBundleMember(exec, m.linkId);
+                        await call("bundle.removeMember", m.linkId);
                         setMembers(await bundleMembers(exec, bundleId));
                         noteWrite();
                       })();

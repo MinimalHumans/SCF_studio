@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
-  canReorder, loadBoard, moveTile, purposeHelp, sameSequence, purposeLabel, purposesFor, SharedSetError,
-  type BoardData, type BoardName, type Owner, type Purpose, type Tile,
+  canReorder, loadBoard, purposeHelp, sameSequence, purposeLabel, purposesFor,
+  SharedSetError, type BoardData, type BoardName, type Owner, type Purpose,
+  type Tile,
 } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { assetStanding, type Standing }
@@ -195,7 +197,7 @@ files. They are still attached until removed."
           const next = tiles.slice(i + 1).find((x) => sameSequence(t, x));
           const move = (to: Tile | undefined, d: -1 | 1) => to === undefined
             ? undefined
-            : () => void moveTile(exec, owner, t, to, d).then((c) => {
+            : () => void call("media.moveTile", owner, t, to, d).then((c) => {
                 if (c !== null) done(c);
               }).catch((e: unknown) => fail("Could not move it", e));
           return (

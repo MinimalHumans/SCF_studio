@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useMemo, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
@@ -7,9 +8,7 @@ import {
 import { useQuery } from "../useQuery.ts";
 import { CharacterFace } from "./CharacterFace.tsx";
 import { KINDS, type SubjectKind } from "../../state/subjectKinds.ts";
-import {
-  cleanName, createSubject, subjectsNamed,
-} from "@scf-core/ops/elementOps.ts";
+import { cleanName, subjectsNamed } from "@scf-core/ops/elementOps.ts";
 
 /**
  * Every character, with a way to make another at the top.
@@ -82,7 +81,7 @@ export function SubjectRail({ kind }: { kind: SubjectKind }): JSX.Element {
       }
     }
     try {
-      const id = await createSubject(exec, kind, name);
+      const id = await call("element.createSubject", kind, name);
       useStore.getState().noteWrite();
       setCreating(false);
       setDraftName("");
