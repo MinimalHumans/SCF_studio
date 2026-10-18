@@ -76,10 +76,21 @@ runtime.
 
 ### 3.1 Development
 
-`npm run dev` in `scf-app` starts the host and Vite as one command (a
-Vite plugin that spawns the host in `configureServer`, so its lifetime is
-tied to the dev server). Direct `vite` without the plugin is not a
-supported path.
+`npm run dev` in `scf-app` starts the host and Vite as one command. A
+Vite plugin (`scf-app/tools/scfHostPlugin.ts`) starts the host
+**inside the dev server's process**, loading `scf-host` and `scf-core`
+from TypeScript source, so there is no build step and an edit takes
+effect on restart like any other. The host's lifetime is the dev
+server's, including on Ctrl-C. Direct use of a bare host is the
+`scf-host` command.
+
+The plugin allow-lists the dev server's own origin and serves the
+connection details (`{url, token}`) at `/__scf-host`. Vite's dev server
+sends permissive CORS headers, so that endpoint answers only a request
+the browser marks same-origin, with a matching `Host`, and sets no CORS
+header; another site cannot read the token. The host also writes the
+discovery file, so an MCP started during development shares this host.
+If a host is already running the plugin refuses to start a second.
 
 ### 3.2 Startup from an MCP call
 
@@ -193,16 +204,19 @@ Done on branch `fileio`:
   watermark, external-change token, serialised writes; `openNodeSession`
   is the file-backed driver.
 
+- ✅ **Op registry** (`scf-core/src/ops/opTable.ts`): named ops,
+  validated plain-data arguments, `callOp` with an expected-revision
+  check. Covers records, shots, beats and title page so far; ops that
+  take live objects get plain-data wrappers as the window needs them.
+- ✅ **`scf-host`**: transport-free core, WebSocket server with token,
+  `Host` and `Origin` checks, discovery file. Tested with a real socket.
+- ✅ **`HostClient`** (`@minimalhumans/scf-host/client`) over a
+  `HostTransport`; WebSocket adapter, plus a Node `connectToHost`. A
+  Tauri `invoke()` adapter implements the same four-method interface.
+- ✅ **Dev integration**: the Vite plugin above.
+
 To do:
 
-1. **Op registry** in core: name, argument validation, handler; one
-   table for the window and the MCP.
-2. **`scf-host`**: session map, per-file queue, read-only `query`,
-   registry file, WebSocket endpoint with token and origin check, event
-   push. Tests with a real socket.
-3. **`HostClient`** (browser and Node).
-4. **Dev integration**: the Vite plugin; `npm run dev` unchanged for
-   the developer.
 5. **Window migration**: replace the SQLite worker, OPFS copy and Save
    with the host; add the file chooser; delete the worker driver and
    working-copy code; update README ("local-first, no server" becomes
