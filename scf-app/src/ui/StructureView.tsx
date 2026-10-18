@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useMemo } from "react";
-import { newUuid, type Row } from "@scf-core/db.ts";
+import type { Row } from "@scf-core/db.ts";
 import {
   actOutline, deriveStructure, sceneOrderHint, structureFindings,
   type Span, type Structure,
 } from "@scf-core/structure.ts";
-import { sceneLabel } from "../state/displayName.ts";
+import { sceneLabel } from "@scf-core/displayName.ts";
 import { exec, useStore } from "../state/store.ts";
-import { renumberSpans } from "@scf-core/ops/structureCommit.ts";
+import { createSpan, renumberSpans } from "@scf-core/ops/structureCommit.ts";
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
 
@@ -66,15 +66,7 @@ export function StructureView(): JSX.Element {
 
   const create = async (table: "act" | "sequence",
                         sceneId: number): Promise<void> => {
-    // NOT "Act 3". A stored name built from a count is a label that
-    // starts true and becomes a lie the moment a boundary moves — the
-    // exact denormalization the number is there to avoid. The number is
-    // derived and displayed beside the name; the name is a title.
-    const label = table === "act" ? "Untitled act" : "Untitled sequence";
-    await exec(
-      `INSERT INTO ${table} (uuid, name, start_scene_id) VALUES (?, ?, ?)`,
-      [newUuid(), label, sceneId]);
-    await renumberSpans(exec);
+    await createSpan(exec, table, sceneId);
     useStore.setState((s) => ({ revision: s.revision + 1 }));
   };
 

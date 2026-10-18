@@ -22,7 +22,8 @@ import { withTransaction } from "@scf-core/db.ts";
 import { lineState, loadLines, mintLineId } from "../editor/lineState.ts";
 import { planSceneMove, sceneBlocks } from "../editor/sceneMove.ts";
 import {
-  duplicateSceneRow, removeSceneCascade,
+  duplicateSceneRow, removeSceneCascade, syncSceneFromHeading,
+  unlinkLineScene,
 } from "@scf-core/ops/sceneOps.ts";
 import { reanchorSpansForMove } from "@scf-core/ops/structureCommit.ts";
 import {
@@ -869,9 +870,7 @@ export function ScriptView(): JSX.Element {
   }, []);
 
   const unlinkScene = async (notice: StaleNotice): Promise<void> => {
-    await exec(
-      "UPDATE screenplay_lines SET scene_id = NULL WHERE uuid = ?",
-      [notice.uuid]);
+    await unlinkLineScene(exec, notice.uuid);
     const block = prevBlocksRef.current.get(notice.uuid);
     if (block !== undefined) block.sceneId = null;
     setStale((old) => old.filter((x) => x.uuid !== notice.uuid));
@@ -891,27 +890,8 @@ export function ScriptView(): JSX.Element {
    */
   const syncScene = async (notice: StaleNotice): Promise<void> => {
     const fields = sceneSyncFromHeading(notice.headingText);
-    let locationId: number | null = null;
-    if (fields.location !== null) {
-      const hit = await exec(
-        "SELECT id FROM location WHERE upper(name) = upper(?)",
-        [fields.location.trim()]);
-      locationId = (hit[0]?.["id"] as number | undefined) ?? null;
-    }
-    await exec(
-      "UPDATE scene SET name = ?, " +
-      "int_ext = COALESCE(?, int_ext), " +
-      "time_of_day = COALESCE(?, time_of_day), " +
-      "location_id = COALESCE(?, location_id), " +
-      "updated_at = datetime('now') WHERE id = ?",
-      [fields.name,
-       fields.int_ext !== null
-         ? { INT: "interior", EXT: "exterior",
-             "INT/EXT": "int/ext" }[fields.int_ext] ?? null : null,
-       fields.time_of_day !== null
-         ? fields.time_of_day.toLowerCase() : null,
-       locationId,
-       notice.sceneId]);
+    const locationId =
+      await syncSceneFromHeading(exec, notice.sceneId, fields);
     setStale((old) => old.filter((s) => s.uuid !== notice.uuid));
     say(fields.location !== null && locationId === null
       ? `renamed — "${fields.location}" is not a location yet, so Commit will offer to create it`

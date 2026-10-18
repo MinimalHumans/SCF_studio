@@ -9,7 +9,7 @@ import {
   addBeat, addShot, isCut, moveShot, removeBeat, removeShot,
   SCENE_SCRIPT_SQL, setShotCut, summarize, updateField,
 } from "@scf-core/ops/shootOps.ts";
-import { sceneLabel } from "../state/displayName.ts";
+import { sceneLabel } from "@scf-core/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";

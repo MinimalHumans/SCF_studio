@@ -14,7 +14,7 @@ import {
 import type { ScreenplayRow } from "../src/screenplay/rowModel.ts";
 import {
   classifySection, commitStructure, planCommitStructure,
-  previewDerivedNumbering, reanchorSpansForMove, renumberSpans,
+  createSpan, previewDerivedNumbering, reanchorSpansForMove, renumberSpans,
   setNumberingMode,
 } from "../src/ops/structureCommit.ts";
 import { initScreenplayTables } from "../src/screenplay/rowModel.ts";
@@ -622,5 +622,36 @@ describe("deleting a boundary scene", () => {
     await reanchorSpansForMove(db.exec, 3, [1, 2, 3]);
     const acts = await db.exec("SELECT start_scene_id FROM act");
     expect(acts[0]!["start_scene_id"]).toBe(3);
+  });
+});
+
+describe("createSpan", () => {
+  test("starts an untitled act at the scene and numbers it", async () => {
+    const db = await freshDb();
+    await db.exec("INSERT INTO scene (name, scene_number) VALUES ('A', '1')");
+    await db.exec("INSERT INTO scene (name, scene_number) VALUES ('B', '2')");
+    await db.exec(
+      "INSERT INTO screenplay_lines (uuid, line_order, line_type, content, " +
+      "scene_id) VALUES ('l1', 1, 'heading', 'A', 1), " +
+      "('l2', 2, 'heading', 'B', 2)");
+    await createSpan(db.exec, "act", 1);
+    await createSpan(db.exec, "act", 2);
+    const acts = await db.exec(
+      "SELECT name, act_number, start_scene_id, uuid FROM act " +
+      "ORDER BY start_scene_id");
+    expect(acts.map((a) => a["name"]))
+      .toEqual(["Untitled act", "Untitled act"]);
+    expect(acts.map((a) => a["act_number"])).toEqual([1, 2]);
+    expect(acts.every((a) => typeof a["uuid"] === "string")).toBe(true);
+    db.close();
+  });
+
+  test("a sequence goes in the sequence table", async () => {
+    const db = await freshDb();
+    await db.exec("INSERT INTO scene (name, scene_number) VALUES ('A', '1')");
+    await createSpan(db.exec, "sequence", 1);
+    const rows = await db.exec("SELECT name FROM sequence");
+    expect(rows.map((r) => r["name"])).toEqual(["Untitled sequence"]);
+    db.close();
   });
 });

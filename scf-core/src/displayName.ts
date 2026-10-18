@@ -20,8 +20,8 @@
  *     files (hollow_creek's numeric names) would stay unreadable.
  */
 
-import type { Row } from "@scf-core/db.ts";
-import type { EntityDef, FieldDef } from "@scf-core/registry.ts";
+import type { Row } from "./db.ts";
+import type { EntityDef, FieldDef } from "./registry.ts";
 
 /** Resolves a reference to the label of the row it points at. */
 export type NameLookup =

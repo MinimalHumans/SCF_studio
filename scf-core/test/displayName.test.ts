@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from "vitest";
-import registryJson from "../../scf-core/registry/registry.json"
-  with { type: "json" };
+import registryJson from "../registry/registry.json" with { type: "json" };
 import { loadRegistry, type RegistryJson }
-  from "../../scf-core/src/registry.ts";
+  from "../src/registry.ts";
 import {
   isComposedLink, linkLabel, linkQualifiers, rowLabel, sceneLabel,
   sceneShort, type NameLookup,
-} from "../src/state/displayName.ts";
+} from "../src/displayName.ts";
 
 const registry = loadRegistry(registryJson as unknown as RegistryJson);
 const def = (name: string) => {

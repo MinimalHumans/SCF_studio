@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
-import { sceneLabel } from "../state/displayName.ts";
+import { sceneLabel } from "@scf-core/displayName.ts";
 import { useQuery } from "./useQuery.ts";
 
 /**

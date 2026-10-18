@@ -6,7 +6,7 @@ import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "@scf-core/structure.ts";
 import { useQuery } from "./useQuery.ts";
 import { ShotFrame, useShotFrames } from "./ShotFrame.tsx";
 import { useRememberedOptions } from "./useRememberedOptions.ts";
-import { sceneLabel } from "../state/displayName.ts";
+import { sceneLabel } from "@scf-core/displayName.ts";
 import { beatBanner } from "../state/shotlist.ts";
 import {
   ASPECT_CHOICES, BOARD_TABS, boardAspect, buildBoard, step,

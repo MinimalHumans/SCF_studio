@@ -6,7 +6,7 @@ import { useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
 import { ShotFrame, useShotFrames } from "./ShotFrame.tsx";
 import { useRememberedOptions } from "./useRememberedOptions.ts";
-import { sceneLabel } from "../state/displayName.ts";
+import { sceneLabel } from "@scf-core/displayName.ts";
 import {
   actionText, beatBanner, buildSheets, COLUMN_LABEL, runningTime,
   seconds, shortAngle, shortSize, SHOTLIST_COLUMNS, sizeLegend, tidy,

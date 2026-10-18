@@ -13,18 +13,18 @@ import { create } from "zustand";
 import registryJson from "@registry/registry.json" with { type: "json" };
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
-import { initDatabase, newUuid, q, type Row, type SqlValue }
+import { initDatabase, q, type Row, type SqlValue }
   from "@scf-core/db.ts";
 import { SqlWorkerClient } from "../db/workerClient.ts";
 import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef,
          type NavigableSubject } from "./registryGraph.ts";
 import { suggestSaveAsName } from "./saveName.ts";
-import { reanchorSpansForMove } from "@scf-core/ops/structureCommit.ts";
-import { rowLabel } from "./displayName.ts";
 import {
-  captureForUndo, restoreFromUndo, type UndoEntry,
-} from "@scf-core/ops/undoDelete.ts";
+  createRecord, deleteRecord, updateRecord,
+} from "@scf-core/ops/recordOps.ts";
+import { rowLabel } from "@scf-core/displayName.ts";
+import { restoreFromUndo, type UndoEntry } from "@scf-core/ops/undoDelete.ts";
 import { applyUndoChange, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { withTransaction } from "@scf-core/db.ts";
 import {
@@ -39,7 +39,6 @@ import { revokeAll } from "../files/objectUrlCache.ts";
 import { clearResolutions } from "../files/thumbnailCache.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
 import type { RootMode, RootPermission } from "../files/fileAdapter.ts";
-import { renumberForScene } from "@scf-core/ops/shootOps.ts";
 
 export { suggestSaveAsName };
 
@@ -1007,48 +1006,15 @@ export const useStore = create<AppState>((set, get) => ({
     if (draft === null) return null;
     const edef = registry.entities.get(draft.entity);
     if (edef === undefined) return null;
-    const fieldNames = edef.fields.map((f) => f.name);
-
     if (draft.id === null) {
-      // INSERT with uuid stamped, same as Python create_entity.
-      const filtered = Object.entries(draft.values)
-        .filter(([k, v]) => fieldNames.includes(k) &&
-                            v !== null && v !== "");
-      const cols = [...filtered.map(([k]) => k), "uuid"];
-      const vals: SqlValue[] = [...filtered.map(([, v]) => v), newUuid()];
-      await exec(
-        `INSERT INTO ${q(draft.entity)} ` +
-        `(${cols.map(q).join(", ")}) ` +
-        `VALUES (${cols.map(() => "?").join(", ")})`, vals);
-      const idRow = await exec("SELECT last_insert_rowid() AS id");
-      const newId = idRow[0]?.["id"] as number;
+      const newId = await createRecord(
+        exec, registry, draft.entity, draft.values);
       set({ revision: get().revision + 1 });
       await get().openEntityRow(draft.entity, newId);
       return newId;
     }
 
-    // A shot moved to another scene is renumbered before the write, so
-    // the form does not save "5A" onto scene 66. The scene renumbering
-    // case is the opposite and leaves the number alone — see
-    // renumberForScene.
-    if (draft.entity === "shot") {
-      const target = draft.values["scene_id"];
-      if (target !== null && target !== undefined && target !== "") {
-        const renumbered = await renumberForScene(
-          exec, draft.id, Number(target));
-        if (renumbered !== null) draft.values["shot_number"] = renumbered;
-      }
-    }
-
-    // Whole-row UPDATE; updated_at written faithfully, for the
-    // collaboration case.
-    const sets = fieldNames.map((f) => `${q(f)} = ?`).join(", ");
-    const vals: SqlValue[] =
-      fieldNames.map((f) => draft.values[f] ?? null);
-    await exec(
-      `UPDATE ${q(draft.entity)} SET ${sets}, ` +
-      `updated_at = datetime('now') WHERE id = ?`,
-      [...vals, draft.id]);
+    await updateRecord(exec, registry, draft.entity, draft.id, draft.values);
     set({ revision: get().revision + 1 });
     await get().openEntityRow(draft.entity, draft.id);
     return draft.id;
@@ -1062,32 +1028,7 @@ export const useStore = create<AppState>((set, get) => ({
   deleteRow: async (entity, id) => {
     let undo: UndoEntry | null = null;
     try {
-      const existing = await exec(
-        `SELECT * FROM ${q(entity)} WHERE id = ?`, [id]);
-      undo = await captureForUndo(
-        exec, registry, entity, id,
-        existing[0] === undefined
-          ? entity : rowLabel(registry.entities.get(entity), entity,
-                              existing[0]));
-      // An act or sequence is anchored to a START SCENE, so deleting
-      // that scene leaves the span pointing at nothing: the row is not
-      // deleted, it just stops appearing in the structure, and every
-      // scene it held falls out of any act. Same answer as moving the
-      // anchor scene — hand the boundary to whatever now sits where the
-      // old one did.
-      if (entity === "scene") {
-        const headings = await exec(
-          "SELECT scene_id FROM screenplay_lines " +
-          "WHERE line_type = 'heading' AND scene_id IS NOT NULL " +
-          "ORDER BY line_order");
-        const order: number[] = [];
-        for (const row of headings) {
-          const sceneId = Number(row["scene_id"]);
-          if (!order.includes(sceneId)) order.push(sceneId);
-        }
-        await reanchorSpansForMove(exec, id, order);
-      }
-      await exec(`DELETE FROM ${q(entity)} WHERE id = ?`, [id]);
+      undo = await deleteRecord(exec, registry, entity, id);
     } catch (e) {
       set({ errorMessage: `Delete failed: ${
         e instanceof Error ? e.message : String(e)}` });

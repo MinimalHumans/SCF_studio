@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useState } from "react";
 import type { EntityDef } from "@scf-core/registry.ts";
-import { newUuid, q } from "@scf-core/db.ts";
+import { q } from "@scf-core/db.ts";
+import { createRecord } from "@scf-core/ops/recordOps.ts";
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
 import {
@@ -52,10 +53,8 @@ export function JunctionQuickAdd({ edef, anchorField, anchorId }: {
   if (other === undefined || target === undefined) return null;
 
   const add = async (otherId: number): Promise<void> => {
-    await exec(
-      `INSERT INTO ${q(edef.name)} ` +
-      `(${q(anchorField)}, ${q(other.name)}, uuid) VALUES (?, ?, ?)`,
-      [anchorId, otherId, newUuid()]);
+    await createRecord(exec, registry, edef.name,
+                       { [anchorField]: anchorId, [other.name]: otherId });
     setOpen(false);
     setFilter("");
     setRevision((s) => ({ revision: s.revision + 1 }));
