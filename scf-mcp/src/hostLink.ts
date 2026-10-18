@@ -35,6 +35,8 @@ import {
 } from "@minimalhumans/scf-host/registryFile";
 
 const require = createRequire(import.meta.url);
+// Loaded like `node:sqlite` in scf-core: a builtin Vite does not know.
+const { isSea } = require("node:sea") as { isSea: () => boolean };
 
 export interface HostLinkOptions {
   /** Where the host keeps its discovery file; the user's by default. */
@@ -64,9 +66,17 @@ function envNumber(name: string, fallback: number): number {
   return Number.isFinite(v) && v > 0 ? v : fallback;
 }
 
-/** The host's entry point: built, or source when this runs from source. */
-function serveEntry(): string {
-  return require.resolve("@minimalhumans/scf-host/serve");
+/**
+ * How to run a host, after the executable: the host's entry point,
+ * built or source, under the same Node flags as this process, so a
+ * server run from source starts a host that runs from source too. In
+ * the desktop app this process is the bundled `scf` executable
+ * (scf-app/tools/buildSidecar.mjs), which is the host as well.
+ */
+function hostArgs(): string[] {
+  if (isSea()) return ["host"];
+  return [...process.execArgv,
+          require.resolve("@minimalhumans/scf-host/serve")];
 }
 
 function startHostProcess(dir: string, idleExitMs: number): void {
@@ -74,13 +84,10 @@ function startHostProcess(dir: string, idleExitMs: number): void {
   // Mode 0600, and only stderr: stdout carries the host's token.
   const log = openSync(join(dir, "host.log"), "a", 0o600);
   try {
-    // The same Node flags as this process, so a server run from source
-    // (type stripping, the `scf-source` condition) starts a host that
-    // runs from source too.
     const child = spawn(process.execPath, [
-      ...process.execArgv, serveEntry(),
+      ...hostArgs(),
       "--dir", dir, "--idle-exit", String(idleExitMs),
-    ], { detached: true, stdio: ["ignore", "ignore", log],
+    ], { detached: true, windowsHide: true, stdio: ["ignore", "ignore", log],
          env: process.env });
     child.unref();
   } finally {
