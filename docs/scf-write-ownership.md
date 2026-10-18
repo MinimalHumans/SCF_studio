@@ -290,3 +290,15 @@ the editor); the host compares protocol versions on connect but does not
 yet restart an idle host that is an older build; and session keys are
 paths, so under WSL a host and a client that spell one file `F:\…` and
 `/mnt/f/…` do not share a session.
+
+On branch `tauri`, the desktop app (decision 5, now in scope): a Tauri
+shell around the same window and the same host (`scf-app/src-tauri/`).
+The host is a sidecar — `scf-host` as a Node single executable — started
+by the shell on the window's first `host_location`, which answers with
+the port and token the dev server's endpoint would. The window keeps
+its WebSocket transport, so no `invoke()` transport was needed, and the
+host allows the shell's origin (`http://tauri.localhost` on Windows,
+`tauri://localhost` elsewhere). Like the dev server, it replaces an
+idle host and refuses to start beside a busy one (`--replace-idle`); it
+exits once the app has and no client is left (`--exit-with-stdin`).
+The file chooser is still the host-side one; the native dialog is next.

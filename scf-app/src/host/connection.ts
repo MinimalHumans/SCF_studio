@@ -10,6 +10,11 @@
  *
  * The transport is the only thing here that knows it is a WebSocket. A
  * desktop shell would replace `openTransport` and nothing else.
+ *
+ * In the desktop app (a production build inside Tauri) there is no dev
+ * server, and the first step asks the shell instead (`host_location` in
+ * `src-tauri/src/lib.rs`), which starts the host on first ask. Under
+ * `tauri dev` the page is the dev server's, so it asks the dev server.
  */
 
 import {
@@ -61,6 +66,28 @@ export async function locateHost(
   return { url: body.url, token: body.token };
 }
 
+/** What the shell's `host_location` rejects with. */
+interface ShellHostError {
+  message: string;
+  refused: boolean;
+}
+
+export async function locateDesktopHost(): Promise<HostLocation> {
+  const { invoke } = await import("@tauri-apps/api/core");
+  try {
+    return await invoke<HostLocation>("host_location");
+  } catch (e) {
+    const err = e as Partial<ShellHostError>;
+    throw new HostUnavailableError(
+      err.message ?? String(e), err.refused ?? false);
+  }
+}
+
+function defaultLocate(): Promise<HostLocation> {
+  return !import.meta.env.DEV && "__TAURI_INTERNALS__" in window
+    ? locateDesktopHost() : locateHost();
+}
+
 export type TransportOpener = (where: HostLocation) => Promise<HostTransport>;
 
 const openWebSocket: TransportOpener = (where) =>
@@ -77,7 +104,7 @@ export interface ConnectOptions {
 /** Connect, retrying while the host comes up. */
 export async function connectHost(
     options: ConnectOptions = {}): Promise<HostClient> {
-  const locate = options.locate ?? (() => locateHost());
+  const locate = options.locate ?? defaultLocate;
   const open = options.openTransport ?? openWebSocket;
   return withRetry(async () => {
     // Located again on every attempt: a host that restarted has a new

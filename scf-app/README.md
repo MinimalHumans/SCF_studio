@@ -16,6 +16,28 @@ npm test
 npm run build      # static bundle in dist/ (needs a host to open files)
 ```
 
+## Desktop app
+
+The same window in a Tauri shell (`src-tauri/`), with the host as a
+sidecar: `scf-host` bundled into one executable with Node's single
+executable support (`tools/buildSidecar.mjs`), so nothing else needs to
+be installed. The window still reaches the host over its loopback
+socket; the shell only starts the host on the window's first ask and
+says where it is (`host_location`), and the host exits when the app
+does (once an MCP using it has finished). Needs Rust as well as Node.
+
+```sh
+npm run build:sidecar   # once, and after changing scf-host or scf-core
+npm run tauri dev       # the dev server's page and host, in the shell
+npm run tauri build     # installer in src-tauri/target/release/bundle/
+```
+
+The Node that runs `build:sidecar` is the Node that ships. The sidecar
+is unsigned (injecting it breaks `node.exe`'s signature), so sign it
+and the app before distributing them. Under `tauri dev` no sidecar is
+started (the dev server has a host), but the build still expects one to
+exist, hence the first line.
+
 `scf-core` and `scf-host`'s client are consumed as TypeScript source via
 Vite aliases (`@scf-core -> ../scf-core/src`, `@scf-host ->
 ../scf-host/src`), so keep the directories siblings. The host's folders
