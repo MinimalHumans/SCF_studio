@@ -66,8 +66,16 @@ export {
 // "./node" is the file-backed driver.
 export {
   type Session, type SessionDriver, type SessionOptions, type SessionState,
-  createSession,
+  type WriteOptions, StaleRevisionError, createSession,
 } from "./session.ts";
+
+// The named writes a client may ask the host for. Plain-data arguments in,
+// plain data out: the same table serves the window, the MCP and scripts.
+export {
+  type ArgSpec, type ArgsSpec, type ArgType, type CallOptions, type OpDef,
+  type OpResult, OpArgumentError, UnknownOpError,
+  argsJsonSchema, callOp, getOp, listOps, validateArgs,
+} from "./ops/opTable.ts";
 
 export {
   type FileIdentity, SCF_APPLICATION_ID,
