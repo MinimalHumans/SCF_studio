@@ -10,12 +10,12 @@
  * (conventions §1: SCF reports, it does not enforce).
  */
 
+import { call } from "../state/api.ts";
 import { useEffect, useState } from "react";
 import {
-  EMPTY_MEDIA_REPORT, mediaFindingCount, scanMedia, unifySpelling,
-  type MediaReport,
+  EMPTY_MEDIA_REPORT, mediaFindingCount, scanMedia, type MediaReport,
 } from "@scf-core/ops/mediaChecks.ts";
-import { setField } from "@scf-core/ops/elementOps.ts";
+
 import { exec, registry, useStore } from "../state/store.ts";
 
 /** Loads the report; shared by the toggle's count and the panel. */
@@ -173,8 +173,7 @@ export function MediaChecksPanel({ report }: {
                     <button className="ghost tiny"
                             title={`Rewrite the other spellings to “${
                               keep.value}”`}
-                            onClick={() => act(() => unifySpelling(
-                              exec, registry, field.entity, field.field,
+                            onClick={() => act(() => call("mediaChecks.unifySpelling", field.entity, field.field,
                               keep.value, group.slice(1).map((g) => g.value)))}>
                       use “{keep.value}”
                     </button>
@@ -206,8 +205,7 @@ export function MediaChecksPanel({ report }: {
                 {j.suggestion !== null && (
                   <button className="ghost tiny"
                           title={j.suggestion}
-                          onClick={() => act(() => setField(
-                            exec, registry, j.entity, j.id, j.field,
+                          onClick={() => act(() => call("element.setField", j.entity, j.id, j.field,
                             j.suggestion as string))}>
                     make it a list
                   </button>

@@ -2,13 +2,14 @@
 /**
  * ElementTabs.tsx — tabs shared by the Location and Prop workspaces.
  */
+import { call } from "../../state/api.ts";
 import { useEffect, useState } from "react";
 import { q } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import { KINDS, type SubjectKind } from "../../state/subjectKinds.ts";
-import { addVariantOf, cleanName } from "@scf-core/ops/elementOps.ts";
+import { cleanName } from "@scf-core/ops/elementOps.ts";
 import {
-  addException, loadBoard, type Exception, type Owner,
+  loadBoard, type Exception, type Owner,
 } from "@scf-core/ops/mediaOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { mergeChanges, type ChangeUndo } from "@scf-core/ops/undoChange.ts";
@@ -132,8 +133,7 @@ export function VariantsTab({ kind, id, note }: {
                                       // It replaces the baseline where the
                                       // variant is in force; change that under
                                       // Look, Exceptions.
-                                      const added = await addException(
-                                        exec, registry, owner, "look",
+                                      const added = await call("media.addException", owner, "look",
                                         { kind: "variant", variantId: vid }, true);
                                       made = added.change;
                                       const b = await loadBoard(exec, registry,
@@ -168,7 +168,7 @@ export function VariantsTab({ kind, id, note }: {
           })}
           <form className="ws-add-row" onSubmit={(e) => {
             e.preventDefault();
-            addVariantOf(exec, kind, id, name).then(() => {
+            call("element.addVariantOf", kind, id, name).then(() => {
               useStore.getState().noteWrite(); setName("");
             }).catch((err: unknown) => fail("Could not add the variant", err));
           }}>

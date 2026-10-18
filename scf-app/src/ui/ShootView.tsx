@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../state/api.ts";
 import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import type { Row } from "@scf-core/db.ts";
 import {
   actOutline, deriveStructure, sceneOrderHint,
 } from "@scf-core/structure.ts";
 import { shotCode } from "@scf-core/shots.ts";
-import {
-  addBeat, addShot, isCut, moveShot, removeBeat, removeShot,
-  SCENE_SCRIPT_SQL, setShotCut, summarize, updateField,
-} from "@scf-core/ops/shootOps.ts";
+import { isCut, SCENE_SCRIPT_SQL, summarize } from "@scf-core/ops/shootOps.ts";
 import { sceneLabel } from "@scf-core/displayName.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { useQuery } from "./useQuery.ts";
@@ -155,9 +153,9 @@ export function ShootView(): JSX.Element {
           </span>
           {mediaToggle("scene", sceneId)}
           <button className="ghost tiny"
-                  onClick={() => void run(addBeat(exec, sceneId))}>+ beat</button>
+                  onClick={() => void run(call("shoot.addBeat", sceneId))}>+ beat</button>
           <button className="ghost tiny"
-                  onClick={() => void run(addShot(exec, sceneId, null))}>
+                  onClick={() => void run(call("shoot.addShot", sceneId, null))}>
             + shot
           </button>
         </div>
@@ -179,17 +177,15 @@ export function ShootView(): JSX.Element {
                     <span className="shoot-kind">beat</span>
                     <input className="shoot-input shoot-beat-name"
                            defaultValue={String(beat["name"] ?? "")}
-                           onBlur={(e) => void run(updateField(
-                             exec, "story_beat", beatId, "name",
+                           onBlur={(e) => void run(call("shoot.updateField", "story_beat", beatId, "name",
                              e.target.value))} />
                     <input className="shoot-input shoot-beat-desc"
                            placeholder="what happens"
                            defaultValue={String(beat["description"] ?? "")}
-                           onBlur={(e) => void run(updateField(
-                             exec, "story_beat", beatId, "description",
+                           onBlur={(e) => void run(call("shoot.updateField", "story_beat", beatId, "description",
                              e.target.value))} />
                     <button className="ghost tiny"
-                            onClick={() => void run(addShot(exec, sceneId, beatId))}>
+                            onClick={() => void run(call("shoot.addShot", sceneId, beatId))}>
                       + shot
                     </button>
                     <button className="ghost tiny"
@@ -198,7 +194,7 @@ export function ShootView(): JSX.Element {
                               "story_beat", beatId)}>⋯</button>
                     <button className="ghost tiny"
                             title="Delete the beat; its shots stay on the scene"
-                            onClick={() => void run(removeBeat(exec, beatId))}>
+                            onClick={() => void run(call("shoot.removeBeat", beatId))}>
                       ×
                     </button>
                   </div>
@@ -244,8 +240,7 @@ export function ShootView(): JSX.Element {
         <div className="shoot-row shoot-row-shot">
           <input className="shoot-input shoot-number"
                  defaultValue={authored}
-                 onBlur={(e) => void run(updateField(
-                   exec, "shot", id, "shot_number", e.target.value))} />
+                 onBlur={(e) => void run(call("shoot.updateField", "shot", id, "shot_number", e.target.value))} />
           {!fixed && authored !== "" && authored !== derived && (
             <span className="shoot-drift"
                   title={"A shot number is an identifier issued to a crew, " +
@@ -263,18 +258,18 @@ export function ShootView(): JSX.Element {
           <input className="shoot-input shoot-shot-name"
                  placeholder="description"
                  defaultValue={String(shot["name"] ?? "")}
-                 onBlur={(e) => void run(updateField(exec, "shot", id, "name", e.target.value))} />
+                 onBlur={(e) => void run(call("shoot.updateField", "shot", id, "name", e.target.value))} />
           <FieldSelect field="shot_size" value={shot["shot_size"]}
-                       onPick={(v) => void run(updateField(exec, "shot", id, "shot_size", v))} />
+                       onPick={(v) => void run(call("shoot.updateField", "shot", id, "shot_size", v))} />
           <FieldSelect field="camera_angle" value={shot["camera_angle"]}
                        onPick={(v) =>
-                         void run(updateField(exec, "shot", id, "camera_angle", v))} />
+                         void run(call("shoot.updateField", "shot", id, "camera_angle", v))} />
           <button className="ghost tiny" title="Move up"
                   onClick={() => void run(
-                    moveShot(exec, id, sceneShots, -1, hidden))}>▲</button>
+                    call("shoot.moveShot", id, -1, [...hidden]))}>▲</button>
           <button className="ghost tiny" title="Move down"
                   onClick={() => void run(
-                    moveShot(exec, id, sceneShots, 1, hidden))}>▼</button>
+                    call("shoot.moveShot", id, 1, [...hidden]))}>▼</button>
           <button className="ghost tiny" title="Open the full shot record"
                   onClick={() => void openEntityRow("shot", id)}>⋯</button>
           {mediaToggle("shot", id)}
@@ -285,7 +280,7 @@ export function ShootView(): JSX.Element {
                     ? "Put this shot back in the film"
                     : "Take this shot out of the film. It keeps its " +
                       "number and media, and can be restored."}
-                  onClick={() => void run(setShotCut(exec, id, !cut))}>
+                  onClick={() => void run(call("shoot.setShotCut", id, !cut))}>
             {cut ? "restore" : "cut"}
           </button>
           <button className="ghost tiny"
@@ -295,7 +290,7 @@ export function ShootView(): JSX.Element {
                     if (window.confirm(
                       `Delete ${label} permanently? To take it out of ` +
                       "the film but keep it, use cut instead.")) {
-                      void run(removeShot(exec, id));
+                      void run(call("shoot.removeShot", id));
                     }
                   }}>×</button>
         </div>

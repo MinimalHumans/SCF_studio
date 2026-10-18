@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useRef, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
-import {
-  cleanName, createCharacter, fromPointOfView, relate, setDirection,
-} from "@scf-core/ops/elementOps.ts";
+import { cleanName, fromPointOfView } from "@scf-core/ops/elementOps.ts";
 import { RELATIONSHIP_SECTIONS } from "../../state/characterLayout.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
@@ -60,7 +59,7 @@ export function RelationshipsTab({ characterId }: { characterId: number }):
     fromPointOfView(r, characterId).otherId));
 
   const doRelate = (otherId: number): void => {
-    relate(exec, characterId, otherId).then(({ id }) => {
+    call("element.relate", characterId, otherId).then(({ id }) => {
       justMade.current = id;
       setSelected(id);
       useStore.getState().noteWrite();
@@ -230,7 +229,7 @@ function AddRelationship({ characters, viewerId, related, onRelate }: {
             if (choice === "new") {
               const name = cleanName(newName);
               if (name === null) return;
-              createCharacter(exec, name).then((id) => {
+              call("element.createCharacter", name).then((id) => {
                 setNewName(""); setChoice("");
                 onRelate(id);
               }).catch((err: unknown) => useStore.setState({
@@ -286,7 +285,7 @@ function RelationshipEditor({ row, viewerId, nameOf, onOpen, onRemove }: {
       .some((d) => d.name === f) ?? false;
 
   const point = (d: "mutual" | number): void => {
-    setDirection(exec, id, d === "mutual" ? "mutual" : { fromId: d })
+    call("element.setDirection", id, d === "mutual" ? "mutual" : { fromId: d })
       .then(() => useStore.getState().noteWrite())
       .catch((e: unknown) => useStore.setState({
         errorMessage: `Could not change the direction: ${

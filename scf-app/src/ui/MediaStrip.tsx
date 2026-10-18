@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../state/api.ts";
 import { useEffect, useState } from "react";
 import { exec, useStore } from "../state/store.ts";
 import {
-  attachMedia, detachMedia, loadMedia, MEDIA_HELP, MEDIA_LABEL, MEDIA_TYPES,
-  mediaLabel, moveMedia, setMediaNotes, setMediaType,
+  loadMedia, MEDIA_HELP, MEDIA_LABEL, MEDIA_TYPES, mediaLabel,
   type MediaOwner, type MediaTile,
 } from "@scf-core/ops/relatedMediaOps.ts";
-import { registerFiles, withCreatedAssets } from "@scf-core/ops/mediaOps.ts";
+import { withCreatedAssets } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { fail, FileIntake, type Incoming } from "./workspace/BoardParts.tsx";
 import { AssetThumb } from "./AssetThumb.tsx";
@@ -44,10 +44,11 @@ export function MediaStrip({ owner }: { owner: MediaOwner }): JSX.Element {
   const place = async (type: string): Promise<void> => {
     if (incoming === null) return;
     try {
-      const { assetIds, created } = await registerFiles(
-        exec, incoming.candidates);
-      const change = await attachMedia(
-        exec, owner, [...incoming.assetIds, ...assetIds], type);
+      const { assetIds, created } = await call(
+        "media.registerFiles", incoming.candidates);
+      const change = await call(
+        "relatedMedia.attach", owner,
+        [...incoming.assetIds, ...assetIds], type);
       done(withCreatedAssets(change, created));
       setIncoming(null);
     } catch (e) {
@@ -99,7 +100,7 @@ export function MediaStrip({ owner }: { owner: MediaOwner }): JSX.Element {
           {list.map((t, i) => (
             <MediaTileView key={t.linkId} tile={t} index={i}
                            count={list.length} run={run}
-                           onMove={(d) => run(moveMedia(exec, list, t.linkId, d),
+                           onMove={(d) => run(call("relatedMedia.move", list, t.linkId, d),
                                               "Could not move it")}
                            onOpen={() => void openEntityRow(
                              "asset", Number(t.asset["id"]))} />
@@ -151,7 +152,7 @@ function MediaTileView({ tile, index, count, run, onMove, onOpen }: {
           What {name} is for
         </label>
         <select id={id} value={tile.type ?? ""}
-                onChange={(e) => run(setMediaType(exec, tile, e.target.value),
+                onChange={(e) => run(call("relatedMedia.setType", tile, e.target.value),
                                      "Could not change what it is for")}>
           {!known && <option value={tile.type ?? ""}>{mediaLabel(tile.type)}</option>}
           {MEDIA_TYPES.map((t) => (
@@ -163,7 +164,7 @@ function MediaTileView({ tile, index, count, run, onMove, onOpen }: {
                onChange={(e) => setNotes(e.target.value)}
                onBlur={() => {
                  if (notes.trim() === (tile.notes ?? "")) return;
-                 run(setMediaNotes(exec, tile, notes), "Could not save the note");
+                 run(call("relatedMedia.setNotes", tile, notes), "Could not save the note");
                }}
                onKeyDown={(e) => {
                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
@@ -177,7 +178,7 @@ function MediaTileView({ tile, index, count, run, onMove, onOpen }: {
           <button className="ghost tiny" title="Show in Assets"
                   onClick={onOpen}>⋯</button>
           <button className="ghost tiny" title="Remove from this shot or scene"
-                  onClick={() => run(detachMedia(exec, tile), "Could not remove")}>
+                  onClick={() => run(call("relatedMedia.detach", tile), "Could not remove")}>
             ×
           </button>
         </div>

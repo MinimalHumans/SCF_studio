@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useRef } from "react";
 import { q } from "@scf-core/db.ts";
-import { createRecord } from "@scf-core/ops/recordOps.ts";
+
 import { exec, registry, useStore } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
@@ -55,8 +56,8 @@ export function ProfileRowFields({ entity, characterId, titles,
   const ensure = (): Promise<number> => {
     if (creating.current === null) {
       creating.current = (async () => {
-        const made = await createRecord(
-          exec, registry, entity, { [ownerColumn]: characterId });
+        const made = await call(
+          "record.create", entity, { [ownerColumn]: characterId });
         useStore.getState().noteWrite();
         return made;
       })();

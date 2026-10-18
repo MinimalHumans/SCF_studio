@@ -16,17 +16,17 @@
  * (conventions §9). Every save is one undo step (mediaOps).
  */
 
+import { call } from "../../state/api.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { parseIdentifier, resolveIdentifier, type Resolution }
-  from "@scf-core/assets.ts";
+import {
+  parseIdentifier, resolveIdentifier, type Resolution,
+} from "@scf-core/assets.ts";
 import { LARGE_FILE_BYTES, previewCapability } from "@scf-core/preview.ts";
 import type { RegionBox } from "@scf-core/anchors.ts";
 import { exec, useStore } from "../../state/store.ts";
 import { acquire, release } from "../../files/objectUrlCache.ts";
 import { makeLocator } from "../../files/assetLocator.ts";
-import {
-  ScopeError, setAnchorClip, setAnchorRegion, type Tile,
-} from "@scf-core/ops/mediaOps.ts";
+import { ScopeError, type Tile } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 
 /** "0:02.12" — minutes, seconds, hundredths. */
@@ -187,7 +187,7 @@ export function RegionEditor({ tile, kind, onDone, onClose }: {
 
   const save = (next: RegionBox | null): void => {
     setError(null);
-    setAnchorRegion(exec, tile.link.id, next, label, natural ?? undefined)
+    call("media.setAnchorRegion", tile.link.id, next, label, natural ?? undefined)
       .then((c) => { onDone(c); onClose(); })
       .catch((e: unknown) => setError(asMessage(e)));
   };
@@ -426,7 +426,7 @@ export function ClipEditor({ tile, onDone, onClose }: {
 
   const save = (s: number | null, e: number | null): void => {
     setError(null);
-    setAnchorClip(exec, tile.link.id, s, e, duration ?? undefined)
+    call("media.setAnchorClip", tile.link.id, s, e, duration ?? undefined)
       .then((c) => { onDone(c); onClose(); })
       .catch((err: unknown) => setError(asMessage(err)));
   };

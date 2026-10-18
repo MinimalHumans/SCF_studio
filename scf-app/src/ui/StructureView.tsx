@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../state/api.ts";
 import { useMemo } from "react";
 import type { Row } from "@scf-core/db.ts";
 import {
-  actOutline, deriveStructure, sceneOrderHint, structureFindings,
-  type Span, type Structure,
+  actOutline, deriveStructure, sceneOrderHint, structureFindings, type Span,
+  type Structure,
 } from "@scf-core/structure.ts";
 import { sceneLabel } from "@scf-core/displayName.ts";
 import { exec, useStore } from "../state/store.ts";
-import { createSpan, setSpanBoundary } from "@scf-core/ops/structureCommit.ts";
+
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
 
@@ -53,13 +54,13 @@ export function StructureView(): JSX.Element {
 
   const setBoundary = async (table: "act" | "sequence", id: number,
                              sceneId: number | null): Promise<void> => {
-    await setSpanBoundary(exec, table, id, sceneId);
+    await call("structure.setBoundary", table, id, sceneId);
     useStore.getState().noteWrite();
   };
 
   const create = async (table: "act" | "sequence",
                         sceneId: number): Promise<void> => {
-    await createSpan(exec, table, sceneId);
+    await call("structure.createSpan", table, sceneId);
     useStore.getState().noteWrite();
   };
 

@@ -76,7 +76,7 @@ export type {
 } from "./screenplay/rowModel.ts";
 export {
   type CallArgs, type CallName, type CallResult, type Callable,
-  type ScriptCommit, CALLS, UnknownCallError, callFn, callNames,
+  type ScriptCommit, type ScriptImport, CALLS, UnknownCallError, callFn, callNames,
 } from "./ops/calls.ts";
 export {
   type ArgSpec, type ArgsSpec, type ArgType, type CallOptions, type OpDef,

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
-  addVariant, castActor, cleanName, loadProfile, reassignActor,
-  type CharacterProfile,
+  cleanName, loadProfile, type CharacterProfile,
 } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
@@ -129,7 +129,7 @@ function Casting({ characterId, roles }: {
             onSubmit={(e) => {
               e.preventDefault();
               if (cleanName(adding) === null) return;
-              castActor(exec, characterId, adding, roleType).then(() => {
+              call("element.castActor", characterId, adding, roleType).then(() => {
                 useStore.getState().noteWrite();
                 setAdding("");
               }).catch((err: unknown) => fail("Could not cast", err));
@@ -171,7 +171,7 @@ function ActorName({ roleId, value, onError }: {
       setText(value ?? "");
       return;
     }
-    reassignActor(exec, roleId, clean).then(() => {
+    call("element.reassignActor", roleId, clean).then(() => {
       useStore.getState().noteWrite();
     }).catch((e: unknown) => onError("Could not change the actor", e));
   };
@@ -240,7 +240,7 @@ function Variants({ characterId, variants }: {
             onSubmit={(e) => {
               e.preventDefault();
               if (cleanName(name) === null) return;
-              addVariant(exec, characterId, name).then(() => {
+              call("element.addVariant", characterId, name).then(() => {
                 useStore.getState().noteWrite();
                 setName("");
               }).catch((err: unknown) => useStore.setState({

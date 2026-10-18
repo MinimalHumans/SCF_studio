@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useMemo, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import { PROP_TABS } from "../../state/subjectKinds.ts";
 import { layoutStages, stageAt } from "../../state/storyStrip.ts";
-import { linkPropToScene, setField } from "@scf-core/ops/elementOps.ts";
+
 import { useQuery } from "../useQuery.ts";
 import { MainRowFields, VariantsTab } from "./ElementTabs.tsx";
 import { ProfileRowFields } from "./ProfileRowFields.tsx";
@@ -191,7 +192,7 @@ function PropScenes({ id }: { id: number }): JSX.Element {
     order.indexOf(Number(a["scene_id"])) - order.indexOf(Number(b["scene_id"])));
   const linkedIds = new Set(links.map((l) => Number(l["scene_id"])));
   const save = (linkId: number, field: string, value: string): void => {
-    setField(exec, registry, "scene_prop", linkId, field,
+    call("element.setField", "scene_prop", linkId, field,
              value === "" ? null : field === "variant_id" ? Number(value) : value)
       .then(() => useStore.getState().noteWrite())
       .catch((e: unknown) => fail("Could not save", e));
@@ -272,7 +273,7 @@ function PropScenes({ id }: { id: number }): JSX.Element {
                   const v = e.target.value;
                   setPick("");
                   if (v === "") return;
-                  linkPropToScene(exec, id, Number(v))
+                  call("element.linkPropToScene", id, Number(v))
                     .then(() => useStore.getState().noteWrite())
                     .catch((err: unknown) => fail("Could not link", err));
                 }}>

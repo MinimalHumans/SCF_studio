@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useState } from "react";
 import { variantInForce } from "@scf-core/resolution.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import { LOCATION_TABS } from "../../state/subjectKinds.ts";
-import { setField } from "@scf-core/ops/elementOps.ts";
+
 import { useQuery } from "../useQuery.ts";
 import { MainRowFields, VariantsTab } from "./ElementTabs.tsx";
 import { ProfileRowFields } from "./ProfileRowFields.tsx";
@@ -196,7 +197,7 @@ function LocationScenes({ id }: { id: number }): JSX.Element {
                   const v = e.target.value;
                   setPick("");
                   if (v === "") return;
-                  setField(exec, registry, "scene", Number(v), "location_id", id)
+                  call("element.setField", "scene", Number(v), "location_id", id)
                     .then(() => useStore.getState().noteWrite())
                     .catch((err: unknown) => fail("Could not set the location", err));
                 }}>

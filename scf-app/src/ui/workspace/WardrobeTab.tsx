@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useMemo, useState } from "react";
 import type { Row } from "@scf-core/db.ts";
 import { exec, useStore } from "../../state/store.ts";
-import {
-  addCostume, addMakeupFor, cleanName, ensureProgression, wearIn,
-} from "@scf-core/ops/elementOps.ts";
+import { cleanName } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import { ProfileRowFields, RowFields } from "./ProfileRowFields.tsx";
@@ -51,7 +50,7 @@ export function WardrobeTab({ characterId }: { characterId: number }):
           ))}
           <form className="ws-add-row" onSubmit={(e) => {
             e.preventDefault();
-            addCostume(exec, characterId, newName).then(() => {
+            call("element.addCostume", characterId, newName).then(() => {
               useStore.getState().noteWrite(); setNewName("");
             }).catch((err: unknown) => fail("Could not add the costume", err));
           }}>
@@ -139,7 +138,7 @@ function CostumeCard({ costume, scenes, worn, open }: {
                       const v = e.target.value;
                       setPick("");
                       if (v === "") return;
-                      wearIn(exec, id, Number(v))
+                      call("element.wearIn", id, Number(v))
                         .then(() => useStore.getState().noteWrite())
                         .catch((err: unknown) => fail("Could not add the scene", err));
                     }}>
@@ -212,7 +211,7 @@ function WardrobeStory({ characterId, scenes, costumes, worn }: {
     onAddAt: (sceneId) => {
       setSelected(null);
       // The progression the stages hang from is made on first need.
-      ensureProgression(exec, characterId).then((id) => {
+      call("element.ensureProgression", characterId).then((id) => {
         if (progressionId === null) useStore.getState().noteWrite();
         setPending({ table: "costume_progression_state", parentId: id,
                      sceneId, laneLabel: "the wardrobe" });
@@ -305,7 +304,7 @@ function Makeup({ characterId, scenes }: {
                     const v = e.target.value;
                     setPick("");
                     if (v === "") return;
-                    addMakeupFor(exec, characterId, Number(v))
+                    call("element.addMakeupFor", characterId, Number(v))
                       .then(() => useStore.getState().noteWrite())
                       .catch((err: unknown) => fail("Could not add it", err));
                   }}>

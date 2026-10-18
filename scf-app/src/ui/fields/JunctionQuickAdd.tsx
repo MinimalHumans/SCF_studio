@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useState } from "react";
 import type { EntityDef } from "@scf-core/registry.ts";
 import { q } from "@scf-core/db.ts";
-import { createRecord } from "@scf-core/ops/recordOps.ts";
+
 import { exec, registry, rowName, useStore } from "../../state/store.ts";
 import { useQuery } from "../useQuery.ts";
-import {
-  SCENE_ORDER_BY, SCENE_ORDER_JOIN,
-} from "@scf-core/structure.ts";
+import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "@scf-core/structure.ts";
 
 /**
  * Junction quick-add, generalised over the registry. Any link-subject
@@ -52,7 +51,7 @@ export function JunctionQuickAdd({ edef, anchorField, anchorId }: {
   if (other === undefined || target === undefined) return null;
 
   const add = async (otherId: number): Promise<void> => {
-    await createRecord(exec, registry, edef.name,
+    await call("record.create", edef.name,
                        { [anchorField]: anchorId, [other.name]: otherId });
     setOpen(false);
     setFilter("");

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useMemo, useState } from "react";
 import { exec, useStore } from "../../state/store.ts";
-import { addArc, cleanName } from "@scf-core/ops/elementOps.ts";
+import { cleanName } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import { StoryStrip, useStoryScenes, type Lane } from "./StoryStrip.tsx";
@@ -149,7 +150,7 @@ export function ArcTab({ characterId }: { characterId: number }):
           <form className="ws-add-row"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  addArc(exec, characterId, newAxis).then(() => {
+                  call("element.addArc", characterId, newAxis).then(() => {
                     useStore.getState().noteWrite();
                     setNewAxis("");
                   }).catch((err: unknown) => useStore.setState({

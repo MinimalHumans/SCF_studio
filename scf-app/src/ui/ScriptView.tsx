@@ -9,6 +9,7 @@
  * Fountain export with derived spacing; and the import flow entry.
  */
 
+import { call } from "../state/api.ts";
 import { useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
 
@@ -16,19 +17,15 @@ import { EditorState, Transaction } from "@codemirror/state";
 import { exec, registry, useStore } from "../state/store.ts";
 import { suggestExportName } from "../state/saveName.ts";
 import { screenplayFountain } from "../state/screenplayLayout.ts";
-import { readScreenplay, writeScreenplay, type TitlePageRow }
-  from "@scf-core/screenplay/rowModel.ts";
-import { withTransaction } from "@scf-core/db.ts";
+import {
+  readScreenplay, type TitlePageRow,
+} from "@scf-core/screenplay/rowModel.ts";
 import { lineState, loadLines, mintLineId } from "../editor/lineState.ts";
 import { planSceneMove, sceneBlocks } from "@scf-core/screenplay/sceneMove.ts";
-import {
-  duplicateSceneRow, removeSceneCascade, syncSceneFromHeading,
-  unlinkLineScene,
-} from "@scf-core/ops/sceneOps.ts";
+
 import { reanchorSpansForMove } from "@scf-core/ops/structureCommit.ts";
 import {
-  blocksToDoc, rowsToBlocks, sceneSyncFromHeading, type Block,
-  type LineEvent,
+  blocksToDoc, rowsToBlocks, sceneSyncFromHeading, type Block, type LineEvent,
 } from "@scf-core/screenplay/blocks.ts";
 import { commitPlan } from "../editor/screenplayDoc.ts";
 import {
@@ -36,10 +33,8 @@ import {
 } from "../editor/extensions.ts";
 import { lineEntries, lineEvents } from "../editor/lineState.ts";
 import {
-  createBeatForLine, diffVersionAgainstCurrent, linkAndCreateAtCommit,
-  planCommitLinks, publishVersion, reanchorForEvents, syncPropSceneLinks,
-  createEditorProp, tagPropRange,
-  validateTags, type CommitPlanInfo,
+  diffVersionAgainstCurrent, planCommitLinks, validateTags,
+  type CommitPlanInfo,
 } from "@scf-core/ops/features.ts";
 import { paginationFor } from "../editor/extensions.ts";
 import { ImportFlow } from "./ImportFlow.tsx";
@@ -291,15 +286,9 @@ export function ScriptView(): JSX.Element {
     const view = viewRef.current;
     if (view === null || !projectOpen()) return;
     const plan = commitPlan(view.state, prevBlocksRef.current);
-    const created = await withTransaction(exec, async () => {
-      const link = await linkAndCreateAtCommit(
-        exec, plan.rows, { createNew: false });
-      await writeScreenplay(exec, {
-        bom: false,
-        titlePage: titlePageRef.current,
-        lines: plan.rows,
-      });
-      return link;
+    const created = await call("script.commit", {
+      rows: plan.rows, titlePage: titlePageRef.current,
+      link: { createNew: false },
     });
     const parts: string[] = [];
     if (created.scenesCreated > 0) {
@@ -327,12 +316,12 @@ export function ScriptView(): JSX.Element {
     const events = pendingEvents.current;
     pendingEvents.current = [];
     if (events.length > 0) {
-      await reanchorForEvents(exec, events);
+      await call("script.reanchor", events);
     }
     // Derived rather than trusted to the moment of tagging: a prop
     // tagged on a line that had not been committed yet could not know
     // its scene at the time.
-    await syncPropSceneLinks(exec);
+    await call("script.syncPropScenes");
     if (reportStale && plan.staleScenes.length > 0) {
       const ids = plan.staleScenes
         .map((s) => s.sceneId)
@@ -396,14 +385,9 @@ export function ScriptView(): JSX.Element {
         info.newCharacters.length === 0 && info.conflicts.length === 0 &&
         info.newActs.length === 0 && info.newSequences.length === 0) {
       if (info.newScenes > 0) {
-        const created = await withTransaction(exec, async () => {
-          const link = await linkAndCreateAtCommit(exec, plan.rows,
-            { createNew: true });
-          await writeScreenplay(exec, {
-            bom: false, titlePage: titlePageRef.current,
-            lines: plan.rows,
-          });
-          return link;
+        const created = await call("script.commit", {
+          rows: plan.rows, titlePage: titlePageRef.current,
+          link: { createNew: true },
         });
         prevBlocksRef.current = new Map(plan.rows.map((r) => [r.uuid!, {
           id: r.uuid!, type: r.lineType as Block["type"],
@@ -440,13 +424,10 @@ export function ScriptView(): JSX.Element {
         renames.set(c.entityId, smartTitleLocal(c.cue));
       }
     }
-    const created = await withTransaction(exec, async () => {
-      const link = await linkAndCreateAtCommit(exec, plan.rows,
-        { createNew: true, unlinkUuids, renames });
-      await writeScreenplay(exec, {
-        bom: false, titlePage: titlePageRef.current, lines: plan.rows,
-      });
-      return link;
+    const created = await call("script.commit", {
+      rows: plan.rows, titlePage: titlePageRef.current,
+      link: { createNew: true, unlinkUuids: [...unlinkUuids],
+              renames: [...renames] },
     });
     prevBlocksRef.current = new Map(plan.rows.map((r) => [r.uuid!, {
       id: r.uuid!, type: r.lineType as Block["type"], text: r.content,
@@ -730,7 +711,7 @@ export function ScriptView(): JSX.Element {
         if (id !== undefined && id !== null) order.push(id);
       }
       await reanchorSpansForMove(exec, sceneId, order);
-      await removeSceneCascade(exec, registry, sceneId, lineIds);
+      await call("scene.removeCascade", sceneId, lineIds);
 
       if (range !== null) {
         const [start, end] = range;
@@ -759,7 +740,7 @@ export function ScriptView(): JSX.Element {
       const range = blockRange(sceneId);
       if (range === null) return;
       const [start, end] = range;
-      const newId = await duplicateSceneRow(exec, sceneId);
+      const newId = await call("scene.duplicateRow", sceneId);
 
       const entries = lineEntries(view.state);
       const lines: string[] = [];
@@ -868,7 +849,7 @@ export function ScriptView(): JSX.Element {
   }, []);
 
   const unlinkScene = async (notice: StaleNotice): Promise<void> => {
-    await unlinkLineScene(exec, notice.uuid);
+    await call("scene.unlinkLine", notice.uuid);
     const block = prevBlocksRef.current.get(notice.uuid);
     if (block !== undefined) block.sceneId = null;
     setStale((old) => old.filter((x) => x.uuid !== notice.uuid));
@@ -889,7 +870,7 @@ export function ScriptView(): JSX.Element {
   const syncScene = async (notice: StaleNotice): Promise<void> => {
     const fields = sceneSyncFromHeading(notice.headingText);
     const locationId =
-      await syncSceneFromHeading(exec, notice.sceneId, fields);
+      await call("scene.syncFromHeading", notice.sceneId, fields);
     setStale((old) => old.filter((s) => s.uuid !== notice.uuid));
     say(fields.location !== null && locationId === null
       ? `renamed — "${fields.location}" is not a location yet, so Commit will offer to create it`
@@ -1248,7 +1229,7 @@ function BeatControl({ block, onCreated }: {
                 "physical" | "vocal" | "facial" | "";
               e.target.value = "";
               if (modality === "" || block === null) return;
-              void createBeatForLine(exec, block, modality, block.text)
+              void call("script.createBeat", block, modality, block.text)
                 .then(() => onCreated(modality));
             }}>
       <option value="" disabled>＋ beat</option>
@@ -1281,8 +1262,8 @@ function TagControl({ selection, onTagged }: {
                   "New prop name:", selection.text.trim());
                 if (name === null || name.trim() === "") return;
                 void (async () => {
-                  const id = await createEditorProp(exec, name.trim());
-                  await tagPropRange(exec, selection.lineId,
+                  const id = await call("script.createProp", name.trim());
+                  await call("script.tagProp", selection.lineId,
                                      id, selection.text,
                                      selection.from, selection.to);
                   onTagged(name.trim());
@@ -1294,7 +1275,7 @@ function TagControl({ selection, onTagged }: {
               const propName = String(
                 props.find((r) => Number(r["id"]) === propId)?.["name"] ??
                 "prop");
-              void tagPropRange(exec, selection.lineId, propId,
+              void call("script.tagProp", selection.lineId, propId,
                                 selection.text, selection.from,
                                 selection.to).then(() => onTagged(propName));
             }}>
@@ -1347,7 +1328,7 @@ function VersionsPanel({ onPublished, onImport, onExport,
         <button className="primary" disabled={busy}
                 onClick={() => {
                   setBusy(true);
-                  void publishVersion(exec, description).then(() => {
+                  void call("script.publishVersion", description).then(() => {
                     setDescription("");
                     setBusy(false);
                     onPublished();
@@ -1416,7 +1397,7 @@ function PropContextMenu({ at, selection, onClose, onDone }: {
 }): JSX.Element {
   const props = useQuery("SELECT id, name FROM prop ORDER BY name");
   const tag = async (propId: number): Promise<void> => {
-    await tagPropRange(exec, selection.lineId, propId, selection.text,
+    await call("script.tagProp", selection.lineId, propId, selection.text,
                        selection.from, selection.to);
     onDone();
   };
@@ -1426,7 +1407,7 @@ function PropContextMenu({ at, selection, onClose, onDone }: {
       onClose();
       return;
     }
-    await tag(await createEditorProp(exec, name.trim()));
+    await tag(await call("script.createProp", name.trim()));
   };
   return (
     <>

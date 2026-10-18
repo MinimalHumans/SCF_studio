@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
-  addException, moveException, removeException, updateException,
   type BoardName, type Exception, type Owner, type When,
 } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
@@ -99,7 +99,7 @@ export function ExceptionList({ owner, board, exceptions, inForce, asOf }: {
         <NewException owner={owner}
                       onCancel={() => setAdding(false)}
                       onAdd={(when, replaces) => {
-                        addException(exec, registry, owner, board, when, replaces)
+                        call("media.addException", owner, board, when, replaces)
                           .then(({ change }) => { done(change); setAdding(false); })
                           .catch((e: unknown) => fail("Could not add the exception", e));
                       }} />
@@ -121,14 +121,14 @@ export function ExceptionList({ owner, board, exceptions, inForce, asOf }: {
                 <div className="ws-row-actions">
                   <button className="ghost tiny" disabled={i === 0}
                           aria-label="Move up: wins over more"
-                          onClick={() => run(moveException(exec, registry, owner,
+                          onClick={() => run(call("media.moveException", owner,
                             board, x.bindingId, "up"), "Could not move it")}>
                     ↑
                   </button>
                   <button className="ghost tiny"
                           disabled={i === exceptions.length - 1}
                           aria-label="Move down"
-                          onClick={() => run(moveException(exec, registry, owner,
+                          onClick={() => run(call("media.moveException", owner,
                             board, x.bindingId, "down"), "Could not move it")}>
                     ↓
                   </button>
@@ -168,7 +168,7 @@ export function ExceptionList({ owner, board, exceptions, inForce, asOf }: {
                   Open record
                 </button>
                 <button className="ghost tiny" onClick={() => run(
-                  removeException(exec, registry, owner, x.bindingId),
+                  call("media.removeException", owner, x.bindingId),
                   "Could not remove it")}>
                   Remove exception
                 </button>
@@ -187,7 +187,7 @@ function ExceptionEditor({ owner, exception, onChange }: {
 }): JSX.Element {
   const when = whenOf(exception);
   const set = (patch: { when?: When; replaces?: boolean }): void =>
-    onChange(updateException(exec, registry, owner, exception.bindingId, patch),
+    onChange(call("media.updateException", owner, exception.bindingId, patch),
              "Could not change the exception");
   return (
     <div className="exc-editor">

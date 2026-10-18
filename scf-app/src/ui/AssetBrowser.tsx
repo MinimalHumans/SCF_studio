@@ -24,22 +24,19 @@
  * checks toggle (MediaChecksPanel).
  */
 
+import { call } from "../state/api.ts";
 import { useEffect, useMemo, useState } from "react";
 import {
-  applyFilter, facetsOf, listAssets, orphanIds, pathTree,
-  type AssetFilter, type AssetRow, type TreeNode,
+  applyFilter, facetsOf, listAssets, orphanIds, pathTree, type AssetFilter,
+  type AssetRow, type TreeNode,
 } from "@scf-core/assetIndex.ts";
-import { applyRelink, planRelink, type RelinkChange }
-  from "@scf-core/assets.ts";
+import { planRelink, type RelinkChange } from "@scf-core/assets.ts";
 import { previewCapability } from "@scf-core/preview.ts";
-import {
-  applyAssetImport, planAssetImport, type ImportPlan,
-} from "@scf-core/assetImport.ts";
+import { planAssetImport, type ImportPlan } from "@scf-core/assetImport.ts";
 import { pickAssetFiles, pickAssetFolder }
   from "../files/assetLocator.ts";
 import {
-  applyBundleAdd, createBundle, listBundles, planBundleAdd,
-  type BundleSummary,
+  listBundles, planBundleAdd, type BundleSummary,
 } from "@scf-core/bundling.ts";
 import { exec, registry, useStore } from "../state/store.ts";
 import { AssetThumb } from "./AssetThumb.tsx";
@@ -120,7 +117,7 @@ function Relink({ prefix, onDone }: {
           <button className="tiny primary"
                   onClick={() => {
                     void (async () => {
-                      setApplied(await applyRelink(exec, plan));
+                      setApplied(await call("assets.applyRelink", plan));
                       setPlan(null);
                       markChanged();
                       onDone();
@@ -272,7 +269,7 @@ function ImportAssets({ onDone }: { onDone: () => void }): JSX.Element {
                     onClick={() => {
                       void (async () => {
                         setBusy(true);
-                        const n = await applyAssetImport(exec, plan.create);
+                        const n = await call("assets.applyImport", plan.create);
                         setCreated(n);
                         setPlan(null);
                         setBusy(false);
@@ -320,12 +317,12 @@ function AddToBundle({ ids, onDone }: {
       let bundleId: number;
       if (target === "new") {
         if (newName.trim() === "") return;
-        bundleId = await createBundle(exec, newName.trim(), intent);
+        bundleId = await call("bundle.create", newName.trim(), intent);
       } else {
         bundleId = Number(target);
       }
       const plan = await planBundleAdd(exec, bundleId, ids);
-      await applyBundleAdd(exec, bundleId, plan.add,
+      await call("bundle.addAssets", bundleId, plan.add,
                            role.trim() === "" ? null : role.trim());
       setResult(
         `${plan.add.length} added` +

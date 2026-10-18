@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useRef, useState } from "react";
 import type { SqlValue } from "@scf-core/db.ts";
 import type { FieldDef } from "@scf-core/registry.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
-import { setField } from "@scf-core/ops/elementOps.ts";
 import { Field } from "../fields/Field.tsx";
 
 /** Quiet time after the last keystroke before a text field is written. */
@@ -67,7 +67,7 @@ export function AutoField({ entity, id, ensure, field, value, inputId,
     try {
       const target = id ?? (ensure === undefined ? null : await ensure());
       if (target === null) throw new Error("Nothing to save this to yet.");
-      await setField(exec, registry, entity, target, field, next);
+      await call("element.setField", entity, target, field, next);
       saved.current = next;
       setFailed(null);
       useStore.getState().noteWrite();

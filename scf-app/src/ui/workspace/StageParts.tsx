@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+import { call } from "../../state/api.ts";
 import { useEffect, useMemo, useState } from "react";
 import { q } from "@scf-core/db.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
-import {
-  addStage, STAGE_LABEL, STAGE_PARENT,
-} from "@scf-core/ops/elementOps.ts";
+import { STAGE_LABEL, STAGE_PARENT } from "@scf-core/ops/elementOps.ts";
 import { useQuery } from "../useQuery.ts";
 import { AutoField } from "./AutoField.tsx";
 import type { MarkLane, StripScene } from "./StoryStrip.tsx";
@@ -30,7 +29,7 @@ export function AddStageForm({ pending, scenes, onDone, onCancel }: {
     <form className="ws-add-row strip-add-form"
           onSubmit={(e) => {
             e.preventDefault();
-            addStage(exec, pending.table, pending.parentId, pending.sceneId,
+            call("element.addStage", pending.table, pending.parentId, pending.sceneId,
                      label).then((id) => {
               useStore.getState().noteWrite();
               onDone(id);
