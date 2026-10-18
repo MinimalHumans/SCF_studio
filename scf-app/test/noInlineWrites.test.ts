@@ -20,7 +20,7 @@ const SRC = fileURLToPath(new URL("../src", import.meta.url));
 const ALLOWED = new Set<string>();
 
 const WRITE_SQL =
-  /INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE\s+[$\{\w".]+\s+SET|DELETE\s+FROM|REPLACE\s+INTO/i;
+  /INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE\s+[$\{\}\w".()]+\s+SET|DELETE\s+FROM|REPLACE\s+INTO/i;
 
 function sources(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>

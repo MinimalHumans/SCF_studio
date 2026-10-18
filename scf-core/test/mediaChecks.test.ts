@@ -17,7 +17,7 @@ import { loadRegistry, type Registry, type RegistryJson }
   from "../src/registry.ts";
 import {
   adoptSpelling, commaListToJson, intentConflict, lookalikeGroups,
-  mediaFindingCount, mediaKindOf, scanMedia,
+  mediaFindingCount, mediaKindOf, scanMedia, unifySpelling,
 } from "../src/ops/mediaChecks.ts";
 
 const REGISTRY = fileURLToPath(new URL(
@@ -160,5 +160,31 @@ describe("scanMedia on the fixture", () => {
     } finally {
       db.close();
     }
+  });
+});
+
+describe("unifySpelling", () => {
+  test("rewrites the other spellings and leaves the rest alone", async () => {
+    const registry = await loadReg();
+    const db = openNodeDatabase(":memory:");
+    await initDatabase(db.exec, registry);
+    for (const name of ["Bob", "bob", "BOB ", "Alice"]) {
+      await db.exec("INSERT INTO character (name, role) VALUES ('x', ?)",
+                    [name]);
+    }
+    await unifySpelling(db.exec, registry, "character", "role",
+                        "Bob", ["bob", "BOB "]);
+    const rows = await db.exec("SELECT role FROM character ORDER BY id");
+    expect(rows.map((r) => r["role"])).toEqual(["Bob", "Bob", "Bob", "Alice"]);
+    db.close();
+  });
+
+  test("refuses a column the registry does not declare", async () => {
+    const registry = await loadReg();
+    const db = openNodeDatabase(":memory:");
+    await initDatabase(db.exec, registry);
+    await expect(unifySpelling(db.exec, registry, "character",
+      "role = 'x'; --", "a", ["b"])).rejects.toThrow(/not a field/);
+    db.close();
   });
 });

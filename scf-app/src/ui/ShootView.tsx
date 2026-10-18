@@ -89,7 +89,7 @@ export function ShootView(): JSX.Element {
   };
 
   const bump = (): void => {
-    useStore.setState((s) => ({ revision: s.revision + 1 }));
+    useStore.getState().noteWrite();
   };
   const toggle = (key: string): void => {
     const next = new Set(useStore.getState().shootView.open);

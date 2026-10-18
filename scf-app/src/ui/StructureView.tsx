@@ -7,7 +7,7 @@ import {
 } from "@scf-core/structure.ts";
 import { sceneLabel } from "@scf-core/displayName.ts";
 import { exec, useStore } from "../state/store.ts";
-import { createSpan, renumberSpans } from "@scf-core/ops/structureCommit.ts";
+import { createSpan, setSpanBoundary } from "@scf-core/ops/structureCommit.ts";
 import { useQuery } from "./useQuery.ts";
 import { revealSceneInReader } from "./ScriptReader.tsx";
 
@@ -53,21 +53,14 @@ export function StructureView(): JSX.Element {
 
   const setBoundary = async (table: "act" | "sequence", id: number,
                              sceneId: number | null): Promise<void> => {
-    await exec(
-      `UPDATE ${table} SET start_scene_id = ?, ` +
-      "updated_at = datetime('now') WHERE id = ?", [sceneId, id]);
-    // Moving a boundary changes the derived order, so the numbers are
-    // recomputed here rather than at the next SCRIPT commit — otherwise
-    // the tab the boundary was moved in shows stale numbers until
-    // someone goes and types something.
-    await renumberSpans(exec);
-    useStore.setState((s) => ({ revision: s.revision + 1 }));
+    await setSpanBoundary(exec, table, id, sceneId);
+    useStore.getState().noteWrite();
   };
 
   const create = async (table: "act" | "sequence",
                         sceneId: number): Promise<void> => {
     await createSpan(exec, table, sceneId);
-    useStore.setState((s) => ({ revision: s.revision + 1 }));
+    useStore.getState().noteWrite();
   };
 
   if (scenes.length === 0) {

@@ -604,3 +604,21 @@ export async function createSpan(
     await renumberSpans(exec);
   });
 }
+
+/**
+ * Move an act or sequence to start at another scene, or detach it
+ * (null). Moving a boundary changes the derived order, so the numbers
+ * are recomputed here rather than at the next script commit — otherwise
+ * the tab the boundary was moved in shows stale numbers until someone
+ * goes and types something.
+ */
+export async function setSpanBoundary(
+    exec: SqlExec, table: "act" | "sequence", id: number,
+    sceneId: number | null): Promise<void> {
+  await withTransaction(exec, async () => {
+    await exec(
+      `UPDATE ${table} SET start_scene_id = ?, ` +
+      "updated_at = datetime('now') WHERE id = ?", [sceneId, id]);
+    await renumberSpans(exec);
+  });
+}

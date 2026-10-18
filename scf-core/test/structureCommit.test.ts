@@ -14,7 +14,7 @@ import {
 import type { ScreenplayRow } from "../src/screenplay/rowModel.ts";
 import {
   classifySection, commitStructure, planCommitStructure,
-  createSpan, previewDerivedNumbering, reanchorSpansForMove, renumberSpans,
+  createSpan, setSpanBoundary, previewDerivedNumbering, reanchorSpansForMove, renumberSpans,
   setNumberingMode,
 } from "../src/ops/structureCommit.ts";
 import { initScreenplayTables } from "../src/screenplay/rowModel.ts";
@@ -652,6 +652,30 @@ describe("createSpan", () => {
     await createSpan(db.exec, "sequence", 1);
     const rows = await db.exec("SELECT name FROM sequence");
     expect(rows.map((r) => r["name"])).toEqual(["Untitled sequence"]);
+    db.close();
+  });
+});
+
+describe("setSpanBoundary", () => {
+  test("moving the boundary renumbers; null detaches it", async () => {
+    const db = await freshDb();
+    await db.exec("INSERT INTO scene (name, scene_number) VALUES ('A', '1')");
+    await db.exec("INSERT INTO scene (name, scene_number) VALUES ('B', '2')");
+    await db.exec(
+      "INSERT INTO screenplay_lines (uuid, line_order, line_type, content, " +
+      "scene_id) VALUES ('l1', 1, 'heading', 'A', 1), " +
+      "('l2', 2, 'heading', 'B', 2)");
+    await createSpan(db.exec, "act", 1);
+    const id = Number((await db.exec("SELECT id FROM act"))[0]!["id"]);
+    await setSpanBoundary(db.exec, "act", id, 2);
+    let row = (await db.exec(
+      "SELECT start_scene_id, act_number FROM act WHERE id = ?", [id]))[0]!;
+    expect(row["start_scene_id"]).toBe(2);
+    expect(row["act_number"]).toBe(1);
+    await setSpanBoundary(db.exec, "act", id, null);
+    row = (await db.exec(
+      "SELECT start_scene_id FROM act WHERE id = ?", [id]))[0]!;
+    expect(row["start_scene_id"]).toBeNull();
     db.close();
   });
 });
