@@ -70,6 +70,18 @@ export interface HostCoreOptions {
   journalDir?: string;
   /** Snapshots kept per film. */
   snapshotsKept?: number;
+  /**
+   * How long a snapshot stays good. An agent's write is preceded by one
+   * unless the film has been snapshotted within this many milliseconds,
+   * so a burst of changes is recoverable from its start without copying
+   * the file for every one. Default ten minutes; 0 snapshots every time.
+   */
+  snapshotEveryMs?: number;
+  /**
+   * Called when a client asks the host to exit and nobody else is
+   * connected. Without it `shutdown` is refused.
+   */
+  onShutdown?: () => void;
 }
 
 interface Film {
@@ -79,8 +91,6 @@ interface Film {
   connections: Set<ConnectionImpl>;
   /** Added to the session's revision, so a reload never repeats one. */
   base: number;
-  /** A snapshot has been taken for this open. */
-  snapshotted: boolean;
   journal: JournalEntry[];
 }
 
@@ -227,6 +237,19 @@ class HostCoreImpl implements HostCore {
   private readonly snapshotDir: string | undefined;
   private readonly journalDir: string | undefined;
   private readonly snapshotsKept: number;
+  private readonly snapshotEveryMs: number;
+  /** When each film was last snapshotted, across closes and reopens. */
+  private readonly snapshotTimes = new Map<string, number>();
+  private readonly onShutdown: (() => void) | undefined;
+  /**
+   * The last revision each film reached before it was closed. A film is
+   * closed whenever its last client lets go, and a tool that planned a
+   * change a moment ago and applies it now has closed and reopened it in
+   * between; the revision has to carry on from where it was, not restart
+   * at zero, or "the file has not moved since revision N" would mean
+   * nothing across a reopen. It rises for the life of the host.
+   */
+  private readonly lastRevisions = new Map<string, number>();
   /** Opens of one path wait for each other, so it is opened once. */
   private readonly opening = new Map<string, Promise<Film>>();
 
@@ -238,6 +261,8 @@ class HostCoreImpl implements HostCore {
     this.snapshotDir = options.snapshotDir;
     this.journalDir = options.journalDir;
     this.snapshotsKept = options.snapshotsKept ?? 10;
+    this.snapshotEveryMs = options.snapshotEveryMs ?? 600_000;
+    this.onShutdown = options.onShutdown;
   }
 
   /** A short stable name for a film's files in a shared directory. */
@@ -273,15 +298,24 @@ class HostCoreImpl implements HostCore {
   }
 
   /**
-   * A copy of the committed file, taken before an agent's first write to
-   * it. Through the READ connection, so it neither waits in the write
+   * A copy of the committed file, taken before an agent's write to it
+   * (unless one was taken recently — see `snapshotEveryMs`). Through the READ connection, so it neither waits in the write
    * queue nor moves the revision a caller is about to check.
    */
   private async snapshot(film: Film): Promise<string | undefined> {
-    if (this.snapshotDir === undefined || film.snapshotted) return undefined;
+    if (this.snapshotDir === undefined) return undefined;
+    const last = this.snapshotTimes.get(film.path);
+    if (last !== undefined && Date.now() - last < this.snapshotEveryMs) {
+      return undefined;
+    }
     const dir = join(this.snapshotDir, this.slug(film.path));
     const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const target = join(dir, `${stamp}.scf`);
+    let target = join(dir, `${stamp}.scf`);
+    // Two snapshots in one millisecond must not collide: VACUUM INTO
+    // refuses to overwrite.
+    for (let n = 2; existsSync(target); n += 1) {
+      target = join(dir, `${stamp}-${String(n)}.scf`);
+    }
     try {
       mkdirSync(dir, { recursive: true });
       await film.reader.exec("VACUUM INTO ?", [target]);
@@ -290,7 +324,7 @@ class HostCoreImpl implements HostCore {
       throw new HostFailure("failed", `could not take a snapshot first, ` +
         `so nothing was written: ${e instanceof Error ? e.message : String(e)}`);
     }
-    film.snapshotted = true;
+    this.snapshotTimes.set(film.path, Date.now());
     const old = readdirSync(dir).filter((n) => n.endsWith(".scf")).sort();
     for (const n of old.slice(0, Math.max(0, old.length - this.snapshotsKept))) {
       rmSync(join(dir, n), { force: true });
@@ -353,6 +387,7 @@ class HostCoreImpl implements HostCore {
   }
 
   private async closeFilm(film: Film): Promise<void> {
+    this.lastRevisions.set(film.path, this.revisionOf(film));
     this.films.delete(film.path);
     film.reader.close();
     await film.session.close();
@@ -414,8 +449,9 @@ class HostCoreImpl implements HostCore {
     await reader.exec(`PRAGMA busy_timeout = ${String(this.busyTimeoutMs)}`);
     await session.exec(`PRAGMA busy_timeout = ${String(this.busyTimeoutMs)}`);
     const film: Film = {
-      path: key, session, reader, connections: new Set(), base: 0,
-      snapshotted: false, journal: this.readJournalTail(key),
+      path: key, session, reader, connections: new Set(),
+      base: this.lastRevisions.get(key) ?? 0,
+      journal: this.readJournalTail(key),
     };
     this.films.set(key, film);
     return film;
@@ -475,10 +511,12 @@ class HostCoreImpl implements HostCore {
    */
   private async write(
       c: ConnectionImpl, p: Record<string, unknown>,
-      what: { via: "op" | "call"; name: string; snapshot: boolean },
+      what: { via: "op" | "call"; name: string; snapshot: boolean;
+              dry?: boolean },
       run: (film: Film, expected: number | undefined) =>
-        Promise<{ result: unknown; revision: number }>):
-      Promise<{ result: unknown; revision: number; snapshot?: string }> {
+        Promise<{ result: unknown; revision: number;
+                  dryRun?: HostMethods["op"][1]["dryRun"] }>):
+      Promise<HostMethods["op"][1]> {
     const film = this.requireFilm(c);
     if (c.readOnly) {
       throw new HostFailure(
@@ -499,6 +537,14 @@ class HostCoreImpl implements HostCore {
     // meant to change.
     if (expected !== undefined && expected !== this.revisionOf(film)) {
       throw new StaleRevisionError(expected, this.revisionOf(film));
+    }
+    if (what.dry === true) {
+      // Nothing changes, so nothing is snapshotted, journalled or
+      // announced — and the revision stays where it was.
+      const out = await run(
+        film, expected === undefined ? undefined : expected - film.base);
+      return { result: out.result, revision: film.base + out.revision,
+               ...(out.dryRun === undefined ? {} : { dryRun: out.dryRun }) };
     }
     const snapshot = what.snapshot ? await this.snapshot(film) : undefined;
     const before = this.revisionOf(film);
@@ -641,12 +687,13 @@ class HostCoreImpl implements HostCore {
         // stricter rules: a snapshot first, and no new integrity finding
         // unless the caller says it has a person watching.
         const gate = p["integrityGate"] !== false;
+        const dry = p["dryRun"] === true;
         return this.write(
-          c, p, { via: "op", name, snapshot: true },
+          c, p, { via: "op", name, snapshot: !dry, dry },
           (film, expected) => callOp(
             film.session, name, p["args"] ?? {},
             { ...(expected === undefined ? {} : { expectedRevision: expected }),
-              integrityGate: gate }));
+              integrityGate: gate, dryRun: dry }));
       }
       case "call": {
         const name = need<string>(p, "name", "string");
@@ -655,6 +702,19 @@ class HostCoreImpl implements HostCore {
           (film, expected) => callFn(
             film.session, name, p["args"] ?? [],
             expected === undefined ? {} : { expectedRevision: expected }));
+      }
+      case "shutdown": {
+        if (this.onShutdown === undefined) {
+          throw new HostFailure("failed", "this host cannot be asked to exit");
+        }
+        if (this.connections.size > 1) {
+          throw new HostFailure(
+            "failed", "other clients are connected; the host is in use");
+        }
+        // After the answer is sent, not before it.
+        const exit = this.onShutdown;
+        setTimeout(exit, 50);
+        return null;
       }
       case "journal": {
         const film = this.requireFilm(c);

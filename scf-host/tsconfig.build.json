@@ -5,7 +5,7 @@
     "customConditions": [],
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": false,
+    "declaration": true,
     "sourceMap": true,
     "rewriteRelativeImportExtensions": true
   },

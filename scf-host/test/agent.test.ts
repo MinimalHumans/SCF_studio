@@ -41,6 +41,7 @@ describe("what the host does for a tool's writes", () => {
     host = createHostCore({
       registry, snapshotDir: join(state, "snapshots"),
       journalDir: join(state, "journal"), snapshotsKept: 2,
+      snapshotEveryMs: 600_000,
     });
     agent = host.connect();
     window = host.connect();
@@ -106,6 +107,16 @@ describe("what the host does for a tool's writes", () => {
   });
 
   test("old snapshots are pruned to the number kept", async () => {
+    await host.shutdown();
+    host = createHostCore({
+      registry, snapshotDir: join(state, "snapshots"),
+      snapshotsKept: 2, snapshotEveryMs: 0 });
+    agent = host.connect();
+    window = host.connect();
+    await ok(agent, "hello", { client: "a" });
+    await ok(window, "hello", { client: "w" });
+    await ok(agent, "open", { path: film });
+    await ok(window, "open", { path: film });
     for (let i = 0; i < 4; i += 1) {
       const c = host.connect();
       await ok(c, "hello", { client: `agent ${String(i)}` });
@@ -156,6 +167,28 @@ describe("what the host does for a tool's writes", () => {
     await ok(agent, "op", { ...link, integrityGate: false });
   }, 60_000);
 
+  test("a dry run says what would happen and changes nothing at all",
+      async () => {
+    const heard: unknown[] = [];
+    window.onEvent((e) => heard.push(e));
+    const before = (await ok(agent, "status", {}) as unknown as
+      { films: { revision: number }[] }).films[0]!.revision;
+    const r = await ok(agent, "op", { ...addCharacter("PREVIEW"),
+      dryRun: true, expectedRevision: before });
+    expect(r["revision"]).toBe(before);
+    expect((r["dryRun"] as { added: unknown[] }).added).toEqual([]);
+    expect(await ok(agent, "query",
+      { sql: "SELECT COUNT(*) AS n FROM character" }) as unknown)
+      .toEqual([{ n: 0 }]);
+    expect(snapshots()).toEqual([]);
+    expect(heard).toEqual([]);
+    expect(((await ok(agent, "journal", {})) as unknown as
+      { entries: unknown[] }).entries).toEqual([]);
+    // The plan it belongs to is still good: the revision did not move.
+    await ok(agent, "op", { ...addCharacter("REAL"),
+      expectedRevision: before });
+  });
+
   test("every write is journalled with who made it and how", async () => {
     await ok(window, "call", { name: "record.create",
       args: ["character", { name: "W" }] });
@@ -193,5 +226,64 @@ describe("what the host does for a tool's writes", () => {
     expect(entries).toHaveLength(1);
     expect(entries[0]!.ok).toBe(false);
     expect(entries[0]!.error).toContain("unknown entity");
+  });
+});
+
+describe("a film that is closed and reopened keeps counting", () => {
+  test("so a revision read before the close still means something",
+      async () => {
+    const host = createHostCore({ registry });
+    const film = ws.newFilm();
+    const a = host.connect();
+    await a.handle("hello", { client: "a" });
+    await a.handle("open", { path: film });
+    await a.handle("op", { name: "record.create",
+      args: { entity: "character", values: { name: "ONE" } } });
+    const seen = await a.handle("status", {});
+    const revision = (seen as { ok: true; result: { films: { revision: number }[] } })
+      .result.films[0]!.revision;
+    await a.close();                       // last client: the film closes
+
+    const b = host.connect();
+    await b.handle("hello", { client: "b" });
+    const reopened = await b.handle("open", { path: film });
+    expect((reopened as { ok: true; result: { revision: number } })
+      .result.revision).toBe(revision);
+    // The plan a moment ago is still good…
+    const good = await b.handle("op", { name: "record.create",
+      args: { entity: "character", values: { name: "TWO" } },
+      expectedRevision: revision });
+    expect(good.ok).toBe(true);
+    // …and one made before anything moved is not.
+    const stale = await b.handle("op", { name: "record.create",
+      args: { entity: "character", values: { name: "THREE" } },
+      expectedRevision: revision });
+    expect(stale.ok).toBe(false);
+    await host.shutdown();
+  });
+});
+
+describe("asking the host to exit", () => {
+  test("is allowed for a lone client and refused when others are there",
+      async () => {
+    let exited = 0;
+    const host = createHostCore({ registry, onShutdown: () => { exited += 1; } });
+    const a = host.connect();
+    const b = host.connect();
+    const refused = await a.handle("shutdown", {});
+    expect(refused.ok).toBe(false);
+    await b.close();
+    const accepted = await a.handle("shutdown", {});
+    expect(accepted.ok).toBe(true);
+    await new Promise((r) => setTimeout(r, 120));
+    expect(exited).toBe(1);
+    await host.shutdown();
+  });
+
+  test("is refused by a host that was not given a way to", async () => {
+    const host = createHostCore({ registry });
+    const a = host.connect();
+    expect((await a.handle("shutdown", {})).ok).toBe(false);
+    await host.shutdown();
   });
 });

@@ -55,6 +55,13 @@ export interface JournalEntry {
   error?: string;
 }
 
+/** An integrity finding a write would add (scf-core's `GateFinding`). */
+export interface GateFindingInfo {
+  kind: string;
+  key: string;
+  description: string;
+}
+
 export interface DirEntry {
   name: string;
   /** A folder to descend into, or a `.scf` to open. */
@@ -131,10 +138,17 @@ export interface HostMethods {
   op: [{ name: string; args?: unknown; expectedRevision?: number;
          /** Refuse a write that adds an integrity finding (default on
           *  for `op`; pass false to opt out). */
-         integrityGate?: boolean },
+         integrityGate?: boolean;
+         /** Report what the write would do, and roll it back. Nothing
+          *  changes: no snapshot, no journal entry, no new revision. */
+         dryRun?: boolean },
        { result: unknown; revision: number;
          /** Set on the first write that took a snapshot of the file. */
-         snapshot?: string }];
+         snapshot?: string;
+         /** For a dry run: the findings the write would add. */
+         dryRun?: { added: GateFindingInfo[] } }];
+  /** Ask the host to exit. Refused while any other client is connected. */
+  shutdown: [Record<string, never>, null];
   /** Recent writes to the open film, newest last, with who made them. */
   journal: [{ limit?: number }, { entries: JournalEntry[] }];
   /** A function from the window's call table (`scf-core` ops/calls.ts). */

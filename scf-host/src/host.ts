@@ -41,6 +41,8 @@ export interface StartHostOptions {
    * `SCF_HOST_ROOTS` (a path-delimited list), then the user's home.
    */
   roots?: readonly string[];
+  /** Called when a client asks the host to exit (and is alone). */
+  onShutdown?: () => void;
   /** Exit policy hook: called when the last client leaves. */
   onIdle?: () => void;
 }
@@ -61,6 +63,8 @@ export async function startHost(
   // directory holds everything a host leaves behind.
   const core = createHostCore({
     registry, version, roots,
+    ...(options.onShutdown === undefined
+      ? {} : { onShutdown: options.onShutdown }),
     ...(dir === null ? {} : {
       snapshotDir: join(dir, "snapshots"), journalDir: join(dir, "journal"),
     }),
