@@ -180,8 +180,13 @@ function pureBaseline(registry: Registry, o: Owner): string {
 }
 
 export class SharedSetError extends Error {
-  constructor(readonly sharedWith: string[]) {
+  // A declared field, not a parameter property: scf-core runs under
+  // Node's type stripping (the MCP's no-build launcher), which rejects
+  // the shorthand.
+  readonly sharedWith: string[];
+  constructor(sharedWith: string[]) {
     super(`This set is also used by ${sharedWith.join(", ")}.`);
+    this.sharedWith = sharedWith;
   }
 }
 

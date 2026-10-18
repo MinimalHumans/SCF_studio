@@ -171,7 +171,11 @@ class ConnectionImpl implements HostConnection {
   name = "unknown";
   private listener: ((event: HostEvent) => void) | null = null;
 
-  constructor(private readonly host: HostCoreImpl) {}
+  private readonly host: HostCoreImpl;
+
+  constructor(host: HostCoreImpl) {
+    this.host = host;
+  }
 
   onEvent(listener: (event: HostEvent) => void): void {
     this.listener = listener;
