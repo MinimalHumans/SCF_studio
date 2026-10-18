@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useState } from "react";
-import type { Row, SqlValue } from "@scf-core/db.ts";
+import type { Row, SqlExec, SqlValue } from "@scf-core/db.ts";
 import { exec, useStore } from "../state/store.ts";
 
 /**
@@ -39,4 +39,39 @@ export function useQuery(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sql, key, revision, phase]);
   return rows;
+}
+
+/**
+ * Run a read from scf-core and keep its answer current, the way
+ * `useQuery` does for one statement: it runs again when the store's
+ * revision moves (any write, by any client) or the film changes, and a
+ * failure renders as `empty` and logs rather than crashing the view.
+ *
+ * For a read that is several queries and some shaping — a shot list, a
+ * storyboard — that scf-core owns, so the page and an MCP tool ask the
+ * same question.
+ */
+export function useRead<T>(read: (exec: SqlExec) => Promise<T>,
+                           empty: T): T {
+  const revision = useStore((s) => s.revision);
+  const phase = useStore((s) => s.phase);
+  const [value, setValue] = useState<T>(empty);
+  useEffect(() => {
+    let cancelled = false;
+    if (phase !== "open") {
+      setValue(empty);
+      return;
+    }
+    read(exec).then((v) => {
+      if (!cancelled) setValue(v);
+    }).catch((e: unknown) => {
+      console.error("read failed:", e);
+      if (!cancelled) setValue(empty);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision, phase]);
+  return value;
 }

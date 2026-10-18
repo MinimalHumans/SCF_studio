@@ -7,12 +7,12 @@ import { exec, useStore } from "../state/store.ts";
 import { resolveCached } from "../files/thumbnailCache.ts";
 import { useFrameUrl } from "./ShotFrame.tsx";
 import { useRememberedOptions } from "./useRememberedOptions.ts";
-import { step } from "../state/storyboard.ts";
+import { step } from "@scf-core/storyboard.ts";
 import {
   describeUses, FILTER_LABEL, filterItems, loadGallery, presentItems,
   SORT_LABEL, sortItems,
   type GalleryFilter, type GalleryItem, type GallerySort,
-} from "../state/gallery.ts";
+} from "@scf-core/gallery.ts";
 
 const OPTIONS_KEY = "scf:gallery-options";
 

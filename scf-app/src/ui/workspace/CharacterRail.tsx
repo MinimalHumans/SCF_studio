@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
   compareSubjects, subjectStatsSql, type SubjectSort, type SubjectStat,
-} from "../../state/subjectStats.ts";
+} from "@scf-core/subjectStats.ts";
 import { useQuery } from "../useQuery.ts";
 import { CharacterFace } from "./CharacterFace.tsx";
 import { KINDS, type SubjectKind } from "../../state/subjectKinds.ts";

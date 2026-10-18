@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, test } from "vitest";
-import { assetStanding } from "../src/editor/assetStanding.ts";
+import { assetStanding } from "../src/assetStanding.ts";
 
 describe("whether a file is current or history", () => {
   test("active, draft and unset are current, split by whether used", () => {

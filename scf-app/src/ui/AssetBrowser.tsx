@@ -41,7 +41,7 @@ import {
 import { exec, registry, useStore } from "../state/store.ts";
 import { AssetThumb } from "./AssetThumb.tsx";
 import { mediaFindingCount } from "@scf-core/ops/mediaChecks.ts";
-import { assetStanding } from "../editor/assetStanding.ts";
+import { assetStanding } from "@scf-core/assetStanding.ts";
 import { StandingTag } from "./StandingTag.tsx";
 import { useRememberedFlag } from "./useRememberedFlag.ts";
 import { MediaChecksPanel, useMediaReport } from "./MediaChecksPanel.tsx";

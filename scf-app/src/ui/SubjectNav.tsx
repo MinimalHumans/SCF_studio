@@ -4,7 +4,7 @@ import { useQuery } from "./useQuery.ts";
 import { registry, rowName, useStore } from "../state/store.ts";
 import {
   compareSubjects, subjectStatsSql, type SubjectSort, type SubjectStat,
-} from "../state/subjectStats.ts";
+} from "@scf-core/subjectStats.ts";
 import { useRefNames } from "./useRefNames.ts";
 import { NAVIGABLE_SUBJECTS, type NavigableSubject }
   from "../state/registryGraph.ts";

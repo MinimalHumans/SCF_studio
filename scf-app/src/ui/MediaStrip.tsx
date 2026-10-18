@@ -10,7 +10,7 @@ import { withCreatedAssets } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { fail, FileIntake, type Incoming } from "./workspace/BoardParts.tsx";
 import { AssetThumb } from "./AssetThumb.tsx";
-import { assetStanding } from "../editor/assetStanding.ts";
+import { assetStanding } from "@scf-core/assetStanding.ts";
 import { StandingTag } from "./StandingTag.tsx";
 
 /**

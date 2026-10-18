@@ -12,7 +12,8 @@
  * live in localStorage, not the .scf.
  */
 
-import type { Row } from "@scf-core/db.ts";
+import type { Row, SqlExec } from "./db.ts";
+import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "./structure.ts";
 
 /** One column of the table, in the order they print. */
 export const SHOTLIST_COLUMNS = [
@@ -40,16 +41,20 @@ export const COLUMN_LABEL: Record<ShotlistColumn, string> = {
 export type Orientation = "landscape" | "portrait";
 export type PaperSize = "letter" | "a4";
 
-export interface ShotlistOptions {
-  columns: Record<ShotlistColumn, boolean>;
-  orientation: Orientation;
-  paper: PaperSize;
+/** Which shots a sheet takes in — all a reader of the data needs. */
+export interface SheetOptions {
   /** "all", or one scene's id as a string. */
   scope: string;
   groupByBeat: boolean;
+  includeCut: boolean;
+}
+
+export interface ShotlistOptions extends SheetOptions {
+  columns: Record<ShotlistColumn, boolean>;
+  orientation: Orientation;
+  paper: PaperSize;
   /** Location, light, cast and props above each scene's table. */
   sceneHeader: boolean;
-  includeCut: boolean;
   /** ECU, MCU, MW … rather than the words as stored. */
   abbreviate: boolean;
   /** Each scene starts on a fresh page. */
@@ -217,7 +222,7 @@ const byOrder = (field: string) => (a: Row, b: Row): number =>
  */
 export function buildSheets(
   scenes: readonly Row[], beats: readonly Row[], shots: readonly Row[],
-  opts: Pick<ShotlistOptions, "scope" | "groupByBeat" | "includeCut">,
+  opts: SheetOptions,
 ): SceneSheet[] {
   const out: SceneSheet[] = [];
   for (const scene of scenes) {
@@ -287,4 +292,58 @@ export function actionText(shot: Row, titleColumn: boolean): string {
   if (desc === "") return titleColumn ? "" : name;
   if (titleColumn || name === "" || desc.startsWith(name)) return desc;
   return `${name}. ${desc}`;
+}
+
+// ---------------------------------------------------------------------------
+// Reading the rows
+// ---------------------------------------------------------------------------
+
+/** Everything a shot list is built from, as the file holds it. */
+export interface ShotlistRows {
+  scenes: Row[];
+  beats: Row[];
+  shots: Row[];
+  locations: Row[];
+  /** Scene-level lighting only. */
+  lighting: Row[];
+  sceneCast: Row[];
+  sceneProps: Row[];
+  shotCast: Row[];
+  shotProps: Row[];
+}
+
+/**
+ * The rows a shot list is made from, in one read: the editor's page and
+ * an MCP client ask this and get the same answer. Scenes come back in
+ * STORY order (a scene's number is a label, never an order).
+ */
+export async function readShotlistRows(exec: SqlExec): Promise<ShotlistRows> {
+  const [scenes, beats, shots, locations, lighting, sceneCast, sceneProps,
+         shotCast, shotProps] = await Promise.all([
+    exec("SELECT s.id, s.uuid, s.scene_number, s.name, s.location_id, " +
+         "s.summary " +
+         `FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`),
+    exec("SELECT id, uuid, name, scene_id, beat_order, description " +
+         "FROM story_beat"),
+    exec("SELECT id, uuid, name, scene_id, story_beat_id, shot_number, " +
+         "shot_order, shot_size, camera_angle, camera_movement, " +
+         "lens_choice, duration_seconds, description, notes, " +
+         "lifecycle_status FROM shot"),
+    exec("SELECT id, name, setting, key_features FROM location"),
+    // Scene-level lighting only: a shot's own row is a delta, and the
+    // header describes the room the shots are in.
+    exec("SELECT scene_id, lighting_style, overall_mood, key_source, " +
+         "light_quality FROM lighting_design WHERE shot_id IS NULL " +
+         "ORDER BY id"),
+    exec("SELECT sc.scene_id, c.name FROM scene_character sc " +
+         "JOIN character c ON c.id = sc.character_id ORDER BY sc.id"),
+    exec("SELECT sp.scene_id, p.name FROM scene_prop sp " +
+         "JOIN prop p ON p.id = sp.prop_id ORDER BY sp.id"),
+    exec("SELECT sc.shot_id, c.name FROM shot_character sc " +
+         "JOIN character c ON c.id = sc.character_id ORDER BY sc.id"),
+    exec("SELECT sp.shot_id, p.name FROM shot_prop sp " +
+         "JOIN prop p ON p.id = sp.prop_id ORDER BY sp.id"),
+  ]);
+  return { scenes, beats, shots, locations, lighting, sceneCast, sceneProps,
+           shotCast, shotProps };
 }

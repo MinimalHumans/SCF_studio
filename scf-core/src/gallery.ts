@@ -22,17 +22,17 @@
  * Cut rows count for nothing (§6.6.1), as everywhere else.
  */
 
-import type { Row, SqlExec } from "@scf-core/db.ts";
-import { previewCapability, type PreviewKind } from "@scf-core/preview.ts";
+import type { Row, SqlExec } from "./db.ts";
+import { previewCapability, type PreviewKind } from "./preview.ts";
 
-export type SubjectKind =
+export type GallerySubjectKind =
   "character" | "location" | "prop" | "costume" | "scene" | "shot" | "project";
 
 /** One way an asset is used, as the viewer lists it. */
 export interface Use {
   /** What it serves; null for a use that reaches no subject (a bundle
    *  nothing binds, a link to another asset). */
-  subject: { kind: SubjectKind; id: number; name: string } | null;
+  subject: { kind: GallerySubjectKind; id: number; name: string } | null;
   /** How: "look board", "face anchor", "storyboard" … */
   how: string;
 }
@@ -103,19 +103,19 @@ function intentLabel(intent: unknown): string {
 export async function loadGallery(exec: SqlExec,
                                   includeHistory = false): Promise<GalleryItem[]> {
   const assets = await exec(
-    "SELECT id, name, identifier, description, tags, lifecycle_status, " +
+    "SELECT id, uuid, name, identifier, description, tags, lifecycle_status, " +
     "superseded_by_id, created_at FROM asset ORDER BY id");
 
   // Subject names and how many scenes each is in.
   const names = new Map<string, string>();
   const weight = new Map<string, number>();
-  const key = (k: SubjectKind, id: unknown): string => `${k}:${String(id)}`;
+  const key = (k: GallerySubjectKind, id: unknown): string => `${k}:${String(id)}`;
   for (const k of ["character", "location", "prop", "costume"] as const) {
     for (const r of await maybe(exec, `SELECT id, name FROM ${k} s WHERE ${notCut("s")}`)) {
       names.set(key(k, r["id"]), String(r["name"] ?? `${k} ${String(r["id"])}`));
     }
   }
-  const sceneCounts: Array<[SubjectKind, string]> = [
+  const sceneCounts: Array<[GallerySubjectKind, string]> = [
     ["character", "SELECT character_id AS id, COUNT(DISTINCT scene_id) AS n FROM scene_character GROUP BY character_id"],
     ["location", "SELECT location_id AS id, COUNT(*) AS n FROM scene s WHERE location_id IS NOT NULL AND " + notCut("s") + " GROUP BY location_id"],
     ["prop", "SELECT prop_id AS id, COUNT(DISTINCT scene_id) AS n FROM scene_prop GROUP BY prop_id"],
@@ -142,7 +142,7 @@ export async function loadGallery(exec: SqlExec,
   }
 
   // Which subjects each bundle reaches.
-  const bundleReach = new Map<number, Array<{ kind: SubjectKind; id: number }>>();
+  const bundleReach = new Map<number, Array<{ kind: GallerySubjectKind; id: number }>>();
   for (const k of BINDING_KINDS) {
     const rows = await maybe(exec,
       `SELECT bundle_id, ${k}_id AS sid FROM ${k}_asset_binding b WHERE ${notCut("b")}`);
@@ -161,7 +161,7 @@ export async function loadGallery(exec: SqlExec,
     list.push(use);
     uses.set(id, list);
   };
-  const subject = (kind: SubjectKind, id: unknown): Use["subject"] => {
+  const subject = (kind: GallerySubjectKind, id: unknown): Use["subject"] => {
     const n = names.get(key(kind, id));
     return n === undefined ? null : { kind, id: Number(id), name: n };
   };
@@ -179,15 +179,15 @@ export async function loadGallery(exec: SqlExec,
   for (const r of await maybe(exec,
       "SELECT asset_id, subject_type, subject_id, anchor_type FROM entity_anchor a " +
       `WHERE ${notCut("a")}`)) {
-    const kind = String(r["subject_type"]) as SubjectKind;
+    const kind = String(r["subject_type"]) as GallerySubjectKind;
     const how = `${String(r["anchor_type"] ?? "identity").replace(/[_-]+/g, " ")} anchor`;
     add(r["asset_id"], { subject: subject(kind, r["subject_id"]), how });
   }
   for (const r of await maybe(exec,
       "SELECT asset_id, entity_type, entity_id, relationship_type FROM asset_relationship")) {
-    const kind = String(r["entity_type"]) as SubjectKind;
+    const kind = String(r["entity_type"]) as GallerySubjectKind;
     const how = String(r["relationship_type"] ?? "related").replace(/[_-]+/g, " ");
-    if (kind !== ("asset" as SubjectKind)) {
+    if (kind !== ("asset" as GallerySubjectKind)) {
       add(r["asset_id"], { subject: subject(kind, r["entity_id"]), how });
       continue;
     }
@@ -233,7 +233,7 @@ export function scoreOf(uses: readonly Use[],
 }
 
 /** Shots, scenes and the project poster read as one group. */
-const FILTER_KINDS: Record<Exclude<GalleryFilter, "all" | "unused">, SubjectKind[]> = {
+const FILTER_KINDS: Record<Exclude<GalleryFilter, "all" | "unused">, GallerySubjectKind[]> = {
   character: ["character", "costume"],
   location: ["location"],
   prop: ["prop"],

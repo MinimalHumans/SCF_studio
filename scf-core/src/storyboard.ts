@@ -12,7 +12,8 @@
  * preference, kept in localStorage.
  */
 
-import type { Row } from "@scf-core/db.ts";
+import type { Row, SqlExec } from "./db.ts";
+import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "./structure.ts";
 import { buildSheets, type SceneSheet } from "./shotlist.ts";
 
 export const BOARD_TABS = ["Board", "Lightbox"] as const;
@@ -156,4 +157,31 @@ export function buildBoard(
 export function step(index: number, delta: number, count: number): number {
   if (count === 0) return 0;
   return Math.min(count - 1, Math.max(0, index + delta));
+}
+
+/** What a storyboard is built from, as the file holds it. */
+export interface BoardRows {
+  scenes: Row[];
+  beats: Row[];
+  shots: Row[];
+  /** The project's aspect ratio as written ("16:9"), if it has one. */
+  aspectRatio: string | null;
+}
+
+/** The rows a storyboard is made from, scenes in story order. */
+export async function readBoardRows(exec: SqlExec): Promise<BoardRows> {
+  const [scenes, beats, shots, specs] = await Promise.all([
+    exec("SELECT s.id, s.scene_number, s.name " +
+         `FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`),
+    exec("SELECT id, name, scene_id, beat_order, description " +
+         "FROM story_beat"),
+    exec("SELECT id, name, scene_id, story_beat_id, shot_number, " +
+         "shot_order, description, lifecycle_status FROM shot"),
+    exec("SELECT aspect_ratio FROM technical_specs LIMIT 1"),
+  ]);
+  const ratio = specs[0]?.["aspect_ratio"];
+  return {
+    scenes, beats, shots,
+    aspectRatio: typeof ratio === "string" && ratio !== "" ? ratio : null,
+  };
 }

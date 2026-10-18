@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { exec, useStore } from "../../state/store.ts";
 import {
   readSceneIndex, type SceneIndex,
-} from "../../editor/characterPresence.ts";
+} from "@scf-core/characterPresence.ts";
 
 /** Which scene each script line is in, re-read on every write. */
 export function useSceneIndex(): SceneIndex | null {

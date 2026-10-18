@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, test } from "vitest";
-import type { Row } from "@scf-core/db.ts";
+import type { Row } from "../src/db.ts";
 import {
   boardAspect, buildBoard, DEFAULT_BOARD_OPTIONS, parseAspect, step,
   withBoardDefaults,
-} from "../src/state/storyboard.ts";
+} from "../src/storyboard.ts";
 
 const scenes: Row[] = [
   { id: 2, scene_number: "2", name: "INT. ROOM - DAY" },

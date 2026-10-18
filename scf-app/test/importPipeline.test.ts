@@ -22,7 +22,7 @@ import {
 import {
   blocksToFountain, rowsToBlocks,
 } from "@scf-core/screenplay/blocks.ts";
-import { subjectStatsSql } from "../src/state/subjectStats.ts";
+import { subjectStatsSql } from "@scf-core/subjectStats.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REGISTRY = join(HERE, "../../scf-core/registry/registry.json");

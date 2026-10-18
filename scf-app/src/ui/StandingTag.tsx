@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import type { Standing } from "../editor/assetStanding.ts";
+import type { Standing } from "@scf-core/assetStanding.ts";
 
 /**
  * The small tag that says whether a file is current or history

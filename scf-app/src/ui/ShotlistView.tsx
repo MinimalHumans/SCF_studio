@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo } from "react";
 import type { Row } from "@scf-core/db.ts";
-import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "@scf-core/structure.ts";
 import { useStore } from "../state/store.ts";
-import { useQuery } from "./useQuery.ts";
+import { useRead } from "./useQuery.ts";
 import { ShotFrame, useShotFrames } from "./ShotFrame.tsx";
 import { useRememberedOptions } from "./useRememberedOptions.ts";
 import { sceneLabel } from "@scf-core/displayName.ts";
@@ -11,7 +10,14 @@ import {
   actionText, beatBanner, buildSheets, COLUMN_LABEL, runningTime,
   seconds, shortAngle, shortSize, SHOTLIST_COLUMNS, sizeLegend, tidy,
   withDefaults, type SceneSheet, type ShotlistColumn, type ShotlistOptions,
-} from "../state/shotlist.ts";
+  readShotlistRows, type ShotlistRows,
+} from "@scf-core/shotlist.ts";
+
+/** Before the first read lands, and when one fails. */
+const EMPTY_ROWS: ShotlistRows = {
+  scenes: [], beats: [], shots: [], locations: [], lighting: [],
+  sceneCast: [], sceneProps: [], shotCast: [], shotProps: [],
+};
 
 const OPTIONS_KEY = "scf:shotlist-options";
 
@@ -46,35 +52,8 @@ export function ShotlistView(): JSX.Element {
   const { projectName } = useStore();
   const [opts, setOpts] = useRememberedOptions(OPTIONS_KEY, withDefaults);
 
-  const scenes = useQuery(
-    "SELECT s.id, s.scene_number, s.name, s.location_id, s.summary " +
-    `FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`);
-  const beats = useQuery(
-    "SELECT id, name, scene_id, beat_order, description FROM story_beat");
-  const shots = useQuery(
-    "SELECT id, name, scene_id, story_beat_id, shot_number, shot_order, " +
-    "shot_size, camera_angle, camera_movement, lens_choice, " +
-    "duration_seconds, description, notes, lifecycle_status FROM shot");
-  const locations = useQuery(
-    "SELECT id, name, setting, key_features FROM location");
-  // Scene-level lighting only: a shot's own row is a delta, and the
-  // header describes the room the shots are in.
-  const lighting = useQuery(
-    "SELECT scene_id, lighting_style, overall_mood, key_source, " +
-    "light_quality FROM lighting_design WHERE shot_id IS NULL " +
-    "ORDER BY id");
-  const sceneCast = useQuery(
-    "SELECT sc.scene_id, c.name FROM scene_character sc " +
-    "JOIN character c ON c.id = sc.character_id ORDER BY sc.id");
-  const sceneProps = useQuery(
-    "SELECT sp.scene_id, p.name FROM scene_prop sp " +
-    "JOIN prop p ON p.id = sp.prop_id ORDER BY sp.id");
-  const shotCast = useQuery(
-    "SELECT sc.shot_id, c.name FROM shot_character sc " +
-    "JOIN character c ON c.id = sc.character_id ORDER BY sc.id");
-  const shotProps = useQuery(
-    "SELECT sp.shot_id, p.name FROM shot_prop sp " +
-    "JOIN prop p ON p.id = sp.prop_id ORDER BY sp.id");
+  const { scenes, beats, shots, locations, lighting, sceneCast, sceneProps,
+          shotCast, shotProps } = useRead(readShotlistRows, EMPTY_ROWS);
   const frameOf = useShotFrames();
   const locationById = useMemo(
     () => new Map(locations.map((l) => [Number(l["id"]), l])), [locations]);

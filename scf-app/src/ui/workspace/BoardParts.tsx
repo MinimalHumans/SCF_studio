@@ -19,7 +19,7 @@ import { AssetThumb } from "../AssetThumb.tsx";
 import { scopeSummary } from "./AnchorScope.tsx";
 import { useQuery } from "../useQuery.ts";
 import { StandingTag } from "../StandingTag.tsx";
-import type { Standing } from "../../editor/assetStanding.ts";
+import type { Standing } from "@scf-core/assetStanding.ts";
 
 /** Files on their way onto a board or an exception. */
 export interface Incoming {

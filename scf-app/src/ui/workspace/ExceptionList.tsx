@@ -10,7 +10,7 @@ import { useQuery } from "../useQuery.ts";
 import {
   BoardTile, fail, FileIntake, placeFiles, type InForce,
 } from "./BoardParts.tsx";
-import { assetStanding } from "../../editor/assetStanding.ts";
+import { assetStanding } from "@scf-core/assetStanding.ts";
 import { useStoryScenes } from "./StoryStrip.tsx";
 
 type Kind = When["kind"];

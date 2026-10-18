@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * state/listOrder.ts — how a schema list decides its order.
+ * listOrder.ts — how a schema list decides its order.
  *
  * Pure and view-free on purpose: importing anything under ui/ pulls in
  * the store, which spawns the SQL worker, and a unit test has no
  * business doing that.
  */
 
-import { q } from "@scf-core/db.ts";
-import type { EntityDef } from "@scf-core/registry.ts";
+import { q } from "./db.ts";
+import type { EntityDef } from "./registry.ts";
 
 export const STORY_ORDERED: Record<string,
     { sceneRef: string; fallbacks: string[]; from?: string }> = {

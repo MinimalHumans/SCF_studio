@@ -2,16 +2,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Row } from "@scf-core/db.ts";
-import { SCENE_ORDER_BY, SCENE_ORDER_JOIN } from "@scf-core/structure.ts";
-import { useQuery } from "./useQuery.ts";
+import { useRead } from "./useQuery.ts";
 import { ShotFrame, useShotFrames } from "./ShotFrame.tsx";
 import { useRememberedOptions } from "./useRememberedOptions.ts";
 import { sceneLabel } from "@scf-core/displayName.ts";
-import { beatBanner } from "../state/shotlist.ts";
+import { beatBanner } from "@scf-core/shotlist.ts";
 import {
   ASPECT_CHOICES, BOARD_TABS, boardAspect, buildBoard, step,
   withBoardDefaults, type BoardFrame, type BoardScene, type StoryboardOptions,
-} from "../state/storyboard.ts";
+  readBoardRows, type BoardRows,
+} from "@scf-core/storyboard.ts";
+
+/** Before the first read lands, and when one fails. */
+const EMPTY_BOARD: BoardRows =
+  { scenes: [], beats: [], shots: [], aspectRatio: null };
 
 const OPTIONS_KEY = "scf:storyboard-options";
 
@@ -43,18 +47,11 @@ export function StoryboardView(): JSX.Element {
   const [opts, setOpts] = useRememberedOptions(OPTIONS_KEY, withBoardDefaults);
   const [viewing, setViewing] = useState<number | null>(null);
 
-  const scenes = useQuery(
-    "SELECT s.id, s.scene_number, s.name " +
-    `FROM scene s ${SCENE_ORDER_JOIN} ${SCENE_ORDER_BY}`);
-  const beats = useQuery(
-    "SELECT id, name, scene_id, beat_order, description FROM story_beat");
-  const shots = useQuery(
-    "SELECT id, name, scene_id, story_beat_id, shot_number, shot_order, " +
-    "description, lifecycle_status FROM shot");
-  const specs = useQuery("SELECT aspect_ratio FROM technical_specs LIMIT 1");
+  const { scenes, beats, shots, aspectRatio } =
+    useRead(readBoardRows, EMPTY_BOARD);
   const frameOf = useShotFrames();
 
-  const projectRatio = text(specs[0]?.["aspect_ratio"]) || null;
+  const projectRatio = aspectRatio;
   const aspect = boardAspect(opts.aspect, projectRatio);
   const board = useMemo(
     () => buildBoard(scenes, beats, shots, frameOf, opts),
