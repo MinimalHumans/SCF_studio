@@ -903,7 +903,7 @@ at the layer that won — the cascade returns most-specific-first, so an
 override beats the base bundle it shadows.
 
 The locator is injected into the query layer rather than imported, so
-`runners.ts` stays runnable without the app store or its SQL worker.
+`runners.ts` stays runnable without the app store or a host connection.
 `scf-core/test/mediaReferences.test.ts` includes an assertion that no
 export ever contains `base64`, `blob:` or `data:`.
 

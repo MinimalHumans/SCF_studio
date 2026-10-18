@@ -380,8 +380,18 @@ server, queries it, then renames and deletes it while the server runs.
 | `shot_context` | `(shotUuid)` | → `shotContext`, the frame (§4.7) |
 | `shot_media` | `(shotUuid, subjectUuid?)` | → `shotMedia`, what to attach |
 | `shot_readiness` | `(shotUuid)` | → `shotReadiness`, what is thin |
-| one tool per query | each query's own params | Q00–Q13, Q15 |
-| `readiness` | `(queryId, params)` | Q14 directly, for pre-flight |
+| one tool per query | each query's own params, and `format?` | Q00–Q13, Q15; `format: "markdown"` is the prompt-ready block (`scf-core` `queryMarkdown`) |
+| `readiness` | `(queryId, params, format?)` | Q14 directly, for pre-flight |
+| `shot_list` | `(sceneUuid?, includeCut?)` | → `readShotlistRows` + `buildSheets`, what the editor prints |
+| `gallery` | `(sort?, filter?, includeHistory?, limit?)` | → `loadGallery`, assets ranked by what they carry |
+| `character_presence` | `(characterUuid)` | → `readScriptPresence` + `presenceByScene`, links vs cues |
+| `recent_changes` | `(limit?)` | the host's journal: who changed what |
+| `create_row`, `update_row`, `delete_row`, `add_shot`, `set_shot_cut`, `move_shot`, `set_title_page_key` | each tool's own, and `confirm?` | writes, plan first (`writeTools.ts`; omitted by `--read-only`) |
+
+The last three read rows are the editor's own: the shot list, gallery and
+presence reads live in `scf-core` and the editor calls the same
+functions, so a client and the person at the editor see the same thing in
+the same order.
 
 **`query(id, params)` is gone.** With `params` a loose string map, an
 agent had no way to know which keys an id needed short of guessing.

@@ -1,10 +1,16 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # One host for every `.scf` — design note
 
-**Status: decided in outline, partly built.** First written 2026-10-12;
-rewritten 2026-10-18 after the decisions in §2. Supersedes the
-"`scf-mcp` has no write tools" line in
-[`scf-mcp-design.md`](scf-mcp-design.md) §1 once built.
+**Status: built** (on the `fileio` branch). First written 2026-10-12;
+rewritten 2026-10-18 after the decisions in §2; §10 records what was
+done and what was left. It supersedes the "`scf-mcp` has no write
+tools" line in [`scf-mcp-design.md`](scf-mcp-design.md) §1, which that
+document now says.
+
+Where to look: `scf-core/src/ops/` (the write rules and the two op
+tables), `scf-host/` (the process), `scf-app/src/host/` and
+`state/api.ts` (the window as a client), `scf-mcp/src/hostLink.ts` and
+`writeTools.ts` (the MCP as a client).
 
 ---
 
@@ -251,12 +257,24 @@ Done on branch `fileio`:
     film on an older schema is refused with "open it once in the
     editor".
 
-To do:
-
-7. **Phase 4 reads**: promote the app-only queries to core so the host
-   serves one read surface.
-8. **Docs**: done for the MCP, the READMEs, `conventions.md` §9 and the
-   editor notes.
+- ✅ **Reads in one place.** The modules that read the film and had
+  lived in the editor moved into `scf-core` with their tests, and the
+  editor imports them back: `gallery`, `characterPresence` (who speaks
+  where, link vs script), `subjectStats`, `listOrder`, `assetStanding`,
+  `shotlist` and `storyboard` (with `readShotlistRows` and
+  `readBoardRows`, which replaced thirteen inline queries in two
+  views), and `queryMarkdown` — the prompt-ready rendering of all
+  sixteen canonical queries, split out of the editor's `runners.ts`,
+  which keeps only the picker wiring. The renderings are pinned
+  character for character (`scf-core/test/golden/queryMarkdown.json`,
+  captured before the move). The MCP offers the same reads: `shot_list`,
+  `gallery`, `character_presence`, and `format: "markdown"` on the
+  query tools. A read whose answer is *shaped* (joins, ordering rules, a
+  derivation) belongs in core; a view may still do a plain lookup of its
+  own rows.
+- ✅ **Docs**: this note, the READMEs of `scf-core`, `scf-host`,
+  `scf-app` and `scf-mcp`, `scf-mcp-design.md` §1 and §5, `conventions.md`
+  §9, and the editor notes.
 
 Known limits of the window migration: the import dialog no longer shows
 per-step progress (a call returns once); a change the MCP makes to the
