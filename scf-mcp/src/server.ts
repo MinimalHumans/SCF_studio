@@ -24,9 +24,14 @@
  *                 the call is even sent, not a runtime failure
  *   readiness     Q14 directly, for pre-flight
  *
- * This server READS. It has no write tools, per the design doc's
- * boundary: SCF is the ground truth of the film, not the workflow for
- * making it.
+ * Writing. The read tools above never change a film. The write tools
+ * (writeTools.ts) do, and only in two steps: a plan the person can
+ * read, then an apply that is refused if the film is no longer what the
+ * plan described. `--read-only` offers none of them. Every film is
+ * opened by the SCF host (scf-host), shared with the editor, which also
+ * holds the lines no tool can cross: a snapshot before the first
+ * agent change, no new integrity finding, and a journal of who wrote
+ * what.
  *
  * Exactly one film is open at a time, held in process state — see
  * projectCache.ts. `open` is the only tool that names a `.scf` path;
@@ -53,11 +58,12 @@ import {
   shotReadiness, whereUsed,
 } from "@minimalhumans/scf-core";
 import { parseConfig } from "./config.ts";
+import { registerJournalTool, registerWriteTools } from "./writeTools.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
 import { makeNodeConfigStore } from "./nodeConfigStore.ts";
 import {
-  loadRecent, openProject, recentProjects, setConfigStore, setRoots,
-  withProject,
+  loadRecent, openProject, recentProjects, setAgentName, setConfigStore,
+  setReadOnly, setRoots, withProject,
 } from "./projectCache.ts";
 import { registerQueryTools } from "./queryTools.ts";
 import { err, ok, text } from "./toolResult.ts";
@@ -67,12 +73,14 @@ setConfigStore(configStore);
 loadRecent((await configStore.read()).recentFiles);
 
 const config = parseConfig(process.argv.slice(2));
+setReadOnly(config.readOnly);
 if (config.scfPath !== undefined) openProject(config.scfPath, config.roots);
 
 
 const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
   instructions:
-    "Read-only access to a film's Story Context Framework (`.scf`) file. " +
+    (config.readOnly ? "Read-only access to" : "Access to") +
+    " a film's Story Context Framework (`.scf`) file. " +
     "Call `open` once per film, with the path to its `.scf` file, before " +
     "anything else — every other tool reads whichever film was opened " +
     "most recently and errors if nothing has been opened yet. Don't " +
@@ -107,9 +115,27 @@ const server = new McpServer({ name: "scf-mcp", version: "0.1.0" }, {
     "(voice_direction, physical_direction, look_resolution, soundscape, " +
     "media_resolution, or subject_in_context) at a given position, " +
     "before you write a prompt that depends on it.\n\n" +
-    "This server has no write tools by design — SCF is the ground truth " +
-    "of the film, not the workflow for making it.",
+    (config.readOnly
+      ? "This server is read-only: it offers no write tools."
+      : "Changing the film is deliberately two steps. `create_row`, " +
+        "`update_row`, `delete_row`, `add_shot`, `set_shot_cut`, " +
+        "`move_shot` and `set_title_page_key` first return a PLAN — the " +
+        "exact changes, the risks, a `planId` — and change nothing. " +
+        "Show the plan to the person you are working with and wait for " +
+        "their approval; then call the same tool again with `confirm` " +
+        "set to the `planId`. It re-checks the film and applies only an " +
+        "unchanged plan. A change that would add an integrity finding " +
+        "is refused, the first agent change to a film is preceded by a " +
+        "snapshot of it, and `recent_changes` shows who changed what. " +
+        "SCF is the ground truth of the film: change a row only when " +
+        "asked to, and say what you changed."),
 });
+
+// The handshake names the client; the host's journal and the editor's
+// "edited by" notice show it, so a change can be traced to who made it.
+server.server.oninitialized = () => {
+  setAgentName(server.server.getClientVersion()?.name);
+};
 
 server.registerTool("open", {
   description: "Open (or switch to) a film, optionally mapping asset " +
@@ -129,7 +155,7 @@ server.registerTool("open", {
 }, async ({ scfPath, roots }) => {
   try {
     const project = openProject(scfPath, roots ?? {});
-    return ok(await withProject(async ({ ctx }) => {
+    return ok(await withProject(async ({ ctx, revision, readOnly }) => {
       const brief = await q00Result(ctx);
       const scenes = await listEntities(ctx, "scene");
       const shots = await listEntities(ctx, "shot");
@@ -142,6 +168,8 @@ server.registerTool("open", {
         shotCount: shots.length,
         rootMapped: project.rootMapped,
         roots: project.roots,
+        revision,
+        writable: !readOnly,
       };
     }, project));
   } catch (e) {
@@ -327,6 +355,8 @@ server.registerTool("shot_readiness", {
 });
 
 registerQueryTools(server);
+registerJournalTool(server);
+if (!config.readOnly) registerWriteTools(server);
 
 const READINESS_TARGETS = ["Q02", "Q05", "Q06", "Q07", "Q08", "Q13"] as const;
 

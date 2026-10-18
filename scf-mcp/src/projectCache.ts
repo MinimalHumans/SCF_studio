@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * projectCache.ts — which `.scf` a tool call means, and opening it for
- * exactly as long as the call runs.
+ * projectCache.ts — which `.scf` a tool call means, and talking to the
+ * host about it for exactly as long as the call runs.
  *
- * NO HANDLE OUTLIVES A CALL. `open` remembers a path and its roots; each
- * tool call opens the file read-only, answers, and closes it
- * (`withProject`). On Windows an open handle stops any other program
- * renaming, replacing or deleting the file, and this process lives as
- * long as the client's session: a cached handle would keep every film
- * the session had looked at locked against the editor saving it and the
- * fixture build rewriting it. Opening a database costs milliseconds; a
- * call answers from what is on disk when it runs.
+ * NO FILM OUTLIVES A CALL. `open` remembers a path and its roots; each
+ * tool call makes its own connection to the host, opens the film on it,
+ * answers, and disconnects (`withProject`). The host lets go of a film
+ * when its last client does, so on Windows — where an open handle stops
+ * any other program renaming, replacing or deleting the file — a film
+ * this session has looked at is not held against the editor saving it
+ * or the fixture build rewriting it. A connection per call costs a few
+ * milliseconds and means a call answers from what is on disk when it
+ * runs.
  *
  * A stdio MCP server is a single long-lived process a client (Claude
  * Desktop, an editor, whatever) spawns once and keeps running for its
@@ -38,13 +39,37 @@ import { resolve } from "node:path";
 import {
   loadRegistry, type FileLocator, type RegistryJson, type ScfContext,
 } from "@minimalhumans/scf-core";
-import { openNodeDatabase, type NodeDatabase } from "@minimalhumans/scf-core/node";
+import type { HostClient } from "@minimalhumans/scf-host/client";
 import registryJson from "@minimalhumans/scf-core/registry.json" with { type: "json" };
 import type { AppConfigStore } from "./appConfig.ts";
 import type { RootMap } from "./config.ts";
+import { connectHost } from "./hostLink.ts";
 import { makeNodeLocator } from "./nodeLocator.ts";
 
-const registry = loadRegistry(registryJson as unknown as RegistryJson);
+export const registry = loadRegistry(registryJson as unknown as RegistryJson);
+
+/**
+ * Who this server is to the host, for attributing its writes. The MCP
+ * handshake names the client (Claude Desktop, an editor…); the host's
+ * journal and the editor's "edited by" notice show it.
+ */
+let agentName = "mcp";
+export function setAgentName(client: string | undefined): void {
+  agentName = client === undefined || client === "" ? "mcp"
+    : `mcp: ${client}`;
+}
+export function currentAgentName(): string {
+  return agentName;
+}
+
+/** When set, films are opened read-only: no write can come from here. */
+let readOnly = false;
+export function setReadOnly(value: boolean): void {
+  readOnly = value;
+}
+export function isReadOnly(): boolean {
+  return readOnly;
+}
 
 /** A film this session knows: where it is and its roots. No handle. */
 export interface Project {
@@ -56,7 +81,13 @@ export interface Project {
 
 /** A film open for the length of one call (`withProject`). */
 export interface OpenProject extends Project {
+  /** Reads, against the host's read-only connection. */
   ctx: ScfContext;
+  /** This call's own connection, for writes. Closed when the call ends. */
+  host: HostClient;
+  /** The film's revision when this call opened it. */
+  revision: number;
+  readOnly: boolean;
 }
 
 /**
@@ -158,19 +189,22 @@ export function currentProject(): Project {
 }
 
 /**
- * Run `fn` against a film open read-only for exactly as long as `fn`
- * runs, and close it however `fn` ends. The current film unless one is
- * given. Every tool call goes through here, so no handle outlives a call.
+ * Run `fn` against the film, on a connection of its own that is closed
+ * however `fn` ends. The current film unless one is given. Every tool
+ * call goes through here, so nothing outlives a call.
  */
 export async function withProject<T>(
     fn: (project: OpenProject) => Promise<T>,
     project: Project = currentProject()): Promise<T> {
-  const db: NodeDatabase = openNodeDatabase(project.scfPath,
-                                            { readOnly: true });
+  const host = await connectHost(agentName);
   try {
-    return await fn({ ...project, ctx: { exec: db.exec, registry } });
+    const opened = await host.open(project.scfPath, { readOnly });
+    return await fn({
+      ...project, ctx: host.context(registry), host,
+      revision: opened.revision, readOnly,
+    });
   } finally {
-    db.close();
+    await host.dispose();
   }
 }
 

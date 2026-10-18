@@ -23,18 +23,22 @@ export type RootMap = Record<string, string>;
 export interface ServerConfig {
   scfPath: string | undefined;
   roots: RootMap;
+  /** No write tool is offered, and films are opened read-only. */
+  readOnly: boolean;
 }
 
 interface ConfigFile {
   scf?: string;
   roots?: RootMap;
+  readOnly?: boolean;
 }
 
 function usage(message?: string): never {
   if (message !== undefined) process.stderr.write(`${message}\n`);
   process.stderr.write(
     "usage: scf-mcp [--scf <path>] [--root name=path ...] " +
-    "[--config <path>]\n" +
+    "[--config <path>] [--read-only]\n" +
+    "  --read-only offers no write tools (also SCF_MCP_READ_ONLY=1).\n" +
     "  --scf/--root set the default project; every tool also accepts " +
     "its own scfPath.\n");
   process.exit(1);
@@ -43,6 +47,7 @@ function usage(message?: string): never {
 export function parseConfig(argv: readonly string[]): ServerConfig {
   let scfPath: string | undefined;
   let configPath: string | undefined;
+  let readOnly = process.env["SCF_MCP_READ_ONLY"] === "1";
   const roots: RootMap = {};
 
   for (let i = 0; i < argv.length; i++) {
@@ -56,6 +61,8 @@ export function parseConfig(argv: readonly string[]): ServerConfig {
         usage(`--root expects name=path, got ${spec ?? "nothing"}`);
       }
       roots[spec.slice(0, eq)] = spec.slice(eq + 1);
+    } else if (arg === "--read-only") {
+      readOnly = true;
     } else if (arg === "--config") {
       configPath = argv[++i];
     } else {
@@ -66,10 +73,11 @@ export function parseConfig(argv: readonly string[]): ServerConfig {
   if (configPath !== undefined) {
     const raw: ConfigFile = JSON.parse(readFileSync(configPath, "utf8"));
     scfPath ??= raw.scf;
+    readOnly ||= raw.readOnly === true;
     for (const [name, path] of Object.entries(raw.roots ?? {})) {
       roots[name] ??= path;
     }
   }
 
-  return { scfPath, roots };
+  return { scfPath, roots, readOnly };
 }

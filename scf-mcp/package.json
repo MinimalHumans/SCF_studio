@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@minimalhumans/scf-core": "file:../scf-core",
+    "@minimalhumans/scf-host": "file:../scf-host",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^4.5.4"
   },
