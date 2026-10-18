@@ -14,10 +14,15 @@
  * a film nobody is looking at.
  */
 
-import { existsSync, realpathSync } from "node:fs";
-import { resolve } from "node:path";
 import {
-  argsJsonSchema, callOp, fileIdentity, initDatabase, listOps,
+  existsSync, mkdirSync, readdirSync, realpathSync, statSync, writeFileSync,
+  rmSync,
+} from "node:fs";
+import { basename, dirname, join, relative, resolve, isAbsolute }
+  from "node:path";
+import {
+  argsJsonSchema, callFn, callOp, fileIdentity, initDatabase, listOps,
+  UnknownCallError,
   OpArgumentError, StaleRevisionError, UnknownOpError,
   type Registry, type Row, type Session,
 } from "@minimalhumans/scf-core";
@@ -26,7 +31,8 @@ import {
 } from "@minimalhumans/scf-core/node";
 import {
   PROTOCOL_VERSION,
-  type ErrorCode, type HostError, type HostEvent, type HostMethods,
+  type DirEntry, type ErrorCode, type HostError, type HostEvent,
+  type HostMethods,
   type JsonRow, type MethodName, type SqlJson,
 } from "./protocol.ts";
 import { refuseQuery } from "./readGuard.ts";
@@ -47,6 +53,12 @@ export interface HostCoreOptions {
   version?: string;
   /** Milliseconds a reader waits for a writer's commit. */
   busyTimeoutMs?: number;
+  /**
+   * Folders the host will list and create files under. Opening an
+   * existing film by path is not confined (a tool is given paths), but
+   * a client cannot browse or write anywhere else.
+   */
+  roots?: readonly string[];
 }
 
 interface Film {
@@ -127,14 +139,27 @@ function failure(e: unknown): HostError {
   if (e instanceof OpArgumentError) {
     return { code: "bad_request", message: e.message };
   }
-  if (e instanceof UnknownOpError) {
+  if (e instanceof UnknownOpError || e instanceof UnknownCallError) {
     return { code: "unknown_op", message: e.message };
   }
   if (e instanceof StaleRevisionError) {
     return { code: "stale_revision", message: e.message };
   }
   const message = e instanceof Error ? e.message : String(e);
-  return { code: "failed", message };
+  if (!(e instanceof Error)) return { code: "failed", message };
+  // Own fields that survive JSON, so a client can read what a typed
+  // error carried (SharedSetError.sharedWith, say).
+  const data: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(e)) {
+    try {
+      data[k] = JSON.parse(JSON.stringify(v)) as unknown;
+    } catch {
+      // not representable; the message still says what happened
+    }
+  }
+  return { code: "failed", message,
+           name: e.constructor.name !== "Error" ? e.constructor.name : e.name,
+           data };
 }
 
 let nextConnectionId = 1;
@@ -176,6 +201,7 @@ class HostCoreImpl implements HostCore {
   private readonly registry: Registry;
   private readonly version: string;
   private readonly busyTimeoutMs: number;
+  private readonly roots: string[];
   /** Opens of one path wait for each other, so it is opened once. */
   private readonly opening = new Map<string, Promise<Film>>();
 
@@ -183,6 +209,33 @@ class HostCoreImpl implements HostCore {
     this.registry = options.registry;
     this.version = options.version ?? "0.0.0";
     this.busyTimeoutMs = options.busyTimeoutMs ?? 2000;
+    this.roots = (options.roots ?? []).map(canonicalPath);
+  }
+
+  /** Is `path` at or below one of the roots (links resolved)? */
+  private inRoots(path: string): boolean {
+    // A path that does not exist yet is judged by its nearest parent
+    // that does, so a link cannot smuggle a new file out of the roots.
+    let probe = resolve(path);
+    const tail: string[] = [];
+    while (!existsSync(probe) && dirname(probe) !== probe) {
+      tail.unshift(basename(probe));
+      probe = dirname(probe);
+    }
+    const real = join(realpathSync(probe), ...tail);
+    return this.roots.some((root) => {
+      const rel = relative(root, real);
+      return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
+    });
+  }
+
+  private requireInRoots(path: string): string {
+    if (!this.inRoots(path)) {
+      throw new HostFailure(
+        "outside_roots", "that location is outside the folders this host " +
+        "may use");
+    }
+    return canonicalPath(path);
   }
 
   get openCount(): number {
@@ -227,20 +280,24 @@ class HostCoreImpl implements HostCore {
     for (const c of film.connections) c.emit(event);
   }
 
-  private async openFilm(path: string, migrate: boolean): Promise<Film> {
+  private async openFilm(path: string, migrate: boolean,
+                         editorVersion?: string,
+                         fresh = false): Promise<Film> {
     const key = canonicalPath(path);
     const existing = this.films.get(key);
     if (existing !== undefined) return existing;
     const pending = this.opening.get(key);
     if (pending !== undefined) return pending;
-    const p = this.buildFilm(key, migrate).finally(() => {
+    const p = this.buildFilm(key, migrate, editorVersion, fresh).finally(() => {
       this.opening.delete(key);
     });
     this.opening.set(key, p);
     return p;
   }
 
-  private async buildFilm(key: string, migrate: boolean): Promise<Film> {
+  private async buildFilm(key: string, migrate: boolean,
+                          editorVersion?: string,
+                          fresh = false): Promise<Film> {
     if (!existsSync(key)) {
       throw new HostFailure("not_found", `no such file: ${key}`);
     }
@@ -249,10 +306,17 @@ class HostCoreImpl implements HostCore {
       const identity = await fileIdentity(session.exec);
       const tables = await session.exec(
         "SELECT 1 FROM sqlite_master WHERE name = '_scf_meta'");
-      if (!identity.isScf && tables.length === 0) {
+      // A file this host has just made is empty on purpose.
+      if (!fresh && !identity.isScf && tables.length === 0) {
         throw new HostFailure("not_scf", `not an SCF file: ${key}`);
       }
-      if (migrate) await initDatabase(session.exec, this.registry);
+      if (migrate) {
+        // Through the session, so its fingerprint follows the change:
+        // our own migration is not an outside edit.
+        await session.write((ctx) => initDatabase(
+          ctx.exec, this.registry,
+          editorVersion === undefined ? {} : { editorVersion }));
+      }
     } catch (e) {
       await session.close();
       if (e instanceof HostFailure) throw e;
@@ -268,6 +332,93 @@ class HostCoreImpl implements HostCore {
     };
     this.films.set(key, film);
     return film;
+  }
+
+  private attach(c: ConnectionImpl, film: Film,
+                 readOnly: boolean): HostMethods["open"][1] {
+    film.connections.add(c);
+    c.film = film;
+    c.readOnly = readOnly;
+    return { path: film.path, revision: this.revisionOf(film), readOnly };
+  }
+
+  private list(path: string | undefined): HostMethods["list"][1] {
+    if (path === undefined) {
+      return {
+        path: null, parent: null,
+        entries: this.roots.map((r): DirEntry =>
+          ({ name: basename(r) || r, kind: "dir", path: r })),
+      };
+    }
+    const dir = this.requireInRoots(path);
+    let names: string[];
+    try {
+      names = readdirSync(dir);
+    } catch {
+      throw new HostFailure("not_found", `cannot read ${dir}`);
+    }
+    const entries: DirEntry[] = [];
+    for (const name of names.sort((a, b) => a.localeCompare(b))) {
+      if (name.startsWith(".")) continue;
+      const full = join(dir, name);
+      try {
+        const st = statSync(full);
+        if (st.isDirectory()) {
+          entries.push({ name, kind: "dir", path: full });
+        } else if (st.isFile() && name.toLowerCase().endsWith(".scf")) {
+          entries.push({ name, kind: "scf", path: full, size: st.size,
+                         modified: st.mtime.toISOString() });
+        }
+      } catch {
+        // unreadable entry: leave it out
+      }
+    }
+    // Directories first, so the way down is always at the top.
+    entries.sort((a, b) =>
+      (a.kind === b.kind ? 0 : a.kind === "dir" ? -1 : 1));
+    const up = dirname(dir);
+    return { path: dir, parent: this.inRoots(up) && up !== dir ? up : null,
+             entries };
+  }
+
+  /**
+   * The shared path of every write: the gates, the revision offset, and
+   * the event to everyone on the film, sent even when the write threw,
+   * because a failed write may still have changed rows.
+   */
+  private async write(
+      c: ConnectionImpl, p: Record<string, unknown>,
+      run: (film: Film, expected: number | undefined) =>
+        Promise<{ result: unknown; revision: number }>):
+      Promise<{ result: unknown; revision: number }> {
+    const film = this.requireFilm(c);
+    if (c.readOnly) {
+      throw new HostFailure(
+        "read_only", "this connection opened the file read-only");
+    }
+    if (await film.session.hasExternalChange()) {
+      throw new HostFailure(
+        "external_change",
+        "the file was changed outside the host; reload before writing");
+    }
+    const expected = p["expectedRevision"];
+    if (expected !== undefined && typeof expected !== "number") {
+      throw new HostFailure(
+        "bad_request", "expectedRevision: expected a number");
+    }
+    const before = this.revisionOf(film);
+    try {
+      const out = await run(
+        film, expected === undefined ? undefined : expected - film.base);
+      return { result: out.result, revision: film.base + out.revision };
+    } finally {
+      const revision = this.revisionOf(film);
+      if (revision !== before) {
+        this.broadcast(film, {
+          event: "revision", path: film.path, revision, by: c.name,
+        });
+      }
+    }
   }
 
   private requireFilm(c: ConnectionImpl): Film {
@@ -290,16 +441,54 @@ class HostCoreImpl implements HostCore {
       case "open": {
         const path = need<string>(p, "path", "string");
         await this.leave(c);
-        const film = await this.openFilm(path, p["migrate"] === true);
-        film.connections.add(c);
-        c.film = film;
-        c.readOnly = p["readOnly"] === true;
-        const out: HostMethods["open"][1] = {
-          path: film.path, revision: this.revisionOf(film),
-          readOnly: c.readOnly,
-        };
-        return out;
+        const film = await this.openFilm(
+          path, p["migrate"] === true,
+          typeof p["editorVersion"] === "string"
+            ? p["editorVersion"] : undefined);
+        return this.attach(c, film, p["readOnly"] === true);
       }
+      case "create": {
+        const path = this.requireInRoots(need<string>(p, "path", "string"));
+        if (existsSync(path)) {
+          throw new HostFailure("exists", `${path} already exists`);
+        }
+        await this.leave(c);
+        const bytes = p["bytes"];
+        if (typeof bytes === "string") {
+          writeFileSync(path, Buffer.from(bytes, "base64"), { flag: "wx" });
+        } else {
+          mkdirSync(dirname(path), { recursive: true });
+          writeFileSync(path, "", { flag: "wx" });
+        }
+        try {
+          const film = await this.openFilm(
+            path, bytes === undefined || p["migrate"] === true,
+            typeof p["editorVersion"] === "string"
+              ? p["editorVersion"] : undefined,
+            bytes === undefined);
+          return this.attach(c, film, false);
+        } catch (e) {
+          // A file we just made and could not open is not worth keeping.
+          rmSync(path, { force: true });
+          throw e;
+        }
+      }
+      case "saveAs": {
+        const film = this.requireFilm(c);
+        const target = this.requireInRoots(need<string>(p, "path", "string"));
+        if (existsSync(target)) {
+          throw new HostFailure("exists", `${target} already exists`);
+        }
+        // A consistent copy of the committed state, taken through the
+        // writer so it waits its turn behind queued writes.
+        await film.session.write(async (ctx) => {
+          await ctx.exec("VACUUM INTO ?", [target]);
+        });
+        await this.leave(c);
+        return this.attach(c, await this.openFilm(target, false), false);
+      }
+      case "list":
+        return this.list(typeof p["path"] === "string" ? p["path"] : undefined);
       case "close":
         await this.leave(c);
         return null;
@@ -339,39 +528,16 @@ class HostCoreImpl implements HostCore {
           destructive: op.destructive, args: argsJsonSchema(op),
         }));
       case "op": {
-        const film = this.requireFilm(c);
-        if (c.readOnly) {
-          throw new HostFailure(
-            "read_only", "this connection opened the file read-only");
-        }
         const name = need<string>(p, "name", "string");
-        if (await film.session.hasExternalChange()) {
-          throw new HostFailure(
-            "external_change",
-            "the file was changed outside the host; reload before writing");
-        }
-        const expected = p["expectedRevision"];
-        if (expected !== undefined && typeof expected !== "number") {
-          throw new HostFailure(
-            "bad_request", "expectedRevision: expected a number");
-        }
-        const before = this.revisionOf(film);
-        try {
-          const out = await callOp(
-            film.session, name, p["args"] ?? {},
-            expected === undefined
-              ? {} : { expectedRevision: expected - film.base });
-          return { result: out.result, revision: film.base + out.revision };
-        } finally {
-          // A write that threw may still have changed rows, and the
-          // session counts it; other clients must hear either way.
-          const revision = this.revisionOf(film);
-          if (revision !== before) {
-            this.broadcast(film, {
-              event: "revision", path: film.path, revision, by: c.name,
-            });
-          }
-        }
+        return this.write(c, p, (film, expected) => callOp(
+          film.session, name, p["args"] ?? {},
+          expected === undefined ? {} : { expectedRevision: expected }));
+      }
+      case "call": {
+        const name = need<string>(p, "name", "string");
+        return this.write(c, p, (film, expected) => callFn(
+          film.session, name, p["args"] ?? [],
+          expected === undefined ? {} : { expectedRevision: expected }));
       }
       case "status": {
         const out: HostMethods["status"][1] = {

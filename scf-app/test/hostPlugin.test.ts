@@ -3,12 +3,12 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { createServer, type ViteDevServer } from "vite";
 import { request } from "node:http";
 import WebSocket from "ws";
 import {
-  HOST_ENDPOINT, devOrigins, scfHostPlugin, type HostConnectionInfo,
+  HOST_ENDPOINT, devOrigins, devRoots, scfHostPlugin, type HostConnectionInfo,
 } from "../tools/scfHostPlugin";
 
 /** A raw GET, so the test controls every header the browser would send. */
@@ -73,6 +73,15 @@ describe("the dev-server host plugin", () => {
     });
     expect(ok).toBe(true);
   }, 60_000);
+
+  test("the page may browse home and the repository's sample folders",
+      () => {
+    const roots = devRoots({});
+    expect(roots.some((r) => r.endsWith("fixtures"))).toBe(true);
+    expect(roots.some((r) => r.endsWith("templates"))).toBe(true);
+    expect(devRoots({ SCF_HOST_ROOTS: ["/a", "/b"].join(delimiter) }))
+      .toEqual(["/a", "/b"]);
+  });
 
   test("another site cannot read the token", async () => {
     const { port } = await dev();

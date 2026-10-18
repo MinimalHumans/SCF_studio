@@ -71,6 +71,13 @@ export {
 
 // The named writes a client may ask the host for. Plain-data arguments in,
 // plain data out: the same table serves the window, the MCP and scripts.
+export type {
+  ScreenplayRow, TitlePageRow,
+} from "./screenplay/rowModel.ts";
+export {
+  type CallArgs, type CallName, type CallResult, type Callable,
+  type ScriptCommit, CALLS, UnknownCallError, callFn, callNames,
+} from "./ops/calls.ts";
 export {
   type ArgSpec, type ArgsSpec, type ArgType, type CallOptions, type OpDef,
   type OpResult, OpArgumentError, UnknownOpError,

@@ -41,6 +41,10 @@ export default defineConfig({
     alias: {
       "@scf-core": resolve(here, "../scf-core/src"),
       "@registry": resolve(here, "../scf-core/registry"),
+      // The host's client is browser-safe and consumed as source, like
+      // scf-core. Its type-only imports of scf-core resolve here too.
+      "@scf-host": resolve(here, "../scf-host/src"),
+      "@minimalhumans/scf-core": resolve(here, "../scf-core/src/index.ts"),
     },
   },
   define: {

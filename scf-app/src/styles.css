@@ -3002,3 +3002,24 @@ button.strip-span-label:hover { color: var(--amber); }
   display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
   font: 600 11px var(--mono); color: var(--amber);
 }
+
+/* host file chooser */
+.modal.chooser {
+  background: var(--ink-0, #12151a); border: 1px solid var(--line);
+  border-radius: 6px; width: min(640px, 92vw); max-height: 80vh;
+  display: flex; flex-direction: column; gap: 8px; padding: 16px 20px;
+}
+.chooser-path { display: flex; gap: 8px; align-items: center; }
+.chooser-path code { overflow: hidden; text-overflow: ellipsis; }
+.chooser-list {
+  list-style: none; margin: 0; padding: 0; overflow: auto; min-height: 160px;
+  border: 1px solid var(--line); border-radius: 4px;
+}
+.chooser-entry {
+  display: block; width: 100%; text-align: left; background: none;
+  border: none; padding: 5px 10px; cursor: pointer;
+}
+.chooser-entry:hover:not(:disabled) { background: var(--ink-1); }
+.chooser-entry.selected { background: var(--ink-1); color: var(--amber); }
+.chooser-entry:disabled { opacity: .45; cursor: default; }
+.chooser-name { display: flex; flex-direction: column; gap: 4px; }

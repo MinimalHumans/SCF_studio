@@ -25,6 +25,12 @@
       ],
       "@registry/*": [
         "../scf-core/registry/*"
+      ],
+      "@scf-host/*": [
+        "../scf-host/src/*"
+      ],
+      "@minimalhumans/scf-core": [
+        "../scf-core/src/index.ts"
       ]
     }
   },

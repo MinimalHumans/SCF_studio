@@ -10,7 +10,7 @@
  * plans coverage against the script's spine; it never edits it.
  */
 
-import { newUuid, type Row, type SqlExec } from "../db.ts";
+import { newUuid, type Row, type SqlExec, type SqlValue } from "../db.ts";
 import { nextShotNumber } from "../shots.ts";
 
 const beatLetter = (i: number): string =>
@@ -176,4 +176,19 @@ export async function moveShot(exec: SqlExec, id: number,
     if (Number(was?.["shot_order"]) === k + 1) continue;
     await exec("UPDATE shot SET shot_order = ? WHERE id = ?", [k + 1, shotId]);
   }
+}
+
+/**
+ * `moveShot` for a caller that holds only an id: reads the scene's
+ * shots itself, so nothing but plain data crosses a process boundary.
+ */
+export async function moveShotInScene(
+    exec: SqlExec, id: number, delta: -1 | 1,
+    hidden: readonly number[] = []): Promise<void> {
+  const own = await exec("SELECT scene_id FROM shot WHERE id = ?", [id]);
+  if (own[0] === undefined) throw new Error(`no shot with id ${String(id)}`);
+  const siblings = await exec(
+    "SELECT id, shot_order FROM shot WHERE scene_id = ? " +
+    "ORDER BY shot_order, id", [own[0]["scene_id"] as SqlValue]);
+  await moveShot(exec, id, siblings, delta, new Set(hidden));
 }

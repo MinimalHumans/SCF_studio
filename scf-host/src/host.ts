@@ -7,6 +7,8 @@
  * directory on a free port.
  */
 
+import { homedir } from "node:os";
+import { delimiter } from "node:path";
 import {
   loadRegistry, type Registry, type RegistryJson,
 } from "@minimalhumans/scf-core";
@@ -18,6 +20,14 @@ import {
 } from "./registryFile.ts";
 import { startHostServer, type HostServer } from "./server.ts";
 
+export function defaultRoots(env: NodeJS.ProcessEnv = process.env): string[] {
+  const configured = env["SCF_HOST_ROOTS"];
+  if (configured !== undefined && configured !== "") {
+    return configured.split(delimiter).filter((r) => r !== "");
+  }
+  return [homedir()];
+}
+
 export interface StartHostOptions {
   port?: number;
   token?: string;
@@ -26,6 +36,11 @@ export interface StartHostOptions {
   /** Where to publish the discovery file; `false` to publish none. */
   hostDir?: string | false;
   registry?: Registry;
+  /**
+   * Folders clients may browse and create files under. Defaults to
+   * `SCF_HOST_ROOTS` (a path-delimited list), then the user's home.
+   */
+  roots?: readonly string[];
   /** Exit policy hook: called when the last client leaves. */
   onIdle?: () => void;
 }
@@ -39,7 +54,8 @@ export async function startHost(
   const version = options.version ?? "0.1.0";
   const registry = options.registry ??
     loadRegistry(registryJson as unknown as RegistryJson);
-  const core = createHostCore({ registry, version });
+  const roots = options.roots ?? defaultRoots();
+  const core = createHostCore({ registry, version, roots });
   const dir = options.hostDir === false
     ? null : (options.hostDir ?? defaultHostDir());
   const server = await startHostServer({
