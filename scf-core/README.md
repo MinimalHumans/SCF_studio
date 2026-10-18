@@ -3,8 +3,8 @@
 
 The SCF (Story Context Framework) core library: **format + executable semantics +
 conformance target**, UI-free. The reference editor (`scf-app`), its query
-pages and screenplay editor, and the MCP server (`scf-mcp`) are all clients
-of this package.
+pages and screenplay editor, the local host (`scf-host`) and the MCP server
+(`scf-mcp`) are all clients of this package.
 
 Structured to be publishable; **unpublished until SCF 1.0**
 (`docs/release-checklist.md` §E). The public surface is the explicit export
@@ -28,7 +28,9 @@ The main modules; `src/index.ts` is the whole list, organised by
 | `src/shotContext.ts` | The shot-prompt composite `scf-mcp` serves: `shotContext`, `shotMedia`, `shotReadiness`. |
 | `src/node.ts` | Node driver (`node:sqlite`) for the `SqlExec` seam, and `openNodeSession`, a file-backed `Session`. Separate export, `scf-core/node`; browser bundles never touch it. |
 | `src/session.ts` | `Session`: one open `.scf` — a connection plus what is unsaved, how to save it, and whether the file changed under it. Storage-agnostic; the app and the Node driver both supply a `SessionDriver`. |
-| `src/ops/` | Every write to a `.scf`, as named operations over `SqlExec` + `Registry`. Nothing outside core issues `INSERT`, `UPDATE` or `DELETE`. |
+| `src/ops/` | Every write to a `.scf`, as named operations over `SqlExec` + `Registry`. Nothing outside core issues `INSERT`, `UPDATE` or `DELETE`. `opTable.ts` is the curated, schema-checked set for tools; `calls.ts` is the editor's wider surface by name; `integrityGate.ts` refuses (and can dry-run) a write that would add an integrity finding. |
+| `src/queryMarkdown.ts` | The prompt-ready markdown block for each canonical query's result — the editor's "copy as context" and an MCP client's `format: "markdown"`. Pinned character for character in `test/golden/`. |
+| `src/gallery.ts`, `src/shotlist.ts`, `src/storyboard.ts`, `src/characterPresence.ts`, `src/subjectStats.ts`, `src/listOrder.ts`, `src/assetStanding.ts` | Reads the editor shows that are shaped, not just fetched: assets ranked by what they carry, the shot list and storyboard (with `readShotlistRows` / `readBoardRows`), who speaks where against who is linked, how a list is ordered. Shared by the editor and the MCP. |
 
 `scripts/scf_check.mjs` is the `scf-check` bin: a validator for any `.scf`
 (`spec/conformance.md` §4).
@@ -88,6 +90,13 @@ python schema/generate_registry_json.py --check
 - **UI.** Nothing in this package imports React or touches the DOM.
 - **Migrations.** Before 1.0 working files are disposable (spec §11.0),
   and the fixture is rebuilt from source at every schema change.
-- **The browser SQLite adapter.** It is an implementation of `SqlExec` that
-  needs a browser to exist, so it lives in `scf-app`. `initDatabase` and
-  the semantics are driver-agnostic and proven through the Node driver.
+- **A browser SQLite.** The editor no longer runs a database in the page:
+  it reads through the host (`scf-host`), whose `SqlExec` is `scf-core/node`.
+  `initDatabase` and the semantics are driver-agnostic and proven through the
+  Node driver; a client that talks to the host gets an `SqlExec` from
+  `HostClient`.
+- **Anything that needs a process.** The host, its socket and its
+  files-on-disk policy are `scf-host`; core stays a library.
+- **Node-only syntax.** Core must load under Node's type stripping (the MCP's
+  no-build launcher runs it that way): no parameter properties, enums or
+  namespaces. `test/stripTypes.test.ts` loads the entry points to prove it.

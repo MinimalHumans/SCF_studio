@@ -86,8 +86,6 @@ export function ShootView(): JSX.Element {
     );
   };
 
-  const bump = (): void => {
-  };
   const toggle = (key: string): void => {
     const next = new Set(useStore.getState().shootView.open);
     if (next.has(key)) next.delete(key);
@@ -95,9 +93,10 @@ export function ShootView(): JSX.Element {
     setOpen(next);
   };
 
+  // A write refreshes every view through the revision; there is nothing
+  // to do after it but wait for it.
   const run = async (op: Promise<void>): Promise<void> => {
     await op;
-    bump();
   };
 
   if (scenes.length === 0) {

@@ -6,7 +6,7 @@ import { statesInForce } from "@scf-core/resolution.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
 import {
   presenceByScene, readScriptPresence, type ScriptPresence,
-} from "../../editor/characterPresence.ts";
+} from "@scf-core/characterPresence.ts";
 
 import { useQuery } from "../useQuery.ts";
 import {

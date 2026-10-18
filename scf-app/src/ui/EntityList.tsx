@@ -13,7 +13,7 @@ import {
 } from "@scf-core/structure.ts";
 import {
   ORDER_FALLBACKS, STORY_ORDERED, listTable, sceneRefFor,
-} from "../state/listOrder.ts";
+} from "@scf-core/listOrder.ts";
 
 /**
  * Which entities have a STORY order, and how to reach it.

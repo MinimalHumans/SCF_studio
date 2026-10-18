@@ -9,7 +9,7 @@ import {
 } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import { assetStanding, type Standing }
-  from "../../editor/assetStanding.ts";
+  from "@scf-core/assetStanding.ts";
 import { useQuery } from "../useQuery.ts";
 import { useRememberedFlag } from "../useRememberedFlag.ts";
 import { ExceptionList } from "./ExceptionList.tsx";

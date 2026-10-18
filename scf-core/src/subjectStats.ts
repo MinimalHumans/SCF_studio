@@ -12,8 +12,8 @@
  * story order, and the rail says so by offering only A–Z.
  */
 
-import { q } from "@scf-core/db.ts";
-import type { Registry } from "@scf-core/registry.ts";
+import { q } from "./db.ts";
+import type { Registry } from "./registry.ts";
 
 export type SubjectSort = "name" | "story" | "uses";
 

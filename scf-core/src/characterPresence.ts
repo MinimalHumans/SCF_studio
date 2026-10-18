@@ -18,7 +18,7 @@
  * Headless, like the other editor modules.
  */
 
-import type { Row, SqlExec } from "@scf-core/db.ts";
+import type { Row, SqlExec } from "./db.ts";
 
 /** One stretch of speech: a cue and the dialogue under it. */
 export interface Speech {

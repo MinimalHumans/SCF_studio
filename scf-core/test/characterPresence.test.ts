@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { fileURLToPath } from "node:url";
-import { openNodeDatabase } from "@scf-core/node.ts";
+import { openNodeDatabase } from "../src/node.ts";
 import {
   presenceByScene, QUIET_ROLES, readScriptPresence,
-} from "../src/editor/characterPresence.ts";
-import { scanIntegrity } from "@scf-core/ops/integrity.ts";
+} from "../src/characterPresence.ts";
+import { scanIntegrity } from "../src/ops/integrity.ts";
 
 const FIXTURE = fileURLToPath(new URL(
   "../../fixtures/hollow_creek.scf", import.meta.url));

@@ -3,15 +3,15 @@ import { describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { loadRegistry, type Registry, type RegistryJson }
-  from "@scf-core/registry.ts";
-import { isComposedLink } from "@scf-core/displayName.ts";
+  from "../src/registry.ts";
+import { isComposedLink } from "../src/displayName.ts";
 import { STORY_ORDERED, listTable, sceneRefFor }
-  from "../src/state/listOrder.ts";
-import { storyOrder } from "@scf-core/structure.ts";
-import { openNodeDatabase } from "@scf-core/node.ts";
+  from "../src/listOrder.ts";
+import { storyOrder } from "../src/structure.ts";
+import { openNodeDatabase } from "../src/node.ts";
 
 const REGISTRY = fileURLToPath(new URL(
-  "../../scf-core/registry/registry.json", import.meta.url));
+  "../registry/registry.json", import.meta.url));
 const FIXTURE = fileURLToPath(new URL(
   "../../fixtures/hollow_creek.scf", import.meta.url));
 

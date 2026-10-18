@@ -79,6 +79,30 @@ export {
   withIntegrityGate,
 } from "./ops/integrityGate.ts";
 export { rowLabel } from "./displayName.ts";
+export type { PreviewKind } from "./preview.ts";
+
+// Reads that used to live in the editor. One implementation each, so the
+// window and an MCP client ask the same question and get the same answer.
+export {
+  type QueryId, type MarkdownRenderer, QUERY_IDS, isQueryId, queryMarkdown,
+} from "./queryMarkdown.ts";
+export {
+  type GalleryFilter, type GalleryItem, type GallerySort, type Use,
+  type GallerySubjectKind,
+  describeUses, filterItems, loadGallery, sortItems,
+} from "./gallery.ts";
+export {
+  type BeatGroup, type SceneSheet, type SheetOptions, type ShotlistRows,
+  actionText, beatBanner,
+  buildSheets, readShotlistRows, runningTime, shortAngle, shortSize,
+} from "./shotlist.ts";
+export {
+  type BoardRows, readBoardRows,
+} from "./storyboard.ts";
+export {
+  type ScenePresence as CharacterScenePresence, type ScriptPresence,
+  type Speech, presenceByScene, readScriptPresence,
+} from "./characterPresence.ts";
 export { TITLE_KEYS, titleSlot, type TitleKeyDef }
   from "./ops/titlePageOps.ts";
 export {

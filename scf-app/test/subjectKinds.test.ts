@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { openNodeDatabase } from "@scf-core/node.ts";
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
 import { KINDS } from "../src/state/subjectKinds.ts";
-import { readSceneIndex } from "../src/editor/characterPresence.ts";
+import { readSceneIndex } from "@scf-core/characterPresence.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../../scf-core/registry/registry.json", import.meta.url));
