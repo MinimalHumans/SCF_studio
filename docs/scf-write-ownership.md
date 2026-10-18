@@ -293,9 +293,11 @@ paths, so under WSL a host and a client that spell one file `F:\…` and
 
 On branch `tauri`, the desktop app (decision 5, now in scope): a Tauri
 shell around the same window and the same host (`scf-app/src-tauri/`).
-The host is a sidecar — `scf-host` as a Node single executable — started
-by the shell on the window's first `host_location`, which answers with
-the port and token the dev server's endpoint would. The window keeps
+The host is a sidecar — `scf host`, from a Node single executable that
+is also the MCP (`scf mcp`), so an assistant needs only the installed
+app — started by the shell on the window's first `host_location`,
+which answers with the port and token the dev server's endpoint would.
+The window keeps
 its WebSocket transport, so no `invoke()` transport was needed, and the
 host allows the shell's origin (`http://tauri.localhost` on Windows,
 `tauri://localhost` elsewhere). Like the dev server, it replaces an

@@ -4,8 +4,9 @@
 //! The window talks to `scf-host` over the same loopback WebSocket it
 //! uses in the browser (docs/scf-write-ownership.md); all the shell adds
 //! is starting that host and telling the window where it is. The host is
-//! the `scf-host` sidecar (tools/buildSidecar.mjs), started on the
-//! window's first `host_location` and answered from then on.
+//! `scf host`, from the `scf` sidecar (tools/scf.ts), started on the
+//! window's first `host_location` and answered from then on. The same
+//! executable is the MCP server (`scf mcp`) an assistant can be given.
 //!
 //! Under `tauri dev` the page is the Vite dev server's, which runs a host
 //! of its own and never asks, so no sidecar is started.
@@ -68,14 +69,20 @@ fn sidecar_path() -> std::io::Result<PathBuf> {
     // Tauri puts an `externalBin` beside the app's own executable, with
     // the target triple taken off.
     let exe = std::env::current_exe()?;
-    let name = if cfg!(windows) { "scf-host.exe" } else { "scf-host" };
+    let name = if cfg!(windows) { "scf.exe" } else { "scf" };
     Ok(exe.with_file_name(name))
 }
 
 fn start(host: Arc<Host>) -> Result<(), String> {
     let mut command = Command::new(sidecar_path().map_err(|e| e.to_string())?);
     command
-        .args(["--origin", ORIGIN, "--replace-idle", "--exit-with-stdin"])
+        .args([
+            "host",
+            "--origin",
+            ORIGIN,
+            "--replace-idle",
+            "--exit-with-stdin",
+        ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -138,7 +145,10 @@ fn host_location(host: tauri::State<'_, Arc<Host>>) -> Result<Location, HostErro
             *state = State::Starting;
             drop(state);
             if let Err(message) = start(Arc::clone(&host)) {
-                let e = HostError { message, refused: true };
+                let e = HostError {
+                    message,
+                    refused: true,
+                };
                 *host.state.lock().unwrap() = State::Failed(e.clone());
                 return Err(e);
             }
