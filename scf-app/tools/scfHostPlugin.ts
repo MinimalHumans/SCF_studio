@@ -98,6 +98,14 @@ export function isSamePageRequest(req: IncomingMessage,
 export function scfHostPlugin(options: ScfHostPluginOptions = {}): Plugin {
   let running: Running | null = null;
   let origins: string[] = [];
+  let done = false;
+
+  async function stop(): Promise<void> {
+    if (done) return;
+    done = true;
+    await running?.stop();
+    running = null;
+  }
 
   async function start(server: ViteDevServer, port: number): Promise<void> {
     origins = devOrigins(port);
@@ -184,7 +192,6 @@ export function scfHostPlugin(options: ScfHostPluginOptions = {}): Plugin {
     configureServer(server) {
       const http = server.httpServer;
       if (http === null) return;           // middleware mode: no host
-      let done = false;
       // Registered now, not when the host is up: otherwise a request that
       // arrives first falls through to the SPA fallback and gets HTML.
       server.middlewares.use(HOST_ENDPOINT, (req, res) => {
@@ -204,12 +211,6 @@ export function scfHostPlugin(options: ScfHostPluginOptions = {}): Plugin {
         });
         res.end(JSON.stringify(body));
       });
-      const stop = async (): Promise<void> => {
-        if (done) return;
-        done = true;
-        await running?.stop();
-        running = null;
-      };
       http.once("close", () => { void stop(); });
       const begin = (): void => {
         const addr = http.address() as AddressInfo;
@@ -222,5 +223,8 @@ export function scfHostPlugin(options: ScfHostPluginOptions = {}): Plugin {
       if (http.listening) begin();
       else http.once("listening", begin);
     },
+    // `server.close()` awaits this, so the host's files are closed by the
+    // time it resolves; Windows will not delete a file that is still open.
+    closeBundle: stop,
   };
 }

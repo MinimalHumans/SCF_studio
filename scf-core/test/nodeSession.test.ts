@@ -84,7 +84,9 @@ describe("a session on a file", () => {
     await session.close();
   });
 
-  test("a file that disappears counts as changed", async () => {
+  // Windows will not delete a file the session holds open.
+  test.skipIf(process.platform === "win32")(
+      "a file that disappears counts as changed", async () => {
     const session = openNodeSession(path, registry);
     await session.hasExternalChange();
     rmSync(path);

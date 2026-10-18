@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, beforeEach, afterEach, describe, expect, test }
   from "vitest";
 import { writeFileSync, utimesSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import {
   createHostCore, type HostConnection, type HostCore, type HostEvent,
 } from "../src/index.ts";
@@ -201,7 +201,7 @@ describe("host core", () => {
     const b = await connect();
     await ok(a, "open", { path });
     await ok(b, "open", { path: join(ws.dir, ".", "..",
-      ws.dir.split("/").pop()!, path.split("/").pop()!) });
+      basename(ws.dir), basename(path)) });
     expect(host.openCount).toBe(1);
   });
 

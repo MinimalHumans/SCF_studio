@@ -11,15 +11,13 @@
 
 import { describe, expect, test } from "vitest";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-
-const SRC = fileURLToPath(new URL("../src/", import.meta.url));
+const SRC = new URL("../src/", import.meta.url);
 
 function load(entry: string): { status: number | null; stderr: string } {
   const r = spawnSync(process.execPath, [
     "--experimental-strip-types", "--no-warnings",
     "--conditions=scf-source", "--input-type=module",
-    "-e", `await import(${JSON.stringify(`${SRC}${entry}`)});`,
+    "-e", `await import(${JSON.stringify(new URL(entry, SRC).href)});`,
   ], { encoding: "utf8", timeout: 60_000 });
   return { status: r.status, stderr: r.stderr };
 }
