@@ -215,6 +215,7 @@ export function Workbench(): JSX.Element {
             useStoreRaw.setState({ errorMessage: null })}>×</button>
         </div>
       )}
+      <HostBanner />
       <header className="topbar">
         <img className="topbar-mark" src={logoSmallCloud} alt="SCF" />
         <span className="topbar-project">{projectName}</span>
@@ -232,16 +233,7 @@ export function Workbench(): JSX.Element {
         </button>
         <SearchBox />
         <SaveControls />
-          <button onClick={() => {
-            const st = useStoreRaw.getState();
-            const unsaved = st.revision !== st.lastSavedRevision;
-            if (!unsaved || window.confirm(
-                "You have changes not yet saved to your .scf file — " +
-                "they remain only in this browser (Resume can reopen " +
-                "them). Close the project anyway?")) {
-              void st.closeProject();
-            }
-          }}>
+          <button onClick={() => void useStoreRaw.getState().closeProject()}>
             Close project
           </button>
       </header>
@@ -370,16 +362,8 @@ permission to read it on reload.">
 }
 
 /**
- * Save + Save As, with the Commit button's light: accent while the
- * working database is ahead of the .scf file on disk, dim once the two
- * agree. A project that has no file yet (demo, new project) counts as
- * ahead — nothing of it is durable until a first save picks a
- * destination — and the tooltip says so rather than leaving the colour
- * to be guessed at.
- */
-/**
  * A delete is the one action with no other way back — there is no file
- * history until you save, and no row-level version. So it gets a toast
+ * history to go back to, and no row-level version. So it gets a toast
  * rather than a confirmation dialog: confirmations interrupt every
  * delete to prevent the rare wrong one, an undo interrupts none.
  */
@@ -400,48 +384,56 @@ function UndoToast(): JSX.Element | null {
   );
 }
 
+/**
+ * There is no Save: the host writes every change to the file as it is
+ * made. What is left is Save As (version up, or rename), and a quiet
+ * statement of the fact so nobody goes looking for the button.
+ */
 function SaveControls(): JSX.Element {
-  const { saveProject, saveProjectAs, saving, revision,
-          lastSavedRevision, fileToken, projectName } = useStore();
-  const [flash, setFlash] = useState(false);
-  const seen = useRef(lastSavedRevision);
-
-  useEffect(() => {
-    if (lastSavedRevision === seen.current) return;
-    seen.current = lastSavedRevision;
-    setFlash(true);
-    const t = window.setTimeout(() => setFlash(false), 1600);
-    return () => window.clearTimeout(t);
-  }, [lastSavedRevision]);
-
-  const noFileYet = fileToken === null;
-  const dirty = revision !== lastSavedRevision || noFileYet;
-  const label = saving ? "Saving…" : flash ? "Saved" : "Save project";
-
+  const { saveProjectAs, projectPath } = useStore();
   return (
     <>
-      <button className={(dirty ? "save-dirty" : "save-clean") +
-                         (flash && !dirty ? " save-flash" : "")}
-              disabled={saving}
-              onClick={() => void saveProject()}
-              title={noFileYet
-                ? `${projectName ?? "This project"} has no file yet. ` +
-                  "Your work is in browser storage; Save will ask where " +
-                  "to write the .scf file."
-                : dirty
-                  ? "Write these changes out to your .scf file on disk. " +
-                    "Until you do, they are only in browser storage."
-                  : "Your .scf file on disk matches this session."}>
-        {label}
-      </button>
-      <button disabled={saving}
-              onClick={() => void saveProjectAs()}
-              title={"Write to a new .scf file (version up or rename); " +
+      <span className="topbar-saved muted"
+            title={`Every change is written to ${projectPath ?? "the file"
+                    } as you make it.`}>
+        saved
+      </span>
+      <button onClick={() => void saveProjectAs()}
+              title={"Copy to a new .scf file (version up or rename); " +
                      "the project then follows that file"}>
         Save as…
       </button>
     </>
   );
+}
+
+/**
+ * The two ways the window can stop being in step with the file, said
+ * out loud. Neither is resolved silently: reconnecting after a dropped
+ * host and re-reading after an outside edit both throw away what the
+ * window believes, and that should be the user's click.
+ */
+function HostBanner(): JSX.Element | null {
+  const { hostLost, externalChange, reconnect, reloadFromDisk } = useStore();
+  if (hostLost) {
+    return (
+      <div className="error-toast" role="alert">
+        <span>Lost the connection to the SCF host. Nothing more will be
+          saved until it is back.</span>
+        <button onClick={() => void reconnect()}>Reconnect</button>
+      </div>
+    );
+  }
+  if (externalChange) {
+    return (
+      <div className="error-toast" role="alert">
+        <span>This file was changed outside SCF Studio. Your edits are
+          refused until you reload it, so nothing is overwritten.</span>
+        <button onClick={() => void reloadFromDisk()}>Reload</button>
+      </div>
+    );
+  }
+  return null;
 }
 
 function IntroMain(): JSX.Element {

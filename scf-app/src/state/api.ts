@@ -4,31 +4,55 @@
  *
  * Every change to the film goes through `call(name, ...args)`: a name
  * from scf-core's call table and that function's own arguments, as
- * plain data. The window never holds a write function. For now the
- * call runs here, in this page, against the working database; the
- * arguments and the result are passed through JSON first, so anything
- * that could not cross to the host (a `Set`, a callback, a class
- * instance) fails now, in development, instead of at the cutover.
+ * plain data. The window holds no write function and issues no write
+ * SQL; the host runs the call as one write against the film, in order
+ * with everyone else's, and answers with the result.
+ *
+ * Errors that carry meaning to the UI are rebuilt here from what the
+ * host reports, so a caller can still ask `e instanceof SharedSetError`
+ * and get the answer it would have got when the write ran in the page.
  */
 
-import {
-  CALLS, UnknownCallError, type CallArgs, type CallName, type CallResult,
-  type Callable,
+import type {
+  CallArgs, CallName, CallResult,
 } from "@scf-core/ops/calls.ts";
-import { session } from "./store.ts";
+import { ScopeError, SharedSetError } from "@scf-core/ops/mediaOps.ts";
+import { HostClientError } from "@scf-host/client.ts";
+import { getHost } from "../host/hostClient.ts";
+import { useStore } from "./store.ts";
 
-const plain = <T,>(v: T): T =>
-  v === undefined ? v : JSON.parse(JSON.stringify(v)) as T;
+/** What the host's error was, as the class the UI knows it by. */
+export function reviveError(e: unknown): unknown {
+  if (!(e instanceof HostClientError)) return e;
+  if (e.code === "external_change") {
+    useStore.setState({ externalChange: true });
+  } else if (e.code === "disconnected") {
+    useStore.setState({ hostLost: true });
+  } else if (e.code === "failed") {
+    if (e.remoteName === "SharedSetError") {
+      const shared = e.data?.["sharedWith"];
+      return new SharedSetError(
+        Array.isArray(shared) ? shared.map(String) : []);
+    }
+    if (e.remoteName === "ScopeError") return new ScopeError(e.message);
+  }
+  return e;
+}
 
 export async function call<K extends CallName>(
     name: K, ...args: CallArgs<K>): Promise<CallResult<K>> {
-  if (!Object.hasOwn(CALLS, name)) throw new UnknownCallError(name);
-  const list = [...args];
-  while (list.length > 0 && list[list.length - 1] === undefined) list.pop();
-  const callable = CALLS[name] as unknown as Callable<unknown[], unknown>;
-  // Serialised with every other write, and counted, as it will be on
-  // the host.
-  const result = await session.write((ctx) =>
-    callable.run(ctx, plain(list)));
-  return plain(result ?? null) as CallResult<K>;
+  const host = await getHost();
+  try {
+    const result = await host.call(name, args);
+    // The host has already told every window; this is the one that made
+    // the change, which may hear its own event after the answer.
+    useStore.setState((st) => ({
+      revision: Math.max(st.revision, host.revision),
+    }));
+    return result;
+  } catch (e) {
+    // A write that threw may still have changed rows, and the host
+    // reports that as an event; nothing to undo here.
+    throw reviveError(e);
+  }
 }

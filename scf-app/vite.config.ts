@@ -38,14 +38,17 @@ function gitCommit(): string {
 export default defineConfig({
   plugins: [react(), scfHostPlugin()],
   resolve: {
-    alias: {
-      "@scf-core": resolve(here, "../scf-core/src"),
-      "@registry": resolve(here, "../scf-core/registry"),
+    alias: [
+      { find: "@scf-core", replacement: resolve(here, "../scf-core/src") },
+      { find: "@registry", replacement: resolve(here, "../scf-core/registry") },
       // The host's client is browser-safe and consumed as source, like
-      // scf-core. Its type-only imports of scf-core resolve here too.
-      "@scf-host": resolve(here, "../scf-host/src"),
-      "@minimalhumans/scf-core": resolve(here, "../scf-core/src/index.ts"),
-    },
+      // scf-core. Its type-only imports of scf-core resolve to the same
+      // source. Exact match: `@minimalhumans/scf-core/node` and
+      // `/registry.json` are other entries and must keep resolving.
+      { find: "@scf-host", replacement: resolve(here, "../scf-host/src") },
+      { find: /^@minimalhumans\/scf-core$/,
+        replacement: resolve(here, "../scf-core/src/index.ts") },
+    ],
   },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),

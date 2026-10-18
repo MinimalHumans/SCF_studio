@@ -1,0 +1,286 @@
+// SPDX-License-Identifier: Apache-2.0
+// @vitest-environment node
+/**
+ * The window against a real host: the store's own actions, the `call`
+ * facade and `exec`, over a real socket, with only the file chooser
+ * stubbed (a person picks paths; a test supplies them).
+ */
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test,
+         vi } from "vitest";
+import { mkdtempSync, rmSync, readFileSync, existsSync }
+  from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { request } from "node:http";
+import { createServer, type ViteDevServer } from "vite";
+import WebSocket from "ws";
+import { HOST_ENDPOINT, scfHostPlugin } from "../tools/scfHostPlugin";
+import { HostClient, connectWebSocket, type WebSocketConstructor }
+  from "@scf-host/client.ts";
+
+/**
+ * The few browser globals the store touches. A real jsdom would also
+ * replace TextEncoder, which the dev server (esbuild) refuses to run
+ * under, so the Node environment is used and these are stubbed.
+ */
+const { memory } = vi.hoisted(() => {
+  const memory = new Map<string, string>();
+  const g = globalThis as Record<string, unknown>;
+  g["window"] = globalThis;
+  g["localStorage"] = {
+    getItem: (k: string) => memory.get(k) ?? null,
+    setItem: (k: string, v: string) => { memory.set(k, v); },
+    removeItem: (k: string) => { memory.delete(k); },
+    clear: () => { memory.clear(); },
+  };
+  return { memory };
+});
+
+const chooserPaths: (string | null)[] = [];
+
+vi.mock("../src/files/hostChooser", () => ({
+  createHostChooser: () => ({
+    chooseExisting: () => Promise.resolve(chooserPaths.shift() ?? null),
+    chooseNew: () => Promise.resolve(chooserPaths.shift() ?? null),
+  }),
+  useChooser: { getState: () => ({ request: null }) },
+}));
+
+let dir: string;
+let dev: ViteDevServer;
+let host: { url: string; token: string };
+let other: HostClient;
+
+/** A raw GET with the headers a same-origin page would send. */
+function fetchConnection(port: number):
+    Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    request({
+      host: "127.0.0.1", port, path: HOST_ENDPOINT,
+      headers: { host: `127.0.0.1:${String(port)}`,
+                 "sec-fetch-site": "same-origin" },
+    }, (res) => {
+      let body = "";
+      res.on("data", (d: Buffer) => { body += d.toString(); });
+      res.on("end", () => resolve({ status: res.statusCode ?? 0, body }));
+    }).on("error", reject).end();
+  });
+}
+
+vi.mock("../src/host/hostClient", () => {
+  let current: Promise<HostClient> | null = null;
+  return {
+    getHost: () => {
+      current ??= connectWebSocket(
+        `${host.url}?token=${host.token}`,
+        WebSocket as unknown as WebSocketConstructor)
+        .then((t) => HostClient.connect(t, { name: "window" }));
+      return current;
+    },
+    dropHost: () => { current = null; return Promise.resolve(); },
+  };
+});
+
+beforeAll(async () => {
+  dir = mkdtempSync(join(tmpdir(), "scf-window-"));
+  // The host the way development runs it: started by the dev-server
+  // plugin, reached by the endpoint the page would use.
+  dev = await createServer({
+    configFile: false, root: join(__dirname, ".."), logLevel: "silent",
+    server: { port: 0, host: "127.0.0.1" },
+    plugins: [scfHostPlugin({ hostDir: false, roots: [dir] })],
+  });
+  await dev.listen();
+  const port = (dev.httpServer!.address() as { port: number }).port;
+  for (let i = 0; i < 300; i += 1) {
+    const r = await fetchConnection(port);
+    if (r.status === 200) { host = JSON.parse(r.body) as typeof host; break; }
+    await new Promise((res) => setTimeout(res, 100));
+  }
+  if (host === undefined) throw new Error("the host never came up");
+  const t = await connectWebSocket(
+    `${host.url}?token=${host.token}`,
+    WebSocket as unknown as WebSocketConstructor);
+  other = await HostClient.connect(t, { name: "agent" });
+}, 120_000);
+
+afterAll(async () => {
+  await other.dispose();
+  await dev.close();
+  rmSync(dir, { recursive: true, force: true });
+});
+
+beforeEach(() => { chooserPaths.length = 0; memory.clear(); });
+afterEach(async () => {
+  const { useStore } = await import("../src/state/store");
+  await useStore.getState().closeProject();
+});
+
+async function store() {
+  const { useStore, exec } = await import("../src/state/store");
+  const { call } = await import("../src/state/api");
+  await useStore.getState().connect();
+  return { useStore, exec, call };
+}
+
+describe("the window on the host", () => {
+  test("connects, and the start screen's buttons can be enabled", async () => {
+    const { useStore } = await store();
+    expect(useStore.getState().hostStatus).toBe("ready");
+  });
+
+  test("New Project creates a file, opens it, and writes reach it at once",
+      async () => {
+    const { useStore, exec, call } = await store();
+    const path = join(dir, "new.scf");
+    chooserPaths.push(path);
+    await useStore.getState().newProject();
+    expect(useStore.getState().phase).toBe("open");
+    expect(useStore.getState().projectName).toBe("new.scf");
+    expect(useStore.getState().projectPath).toBe(path);
+
+    const id = await call("record.create", "character", { name: "ELEANOR" });
+    expect(typeof id).toBe("number");
+    expect(await exec("SELECT name FROM character"))
+      .toEqual([{ name: "ELEANOR" }]);
+    // No save: the bytes on disk already hold it.
+    expect(readFileSync(path).includes(Buffer.from("ELEANOR"))).toBe(true);
+  }, 60_000);
+
+  test("a write by another client moves the window's revision",
+      async () => {
+    const { useStore } = await store();
+    chooserPaths.push(join(dir, "shared.scf"));
+    await useStore.getState().newProject();
+    const before = useStore.getState().revision;
+    await other.open(useStore.getState().projectPath!);
+    await other.call("record.create", ["character", { name: "FROM AGENT" }]);
+    await vi.waitFor(() =>
+      expect(useStore.getState().revision).toBeGreaterThan(before));
+  }, 60_000);
+
+  test("opening an existing file, and reopening it after a reload",
+      async () => {
+    const { useStore, exec, call } = await store();
+    const path = join(dir, "keep.scf");
+    chooserPaths.push(path);
+    await useStore.getState().newProject();
+    await call("record.create", "character", { name: "KEPT" });
+    await useStore.getState().closeProject();
+
+    chooserPaths.push(path);
+    await useStore.getState().openFromPicker();
+    expect(useStore.getState().phase).toBe("open");
+    expect(await exec("SELECT name FROM character"))
+      .toEqual([{ name: "KEPT" }]);
+
+    // A reload keeps the path, not the host connection's state.
+    useStore.setState({ phase: "start" });
+    localStorage.setItem("scf:auto-resume", "1");
+    await useStore.getState().resumeLast();
+    expect(useStore.getState().phase).toBe("open");
+    expect(useStore.getState().projectPath).toBe(path);
+  }, 60_000);
+
+  test("resuming a file that has gone says so and offers the start screen",
+      async () => {
+    const { useStore } = await store();
+    localStorage.setItem("scf:last-session", join(dir, "gone.scf"));
+    await useStore.getState().resumeLast();
+    const st = useStore.getState();
+    expect(st.phase).toBe("start");
+    expect(st.errorMessage).toContain("gone.scf");
+    expect(localStorage.getItem("scf:last-session")).toBeNull();
+  }, 60_000);
+
+  test("Save As copies, follows the new file, and leaves the old one",
+      async () => {
+    const { useStore, exec, call } = await store();
+    const a = join(dir, "v1.scf");
+    chooserPaths.push(a);
+    await useStore.getState().newProject();
+    await call("record.create", "character", { name: "ONE" });
+    const b = join(dir, "v2.scf");
+    chooserPaths.push(b);
+    await useStore.getState().saveProjectAs();
+    expect(useStore.getState().projectPath).toBe(b);
+    expect(useStore.getState().projectName).toBe("v2.scf");
+    await call("record.create", "character", { name: "TWO" });
+    expect((await exec("SELECT name FROM character ORDER BY id"))
+      .map((r) => r["name"])).toEqual(["ONE", "TWO"]);
+    // The first file did not see the second edit.
+    await useStore.getState().closeProject();
+    chooserPaths.push(a);
+    await useStore.getState().openFromPicker();
+    expect((await exec("SELECT name FROM character"))
+      .map((r) => r["name"])).toEqual(["ONE"]);
+  }, 60_000);
+
+  test("a cancelled chooser changes nothing", async () => {
+    const { useStore } = await store();
+    chooserPaths.push(null);
+    await useStore.getState().newProject();
+    expect(useStore.getState().phase).toBe("start");
+  });
+
+  test("a delete returns an undo the window can send back", async () => {
+    const { useStore, exec, call } = await store();
+    chooserPaths.push(join(dir, "undo.scf"));
+    await useStore.getState().newProject();
+    const id = await call("record.create", "character", { name: "GONE" });
+    await useStore.getState().deleteRow("character", id);
+    expect(await exec("SELECT id FROM character")).toEqual([]);
+    expect(useStore.getState().undo).not.toBeNull();
+    await useStore.getState().undoDelete();
+    expect((await exec("SELECT name FROM character"))
+      .map((r) => r["name"])).toEqual(["GONE"]);
+  }, 60_000);
+
+  test("saving a record from the form writes through the host",
+      async () => {
+    const { useStore, exec } = await store();
+    chooserPaths.push(join(dir, "form.scf"));
+    await useStore.getState().newProject();
+    await useStore.getState().openEntityRow("character", null);
+    useStore.getState().setDraftValue("name", "FROM FORM");
+    const id = await useStore.getState().saveDraft();
+    expect(id).not.toBeNull();
+    expect((await exec("SELECT name FROM character"))
+      .map((r) => r["name"])).toEqual(["FROM FORM"]);
+  }, 60_000);
+
+  test("an outside edit is refused loudly, and Reload clears it",
+      async () => {
+    const { useStore, call } = await store();
+    const path = join(dir, "outside.scf");
+    chooserPaths.push(path);
+    await useStore.getState().newProject();
+    await call("record.create", "character", { name: "A" });
+    const later = new Date(Date.now() + 120_000);
+    const { utimesSync } = await import("node:fs");
+    utimesSync(path, later, later);
+    await expect(call("record.create", "character", { name: "B" }))
+      .rejects.toMatchObject({ code: "external_change" });
+    expect(useStore.getState().externalChange).toBe(true);
+    await useStore.getState().reloadFromDisk();
+    expect(useStore.getState().externalChange).toBe(false);
+    await call("record.create", "character", { name: "B" });
+  }, 60_000);
+
+  test("the demo is copied where the user says, and opens", async () => {
+    const { useStore, exec } = await store();
+    const demo = readFileSync(join(
+      __dirname, "..", "public", "hollow_creek.scf"));
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(
+      new Response(demo, { status: 200 }))));
+    const path = join(dir, "demo.scf");
+    chooserPaths.push(path);
+    await useStore.getState().openDemo();
+    vi.unstubAllGlobals();
+    expect(useStore.getState().phase).toBe("open");
+    expect(existsSync(path)).toBe(true);
+    const n = await exec("SELECT COUNT(*) AS n FROM scene");
+    expect(Number(n[0]!["n"])).toBeGreaterThan(0);
+  }, 120_000);
+});
+

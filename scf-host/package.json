@@ -47,7 +47,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "start": "node --experimental-strip-types --conditions=scf-source src/serve.ts"
+    "start": "node dist/serve.js"
   },
   "dependencies": {
     "@minimalhumans/scf-core": "file:../scf-core",

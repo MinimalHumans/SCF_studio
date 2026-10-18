@@ -2,37 +2,37 @@
 /**
  * store.ts — application state (Zustand).
  *
- * The SQLite client and file adapter are module singletons
- * (non-reactive); the store holds reactive state: project lifecycle,
- * navigation, and the form draft — dirty-state and undo at the form
- * level. `revision` is bumped after any write so lists and panels
- * re-query.
+ * The host connection and the asset-folder adapter are module
+ * singletons (non-reactive); the store holds reactive state: project
+ * lifecycle, navigation, and the form draft — dirty-state and undo at
+ * the form level. `revision` is the host's, and moves after any write
+ * by any client, so lists and panels re-query.
  */
 
 import { create } from "zustand";
 import registryJson from "@registry/registry.json" with { type: "json" };
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
-import { initDatabase, q, type Row, type SqlValue }
-  from "@scf-core/db.ts";
-import { createSession, type Session } from "@scf-core/session.ts";
-import { SqlWorkerClient } from "../db/workerClient.ts";
-import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
+import { q, type Row, type SqlExec, type SqlValue } from "@scf-core/db.ts";
+import { FsAccessAdapter, type FileAdapter }
+  from "../files/fileAdapter.ts";
+import { createHostChooser } from "../files/hostChooser.ts";
+import type { ProjectChooser } from "../files/projectChooser.ts";
+import { getHost } from "../host/hostClient.ts";
+import type { HostClient } from "@scf-host/client.ts";
 import { buildReferenceGraph, type IncomingRef,
          type NavigableSubject } from "./registryGraph.ts";
 import { suggestSaveAsName } from "./saveName.ts";
+import { call } from "./api.ts";
 import { rowLabel } from "@scf-core/displayName.ts";
 import { type UndoEntry } from "@scf-core/ops/undoDelete.ts";
 import { type ChangeUndo } from "@scf-core/ops/undoChange.ts";
 import {
-  forgetHandle, forgetRoot, recallHandle, recallPairFor, recallRoot,
-  rememberHandle, rememberPair, rememberRoot,
+  forgetRoot, recallPairFor, rememberPair, rememberRoot,
 } from "../files/handleStore.ts";
-import type { ProjectFinding } from "@scf-core/project.ts";
 import { resolveAllAssets, type ResolutionReport }
   from "@scf-core/assets.ts";
 import { makeLocator } from "../files/assetLocator.ts";
-import { call } from "./api.ts";
 import { revokeAll } from "../files/objectUrlCache.ts";
 import { clearResolutions } from "../files/thumbnailCache.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
@@ -45,27 +45,20 @@ export const registry: Registry =
 export const referenceGraph: Map<string, IncomingRef[]> =
   buildReferenceGraph(registry);
 
-const WORKING_PATH = "working.scf";
 const EDITOR_VERSION = "scf-app 0.1.0";
 
-const client = new SqlWorkerClient();
+/** The asset folder is the one thing still acquired through the browser. */
 const adapter: FileAdapter = new FsAccessAdapter();
+/** How the user names a `.scf`; the host lists folders for it today. */
+const chooser: ProjectChooser = createHostChooser();
 
 /**
- * The open project, app-wide. The window edits an OPFS working copy and
- * saves by exporting it to the user's file, so `persist` is the Save
- * button's work. The store mirrors the session's revision and saved
- * revision (below) rather than keeping its own count.
+ * scf-core's read seam, app-wide. Reads go to the host's read-only
+ * connection on whichever film this window has open; writes never go
+ * through here (see `call` in api.ts).
  */
-export const session: Session = createSession(registry, {
-  exec: client.exec,
-  persist: (options) =>
-    persistWorkingCopy((options as PersistOptions | undefined) ?? {}),
-  close: () => client.close(),
-});
-
-/** scf-core's seam, app-wide. */
-export const exec = session.exec;
+export const exec: SqlExec = async (sql, params) =>
+  (await getHost()).exec(sql, params);
 
 /** Sentinel: every category collapsed. Resolved by CategoryTree, which
  * is the only place that knows the category names. */
@@ -103,17 +96,26 @@ interface AppState {
   phase: "start" | "loading" | "open" | "error" | "multitab";
   errorMessage: string | null;
   projectName: string | null;
-  fileToken: unknown | null;
-  fsAccessSupported: boolean;
+  /** The open film's path on the host; null when none is open. */
+  projectPath: string | null;
+  /** Whether the browser can supply an asset folder (Chromium). */
   folderSupported: boolean;
-  /** The project folder handle (P2), or null for a degraded
-   *  single-file session. Assets can only resolve when this is set. */
+  /** The window's link to the host: starting (retried), ready, or
+   *  given up on with a reason. */
+  hostStatus: "connecting" | "ready" | "unavailable";
+  hostError: string | null;
+  /** The connection dropped while a film was open. */
+  hostLost: boolean;
+  /** The file changed on disk behind the host; writes are refused
+   *  until it is reloaded. */
+  externalChange: boolean;
+  /** The project's asset folder handle, or null when none is attached.
+   *  Assets can only resolve when this is set. */
   projectRoot: unknown | null;
   rootPermission: RootPermission;
-  /** Which grant the root was acquired under. Folder-first needs
-   *  `readwrite` (it saves through a handle taken from the root);
-   *  file-first only ever reads. Carried because querying in the wrong
-   *  mode misreports a working folder as needing reconnection. */
+  /** Which grant the root was acquired under. Carried because querying
+   *  in the wrong mode misreports a working folder as needing
+   *  reconnection. */
   rootMode: RootMode;
   /** Whether anything CHECKED that this folder holds the open file.
    *  False for a root attached to a session with no file on disk — the
@@ -135,11 +137,6 @@ interface AppState {
    *  on listing, so this is the capability that matters. */
   rootTraversal: "ok" | "blocked" | "unknown";
   rootTraversalError: string | null;
-  /** Set when a picked folder held zero or several .scf files: the user
-   *  chooses, the app never guesses (conventions §9). */
-  folderChoice: { root: unknown; candidates: string[]; seen: string[];
-                  report: string[];
-                  findings: ProjectFinding[] } | null;
   revision: number;
 
   navMode: NavMode;
@@ -189,36 +186,25 @@ interface AppState {
   setCharacterTab: (tab: CharacterTab) => void;
   draft: FormDraft | null;
 
+  /** Connect to the host (retrying while it starts). Safe to repeat. */
+  connect: () => Promise<void>;
+  /** After a dropped connection: connect again and reopen the film. */
+  reconnect: () => Promise<void>;
+  /** After `externalChange`: read the file again from disk. */
+  reloadFromDisk: () => Promise<void>;
   openDemo: () => Promise<void>;
   resumeLast: () => Promise<void>;
+  /** Path of the last film opened, for resuming after a reload. */
   lastSession: string | null;
-  /** revision at the last successful write to the user's .scf file —
-   * anything newer lives only in browser storage. */
-  lastSavedRevision: number;
-  /** true while a file write is in flight — the topbar reflects it and
-   * a second click can't start a concurrent export. */
-  saving: boolean;
   closeProject: () => Promise<void>;
   setAssetPrefix: (prefix: string) => void;
-  /** Record that something wrote rows outside the draft/commit path —
-   *  bulk import, relink. `revision` is what marks the project dirty
-   *  and what every asset view keys its refresh on, so a write that
-   *  skips it leaves the file looking saved when it is not. */
+  /** Retired: a write bumps `revision` itself now. Kept as a no-op
+   *  until its call sites are removed. */
   noteWrite: () => void;
-  /** Record that rows were written outside the entity form — bulk
-   *  import, relink. Bumps the revision so derived views re-read and
-   *  the project registers as unsaved. */
   markChanged: () => void;
   openFromPicker: () => Promise<void>;
-  /** Folder-first open: one directory gesture for project and assets. */
-  openProjectFolder: () => Promise<void>;
-  /** Open a named .scf from a folder the user already picked. */
-  openFromFolderChoice: (name: string) => Promise<void>;
-  dismissFolderChoice: () => void;
-  /** Escape hatch when the root scan misses an .scf that is there. */
-  pickScfInRoot: () => Promise<void>;
-  /** Attach a project folder to a session that is already open. Must
-   *  run inside a click: it opens a picker. */
+  /** Attach the asset folder to the film that is open. Must run
+   *  inside a click: it opens a picker. */
   attachFolder: () => Promise<void>;
   dismissAttachError: () => void;
   /** Resolve every asset against the current root. Never throws. */
@@ -226,8 +212,8 @@ interface AppState {
   /** Re-ask for a remembered root. Must run inside a click. */
   regrantRoot: () => Promise<void>;
   newProject: () => Promise<void>;
-  saveProject: () => Promise<void>;
-  /** Always prompts for a destination: rename or version up in place. */
+  /** Copy the film to a new path and carry on there: rename or version
+   *  up. Every edit is already in the file; there is no Save. */
   saveProjectAs: () => Promise<void>;
 
   setNavMode: (mode: NavMode) => void;
@@ -269,29 +255,16 @@ interface AppState {
   dismissUndo: () => void;
 }
 
-async function bootDatabase(
-    bytes: ArrayBuffer | null): Promise<void> {
-  if (bytes !== null) {
-    await client.importBytes(WORKING_PATH, bytes);
-  } else {
-    await client.open(WORKING_PATH);
-  }
-  // Same init as Python: create/ALTER registry tables, uuid identity,
-  // stamp schema_version. 1.x data migrations intentionally absent.
-  await initDatabase(client.exec, registry,
-                     { editorVersion: EDITOR_VERSION });
-}
-
 /**
- * Single-tab guard. The SAH pool's sync access handles are EXCLUSIVE —
- * a second tab (or a stale HMR worker) contending for them is exactly
- * the "Access Handles cannot be created…" failure, and a half-acquired
- * pool degrades unpredictably. One tab holds a Web Lock for the life of
- * the page; any other tab gets a clear screen instead of a broken app.
+ * One window at a time. Two windows on the same film would each keep
+ * their own copy of the script document and each commit it whole, so
+ * the later commit would silently overwrite the earlier one. One tab
+ * holds a Web Lock for the life of the page; any other tab gets a clear
+ * screen instead of two editors that disagree.
  */
 function guardSingleTab(): void {
   if (!("locks" in navigator)) return;
-  void navigator.locks.request("scf-working-db", { ifAvailable: true },
+  void navigator.locks.request("scf-window", { ifAvailable: true },
     (lock) => {
       if (lock === null) {
         useStore.setState({ phase: "multitab" });
@@ -302,26 +275,42 @@ function guardSingleTab(): void {
     });
 }
 
-// Vite HMR: a module reload here would orphan the old worker WITH its
-// access handles still held — the same contention as a second tab. A
-// full page reload is the only clean handoff for the database layer.
+// Vite HMR: a reload of this module would leave the old store's host
+// subscriptions running beside the new one's. A full page reload is the
+// only clean handoff.
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    client.terminate();
     window.location.reload();
   });
 }
 
+/** The file name of a host path, for the title and the Save As suggestion. */
+const nameOf = (path: string): string => path.split(/[\\/]/).pop() ?? path;
+
+/** Hosts whose events and closing this store already listens to. */
+const bound = new WeakSet<HostClient>();
+
 /**
- * The tail every folder open shares: boot the database, remember both
- * handles, land on the script.
- *
- * The root is remembered separately from the file handle, because a
- * reload keeps the handle and drops the PERMISSION. Recovering that is
- * one click inside a user gesture, which is why `regrantRoot` exists
- * rather than a silent retry: a page that could re-grant itself access
- * to a folder would make the original prompt meaningless.
+ * Keep the store in step with the host: another client's write (the MCP,
+ * say) arrives as a revision and every view re-reads, exactly as for a
+ * local edit; a dropped connection is surfaced instead of leaving the
+ * window silently dead.
  */
+function bindHost(host: HostClient): void {
+  if (bound.has(host)) return;
+  bound.add(host);
+  host.subscribe((event) => {
+    useStore.setState((st) => ({
+      revision: Math.max(st.revision, event.revision),
+    }));
+  });
+  host.onClose(() => {
+    if (useStore.getState().phase === "open") {
+      useStore.setState({ hostLost: true });
+    }
+  });
+}
+
 function describeError(e: unknown): string {
   return e instanceof DOMException ? `${e.name}: ${e.message}`
     : e instanceof Error ? e.message : String(e);
@@ -401,7 +390,8 @@ async function applyRoot(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
   root: FileSystemDirectoryHandle,
-  opts: { fileToken: unknown; fileName: string | null; mode: RootMode;
+  opts: { filePath: string | null; fileName: string | null;
+          mode: RootMode;
           verified: boolean },
 ): Promise<void> {
   // Anything held now describes the PREVIOUS root. Bytes from a project
@@ -413,7 +403,7 @@ async function applyRoot(
   clearResolutions();
   const probe = await probeTraversal(root, opts.fileName);
   await rememberRoot(root);
-  await rememberPair(opts.fileToken, root, opts.mode);
+  await rememberPair(opts.filePath, root, opts.mode);
   setAssetLocator(makeLocator(root));
   set({ projectRoot: root,
         rootPermission: await adapter.rootPermission(root, opts.mode),
@@ -468,31 +458,50 @@ const freshShootView = (): ShootMemory =>
   ({ open: new Set(), showEmpty: readShootPref("showEmpty", true),
      hideCut: readShootPref("hideCut", false), scrollTop: 0 });
 
-async function finishFolderOpen(
+/**
+ * The tail every open shares: land on the script, with nothing of the
+ * previous project left behind, and pick up the asset folder this
+ * project was last used with.
+ *
+ * The folder is recalled by the project's path, and its permission is
+ * reported rather than requested: a reload drops the permission, and
+ * asking outside a click is refused by the browser anyway. The topbar
+ * offers the re-grant.
+ */
+async function finishOpen(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
-  root: FileSystemDirectoryHandle,
-  opened: { name: string; bytes: ArrayBuffer; token: unknown },
+  path: string, revision: number,
 ): Promise<void> {
-  set({ phase: "loading", errorMessage: null });
-  await bootDatabase(opened.bytes);
   localStorage.setItem("scf:auto-resume", "1");
-  localStorage.setItem("scf:last-session", opened.name);
-  await rememberHandle(opened.token);
-  session.reset();
+  localStorage.setItem("scf:last-session", path);
+  // Clear the root EXPLICITLY. Opening a film while another is live
+  // otherwise leaves `projectRoot` untouched, and the new project
+  // inherits the old one's folder — addressing every asset against
+  // another film's disk. Nothing reports it, because a stale root
+  // resolves perfectly well.
+  setAssetLocator(null);
+  revokeAll();
+  clearResolutions();
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
-        phase: "open", projectName: opened.name,
-        fileToken: opened.token, lastSession: opened.name,
-        folderChoice: null });
-  // The file handle came out of this root, so the grant has to cover
-  // writing to it — the folder-first order cannot ask for less.
-  await applyRoot(set, get, root, {
-    fileToken: opened.token, fileName: opened.name,
-    mode: "readwrite", verified: true,
-  });
+        openRow: null, draft: null, undo: null, lastChange: null,
+        phase: "open", projectName: nameOf(path), projectPath: path,
+        lastSession: path, revision, hostLost: false,
+        externalChange: false, errorMessage: null,
+        projectRoot: null, rootPermission: "none", rootMode: "read",
+        rootVerified: false, attachError: null,
+        rootTraversal: "unknown", rootTraversalError: null,
+        environmentRevision: get().environmentRevision + 1 });
+  const pair = await recallPairFor(path);
+  if (pair !== null) {
+    await applyRoot(set, get, pair.root as FileSystemDirectoryHandle, {
+      filePath: path, fileName: nameOf(path),
+      mode: pair.mode, verified: true,
+    });
+  }
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -505,21 +514,21 @@ export const useStore = create<AppState>((set, get) => ({
   lastSession: localStorage.getItem("scf:last-session"),
   errorMessage: null,
   projectName: null,
-  fileToken: null,
-  fsAccessSupported: FsAccessAdapter.supported(),
+  projectPath: null,
   folderSupported: FsAccessAdapter.folderSupported(),
+  hostStatus: "connecting",
+  hostError: null,
+  hostLost: false,
+  externalChange: false,
   projectRoot: null,
   rootPermission: "none",
-  rootMode: "readwrite",
+  rootMode: "read",
   rootVerified: false,
   environmentRevision: 0,
   attachError: null,
   rootTraversal: "unknown",
   rootTraversalError: null,
-  folderChoice: null,
   revision: 0,
-  lastSavedRevision: 0,
-  saving: false,
 
   // The script is what a project is FOR: opening anywhere else means a
   // click before you can write. Every open path sets this too, so
@@ -535,186 +544,116 @@ export const useStore = create<AppState>((set, get) => ({
   openRow: null,
   draft: null,
 
-  openDemo: async () => {
-    set({ phase: "loading", errorMessage: null });
+  connect: async () => {
+    set({ hostStatus: "connecting", hostError: null });
     try {
-      const res = await fetch("/hollow_creek.scf");
-      if (!res.ok) throw new Error(`demo fetch failed: ${res.status}`);
-      await bootDatabase(await res.arrayBuffer());
-      const check = await client.exec(
-        "SELECT (SELECT COUNT(*) FROM character) + " +
-        "(SELECT COUNT(*) FROM scene) AS n");
-      if ((check[0]?.["n"] as number ?? 0) === 0) {
-        throw new Error(
-          "demo imported but contains no data — the imported bytes and " +
-          "the opened database are not the same file (path mismatch " +
-          "in the storage layer)");
-      }
-      localStorage.setItem("scf:last-session", "Hollow Creek (demo)");
-      localStorage.setItem("scf:auto-resume", "1");
-      session.reset();
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
-        shootView: freshShootView(),
-        selectedCharacterId: null, asOfSceneId: null,
-        selectedLocationId: null, selectedPropId: null,
-            phase: "open", projectName: "Hollow Creek (demo)",
-            fileToken: null, lastSession: "Hollow Creek (demo)" });
+      bindHost(await getHost({
+        retry: {
+          // The host starts with the dev server but not before it; say
+          // so rather than showing nothing for the first seconds.
+          onWait: (attempt) => {
+            if (attempt >= 3) {
+              set({ hostError: "Still waiting for the SCF host to start…" });
+            }
+          },
+        },
+      }));
+      set({ hostStatus: "ready", hostError: null });
     } catch (e) {
-      set({ phase: "error",
-            errorMessage: e instanceof Error ? e.message : String(e) });
+      set({ hostStatus: "unavailable", hostError: describeError(e) });
     }
   },
 
-  /** Reopen the OPFS working database from the previous session — the
-   * work is still there after a refresh; this is the path back to it. */
-  resumeLast: async () => {
-    set({ phase: "loading", errorMessage: null });
+  reconnect: async () => {
+    const path = get().projectPath;
     try {
-      if (!(await client.exists(WORKING_PATH))) {
-        throw new Error("no previous session found in browser storage");
+      const host = await getHost();
+      bindHost(host);
+      if (path !== null) {
+        const opened = await host.open(path, { migrate: false });
+        set({ hostLost: false, externalChange: false,
+              hostStatus: "ready", hostError: null,
+              revision: Math.max(get().revision, opened.revision),
+              environmentRevision: get().environmentRevision + 1 });
       }
-      localStorage.setItem("scf:auto-resume", "1");
-      await bootDatabase(null);
-      const name = localStorage.getItem("scf:last-session") ?? "resumed";
-      // The handle outlives the page: Save keeps targeting the same
-      // file, and Chromium re-asks for write permission once.
-      const fileToken = await recallHandle();
-      // The root survives a reload; its permission does not. Report the
-      // state rather than prompting — a prompt outside a click is
-      // rejected by the browser anyway, and the topbar offers the
-      // re-grant.
-      // The root is recalled BY THE FILE, not on its own: a single-root
-      // key pairs whatever folder was last opened with whatever file
-      // was last opened, which are not always the same project.
-      // `recallRoot()` is only the fallback for a session with no file
-      // handle to key on.
-      const pair = await recallPairFor(fileToken);
-      const projectRoot = pair?.root ?? await recallRoot();
-      const rootMode = pair?.mode ?? "readwrite";
-      session.reset();
-      setAssetLocator(
-        projectRoot === null
-          ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
-        shootView: freshShootView(),
-        selectedCharacterId: null, asOfSceneId: null,
-        selectedLocationId: null, selectedPropId: null,
-            phase: "open", projectName: `${name}`, fileToken,
-            projectRoot, rootMode,
-            rootVerified: pair !== null,
-            attachError: null,
-            rootPermission: projectRoot === null
-              ? "none" : await adapter.rootPermission(projectRoot, rootMode),
+    } catch (e) {
+      set({ errorMessage: `Could not reconnect: ${describeError(e)}` });
+    }
+  },
+
+  reloadFromDisk: async () => {
+    try {
+      const host = await getHost();
+      const revision = await host.reload();
+      set({ externalChange: false,
+            revision: Math.max(get().revision, revision),
             environmentRevision: get().environmentRevision + 1 });
     } catch (e) {
-      set({ phase: "error",
-            errorMessage: e instanceof Error ? e.message : String(e) });
+      set({ errorMessage: `Could not reload: ${describeError(e)}` });
+    }
+  },
+
+  openDemo: async () => {
+    // Asked first: the demo has to live somewhere, and every edit is
+    // written straight to its file.
+    const path = await chooser.chooseNew("Hollow Creek (demo).scf");
+    if (path === null) return;
+    set({ phase: "loading", errorMessage: null });
+    try {
+      const res = await fetch("/hollow_creek.scf");
+      if (!res.ok) throw new Error(`demo fetch failed: ${String(res.status)}`);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      const host = await getHost();
+      bindHost(host);
+      const made = await host.create(path, { bytes });
+      // Migrated through the open path below, which stamps the editor.
+      const opened = await host.open(made.path, {
+        migrate: true, editorVersion: EDITOR_VERSION });
+      const check = await host.exec(
+        "SELECT (SELECT COUNT(*) FROM character) + " +
+        "(SELECT COUNT(*) FROM scene) AS n");
+      if ((check[0]?.["n"] as number ?? 0) === 0) {
+        throw new Error("the demo was copied but contains no data");
+      }
+      await finishOpen(set, get, opened.path, opened.revision);
+    } catch (e) {
+      set({ phase: "error", errorMessage: describeError(e) });
+    }
+  },
+
+  /** Reopen the film this window had open before a reload. */
+  resumeLast: async () => {
+    const path = localStorage.getItem("scf:last-session");
+    if (path === null) return;
+    set({ phase: "loading", errorMessage: null });
+    try {
+      const host = await getHost();
+      bindHost(host);
+      const opened = await host.open(path, {
+        migrate: true, editorVersion: EDITOR_VERSION });
+      await finishOpen(set, get, opened.path, opened.revision);
+    } catch (e) {
+      // The file moved or was deleted: forget it, so the start screen
+      // is offered next time instead of the same failure.
+      localStorage.removeItem("scf:last-session");
+      set({ phase: "start", lastSession: null,
+            errorMessage: `Could not reopen ${nameOf(path)}: ${
+              describeError(e)}` });
     }
   },
 
   openFromPicker: async () => {
+    const path = await chooser.chooseExisting();
+    if (path === null) return;                           // user cancelled
+    set({ phase: "loading", errorMessage: null });
     try {
-      const opened = await adapter.openScf();
-      if (opened === null) return; // user cancelled
-      set({ phase: "loading", errorMessage: null });
-      await bootDatabase(opened.bytes);
-      localStorage.setItem("scf:auto-resume", "1");
-      localStorage.setItem("scf:last-session", opened.name);
-      await rememberHandle(opened.token);
-      session.reset();
-      // Clear the root EXPLICITLY. Opening a file while a folder
-      // session is live otherwise leaves `projectRoot` untouched, and
-      // the new project inherits the old one's folder — addressing
-      // every asset against another film's disk. Nothing reports it,
-      // because a stale root resolves perfectly well.
-      setAssetLocator(null);
-      revokeAll();
-      clearResolutions();
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
-        shootView: freshShootView(),
-        selectedCharacterId: null, asOfSceneId: null,
-        selectedLocationId: null, selectedPropId: null,
-            phase: "open", projectName: opened.name,
-            fileToken: opened.token, lastSession: opened.name,
-            projectRoot: null, rootPermission: "none",
-            rootMode: "read", rootVerified: false, attachError: null,
-            rootTraversal: "unknown", rootTraversalError: null,
-            folderChoice: null,
-            environmentRevision: get().environmentRevision + 1 });
-      // Opened before? Then its folder is known, and re-granting is one
-      // click in the topbar rather than another trip through the
-      // picker. The grant does not survive a reload; the pairing does.
-      const pair = await recallPairFor(opened.token);
-      if (pair !== null) {
-        await applyRoot(set, get, pair.root as FileSystemDirectoryHandle, {
-          fileToken: opened.token, fileName: opened.name,
-          mode: pair.mode, verified: true,
-        });
-      }
+      const host = await getHost();
+      bindHost(host);
+      const opened = await host.open(path, {
+        migrate: true, editorVersion: EDITOR_VERSION });
+      await finishOpen(set, get, opened.path, opened.revision);
     } catch (e) {
-      set({ phase: "error",
-            errorMessage: e instanceof Error ? e.message : String(e) });
-    }
-  },
-
-  openProjectFolder: async () => {
-    try {
-      const picked = await adapter.openProject();
-      if (picked === null) return; // user cancelled
-      if (picked.file === null) {
-        // Zero or several .scf at the root. Hand the findings back and
-        // let the user decide; guessing here would silently open the
-        // wrong film.
-        set({ folderChoice: { root: picked.root,
-                              candidates: picked.candidates,
-                              seen: picked.seen,
-                              report: picked.report,
-                              findings: picked.findings } });
-        return;
-      }
-      await finishFolderOpen(set, get, picked.root, picked.file);
-    } catch (e) {
-      set({ phase: "error",
-            errorMessage: e instanceof Error ? e.message : String(e) });
-    }
-  },
-
-  openFromFolderChoice: async (name) => {
-    const choice = get().folderChoice;
-    if (choice === null) return;
-    try {
-      const root = choice.root as FileSystemDirectoryHandle;
-      const opened = await adapter.readFromRoot(root, name);
-      if (opened === null) {
-        set({ errorMessage: `Could not read ${name}` });
-        return;
-      }
-      set({ folderChoice: null });
-      await finishFolderOpen(set, get, root, opened);
-    } catch (e) {
-      set({ phase: "error",
-            errorMessage: e instanceof Error ? e.message : String(e) });
-    }
-  },
-
-  /**
-   * The way in when the scan cannot find the .scf that is plainly
-   * there. The root is already granted; this only asks which file, and
-   * the project opens as a FOLDER session with assets resolvable — the
-   * scan being wrong should not cost the user the folder.
-   */
-  pickScfInRoot: async () => {
-    const choice = get().folderChoice;
-    if (choice === null) return;
-    try {
-      const opened = await adapter.openScf();
-      if (opened === null) return; // user cancelled
-      set({ folderChoice: null });
-      await finishFolderOpen(
-        set, get, choice.root as FileSystemDirectoryHandle, opened);
-    } catch (e) {
-      set({ phase: "error",
-            errorMessage: e instanceof Error ? e.message : String(e) });
+      set({ phase: "error", errorMessage: describeError(e) });
     }
   },
 
@@ -736,11 +675,10 @@ export const useStore = create<AppState>((set, get) => ({
    * session is marked unverified and the topbar says so.
    */
   attachFolder: async () => {
-    const { fileToken, projectName } = get();
+    const { projectPath, projectName } = get();
     set({ attachError: null });
     try {
-      const attached = await adapter.attachRoot(
-        fileToken, projectName ?? "this project");
+      const attached = await adapter.attachRoot(projectName);
       if (attached === null) return;                     // user cancelled
       if (attached.pairing !== null &&
           attached.pairing.kind !== "at-root") {
@@ -748,7 +686,7 @@ export const useStore = create<AppState>((set, get) => ({
         return;
       }
       await applyRoot(set, get, attached.root, {
-        fileToken, fileName: fileToken === null ? null : projectName,
+        filePath: projectPath, fileName: projectName,
         mode: "read", verified: attached.pairing !== null,
       });
     } catch (e) {
@@ -764,11 +702,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   setAssetPrefix: (assetPrefix) => set({ assetPrefix }),
 
-  noteWrite: () => session.noteWrite(),
+  noteWrite: () => undefined,
 
-  markChanged: () => session.noteWrite(),
-
-  dismissFolderChoice: () => set({ folderChoice: null }),
+  markChanged: () => undefined,
 
   resolveAssets: async () => {
     const root = get().projectRoot as FileSystemDirectoryHandle | null;
@@ -791,32 +727,28 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   newProject: async () => {
+    // Asked first, while the current screen is still up: the film is a
+    // file from its first moment, and every edit is written to it.
+    const path = await chooser.chooseNew("Untitled.scf");
+    if (path === null) return;
     // "loading" first, and awaited into the next task, so mounted views
-    // unmount before the file is wiped. Wiping under a live workbench
-    // leaves its queries hitting a half-built database, which surfaces
-    // as "no such table: …" from whichever table is created last.
+    // unmount before the host switches films. A view whose query lands
+    // between the two films would read the wrong one.
     set({ phase: "loading", errorMessage: null, openRow: null,
           draft: null, selectedSubject: null });
     await new Promise((r) => setTimeout(r, 0));
     try {
-      // Fresh working database; initDatabase creates the format.
-      await client.wipe(WORKING_PATH);
-      await initDatabase(client.exec, registry,
-                         { editorVersion: EDITOR_VERSION });
-      session.reset();
-      set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
-        shootView: freshShootView(),
-        selectedCharacterId: null, asOfSceneId: null,
-        selectedLocationId: null, selectedPropId: null,
-            phase: "open", projectName: "Untitled.scf", fileToken: null });
+      const host = await getHost();
+      bindHost(host);
+      const made = await host.create(path, { editorVersion: EDITOR_VERSION });
+      await finishOpen(set, get, made.path, made.revision);
     } catch (e) {
-      set({ phase: "error",
-            errorMessage: e instanceof Error ? e.message : String(e) });
+      set({ phase: "error", errorMessage: describeError(e) });
     }
   },
 
-  /** Back to the start screen. The OPFS working copy stays — Resume
-   * still works — but only the .scf file is durable. */
+  /** Back to the start screen. The film is already in its file; the
+   *  host lets go of it when this window does. */
   closeProject: async () => {
     // Disarm auto-resume BEFORE the phase change, not after the awaits
     // below. App's resume effect fires the moment phase becomes "start"
@@ -827,10 +759,11 @@ export const useStore = create<AppState>((set, get) => ({
     revokeAll();
     clearResolutions();
     setAssetLocator(null);
-    // Leave the workbench FIRST. Closing the database under mounted
-    // views leaves their in-flight queries — and the script editor's
-    // blur-triggered commit — resolving against no database.
-    set({ phase: "start", fileToken: null, errorMessage: null,
+    // Leave the workbench FIRST. Closing the film under mounted views
+    // leaves their in-flight queries — and the script editor's
+    // blur-triggered commit — resolving against no film.
+    set({ phase: "start", projectPath: null, projectName: null,
+          errorMessage: null, hostLost: false, externalChange: false,
           navMode: "intro", selectedCharacterId: null, characterTab: "Profile",
           shootView: freshShootView(),
   asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
@@ -838,43 +771,44 @@ export const useStore = create<AppState>((set, get) => ({
   assetPrefix: "", openRow: null, draft: null,
           selectedSubject: null, projectRoot: null,
           rootPermission: "none", rootTraversal: "unknown",
-          rootMode: "readwrite", rootVerified: false, attachError: null,
-          rootTraversalError: null, folderChoice: null });
-    await client.close();
-    // Closing is deliberate: forget the file so the next boot offers the
-    // start screen rather than silently reopening what was closed.
-    await forgetHandle();
+          rootMode: "read", rootVerified: false, attachError: null,
+          rootTraversalError: null });
+    try {
+      await (await getHost()).closeFilm();
+    } catch {
+      // The host is gone or never had it; either way it is closed.
+    }
+    // Closing is deliberate: forget the folder so the next open starts
+    // clean rather than inheriting this one's.
     await forgetRoot();
   },
 
-  saveProject: async () => {
-    if (get().saving) return;
-    set({ saving: true });
-    try {
-      await session.persist();
-    } catch (e) {
-      set({ errorMessage:
-        e instanceof Error ? e.message : String(e) });
-    } finally {
-      set({ saving: false });
-    }
-  },
-
   /**
-   * Save As — always prompts, and the project follows the new file:
-   * subsequent Save writes there, so this is how you version up
-   * (hollow_creek_v2.scf) or rename without leaving the editor.
+   * Save As — the project follows the new file, so this is how you
+   * version up (hollow_creek_v2.scf) or rename without leaving the
+   * editor. The old file is left exactly as it was; there is nothing to
+   * save first, because every edit is already in it.
    */
   saveProjectAs: async () => {
-    if (get().saving) return;
-    set({ saving: true });
+    const { projectName, projectRoot, rootMode } = get();
+    const path = await chooser.chooseNew(
+      suggestSaveAsName(projectName, true));
+    if (path === null) return;
     try {
-      await session.persist({ saveAs: true });
+      const host = await getHost();
+      const copied = await host.saveAs(path);
+      localStorage.setItem("scf:last-session", copied.path);
+      set({ projectPath: copied.path, projectName: nameOf(copied.path),
+            lastSession: copied.path,
+            revision: Math.max(get().revision, copied.revision) });
+      // The folder was verified against the old file's name; remember it
+      // for the new path, but the check is no longer a fact.
+      if (projectRoot !== null) {
+        await rememberPair(copied.path, projectRoot, rootMode);
+        set({ rootVerified: false });
+      }
     } catch (e) {
-      set({ errorMessage:
-        e instanceof Error ? e.message : String(e) });
-    } finally {
-      set({ saving: false });
+      set({ errorMessage: `Save As failed: ${describeError(e)}` });
     }
   },
 
@@ -1032,7 +966,6 @@ export const useStore = create<AppState>((set, get) => ({
 
   recordChange: (change) => {
     const empty = change.created.length === 0 && change.before.length === 0;
-    session.noteWrite();
     set(empty ? {} : { lastChange: change, undo: null });
   },
 
@@ -1055,40 +988,6 @@ export const useStore = create<AppState>((set, get) => ({
  * name of their own; those callers use `linkLabel` with resolved
  * references instead (see displayName.ts).
  */
-interface PersistOptions { saveAs?: boolean }
-
-/**
- * The window's Save: export the live working copy and hand the bytes to
- * the user's file. The session took its watermark before calling this,
- * so an edit that lands while the bytes are written stays unsaved.
- *
- * With a file already chosen Save writes there; without one (the demo, a
- * new project) the first Save asks where. Save As always asks, and the
- * project follows the new file. Returns false when the user cancelled.
- */
-async function persistWorkingCopy(options: PersistOptions): Promise<boolean> {
-  const { fileToken, projectName } = useStore.getState();
-  const bytes = await client.exportBytes();
-  if (options.saveAs !== true && fileToken !== null) {
-    await adapter.save(fileToken, bytes);
-    return true;
-  }
-  const saved = await adapter.saveAs(
-    bytes, suggestSaveAsName(projectName, options.saveAs === true));
-  if (saved === null) return false;
-  localStorage.setItem("scf:last-session", saved.name);
-  await rememberHandle(saved.token);
-  useStore.setState({ projectName: saved.name, fileToken: saved.token,
-                      lastSession: saved.name });
-  return true;
-}
-
-// The session is the source of truth for what is unsaved; the store
-// carries its numbers so views can select on them.
-session.subscribe(({ revision, savedRevision }) => {
-  useStore.setState({ revision, lastSavedRevision: savedRevision });
-});
-
 export function rowName(entity: string, row: Row): string {
   return rowLabel(registry.entities.get(entity), entity, row);
 }

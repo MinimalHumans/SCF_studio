@@ -2,12 +2,14 @@
 import { useEffect, useRef } from "react";
 import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";
+import { ChooserDialog } from "./ChooserDialog.tsx";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
 import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
 
 function StartScreen(): JSX.Element {
-  const { openDemo, openFromPicker, newProject, fsAccessSupported,
-          phase, errorMessage } = useStore();
+  const { openDemo, openFromPicker, newProject, hostStatus, hostError,
+          connect, phase, errorMessage } = useStore();
+  const ready = hostStatus === "ready";
   return (
     <div className="start">
       <div className="start-card">
@@ -15,25 +17,32 @@ function StartScreen(): JSX.Element {
           <img src={logoBigCloud} alt="SCF" />
         </h1>
         <p className="start-sub">Story Context Framework — editor</p>
-        {!fsAccessSupported && (
-          <p className="start-warn">
-            This browser has no File System Access API. Use a
-            Chromium-based browser to open and save .scf files; the demo
-            project still works here.
+        {hostStatus === "connecting" && (
+          <p className="start-status" role="status">
+            {hostError ?? "Connecting to the SCF host…"}
           </p>
         )}
+        {hostStatus === "unavailable" && (
+          <>
+            <p className="start-error">
+              The SCF host is not reachable: {hostError}
+            </p>
+            <button onClick={() => void connect()}>Try again</button>
+          </>
+        )}
         <div className="start-actions">
-          <button className="primary" onClick={() => void newProject()}>
+          <button className="primary" disabled={!ready}
+                  onClick={() => void newProject()}>
             New Project
           </button>
-          <button onClick={() => void openFromPicker()}
-                  disabled={!fsAccessSupported}
-                  title="Opens the file. Its folder is attached
+          <button disabled={!ready}
+                  onClick={() => void openFromPicker()}
+                  title="Opens the file. Its asset folder is attached
 afterwards, from the topbar — the browser cannot find the folder from
 the file, but it can confirm the one you name holds it.">
             Open an SCF File
           </button>
-          <button onClick={() => void openDemo()}>
+          <button disabled={!ready} onClick={() => void openDemo()}>
             Open Hollow Creek Demo
           </button>
         </div>
@@ -45,6 +54,9 @@ the file, but it can confirm the one you name holds it.">
               Reload app
             </button>
           </>
+        )}
+        {phase === "start" && errorMessage !== null && (
+          <p className="start-error">{errorMessage}</p>
         )}
       </div>
       <a className="start-maker" href="https://www.minimalhumans.com"
@@ -64,9 +76,10 @@ function MultiTabScreen(): JSX.Element {
         </h1>
         <p className="start-sub">Story Context Framework — editor</p>
         <p className="start-warn">
-          SCF is already open in another tab. The working database uses
-          exclusive browser storage handles, so only one tab can hold it
-          at a time. Close the other tab, then
+          SCF is already open in another tab. Two windows editing one
+          film would each save their own copy of the script over the
+          other's, so only one tab is allowed at a time. Close the other
+          tab, then
         </p>
         <button className="primary"
                 onClick={() => window.location.reload()}>
@@ -79,21 +92,36 @@ function MultiTabScreen(): JSX.Element {
 
 export function App(): JSX.Element {
   const phase = useStore((s) => s.phase);
+  const hostStatus = useStore((s) => s.hostStatus);
+  const connect = useStore((s) => s.connect);
   const resumeLast = useStore((s) => s.resumeLast);
   const lastSession = useStore((s) => s.lastSession);
   const tried = useRef(false);
+  const connecting = useRef(false);
 
-  // A refresh is not a close. The working database is still in browser
-  // storage and the file handle is still in IndexedDB, so walk straight
-  // back in — unless the last thing the user did was close the project,
-  // in which case the start screen is what they asked for.
+  // The host starts with the dev server, possibly a moment after the
+  // page: connect (retrying) as soon as the app is up.
+  useEffect(() => {
+    if (connecting.current) return;
+    connecting.current = true;
+    void connect();
+  }, [connect]);
+
+  // A refresh is not a close. The host still has the file and the path
+  // is in browser storage, so walk straight back in — unless the last
+  // thing the user did was close the project, in which case the start
+  // screen is what they asked for.
   useEffect(() => {
     if (tried.current || phase !== "start" || lastSession === null) return;
+    if (hostStatus !== "ready") return;
     tried.current = true;
     if (localStorage.getItem("scf:auto-resume") === "0") return;
     void resumeLast();
-  }, [phase, lastSession, resumeLast]);
+  }, [phase, hostStatus, lastSession, resumeLast]);
 
-  if (phase === "multitab") return <MultiTabScreen />;
-  return phase === "open" ? <Workbench /> : <StartScreen />;
+  // The chooser is mounted over whichever screen asked for it: the
+  // start screen to open or create, the workbench to Save As.
+  const screen = phase === "multitab" ? <MultiTabScreen />
+    : phase === "open" ? <Workbench /> : <StartScreen />;
+  return <>{screen}<ChooserDialog /></>;
 }
