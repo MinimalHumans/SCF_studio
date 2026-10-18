@@ -109,6 +109,10 @@ interface AppState {
   /** The file changed on disk behind the host; writes are refused
    *  until it is reloaded. */
   externalChange: boolean;
+  /** The last change another client made to this film (the MCP, say),
+   *  so it is attributed rather than appearing from nowhere. */
+  externalEdit: { by: string; revision: number } | null;
+  dismissExternalEdit: () => void;
   /** The project's asset folder handle, or null when none is attached.
    *  Assets can only resolve when this is set. */
   projectRoot: unknown | null;
@@ -298,6 +302,10 @@ function bindHost(host: HostClient): void {
   host.subscribe((event) => {
     useStore.setState((st) => ({
       revision: Math.max(st.revision, event.revision),
+      // Our own name is "window"; anything else made this change.
+      ...(event.event === "revision" && event.by !== "window"
+        ? { externalEdit: { by: event.by, revision: event.revision } }
+        : {}),
     }));
   });
   host.onClose(() => {
@@ -487,6 +495,7 @@ async function finishOpen(
         phase: "open", projectName: nameOf(path), projectPath: path,
         lastSession: path, revision, hostLost: false,
         externalChange: false, errorMessage: null,
+        externalEdit: null,
         projectRoot: null, rootPermission: "none", rootMode: "read",
         rootVerified: false, attachError: null,
         rootTraversal: "unknown", rootTraversalError: null,
@@ -516,6 +525,8 @@ export const useStore = create<AppState>((set, get) => ({
   hostError: null,
   hostLost: false,
   externalChange: false,
+  externalEdit: null,
+  dismissExternalEdit: () => useStore.setState({ externalEdit: null }),
   projectRoot: null,
   rootPermission: "none",
   rootMode: "read",

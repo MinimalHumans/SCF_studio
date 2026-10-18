@@ -157,6 +157,20 @@ describe("the window on the host", () => {
     await other.call("record.create", ["character", { name: "FROM AGENT" }]);
     await vi.waitFor(() =>
       expect(useStore.getState().revision).toBeGreaterThan(before));
+    // And the change is attributed, not anonymous.
+    expect(useStore.getState().externalEdit).toMatchObject({ by: "agent" });
+    useStore.getState().dismissExternalEdit();
+    expect(useStore.getState().externalEdit).toBeNull();
+  }, 60_000);
+
+  test("the window's own writes are not reported as someone else's",
+      async () => {
+    const { useStore, call } = await store();
+    chooserPaths.push(join(dir, "mine.scf"));
+    await useStore.getState().newProject();
+    await call("record.create", "character", { name: "MINE" });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(useStore.getState().externalEdit).toBeNull();
   }, 60_000);
 
   test("opening an existing file, and reopening it after a reload",

@@ -390,9 +390,17 @@ function UndoToast(): JSX.Element | null {
  * statement of the fact so nobody goes looking for the button.
  */
 function SaveControls(): JSX.Element {
-  const { saveProjectAs, projectPath } = useStore();
+  const { saveProjectAs, projectPath, externalEdit, dismissExternalEdit } =
+    useStore();
   return (
     <>
+      {externalEdit !== null && (
+        <button className="ghost tiny topbar-agent" role="status"
+                onClick={dismissExternalEdit}
+                title="Another program changed this film while it was open here. Lists and records are up to date; click to dismiss.">
+          edited by {externalEdit.by}
+        </button>
+      )}
       <span className="topbar-saved muted"
             title={`Every change is written to ${projectPath ?? "the file"
                     } as you make it.`}>
