@@ -17,6 +17,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readHostEntry } from "@minimalhumans/scf-host/registryFile";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -30,9 +31,12 @@ const SLOW = 60_000;
 
 describe("scripts/start.mjs — scf-mcp from source, no build", () => {
   const scratch = mkdtempSync(join(tmpdir(), "scf-mcp-launcher-"));
+  // A host of its own, as helpers.ts gives the other tests, so the run
+  // never meets (or leaves a host in) the developer's real directory.
+  const hostDir = mkdtempSync(join(tmpdir(), "scf-mcp-launcher-host-"));
   const child = spawn(process.execPath, [LAUNCHER, "--scf", FIXTURE], {
     cwd: scratch,
-    env: { ...process.env, SCF_CONFIG_DIR: scratch },
+    env: { ...process.env, SCF_CONFIG_DIR: scratch, SCF_HOST_DIR: hostDir },
   });
 
   let nextId = 1;
@@ -88,9 +92,20 @@ describe("scripts/start.mjs — scf-mcp from source, no build", () => {
       jsonrpc: "2.0", method: "notifications/initialized" })}\n`);
   }, SLOW);
 
-  afterAll(() => {
-    child.kill();
-    rmSync(scratch, { recursive: true, force: true });
+  afterAll(async () => {
+    const entry = readHostEntry(hostDir);
+    if (entry !== null) {
+      try { process.kill(entry.pid); } catch { /* already gone */ }
+    }
+    const gone = new Promise((r) => { child.once("exit", r); });
+    if (child.kill()) await gone;
+    // The host ran in `scratch` too, and Windows will not remove a
+    // directory a process is still in, or still has a file open in,
+    // until that process has finished going.
+    for (const dir of [scratch, hostDir]) {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 20,
+                    retryDelay: 100 });
+    }
   });
 
   test("starts, and lists the tool surface", async () => {
