@@ -204,6 +204,10 @@ export async function withProject<T>(
       revision: opened.revision, readOnly,
     });
   } finally {
+    // Closed before the socket is: the host lets go of a dropped
+    // connection's film only after it notices, and until then Windows
+    // will not let anyone rename or delete the file.
+    await host.closeFilm().catch(() => {});
     await host.dispose();
   }
 }
