@@ -37,3 +37,31 @@ export async function connectToHost(
   }
   return connectToEntry(entry, options);
 }
+
+/**
+ * Make way for a new host that must allow an origin the running one
+ * does not: a host a tool started is idle and will exit by itself soon,
+ * so ask it to go now. One with clients — the MCP mid-conversation,
+ * another editor — is not ours to stop, and that fails saying so.
+ */
+export async function replaceIdleHost(
+    dir: string, options: HostClientOptions): Promise<void> {
+  const other = readHostEntry(dir);
+  if (other === null) return;
+  try {
+    const client = await connectToEntry(other, options);
+    await client.shutdown();
+    await client.dispose();
+  } catch {
+    throw new Error(
+      `An SCF host is already running (pid ${String(other.pid)}, ` +
+      `port ${String(other.port)}) and is in use, so it cannot be ` +
+      "replaced. Stop it, or wait until nothing is using it, and try " +
+      "again.");
+  }
+  for (let i = 0; i < 100; i += 1) {
+    if (readHostEntry(dir) === null) return;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  throw new Error("The running SCF host was asked to exit and has not yet.");
+}

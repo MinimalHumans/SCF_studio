@@ -12,7 +12,9 @@ npm test
 ```
 
 In development you do not start it: `npm run dev` in `scf-app` runs a host
-inside the dev server. The MCP starts one on demand if none is running.
+inside the dev server. The MCP starts one on demand if none is running,
+and the desktop app runs its own as a sidecar (`--replace-idle
+--exit-with-stdin`; see `src/serve.ts`).
 
 ## What a client can ask
 
