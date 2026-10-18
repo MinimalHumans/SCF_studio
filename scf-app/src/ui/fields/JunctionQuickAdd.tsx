@@ -26,7 +26,6 @@ export function JunctionQuickAdd({ edef, anchorField, anchorId }: {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const bump = useStore((s) => s.revision);
-  const setRevision = useStore.setState;
 
   // The "other end": the first non-injected reference field that is not
   // the anchor. Junctions are pairs by design; extras stay form-only.
@@ -57,7 +56,7 @@ export function JunctionQuickAdd({ edef, anchorField, anchorId }: {
                        { [anchorField]: anchorId, [other.name]: otherId });
     setOpen(false);
     setFilter("");
-    setRevision((s) => ({ revision: s.revision + 1 }));
+    useStore.getState().noteWrite();
   };
 
   return (

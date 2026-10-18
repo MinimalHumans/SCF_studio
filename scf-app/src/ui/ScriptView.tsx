@@ -47,9 +47,7 @@ import { IntegrityPanel } from "./IntegrityPanel.tsx";
 import { useQuery } from "./useQuery.ts";
 import { scanIntegrity } from "@scf-core/ops/integrity.ts";
 
-const touch = (): void => {
-  useStore.setState((s) => ({ revision: s.revision + 1 }));
-};
+const touch = (): void => { useStore.getState().noteWrite(); };
 
 /**
  * Every async path here must check this before touching the database.

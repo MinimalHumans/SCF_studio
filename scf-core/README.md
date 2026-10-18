@@ -26,7 +26,9 @@ The main modules; `src/index.ts` is the whole list, organised by
 | `src/readiness.ts` | Q14 readiness reports. Finding messages are part of the conformance surface. |
 | `src/findings.ts` | `collectFindings()`, the one engine behind `scf-check`, the editor's panels and the tests; the closed catalog published as `spec/finding-catalog.json`. |
 | `src/shotContext.ts` | The shot-prompt composite `scf-mcp` serves: `shotContext`, `shotMedia`, `shotReadiness`. |
-| `src/node.ts` | Node driver (`node:sqlite`) for the `SqlExec` seam. Separate export, `scf-core/node`; browser bundles never touch it. |
+| `src/node.ts` | Node driver (`node:sqlite`) for the `SqlExec` seam, and `openNodeSession`, a file-backed `Session`. Separate export, `scf-core/node`; browser bundles never touch it. |
+| `src/session.ts` | `Session`: one open `.scf` — a connection plus what is unsaved, how to save it, and whether the file changed under it. Storage-agnostic; the app and the Node driver both supply a `SessionDriver`. |
+| `src/ops/` | Every write to a `.scf`, as named operations over `SqlExec` + `Registry`. Nothing outside core issues `INSERT`, `UPDATE` or `DELETE`. |
 
 `scripts/scf_check.mjs` is the `scf-check` bin: a validator for any `.scf`
 (`spec/conformance.md` §4).

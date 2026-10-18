@@ -61,6 +61,14 @@ export {
   initDatabase, newUuid, q, readMeta, tableColumns, withTransaction,
 } from "./db.ts";
 
+// A session is one open file plus the bookkeeping writers share: what is
+// unsaved, how to save, whether the file moved. `openNodeSession` in
+// "./node" is the file-backed driver.
+export {
+  type Session, type SessionDriver, type SessionOptions, type SessionState,
+  createSession,
+} from "./session.ts";
+
 export {
   type FileIdentity, SCF_APPLICATION_ID,
   decodeUserVersion, encodeUserVersion, fileIdentity, stampFileIdentity,

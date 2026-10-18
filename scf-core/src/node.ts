@@ -9,7 +9,10 @@
  */
 
 import { createRequire } from "node:module";
+import { statSync } from "node:fs";
 import type { Row, SqlExec, SqlValue } from "./db.ts";
+import type { Registry } from "./registry.ts";
+import { createSession, type Session } from "./session.ts";
 
 // node:sqlite is loaded dynamically (not a static import) because Vite's
 // builtin-module list predates it; static imports fail under vitest.
@@ -60,4 +63,32 @@ export function openNodeDatabase(
     return [];
   };
   return { exec, close: () => db.close() };
+}
+
+/**
+ * Open the `.scf` at `path` as a session.
+ *
+ * The file is edited in place, so every committed write is already on
+ * disk and `persist()` has nothing to do beyond reporting success. The
+ * fingerprint is the file's mtime and size: a session that finds it
+ * changed by someone else (`hasExternalChange`) should refuse to write
+ * rather than guess.
+ *
+ * Holds the file open until `close()` — on Windows that blocks other
+ * programs from replacing it, so open for the length of an operation
+ * and close.
+ */
+export function openNodeSession(
+    path: string, registry: Registry,
+    options: { readOnly?: boolean } = {}): Session {
+  const db = openNodeDatabase(path, options);
+  return createSession(registry, {
+    exec: db.exec,
+    persist: () => Promise.resolve(true),
+    close: () => { db.close(); return Promise.resolve(); },
+    fingerprint: () => {
+      const st = statSync(path);
+      return Promise.resolve(`${String(st.mtimeMs)}:${String(st.size)}`);
+    },
+  }, { readOnly: options.readOnly ?? false });
 }

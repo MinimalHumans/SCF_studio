@@ -15,6 +15,7 @@ import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { initDatabase, q, type Row, type SqlValue }
   from "@scf-core/db.ts";
+import { createSession, type Session } from "@scf-core/session.ts";
 import { SqlWorkerClient } from "../db/workerClient.ts";
 import { FsAccessAdapter, type FileAdapter } from "../files/fileAdapter.ts";
 import { buildReferenceGraph, type IncomingRef,
@@ -53,8 +54,21 @@ const EDITOR_VERSION = "scf-app 0.1.0";
 const client = new SqlWorkerClient();
 const adapter: FileAdapter = new FsAccessAdapter();
 
+/**
+ * The open project, app-wide. The window edits an OPFS working copy and
+ * saves by exporting it to the user's file, so `persist` is the Save
+ * button's work. The store mirrors the session's revision and saved
+ * revision (below) rather than keeping its own count.
+ */
+export const session: Session = createSession(registry, {
+  exec: client.exec,
+  persist: (options) =>
+    persistWorkingCopy((options as PersistOptions | undefined) ?? {}),
+  close: () => client.close(),
+});
+
 /** scf-core's seam, app-wide. */
-export const exec = client.exec;
+export const exec = session.exec;
 
 /** Sentinel: every category collapsed. Resolved by CategoryTree, which
  * is the only place that knows the category names. */
@@ -468,15 +482,14 @@ async function finishFolderOpen(
   localStorage.setItem("scf:auto-resume", "1");
   localStorage.setItem("scf:last-session", opened.name);
   await rememberHandle(opened.token);
-  const rev = get().revision + 1;
+  session.reset();
   set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
         phase: "open", projectName: opened.name,
         fileToken: opened.token, lastSession: opened.name,
-        folderChoice: null,
-        revision: rev, lastSavedRevision: rev });
+        folderChoice: null });
   // The file handle came out of this root, so the grant has to cover
   // writing to it — the folder-first order cannot ask for less.
   await applyRoot(set, get, root, {
@@ -542,14 +555,13 @@ export const useStore = create<AppState>((set, get) => ({
       }
       localStorage.setItem("scf:last-session", "Hollow Creek (demo)");
       localStorage.setItem("scf:auto-resume", "1");
-      const rev = get().revision + 1;
+      session.reset();
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
             phase: "open", projectName: "Hollow Creek (demo)",
-            fileToken: null, lastSession: "Hollow Creek (demo)",
-            revision: rev, lastSavedRevision: rev });
+            fileToken: null, lastSession: "Hollow Creek (demo)" });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -582,7 +594,7 @@ export const useStore = create<AppState>((set, get) => ({
       const pair = await recallPairFor(fileToken);
       const projectRoot = pair?.root ?? await recallRoot();
       const rootMode = pair?.mode ?? "readwrite";
-      const rev = get().revision + 1;
+      session.reset();
       setAssetLocator(
         projectRoot === null
           ? null : makeLocator(projectRoot as FileSystemDirectoryHandle));
@@ -596,8 +608,7 @@ export const useStore = create<AppState>((set, get) => ({
             attachError: null,
             rootPermission: projectRoot === null
               ? "none" : await adapter.rootPermission(projectRoot, rootMode),
-            environmentRevision: get().environmentRevision + 1,
-            revision: rev, lastSavedRevision: rev });
+            environmentRevision: get().environmentRevision + 1 });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -613,7 +624,7 @@ export const useStore = create<AppState>((set, get) => ({
       localStorage.setItem("scf:auto-resume", "1");
       localStorage.setItem("scf:last-session", opened.name);
       await rememberHandle(opened.token);
-      const rev = get().revision + 1;
+      session.reset();
       // Clear the root EXPLICITLY. Opening a file while a folder
       // session is live otherwise leaves `projectRoot` untouched, and
       // the new project inherits the old one's folder — addressing
@@ -632,8 +643,7 @@ export const useStore = create<AppState>((set, get) => ({
             rootMode: "read", rootVerified: false, attachError: null,
             rootTraversal: "unknown", rootTraversalError: null,
             folderChoice: null,
-            environmentRevision: get().environmentRevision + 1,
-            revision: rev, lastSavedRevision: rev });
+            environmentRevision: get().environmentRevision + 1 });
       // Opened before? Then its folder is known, and re-granting is one
       // click in the topbar rather than another trip through the
       // picker. The grant does not survive a reload; the pairing does.
@@ -757,9 +767,9 @@ export const useStore = create<AppState>((set, get) => ({
 
   setAssetPrefix: (assetPrefix) => set({ assetPrefix }),
 
-  noteWrite: () => set({ revision: get().revision + 1 }),
+  noteWrite: () => session.noteWrite(),
 
-  markChanged: () => set({ revision: get().revision + 1 }),
+  markChanged: () => session.noteWrite(),
 
   dismissFolderChoice: () => set({ folderChoice: null }),
 
@@ -796,13 +806,12 @@ export const useStore = create<AppState>((set, get) => ({
       await client.wipe(WORKING_PATH);
       await initDatabase(client.exec, registry,
                          { editorVersion: EDITOR_VERSION });
-      const rev = get().revision + 1;
+      session.reset();
       set({ schemaCollapsed: COLLAPSE_ALL, navMode: "intro",
         shootView: freshShootView(),
         selectedCharacterId: null, asOfSceneId: null,
         selectedLocationId: null, selectedPropId: null,
-            phase: "open", projectName: "Untitled.scf", fileToken: null,
-            revision: rev, lastSavedRevision: rev });
+            phase: "open", projectName: "Untitled.scf", fileToken: null });
     } catch (e) {
       set({ phase: "error",
             errorMessage: e instanceof Error ? e.message : String(e) });
@@ -842,30 +851,10 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   saveProject: async () => {
-    const { fileToken, projectName, saving } = get();
-    if (saving) return;
+    if (get().saving) return;
     set({ saving: true });
     try {
-      // The watermark is the revision the BYTES represent, taken before
-      // the export — not get().revision after the await, which would
-      // silently mark any edit landing mid-save as already on disk.
-      const at = get().revision;
-      // Live snapshot — no close/reopen dance.
-      const bytes = await client.exportBytes();
-      if (fileToken !== null) {
-        await adapter.save(fileToken, bytes);
-        set({ lastSavedRevision: at });
-      } else {
-        // Never saved (demo / new project): first save picks the file.
-        const saved = await adapter.saveAs(
-          bytes, suggestSaveAsName(projectName));
-        if (saved !== null) {
-          localStorage.setItem("scf:last-session", saved.name);
-          await rememberHandle(saved.token);
-          set({ projectName: saved.name, fileToken: saved.token,
-                lastSession: saved.name, lastSavedRevision: at });
-        }
-      }
+      await session.persist();
     } catch (e) {
       set({ errorMessage:
         e instanceof Error ? e.message : String(e) });
@@ -880,20 +869,10 @@ export const useStore = create<AppState>((set, get) => ({
    * (hollow_creek_v2.scf) or rename without leaving the editor.
    */
   saveProjectAs: async () => {
-    const { projectName, saving } = get();
-    if (saving) return;
+    if (get().saving) return;
     set({ saving: true });
     try {
-      const at = get().revision;
-      const bytes = await client.exportBytes();
-      const saved = await adapter.saveAs(
-        bytes, suggestSaveAsName(projectName, true));
-      if (saved !== null) {
-        localStorage.setItem("scf:last-session", saved.name);
-        await rememberHandle(saved.token);
-        set({ projectName: saved.name, fileToken: saved.token,
-              lastSession: saved.name, lastSavedRevision: at });
-      }
+      await session.persist({ saveAs: true });
     } catch (e) {
       set({ errorMessage:
         e instanceof Error ? e.message : String(e) });
@@ -1009,13 +988,13 @@ export const useStore = create<AppState>((set, get) => ({
     if (draft.id === null) {
       const newId = await createRecord(
         exec, registry, draft.entity, draft.values);
-      set({ revision: get().revision + 1 });
+      session.noteWrite();
       await get().openEntityRow(draft.entity, newId);
       return newId;
     }
 
     await updateRecord(exec, registry, draft.entity, draft.id, draft.values);
-    set({ revision: get().revision + 1 });
+    session.noteWrite();
     await get().openEntityRow(draft.entity, draft.id);
     return draft.id;
    } catch (e) {
@@ -1035,8 +1014,8 @@ export const useStore = create<AppState>((set, get) => ({
       return;
     }
     const { openRow } = get();
+    session.noteWrite();
     set({
-      revision: get().revision + 1,
       undo,
       lastChange: null,
       ...(openRow?.entity === entity && openRow.id === id
@@ -1049,7 +1028,8 @@ export const useStore = create<AppState>((set, get) => ({
     if (undo === null) return;
     try {
       await restoreFromUndo(exec, undo);
-      set({ revision: get().revision + 1, undo: null });
+      session.noteWrite();
+      set({ undo: null });
     } catch (e) {
       set({ errorMessage: `Undo failed: ${
         e instanceof Error ? e.message : String(e)}` });
@@ -1060,8 +1040,8 @@ export const useStore = create<AppState>((set, get) => ({
 
   recordChange: (change) => {
     const empty = change.created.length === 0 && change.before.length === 0;
-    set({ revision: get().revision + 1,
-          ...(empty ? {} : { lastChange: change, undo: null }) });
+    session.noteWrite();
+    set(empty ? {} : { lastChange: change, undo: null });
   },
 
   undoLastChange: async () => {
@@ -1069,7 +1049,8 @@ export const useStore = create<AppState>((set, get) => ({
     if (change === null) return;
     try {
       await withTransaction(exec, () => applyUndoChange(exec, change));
-      set({ revision: get().revision + 1, lastChange: null });
+      session.noteWrite();
+      set({ lastChange: null });
     } catch (e) {
       set({ errorMessage: `Undo failed: ${
         e instanceof Error ? e.message : String(e)}` });
@@ -1083,6 +1064,40 @@ export const useStore = create<AppState>((set, get) => ({
  * name of their own; those callers use `linkLabel` with resolved
  * references instead (see displayName.ts).
  */
+interface PersistOptions { saveAs?: boolean }
+
+/**
+ * The window's Save: export the live working copy and hand the bytes to
+ * the user's file. The session took its watermark before calling this,
+ * so an edit that lands while the bytes are written stays unsaved.
+ *
+ * With a file already chosen Save writes there; without one (the demo, a
+ * new project) the first Save asks where. Save As always asks, and the
+ * project follows the new file. Returns false when the user cancelled.
+ */
+async function persistWorkingCopy(options: PersistOptions): Promise<boolean> {
+  const { fileToken, projectName } = useStore.getState();
+  const bytes = await client.exportBytes();
+  if (options.saveAs !== true && fileToken !== null) {
+    await adapter.save(fileToken, bytes);
+    return true;
+  }
+  const saved = await adapter.saveAs(
+    bytes, suggestSaveAsName(projectName, options.saveAs === true));
+  if (saved === null) return false;
+  localStorage.setItem("scf:last-session", saved.name);
+  await rememberHandle(saved.token);
+  useStore.setState({ projectName: saved.name, fileToken: saved.token,
+                      lastSession: saved.name });
+  return true;
+}
+
+// The session is the source of truth for what is unsaved; the store
+// carries its numbers so views can select on them.
+session.subscribe(({ revision, savedRevision }) => {
+  useStore.setState({ revision, lastSavedRevision: savedRevision });
+});
+
 export function rowName(entity: string, row: Row): string {
   return rowLabel(registry.entities.get(entity), entity, row);
 }

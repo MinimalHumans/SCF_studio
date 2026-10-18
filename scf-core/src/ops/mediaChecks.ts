@@ -379,3 +379,23 @@ export async function columnValues(
     return [];
   }
 }
+
+/**
+ * Rewrite the other spellings of a value to the one chosen, across a
+ * whole column. The column name is interpolated, so it must be one the
+ * registry declares for the entity.
+ */
+export async function unifySpelling(
+  exec: SqlExec, registry: Registry, entity: string, field: string,
+  keep: string, others: readonly string[],
+): Promise<void> {
+  const declared = registry.entities.get(entity)?.fields
+    .some((f) => f.name === field) ?? false;
+  if (!declared) throw new Error(`${entity}.${field} is not a field.`);
+  if (others.length === 0) return;
+  await exec(
+    `UPDATE ${q(entity)} SET ${q(field)} = ?, ` +
+    "updated_at = datetime('now') " +
+    `WHERE ${q(field)} IN (${others.map(() => "?").join(", ")})`,
+    [keep, ...others]);
+}
