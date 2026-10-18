@@ -69,7 +69,7 @@ describe("files and the window's call table", () => {
     expect((await err("list", { path: ws.dir })).code)
       .toBe("outside_roots");
     const link = join(root, "films", "link");
-    symlinkSync(ws.dir, link);
+    symlinkSync(ws.dir, link, "junction");   // no privilege needed on Windows
     expect((await err("create", { path: join(link, "x.scf") })).code)
       .toBe("outside_roots");
     expect((await err("list", { path: link })).code).toBe("outside_roots");
