@@ -25,7 +25,9 @@
  */
 
 import type { TitlePageRow } from "@scf-core/screenplay/rowModel.ts";
-import { blankBetween, blocksToFountain, type Block } from "../editor/screenplayDoc.ts";
+import {
+  blankBetween, blocksToFountain, type Block,
+} from "@scf-core/screenplay/blocks.ts";
 
 /* ── Page geometry ────────────────────────────────────────────────── */
 

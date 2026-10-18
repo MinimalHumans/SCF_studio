@@ -6,7 +6,7 @@ import { openNodeDatabase } from "@scf-core/node.ts";
 import { initDatabase } from "@scf-core/db.ts";
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
 import { applyImport, defaultAcceptance, prepareImport }
-  from "../src/editor/importPipeline.ts";
+  from "@scf-core/ops/importPipeline.ts";
 import { SCENE_SCRIPT_SQL } from "@scf-core/ops/shootOps.ts";
 
 const REGISTRY = fileURLToPath(new URL(

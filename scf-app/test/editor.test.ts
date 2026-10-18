@@ -12,12 +12,13 @@ import { describe, expect, test, beforeEach } from "vitest";
 import { EditorState, type Transaction } from "@codemirror/state";
 import {
   assertAligned, inferredTypeAfter, lineEntries, lineEvents, lineState,
-  loadLines, setIdMinter, setLineType, type LineEntry,
+  loadLines, setIdMinter, setLineType,
 } from "../src/editor/lineState.ts";
 import {
-  blankBetween, blocksToDoc, blocksToFountain, commitPlan, rowsToBlocks,
-  sceneSyncFromHeading, type Block,
-} from "../src/editor/screenplayDoc.ts";
+  blankBetween, blocksToDoc, blocksToFountain, rowsToBlocks,
+  sceneSyncFromHeading, type Block, type LineEntry,
+} from "@scf-core/screenplay/blocks.ts";
+import { commitPlan } from "../src/editor/screenplayDoc.ts";
 import { parseFountain } from "@scf-core/fountain/index.ts";
 import { linesToRows } from "@scf-core/screenplay/rowModel.ts";
 

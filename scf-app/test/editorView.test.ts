@@ -13,9 +13,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { undo, redo } from "@codemirror/commands";
 import { currentCompletions, startCompletion } from "@codemirror/autocomplete";
-import {
-  lineEvents, setIdMinter, type LineEntry,
-} from "../src/editor/lineState.ts";
+import { lineEvents, setIdMinter } from "../src/editor/lineState.ts";
+import type { LineEntry } from "@scf-core/screenplay/blocks.ts";
 import { mountEditor, type Mounted } from "./helpers/mountEditor.ts";
 
 type Script = Array<[string, LineEntry["type"]]>;

@@ -6,7 +6,7 @@
  * and a cue that names someone else still does not.
  */
 import { describe, expect, test } from "vitest";
-import { cueMatchesEntity } from "../src/editor/cueMatch.ts";
+import { cueMatchesEntity } from "../src/screenplay/cueMatch.ts";
 
 describe("a cue as written against the entity it is linked to", () => {
   test("a first-name cue agrees with the full name", () => {

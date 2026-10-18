@@ -22,18 +22,17 @@
  * deleted).
  */
 
-import type { SqlExec } from "@scf-core/db.ts";
-import { newUuid, withTransaction } from "@scf-core/db.ts";
-import type { Row } from "@scf-core/db.ts";
-import type { ScreenplayRow } from "@scf-core/screenplay/rowModel.ts";
-import { readScreenplay } from "@scf-core/screenplay/rowModel.ts";
+import type { SqlExec } from "../db.ts";
+import { newUuid, withTransaction } from "../db.ts";
+import type { Row } from "../db.ts";
+import type { ScreenplayRow } from "../screenplay/rowModel.ts";
+import { readScreenplay } from "../screenplay/rowModel.ts";
 import { diffScreenplay, type ReimportDiff }
-  from "@scf-core/screenplay/reimport.ts";
+  from "../screenplay/reimport.ts";
 import { commitStructure, planCommitStructure }
-  from "@scf-core/ops/structureCommit.ts";
-import { cueMatchesEntity } from "./cueMatch.ts";
-import type { LineEvent } from "./lineState.ts";
-import type { Block } from "./screenplayDoc.ts";
+  from "./structureCommit.ts";
+import { cueMatchesEntity } from "../screenplay/cueMatch.ts";
+import type { Block, LineEvent } from "../screenplay/blocks.ts";
 
 // ---------------------------------------------------------------------------
 // Beats (G5)
@@ -410,7 +409,7 @@ export async function planCommitLinks(
     exec: SqlExec, rows: ScreenplayRow[]): Promise<CommitPlanInfo> {
   const norm = (x: string): string => x.trim().toUpperCase();
   const { parseHeading, normalizeCue } =
-    await import("@scf-core/proposals/propose.ts");
+    await import("../proposals/propose.ts");
   const locations = await exec("SELECT id, name FROM location");
   const locNames = locations.map((r) => String(r["name"]));
   const locSet = new Set(locNames.map(norm));
@@ -560,7 +559,7 @@ export async function linkAndCreateAtCommit(
     `${String(r["scene_id"])}:${String(r["character_id"])}`));
 
   const { parseHeading, normalizeCue } =
-    await import("@scf-core/proposals/propose.ts");
+    await import("../proposals/propose.ts");
   const smartTitle = (s: string): string =>
     s.toLowerCase().replace(/(^|[\s\-'/(])\p{L}/gu,
                             (c) => c.toUpperCase());

@@ -24,7 +24,7 @@
  * caller turns that into one transaction.
  */
 
-import type { LineEntry } from "./lineState.ts";
+import type { LineEntry } from "./blocks.ts";
 
 export interface SceneBlock {
   /** 0-based index into the lines array of the heading. */

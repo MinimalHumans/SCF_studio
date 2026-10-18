@@ -2,8 +2,8 @@
 import { describe, expect, it } from "vitest";
 import {
   blockOfLine, planSceneMove, sceneBlocks,
-} from "../src/editor/sceneMove.ts";
-import type { BlockType, LineEntry } from "../src/editor/lineState.ts";
+} from "../src/screenplay/sceneMove.ts";
+import type { BlockType, LineEntry } from "../src/screenplay/blocks.ts";
 
 /** A tiny script: preamble, then three scenes. */
 const SCRIPT: Array<[BlockType, string]> = [

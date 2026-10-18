@@ -2,19 +2,19 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { openNodeDatabase } from "@scf-core/node.ts";
-import { initDatabase } from "@scf-core/db.ts";
+import { openNodeDatabase } from "../src/node.ts";
+import { initDatabase } from "../src/db.ts";
 import { loadRegistry, type Registry, type RegistryJson }
-  from "@scf-core/registry.ts";
-import { initScreenplayTables } from "@scf-core/screenplay/rowModel.ts";
+  from "../src/registry.ts";
+import { initScreenplayTables } from "../src/screenplay/rowModel.ts";
 import {
   deleteSceneCharacter, scanIntegrity, unanchor, unanchorBeat,
-} from "@scf-core/ops/integrity.ts";
+} from "../src/ops/integrity.ts";
 import { syncPropSceneLinks, tagPropRange }
-  from "../src/editor/features.ts";
+  from "../src/ops/features.ts";
 
 const REGISTRY = fileURLToPath(new URL(
-  "../../scf-core/registry/registry.json", import.meta.url));
+  "../registry/registry.json", import.meta.url));
 
 describe("script integrity", () => {
   let db: ReturnType<typeof openNodeDatabase>;

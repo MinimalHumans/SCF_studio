@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, test } from "vitest";
 import { parseFdx } from "@scf-core/fdx/parser.ts";
-import type { Block } from "../src/editor/screenplayDoc.ts";
+import type { Block } from "@scf-core/screenplay/blocks.ts";
 import {
   BOLD, ITALIC, layoutScreenplay, LINES_PER_PAGE, parseEmphasis, runs,
   screenplayFdx, screenplayFountain, titleLayout, UNDERLINE, wrap,

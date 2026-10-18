@@ -19,7 +19,7 @@
  * are new lines; the line they landed on keeps what it had.
  */
 
-import type { BlockType } from "./lineState.ts";
+import type { BlockType } from "@scf-core/screenplay/blocks.ts";
 
 export interface PasteShape {
   /** 1-based line holding the start of the replaced selection. */

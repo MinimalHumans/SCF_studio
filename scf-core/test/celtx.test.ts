@@ -10,18 +10,18 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { parseFountain } from "@scf-core/fountain/index.ts";
-import { linesToRows } from "@scf-core/screenplay/rowModel.ts";
-import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
-import { openNodeDatabase, type NodeDatabase } from "@scf-core/node.ts";
-import { initDatabase } from "@scf-core/db.ts";
-import { rowsToBlocks, stripMarker } from "../src/editor/screenplayDoc.ts";
-import { linkAndCreateAtCommit } from "../src/editor/features.ts";
+import { parseFountain } from "../src/fountain/index.ts";
+import { linesToRows } from "../src/screenplay/rowModel.ts";
+import { loadRegistry, type RegistryJson } from "../src/registry.ts";
+import { openNodeDatabase, type NodeDatabase } from "../src/node.ts";
+import { initDatabase } from "../src/db.ts";
+import { rowsToBlocks, stripMarker } from "../src/screenplay/blocks.ts";
+import { linkAndCreateAtCommit } from "../src/ops/features.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CELTX = join(
   HERE, "../../corpus/private/fountain/alexis-nexus-celtx.fountain");
-const REGISTRY = join(HERE, "../../scf-core/registry/registry.json");
+const REGISTRY = join(HERE, "../registry/registry.json");
 
 describe("stripMarker: layout whitespace and Celtx artifacts", () => {
   test("leading indentation trims for everything except action", () => {
@@ -137,7 +137,7 @@ describe("linkAndCreateAtCommit", () => {
 describe("repair: export-mangled apostrophes", () => {
   test("letter + \\u0080?\\uFFFD becomes an apostrophe, reported", async () => {
     const { repairConversionArtifacts } =
-      await import("@scf-core/fountain/repair.ts");
+      await import("../src/fountain/repair.ts");
     const { text, repairs } = repairConversionArtifacts(
       ".INT. ALEXIS\u0080\uFFFD BEDROOM - NIGHT\n\nShe\uFFFDs here.\n");
     expect(text).toBe(".INT. ALEXIS' BEDROOM - NIGHT\n\nShe's here.\n");
@@ -147,7 +147,7 @@ describe("repair: export-mangled apostrophes", () => {
 
   test("inert without a preceding letter and on clean text", async () => {
     const { repairConversionArtifacts } =
-      await import("@scf-core/fountain/repair.ts");
+      await import("../src/fountain/repair.ts");
     const clean = repairConversionArtifacts("INT. HOUSE - DAY\n");
     expect(clean.repairs).toEqual([]);
     // A replacement char NOT after a letter is not our pattern: kept.
@@ -159,10 +159,10 @@ describe("repair: export-mangled apostrophes", () => {
 
 describe("planCommitLinks lists new locations from fresh headings", () => {
   test("a typed heading with no scene id proposes its location", async () => {
-    const { loadRegistry } = await import("@scf-core/registry.ts");
-    const { openNodeDatabase } = await import("@scf-core/node.ts");
-    const { initDatabase } = await import("@scf-core/db.ts");
-    const { planCommitLinks } = await import("../src/editor/features.ts");
+    const { loadRegistry } = await import("../src/registry.ts");
+    const { openNodeDatabase } = await import("../src/node.ts");
+    const { initDatabase } = await import("../src/db.ts");
+    const { planCommitLinks } = await import("../src/ops/features.ts");
     const registry = loadRegistry(JSON.parse(
       await readFile(REGISTRY, "utf8")) as RegistryJson);
     const db2 = openNodeDatabase(":memory:");
@@ -187,11 +187,11 @@ describe("planCommitLinks lists new locations from fresh headings", () => {
 
 describe("compound cues never become entities", () => {
   test("'&' and 'AND' cues are skipped by plan and create", async () => {
-    const { loadRegistry } = await import("@scf-core/registry.ts");
-    const { openNodeDatabase } = await import("@scf-core/node.ts");
-    const { initDatabase } = await import("@scf-core/db.ts");
+    const { loadRegistry } = await import("../src/registry.ts");
+    const { openNodeDatabase } = await import("../src/node.ts");
+    const { initDatabase } = await import("../src/db.ts");
     const { planCommitLinks, linkAndCreateAtCommit } =
-      await import("../src/editor/features.ts");
+      await import("../src/ops/features.ts");
     const registry = loadRegistry(JSON.parse(
       await readFile(REGISTRY, "utf8")) as RegistryJson);
     const db3 = openNodeDatabase(":memory:");
@@ -221,11 +221,11 @@ describe("compound cues never become entities", () => {
 describe("auto-save can never create entities", () => {
   test("createNew:false threads and matches but creates nothing",
       async () => {
-    const { loadRegistry } = await import("@scf-core/registry.ts");
-    const { openNodeDatabase } = await import("@scf-core/node.ts");
-    const { initDatabase } = await import("@scf-core/db.ts");
+    const { loadRegistry } = await import("../src/registry.ts");
+    const { openNodeDatabase } = await import("../src/node.ts");
+    const { initDatabase } = await import("../src/db.ts");
     const { linkAndCreateAtCommit } =
-      await import("../src/editor/features.ts");
+      await import("../src/ops/features.ts");
     const registry = loadRegistry(JSON.parse(
       await readFile(REGISTRY, "utf8")) as RegistryJson);
     const db4 = openNodeDatabase(":memory:");
@@ -260,11 +260,11 @@ describe("auto-save can never create entities", () => {
 describe("one scene entity, one heading", () => {
   test("contaminated and duplicate scene claims are shed on any pass; " +
        "explicit commit then creates fresh", async () => {
-    const { loadRegistry } = await import("@scf-core/registry.ts");
-    const { openNodeDatabase } = await import("@scf-core/node.ts");
-    const { initDatabase } = await import("@scf-core/db.ts");
+    const { loadRegistry } = await import("../src/registry.ts");
+    const { openNodeDatabase } = await import("../src/node.ts");
+    const { initDatabase } = await import("../src/db.ts");
     const { linkAndCreateAtCommit } =
-      await import("../src/editor/features.ts");
+      await import("../src/ops/features.ts");
     const registry = loadRegistry(JSON.parse(
       await readFile(REGISTRY, "utf8")) as RegistryJson);
     const db5 = openNodeDatabase(":memory:");

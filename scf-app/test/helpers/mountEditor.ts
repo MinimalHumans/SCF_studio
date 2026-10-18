@@ -13,9 +13,8 @@ import { EditorView } from "@codemirror/view";
 import {
   screenplayExtensions, type ScriptCallbacks,
 } from "../../src/editor/extensions.ts";
-import {
-  lineState, loadLines, type LineEntry,
-} from "../../src/editor/lineState.ts";
+import { lineState, loadLines } from "../../src/editor/lineState.ts";
+import type { LineEntry } from "@scf-core/screenplay/blocks.ts";
 
 // CodeMirror measures with Range rects, which jsdom does not implement.
 const rangeProto = Range.prototype as unknown as Record<string, unknown>;
