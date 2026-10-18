@@ -9,8 +9,30 @@ told to write SQL.
 It is a local stdio process. Nothing is hosted, and the film never
 leaves your machine except as the answers your assistant asks for.
 
-**It reads.** There are no write tools: SCF is the ground truth of the
-film, not the workflow for making it.
+**It is a client of the SCF host.** One local process (`scf-host`) opens
+every `.scf`; the editor and this server both talk to it. If the editor
+is running this connects to its host, so a film open in both is one
+session. If nothing is running, the server starts a host on demand and
+leaves it to exit by itself a few minutes after the last client goes
+(its log is `host.log` in `~/.scf-host`, or `$SCF_HOST_DIR`).
+
+**It reads, and it can change a film — carefully.** Most tools read.
+The write tools (`create_row`, `update_row`, `delete_row`, `add_shot`,
+`set_shot_cut`, `move_shot`, `set_title_page_key`) are two steps: called
+as they stand they only return a *plan* — the exact changes, the risks
+and a `planId` — and change nothing. Show it to the person you are
+working with; call the tool again with `confirm` set to that `planId`
+and it applies the change only if the film still matches the plan. Where
+the client supports it, the person is asked directly as well. The host
+holds three more lines: it copies the file before an agent's change
+(unless it did within the last ten minutes), it refuses any change that
+would add an integrity finding the file did not already have, and it
+journals which client made every change (`recent_changes`; the editor
+shows "edited by …"). `--read-only` (or `SCF_MCP_READ_ONLY=1`) offers no
+write tool at all.
+
+SCF stays the ground truth of the film, not the workflow for making it:
+change a row when asked to, not as a place to keep working notes.
 
 ## Quick start
 
@@ -18,7 +40,8 @@ You need Node 22.6 or newer and a full clone of the repository
 (`scf-mcp` expects its sibling `scf-core` directory).
 
 ```sh
-cd scf-mcp && npm ci
+(cd scf-host && npm ci) && (cd scf-mcp && npm ci)
+cd scf-mcp
 claude mcp add scf -- node "$(pwd)/scripts/start.mjs"
 claude mcp list        # scf should show as connected
 ```

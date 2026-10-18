@@ -7,7 +7,6 @@
  * surface changed" without a live client configured.
  */
 
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import {
   copyFileSync, existsSync, mkdtempSync, readdirSync, readlinkSync,
   renameSync, rmSync, unlinkSync,
@@ -17,92 +16,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { CATALOG, toolNameFor } from "../src/queryTools.ts";
+import { FIXTURE, startServer, type Server } from "./helpers.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const SERVER = join(HERE, "..", "dist", "server.js");
-const FIXTURE = join(HERE, "..", "..", "fixtures", "hollow_creek.scf");
 const SCENE12 = "06857531-3e91-41a9-95dd-3262407d8132";
 const SHOT1204 = "404e480d-dde6-4b4f-9cd4-daec42d5bfa0";
 const ELEANOR = "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64";
 const QUERY_TOOL_NAMES = CATALOG.map((spec) => toolNameFor(spec.title));
-
-/**
- * These tests spawn the BUILT server, so `dist/` has to exist. Without
- * it every spawn fails on module resolution, each `send` waits out its
- * timeout, and vitest reports the whole file as skipped — a suite that
- * covers nothing and says nothing, which is how a tool-list change sat
- * unnoticed. Fail here instead, naming the command.
- */
-if (!existsSync(SERVER)) {
-  throw new Error(
-    `scf-mcp smoke tests need the built server at ${SERVER}. ` +
-    "Run `npm run build` in scf-mcp first (CI does; `npm test` alone " +
-    "does not).");
-}
-
-interface Server {
-  send: (method: string, params?: unknown) => Promise<unknown>;
-  kill: () => void;
-  /** The server process, to ask the OS what it holds open. */
-  pid: number | undefined;
-}
-
-/**
- * Every spawned server gets its own SCF_CONFIG_DIR — otherwise the
- * persisted recent-files list (nodeConfigStore.ts) would read and write
- * the real user's OS config directory during tests, and tests would
- * leak state into each other across runs. Pass `configDir` explicitly
- * to share one across two spawns, e.g. to prove persistence survives a
- * restart.
- */
-function startServer(
-    args: string[], configDir: string = mkdtempSync(
-      join(tmpdir(), "scf-mcp-test-"))): Promise<Server> {
-  const child: ChildProcessWithoutNullStreams = spawn(
-    process.execPath, [SERVER, ...args],
-    { env: { ...process.env, SCF_CONFIG_DIR: configDir } });
-  let nextId = 1;
-  const pending = new Map<number, (result: unknown) => void>();
-  let buffer = "";
-
-  child.stdout.on("data", (chunk: Buffer) => {
-    buffer += chunk.toString("utf8");
-    let newline: number;
-    while ((newline = buffer.indexOf("\n")) !== -1) {
-      const line = buffer.slice(0, newline);
-      buffer = buffer.slice(newline + 1);
-      if (line.trim() === "") continue;
-      const msg = JSON.parse(line) as
-        { id?: number; result?: unknown; error?: unknown };
-      if (msg.id !== undefined) {
-        pending.get(msg.id)?.(
-          msg.error !== undefined ? { rpcError: msg.error } : msg.result);
-      }
-    }
-  });
-
-  const send = (method: string, params?: unknown): Promise<unknown> => {
-    const id = nextId++;
-    const line = `${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`;
-    return new Promise((resolve) => {
-      pending.set(id, resolve);
-      child.stdin.write(line);
-    });
-  };
-
-  const notify = (method: string, params?: unknown): void => {
-    child.stdin.write(
-      `${JSON.stringify({ jsonrpc: "2.0", method, params })}\n`);
-  };
-
-  return send("initialize", {
-    protocolVersion: "2025-06-18", capabilities: {},
-    clientInfo: { name: "smoke", version: "0.0.1" },
-  }).then(() => {
-    notify("notifications/initialized");
-    return { send, kill: () => child.kill(), pid: child.pid };
-  });
-}
 
 describe("scf-mcp server — a default project set at startup", () => {
   let server: Server;
@@ -116,8 +36,10 @@ describe("scf-mcp server — a default project set at startup", () => {
       { tools: Array<{ name: string }> };
     expect(result.tools.map((t) => t.name).sort()).toEqual([
       ...QUERY_TOOL_NAMES,
-      "find", "list", "open", "readiness", "recent_files", "set_root",
-      "shot_context", "shot_media", "shot_readiness", "where_used",
+      "add_shot", "create_row", "delete_row", "find", "list", "move_shot",
+      "open", "readiness", "recent_changes", "recent_files", "set_root",
+      "set_shot_cut", "set_title_page_key", "shot_context", "shot_media",
+      "shot_readiness", "update_row", "where_used",
     ].sort());
   });
 
