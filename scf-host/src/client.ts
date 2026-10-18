@@ -201,7 +201,10 @@ export class HostClient {
     return rows.map(decodeRow);
   };
 
-  private constructor(private readonly transport: HostTransport) {
+  private readonly transport: HostTransport;
+
+  private constructor(transport: HostTransport) {
+    this.transport = transport;
     this.offEvent = transport.onEvent((e) => {
       if (e.revision > this.rev) this.rev = e.revision;
       for (const l of this.listeners) l(e);
