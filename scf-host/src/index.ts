@@ -15,5 +15,6 @@ export { startHost, type RunningHost, type StartHostOptions } from "./host.ts";
 export {
   HostClient, HostClientError, connectWebSocket,
   type CallOptions, type HostClientOptions, type HostTransport,
+  type OpOptions,
   type WebSocketConstructor, type WebSocketLike,
 } from "./client.ts";

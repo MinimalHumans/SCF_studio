@@ -40,6 +40,11 @@
       "scf-source": "./src/nodeConnect.ts",
       "types": "./dist/nodeConnect.d.ts",
       "default": "./dist/nodeConnect.js"
+    },
+    "./serve": {
+      "scf-source": "./src/serve.ts",
+      "types": "./dist/serve.d.ts",
+      "default": "./dist/serve.js"
     }
   },
   "scripts": {

@@ -75,6 +75,9 @@ export type {
   ScreenplayRow, TitlePageRow,
 } from "./screenplay/rowModel.ts";
 export {
+  type GateFinding, IntegrityGateError, currentFindings, withIntegrityGate,
+} from "./ops/integrityGate.ts";
+export {
   type CallArgs, type CallName, type CallResult, type Callable,
   type ScriptCommit, type ScriptImport, CALLS, UnknownCallError, callFn, callNames,
 } from "./ops/calls.ts";

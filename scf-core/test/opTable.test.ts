@@ -10,6 +10,7 @@ import { createSession, StaleRevisionError, type Session }
 import {
   OpArgumentError, UnknownOpError, argsJsonSchema, callOp, listOps,
 } from "../src/ops/opTable.ts";
+import { IntegrityGateError } from "../src/ops/integrityGate.ts";
 
 const REGISTRY = fileURLToPath(new URL(
   "../registry/registry.json", import.meta.url));
@@ -156,5 +157,101 @@ describe("op table", () => {
     }
     const names = listOps().map((o) => o.name);
     expect(new Set(names).size).toBe(names.length);
+  });
+});
+
+describe("the integrity gate", () => {
+  let session: Session;
+
+  beforeEach(async () => {
+    const registry = loadRegistry(JSON.parse(
+      await readFile(REGISTRY, "utf8")) as RegistryJson);
+    const db = openNodeDatabase(":memory:");
+    await initDatabase(db.exec, registry);
+    session = createSession(registry, {
+      exec: db.exec, persist: () => Promise.resolve(true),
+      close: () => Promise.resolve(),
+    });
+  });
+
+  /** A scene with a heading and an action line, and one character who
+   *  has no cue there: linking them is an unjustified link. */
+  async function scriptedScene(): Promise<{ scene: number; person: number }> {
+    const scene = (await callOp(session, "record.create", {
+      entity: "scene", values: { scene_number: "1" } })).result as number;
+    const person = (await callOp(session, "record.create", {
+      entity: "character", values: { name: "ELEANOR" } })).result as number;
+    await session.exec(
+      "INSERT INTO screenplay_lines (uuid, line_order, line_type, content, " +
+      "scene_id) VALUES ('h1', 0, 'heading', 'INT. HALL - DAY', ?)", [scene]);
+    await session.exec(
+      "INSERT INTO screenplay_lines (uuid, line_order, line_type, content) " +
+      "VALUES ('a1', 1, 'action', 'Rain.')");
+    return { scene, person };
+  }
+
+  const link = (scene: number, person: number) => ({
+    entity: "scene_character",
+    values: { scene_id: scene, character_id: person },
+  });
+
+  test("without the gate the same write goes through", async () => {
+    const { scene, person } = await scriptedScene();
+    await callOp(session, "record.create", link(scene, person));
+    const n = await session.exec("SELECT COUNT(*) AS n FROM scene_character");
+    expect(n[0]!["n"]).toBe(1);
+  });
+
+  test("a write that adds a finding is refused and leaves nothing",
+      async () => {
+    const { scene, person } = await scriptedScene();
+    const err = await callOp(session, "record.create", link(scene, person),
+      { integrityGate: true }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(IntegrityGateError);
+    expect((err as IntegrityGateError).added[0]!.kind)
+      .toBe("unjustified_link");
+    expect(await session.exec("SELECT id FROM scene_character")).toEqual([]);
+    // The connection is usable afterwards, and not stuck in a transaction.
+    await callOp(session, "record.create", {
+      entity: "character", values: { name: "MARCUS" } },
+      { integrityGate: true });
+  });
+
+  test("findings the file already had do not block an unrelated write",
+      async () => {
+    const { scene, person } = await scriptedScene();
+    await callOp(session, "record.create", link(scene, person));
+    // The file now carries one finding. Adding a character is fine.
+    const r = await callOp(session, "record.create", {
+      entity: "character", values: { name: "MARCUS" } },
+      { integrityGate: true });
+    expect(typeof r.result).toBe("number");
+  });
+
+  test("a write that fixes one finding and makes another is refused",
+      async () => {
+    const { scene, person } = await scriptedScene();
+    const made = (await callOp(session, "record.create",
+      link(scene, person))).result as number;
+    const other = (await callOp(session, "record.create", {
+      entity: "character", values: { name: "MARCUS" } })).result as number;
+    // Re-pointing the link at someone else keeps the total at one.
+    await expect(callOp(session, "record.update", {
+      entity: "scene_character", id: made,
+      values: { scene_id: scene, character_id: other } },
+      { integrityGate: true })).rejects.toBeInstanceOf(IntegrityGateError);
+    const row = await session.exec(
+      "SELECT character_id AS c FROM scene_character WHERE id = ?", [made]);
+    expect(row[0]!["c"]).toBe(person);
+  });
+
+  test("an op that fails on its own still rolls back and releases",
+      async () => {
+    await expect(callOp(session, "record.create", {
+      entity: "nope", values: {} }, { integrityGate: true })).rejects
+      .toThrow("unknown entity");
+    await callOp(session, "record.create", {
+      entity: "character", values: { name: "OK" } },
+      { integrityGate: true });
   });
 });
