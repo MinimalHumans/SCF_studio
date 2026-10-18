@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * buildSidecar.mjs — the host as one executable, for the desktop app.
+ * buildSidecar.mjs — the host and the MCP as one executable, `scf`, for
+ * the desktop app (tools/scf.ts).
  *
  * The app's window is a client of `scf-host` exactly as it is in the
- * browser; the desktop shell only has to start one. So the host is
- * bundled (esbuild, CommonJS, which is what a Node single executable
- * runs) and injected into a copy of this Node binary, and the result
- * goes where Tauri's `externalBin` looks for it:
- * `src-tauri/binaries/scf-host-<target triple>[.exe]`.
+ * browser; the desktop shell only has to start one. The MCP ships with
+ * it so an assistant can be pointed at the installed app, with no Node
+ * or checkout of its own. Both are bundled (esbuild, CommonJS, which is
+ * what a Node single executable runs) and injected into a copy of this
+ * Node binary, and the result goes where Tauri's `externalBin` looks for
+ * it: `src-tauri/binaries/scf-<target triple>[.exe]`.
  *
  *   node tools/buildSidecar.mjs
  *
@@ -30,15 +32,15 @@ const triple = /^host: (\S+)$/m.exec(
   execFileSync("rustc", ["-vV"], { encoding: "utf8" }))?.[1];
 if (triple === undefined) throw new Error("rustc -vV named no host triple");
 const exe = process.platform === "win32" ? ".exe" : "";
-const out = join(binaries, `scf-host-${triple}${exe}`);
+const out = join(binaries, `scf-${triple}${exe}`);
 
 rmSync(work, { recursive: true, force: true });
 mkdirSync(work, { recursive: true });
 mkdirSync(binaries, { recursive: true });
 
-const bundle = join(work, "scf-host.cjs");
+const bundle = join(work, "scf.cjs");
 await build({
-  entryPoints: [resolve(app, "../scf-host/src/serve.ts")],
+  entryPoints: [join(here, "scf.ts")],
   outfile: bundle,
   bundle: true,
   platform: "node",
@@ -47,8 +49,8 @@ await build({
   conditions: ["scf-source"],
   // `ws` tries these and does without; they are native and not shipped.
   external: ["bufferutil", "utf-8-validate"],
-  // scf-core loads `node:sqlite` through `createRequire(import.meta.url)`,
-  // and CommonJS has no `import.meta`.
+  // scf-core and the MCP load `node:sqlite` and `node:sea` through
+  // `createRequire(import.meta.url)`, and CommonJS has no `import.meta`.
   define: { "import.meta.url": "__scfImportMetaUrl" },
   banner: {
     js: "const __scfImportMetaUrl = " +
@@ -57,7 +59,7 @@ await build({
   logLevel: "warning",
 });
 
-const blob = join(work, "scf-host.blob");
+const blob = join(work, "scf.blob");
 const config = join(work, "sea-config.json");
 writeFileSync(config, JSON.stringify({
   main: bundle, output: blob, disableExperimentalSEAWarning: true,

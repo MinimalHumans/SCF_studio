@@ -34,7 +34,33 @@ write tool at all.
 SCF stays the ground truth of the film, not the workflow for making it:
 change a row when asked to, not as a place to keep working notes.
 
-## Quick start
+## With the desktop app
+
+The SCF Editor desktop app ships this server: its `scf` executable runs
+it as `scf mcp`, with no Node or checkout needed, and starts a host of
+its own when the app is not open. On Windows the installer puts it in
+`%LOCALAPPDATA%\SCF Editor\` by default.
+
+```sh
+claude mcp add scf -- "%LOCALAPPDATA%\SCF Editor\scf.exe" mcp
+```
+
+or, in `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "scf": {
+      "command": "C:\\Users\\you\\AppData\\Local\\SCF Editor\\scf.exe",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+The options below go after `mcp`.
+
+## Quick start (from source)
 
 You need Node 22.6 or newer and a full clone of the repository
 (`scf-mcp` expects its sibling `scf-core` directory).
