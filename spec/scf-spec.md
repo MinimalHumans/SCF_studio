@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 1.0-rc.2 — release candidate.**
+**Version 1.0-rc.3 — release candidate.**
 Describes schema version **2.24**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -1745,7 +1745,7 @@ a minor version at minimum, and MUST be recorded in the specification
 changelog.
 
 A **release candidate** carries `-rc.N` after the version it precedes:
-`1.0-rc.1` was the first candidate for 1.0, and `1.0-rc.2` the second. Its requirements are the
+`1.0-rc.1` was the first candidate for 1.0, `1.0-rc.2` the second and `1.0-rc.3` the third. Its requirements are the
 release's unless a later candidate changes them, and each candidate is
 recorded in the changelog like any version. §11.0 holds until the
 release itself, so a defect found in a candidate is fixed in the next

@@ -6,7 +6,7 @@ specification carries a tier. The tier is a promise about **change**,
 not a statement of quality — a Stable area can still be wrong; it just
 cannot change quietly.
 
-Current as of specification 1.0-rc.2 / schema 2.24. This document is expected
+Current as of specification 1.0-rc.3 / schema 2.24. This document is expected
 to change on most rounds; the specification is not.
 
 ---

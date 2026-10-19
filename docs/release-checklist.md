@@ -576,6 +576,16 @@ booleans stay the stored 0/1, now stated (M2).
    pushed. No schema tag.
 4. ○ `check_pin.py --strict`, then launch run 7 against `spec-1.0-rc.2`.
 
+**1.0-rc.3 — editorial, prepared 2026-10-19.** Moving the editor's
+operations into scf-core changed `stability.md`'s file references and
+scf-core's exports (`api-surface.json`) after `spec-1.0-rc.2` was
+tagged. No requirement, schema, result or report changed.
+
+1. ✅ Spec `1.0-rc.3`: CHANGELOG, headers, manifest regenerated.
+2. ○ 🔒 Once on `main`: the annotated tag `spec-1.0-rc.3` on that
+   commit, pushed; then `check_pin.py --strict`. No schema tag.
+   Run 7, if not yet launched, goes against `spec-1.0-rc.3`.
+
 **1.0 day — after D1, and after anything it finds is fixed:**
 
 1. ○ Spec **1.0**: CHANGELOG entry; §11.0 changed from "becomes binding
