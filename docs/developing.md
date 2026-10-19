@@ -4,11 +4,10 @@
 From a fresh machine to the editor running in its window, with the tests
 passing, on Windows, macOS or Linux.
 
-> **Status.** The desktop app has been built and run on Windows. macOS
-> and Linux follow Tauri's own requirements below but have not yet been
-> run on this branch; if a step here is wrong or something breaks, note
-> what you saw (the exact command and its output) so it can be fixed in
-> the code or in this document.
+> **Status.** The desktop app has been built and run, and the tests
+> pass, on Windows, macOS (Apple Silicon) and Debian. If a step here is
+> wrong or something breaks, note what you saw (the exact command and
+> its output) so it can be fixed in the code or in this document.
 
 ## What you are setting up
 
@@ -29,11 +28,12 @@ shell), and what Rust needs on your OS to compile and to show a web view.
 
 ### All platforms
 
-- **Node 22.6 or newer** (22 LTS or 24). The tests use Node's built-in
-  SQLite, and scf-core's scripts run its TypeScript source directly. With
-  a version manager: `nvm install 24` ([nvm](https://github.com/nvm-sh/nvm),
-  macOS/Linux) or [fnm](https://github.com/Schniz/fnm) (any OS); or the
-  installer from [nodejs.org](https://nodejs.org).
+- **Node 22.6 or newer** (22 LTS or 24; 26 also works). The tests use
+  Node's built-in SQLite, and scf-core's scripts run its TypeScript
+  source directly. With a version manager: `nvm install 24`
+  ([nvm](https://github.com/nvm-sh/nvm), macOS/Linux) or
+  [fnm](https://github.com/Schniz/fnm) (any OS); or the installer from
+  [nodejs.org](https://nodejs.org).
 - **Rust, stable**, through [rustup](https://rustup.rs). The shell needs
   1.90 or newer; `rustup update` brings an older one up to date.
 - **Git.**
@@ -244,6 +244,7 @@ do. Builds are unsigned.
 | Symptom | Likely cause |
 |---|---|
 | `npm ci` says the lockfile is out of sync | A `package.json` changed without its lock, or an npm older than the one that wrote the lock disagrees about optional packages. Report it; do not commit an `npm install` run on a different npm without checking `npm ci` with Node 22's npm. |
+| Cargo says a dependency needs a newer `rustc` | Rust older than 1.90: `rustup update`. |
 | `linker 'cc' not found`, `link.exe not found` | No C toolchain: `build-essential` / Xcode Command Line Tools / Visual Studio Build Tools (above). |
 | `pkg-config` errors about `webkit2gtk-4.1`, `javascriptcoregtk`, `libsoup-3.0` | The Linux packages above are missing, or the distribution is too old for WebKitGTK 4.1. |
 | The window opens but stays blank (Linux) | WebKitGTK's DMA-BUF renderer, which some GPU setups cannot show. With NVIDIA's proprietary driver loaded the app turns it off itself and says so in the terminal; elsewhere, `WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run dev`. If it helps on a machine the app did not detect, report the GPU and driver so the detection can learn it. |
