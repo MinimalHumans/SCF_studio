@@ -8,7 +8,7 @@
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test,
          vi } from "vitest";
-import { mkdtempSync, rmSync, readFileSync, existsSync }
+import { mkdtempSync, realpathSync, rmSync, readFileSync, existsSync }
   from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -62,7 +62,9 @@ vi.mock("../src/host/hostClient", () => {
 });
 
 beforeAll(async () => {
-  dir = mkdtempSync(join(tmpdir(), "scf-window-"));
+  // Real path: on macOS the temp folder is under /var, a link to /private/var,
+  // and the host reports the paths it resolves.
+  dir = realpathSync(mkdtempSync(join(tmpdir(), "scf-window-")));
   core = createHostCore({
     registry: loadRegistry(registryJson as unknown as RegistryJson),
     roots: [dir],
