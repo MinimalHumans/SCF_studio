@@ -23,12 +23,13 @@ The same window in a Tauri shell (`src-tauri/`), with one sidecar,
 executable with Node's single executable support
 (`tools/buildSidecar.mjs`), so nothing else needs to be installed. The
 window still reaches the host over its loopback socket; the shell only
-runs `scf host` on the window's first ask and says where it is
-(`host_location`), and the host exits when the app does (once an MCP
-using it has finished). `scf mcp` is the MCP server, for an assistant
-to be pointed at (see `../scf-mcp/README.md`); it shares the app's host
-when the app is open and starts `scf host` itself when it is not. Needs
-Rust as well as Node.
+says where it is (`host_location`), by asking `scf locate`, which
+answers with the running host or starts one. `scf mcp` is the MCP
+server, for an assistant to be pointed at (see `../scf-mcp/README.md`),
+and finds its host the same way, so whichever of the app and an
+assistant comes first starts the host and the other joins. The host
+exits by itself a few minutes after its last client leaves. Needs Rust
+as well as Node.
 
 ```sh
 npm run build:sidecar   # once, and after changing scf-host, -mcp or -core

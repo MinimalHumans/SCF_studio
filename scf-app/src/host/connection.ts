@@ -13,7 +13,7 @@
  *
  * In the desktop app (a production build inside Tauri) there is no dev
  * server, and the first step asks the shell instead (`host_location` in
- * `src-tauri/src/lib.rs`), which starts the host on first ask. Under
+ * `src-tauri/src/lib.rs`), which finds the running host or starts one. Under
  * `tauri dev` the page is the dev server's, so it asks the dev server.
  */
 
