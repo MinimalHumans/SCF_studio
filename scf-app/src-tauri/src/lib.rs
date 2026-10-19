@@ -164,12 +164,25 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
             publish(&handle, &discovery)?;
+            // Made here rather than from the config (`create: false`), so
+            // it starts as it will stay: hidden for an agent, otherwise
+            // shown. Hiding a window and showing it later can leave
+            // WebKitGTK's blank on some Linux desktops.
+            let config = app
+                .config()
+                .app
+                .windows
+                .iter()
+                .find(|w| w.label == "main")
+                .cloned()
+                .expect("tauri.conf.json has the main window");
+            let mut window =
+                tauri::WebviewWindowBuilder::from_config(&handle, &config)?.visible(!background);
             if cfg!(debug_assertions) {
                 // Beside an installed copy, which has its own data and pipe.
-                if let Some(w) = main_window(&handle) {
-                    let _ = w.set_title("SCF Editor (dev)");
-                }
+                window = window.title("SCF Editor (dev)");
             }
+            window.build()?;
             let on_count = handle.clone();
             relay.on_count(move |n| {
                 if n == 0 && hidden(&on_count) {
