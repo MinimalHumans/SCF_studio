@@ -154,7 +154,7 @@ repository is inside WSL and Claude Desktop is on Windows, use
 | one tool per canonical query | The specification's §12 queries, each with its own typed parameters. |
 | `readiness` | Q14, for pre-flight before writing a prompt. |
 
-`scf-mcp/src/server.ts` lists them authoritatively.
+`scf-mcp/src/mcpServer.ts` lists them authoritatively.
 
 ## Status
 

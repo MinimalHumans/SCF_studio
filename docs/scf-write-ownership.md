@@ -9,7 +9,7 @@ document now says.
 
 Where to look: `scf-core/src/ops/` (the write rules and the two op
 tables), `scf-host/` (the process), `scf-app/src/host/` and
-`state/api.ts` (the window as a client), `scf-mcp/src/hostLink.ts` and
+`state/api.ts` (the window as a client), `scf-mcp/src/nodePlatform.ts` and
 `writeTools.ts` (the MCP as a client).
 
 ---

@@ -34,7 +34,6 @@
  * schema stores.
  */
 
-import { createHash } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
@@ -44,7 +43,7 @@ import {
 } from "@minimalhumans/scf-core";
 import { HostClientError } from "@minimalhumans/scf-host/client";
 import {
-  currentAgentName, registry, withProject, type OpenProject,
+  registry, type OpenProject, type ProjectCache,
 } from "./projectCache.ts";
 import { err, ok } from "./toolResult.ts";
 
@@ -103,13 +102,16 @@ export function canonical(value: unknown): string {
   return JSON.stringify(value) ?? "null";
 }
 
-export function planIdOf(
-    plan: Omit<Plan, "planId">): string {
-  return createHash("sha256").update(canonical({
-    tool: plan.tool, film: plan.film, basedOn: plan.basedOn,
-    op: plan.op, changes: plan.changes, risks: plan.risks,
-    blocked: plan.blocked,
-  })).digest("hex").slice(0, 24);
+export async function planIdOf(
+    plan: Omit<Plan, "planId">): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256",
+    new TextEncoder().encode(canonical({
+      tool: plan.tool, film: plan.film, basedOn: plan.basedOn,
+      op: plan.op, changes: plan.changes, risks: plan.risks,
+      blocked: plan.blocked,
+    })));
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
 }
 
 // ── reading the rows a plan is about ───────────────────────────────
@@ -260,7 +262,7 @@ async function makePlan(
     ...draft, risks, tool, film: p.scfPath, basedOn: p.revision,
     integrity: { wouldAdd }, blocked: wouldAdd.length > 0, destructive,
   };
-  return { ...base, planId: planIdOf(base) };
+  return { ...base, planId: await planIdOf(base) };
 }
 
 interface Applied {
@@ -275,8 +277,8 @@ interface Applied {
 
 /** Ask the person directly, where the client lets a server do that. */
 async function personApproves(
-    server: McpServer, plan: Plan): Promise<boolean> {
-  if (process.env["SCF_MCP_ELICIT"] === "0") return true;
+    server: McpServer, plan: Plan, elicit: boolean): Promise<boolean> {
+  if (!elicit) return true;
   if (server.server.getClientCapabilities()?.elicitation === undefined) {
     return true;                       // the planId is the confirmation
   }
@@ -300,10 +302,11 @@ async function personApproves(
  * `A` beside it.
  */
 function register<A extends object>(
-    server: McpServer, name: string, description: string,
+    on: WriteToolsOn, name: string, description: string,
     shape: z.ZodRawShape,
     build: (p: OpenProject, input: A) => Promise<Draft>,
 ): void {
+  const { server, cache } = on;
   server.registerTool(name, {
     description:
       `${description}\n\nThis tool CHANGES the film, so it works in two ` +
@@ -321,7 +324,7 @@ function register<A extends object>(
   }, async (input) => {
     try {
       const { confirm, ...args } = input as { confirm?: string } & A;
-      return ok(await withProject(async (p) => {
+      return ok(await cache.withProject(async (p) => {
         if (p.readOnly) throw new Error("this film was opened read-only");
         await requireCurrentSchema(p);
         const plan = await makePlan(
@@ -355,7 +358,7 @@ function register<A extends object>(
           throw new Error("this change would add integrity findings, so " +
                           "it is not applied");
         }
-        if (!await personApproves(server, plan)) {
+        if (!await personApproves(server, plan, on.elicit)) {
           return { status: "declined" as const, plan };
         }
         const written = await p.host.op(plan.op.name, plan.op.args, {
@@ -366,7 +369,7 @@ function register<A extends object>(
           revision: written.revision,
           ...(written.snapshot === undefined
             ? {} : { snapshot: written.snapshot }),
-          by: currentAgentName(), result: written.result,
+          by: cache.agentName(), result: written.result,
         };
         return done;
       }));
@@ -382,8 +385,19 @@ type Value = string | number | boolean | null;
 const VALUE = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 const VALUES = z.record(z.string(), VALUE);
 
-export function registerWriteTools(server: McpServer): void {
-  register(server, "create_row",
+/** What the write tools are registered on, and with. */
+export interface WriteToolsOn {
+  server: McpServer;
+  cache: ProjectCache;
+  /**
+   * Ask the person through the client before applying, where it can
+   * (SCF_MCP_ELICIT=0 turns this off, for tests).
+   */
+  elicit: boolean;
+}
+
+export function registerWriteTools(on: WriteToolsOn): void {
+  register(on, "create_row",
     "Create one row of an entity type. Give the fields to set; unset " +
     "fields take their defaults. A reference field takes the target's " +
     "uuid. Unknown fields and values outside a closed vocabulary are " +
@@ -412,7 +426,7 @@ export function registerWriteTools(server: McpServer): void {
       };
     });
 
-  register(server, "update_row",
+  register(on, "update_row",
     "Change some fields of one existing row, by uuid. Only the fields " +
     "you give change; the rest are kept. The plan shows each field's " +
     "current and new value. A reference field takes the target's uuid.",
@@ -450,7 +464,7 @@ export function registerWriteTools(server: McpServer): void {
       };
     });
 
-  register(server, "delete_row",
+  register(on, "delete_row",
     "Delete one row, by uuid. DESTRUCTIVE. The plan lists what points at " +
     "the row (it is left pointing at nothing) so the consequence is " +
     "visible before anything is removed.",
@@ -481,7 +495,7 @@ export function registerWriteTools(server: McpServer): void {
       };
     });
 
-  register(server, "add_shot",
+  register(on, "add_shot",
     "Add a shot to a scene, optionally under a story beat. It is " +
     "numbered after the scene's existing shots; the plan says which " +
     "number it will get.",
@@ -520,7 +534,7 @@ export function registerWriteTools(server: McpServer): void {
       };
     });
 
-  register(server, "set_shot_cut",
+  register(on, "set_shot_cut",
     "Cut a shot from the film, or put it back. A cut shot keeps its row, " +
     "its number and its media, and can be restored.",
     {
@@ -546,7 +560,7 @@ export function registerWriteTools(server: McpServer): void {
       };
     });
 
-  register(server, "move_shot",
+  register(on, "move_shot",
     "Move a shot one place earlier or later in its scene's order. The " +
     "shot's NUMBER does not change — a crew holds paper with it — only " +
     "its position in the list.",
@@ -584,7 +598,7 @@ export function registerWriteTools(server: McpServer): void {
       };
     });
 
-  register(server, "set_title_page_key",
+  register(on, "set_title_page_key",
     "Set one key of the screenplay's title page (Title, Credit, Author, " +
     "Source, Draft date, Contact, Copyright, Notes). An empty value " +
     "removes the key.",
@@ -622,7 +636,8 @@ export function registerWriteTools(server: McpServer): void {
 }
 
 /** Read-only: the host's record of who changed this film, and how. */
-export function registerJournalTool(server: McpServer): void {
+export function registerJournalTool(
+    server: McpServer, cache: ProjectCache): void {
   server.registerTool("recent_changes", {
     description: "The most recent writes to the open film, newest last, " +
       "with which client made each — the editor window, or an MCP client " +
@@ -634,7 +649,7 @@ export function registerJournalTool(server: McpServer): void {
     },
   }, async ({ limit }) => {
     try {
-      return ok(await withProject(async (p) => ({
+      return ok(await cache.withProject(async (p) => ({
         film: p.scfPath, revision: p.revision,
         changes: await p.host.journal(limit),
       })));

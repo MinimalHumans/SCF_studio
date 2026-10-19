@@ -36,7 +36,7 @@
  * it just isn't what selects the tool anymore.
  *
  * Q14 is deliberately not here — the friendlier, separately-named
- * `readiness` tool in server.ts already is Q14, and a "Q14" tool
+ * `readiness` tool in mcpServer.ts already is Q14, and a "Q14" tool
  * alongside it would be the same capability under two names.
  */
 
@@ -44,7 +44,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z, type ZodRawShape } from "zod";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
 import { queryMarkdown, type QueryId } from "@minimalhumans/scf-core";
-import { registry, withProject } from "./projectCache.ts";
+import { registry, type ProjectCache } from "./projectCache.ts";
 import { err, ok, text } from "./toolResult.ts";
 
 /**
@@ -159,7 +159,8 @@ export const CATALOG: QueryToolSpec[] = [
 ];
 
 
-export function registerQueryTools(server: McpServer): void {
+export function registerQueryTools(
+    server: McpServer, cache: ProjectCache): void {
   for (const spec of CATALOG) {
     const note = spec.note === undefined ? "" : ` ${spec.note}`;
     server.registerTool(toolNameFor(spec.title), {
@@ -170,7 +171,7 @@ export function registerQueryTools(server: McpServer): void {
       try {
         const { format, ...params } = args as QueryParams & {
           format?: "json" | "markdown" };
-        const result = await withProject(async (p) => {
+        const result = await cache.withProject(async (p) => {
           const run = buildDispatch(p.locate, p.rootMapped)[spec.id];
           if (run === undefined) {
             throw new Error(`internal: no dispatch entry for "${spec.id}"`);
