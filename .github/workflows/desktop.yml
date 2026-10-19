@@ -1,19 +1,21 @@
 # SPDX-License-Identifier: Apache-2.0
 # The desktop app, built for Windows.
 #
-# Separate from ci.yml because it publishes: every push to the branch
+# Separate from ci.yml because it publishes: every push to `tauri`
 # replaces one rolling prerelease, `desktop-latest`, with the NSIS
 # installer and a zip holding that installer plus a portable copy (the
 # window and its `scf` MCP pipe, side by side, uninstalled). The same
 # files are also kept as a workflow artifact for each run.
 #
-# Restricted to the `tauri` branch for now. Release tags come later.
+# `in-app-host` builds the same way but publishes nothing: its installer
+# is only the run's artifact, so `desktop-latest` stays `tauri`'s.
+# Release tags come later.
 
 name: Desktop
 
 on:
   push:
-    branches: [tauri]
+    branches: [tauri, in-app-host]
   workflow_dispatch:
 
 permissions:
@@ -111,6 +113,7 @@ jobs:
       # Delete and recreate rather than edit, so the tag moves to this
       # commit and the old assets go with it.
       - name: replace the desktop-latest prerelease
+        if: github.ref == 'refs/heads/tauri'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
