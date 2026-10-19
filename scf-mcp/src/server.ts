@@ -12,8 +12,6 @@ import { ConfigError, USAGE, parseConfig } from "./config.ts";
 import { createScfMcpServer } from "./mcpServer.ts";
 import { makeNodePlatform } from "./nodePlatform.ts";
 
-// Started from a function, not with top-level awaits, so the desktop
-// app can bundle this as CommonJS (scf-app/tools/buildSidecar.mjs).
 async function start(): Promise<void> {
   const platform = makeNodePlatform();
   const config = await parseConfig(process.argv.slice(2), {

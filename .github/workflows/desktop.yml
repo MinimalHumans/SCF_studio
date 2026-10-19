@@ -4,7 +4,7 @@
 # Separate from ci.yml because it publishes: every push to the branch
 # replaces one rolling prerelease, `desktop-latest`, with the NSIS
 # installer and a zip holding that installer plus a portable copy (the
-# window and its `scf` sidecar, side by side, uninstalled). The same
+# window and its `scf` MCP pipe, side by side, uninstalled). The same
 # files are also kept as a workflow artifact for each run.
 #
 # Restricted to the `tauri` branch for now. Release tags come later.
@@ -25,8 +25,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # This is also the Node that ships: buildSidecar.mjs injects the Node
-  # running it into the sidecar, so it needs node:sqlite (22.5+).
   NODE_VERSION: "24"
   RELEASE_TAG: desktop-latest
 
@@ -53,7 +51,7 @@ jobs:
         with:
           workspaces: scf-app/src-tauri
 
-      # The sidecar bundles scf-host and scf-mcp from source, and those
+      # The window bundles scf-host and scf-mcp from source, and those
       # depend on scf-core by file path, so all four need dependencies;
       # core and host are built as in ci.yml's mcp job.
       - run: npm ci
@@ -74,7 +72,7 @@ jobs:
       - run: npm ci
         working-directory: scf-app
 
-      # beforeBuildCommand builds the page and the sidecar first.
+      # beforeBuildCommand builds the page first.
       - name: tauri build
         run: npm run tauri build
         working-directory: scf-app
@@ -92,9 +90,8 @@ jobs:
           # The licences go at the top and in portable/, where the
           # installer would have put them (tauri.conf.json resources).
           foreach ($dir in "out/$name", "out/$name/portable") {
-            New-Item -ItemType Directory -Force "$dir/LICENSES" | Out-Null
+            New-Item -ItemType Directory -Force $dir | Out-Null
             Copy-Item LICENSE, NOTICE $dir
-            Copy-Item scf-app/src-tauri/binaries/node-LICENSE "$dir/LICENSES/node.txt"
           }
           Copy-Item $setup.FullName "out/$name/"
           Copy-Item "$release/scf-editor.exe", "$release/scf.exe" "out/$name/portable/"

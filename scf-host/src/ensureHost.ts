@@ -27,16 +27,12 @@ import { spawn } from "node:child_process";
 import {
   closeSync, mkdirSync, openSync, rmSync, statSync,
 } from "node:fs";
-import { createRequire } from "node:module";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   defaultHostDir, readHostEntry, type HostEntry,
 } from "./registryFile.ts";
 
-const require = createRequire(import.meta.url);
-// Loaded like `node:sqlite` in scf-core: a builtin Vite does not know.
-const { isSea } = require("node:sea") as { isSea: () => boolean };
 
 export interface EnsureHostOptions {
   /** Where the host keeps its discovery file; the user's by default. */
@@ -69,12 +65,9 @@ async function answers(entry: HostEntry): Promise<boolean> {
 /**
  * How to run a host, after the executable: `serve` beside this module,
  * built or source, under the same Node flags as this process, so a
- * client run from source starts a host that runs from source too. In
- * the desktop app this process is the bundled `scf` executable
- * (scf-app/tools/buildSidecar.mjs), which is the host as well.
+ * client run from source starts a host that runs from source too.
  */
 function hostArgs(): string[] {
-  if (isSea()) return ["host"];
   const here = fileURLToPath(import.meta.url);
   return [...process.execArgv,
           join(here, "..", `serve${extname(here)}`)];

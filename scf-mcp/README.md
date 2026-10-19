@@ -36,10 +36,13 @@ change a row when asked to, not as a place to keep working notes.
 
 ## With the desktop app
 
-The SCF Editor desktop app ships this server: its `scf` executable runs
-it as `scf mcp`, with no Node or checkout needed, and starts a host of
-its own when the app is not open. On Windows the installer puts it in
-`%LOCALAPPDATA%\SCF Editor\` by default.
+The SCF Editor desktop app ships this server, with no Node or checkout
+needed. The server runs in the app's window, beside the editor, so an
+agent and the person at the editor work on one film together; `scf mcp`
+is a small pipe to it, which starts the app in the background, window
+hidden, when it is not open. Such an app exits a little after its last
+agent leaves, unless someone has opened its window. On Windows the
+installer puts `scf.exe` in `%LOCALAPPDATA%\SCF Editor\` by default.
 
 ```sh
 claude mcp add scf -- "%LOCALAPPDATA%\SCF Editor\scf.exe" mcp

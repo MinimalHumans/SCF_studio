@@ -292,18 +292,17 @@ paths, so under WSL a host and a client that spell one file `F:\…` and
 `/mnt/f/…` do not share a session.
 
 On branch `tauri`, the desktop app (decision 5, now in scope): a Tauri
-shell around the same window and the same host (`scf-app/src-tauri/`).
-The host comes from a sidecar, `scf`: a Node single executable that is
-also the MCP (`scf mcp`), so an assistant needs only the installed app.
-The shell's `host_location` answers with the port and token the dev
-server's endpoint would, from `scf locate`, which finds the running
-host or starts one exactly as the MCP does (`scf-host/src/ensureHost.ts`,
-moved there from the MCP), so whichever comes first starts the host and
-the other joins. For that, every host admits the app's origins
-(`http://tauri.localhost` on Windows, `tauri://localhost` elsewhere):
-the origin check keeps web pages out, which neither is, and the token
-is still required. The app owns no host; one it started exits a while
-after its last client has gone. The window asks again on every
-connect, so a host that has exited is replaced. It keeps its WebSocket
-transport, so no `invoke()` transport was needed.
+shell around the same window, and no host process. The window runs the
+host core (`scf-host/src/core.ts`, which takes its files, SQLite and
+paths from a `HostPlatform`) on the shell's: SQLite through rusqlite,
+set to behave as `node:sqlite` does (foreign keys on, no double-quoted
+strings), over a loopback WebSocket because a Tauri `invoke` costs a
+millisecond and scf-core awaits every statement. The window is a client
+of its own core in-process (`connectInProcess`). The MCP runs in the
+window too, one server per agent (`scf-mcp/src/mcpServer.ts` on a
+platform of the window's), reached by `scf mcp`, a small pipe the shell
+relays to the window, which starts the app hidden if it is not running.
+So an agent and the editor share one owner of each film again, the
+window's core. The Node host remains for development and for the MCP
+run from Node.
 The file chooser is still the host-side one; the native dialog is next.

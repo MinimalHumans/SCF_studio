@@ -1,4 +1,2 @@
 /target/
 /gen/schemas
-# Built by tools/buildSidecar.mjs.
-/binaries/

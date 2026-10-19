@@ -18,34 +18,26 @@ npm run build      # static bundle in dist/ (needs a host to open files)
 
 ## Desktop app
 
-The same window in a Tauri shell (`src-tauri/`), with one sidecar,
-`scf` (`tools/scf.ts`): `scf-host` and `scf-mcp` bundled into one
-executable with Node's single executable support
-(`tools/buildSidecar.mjs`), so nothing else needs to be installed. The
-window still reaches the host over its loopback socket; the shell only
-says where it is (`host_location`), by asking `scf locate`, which
-answers with the running host or starts one. `scf mcp` is the MCP
-server, for an assistant to be pointed at (see `../scf-mcp/README.md`),
-and finds its host the same way, so whichever of the app and an
-assistant comes first starts the host and the other joins. The host
-exits by itself a few minutes after its last client leaves. Needs Rust
-as well as Node.
+The same window in a Tauri shell (`src-tauri/`), with no host
+process: the window runs the host core itself (`src/host/windowHost.ts`)
+on SQLite and files the shell provides (`src-tauri/src/sql.rs`,
+`files.rs`). It also serves the MCP (`src/mcp/windowMcp.ts`): an
+assistant is pointed at `scf mcp` (see `../scf-mcp/README.md`), a small
+Rust pipe shipped beside the app (`src-tauri/src/bin/scf.rs`) that the
+shell relays to the window (`mcp_relay.rs`), so an assistant and the
+editor share one host. The pipe starts the app with its window hidden
+when it is not running; such an app exits a little after its last
+assistant leaves, unless someone has opened the window. Closing the
+window while an assistant is connected only hides it. Needs Rust as well
+as Node.
 
 ```sh
-npm run build:sidecar   # once, and after changing scf-host, -mcp or -core
-npm run tauri dev       # the dev server's page and host, in the shell
+npm run tauri dev       # the dev server's page, in the shell
 npm run tauri build     # installer in src-tauri/target/release/bundle/
 ```
 
-The Node that runs `build:sidecar` is the Node that ships, and its
-licence ships beside it (`src-tauri/binaries/node-LICENSE`, fetched for
-that Node's version when the install has no copy). The sidecar
-is unsigned (injecting it breaks `node.exe`'s signature), so sign it
-and the app before distributing them. Under `tauri dev` no sidecar is
-started (the dev server has a host), but the build still expects one to
-exist, hence the first line. On Windows a running `scf` cannot be
-overwritten, so stop a host an MCP started from `src-tauri/binaries/`
-before rebuilding.
+`npm run tauri dev` runs the dev server's host too, for a browser tab;
+the shell's window does not use it.
 
 `scf-core` and `scf-host`'s client are consumed as TypeScript source via
 Vite aliases (`@scf-core -> ../scf-core/src`, `@scf-host ->

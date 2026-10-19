@@ -28,16 +28,6 @@ export function defaultRoots(env: NodeJS.ProcessEnv = process.env): string[] {
   return [homedir()];
 }
 
-/**
- * The desktop app's window, in its two spellings (Windows, elsewhere).
- * Every host admits it, so whichever of the app and an MCP starts the
- * host, the other joins it. The origin check is there to keep web pages
- * out, and the token, which only the user can read, still has to be
- * shown.
- */
-export const DESKTOP_ORIGINS: readonly string[] =
-  ["http://tauri.localhost", "tauri://localhost"];
-
 export interface StartHostOptions {
   port?: number;
   token?: string;
@@ -83,7 +73,7 @@ export async function startHost(
     core, version,
     ...(options.port === undefined ? {} : { port: options.port }),
     ...(options.token === undefined ? {} : { token: options.token }),
-    allowedOrigins: [...DESKTOP_ORIGINS, ...options.allowedOrigins ?? []],
+    allowedOrigins: options.allowedOrigins ?? [],
     ...(options.onIdle === undefined ? {} : { onIdle: options.onIdle }),
   });
   if (dir !== null) {

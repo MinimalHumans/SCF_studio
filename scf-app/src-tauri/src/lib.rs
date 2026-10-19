@@ -12,11 +12,6 @@
 //! connected, or until the person opens it, which shows the window. A
 //! window closed while an agent is connected is only hidden, and the app
 //! exits when the last one goes.
-//!
-//! `host_location` is left from when the window was a client of the
-//! `scf` sidecar's host (tools/scf.ts), found or started by `scf
-//! locate`. Nothing calls it now; it goes with the sidecar, once the MCP
-//! no longer needs that host either.
 
 mod files;
 mod mcp_relay;
@@ -27,83 +22,10 @@ mod token;
 mod spike;
 
 use std::path::PathBuf;
-use std::process::Command;
-
 use std::time::Duration;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
-
-#[derive(Serialize)]
-struct Location {
-    url: String,
-    token: String,
-}
-
-/// Why there is no location. The window shows the message; `refused`
-/// tells it waiting will not help.
-#[derive(Serialize)]
-struct HostError {
-    message: String,
-    refused: bool,
-}
-
-/// What `scf locate` prints.
-#[derive(Deserialize)]
-struct Located {
-    port: u16,
-    token: String,
-}
-
-fn sidecar_path() -> std::io::Result<PathBuf> {
-    // Tauri puts an `externalBin` beside the app's own executable, with
-    // the target triple taken off.
-    let exe = std::env::current_exe()?;
-    let name = if cfg!(windows) { "scf.exe" } else { "scf" };
-    Ok(exe.with_file_name(name))
-}
-
-fn locate() -> Result<Location, String> {
-    let mut command = Command::new(sidecar_path().map_err(|e| e.to_string())?);
-    command.arg("locate");
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        command.creation_flags(CREATE_NO_WINDOW);
-    }
-    let out = command
-        .output()
-        .map_err(|e| format!("could not run the SCF host: {e}"))?;
-    if !out.status.success() {
-        let said = String::from_utf8_lossy(&out.stderr);
-        let said = said.trim();
-        return Err(match said.strip_prefix("scf-host: ") {
-            Some(s) => s.to_string(),
-            None if said.is_empty() => format!("scf locate failed ({})", out.status),
-            None => said.to_string(),
-        });
-    }
-    let l: Located = serde_json::from_slice(&out.stdout)
-        .map_err(|e| format!("scf locate answered oddly: {e}"))?;
-    Ok(Location {
-        url: format!("ws://127.0.0.1:{}/", l.port),
-        token: l.token,
-    })
-}
-
-/// Where the host is, starting one if none is running.
-#[tauri::command]
-async fn host_location() -> Result<Location, HostError> {
-    tauri::async_runtime::spawn_blocking(locate)
-        .await
-        .map_err(|e| e.to_string())
-        .and_then(|r| r)
-        .map_err(|message| HostError {
-            message,
-            refused: true,
-        })
-}
 
 /// What the window's own host is given (`src/host/windowHost.ts`).
 #[derive(Serialize)]
@@ -245,7 +167,6 @@ pub fn run() {
         });
     #[cfg(any(debug_assertions, feature = "spike"))]
     let builder = builder.invoke_handler(tauri::generate_handler![
-        host_location,
         host_setup,
         sql::sql_open,
         sql::sql_exec,
@@ -273,7 +194,6 @@ pub fn run() {
     ]);
     #[cfg(not(any(debug_assertions, feature = "spike")))]
     let builder = builder.invoke_handler(tauri::generate_handler![
-        host_location,
         host_setup,
         sql::sql_open,
         sql::sql_exec,

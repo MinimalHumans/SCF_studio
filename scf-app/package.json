@@ -8,7 +8,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:sidecar": "node tools/buildSidecar.mjs",
     "tauri": "tauri",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
@@ -34,9 +33,7 @@
     "@types/react-dom": "^18.3.0",
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^4.3.0",
-    "esbuild": "^0.21.5",
     "jsdom": "^29.1.1",
-    "postject": "^1.0.0-alpha.6",
     "typescript": "^5.5.0",
     "vite": "^5.4.0",
     "vitest": "^4.1.10",
