@@ -63,3 +63,20 @@ describe("posix", () => {
   });
 });
 
+describe("resolve, as node:path's", () => {
+  const WIN_BASE = "C:\\work\\films";
+  test.each([
+    "a.scf", ".\\a.scf", "..\\a.scf", "..\\..\\..\\..\\a.scf",
+    "x/./y/../a.scf", "D:\\other\\a.scf", "\\top\\a.scf",
+    "\\\\srv\\share\\a\\..\\b.scf", "C:/fwd//a.scf", "", ".",
+  ])("windows: %s", (p) => {
+    expect(windowsPaths.resolve(WIN_BASE, p)).toBe(win32.resolve(WIN_BASE, p));
+  });
+  test.each([
+    "a.scf", "./a.scf", "../a.scf", "../../../a.scf", "x/./y/../a.scf",
+    "/abs/a.scf", "//double/a.scf", "", ".",
+  ])("posix: %s", (p) => {
+    expect(posixPaths.resolve("/work/films", p))
+      .toBe(posix.resolve("/work/films", p));
+  });
+});

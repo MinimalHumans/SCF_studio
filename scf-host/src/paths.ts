@@ -60,6 +60,24 @@ function ops(sep: "\\" | "/", caseless: boolean): PathOps {
       const p = key(path);
       return p === r || p.startsWith(r.endsWith(sep) ? r : r + sep);
     },
+    resolve(base, path) {
+      let whole = rootLength(path) > 0 ? path : `${base}${sep}${path}`;
+      // `\films` is on the base's drive; `C:films` is taken as `C:\films`.
+      if (sep === "\\" && rootLength(whole) === 1 && !isSep(whole[1])) {
+        whole = base.slice(0, rootLength(base)) + whole.slice(1);
+      } else if (sep === "\\" && rootLength(whole) === 2) {
+        whole = `${whole.slice(0, 2)}\\${whole.slice(2)}`;
+      }
+      const n = rootLength(whole);
+      const root = whole.slice(0, n).replace(/[\\/]/g, sep);
+      const names: string[] = [];
+      for (const name of whole.slice(n).split(anySeps)) {
+        if (name === "" || name === ".") continue;
+        if (name === "..") names.pop();
+        else names.push(name);
+      }
+      return normalize(root + names.join(sep));
+    },
   };
 }
 

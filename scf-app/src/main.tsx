@@ -24,6 +24,11 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 import "./styles.css";
 
+// In the desktop app the window also serves agents' MCP pipes.
+if ("__TAURI_INTERNALS__" in window) {
+  void import("./mcp/windowMcp.ts").then((m) => m.serveMcp());
+}
+
 const rootEl = document.getElementById("root");
 if (rootEl !== null) {
   createRoot(rootEl).render(
