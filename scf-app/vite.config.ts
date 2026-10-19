@@ -37,6 +37,9 @@ function gitCommit(): string {
 // the core package until it publishes (design decision 6).
 export default defineConfig({
   plugins: [react(), scfHostPlugin()],
+  // Cargo's build output is no page's business, and a file it is still
+  // writing stops the watcher (EBUSY on Windows) and with it the server.
+  server: { watch: { ignored: ["**/src-tauri/**"] } },
   resolve: {
     alias: [
       { find: "@scf-core", replacement: resolve(here, "../scf-core/src") },
