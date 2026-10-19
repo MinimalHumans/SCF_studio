@@ -6,7 +6,7 @@ film and assemble a shot prompt without being handed a schema and told
 to write SQL.
 
 **Status: built.** `scf-mcp/` implements it; its tools are listed at the
-top of `scf-mcp/src/server.ts`. It publishes to npm at 0.x after
+top of `scf-mcp/src/mcpServer.ts`. It publishes to npm at 0.x after
 `scf-core`, with no 1.0 stability promise (`release-checklist.md` §A10).
 
 Written for Jesse as a proposal, checked against spec 0.51 / schema 2.13,
@@ -345,13 +345,13 @@ the per-subject call is the room left for growth.
 ## 5. The server
 
 *(The server is a client of the SCF host — `scf-host`, found or started
-on demand by `hostLink.ts` — not a process that opens files itself.
+on demand by `nodePlatform.ts` — not a process that opens files itself.
 Reads are SQL on the host's read-only connection; writes are the host's
 named ops. The write tools, their plan/confirm protocol and the host's
 safeguards are in `writeTools.ts` and `docs/scf-write-ownership.md`.)*
 
 The shipped server is wider than this section first planned; where the
-two disagree, `scf-mcp/src/server.ts` is what runs.
+two disagree, `scf-mcp/src/mcpServer.ts` is what runs.
 
 ### 5.1 No handle outlives a call
 

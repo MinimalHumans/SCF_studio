@@ -14,9 +14,12 @@
  * intentionally not part of the `.scf` itself (docs/scf-mcp-design.md
  * §5.1, spec §0.3/§8.2): the file is portable, where its bytes live on
  * this machine is not.
+ *
+ * Nothing here exits or touches the disk: the server may be a process of
+ * its own or one of several in the desktop app's window, so a bad
+ * argument is a `ConfigError` for the caller to report, and the config
+ * file is read by the caller's `readText`.
  */
-
-import { readFileSync } from "node:fs";
 
 export type RootMap = Record<string, string>;
 
@@ -33,21 +36,35 @@ interface ConfigFile {
   readOnly?: boolean;
 }
 
-function usage(message?: string): never {
-  if (message !== undefined) process.stderr.write(`${message}\n`);
-  process.stderr.write(
-    "usage: scf-mcp [--scf <path>] [--root name=path ...] " +
-    "[--config <path>] [--read-only]\n" +
-    "  --read-only offers no write tools (also SCF_MCP_READ_ONLY=1).\n" +
-    "  --scf/--root set the default project; every tool also accepts " +
-    "its own scfPath.\n");
-  process.exit(1);
+export const USAGE =
+  "usage: scf-mcp [--scf <path>] [--root name=path ...] " +
+  "[--config <path>] [--read-only]\n" +
+  "  --read-only offers no write tools (also SCF_MCP_READ_ONLY=1).\n" +
+  "  --scf/--root set the default project; every tool also accepts " +
+  "its own scfPath.\n";
+
+/** The arguments are wrong; the message says how, `USAGE` the rest. */
+export class ConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfigError";
+  }
 }
 
-export function parseConfig(argv: readonly string[]): ServerConfig {
+export interface ConfigSources {
+  /** SCF_MCP_READ_ONLY=1, or however the caller spells it. */
+  readOnly?: boolean;
+  /** Reads `--config`, already made absolute by `resolve`. */
+  readText: (path: string) => Promise<string>;
+  /** A path as given, made absolute against the client's directory. */
+  resolve: (path: string) => string;
+}
+
+export async function parseConfig(
+    argv: readonly string[], sources: ConfigSources): Promise<ServerConfig> {
   let scfPath: string | undefined;
   let configPath: string | undefined;
-  let readOnly = process.env["SCF_MCP_READ_ONLY"] === "1";
+  let readOnly = sources.readOnly ?? false;
   const roots: RootMap = {};
 
   for (let i = 0; i < argv.length; i++) {
@@ -58,7 +75,8 @@ export function parseConfig(argv: readonly string[]): ServerConfig {
       const spec = argv[++i];
       const eq = spec?.indexOf("=") ?? -1;
       if (spec === undefined || eq <= 0) {
-        usage(`--root expects name=path, got ${spec ?? "nothing"}`);
+        throw new ConfigError(
+          `--root expects name=path, got ${spec ?? "nothing"}`);
       }
       roots[spec.slice(0, eq)] = spec.slice(eq + 1);
     } else if (arg === "--read-only") {
@@ -66,12 +84,13 @@ export function parseConfig(argv: readonly string[]): ServerConfig {
     } else if (arg === "--config") {
       configPath = argv[++i];
     } else {
-      usage(`unrecognised argument: ${arg}`);
+      throw new ConfigError(`unrecognised argument: ${String(arg)}`);
     }
   }
 
   if (configPath !== undefined) {
-    const raw: ConfigFile = JSON.parse(readFileSync(configPath, "utf8"));
+    const raw = JSON.parse(
+      await sources.readText(sources.resolve(configPath))) as ConfigFile;
     scfPath ??= raw.scf;
     readOnly ||= raw.readOnly === true;
     for (const [name, path] of Object.entries(raw.roots ?? {})) {

@@ -79,7 +79,7 @@ describe("queryTools CATALOG vs. the generated spec/query-reference.md",
   });
 
   test("CATALOG covers every reference row except Q14 (that's " +
-      "`readiness`, registered separately in server.ts)", () => {
+      "`readiness`, registered separately in mcpServer.ts)", () => {
     const catalogIds = new Set(CATALOG.map((s) => s.id));
     const referenceIds = reference.map((r) => r.id);
     expect(referenceIds.filter((id) => id !== "Q14").sort())

@@ -20,7 +20,7 @@ import {
   sortItems,
   type GalleryFilter, type GallerySort, type Row, type SceneSheet,
 } from "@minimalhumans/scf-core";
-import { withProject } from "./projectCache.ts";
+import type { ProjectCache } from "./projectCache.ts";
 import { err, ok } from "./toolResult.ts";
 
 const text = (v: unknown): string | null =>
@@ -54,7 +54,8 @@ function sheetJson(sheet: SceneSheet, locations: Map<number, Row>,
   };
 }
 
-export function registerReadTools(server: McpServer): void {
+export function registerReadTools(
+    server: McpServer, cache: ProjectCache): void {
   server.registerTool("shot_list", {
     description: "The shot list: every shot in story order, grouped by " +
       "scene and under its beat, with size, angle, movement, lens, " +
@@ -68,7 +69,7 @@ export function registerReadTools(server: McpServer): void {
     },
   }, async ({ sceneUuid, includeCut }) => {
     try {
-      return ok(await withProject(async ({ ctx }) => {
+      return ok(await cache.withProject(async ({ ctx }) => {
         const rows = await readShotlistRows(ctx.exec);
         let scope = "all";
         if (sceneUuid !== undefined) {
@@ -118,7 +119,7 @@ export function registerReadTools(server: McpServer): void {
     },
   }, async ({ sort, filter, includeHistory, limit }) => {
     try {
-      return ok(await withProject(async ({ ctx }) => {
+      return ok(await cache.withProject(async ({ ctx }) => {
         const all = await loadGallery(ctx.exec, includeHistory === true);
         const kept = sortItems(
           filterItems(all, (filter ?? "all") as GalleryFilter, false),
@@ -150,7 +151,7 @@ export function registerReadTools(server: McpServer): void {
     },
   }, async ({ characterUuid }) => {
     try {
-      return ok(await withProject(async ({ ctx }) => {
+      return ok(await cache.withProject(async ({ ctx }) => {
         const who = (await rowsIncludingCut(
           ctx.exec, "character", "uuid = ?", [characterUuid]))[0];
         if (who === undefined) {
