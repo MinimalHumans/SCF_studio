@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
+import { copyFileSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -20,7 +20,9 @@ export interface Workspace {
 }
 
 export async function makeWorkspace(): Promise<Workspace> {
-  const dir = mkdtempSync(join(tmpdir(), "scf-host-"));
+  // Real path: on macOS the temp folder is under /var, a link to /private/var,
+  // and the host reports the paths it resolves.
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "scf-host-")));
   const template = join(dir, "template.scf");
   const seed = openNodeDatabase(template);
   await initDatabase(seed.exec, registry);
