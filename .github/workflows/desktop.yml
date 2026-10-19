@@ -120,8 +120,7 @@ jobs:
           "SIGNING_METADATA=$metadata" >> $env:GITHUB_ENV
 
       # beforeBuildCommand builds the page first. With signCommand set,
-      # tauri signs scf-editor.exe before bundling it, then the
-      # installer, so the portable copy packaged below is signed too.
+      # tauri signs the exe it puts in the installer, then the installer.
       - name: tauri build
         shell: pwsh
         run: |
@@ -133,6 +132,16 @@ jobs:
             npm run tauri build
           }
         working-directory: scf-app
+
+      # tauri restores the unpatched exe after bundling, which drops the
+      # signature it put on the copy inside the installer. The portable
+      # copy is made from this one, so sign it again.
+      - name: sign the portable exe
+        if: github.ref == 'refs/heads/tauri'
+        shell: pwsh
+        run: |
+          & "$env:RUNNER_TEMP/signing/sign.ps1" "$PWD/scf-app/src-tauri/target/release/scf-editor.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: verify signatures
         if: github.ref == 'refs/heads/tauri'
