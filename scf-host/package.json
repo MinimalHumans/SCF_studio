@@ -26,6 +26,21 @@
       "types": "./dist/registryFile.d.ts",
       "default": "./dist/registryFile.js"
     },
+    "./core": {
+      "scf-source": "./src/core.ts",
+      "types": "./dist/core.d.ts",
+      "default": "./dist/core.js"
+    },
+    "./platform": {
+      "scf-source": "./src/platform.ts",
+      "types": "./dist/platform.d.ts",
+      "default": "./dist/platform.js"
+    },
+    "./paths": {
+      "scf-source": "./src/paths.ts",
+      "types": "./dist/paths.d.ts",
+      "default": "./dist/paths.js"
+    },
     "./host": {
       "scf-source": "./src/host.ts",
       "types": "./dist/host.d.ts",

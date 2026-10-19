@@ -4,10 +4,10 @@
  *
  * Browser-safe: no Node imports, and the only thing it knows about the
  * wire is `HostTransport`, a request/response pipe with pushed events.
- * The WebSocket adapter below is one implementation; a Tauri shell would
- * supply another whose `request` is `invoke("host", {method, params})`
- * and whose events come from Tauri's event bus. Nothing above the
- * transport — views, tools, tests — changes when that happens.
+ * Two implementations are below: a WebSocket to a host process, and a
+ * direct line to a host core in the same page, which is how the desktop
+ * app's window reaches the host it runs itself. Nothing above the
+ * transport — views, tools, tests — knows which it has.
  *
  * What the client offers is deliberately small and matches how the
  * codebase already works:
@@ -28,6 +28,7 @@ import {
   type HostResponse, type JournalEntry, type JsonRow, type MethodName,
   type OpInfo,
 } from "./protocol.ts";
+import type { HostConnection } from "./core.ts";
 
 // ── transport ──────────────────────────────────────────────────────
 
@@ -142,6 +143,46 @@ export function connectWebSocket(
         "disconnected", "could not connect to the host"));
     });
   });
+}
+
+/** What crossing a socket does to a value, without the socket. */
+function overTheWire<T>(v: T): T {
+  return v === undefined ? v : JSON.parse(JSON.stringify(v)) as T;
+}
+
+/**
+ * A transport with no pipe at all: requests go straight to a host core
+ * in this same page (the desktop app runs `core.ts` in its window).
+ * Values are copied as JSON both ways, so a client sees exactly what it
+ * would over a socket and never shares an object with the host.
+ */
+export function connectInProcess(conn: HostConnection): HostTransport {
+  const events = new Set<(e: HostEvent) => void>();
+  const closers = new Set<(reason: string) => void>();
+  let closed = false;
+  conn.onEvent((e) => { for (const l of events) l(overTheWire(e)); });
+  return {
+    request: async (method, params) => {
+      if (closed) {
+        throw new HostClientError(
+          "disconnected", "the host connection is closed");
+      }
+      const r = await conn.handle(method, overTheWire(params));
+      if (r.ok) return overTheWire(r.result);
+      throw new HostClientError(r.error.code, r.error.message, {
+        ...(r.error.name === undefined ? {} : { name: r.error.name }),
+        ...(r.error.data === undefined ? {} : { data: r.error.data }),
+      });
+    },
+    onEvent: (l) => { events.add(l); return () => { events.delete(l); }; },
+    onClose: (l) => { closers.add(l); return () => { closers.delete(l); }; },
+    close: async () => {
+      if (closed) return;
+      closed = true;
+      await conn.close();
+      for (const l of closers) l("closed by the client");
+    },
+  };
 }
 
 // ── client ─────────────────────────────────────────────────────────

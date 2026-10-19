@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import WebSocket from "ws";
 import {
-  HostClient, HostClientError, connectWebSocket, createHostCore, startHost,
+  HostClient, HostClientError, connectInProcess, connectWebSocket,
+  createHostCore, startHost,
   type HostEvent, type HostTransport, type RunningHost,
   type WebSocketConstructor,
 } from "../src/index.ts";
@@ -22,22 +23,7 @@ afterAll(() => { ws.dispose(); });
  */
 function inProcessTransport(core = createHostCore({ registry })):
     { transport: HostTransport; core: ReturnType<typeof createHostCore> } {
-  const conn = core.connect();
-  const listeners = new Set<(e: HostEvent) => void>();
-  conn.onEvent((e) => { for (const l of listeners) l(e); });
-  return {
-    core,
-    transport: {
-      request: async (method, params) => {
-        const r = await conn.handle(method, params);
-        if (r.ok) return r.result;
-        throw new HostClientError(r.error.code, r.error.message);
-      },
-      onEvent: (l) => { listeners.add(l); return () => { listeners.delete(l); }; },
-      onClose: () => () => {},
-      close: () => conn.close(),
-    },
-  };
+  return { core, transport: connectInProcess(core.connect()) };
 }
 
 type Make = (name: string) => Promise<HostClient>;
