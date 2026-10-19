@@ -52,6 +52,11 @@ export default defineConfig({
       { find: "@scf-host", replacement: resolve(here, "../scf-host/src") },
       { find: /^@minimalhumans\/scf-core$/,
         replacement: resolve(here, "../scf-core/src/index.ts") },
+      // Node's SQLite, which only the tests reach: they run the window's
+      // host core on Node (scf-host `nodePlatform.ts`). From source too,
+      // or a checkout that never built scf-core cannot run them.
+      { find: /^@minimalhumans\/scf-core\/node$/,
+        replacement: resolve(here, "../scf-core/src/node.ts") },
       // The MCP's tools, which the desktop window serves (src/mcp). They
       // import the host's client by package name; it must be the same
       // module as the window's, or its errors are not its errors.
