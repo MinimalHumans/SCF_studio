@@ -8,7 +8,7 @@ to write SQL.
 **Status: built.** `scf-mcp/` implements it; its tools are listed at the
 top of `scf-mcp/src/mcpServer.ts`. Since 2026-10-19 it runs only inside
 the SCF Editor desktop app, one server per agent in the app's window,
-reached through the app's `scf mcp` pipe
+reached through the app's `scf-editor mcp` pipe
 ([`scf-write-ownership.md`](scf-write-ownership.md)); it is no longer a
 Node process, nor to be published to npm (`release-checklist.md` §A10).
 
