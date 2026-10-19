@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
-//! The desktop shell: a window, and the host it is a client of.
+//! The desktop shell: a window, and what its host runs on.
 //!
-//! The window talks to `scf-host` over the same loopback WebSocket it
-//! uses in the browser (docs/scf-write-ownership.md); all the shell adds
-//! is telling the window where the host is. It asks `scf locate`, from the
-//! `scf` sidecar (tools/scf.ts), which answers with the running host or
-//! starts one — the same way the MCP (`scf mcp`, the same executable)
-//! finds it, so whichever comes first starts the host and the other
-//! joins. The shell owns no host: one started for it exits by itself a
-//! while after its last client has gone.
+//! The window runs the host core itself (`src/host/windowHost.ts`); the
+//! shell gives it SQLite (`sql`, `sql_socket`), files (`files`) and its
+//! settings (`host_setup`).
 //!
-//! The window asks on every connect, so a host that has exited since is
-//! replaced rather than retried. Under `tauri dev` the page is the Vite
-//! dev server's, which runs a host of its own and never asks.
+//! `host_location` is left from when the window was a client of the
+//! `scf` sidecar's host (tools/scf.ts), found or started by `scf
+//! locate`. Nothing calls it now; it goes with the sidecar, once the MCP
+//! no longer needs that host either.
 
 mod files;
 mod sql;
@@ -96,6 +92,36 @@ async fn host_location() -> Result<Location, HostError> {
         })
 }
 
+/// What the window's own host is given (`src/host/windowHost.ts`).
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct HostSetup {
+    /// Folders a client may browse and create files under: as the Node
+    /// host has them, `SCF_HOST_ROOTS` or else the user's home.
+    roots: Vec<String>,
+    /// Where snapshots and the journal are kept.
+    data_dir: String,
+    version: String,
+}
+
+#[tauri::command]
+fn host_setup(app: tauri::AppHandle) -> Result<HostSetup, String> {
+    use tauri::Manager;
+    let roots: Vec<PathBuf> = match std::env::var_os("SCF_HOST_ROOTS") {
+        Some(v) if !v.is_empty() => std::env::split_paths(&v)
+            .filter(|p| !p.as_os_str().is_empty())
+            .collect(),
+        _ => vec![app.path().home_dir().map_err(|e| e.to_string())?],
+    };
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let text = |p: PathBuf| p.to_string_lossy().into_owned();
+    Ok(HostSetup {
+        roots: roots.into_iter().map(text).collect(),
+        data_dir: text(data_dir),
+        version: app.package_info().version.to_string(),
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let databases = sql::Databases::default();
@@ -104,9 +130,11 @@ pub fn run() {
     #[cfg(any(debug_assertions, feature = "spike"))]
     let builder = builder.invoke_handler(tauri::generate_handler![
         host_location,
+        host_setup,
         sql::sql_open,
         sql::sql_exec,
         sql::sql_close,
+        sql::sql_reset,
         sql::file_fingerprint,
         sql_socket::sql_socket,
         files::fs_windows,
@@ -125,9 +153,11 @@ pub fn run() {
     #[cfg(not(any(debug_assertions, feature = "spike")))]
     let builder = builder.invoke_handler(tauri::generate_handler![
         host_location,
+        host_setup,
         sql::sql_open,
         sql::sql_exec,
         sql::sql_close,
+        sql::sql_reset,
         sql::file_fingerprint,
         sql_socket::sql_socket,
         files::fs_windows,

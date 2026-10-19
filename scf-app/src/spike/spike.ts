@@ -41,7 +41,7 @@ import {
   HostClient, HostClientError, connectInProcess,
 } from "@scf-host/client.ts";
 import { createHostCore } from "@scf-host/core.ts";
-import { connectHost } from "../host/connection.ts";
+import { connectHost, locateHost } from "../host/connection.ts";
 import { createTauriPlatform } from "../host/tauriPlatform.ts";
 import { openTauriDatabase, openTauriSession } from "../host/tauriSql.ts";
 
@@ -141,7 +141,7 @@ async function run(): Promise<Record<string, unknown>> {
     journalDir: at("journal"),
   });
   const hosts: Record<Host, HostClient> = {
-    node: await connectHost({ name: "spike" }),
+    node: await connectHost({ name: "spike", locate: () => locateHost() }),
     core: await HostClient.connect(connectInProcess(core.connect()),
                                    { name: "spike" }),
   };
