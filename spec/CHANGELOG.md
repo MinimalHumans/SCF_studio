@@ -17,6 +17,16 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.3 — 2026-10-19
+
+*Describes schema 2.24.*
+
+**Editorial.** No requirement changes, no schema change, and no result
+or report changes. `stability.md` names the files where the editor's
+operations now live in scf-core, and `api-surface.json` is regenerated
+for what scf-core now exports. A new candidate rather than a patch
+because `spec-1.0-rc.2` is published and a published tag does not move.
+
 ## 1.0-rc.2 — 2026-10-16
 
 *Describes schema 2.24.*

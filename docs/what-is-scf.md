@@ -232,7 +232,7 @@ in the file waiting.
 | Implement the format | [The specification](../spec/scf-spec.md) |
 
 **A note on status.** SCF is pre-1.0. The specification is a release
-candidate, `1.0-rc.2`,
+candidate, `1.0-rc.3`,
 [what is safe to build against is stated per subject](../spec/stability.md),
 and until 1.0 there is no migration path for files already written. Five
 independent implementations have been built from the specification by
