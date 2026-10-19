@@ -8,13 +8,11 @@
  * endpoint means this page is not allowed the token, which no amount of
  * waiting changes, so that stops at once with its own message.
  *
- * The transport is the only thing here that knows it is a WebSocket. A
- * desktop shell would replace `openTransport` and nothing else.
+ * The transport is the only thing here that knows it is a WebSocket.
  *
- * In the desktop app (a production build inside Tauri) there is no dev
- * server, and the first step asks the shell instead (`host_location` in
- * `src-tauri/src/lib.rs`), which finds the running host or starts one. Under
- * `tauri dev` the page is the dev server's, so it asks the dev server.
+ * In the desktop app (inside Tauri, `tauri dev` included) there is no
+ * host to find: the window runs its own (`windowHost.ts`) and connects
+ * to it in-process. The dev server's host is for the page in a browser.
  */
 
 import {
@@ -66,28 +64,6 @@ export async function locateHost(
   return { url: body.url, token: body.token };
 }
 
-/** What the shell's `host_location` rejects with. */
-interface ShellHostError {
-  message: string;
-  refused: boolean;
-}
-
-export async function locateDesktopHost(): Promise<HostLocation> {
-  const { invoke } = await import("@tauri-apps/api/core");
-  try {
-    return await invoke<HostLocation>("host_location");
-  } catch (e) {
-    const err = e as Partial<ShellHostError>;
-    throw new HostUnavailableError(
-      err.message ?? String(e), err.refused ?? false);
-  }
-}
-
-function defaultLocate(): Promise<HostLocation> {
-  return !import.meta.env.DEV && "__TAURI_INTERNALS__" in window
-    ? locateDesktopHost() : locateHost();
-}
-
 export type TransportOpener = (where: HostLocation) => Promise<HostTransport>;
 
 const openWebSocket: TransportOpener = (where) =>
@@ -96,21 +72,32 @@ const openWebSocket: TransportOpener = (where) =>
 export interface ConnectOptions {
   name?: string;
   retry?: RetryOptions;
-  /** For tests and, later, a desktop shell. */
+  /** For tests. */
   locate?: () => Promise<HostLocation>;
   openTransport?: TransportOpener;
+}
+
+function inDesktopApp(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+async function openWindowHost(): Promise<HostTransport> {
+  const { windowHostTransport } = await import("./windowHost.ts");
+  return windowHostTransport();
 }
 
 /** Connect, retrying while the host comes up. */
 export async function connectHost(
     options: ConnectOptions = {}): Promise<HostClient> {
-  const locate = options.locate ?? defaultLocate;
+  const locate = options.locate ?? locateHost;
   const open = options.openTransport ?? openWebSocket;
+  const desktop = inDesktopApp() && options.locate === undefined &&
+    options.openTransport === undefined;
   return withRetry(async () => {
     // Located again on every attempt: a host that restarted has a new
     // port and token.
-    const where = await locate();
-    const transport = await open(where);
+    const transport = desktop
+      ? await openWindowHost() : await open(await locate());
     return HostClient.connect(transport, { name: options.name ?? "window" });
   }, {
     shouldRetry: (e) => !(e instanceof HostUnavailableError && e.refused),

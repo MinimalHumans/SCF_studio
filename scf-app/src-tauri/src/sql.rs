@@ -150,6 +150,14 @@ pub async fn sql_close(state: tauri::State<'_, Databases>, db: u32) -> Result<()
     }
 }
 
+/// Close everything. A page that reloads loses its host without closing
+/// its films; the new one starts here so the old handles do not linger.
+#[tauri::command]
+pub async fn sql_reset(state: tauri::State<'_, Databases>) -> Result<(), String> {
+    state.open.lock().unwrap().clear();
+    Ok(())
+}
+
 /// A token that changes when the file does (scf-core `SessionDriver`).
 #[tauri::command]
 pub async fn file_fingerprint(path: String) -> Result<String, String> {
