@@ -19,7 +19,9 @@ an assistant is connected only hides it.
 
 ## Developing
 
-Needs Node 22+ and Rust (stable).
+Needs Node 22.6+ and Rust (stable), plus the system packages the shell
+needs on your OS: [`docs/developing.md`](../docs/developing.md) has those
+for Windows, macOS and Linux, and the whole setup.
 
 ```sh
 npm ci
