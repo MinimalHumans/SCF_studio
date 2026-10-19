@@ -1,50 +1,60 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # scf-app
 
-The SCF editor: React + Vite + TypeScript + Zustand, local-first,
-Chromium-first. All format knowledge comes from `scf-core`; the app
-never hand-defines an entity. Files are opened, read and written by
-**one local host process** (`../scf-host`), shared with the MCP, so
-"local-first" means your files stay on your machine, not that there is
-no process: `npm run dev` starts the host with the dev server.
+The SCF editor: React + Vite + TypeScript + Zustand, in a Tauri desktop
+shell (`src-tauri/`). All format knowledge comes from `scf-core`; the
+app never hand-defines an entity.
+
+There is no host process. The window runs the host core
+(`../scf-host/src/core.ts`) itself (`src/host/windowHost.ts`), on SQLite
+and files the shell provides (`src-tauri/src/sql.rs`, `files.rs`), and
+it serves the MCP (`src/mcp/windowMcp.ts`): an assistant is pointed at
+`scf mcp` (see `../scf-mcp/README.md`), a small Rust pipe shipped beside
+the app (`src-tauri/src/bin/scf.rs`) that the shell relays to the window
+(`mcp_relay.rs`), so an assistant and the editor share one host. The
+pipe starts the app with its window hidden when it is not running; such
+an app exits a little after its last assistant leaves, unless someone
+has opened the window. Closing the window while an assistant is
+connected only hides it.
+
+## Developing
+
+Needs Node 22+ and Rust (stable).
 
 ```sh
 npm ci
-npm run dev        # http://localhost:5173 — Chromium; starts the host too
+npm run dev          # the editor, in its window, with hot reload
+npm test             # vitest: components, and the window on a host in-process
 npm run typecheck
-npm test
-npm run build      # static bundle in dist/ (needs a host to open files)
+npm run tauri build  # installer in src-tauri/target/release/bundle/
 ```
 
-## Desktop app
+`npm run dev` is `tauri dev`: Vite serves the page (`npm run dev:page`)
+and the shell loads it, so a change under `src/` reloads in place, and
+one under `src-tauri/` rebuilds and restarts the shell. The first run
+compiles the shell, which takes a minute; later ones take seconds. The
+page needs the shell (its files and SQLite are the shell's), so it does
+not work in a browser tab.
 
-The same window in a Tauri shell (`src-tauri/`), with no host
-process: the window runs the host core itself (`src/host/windowHost.ts`)
-on SQLite and files the shell provides (`src-tauri/src/sql.rs`,
-`files.rs`). It also serves the MCP (`src/mcp/windowMcp.ts`): an
-assistant is pointed at `scf mcp` (see `../scf-mcp/README.md`), a small
-Rust pipe shipped beside the app (`src-tauri/src/bin/scf.rs`) that the
-shell relays to the window (`mcp_relay.rs`), so an assistant and the
-editor share one host. The pipe starts the app with its window hidden
-when it is not running; such an app exits a little after its last
-assistant leaves, unless someone has opened the window. Closing the
-window while an assistant is connected only hides it. Needs Rust as well
-as Node.
+- **DevTools**: right-click › Inspect, or F12, in the window (debug
+  builds only).
+- **Beside an installed copy**: the dev app has its own identifier
+  (`src-tauri/tauri.dev.json`), so its own data folder, settings and MCP
+  pipe, and its window says "(dev)". Both can run at once.
+- **Folders**: the host lists your home, and in a debug build the
+  checkout's `fixtures/` and `templates/` as well; `SCF_HOST_ROOTS` (a
+  path-delimited list) replaces them.
+- **An assistant on the dev app**: build the pipe once with `cargo build
+  --bin scf` in `src-tauri/`, then point the assistant at
+  `src-tauri/target/debug/scf.exe mcp` (`scf` elsewhere). A debug pipe
+  only connects to a running `npm run dev`; it does not start one.
+  A page reload keeps the assistant connected, with its film still open;
+  a rebuild of the shell restarts the app, and the assistant has to
+  reconnect.
 
-```sh
-npm run tauri dev       # the dev server's page, in the shell
-npm run tauri build     # installer in src-tauri/target/release/bundle/
-```
-
-`npm run tauri dev` runs the dev server's host too, for a browser tab;
-the shell's window does not use it.
-
-`scf-core` and `scf-host`'s client are consumed as TypeScript source via
-Vite aliases (`@scf-core -> ../scf-core/src`, `@scf-host ->
-../scf-host/src`), so keep the directories siblings. The host's folders
-default to your home directory plus the repository's `fixtures/` and
-`templates/`; set `SCF_HOST_ROOTS` (a path-delimited list) to change
-them.
+`scf-core`, `scf-host` and `scf-mcp` are consumed as TypeScript source
+via Vite aliases (`@scf-core -> ../scf-core/src` and so on), so keep the
+directories siblings.
 
 ## Where the work happens
 

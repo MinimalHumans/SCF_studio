@@ -11,6 +11,10 @@
 //!
 //! Shipped beside the app's executable, which is how it finds it to
 //! start; SCF_EDITOR_EXE names another.
+//!
+//! A debug build is the developer's: it looks for the app `npm run dev`
+//! runs (the `.dev` identifier, src-tauri/tauri.dev.json), and does not
+//! start one, which would have no page without the dev server.
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{Shutdown, TcpStream};
@@ -18,8 +22,13 @@ use std::path::PathBuf;
 use std::process::{Command, ExitCode, Stdio};
 use std::time::{Duration, Instant};
 
-/// The app's identifier (tauri.conf.json), which names its data folder.
-const IDENTIFIER: &str = "com.minimalhumans.scf-editor";
+/// The app's identifier (tauri.conf.json, tauri.dev.json), which names
+/// its data folder.
+const IDENTIFIER: &str = if cfg!(debug_assertions) {
+    "com.minimalhumans.scf-editor.dev"
+} else {
+    "com.minimalhumans.scf-editor"
+};
 
 /// How long a started app has to be ready.
 const START_TIMEOUT: Duration = Duration::from_secs(60);
@@ -50,7 +59,11 @@ fn editor_exe() -> std::io::Result<PathBuf> {
     if let Some(exe) = std::env::var_os("SCF_EDITOR_EXE") {
         return Ok(exe.into());
     }
-    let name = if cfg!(windows) { "scf-editor.exe" } else { "scf-editor" };
+    let name = if cfg!(windows) {
+        "scf-editor.exe"
+    } else {
+        "scf-editor"
+    };
     Ok(std::env::current_exe()?.with_file_name(name))
 }
 
@@ -106,6 +119,11 @@ fn keep_stdio_to_ourselves() {
 fn connect_or_start() -> Result<(TcpStream, String), String> {
     if let Some(found) = connect() {
         return Ok(found);
+    }
+    if cfg!(debug_assertions) {
+        return Err(
+            "the SCF editor (dev) is not running; start it with `npm run dev` in scf-app".into(),
+        );
     }
     start_app().map_err(|e| format!("could not start the SCF editor: {e}"))?;
     let deadline = Instant::now() + START_TIMEOUT;

@@ -29,7 +29,11 @@ import { windowHostTransport } from "../host/windowHost.ts";
 
 type McpEvent =
   | { kind: "open"; session: number; args: string[]; cwd: string;
-      readOnly: boolean; elicit: boolean }
+      readOnly: boolean; elicit: boolean;
+      /** A pipe a page before this one served (a reload). */
+      resumed: boolean;
+      /** Its agent's handshake, to bring the new server up to date. */
+      replay: string[] }
   | { kind: "message"; session: number; line: string }
   | { kind: "closed"; session: number };
 
@@ -50,8 +54,17 @@ class PipeTransport implements Transport {
   onmessage?: (message: JSONRPCMessage) => void;
   private waiting: JSONRPCMessage[] | null = [];
   private closed = false;
+  /** Requests replayed to a resumed server: their answers stay here. */
+  private readonly replayed = new Set<string | number>();
 
   constructor(private readonly session: number) {}
+
+  /** Something the agent said to the server this one replaces. */
+  replay(line: string): void {
+    const message = JSON.parse(line) as { id?: string | number };
+    if (message.id !== undefined) this.replayed.add(message.id);
+    this.receive(line);
+  }
 
   receive(line: string): void {
     let message: JSONRPCMessage;
@@ -73,6 +86,10 @@ class PipeTransport implements Transport {
   }
 
   send(message: JSONRPCMessage): Promise<void> {
+    if ("id" in message && !("method" in message) &&
+        message.id !== undefined && this.replayed.delete(message.id)) {
+      return Promise.resolve();
+    }
     return send(this.session, JSON.stringify(message));
   }
 
@@ -153,7 +170,9 @@ export async function serveMcp(): Promise<void> {
       });
       const server = await createScfMcpServer(
         platform, config, { elicit: event.elicit });
-      await send(session, JSON.stringify({ ok: true }));
+      for (const line of event.replay) pipe.replay(line);
+      // A resumed pipe was answered by the page before.
+      if (!event.resumed) await send(session, JSON.stringify({ ok: true }));
       await server.connect(pipe);
     } catch (e) {
       pipes.delete(session);

@@ -15,11 +15,11 @@
 
 mod files;
 mod mcp_relay;
+#[cfg(any(debug_assertions, feature = "spike"))]
+mod spike;
 mod sql;
 mod sql_socket;
 mod token;
-#[cfg(any(debug_assertions, feature = "spike"))]
-mod spike;
 
 use std::path::PathBuf;
 use std::time::Duration;
@@ -31,8 +31,9 @@ use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct HostSetup {
-    /// Folders a client may browse and create files under: as the Node
-    /// host has them, `SCF_HOST_ROOTS` or else the user's home.
+    /// Folders a client may browse and create files under:
+    /// `SCF_HOST_ROOTS`, or else the user's home, and in a debug build
+    /// the checkout's `fixtures/` and `templates/` too.
     roots: Vec<String>,
     /// Where snapshots and the journal are kept.
     data_dir: String,
@@ -45,7 +46,20 @@ fn host_setup(app: AppHandle) -> Result<HostSetup, String> {
         Some(v) if !v.is_empty() => std::env::split_paths(&v)
             .filter(|p| !p.as_os_str().is_empty())
             .collect(),
-        _ => vec![app.path().home_dir().map_err(|e| e.to_string())?],
+        _ => {
+            let mut roots = vec![app.path().home_dir().map_err(|e| e.to_string())?];
+            if cfg!(debug_assertions) {
+                let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+                roots.extend(
+                    ["fixtures", "templates"]
+                        .map(|d| repo.join(d))
+                        .into_iter()
+                        .filter(|p| p.is_dir())
+                        .filter_map(|p| dunce::canonicalize(p).ok()),
+                );
+            }
+            roots
+        }
     };
     let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let text = |p: PathBuf| p.to_string_lossy().into_owned();
@@ -112,7 +126,9 @@ fn publish(app: &AppHandle, discovery: &mcp_relay::Discovery) -> tauri::Result<(
 
 /// Take `mcp.json` down, if it is still this app's.
 fn unpublish(app: &AppHandle) {
-    let Ok(path) = discovery_path(app) else { return };
+    let Ok(path) = discovery_path(app) else {
+        return;
+    };
     let ours = std::fs::read(&path)
         .ok()
         .and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).ok())
@@ -144,6 +160,12 @@ pub fn run() {
         .setup(move |app| {
             let handle = app.handle().clone();
             publish(&handle, &discovery)?;
+            if cfg!(debug_assertions) {
+                // Beside an installed copy, which has its own data and pipe.
+                if let Some(w) = main_window(&handle) {
+                    let _ = w.set_title("SCF Editor (dev)");
+                }
+            }
             let on_count = handle.clone();
             relay.on_count(move |n| {
                 if n == 0 && hidden(&on_count) {

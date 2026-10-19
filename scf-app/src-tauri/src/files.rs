@@ -69,7 +69,9 @@ pub async fn fs_read_dir(path: String) -> Result<Vec<DirEntry>, String> {
     let mut out = Vec::new();
     for entry in std::fs::read_dir(dir).map_err(|e| err(dir, e))?.flatten() {
         // Followed, as Node's statSync follows links.
-        let Ok(meta) = std::fs::metadata(entry.path()) else { continue };
+        let Ok(meta) = std::fs::metadata(entry.path()) else {
+            continue;
+        };
         out.push(DirEntry {
             name: entry.file_name().to_string_lossy().into_owned(),
             kind: if meta.is_dir() {

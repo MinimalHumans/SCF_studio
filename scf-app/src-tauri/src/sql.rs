@@ -100,7 +100,10 @@ fn open(path: &str, read_only: bool) -> rusqlite::Result<Connection> {
 /// Every statement is stepped to the end, so one that returns no rows
 /// (an INSERT) runs exactly as one that does (a SELECT, or RETURNING).
 fn exec(conn: &Connection, sql: &str, params: Vec<Json>) -> Result<Rows, String> {
-    let params = params.into_iter().map(param).collect::<Result<Vec<_>, _>>()?;
+    let params = params
+        .into_iter()
+        .map(param)
+        .collect::<Result<Vec<_>, _>>()?;
     let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
     let columns: Vec<String> = stmt.column_names().iter().map(|c| c.to_string()).collect();
     let mut cursor = stmt
@@ -108,7 +111,11 @@ fn exec(conn: &Connection, sql: &str, params: Vec<Json>) -> Result<Rows, String>
         .map_err(|e| e.to_string())?;
     let mut rows = Vec::new();
     while let Some(row) = cursor.next().map_err(|e| e.to_string())? {
-        rows.push((0..columns.len()).map(|i| column(row.get_ref_unwrap(i))).collect());
+        rows.push(
+            (0..columns.len())
+                .map(|i| column(row.get_ref_unwrap(i)))
+                .collect(),
+        );
     }
     Ok(Rows { columns, rows })
 }
@@ -121,7 +128,11 @@ pub async fn sql_open(
 ) -> Result<u32, String> {
     let conn = open(&path, read_only).map_err(|e| format!("{path}: {e}"))?;
     let id = state.next.fetch_add(1, Ordering::Relaxed) + 1;
-    state.open.lock().unwrap().insert(id, Arc::new(Mutex::new(conn)));
+    state
+        .open
+        .lock()
+        .unwrap()
+        .insert(id, Arc::new(Mutex::new(conn)));
     Ok(id)
 }
 

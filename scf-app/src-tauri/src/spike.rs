@@ -9,7 +9,9 @@ use serde::Serialize;
 use tauri::Manager;
 
 fn repo() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("..")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
 }
 
 #[derive(Serialize)]
@@ -44,7 +46,9 @@ pub async fn spike_setup() -> Result<Setup, String> {
 
 #[tauri::command]
 pub async fn spike_copy(from: String, to: String) -> Result<(), String> {
-    std::fs::copy(&from, &to).map(|_| ()).map_err(|e| format!("{from}: {e}"))
+    std::fs::copy(&from, &to)
+        .map(|_| ())
+        .map_err(|e| format!("{from}: {e}"))
 }
 
 /// Print what the spike found and close the app.
