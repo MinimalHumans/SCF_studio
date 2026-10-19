@@ -246,7 +246,7 @@ do. Builds are unsigned.
 | `npm ci` says the lockfile is out of sync | A `package.json` changed without its lock, or an npm older than the one that wrote the lock disagrees about optional packages. Report it; do not commit an `npm install` run on a different npm without checking `npm ci` with Node 22's npm. |
 | `linker 'cc' not found`, `link.exe not found` | No C toolchain: `build-essential` / Xcode Command Line Tools / Visual Studio Build Tools (above). |
 | `pkg-config` errors about `webkit2gtk-4.1`, `javascriptcoregtk`, `libsoup-3.0` | The Linux packages above are missing, or the distribution is too old for WebKitGTK 4.1. |
-| The window opens but stays blank (Linux, often NVIDIA or Wayland) | A WebKitGTK rendering problem: try `WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run dev`. |
+| The window opens but stays blank (Linux) | WebKitGTK's DMA-BUF renderer, which some GPU setups cannot show. With NVIDIA's proprietary driver loaded the app turns it off itself and says so in the terminal; elsewhere, `WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run dev`. If it helps on a machine the app did not detect, report the GPU and driver so the detection can learn it. |
 | The window says the editor runs in its desktop app | You opened the page in a browser; use the window `npm run dev` opened. |
 | "Still waiting for the SCF host to start…" that never ends | Open DevTools in the window and look at the console; the shell's own output is in the terminal running `npm run dev`. |
 | `the SCF editor (dev) is not running` from an assistant | Start `npm run dev`; a debug `scf-editor mcp` never starts the app itself. |

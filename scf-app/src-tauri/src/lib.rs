@@ -142,8 +142,33 @@ pub fn mcp_pipe(args: Vec<String>) -> std::process::ExitCode {
     pipe::run(args)
 }
 
+/// WebKitGTK draws through DMA-BUF by default, and under NVIDIA's
+/// proprietary driver that can leave the window blank. With that driver
+/// loaded the renderer is turned off, unless the variable is already set
+/// either way (`=0` keeps it on). Before anything else, as WebKitGTK reads
+/// it once, and while there is only this thread to see the change.
+#[cfg(target_os = "linux")]
+fn avoid_blank_window() {
+    const FLAG: &str = "WEBKIT_DISABLE_DMABUF_RENDERER";
+    if std::env::var_os(FLAG).is_some() {
+        return;
+    }
+    let nvidia = ["/proc/driver/nvidia/version", "/sys/module/nvidia"]
+        .iter()
+        .any(|p| std::path::Path::new(p).exists());
+    if nvidia {
+        eprintln!(
+            "scf-editor: NVIDIA's driver is loaded, so {FLAG}=1 \
+             (set {FLAG}=0 to keep WebKitGTK's default)"
+        );
+        std::env::set_var(FLAG, "1");
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(target_os = "linux")]
+    avoid_blank_window();
     let background = std::env::args().any(|a| a == BACKGROUND);
     let databases = sql::Databases::default();
     let socket = sql_socket::start(databases.clone()).expect("a loopback port for SQL");
