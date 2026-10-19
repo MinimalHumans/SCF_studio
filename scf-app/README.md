@@ -37,7 +37,9 @@ npm run tauri dev       # the dev server's page and host, in the shell
 npm run tauri build     # installer in src-tauri/target/release/bundle/
 ```
 
-The Node that runs `build:sidecar` is the Node that ships. The sidecar
+The Node that runs `build:sidecar` is the Node that ships, and its
+licence ships beside it (`src-tauri/binaries/node-LICENSE`, fetched for
+that Node's version when the install has no copy). The sidecar
 is unsigned (injecting it breaks `node.exe`'s signature), so sign it
 and the app before distributing them. Under `tauri dev` no sidecar is
 started (the dev server has a host), but the build still expects one to

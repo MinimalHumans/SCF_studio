@@ -18,7 +18,9 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -77,5 +79,21 @@ execFileSync(process.execPath, [
   ...(mac ? ["--macho-segment-name", "NODE_SEA"] : []),
 ], { stdio: "inherit" });
 if (mac) execFileSync("codesign", ["--sign", "-", out]);
+
+// The sidecar is a copy of Node, so Node's licence (which also covers
+// what Node bundles) ships with it as a resource (tauri.conf.json).
+// Archive installs keep it beside or above the binary; the Windows
+// installer does not, so fall back to the one tagged for this version.
+const nodeLicense = join(binaries, "node-LICENSE");
+const local = [dirname(process.execPath), dirname(dirname(process.execPath))]
+  .map((dir) => join(dir, "LICENSE")).find((file) => existsSync(file));
+if (local !== undefined) copyFileSync(local, nodeLicense);
+else {
+  const url = "https://raw.githubusercontent.com/nodejs/node/" +
+              `${process.version}/LICENSE`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: ${response.status}`);
+  writeFileSync(nodeLicense, await response.text());
+}
 
 console.log(`sidecar: ${out}`);
