@@ -364,8 +364,8 @@ describe("scf-mcp server — no default project", () => {
 });
 
 describe("scf-mcp server — recent_files persists across restarts", () => {
-  test("a brand new process, given the same SCF_CONFIG_DIR, remembers " +
-      "what an earlier process opened", async () => {
+  test("a new server, given the same config directory, remembers " +
+      "what an earlier one opened", async () => {
     const configDir = mkdtempSync(join(tmpdir(), "scf-mcp-test-"));
     try {
       const first = await startServer([], configDir);
@@ -374,7 +374,7 @@ describe("scf-mcp server — recent_files persists across restarts", () => {
       });
       // The config write is fire-and-forget (projectCache.ts) so a
       // failed or slow write never blocks a tool call — give it a
-      // moment to land on disk before killing the process outright.
+      // moment to land on disk before closing the server.
       await new Promise((r) => { setTimeout(r, 200); });
       first.kill();
 

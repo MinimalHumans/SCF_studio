@@ -2,8 +2,9 @@
 // @vitest-environment node
 /**
  * The window against a real host: the store's own actions, the `call`
- * facade and `exec`, over a real socket, with only the file chooser
- * stubbed (a person picks paths; a test supplies them).
+ * facade and `exec`, on the host core the desktop window runs, here on
+ * Node's files and SQLite, with only the file chooser stubbed (a person
+ * picks paths; a test supplies them).
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test,
          vi } from "vitest";
@@ -11,12 +12,10 @@ import { mkdtempSync, rmSync, readFileSync, existsSync }
   from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { request } from "node:http";
-import { createServer, type ViteDevServer } from "vite";
-import WebSocket from "ws";
-import { HOST_ENDPOINT, scfHostPlugin } from "../tools/scfHostPlugin";
-import { HostClient, connectWebSocket, type WebSocketConstructor }
-  from "@scf-host/client.ts";
+import registryJson from "@registry/registry.json" with { type: "json" };
+import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
+import { HostClient, connectInProcess } from "@scf-host/client.ts";
+import { createHostCore, type HostCore } from "@scf-host/hostCore.ts";
 
 /**
  * The few browser globals the store touches. A real jsdom would also
@@ -47,34 +46,15 @@ vi.mock("../src/files/hostChooser", () => ({
 }));
 
 let dir: string;
-let dev: ViteDevServer;
-let host: { url: string; token: string };
+let core: HostCore;
 let other: HostClient;
-
-/** A raw GET with the headers a same-origin page would send. */
-function fetchConnection(port: number):
-    Promise<{ status: number; body: string }> {
-  return new Promise((resolve, reject) => {
-    request({
-      host: "127.0.0.1", port, path: HOST_ENDPOINT,
-      headers: { host: `127.0.0.1:${String(port)}`,
-                 "sec-fetch-site": "same-origin" },
-    }, (res) => {
-      let body = "";
-      res.on("data", (d: Buffer) => { body += d.toString(); });
-      res.on("end", () => resolve({ status: res.statusCode ?? 0, body }));
-    }).on("error", reject).end();
-  });
-}
 
 vi.mock("../src/host/hostClient", () => {
   let current: Promise<HostClient> | null = null;
   return {
     getHost: () => {
-      current ??= connectWebSocket(
-        `${host.url}?token=${host.token}`,
-        WebSocket as unknown as WebSocketConstructor)
-        .then((t) => HostClient.connect(t, { name: "window" }));
+      current ??= HostClient.connect(
+        connectInProcess(core.connect()), { name: "window" });
       return current;
     },
     dropHost: () => { current = null; return Promise.resolve(); },
@@ -83,30 +63,17 @@ vi.mock("../src/host/hostClient", () => {
 
 beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), "scf-window-"));
-  // The host the way development runs it: started by the dev-server
-  // plugin, reached by the endpoint the page would use.
-  dev = await createServer({
-    configFile: false, root: join(__dirname, ".."), logLevel: "silent",
-    server: { port: 0, host: "127.0.0.1" },
-    plugins: [scfHostPlugin({ hostDir: false, roots: [dir] })],
+  core = createHostCore({
+    registry: loadRegistry(registryJson as unknown as RegistryJson),
+    roots: [dir],
   });
-  await dev.listen();
-  const port = (dev.httpServer!.address() as { port: number }).port;
-  for (let i = 0; i < 300; i += 1) {
-    const r = await fetchConnection(port);
-    if (r.status === 200) { host = JSON.parse(r.body) as typeof host; break; }
-    await new Promise((res) => setTimeout(res, 100));
-  }
-  if (host === undefined) throw new Error("the host never came up");
-  const t = await connectWebSocket(
-    `${host.url}?token=${host.token}`,
-    WebSocket as unknown as WebSocketConstructor);
-  other = await HostClient.connect(t, { name: "agent" });
-}, 120_000);
+  other = await HostClient.connect(
+    connectInProcess(core.connect()), { name: "agent" });
+});
 
 afterAll(async () => {
   await other.dispose();
-  await dev.close();
+  await core.shutdown();
   rmSync(dir, { recursive: true, force: true });
 });
 
