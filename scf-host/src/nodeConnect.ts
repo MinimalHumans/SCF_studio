@@ -13,6 +13,8 @@ import {
   defaultHostDir, readHostEntry, type HostEntry,
 } from "./registryFile.ts";
 
+export { ensureHost, type EnsureHostOptions } from "./ensureHost.ts";
+
 export interface ConnectOptions extends HostClientOptions {
   /** Discovery directory; defaults to the user's. */
   hostDir?: string;
