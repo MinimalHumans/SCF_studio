@@ -6,8 +6,11 @@ film and assemble a shot prompt without being handed a schema and told
 to write SQL.
 
 **Status: built.** `scf-mcp/` implements it; its tools are listed at the
-top of `scf-mcp/src/mcpServer.ts`. It publishes to npm at 0.x after
-`scf-core`, with no 1.0 stability promise (`release-checklist.md` §A10).
+top of `scf-mcp/src/mcpServer.ts`. Since 2026-10-19 it runs only inside
+the SCF Editor desktop app, one server per agent in the app's window,
+reached through the app's `scf mcp` pipe
+([`scf-write-ownership.md`](scf-write-ownership.md)); it is no longer a
+Node process, nor to be published to npm (`release-checklist.md` §A10).
 
 Written for Jesse as a proposal, checked against spec 0.51 / schema 2.13,
 when it sat post-MVP behind three unexercised Part 3 features (see
@@ -473,11 +476,9 @@ feature.
 
 ## 8. What stands in the way
 
-- **`scf-core` is `"private": true`** and held until 1.0, because npm
-  blocks unpublish after 72 hours. `scf-mcp` depends on
-  `file:../scf-core` in the repository, rewritten to a version range
-  when it is packed (`tools/pack_with_ranges.mjs`); nobody outside can
-  install it until both are published.
+- Nothing now: the server ships inside the desktop app, so it waits on
+  no npm publish. (It once did: `scf-core` is held until 1.0, and
+  `scf-mcp` was to follow it to npm.)
 
 ---
 

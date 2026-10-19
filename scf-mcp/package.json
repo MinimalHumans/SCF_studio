@@ -1,7 +1,7 @@
 {
   "name": "@minimalhumans/scf-mcp",
   "version": "0.1.0",
-  "description": "MCP server over a .scf file (docs/scf-mcp-design.md). Local stdio process; no hosting.",
+  "description": "The SCF MCP server's tools (docs/scf-mcp-design.md), served by the desktop app's window to agents through `scf mcp`.",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
@@ -10,29 +10,9 @@
     "url": "git+https://github.com/MinimalHumans/SCF_studio.git",
     "directory": "scf-mcp"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "bin": {
-    "scf-mcp": "./dist/server.js"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "NOTICE"
-  ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "start": "node scripts/start.mjs",
-    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "prepack": "node ../tools/legal_files.mjs copy && npm run build",
-    "postpack": "node ../tools/legal_files.mjs remove",
-    "pack:release": "node ../tools/pack_with_ranges.mjs pack",
-    "publish:release": "node ../tools/pack_with_ranges.mjs publish",
-    "prepublishOnly": "node ../tools/pack_with_ranges.mjs check"
+    "test": "vitest run"
   },
   "dependencies": {
     "@minimalhumans/scf-core": "file:../scf-core",

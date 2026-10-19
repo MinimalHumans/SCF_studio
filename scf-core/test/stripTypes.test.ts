@@ -2,11 +2,11 @@
 /**
  * scf-core's source must load under Node's type stripping.
  *
- * The MCP's launcher (`scf-mcp/scripts/start.mjs`) runs scf-core from
- * `src/` with no build, which only works while the source uses nothing
- * that needs compiling: no parameter properties (`constructor(readonly
- * x)`), enums, namespaces or decorators. `tsc` accepts all of those, so
- * it takes a real load to notice one.
+ * The package's scripts (`scripts/scf_check.mjs`, the emitters) run
+ * scf-core from `src/` with no build, which only works while the source
+ * uses nothing that needs compiling: no parameter properties
+ * (`constructor(readonly x)`), enums, namespaces or decorators. `tsc`
+ * accepts all of those, so it takes a real load to notice one.
  */
 
 import { describe, expect, test } from "vitest";

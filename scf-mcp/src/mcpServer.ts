@@ -3,8 +3,8 @@
  * mcpServer.ts — scf-mcp, an MCP server over `.scf` files
  * (docs/scf-mcp-design.md §5), on whatever platform it is given.
  *
- * `server.ts` runs it as a stdio process in Node; the desktop app runs
- * one in its window for each client its stdio pipe (`scf mcp`) brings.
+ * The desktop app runs one in its window for each agent its stdio pipe
+ * (`scf mcp`) brings.
  *
  * Tools:
  *   open          open (or switch to) a film, with optional root

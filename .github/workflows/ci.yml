@@ -228,14 +228,17 @@ jobs:
           cache: npm
           cache-dependency-path: scf-app/package-lock.json
 
-      # The editor's tests start a real host through the dev-server
-      # plugin, which loads scf-host and scf-core from source, so both
-      # need their dependencies installed.
+      # The window runs scf-host's core and scf-mcp's tools from source,
+      # so the editor's typecheck, tests and build need their
+      # dependencies, and scf-core's, installed.
       - run: npm ci
         working-directory: scf-core
 
       - run: npm ci
         working-directory: scf-host
+
+      - run: npm ci
+        working-directory: scf-mcp
 
       - run: npm ci
         working-directory: scf-app
@@ -312,8 +315,8 @@ jobs:
       - run: npm run build
         working-directory: scf-core
 
-      # scf-mcp is a client of scf-host (also a file dependency), and
-      # starts one on demand, so it must be built too.
+      # scf-mcp's tests run its tools on scf-host's core (also a file
+      # dependency).
       - run: npm ci
         working-directory: scf-host
 
@@ -325,20 +328,6 @@ jobs:
 
       - name: typecheck
         run: npm run typecheck
-        working-directory: scf-mcp
-
-      # The repository keeps file:../scf-core; a published package may
-      # not. Fails here, not on publish day, if the rewrite to a range
-      # could not be made (tools/pack_with_ranges.mjs).
-      - name: file dependencies rewrite to ranges
-        run: node ../tools/pack_with_ranges.mjs plan
-        working-directory: scf-mcp
-
-      # The smoke tests spawn dist/server.js. Without this build they
-      # do not fail — they skip, silently, and the suite reports
-      # nothing at all. test/smoke.test.ts now throws instead.
-      - name: build
-        run: npm run build
         working-directory: scf-mcp
 
       - name: test

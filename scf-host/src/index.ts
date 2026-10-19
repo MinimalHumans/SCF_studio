@@ -16,16 +16,8 @@ export {
 export { posixPaths, windowsPaths } from "./paths.ts";
 export { nodePlatform } from "./nodePlatform.ts";
 export { refuseQuery } from "./readGuard.ts";
-export { startHostServer, type HostServer, type HostServerOptions }
-  from "./server.ts";
 export {
-  defaultHostDir, readHostEntry, removeHostEntry, writeHostEntry,
-  type HostEntry,
-} from "./registryFile.ts";
-export { startHost, type RunningHost, type StartHostOptions } from "./host.ts";
-export {
-  HostClient, HostClientError, connectInProcess, connectWebSocket,
+  HostClient, HostClientError, connectInProcess,
   type CallOptions, type HostClientOptions, type HostTransport,
   type OpOptions,
-  type WebSocketConstructor, type WebSocketLike,
 } from "./client.ts";

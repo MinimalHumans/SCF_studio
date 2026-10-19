@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-//! `sql_exec` over a loopback WebSocket, for the window.
+//! The window's statements (`sql.rs`) over a loopback WebSocket.
 //!
-//! The same statements as the `sql_exec` command (`sql.rs`), on a
-//! faster road: on Windows a Tauri `invoke` costs about a millisecond,
+//! Not commands: on Windows a Tauri `invoke` costs about a millisecond,
 //! and scf-core awaits every statement, so a script import of a few
 //! thousand statements spent seconds in transit. A socket the window
 //! keeps open answers in a fraction of that. Opening and closing a
-//! database stay commands; only the hot path moves.
+//! database stay commands; only the hot path is here.
 //!
 //!   → { "id": 1, "db": 1, "sql": "…", "params": [] }
 //!   ← { "id": 1, "columns": [], "rows": [] }  or  { "id": 1, "error": "…" }

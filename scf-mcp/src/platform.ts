@@ -3,10 +3,10 @@
  * platform.ts — what the MCP server needs from wherever it runs.
  *
  * The tools are the same everywhere; how they reach the host, the disk
- * and a log is not. In Node (`nodePlatform.ts`) the host is found or
- * started over its socket and files are Node's. In the desktop app the
- * server runs in the window, beside the host, and its client's working
- * directory is the stdio pipe's, not the window's.
+ * and a log is not. In the desktop app the server runs in the window,
+ * beside the host (scf-app `src/mcp/windowMcp.ts`), and its client's
+ * working directory is the stdio pipe's, not the window's. The tests run
+ * it on Node's files (`nodePlatform.ts`).
  */
 
 import type { FileLocator } from "@minimalhumans/scf-core";

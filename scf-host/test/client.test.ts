@@ -1,16 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import WebSocket from "ws";
 import {
-  HostClient, HostClientError, connectInProcess, connectWebSocket,
-  createHostCore, startHost,
-  type HostEvent, type HostTransport, type RunningHost,
-  type WebSocketConstructor,
+  HostClient, HostClientError, connectInProcess, createHostCore,
+  type HostEvent, type HostTransport,
 } from "../src/index.ts";
-import { connectToHost } from "../src/nodeConnect.ts";
 import { makeWorkspace, registry, type Workspace } from "./helpers.ts";
 
 let ws: Workspace;
@@ -119,80 +112,11 @@ function contract(label: string, setup: () => Promise<{
   });
 }
 
-let sockHost: RunningHost;
-let sockDir: string;
-contract("a WebSocket (ws)", async () => {
-  sockDir = mkdtempSync(join(tmpdir(), "scf-host-dir-"));
-  sockHost = await startHost({ hostDir: sockDir });
-  return {
-    make: async (name) => HostClient.connect(
-      await connectWebSocket(`${sockHost.url}?token=${sockHost.token}`,
-        WebSocket as unknown as WebSocketConstructor), { name }),
-    teardown: async () => {
-      await sockHost.stop();
-      rmSync(sockDir, { recursive: true, force: true });
-    },
-  };
-});
-
-contract("the platform WebSocket", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "scf-host-dir-"));
-  const host = await startHost({ hostDir: dir });
-  return {
-    make: async (name) => HostClient.connect(
-      await connectWebSocket(`${host.url}?token=${host.token}`), { name }),
-    teardown: async () => {
-      await host.stop();
-      rmSync(dir, { recursive: true, force: true });
-    },
-  };
-});
-
 contract("an in-process transport (no socket)", () => {
   const core = createHostCore({ registry });
   return Promise.resolve({
     make: (name) => HostClient.connect(
       inProcessTransport(core).transport, { name }),
     teardown: () => core.shutdown(),
-  });
-});
-
-describe("connecting", () => {
-  test("a Node client finds the host through the discovery file", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "scf-host-dir-"));
-    const host = await startHost({ hostDir: dir });
-    try {
-      const c = await connectToHost({ hostDir: dir, name: "mcp" });
-      expect((await c.status()).current).toBeNull();
-      await c.dispose();
-    } finally {
-      await host.stop();
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
-  test("no host running is a clear error", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "scf-host-dir-"));
-    await expect(connectToHost({ hostDir: dir, name: "x" }))
-      .rejects.toThrow("no SCF host is running");
-    rmSync(dir, { recursive: true, force: true });
-  });
-
-  test("a refused connection rejects instead of hanging", async () => {
-    await expect(connectWebSocket("ws://127.0.0.1:1/",
-      WebSocket as unknown as WebSocketConstructor)).rejects
-      .toMatchObject({ code: "disconnected" });
-  });
-
-  test("when the host goes away, pending and later calls fail clearly",
-      async () => {
-    const dir = mkdtempSync(join(tmpdir(), "scf-host-dir-"));
-    const host = await startHost({ hostDir: dir });
-    const c = await connectToHost({ hostDir: dir, name: "x" });
-    const closed = new Promise<string>((r) => c.onClose(r));
-    await host.stop();
-    await closed;
-    await expect(c.status()).rejects.toMatchObject({ code: "disconnected" });
-    rmSync(dir, { recursive: true, force: true });
   });
 });

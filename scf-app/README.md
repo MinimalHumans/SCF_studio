@@ -85,15 +85,21 @@ nothing.
 ## Architecture
 
 ```
-browser window                             host process (scf-host)
-──────────────                             ───────────────────────
-React UI (registry-driven)
+window (WebView)                           in the same window
+────────────────                           ──────────────────
+React UI (registry-driven)                 host core (scf-host core.ts)
    │ reads:  exec(sql)  ───────────────►   read-only connection
    │ writes: call(name, ...args) ──────►   scf-core call table, one write
    │                                       queue per file, then the .scf
 Zustand store (state/store.ts)             ◄── revision events (also for
-   │                                           the MCP's writes)
-HostClient (@scf-host/client)  ── WebSocket on 127.0.0.1, token + Origin
+   │                                           agents' writes)
+HostClient (@scf-host/client)  ── in-process (connectInProcess)
+                                           MCP servers (src/mcp/), one
+                                           per `scf mcp` pipe, also its
+                                           clients
+shell (src-tauri/)
+──────────────────
+SQLite (rusqlite) over a loopback socket, files, the `scf mcp` relay
 ```
 
 - **Write-through.** Every change is in the `.scf` as soon as it is
@@ -118,8 +124,9 @@ HostClient (@scf-host/client)  ── WebSocket on 127.0.0.1, token + Origin
   two windows would each commit their own copy of the script over the
   other's.
 - **Transport is swappable.** `HostClient` talks to a `HostTransport`;
-  the WebSocket is one implementation, and a desktop shell would supply
-  another without touching a view.
+  the window's is in-process, and the tests give the same core on
+  Node's files and SQLite (`test/windowOnHost.test.ts`) without touching
+  a view.
 
 ## Patterns worth knowing before changing anything
 

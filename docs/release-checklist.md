@@ -102,7 +102,7 @@ proposals carry their resolutions; the work the decisions create is
 | ✅ | 7 | **One schema bump, not four.** | **2.23 is the release schema** *(2.24 since 2026-10-16 — see the top)*, carrying every registry change in this table — the clip rename, `act_id`, `queries` and the `audio_offset_*` help text. `project.synopsis` already shipped on its own as **2.22** (§A14), tagged before this pass settled the numbering; that tag stays as published rather than being reused, so the release batch is 2.23. Numbering stays `2.x`; no 3.0. |
 | ✅ | 8 | **The schema floor.** §0.6's "2.12 and later" is false. | §0.6 says the spec describes **exactly schema 2.23** — no "and later". Later compatible 2.x revisions are governed by §11, not by the floor sentence. |
 | ✅ | 9 | **`entity_anchor.audio_offset_*` has no stated meaning.** | **Specified, matching what the editor already enforces** (`mediaOps.ts`): non-negative seconds from the start of the asset's playable audio (t = 0 at the first sample); the span is start-inclusive, end-exclusive, and end MUST exceed start; a null bound is open (null start = from the beginning, null end = to the end, both null = the whole recording); meaningless on an asset without audio, where a reader MUST ignore them. In the help text and in §12.8. |
-| ✅ | 10 | **Does 1.0 include the editor?** | **No.** 1.0 is the format, its artifacts and `scf-core`; the editor ships as the reference editor on its own version line. **`scf-mcp` is published to npm at 0.x** after `scf-core`, with a version range on it and no 1.0 stability promise. `editor-mvp.md` §9 should say so. |
+| ✅ | 10 | **Does 1.0 include the editor?** | **No.** 1.0 is the format, its artifacts and `scf-core`; the editor ships as the reference editor on its own version line. **`scf-mcp` is published to npm at 0.x** after `scf-core`, with a version range on it and no 1.0 stability promise. `editor-mvp.md` §9 should say so. **Changed 2026-10-19:** the MCP now runs only inside the desktop app (its `scf mcp` pipe), so `scf-mcp` is not published; the range rewrite (`pack_with_ranges.mjs`) was removed with it. |
 | ✅ | 11 | **The night kitchen (D2).** Scenes 10 and 19 (night, winter) tie the night variant (time) against the morning baseline (season), and the tie gives a night scene morning dressing. | **The rule changes, not the fixture.** §12.17 compares the axes in order — `time_of_day`, then weather, then season — instead of counting them equally; the baseline still breaks a full tie and still wins when nothing agrees, and `varies` still agrees on time. Scenes 10 and 19 then resolve the night variant; scene 12 is unchanged. Normative: `resolution.ts`, §12.17's text, re-bless Q04. |
 | ✅ | 12 | **An unknown `line_type` raises no finding (D4).** | **A finding: `line.type_unknown`, severity error** — a writer broke a MUST NOT. The line is kept as unknown content; the finding names its uuid and the value. §1.3.1's "no finding is raised" sentence is replaced — its own reasoning, a wrong answer given in silence, is the case for the finding. |
 | ✅ | 13 | **RC or straight to 1.0.** | **RC first, always.** Tag `spec-1.0-rc.1`, keep §11.0, hold npm, run D1 against the candidate, then cut 1.0. |
@@ -587,9 +587,8 @@ booleans stay the stored 0/1, now stated (M2).
    new schema version, its `schema-X.Y` on the same commit. No existing
    tag moves. Then `check_pin.py --strict`.
 5. ○ 🔒 `npm publish --access public` for `scf-core`, after `pack-test`
-   confirms the licence is in the tarball. Then `scf-mcp` **at 0.x**,
-   with **`npm run publish:release`**, which publishes it depending on
-   `scf-core` by version range (§A10, §B6).
+   confirms the licence is in the tarball. (`scf-mcp` is no longer
+   published: it ships inside the desktop app, §A10.)
 6. ○ A GitHub Release: notes from the CHANGELOG, the manifest's files
    and `SHA256SUMS` attached.
 7. ○ Pages rebuilt from the tag.

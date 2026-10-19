@@ -1,7 +1,7 @@
 {
   "name": "@minimalhumans/scf-app",
   "version": "0.1.0",
-  "description": "The SCF reference editor. Local-first, Chromium-first; files are served by one local host process.",
+  "description": "The SCF reference editor: a local-first desktop app whose window owns its files and serves the MCP.",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -32,13 +32,11 @@
     "@types/node": "^26.1.1",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
-    "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^4.3.0",
     "jsdom": "^29.1.1",
     "typescript": "^5.5.0",
     "vite": "^5.4.0",
-    "vitest": "^4.1.10",
-    "ws": "^8.22.0"
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=22.0.0"

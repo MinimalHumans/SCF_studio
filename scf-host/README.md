@@ -1,27 +1,24 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # scf-host
 
-The one process that opens `.scf` files. The editor window and the MCP are
-both clients of it, so a film open in both is one session with one write
-queue; see [`docs/scf-write-ownership.md`](../docs/scf-write-ownership.md)
+The one owner of each open `.scf`. The editor and every agent's MCP
+server are clients of it, so a film open in both is one session with one
+write queue; see [`docs/scf-write-ownership.md`](../docs/scf-write-ownership.md)
 for why and what was decided.
 
+It is a core, not a process: the desktop app's window runs it
+(`scf-app/src/host/windowHost.ts`) on the files and SQLite its shell
+provides, and its clients reach it in-process. Here it also runs on
+Node's (`src/nodePlatform.ts`), which is what the tests use.
+
 ```
-npm start            # run a host in the foreground (needs `npm run build`)
 npm test
 ```
 
-In development you do not start it: `npm run dev` in `scf-app` runs a host
-inside the dev server. The MCP finds the running host, or starts one
-if none is (`src/ensureHost.ts`); a host started so exits by itself a
-while after its last client leaves. The desktop app needs no host
-process: its window runs the same core (`src/core.ts`) on the shell's
-files and SQLite, and serves the MCP itself.
-
 ## What a client can ask
 
-A request is `{id, method, params}` over a loopback WebSocket
-(`src/protocol.ts` has the types; they import nothing from Node).
+A request is a method and its params (`src/protocol.ts` has the types;
+they import nothing from Node).
 
 | Method | Does |
 |---|---|
@@ -43,30 +40,23 @@ cannot be taken, the write is refused.
 
 ## Pieces
 
-- `src/hostCore.ts` — the host without a transport: `connect()`, then
-  `handle(method, params)`. A WebSocket, a test, or one day Tauri's
-  `invoke()` all drive this object.
-- `src/server.ts` — the loopback door: `127.0.0.1` only, `Host` and
-  `Origin` checks, a constant-time token check, then one JSON request per
-  frame.
-- `src/client.ts` — `HostClient` (`@minimalhumans/scf-host/client`), browser
-  and Node. It talks to a `HostTransport`; the WebSocket is one
-  implementation, and `connectInProcess` another, for a client in the
-  same page as its core. `src/nodeConnect.ts` finds a running host;
-  `src/ensureHost.ts` starts one if none is.
-- `src/registryFile.ts` — the user-only discovery file (port, token, pid) in
-  `~/.scf-host` or `$SCF_HOST_DIR`, with snapshots, the journal and
-  `host.log`.
-- `src/serve.ts` — the `scf-host` command (`--idle-exit` for a host started
-  on demand).
+- `src/core.ts` — the host: `connect()`, then `handle(method, params)`.
+  Imports nothing from Node; its files, SQLite and paths come from a
+  `HostPlatform` (`src/platform.ts`).
+- `src/paths.ts` — path spelling for Windows and POSIX without
+  `node:path`, for the window.
+- `src/nodePlatform.ts`, `src/hostCore.ts` — the same core on Node, for
+  tests.
+- `src/client.ts` — `HostClient` (`@minimalhumans/scf-host/client`),
+  browser and Node. It talks to a `HostTransport`; `connectInProcess`
+  is the one there is, a client in the same page as its core.
 
 ## Settings
 
-| | |
-|---|---|
-| `SCF_HOST_DIR` | Where the host keeps its files. Default `~/.scf-host`. |
-| `SCF_HOST_ROOTS` | Folders clients may browse and create files in (path-delimited). Default: the user's home. The dev server adds the repository's `fixtures/` and `templates/`. |
-| `SCF_HOST_IDLE_EXIT_MS`, `SCF_HOST_START_TIMEOUT_MS` | For a host started on demand (by the MCP): when it exits unused, and how long to wait for it to come up (raise it on a slow disk). |
+The window's host takes its roots from `SCF_HOST_ROOTS` (a
+path-delimited list), or else the user's home, plus the checkout's
+`fixtures/` and `templates/` in a debug build. Snapshots and the journal
+are kept in the app's data folder.
 
 ## Limits
 

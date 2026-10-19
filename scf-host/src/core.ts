@@ -4,8 +4,8 @@
  *
  * Owns every open `.scf`: one write session and one read-only connection
  * per file, shared by every client that has it open. A client is a
- * `HostConnection`; the WebSocket server, a test, and the desktop app's
- * window all drive the same object by calling `handle()` and listening
+ * `HostConnection`; the desktop app's window, its MCP servers and the
+ * tests all drive the same object by calling `handle()` and listening
  * for events.
  *
  * Files, SQLite and paths come from a `HostPlatform` (platform.ts), so
