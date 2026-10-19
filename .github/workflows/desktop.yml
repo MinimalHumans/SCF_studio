@@ -92,9 +92,32 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: install trusted-signing-cli
+      # signtool plus Microsoft's Artifact Signing dlib, which takes its
+      # credential from the azure/login session above (no client secret).
+      - name: set up signtool
         if: github.ref == 'refs/heads/tauri'
-        run: cargo install trusted-signing-cli --locked
+        shell: pwsh
+        run: |
+          nuget install Microsoft.Trusted.Signing.Client -Version 1.0.60 -x -OutputDirectory "$env:RUNNER_TEMP/signing"
+          $dlib = (Resolve-Path "$env:RUNNER_TEMP/signing/Microsoft.Trusted.Signing.Client/bin/x64/Azure.CodeSigning.Dlib.dll").Path
+          $signtool = (Get-ChildItem "${env:ProgramFiles(x86)}/Windows Kits/10/bin/10.*/x64/signtool.exe" |
+            Sort-Object FullName | Select-Object -Last 1).FullName
+          $metadata = "$env:RUNNER_TEMP/signing/metadata.json"
+          @{
+            Endpoint               = $env:SIGNING_ENDPOINT
+            CodeSigningAccountName = $env:SIGNING_ACCOUNT
+            CertificateProfileName = $env:SIGNING_PROFILE
+          } | ConvertTo-Json | Set-Content $metadata
+
+          # tauri splits signCommand on spaces, so it calls a script
+          # that reads these from the environment.
+          'if (-not $args[0]) { throw "no file to sign" }',
+          '& $env:SIGNTOOL sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib $env:SIGNING_DLIB /dmdf $env:SIGNING_METADATA $args[0]',
+          'if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }' | Set-Content "$env:RUNNER_TEMP/signing/sign.ps1"
+
+          "SIGNTOOL=$signtool" >> $env:GITHUB_ENV
+          "SIGNING_DLIB=$dlib" >> $env:GITHUB_ENV
+          "SIGNING_METADATA=$metadata" >> $env:GITHUB_ENV
 
       # beforeBuildCommand builds the page first. With signCommand set,
       # tauri signs scf-editor.exe before bundling it, then the
@@ -103,7 +126,7 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ github.ref }}" -eq "refs/heads/tauri") {
-            $cmd = "trusted-signing-cli -e $env:SIGNING_ENDPOINT -a $env:SIGNING_ACCOUNT -c $env:SIGNING_PROFILE -d `"SCF Editor`" %1"
+            $cmd = "pwsh -NoProfile -File $env:RUNNER_TEMP/signing/sign.ps1 %1"
             $config = @{ bundle = @{ windows = @{ signCommand = $cmd } } } | ConvertTo-Json -Compress -Depth 5
             npm run tauri build -- --config $config
           } else {
