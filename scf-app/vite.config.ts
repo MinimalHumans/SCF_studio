@@ -36,9 +36,17 @@ function gitCommit(): string {
 // the core package until it publishes (design decision 6).
 export default defineConfig({
   plugins: [react()],
-  // Cargo's build output is no page's business, and a file it is still
-  // writing stops the watcher (EBUSY on Windows) and with it the server.
-  server: { watch: { ignored: ["**/src-tauri/**"] } },
+  server: {
+    // Cargo's build output is no page's business, and a file it is still
+    // writing stops the watcher (EBUSY on Windows) and with it the server.
+    watch: { ignored: ["**/src-tauri/**"] },
+    // The page loads its sibling packages as source (the aliases below);
+    // Vite serves nothing outside this one unless told it may.
+    fs: {
+      allow: [here, ...["scf-core", "scf-host", "scf-mcp"]
+        .map((p) => resolve(here, "..", p))],
+    },
+  },
   resolve: {
     // scf-mcp's own copies would be found from its files; one of each.
     dedupe: ["@modelcontextprotocol/sdk", "zod"],
