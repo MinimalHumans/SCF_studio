@@ -89,7 +89,13 @@ jobs:
           $release = "scf-app/src-tauri/target/release"
           $setup = Get-ChildItem "$release/bundle/nsis/*-setup.exe" | Select-Object -First 1
 
-          New-Item -ItemType Directory -Force "out/$name/portable" | Out-Null
+          # The licences go at the top and in portable/, where the
+          # installer would have put them (tauri.conf.json resources).
+          foreach ($dir in "out/$name", "out/$name/portable") {
+            New-Item -ItemType Directory -Force "$dir/LICENSES" | Out-Null
+            Copy-Item LICENSE, NOTICE $dir
+            Copy-Item scf-app/src-tauri/binaries/node-LICENSE "$dir/LICENSES/node.txt"
+          }
           Copy-Item $setup.FullName "out/$name/"
           Copy-Item "$release/scf-editor.exe", "$release/scf.exe" "out/$name/portable/"
           Compress-Archive -Path "out/$name/*" -DestinationPath "out/$name.zip"
