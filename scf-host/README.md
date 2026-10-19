@@ -12,11 +12,11 @@ npm test
 ```
 
 In development you do not start it: `npm run dev` in `scf-app` runs a host
-inside the dev server. The MCP and the desktop app find the running
-host, or start one if none is, the same way (`src/ensureHost.ts`), so
-whichever comes first starts it and the other joins; a host started so
-exits by itself a while after its last client leaves. Every host admits
-the desktop app's window (`DESKTOP_ORIGINS` in `src/host.ts`).
+inside the dev server. The MCP finds the running host, or starts one
+if none is (`src/ensureHost.ts`); a host started so exits by itself a
+while after its last client leaves. The desktop app needs no host
+process: its window runs the same core (`src/core.ts`) on the shell's
+files and SQLite, and serves the MCP itself.
 
 ## What a client can ask
 
@@ -51,9 +51,9 @@ cannot be taken, the write is refused.
   frame.
 - `src/client.ts` — `HostClient` (`@minimalhumans/scf-host/client`), browser
   and Node. It talks to a `HostTransport`; the WebSocket is one
-  implementation. `src/nodeConnect.ts` finds a running host;
-  `src/ensureHost.ts` starts one if none is, and `src/locate.ts` does
-  that for a client that is not Node (the desktop app's shell).
+  implementation, and `connectInProcess` another, for a client in the
+  same page as its core. `src/nodeConnect.ts` finds a running host;
+  `src/ensureHost.ts` starts one if none is.
 - `src/registryFile.ts` — the user-only discovery file (port, token, pid) in
   `~/.scf-host` or `$SCF_HOST_DIR`, with snapshots, the journal and
   `host.log`.
@@ -66,7 +66,7 @@ cannot be taken, the write is refused.
 |---|---|
 | `SCF_HOST_DIR` | Where the host keeps its files. Default `~/.scf-host`. |
 | `SCF_HOST_ROOTS` | Folders clients may browse and create files in (path-delimited). Default: the user's home. The dev server adds the repository's `fixtures/` and `templates/`. |
-| `SCF_HOST_IDLE_EXIT_MS`, `SCF_HOST_START_TIMEOUT_MS` | For a host started on demand (by the MCP or the desktop app): when it exits unused, and how long to wait for it to come up (raise it on a slow disk). |
+| `SCF_HOST_IDLE_EXIT_MS`, `SCF_HOST_START_TIMEOUT_MS` | For a host started on demand (by the MCP): when it exits unused, and how long to wait for it to come up (raise it on a slow disk). |
 
 ## Limits
 

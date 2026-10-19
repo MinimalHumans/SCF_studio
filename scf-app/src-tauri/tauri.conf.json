@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "npm run build && npm run build:sidecar",
+    "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -38,11 +38,9 @@
     "active": true,
     "targets": ["nsis"],
     "publisher": "Minimal Humans",
-    "externalBin": ["binaries/scf"],
     "resources": {
       "../../LICENSE": "LICENSE",
-      "../../NOTICE": "NOTICE",
-      "binaries/node-LICENSE": "LICENSES/node.txt"
+      "../../NOTICE": "NOTICE"
     },
     "icon": [
       "icons/32x32.png",
