@@ -1,0 +1,122 @@
+# SPDX-License-Identifier: Apache-2.0
+# The desktop app, built for Windows.
+#
+# Separate from ci.yml because it publishes: every push to the branch
+# replaces one rolling prerelease, `desktop-latest`, with the NSIS
+# installer and a zip holding that installer plus a portable copy (the
+# window and its `scf` sidecar, side by side, uninstalled). The same
+# files are also kept as a workflow artifact for each run.
+#
+# Restricted to the `tauri` branch for now. Release tags come later.
+
+name: Desktop
+
+on:
+  push:
+    branches: [tauri]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# A newer push makes an older build pointless.
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # This is also the Node that ships: buildSidecar.mjs injects the Node
+  # running it into the sidecar, so it needs node:sqlite (22.5+).
+  NODE_VERSION: "24"
+  RELEASE_TAG: desktop-latest
+
+jobs:
+  windows:
+    name: Windows installer and portable zip
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            scf-core/package-lock.json
+            scf-host/package-lock.json
+            scf-mcp/package-lock.json
+            scf-app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: scf-app/src-tauri
+
+      # The sidecar bundles scf-host and scf-mcp from source, and those
+      # depend on scf-core by file path, so all four need dependencies;
+      # core and host are built as in ci.yml's mcp job.
+      - run: npm ci
+        working-directory: scf-core
+
+      - run: npm run build
+        working-directory: scf-core
+
+      - run: npm ci
+        working-directory: scf-host
+
+      - run: npm run build
+        working-directory: scf-host
+
+      - run: npm ci
+        working-directory: scf-mcp
+
+      - run: npm ci
+        working-directory: scf-app
+
+      # beforeBuildCommand builds the page and the sidecar first.
+      - name: tauri build
+        run: npm run tauri build
+        working-directory: scf-app
+
+      - name: package
+        id: package
+        shell: pwsh
+        run: |
+          $version = (Get-Content scf-app/package.json | ConvertFrom-Json).version
+          $sha = "${{ github.sha }}".Substring(0, 7)
+          $name = "SCF-Editor-$version-win-x64-$sha"
+          $release = "scf-app/src-tauri/target/release"
+          $setup = Get-ChildItem "$release/bundle/nsis/*-setup.exe" | Select-Object -First 1
+
+          New-Item -ItemType Directory -Force "out/$name/portable" | Out-Null
+          Copy-Item $setup.FullName "out/$name/"
+          Copy-Item "$release/scf-editor.exe", "$release/scf.exe" "out/$name/portable/"
+          Compress-Archive -Path "out/$name/*" -DestinationPath "out/$name.zip"
+
+          # Release assets cannot carry spaces in their names.
+          Copy-Item $setup.FullName "out/SCF-Editor-$version-x64-setup.exe"
+
+          "name=$name" >> $env:GITHUB_OUTPUT
+          "setup=out/SCF-Editor-$version-x64-setup.exe" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: out/${{ steps.package.outputs.name }}/
+
+      # Delete and recreate rather than edit, so the tag moves to this
+      # commit and the old assets go with it.
+      - name: replace the desktop-latest prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete "$RELEASE_TAG" --cleanup-tag --yes || true
+          gh release create "$RELEASE_TAG" \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Desktop (latest ${GITHUB_REF_NAME} build)" \
+            --notes "Unsigned Windows build of ${GITHUB_SHA::7} on \`${GITHUB_REF_NAME}\`. Replaced on every push; not a release." \
+            "out/${{ steps.package.outputs.name }}.zip" \
+            "${{ steps.package.outputs.setup }}"
