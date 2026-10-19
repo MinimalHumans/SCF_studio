@@ -15,8 +15,6 @@
 
 mod files;
 mod mcp_relay;
-#[cfg(any(debug_assertions, feature = "spike"))]
-mod spike;
 mod sql;
 mod sql_socket;
 mod token;
@@ -187,38 +185,9 @@ pub fn run() {
                 }
             }
         });
-    #[cfg(any(debug_assertions, feature = "spike"))]
     let builder = builder.invoke_handler(tauri::generate_handler![
         host_setup,
         sql::sql_open,
-        sql::sql_exec,
-        sql::sql_close,
-        sql::sql_reset,
-        mcp_relay::mcp_listen,
-        mcp_relay::mcp_send,
-        mcp_relay::mcp_close,
-        sql::file_fingerprint,
-        sql_socket::sql_socket,
-        files::fs_windows,
-        files::fs_real,
-        files::fs_exists,
-        files::fs_read_dir,
-        files::fs_stat,
-        files::fs_read_text,
-        files::fs_write_text,
-        files::fs_append_text,
-        files::fs_create_file,
-        files::fs_mkdir,
-        files::fs_remove,
-        spike::spike_setup,
-        spike::spike_copy,
-        spike::spike_report,
-    ]);
-    #[cfg(not(any(debug_assertions, feature = "spike")))]
-    let builder = builder.invoke_handler(tauri::generate_handler![
-        host_setup,
-        sql::sql_open,
-        sql::sql_exec,
         sql::sql_close,
         sql::sql_reset,
         mcp_relay::mcp_listen,

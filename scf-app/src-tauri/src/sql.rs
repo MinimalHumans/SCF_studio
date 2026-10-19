@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-//! SQLite for the window: the `SqlExec` seam (scf-core `db.ts`) as Tauri
-//! commands, so scf-core can run in the window against the `.scf` itself.
+//! SQLite for the window: the `SqlExec` seam (scf-core `db.ts`), so
+//! scf-core can run in the window against the `.scf` itself. Opening and
+//! closing are commands; the statements go over `sql_socket.rs`.
 //!
 //! A connection is a number the window holds. Values cross as JSON the
 //! way the host's protocol already spells them (`SqlJson`): strings,
@@ -134,16 +135,6 @@ pub async fn sql_open(
         .unwrap()
         .insert(id, Arc::new(Mutex::new(conn)));
     Ok(id)
-}
-
-#[tauri::command]
-pub async fn sql_exec(
-    state: tauri::State<'_, Databases>,
-    db: u32,
-    sql: String,
-    params: Vec<Json>,
-) -> Result<Rows, String> {
-    state.exec(db, &sql, params)
 }
 
 #[tauri::command]

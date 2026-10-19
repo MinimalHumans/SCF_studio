@@ -2,8 +2,8 @@
 /**
  * hostCore.ts — the host core (core.ts) on Node's files and SQLite.
  *
- * What the `scf-host` process, the dev server and the tests run. The
- * desktop app's window runs `core.ts` on a platform of its own.
+ * What the tests run. The desktop app's window runs `core.ts` on a
+ * platform of its own.
  */
 
 import {

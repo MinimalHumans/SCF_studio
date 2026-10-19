@@ -111,18 +111,9 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
     ("scf-app tests", [NPM, "test"], "scf-app", False),
     ("scf-app builds", [NPM, "run", "build"], "scf-app", True),
 
-    # scf-mcp's smoke tests spawn the BUILT server, so the build is a
-    # dependency of the tests rather than a separate proof. Both were
-    # outside this list and outside CI until 0.55: the package was
-    # merged into main with nothing running its tests anywhere.
+    # The tools the desktop window serves, on a host core in-process.
     ("scf-mcp typechecks", [NPM, "run", "typecheck"], "scf-mcp", False),
-    # The repository keeps `file:../scf-core`; only what is published may
-    # not. This fails now, rather than on publish day, if the rewrite to a
-    # version range could not be made (tools/pack_with_ranges.mjs).
-    ("scf-mcp's file: dependencies rewrite to ranges",
-     ["node", "../tools/pack_with_ranges.mjs", "plan"], "scf-mcp", False),
-    ("scf-mcp builds", [NPM, "run", "build"], "scf-mcp", True),
-    ("scf-mcp tests", [NPM, "test"], "scf-mcp", True),
+    ("scf-mcp tests", [NPM, "test"], "scf-mcp", False),
 
     # --- site ---
     ("the docs site builds and its cross-references resolve",

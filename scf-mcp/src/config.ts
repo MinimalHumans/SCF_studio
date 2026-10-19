@@ -37,11 +37,11 @@ interface ConfigFile {
 }
 
 export const USAGE =
-  "usage: scf-mcp [--scf <path>] [--root name=path ...] " +
+  "usage: scf mcp [--scf <path>] [--root name=path ...] " +
   "[--config <path>] [--read-only]\n" +
   "  --read-only offers no write tools (also SCF_MCP_READ_ONLY=1).\n" +
-  "  --scf/--root set the default project; every tool also accepts " +
-  "its own scfPath.\n";
+  "  --scf/--root open a film at the start, as the `open` tool " +
+  "would.\n";
 
 /** The arguments are wrong; the message says how, `USAGE` the rest. */
 export class ConfigError extends Error {

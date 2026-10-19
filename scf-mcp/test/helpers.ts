@@ -68,11 +68,11 @@ export async function startServer(
     args: string[], configDir: string = mkdtempSync(
       join(tmpdir(), "scf-mcp-test-")),
     elicit?: Elicit): Promise<Server> {
-  const platform: McpPlatform = {
-    ...makeNodePlatform({ configStore: makeNodeConfigStore(configDir) }),
+  const platform: McpPlatform = makeNodePlatform({
     connect: (name) =>
       HostClient.connect(connectInProcess(core.connect()), { name }),
-  };
+    configStore: makeNodeConfigStore(configDir),
+  });
   const config = await parseConfig(args, {
     readText: platform.readText, resolve: platform.resolve,
   });

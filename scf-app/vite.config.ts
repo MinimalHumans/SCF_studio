@@ -6,7 +6,6 @@ import { dirname, resolve } from "node:path";
 
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { scfHostPlugin } from "./tools/scfHostPlugin";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -36,7 +35,7 @@ function gitCommit(): string {
 // scf-core is consumed as TypeScript source via alias — no build step for
 // the core package until it publishes (design decision 6).
 export default defineConfig({
-  plugins: [react(), scfHostPlugin()],
+  plugins: [react()],
   // Cargo's build output is no page's business, and a file it is still
   // writing stops the watcher (EBUSY on Windows) and with it the server.
   server: { watch: { ignored: ["**/src-tauri/**"] } },

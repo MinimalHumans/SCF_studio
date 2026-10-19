@@ -4,10 +4,10 @@
  *
  * Browser-safe: no Node imports, and the only thing it knows about the
  * wire is `HostTransport`, a request/response pipe with pushed events.
- * Two implementations are below: a WebSocket to a host process, and a
- * direct line to a host core in the same page, which is how the desktop
- * app's window reaches the host it runs itself. Nothing above the
- * transport — views, tools, tests — knows which it has.
+ * The one implementation is a direct line to a host core in the same
+ * page (`connectInProcess`), which is how the desktop app's window, its
+ * MCP servers and the tests reach the host. Nothing above the transport
+ * knows that.
  *
  * What the client offers is deliberately small and matches how the
  * codebase already works:
@@ -37,7 +37,7 @@ export interface HostTransport {
   request(method: string, params: unknown): Promise<unknown>;
   /** Events pushed by the host. Returns an unsubscribe function. */
   onEvent(listener: (event: HostEvent) => void): () => void;
-  /** The pipe is gone (host exited, socket dropped). */
+  /** The pipe is gone (the host shut down). */
   onClose(listener: (reason: string) => void): () => void;
   close(): Promise<void>;
 }
@@ -58,94 +58,7 @@ export class HostClientError extends Error {
   }
 }
 
-/** The part of the WebSocket API the adapter uses (browser, Node, `ws`). */
-export interface WebSocketLike {
-  readonly readyState: number;
-  send(data: string): void;
-  close(): void;
-  addEventListener(type: "open" | "close" | "error" | "message",
-                   listener: (ev: never) => void): void;
-}
-export type WebSocketConstructor = new (url: string) => WebSocketLike;
-
-const OPEN = 1;
-
-export function connectWebSocket(
-    url: string, WS: WebSocketConstructor = globalThis.WebSocket as
-      unknown as WebSocketConstructor): Promise<HostTransport> {
-  return new Promise((resolve, reject) => {
-    const sock = new WS(url);
-    const pending = new Map<number, {
-      resolve: (v: unknown) => void; reject: (e: Error) => void;
-    }>();
-    const events = new Set<(e: HostEvent) => void>();
-    const closers = new Set<(reason: string) => void>();
-    let next = 1;
-    let opened = false;
-    let closed = false;
-
-    const dropAll = (reason: string): void => {
-      if (closed) return;
-      closed = true;
-      const err = new HostClientError("disconnected", reason);
-      for (const p of pending.values()) p.reject(err);
-      pending.clear();
-      for (const l of closers) l(reason);
-    };
-
-    sock.addEventListener("open", () => {
-      opened = true;
-      resolve({
-        request: (method, params) => {
-          if (closed || sock.readyState !== OPEN) {
-            return Promise.reject(new HostClientError(
-              "disconnected", "the host connection is closed"));
-          }
-          const id = next++;
-          return new Promise((res, rej) => {
-            pending.set(id, { resolve: res, reject: rej });
-            sock.send(JSON.stringify({ id, method, params }));
-          });
-        },
-        onEvent: (l) => { events.add(l); return () => { events.delete(l); }; },
-        onClose: (l) => { closers.add(l); return () => { closers.delete(l); }; },
-        close: () => {
-          sock.close();
-          dropAll("closed by the client");
-          return Promise.resolve();
-        },
-      });
-    });
-    sock.addEventListener("message", ((ev: { data: unknown }) => {
-      const m = JSON.parse(String(ev.data)) as HostResponse | HostEvent;
-      if ("event" in m) {
-        for (const l of events) l(m);
-        return;
-      }
-      const p = pending.get(m.id);
-      if (p === undefined) return;
-      pending.delete(m.id);
-      if (m.ok) p.resolve(m.result);
-      else {
-        p.reject(new HostClientError(m.error.code, m.error.message, {
-          ...(m.error.name === undefined ? {} : { name: m.error.name }),
-          ...(m.error.data === undefined ? {} : { data: m.error.data }),
-        }));
-      }
-    }) as (ev: never) => void);
-    sock.addEventListener("close", () => {
-      if (!opened) reject(new HostClientError(
-        "disconnected", "could not connect to the host"));
-      dropAll("the host closed the connection");
-    });
-    sock.addEventListener("error", () => {
-      if (!opened) reject(new HostClientError(
-        "disconnected", "could not connect to the host"));
-    });
-  });
-}
-
-/** What crossing a socket does to a value, without the socket. */
+/** What crossing a wire would do to a value, without a wire. */
 function overTheWire<T>(v: T): T {
   return v === undefined ? v : JSON.parse(JSON.stringify(v)) as T;
 }
@@ -153,8 +66,8 @@ function overTheWire<T>(v: T): T {
 /**
  * A transport with no pipe at all: requests go straight to a host core
  * in this same page (the desktop app runs `core.ts` in its window).
- * Values are copied as JSON both ways, so a client sees exactly what it
- * would over a socket and never shares an object with the host.
+ * Values are copied as JSON both ways, so a client never shares an
+ * object with the host, and sees only what a wire could carry.
  */
 export function connectInProcess(conn: HostConnection): HostTransport {
   const events = new Set<(e: HostEvent) => void>();

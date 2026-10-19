@@ -11,10 +11,10 @@
  * Values cross as the host protocol spells them (`SqlJson`): a blob is
  * `{ $b64 }` both ways.
  *
- * Statements go over the shell's loopback socket (`sql_socket.rs`)
- * unless asked to use `invoke`, which on Windows costs about a
- * millisecond a statement — seconds, for an import that awaits a few
- * thousand of them one by one.
+ * Statements go over the shell's loopback socket (`sql_socket.rs`),
+ * not `invoke`, which on Windows costs about a millisecond a statement —
+ * seconds, for an import that awaits a few thousand of them one by
+ * one.
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -41,9 +41,6 @@ function decode(v: SqlJson): SqlValue {
 }
 
 type Run = (db: number, sql: string, params: SqlJson[]) => Promise<Rows>;
-
-const viaInvoke: Run = (db, sql, params) =>
-  invoke<Rows>("sql_exec", { db, sql, params });
 
 interface Reply extends Partial<Rows> {
   id: number;
@@ -95,12 +92,11 @@ export interface TauriDatabase {
 
 export async function openTauriDatabase(
     path: string,
-    options: { readOnly?: boolean; via?: "socket" | "invoke" } = {}):
-    Promise<TauriDatabase> {
+    options: { readOnly?: boolean } = {}): Promise<TauriDatabase> {
   const db = await invoke<number>("sql_open", {
     path, readOnly: options.readOnly ?? false,
   });
-  const run = options.via === "invoke" ? viaInvoke : await viaSocket();
+  const run = await viaSocket();
   const exec: SqlExec = async (sql, params = []) => {
     const out = await run(db, sql, params.map(encode));
     return out.rows.map((values) => {
@@ -115,8 +111,7 @@ export async function openTauriDatabase(
 /** `openNodeSession`, for the desktop app. */
 export async function openTauriSession(
     path: string, registry: Registry,
-    options: { readOnly?: boolean; via?: "socket" | "invoke" } = {}):
-    Promise<Session> {
+    options: { readOnly?: boolean } = {}): Promise<Session> {
   const db = await openTauriDatabase(path, options);
   return createSession(registry, {
     exec: db.exec,

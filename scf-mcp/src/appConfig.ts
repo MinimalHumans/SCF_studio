@@ -3,17 +3,10 @@
  * appConfig.ts — the shape of app-level config `scf-mcp` persists: for
  * now, just the recent-files list.
  *
- * Deliberately scf-mcp-local for now, not scf-core: `scf-app` (the
- * editor) will eventually want the same shape, but it's still a plain
- * browser app with no filesystem access, and the real shared home for
- * this — once there's a Tauri desktop shell wrapping both — isn't
- * decided yet. Putting it in scf-core now would mean guessing at that
- * shape twice. When the desktop build exists, this module (and
- * nodeConfigStore.ts's AppConfigStore split) is what moves, unchanged
- * in shape, to wherever both sides can reach it.
- *
- * This module defines the CONTRACT only — no I/O. `nodeConfigStore.ts`
- * is the one AppConfigStore implementation that exists today.
+ * This module defines the CONTRACT only — no I/O. The desktop window
+ * keeps it in a file in the app's data folder (scf-app
+ * `src/mcp/windowMcp.ts`); the tests, in a folder of their own
+ * (`nodeConfigStore.ts`).
  */
 
 export interface AppConfig {

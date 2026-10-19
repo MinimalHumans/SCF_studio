@@ -2,11 +2,9 @@
 /**
  * protocol.ts — what a client and the host say to each other.
  *
- * Plain data only, and no imports from Node, so the browser, the MCP and
- * a future Tauri shell can all depend on it. The host core
- * (`hostCore.ts`) answers these requests without knowing how they
- * arrived; a WebSocket frame, a stdio line and a Tauri `invoke()` are all
- * just a way to deliver a `HostRequest`.
+ * Plain data only, and no imports from Node, so the window and the MCP
+ * can depend on it. The host core (`core.ts`) answers these requests
+ * without knowing how they arrived.
  */
 
 export const PROTOCOL_VERSION = 1;

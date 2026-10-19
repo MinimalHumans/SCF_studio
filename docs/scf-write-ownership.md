@@ -7,10 +7,20 @@ done and what was left. It supersedes the "`scf-mcp` has no write
 tools" line in [`scf-mcp-design.md`](scf-mcp-design.md) §1, which that
 document now says.
 
+**Update 2026-10-19: the host is no longer a process.** Everything
+below about who owns a file and how writes are made still holds; what
+changed is where the owner runs. The desktop app's window runs the host
+core itself, on SQLite and files its Tauri shell provides, and serves
+each agent's MCP server beside it, reached through `scf mcp`, a small
+pipe shipped with the app (the end of §10 has the detail). The Node host
+process, its discovery file, the dev-server plugin and the MCP run from
+Node are gone, so §3.1–3.3 describe a design that is no longer built.
+Development is `npm run dev` in `scf-app`, the app in its own window.
+
 Where to look: `scf-core/src/ops/` (the write rules and the two op
-tables), `scf-host/` (the process), `scf-app/src/host/` and
-`state/api.ts` (the window as a client), `scf-mcp/src/nodePlatform.ts` and
-`writeTools.ts` (the MCP as a client).
+tables), `scf-host/src/core.ts` (the host), `scf-app/src/host/` and
+`state/api.ts` (the window as a client), `scf-app/src/mcp/` and
+`scf-mcp/src/writeTools.ts` (the MCP as a client).
 
 ---
 
@@ -80,7 +90,7 @@ runtime.
   what the window shows. Two clients on the same file share one session
   and one write queue.
 
-### 3.1 Development
+### 3.1 Development (superseded 2026-10-19)
 
 `npm run dev` in `scf-app` starts the host and Vite as one command. A
 Vite plugin (`scf-app/tools/scfHostPlugin.ts`) starts the host
@@ -98,7 +108,7 @@ header; another site cannot read the token. The host also writes the
 discovery file, so an MCP started during development shares this host.
 If a host is already running the plugin refuses to start a second.
 
-### 3.2 Startup from an MCP call
+### 3.2 Startup from an MCP call (superseded 2026-10-19: `scf mcp` starts the app)
 
 If no host is running, the MCP shim starts one: read the registry
 directory for `{pid, port, token, version}`; a dead pid is stale and is
@@ -108,7 +118,7 @@ a ping; on timeout, fail naming the host's log file. A host with no
 clients for N minutes flushes and exits; one started by the window stays
 while the window is open.
 
-### 3.3 Version skew
+### 3.3 Version skew (superseded 2026-10-19: the pipe and the app ship together)
 
 The shim compares versions on connect. An old idle host is asked to exit
 and is respawned; a busy one produces a clear error rather than a
@@ -303,6 +313,7 @@ window too, one server per agent (`scf-mcp/src/mcpServer.ts` on a
 platform of the window's), reached by `scf mcp`, a small pipe the shell
 relays to the window, which starts the app hidden if it is not running.
 So an agent and the editor share one owner of each film again, the
-window's core. The Node host remains for development and for the MCP
-run from Node.
+window's core. The Node host, and the MCP run from Node, were then
+removed: development is the app in its own window (`npm run dev`), and
+the tests run the same core on Node's files and SQLite, in-process.
 The file chooser is still the host-side one; the native dialog is next.

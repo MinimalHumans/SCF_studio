@@ -58,42 +58,39 @@ normative artifact.
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
 | `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. `screenplay-tables.json` (the screenplay infrastructure tables and the `line_type` vocabulary). `api-surface.json` (every name importable from `scf-core`), `entity-reference.md` and `query-reference.md` (generated reading aids, not normative). `ARTIFACTS.md` lists every file the manifest covers — these four documents, the generated artifacts, the canonical query results and the blessed negative reports under `fixtures/` — and says how many. |
-| `docs/` | `what-is-scf.md`, `walkthrough.md`, `authoring-guide.md`, `glossary.md` and `faq.md` (start here if the format is new to you), `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `release-checklist.md` (what stands between here and 1.0), and the design records for the editor and the MCP server: `editor-mvp.md`, `narrative-workspaces.md`, `story-structure-design-record.md`, `scf-mcp-design.md`, and `scf-write-ownership.md` (why one host process owns every open file, and the rules its writes keep). |
+| `docs/` | `what-is-scf.md`, `walkthrough.md`, `authoring-guide.md`, `glossary.md` and `faq.md` (start here if the format is new to you), `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `release-checklist.md` (what stands between here and 1.0), and the design records for the editor and the MCP server: `editor-mvp.md`, `narrative-workspaces.md`, `story-structure-design-record.md`, `scf-mcp-design.md`, and `scf-write-ownership.md` (why one host owns every open file, and the rules its writes keep). |
 | `site/` | The documentation site. Renders the Markdown above; authors nothing except its own landing page. `npm run build` in `site/`. |
 
 ## Getting started
 
-Node 22.6 or newer. Each package has its own `package-lock.json`, so
-install in the one you are working on:
+Node 22.6 or newer, and Rust (stable) for the editor. Each package has
+its own `package-lock.json`; the editor runs the others from source, so
+install them all once:
 
 ```sh
-cd scf-host && npm ci                        # the host both of these use
-cd scf-app && npm ci && npm run dev         # the editor (starts the host)
-cd scf-mcp && npm ci                         # the MCP server
-node scf-mcp/scripts/start.mjs --scf fixtures/hollow_creek.scf
+(cd scf-core && npm ci) && (cd scf-host && npm ci) && (cd scf-mcp && npm ci)
+cd scf-app && npm ci && npm run dev         # the editor, in its window
 ```
 
-Neither needs `scf-core` built: the app aliases it to its TypeScript
-source, and the MCP launcher resolves it there through the `scf-source`
-export condition. A build (`npm run build` in `scf-core`, `scf-host`, then
-`scf-mcp`) is for publishing only. `scf-core` needs its own `npm ci`
-only to run its tests and scripts. Connecting an MCP client is in
-[`scf-mcp/README.md`](scf-mcp/README.md).
+Nothing needs building first: the editor aliases `scf-core`, `scf-host`
+and `scf-mcp` to their TypeScript source. `scf-app/README.md` covers
+developing it.
 
-Files are opened by one local host process (`scf-host`); `npm run dev`
-starts it, and the MCP starts one if none is running, so the editor and an
-assistant can work on the same film at once. The editor opens with a start
-screen; every change is written to the `.scf` as it is made (there is no
-Save button — undo is the safety net), and the demo asks where to put its
-copy first.
+The editor is a desktop app (Tauri). Its window owns every open file
+(`scf-host`'s core) and serves the MCP, so an assistant pointed at the
+app's `scf mcp` works on the same film as the person at the editor;
+connecting one is in [`scf-mcp/README.md`](scf-mcp/README.md). The
+editor opens with a start screen; every change is written to the `.scf`
+as it is made (there is no Save button — undo is the safety net), and the
+demo asks where to put its copy first.
 
 ## Tests
 
 ```sh
 cd scf-core && npm test    # semantics + conformance against the fixture
-cd scf-host && npm test    # the host over a real socket
+cd scf-host && npm test    # the host core, on Node's files and SQLite
 cd scf-app  && npm test    # editor, import pipeline, the window on a host
-cd scf-mcp && npm run build && npm test   # the server, spawned, with a real host
+cd scf-mcp  && npm test    # the MCP tools, on a host core in-process
 ```
 
 Validate a file:

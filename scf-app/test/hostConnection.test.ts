@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // @vitest-environment node
 import { describe, expect, test, vi } from "vitest";
-import {
-  HostUnavailableError, connectHost, locateHost,
-} from "../src/host/connection";
+import { HostUnavailableError, connectHost } from "../src/host/connection";
 import { withRetry } from "../src/host/retry";
 
 const noSleep = (): Promise<void> => Promise.resolve();
@@ -43,56 +41,25 @@ describe("retry", () => {
   });
 });
 
-describe("locating the host", () => {
-  const reply = (status: number, body: unknown = null): typeof fetch =>
-    (() => Promise.resolve(new Response(
-      typeof body === "string" ? body : JSON.stringify(body), { status }))
-    ) as typeof fetch;
-
-  test("reads the url and token", async () => {
-    expect(await locateHost(reply(200, { url: "ws://x/", token: "t" })))
-      .toEqual({ url: "ws://x/", token: "t" });
-  });
-
-  test("503 is 'not ready' and worth retrying", async () => {
-    await expect(locateHost(reply(503))).rejects
-      .toMatchObject({ refused: false });
-  });
-
-  test("403 is a refusal and is not retried", async () => {
-    await expect(locateHost(reply(403))).rejects
-      .toMatchObject({ refused: true });
-  });
-
-  test("an HTML fallback means there is no host in this build", async () => {
-    await expect(locateHost(reply(200, "<!doctype html>"))).rejects
-      .toMatchObject({ refused: true });
-  });
-
-  test("a network failure is retryable", async () => {
-    await expect(locateHost((() => Promise.reject(new TypeError("down"))
-    ) as typeof fetch)).rejects.toMatchObject({ refused: false });
-  });
+const answering = () => Promise.resolve({
+  request: (method: string) => Promise.resolve(
+    method === "hello" ? { protocol: 1, version: "0" } : null),
+  onEvent: () => () => {},
+  onClose: () => () => {},
+  close: () => Promise.resolve(),
 });
 
 describe("connecting", () => {
-  test("retries until the host is located and answers", async () => {
+  test("retries until the host answers", async () => {
     let tries = 0;
     const client = await connectHost({
       retry: { sleep: noSleep },
-      locate: () => {
+      transport: () => {
         tries += 1;
         return tries < 3
           ? Promise.reject(new HostUnavailableError("starting", false))
-          : Promise.resolve({ url: "ws://x/", token: "t" });
+          : answering();
       },
-      openTransport: () => Promise.resolve({
-        request: (method: string) => Promise.resolve(
-          method === "hello" ? { protocol: 1, version: "0" } : null),
-        onEvent: () => () => {},
-        onClose: () => () => {},
-        close: () => Promise.resolve(),
-      }),
     });
     expect(tries).toBe(3);
     await client.dispose();
@@ -102,7 +69,7 @@ describe("connecting", () => {
     let tries = 0;
     await expect(connectHost({
       retry: { sleep: noSleep },
-      locate: () => {
+      transport: () => {
         tries += 1;
         return Promise.reject(new HostUnavailableError("not allowed", true));
       },
@@ -113,7 +80,15 @@ describe("connecting", () => {
   test("gives up after the attempts are spent", async () => {
     await expect(connectHost({
       retry: { attempts: 3, sleep: noSleep },
-      locate: () => Promise.reject(new HostUnavailableError("nope", false)),
+      transport: () =>
+        Promise.reject(new HostUnavailableError("nope", false)),
     })).rejects.toThrow("nope");
+  });
+
+  test("outside the desktop shell there is no host, and it says so at " +
+       "once", async () => {
+    await expect(connectHost({ retry: { sleep: noSleep } }))
+      .rejects.toMatchObject({ refused: true, message:
+        expect.stringContaining("desktop app") });
   });
 });
