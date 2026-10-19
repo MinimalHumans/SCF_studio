@@ -6,6 +6,7 @@ description = "The SCF editor as a desktop app"
 license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.90"
+default-run = "scf-editor"
 
 [lib]
 name = "scf_editor_lib"
@@ -20,11 +21,14 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.40.2", features = ["bundled"] }
 base64 = "0.23.1"
-tokio = { version = "1.53.3", features = ["net", "rt", "macros"] }
+tokio = { version = "1.53.3", features = ["net", "rt", "macros", "io-util", "sync", "time"] }
 tokio-tungstenite = "0.30.0"
 futures-util = "0.3.34"
 dunce = "1.0.5"
 chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+getrandom = "0.3.4"
+dirs = "7.0.0"
+tauri-plugin-single-instance = "2.5.4"
 
 [features]
 # The in-app host spike's harness (src/spike.rs) in a release build.

@@ -39,6 +39,7 @@ export const nodePlatform: HostPlatform = {
       const rel = relative(root, path);
       return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
     },
+    resolve: (base, path) => resolve(base, path),
   },
 
   real: (path) => Promise.resolve(realPath(path)),

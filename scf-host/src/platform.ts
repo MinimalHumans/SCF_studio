@@ -36,6 +36,12 @@ export interface PathOps {
   basename(path: string): string;
   /** Is `path` `root` or below it? Both are already `real`. */
   within(root: string, path: string): boolean;
+  /**
+   * `path` as given by someone working in `base` (absolute): made
+   * absolute against it, `.` and `..` gone, as `node:path` `resolve`.
+   * No links are followed; that is `real`.
+   */
+  resolve(base: string, path: string): string;
 }
 
 export interface HostPlatform {

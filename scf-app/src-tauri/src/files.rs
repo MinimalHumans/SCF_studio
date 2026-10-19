@@ -86,9 +86,38 @@ pub async fn fs_read_dir(path: String) -> Result<Vec<DirEntry>, String> {
     Ok(out)
 }
 
+#[derive(Serialize)]
+pub struct Stat {
+    size: u64,
+    modified: String,
+}
+
+/// A file's size and time, or nothing if there is nothing there.
+#[tauri::command]
+pub async fn fs_stat(path: String) -> Result<Option<Stat>, String> {
+    match std::fs::metadata(&path) {
+        Ok(meta) => Ok(Some(Stat {
+            size: meta.len(),
+            modified: meta.modified().map(iso).unwrap_or_default(),
+        })),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(err(Path::new(&path), e)),
+    }
+}
+
 #[tauri::command]
 pub async fn fs_read_text(path: String) -> Result<String, String> {
     std::fs::read_to_string(&path).map_err(|e| err(Path::new(&path), e))
+}
+
+/// Replace the file's text, making the folder if need be.
+#[tauri::command]
+pub async fn fs_write_text(path: String, text: String) -> Result<(), String> {
+    let file = PathBuf::from(&path);
+    if let Some(dir) = file.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| err(dir, e))?;
+    }
+    std::fs::write(&file, text).map_err(|e| err(&file, e))
 }
 
 /// Append, making the folder if need be.

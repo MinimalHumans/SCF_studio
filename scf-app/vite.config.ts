@@ -41,6 +41,8 @@ export default defineConfig({
   // writing stops the watcher (EBUSY on Windows) and with it the server.
   server: { watch: { ignored: ["**/src-tauri/**"] } },
   resolve: {
+    // scf-mcp's own copies would be found from its files; one of each.
+    dedupe: ["@modelcontextprotocol/sdk", "zod"],
     alias: [
       { find: "@scf-core", replacement: resolve(here, "../scf-core/src") },
       { find: "@registry", replacement: resolve(here, "../scf-core/registry") },
@@ -51,6 +53,12 @@ export default defineConfig({
       { find: "@scf-host", replacement: resolve(here, "../scf-host/src") },
       { find: /^@minimalhumans\/scf-core$/,
         replacement: resolve(here, "../scf-core/src/index.ts") },
+      // The MCP's tools, which the desktop window serves (src/mcp). They
+      // import the host's client by package name; it must be the same
+      // module as the window's, or its errors are not its errors.
+      { find: "@scf-mcp", replacement: resolve(here, "../scf-mcp/src") },
+      { find: /^@minimalhumans\/scf-host\/client$/,
+        replacement: resolve(here, "../scf-host/src/client.ts") },
     ],
   },
   define: {

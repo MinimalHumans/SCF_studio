@@ -3,7 +3,15 @@
 //!
 //! The window runs the host core itself (`src/host/windowHost.ts`); the
 //! shell gives it SQLite (`sql`, `sql_socket`), files (`files`) and its
-//! settings (`host_setup`).
+//! settings (`host_setup`). Agents reach it through `scf mcp`
+//! (src/bin/scf.rs), whose lines the shell relays to the window
+//! (`mcp_relay`).
+//!
+//! An agent can start the app: `scf mcp` runs it with `--background`, and
+//! the window stays hidden. The app then lives as long as some agent is
+//! connected, or until the person opens it, which shows the window. A
+//! window closed while an agent is connected is only hidden, and the app
+//! exits when the last one goes.
 //!
 //! `host_location` is left from when the window was a client of the
 //! `scf` sidecar's host (tools/scf.ts), found or started by `scf
@@ -11,15 +19,20 @@
 //! no longer needs that host either.
 
 mod files;
+mod mcp_relay;
 mod sql;
 mod sql_socket;
+mod token;
 #[cfg(any(debug_assertions, feature = "spike"))]
 mod spike;
 
 use std::path::PathBuf;
 use std::process::Command;
 
+use std::time::Duration;
+
 use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
 
 #[derive(Serialize)]
 struct Location {
@@ -105,8 +118,7 @@ struct HostSetup {
 }
 
 #[tauri::command]
-fn host_setup(app: tauri::AppHandle) -> Result<HostSetup, String> {
-    use tauri::Manager;
+fn host_setup(app: AppHandle) -> Result<HostSetup, String> {
     let roots: Vec<PathBuf> = match std::env::var_os("SCF_HOST_ROOTS") {
         Some(v) if !v.is_empty() => std::env::split_paths(&v)
             .filter(|p| !p.as_os_str().is_empty())
@@ -122,11 +134,115 @@ fn host_setup(app: tauri::AppHandle) -> Result<HostSetup, String> {
     })
 }
 
+/// What `scf mcp` passes when it starts the app.
+const BACKGROUND: &str = "--background";
+
+/// How long a pipe-started app waits for its pipe, and a hidden app
+/// whose last pipe has gone waits for another (an agent restarting its
+/// servers), before it exits.
+const LINGER: Duration = Duration::from_secs(20);
+
+fn main_window(app: &AppHandle) -> Option<tauri::WebviewWindow> {
+    app.get_webview_window("main")
+}
+
+fn show(app: &AppHandle) {
+    if let Some(w) = main_window(app) {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
+}
+
+fn hidden(app: &AppHandle) -> bool {
+    main_window(app).is_none_or(|w| !w.is_visible().unwrap_or(false))
+}
+
+/// Exit in a while, if the window is still hidden and by then there has
+/// been no pipe for that long.
+fn exit_if_unused(app: &AppHandle) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(LINGER).await;
+        let idle = app.state::<mcp_relay::Relay>().idle_for();
+        if hidden(&app) && idle.is_some_and(|d| d >= LINGER) {
+            app.exit(0);
+        }
+    });
+}
+
+/// Where `scf mcp` looks for the app.
+fn discovery_path(app: &AppHandle) -> tauri::Result<PathBuf> {
+    Ok(app.path().app_data_dir()?.join("mcp.json"))
+}
+
+fn publish(app: &AppHandle, discovery: &mcp_relay::Discovery) -> tauri::Result<()> {
+    let path = discovery_path(app)?;
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    // Whole or not at all: a pipe may be reading it as it is written.
+    let partial = path.with_extension("json.partial");
+    std::fs::write(&partial, serde_json::to_vec(discovery)?)?;
+    std::fs::rename(&partial, &path)?;
+    Ok(())
+}
+
+/// Take `mcp.json` down, if it is still this app's.
+fn unpublish(app: &AppHandle) {
+    let Ok(path) = discovery_path(app) else { return };
+    let ours = std::fs::read(&path)
+        .ok()
+        .and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).ok())
+        .is_some_and(|v| v["pid"] == std::process::id());
+    if ours {
+        let _ = std::fs::remove_file(path);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let background = std::env::args().any(|a| a == BACKGROUND);
     let databases = sql::Databases::default();
     let socket = sql_socket::start(databases.clone()).expect("a loopback port for SQL");
-    let builder = tauri::Builder::default().manage(databases).manage(socket);
+    let relay = mcp_relay::Relay::new();
+    let discovery = mcp_relay::start(relay.clone()).expect("a loopback port for the MCP");
+    let builder = tauri::Builder::default()
+        // First: a second start hands over here and goes no further.
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            // The person opening the app again wants to see it; a pipe
+            // starting it needs only that it runs, which it does.
+            if !argv.iter().any(|a| a == BACKGROUND) {
+                show(app);
+            }
+        }))
+        .manage(databases)
+        .manage(socket)
+        .manage(relay.clone())
+        .setup(move |app| {
+            let handle = app.handle().clone();
+            publish(&handle, &discovery)?;
+            let on_count = handle.clone();
+            relay.on_count(move |n| {
+                if n == 0 && hidden(&on_count) {
+                    exit_if_unused(&on_count);
+                }
+            });
+            if background {
+                exit_if_unused(&handle);
+            } else {
+                show(&handle);
+            }
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                if window.state::<mcp_relay::Relay>().count() > 0 {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        });
     #[cfg(any(debug_assertions, feature = "spike"))]
     let builder = builder.invoke_handler(tauri::generate_handler![
         host_location,
@@ -135,13 +251,18 @@ pub fn run() {
         sql::sql_exec,
         sql::sql_close,
         sql::sql_reset,
+        mcp_relay::mcp_listen,
+        mcp_relay::mcp_send,
+        mcp_relay::mcp_close,
         sql::file_fingerprint,
         sql_socket::sql_socket,
         files::fs_windows,
         files::fs_real,
         files::fs_exists,
         files::fs_read_dir,
+        files::fs_stat,
         files::fs_read_text,
+        files::fs_write_text,
         files::fs_append_text,
         files::fs_create_file,
         files::fs_mkdir,
@@ -158,19 +279,29 @@ pub fn run() {
         sql::sql_exec,
         sql::sql_close,
         sql::sql_reset,
+        mcp_relay::mcp_listen,
+        mcp_relay::mcp_send,
+        mcp_relay::mcp_close,
         sql::file_fingerprint,
         sql_socket::sql_socket,
         files::fs_windows,
         files::fs_real,
         files::fs_exists,
         files::fs_read_dir,
+        files::fs_stat,
         files::fs_read_text,
+        files::fs_write_text,
         files::fs_append_text,
         files::fs_create_file,
         files::fs_mkdir,
         files::fs_remove,
     ]);
     builder
-        .run(tauri::generate_context!())
-        .expect("error while running the SCF editor");
+        .build(tauri::generate_context!())
+        .expect("error while starting the SCF editor")
+        .run(|app, event| {
+            if let RunEvent::Exit = event {
+                unpublish(app);
+            }
+        });
 }

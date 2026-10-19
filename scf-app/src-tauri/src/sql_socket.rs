@@ -14,9 +14,6 @@
 //! Only a client that knows the token, which the window gets from the
 //! `sql_socket` command, is let in.
 
-use std::collections::hash_map::RandomState;
-use std::hash::{BuildHasher, Hasher};
-
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as Json;
@@ -42,13 +39,6 @@ struct Exec {
     params: Vec<Json>,
 }
 
-fn token() -> String {
-    // TODO: a real random source before this leaves the spike.
-    (0..2)
-        .map(|_| format!("{:016x}", RandomState::new().build_hasher().finish()))
-        .collect()
-}
-
 fn answer(dbs: &Databases, text: &str) -> String {
     let reply = match serde_json::from_str::<Exec>(text) {
         Err(e) => serde_json::json!({ "id": null, "error": e.to_string() }),
@@ -70,7 +60,7 @@ pub fn start(dbs: Databases) -> std::io::Result<SqlSocket> {
     listener.set_nonblocking(true)?;
     let socket = SqlSocket {
         url: format!("ws://{}/", listener.local_addr()?),
-        token: token(),
+        token: crate::token::new()?,
     };
     let expected = format!("token={}", socket.token);
     tauri::async_runtime::spawn(async move {
