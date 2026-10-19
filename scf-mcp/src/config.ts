@@ -37,7 +37,7 @@ interface ConfigFile {
 }
 
 export const USAGE =
-  "usage: scf mcp [--scf <path>] [--root name=path ...] " +
+  "usage: scf-editor mcp [--scf <path>] [--root name=path ...] " +
   "[--config <path>] [--read-only]\n" +
   "  --read-only offers no write tools (also SCF_MCP_READ_ONLY=1).\n" +
   "  --scf/--root open a film at the start, as the `open` tool " +

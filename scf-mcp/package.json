@@ -1,7 +1,7 @@
 {
   "name": "@minimalhumans/scf-mcp",
   "version": "0.1.0",
-  "description": "The SCF MCP server's tools (docs/scf-mcp-design.md), served by the desktop app's window to agents through `scf mcp`.",
+  "description": "The SCF MCP server's tools (docs/scf-mcp-design.md), served by the desktop app's window to agents through `scf-editor mcp`.",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",

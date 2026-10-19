@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-//! The MCP's way into the app: each agent's stdio pipe (`scf mcp`,
-//! src/bin/scf.rs) connects here, and its lines are handed to the
+//! The MCP's way into the app: each agent's stdio pipe (`scf-editor
+//! mcp`, `pipe.rs`) connects here, and its lines are handed to the
 //! window, which runs an MCP server for it beside the host
 //! (`src/mcp/windowMcp.ts`).
 //!

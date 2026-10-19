@@ -3,11 +3,11 @@
 //!
 //! The window runs the host core itself (`src/host/windowHost.ts`); the
 //! shell gives it SQLite (`sql`, `sql_socket`), files (`files`) and its
-//! settings (`host_setup`). Agents reach it through `scf mcp`
-//! (src/bin/scf.rs), whose lines the shell relays to the window
-//! (`mcp_relay`).
+//! settings (`host_setup`). Agents reach it through `scf-editor mcp`,
+//! this same executable as a stdio pipe (`pipe`), whose lines the shell
+//! relays to the window (`mcp_relay`).
 //!
-//! An agent can start the app: `scf mcp` runs it with `--background`, and
+//! An agent can start the app: the pipe runs it with `--background`, and
 //! the window stays hidden. The app then lives as long as some agent is
 //! connected, or until the person opens it, which shows the window. A
 //! window closed while an agent is connected is only hidden, and the app
@@ -15,6 +15,7 @@
 
 mod files;
 mod mcp_relay;
+mod pipe;
 mod sql;
 mod sql_socket;
 mod token;
@@ -68,7 +69,7 @@ fn host_setup(app: AppHandle) -> Result<HostSetup, String> {
     })
 }
 
-/// What `scf mcp` passes when it starts the app.
+/// What the pipe passes when it starts the app.
 const BACKGROUND: &str = "--background";
 
 /// How long a pipe-started app waits for its pipe, and a hidden app
@@ -105,7 +106,7 @@ fn exit_if_unused(app: &AppHandle) {
     });
 }
 
-/// Where `scf mcp` looks for the app.
+/// Where the pipe looks for the app.
 fn discovery_path(app: &AppHandle) -> tauri::Result<PathBuf> {
     Ok(app.path().app_data_dir()?.join("mcp.json"))
 }
@@ -134,6 +135,11 @@ fn unpublish(app: &AppHandle) {
     if ours {
         let _ = std::fs::remove_file(path);
     }
+}
+
+/// `scf-editor mcp …`: an agent's stdio pipe to the app (`pipe.rs`).
+pub fn mcp_pipe(args: Vec<String>) -> std::process::ExitCode {
+    pipe::run(args)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

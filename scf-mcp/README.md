@@ -7,14 +7,14 @@ film — and assemble a shot prompt — without being handed a schema and
 told to write SQL.
 
 It runs inside the SCF Editor desktop app, beside the editor: an
-assistant starts `scf mcp`, a small stdio pipe shipped with the app, and
-the app serves it. Nothing is hosted, and the film never leaves your
+assistant starts `scf-editor mcp`, the app's own executable run as a
+stdio pipe, and the app serves it. Nothing is hosted, and the film never leaves your
 machine except as the answers your assistant asks for.
 
 **It shares the editor's host.** The app's window owns every open
 `.scf` (`scf-host`'s core), and the editor and every assistant's server
 are its clients, so a film open in both is one session: a change either
-makes, the other sees. If the app is not running, `scf mcp` starts it in
+makes, the other sees. If the app is not running, the pipe starts it in
 the background, window hidden; such an app exits a little after its last
 assistant leaves, unless someone has opened its window.
 
@@ -38,11 +38,12 @@ change a row when asked to, not as a place to keep working notes.
 
 ## Connecting an assistant
 
-On Windows the installer puts `scf.exe` in `%LOCALAPPDATA%\SCF Editor\`
-by default.
+Point the assistant at the app's executable with the argument `mcp`.
+On Windows the installer puts `scf-editor.exe` in
+`%LOCALAPPDATA%\SCF Editor\` by default.
 
 ```sh
-claude mcp add scf -- "%LOCALAPPDATA%\SCF Editor\scf.exe" mcp
+claude mcp add scf -- "%LOCALAPPDATA%\SCF Editor\scf-editor.exe" mcp
 claude mcp list        # scf should show as connected
 ```
 
@@ -53,7 +54,7 @@ then restart Claude Desktop):
 {
   "mcpServers": {
     "scf": {
-      "command": "C:\\Users\\you\\AppData\\Local\\SCF Editor\\scf.exe",
+      "command": "C:\\Users\\you\\AppData\\Local\\SCF Editor\\scf-editor.exe",
       "args": ["mcp"]
     }
   }
@@ -65,8 +66,8 @@ use the `open` tool; nothing else needs configuring. `claude mcp remove
 scf` undoes it.
 
 **From a checkout**, run the editor with `npm run dev` in `scf-app`,
-build the pipe once (`cargo build --bin scf` in `scf-app/src-tauri`),
-and point the assistant at `scf-app/src-tauri/target/debug/scf.exe mcp`.
+and point the assistant at
+`scf-app/src-tauri/target/debug/scf-editor.exe mcp`.
 A debug pipe connects only to the running dev app, never to an installed
 one, and does not start it; a page reload keeps it connected.
 
@@ -83,7 +84,7 @@ you want them.
 | `--read-only` | No write tool is offered (also `SCF_MCP_READ_ONLY=1`). |
 
 Relative paths are the assistant's: they are resolved against the
-directory it started `scf mcp` in. Where a film's media lives is a
+directory it started the pipe in. Where a film's media lives is a
 property of the machine, not of the file, which is why roots are set
 here (spec §0.3, §8.2). Because these paths are specific to your
 machine, do not commit a project-level `.mcp.json` that contains them.
@@ -92,7 +93,6 @@ machine, do not commit a project-level `.mcp.json` that contains them.
 
 | Message or symptom | Cause |
 |---|---|
-| `could not start the SCF editor` | `scf.exe` was moved away from the app's `scf-editor.exe`; run it from where the installer put it. |
 | `the SCF editor (dev) is not running` | A debug pipe: start the editor with `npm run dev` in `scf-app`. |
 | `unrecognised argument` | An option the server does not know; the usage follows the message. |
 

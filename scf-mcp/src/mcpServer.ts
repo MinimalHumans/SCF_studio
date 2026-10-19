@@ -4,7 +4,7 @@
  * (docs/scf-mcp-design.md §5), on whatever platform it is given.
  *
  * The desktop app runs one in its window for each agent its stdio pipe
- * (`scf mcp`) brings.
+ * (`scf-editor mcp`) brings.
  *
  * Tools:
  *   open          open (or switch to) a film, with optional root

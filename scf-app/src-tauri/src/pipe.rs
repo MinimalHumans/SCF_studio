@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
-//! `scf mcp [options]`: the SCF editor's MCP server, on stdio, for an
-//! agent to start.
+//! `scf-editor mcp [options]`: the SCF editor's MCP server, on stdio, for
+//! an agent to start.
 //!
-//! The server itself runs in the editor's window (src/mcp_relay.rs); this
-//! is a pipe to it. It finds the running app through `mcp.json` in the
-//! app's data folder, or starts it in the background and waits for it,
-//! says who it is, and from then on copies stdin to the app and the
-//! app's answers to stdout. Its options are scf-mcp's own, and are the
-//! app's to judge; so are SCF_MCP_READ_ONLY and SCF_MCP_ELICIT.
-//!
-//! Shipped beside the app's executable, which is how it finds it to
-//! start; SCF_EDITOR_EXE names another.
+//! The server itself runs in the editor's window (`mcp_relay.rs`); this
+//! is a pipe to it, run by the same executable before any of the app
+//! starts (`main.rs`), so one file is both the app and what an agent is
+//! pointed at. It finds the running app through `mcp.json` in the app's
+//! data folder, or starts it in the background (itself, with
+//! `--background`) and waits for it, says who it is, and from then on
+//! copies stdin to the app and the app's answers to stdout. Its options
+//! are scf-mcp's own, and are the app's to judge; so are
+//! SCF_MCP_READ_ONLY and SCF_MCP_ELICIT.
 //!
 //! A debug build is the developer's: it looks for the app `npm run dev`
 //! runs (the `.dev` identifier, src-tauri/tauri.dev.json), and does not
@@ -33,10 +33,8 @@ const IDENTIFIER: &str = if cfg!(debug_assertions) {
 /// How long a started app has to be ready.
 const START_TIMEOUT: Duration = Duration::from_secs(60);
 
-const USAGE: &str = "usage: scf mcp [options]   the SCF MCP server on stdio";
-
 fn fail(message: impl std::fmt::Display) -> ExitCode {
-    eprintln!("scf: {message}");
+    eprintln!("scf-editor: {message}");
     ExitCode::FAILURE
 }
 
@@ -55,25 +53,13 @@ fn connect() -> Option<(TcpStream, String)> {
     Some((stream, token))
 }
 
-fn editor_exe() -> std::io::Result<PathBuf> {
-    if let Some(exe) = std::env::var_os("SCF_EDITOR_EXE") {
-        return Ok(exe.into());
-    }
-    let name = if cfg!(windows) {
-        "scf-editor.exe"
-    } else {
-        "scf-editor"
-    };
-    Ok(std::env::current_exe()?.with_file_name(name))
-}
-
 /// Start the app in the background, detached from this process: its
 /// output must not land in the agent's protocol stream, and it outlives
 /// this pipe.
 fn start_app() -> std::io::Result<()> {
-    let mut command = Command::new(editor_exe()?);
+    let mut command = Command::new(std::env::current_exe()?);
     command
-        .arg("--background")
+        .arg(crate::BACKGROUND)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
@@ -83,7 +69,7 @@ fn start_app() -> std::io::Result<()> {
         const DETACHED_PROCESS: u32 = 0x0000_0008;
         const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
         command.creation_flags(DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP);
-        keep_stdio_to_ourselves();
+        windows::keep_stdio_to_ourselves();
     }
     #[cfg(unix)]
     {
@@ -94,24 +80,50 @@ fn start_app() -> std::io::Result<()> {
     command.spawn().map(|_| ())
 }
 
-/// Windows gives a child every inheritable handle its parent has, and
-/// this pipe's stdio is inheritable. Were the app to keep a copy of our
-/// stdout, the agent would not see it close until the app exits.
 #[cfg(windows)]
-fn keep_stdio_to_ourselves() {
+mod windows {
     use std::ffi::c_void;
+
     #[link(name = "kernel32")]
     extern "system" {
         fn GetStdHandle(which: u32) -> *mut c_void;
         fn SetHandleInformation(handle: *mut c_void, mask: u32, flags: u32) -> i32;
+        fn AttachConsole(process: u32) -> i32;
     }
+
+    // STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE.
+    const STDIO: [i32; 3] = [-10, -11, -12];
+    const STD_OUTPUT_HANDLE: i32 = -11;
+    const ATTACH_PARENT_PROCESS: u32 = u32::MAX;
     const HANDLE_FLAG_INHERIT: u32 = 1;
-    // STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE: -10, -11, -12.
-    for which in [-10i32, -11, -12] {
-        // SAFETY: both take any handle value, and fail harmlessly on one
-        // that is not open.
+    const INVALID_HANDLE_VALUE: isize = -1;
+
+    /// Windows gives a child every inheritable handle its parent has, and
+    /// this pipe's stdio is inheritable. Were the app to keep a copy of
+    /// our stdout, the agent would not see it close until the app exits.
+    pub fn keep_stdio_to_ourselves() {
+        for which in STDIO {
+            // SAFETY: both take any handle value, and fail harmlessly on
+            // one that is not open.
+            unsafe {
+                SetHandleInformation(GetStdHandle(which as u32), HANDLE_FLAG_INHERIT, 0);
+            }
+        }
+    }
+
+    /// A release build is a windowed program, which Windows starts with
+    /// no stdio unless its parent hands it some. An agent always does
+    /// (pipes); a person typing `scf-editor mcp` in a terminal does not,
+    /// so there the terminal's console is borrowed, and what this says
+    /// (a usage error, say) is seen.
+    pub fn use_a_console_if_not_piped() {
+        // SAFETY: GetStdHandle only reads the process's handle table;
+        // AttachConsole fails harmlessly when there is no parent console.
         unsafe {
-            SetHandleInformation(GetStdHandle(which as u32), HANDLE_FLAG_INHERIT, 0);
+            let out = GetStdHandle(STD_OUTPUT_HANDLE as u32);
+            if out.is_null() || out as isize == INVALID_HANDLE_VALUE {
+                AttachConsole(ATTACH_PARENT_PROCESS);
+            }
         }
     }
 }
@@ -136,13 +148,10 @@ fn connect_or_start() -> Result<(TcpStream, String), String> {
     Err("the SCF editor did not start in time".into())
 }
 
-fn main() -> ExitCode {
-    let mut args = std::env::args().skip(1);
-    if args.next().as_deref() != Some("mcp") {
-        eprintln!("{USAGE}");
-        return ExitCode::from(2);
-    }
-    let args: Vec<String> = args.collect();
+/// Be the pipe, with the arguments after `mcp`.
+pub fn run(args: Vec<String>) -> ExitCode {
+    #[cfg(windows)]
+    windows::use_a_console_if_not_piped();
 
     let (stream, token) = match connect_or_start() {
         Ok(found) => found,

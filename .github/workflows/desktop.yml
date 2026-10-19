@@ -4,7 +4,7 @@
 # Separate from ci.yml because it publishes: every push to `tauri`
 # replaces one rolling prerelease, `desktop-latest`, with the NSIS
 # installer and a zip holding that installer plus a portable copy (the
-# window and its `scf` MCP pipe, side by side, uninstalled). The same
+# app, which is its own MCP pipe, uninstalled). The same
 # files are also kept as a workflow artifact for each run.
 #
 # `in-app-host` builds the same way but publishes nothing: its installer
@@ -96,7 +96,7 @@ jobs:
             Copy-Item LICENSE, NOTICE $dir
           }
           Copy-Item $setup.FullName "out/$name/"
-          Copy-Item "$release/scf-editor.exe", "$release/scf.exe" "out/$name/portable/"
+          Copy-Item "$release/scf-editor.exe" "out/$name/portable/"
           Compress-Archive -Path "out/$name/*" -DestinationPath "out/$name.zip"
 
           # Release assets cannot carry spaces in their names.

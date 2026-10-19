@@ -2,8 +2,8 @@
 /**
  * windowMcp.ts — the MCP server, in the desktop app's window.
  *
- * Agents start `scf mcp` (src-tauri/src/bin/scf.rs), a pipe whose lines
- * the shell hands here (src-tauri/src/mcp_relay.rs). Each pipe gets a
+ * Agents start `scf-editor mcp` (src-tauri/src/pipe.rs), a pipe whose
+ * lines the shell hands here (src-tauri/src/mcp_relay.rs). Each pipe gets a
  * server of its own (scf-mcp `mcpServer.ts`) with its own open film and
  * name, a client of the window's host like the editor is. So an agent
  * and the person at the editor share one host again, as they did when

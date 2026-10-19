@@ -6,7 +6,6 @@ description = "The SCF editor as a desktop app"
 license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.90"
-default-run = "scf-editor"
 
 [lib]
 name = "scf_editor_lib"

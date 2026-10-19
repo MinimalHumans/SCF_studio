@@ -11,8 +11,8 @@ document now says.
 below about who owns a file and how writes are made still holds; what
 changed is where the owner runs. The desktop app's window runs the host
 core itself, on SQLite and files its Tauri shell provides, and serves
-each agent's MCP server beside it, reached through `scf mcp`, a small
-pipe shipped with the app (the end of §10 has the detail). The Node host
+each agent's MCP server beside it, reached through `scf-editor mcp`,
+the app's executable run as a stdio pipe (the end of §10 has the detail). The Node host
 process, its discovery file, the dev-server plugin and the MCP run from
 Node are gone, so §3.1–3.3 describe a design that is no longer built.
 Development is `npm run dev` in `scf-app`, the app in its own window.
@@ -108,7 +108,7 @@ header; another site cannot read the token. The host also writes the
 discovery file, so an MCP started during development shares this host.
 If a host is already running the plugin refuses to start a second.
 
-### 3.2 Startup from an MCP call (superseded 2026-10-19: `scf mcp` starts the app)
+### 3.2 Startup from an MCP call (superseded 2026-10-19: the MCP pipe starts the app)
 
 If no host is running, the MCP shim starts one: read the registry
 directory for `{pid, port, token, version}`; a dead pid is stale and is
@@ -310,7 +310,7 @@ strings), over a loopback WebSocket because a Tauri `invoke` costs a
 millisecond and scf-core awaits every statement. The window is a client
 of its own core in-process (`connectInProcess`). The MCP runs in the
 window too, one server per agent (`scf-mcp/src/mcpServer.ts` on a
-platform of the window's), reached by `scf mcp`, a small pipe the shell
+platform of the window's), reached by `scf-editor mcp`, a pipe the shell
 relays to the window, which starts the app hidden if it is not running.
 So an agent and the editor share one owner of each film again, the
 window's core. The Node host, and the MCP run from Node, were then

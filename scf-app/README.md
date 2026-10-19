@@ -9,13 +9,13 @@ There is no host process. The window runs the host core
 (`../scf-host/src/core.ts`) itself (`src/host/windowHost.ts`), on SQLite
 and files the shell provides (`src-tauri/src/sql.rs`, `files.rs`), and
 it serves the MCP (`src/mcp/windowMcp.ts`): an assistant is pointed at
-`scf mcp` (see `../scf-mcp/README.md`), a small Rust pipe shipped beside
-the app (`src-tauri/src/bin/scf.rs`) that the shell relays to the window
-(`mcp_relay.rs`), so an assistant and the editor share one host. The
-pipe starts the app with its window hidden when it is not running; such
-an app exits a little after its last assistant leaves, unless someone
-has opened the window. Closing the window while an assistant is
-connected only hides it.
+`scf-editor mcp` (see `../scf-mcp/README.md`), the app's own
+executable as a stdio pipe (`src-tauri/src/pipe.rs`), which the shell
+relays to the window (`mcp_relay.rs`), so an assistant and the editor
+share one host. The pipe starts the app with its window hidden when it
+is not running; such an app exits a little after its last assistant
+leaves, unless someone has opened the window. Closing the window while
+an assistant is connected only hides it.
 
 ## Developing
 
@@ -44,10 +44,10 @@ not work in a browser tab.
 - **Folders**: the host lists your home, and in a debug build the
   checkout's `fixtures/` and `templates/` as well; `SCF_HOST_ROOTS` (a
   path-delimited list) replaces them.
-- **An assistant on the dev app**: build the pipe once with `cargo build
-  --bin scf` in `src-tauri/`, then point the assistant at
-  `src-tauri/target/debug/scf.exe mcp` (`scf` elsewhere). A debug pipe
-  only connects to a running `npm run dev`; it does not start one.
+- **An assistant on the dev app**: point it at
+  `src-tauri/target/debug/scf-editor.exe mcp` (`scf-editor` elsewhere),
+  which `npm run dev` builds. A debug pipe only connects to a running
+  `npm run dev`; it does not start one.
   A page reload keeps the assistant connected, with its film still open;
   a rebuild of the shell restarts the app, and the assistant has to
   reconnect.
@@ -95,11 +95,11 @@ Zustand store (state/store.ts)             ◄── revision events (also for
    │                                           agents' writes)
 HostClient (@scf-host/client)  ── in-process (connectInProcess)
                                            MCP servers (src/mcp/), one
-                                           per `scf mcp` pipe, also its
+                                           per `scf-editor mcp` pipe, also
                                            clients
 shell (src-tauri/)
 ──────────────────
-SQLite (rusqlite) over a loopback socket, files, the `scf mcp` relay
+SQLite (rusqlite) over a loopback socket, files, the MCP pipes' relay
 ```
 
 - **Write-through.** Every change is in the `.scf` as soon as it is
