@@ -14,8 +14,12 @@
 //! the app's data folder, which only the user can read.
 //!
 //! A pipe that arrives before the window is listening waits for it. A
-//! page that reloads loses the servers it was running, so a new listener
-//! ends the pipes the last one had heard of; their agents start again.
+//! page that reloads (a developer's F5, or Vite's) loses the servers it
+//! was running, but not the pipes: the new page is told of each again,
+//! `resumed`, with what brings its new server to where the agent thinks
+//! it is (`replay`): the MCP handshake, and the `open` and `set_root`
+//! calls that chose its film and roots. A request in flight at the
+//! reload goes unanswered.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -35,7 +39,7 @@ pub struct Discovery {
     pub pid: u32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct Hello {
     token: String,
@@ -63,6 +67,10 @@ pub enum McpEvent {
         cwd: String,
         read_only: bool,
         elicit: bool,
+        /// Told before, to a page that has since gone.
+        resumed: bool,
+        /// The agent's handshake and state, to replay to a resumed server.
+        replay: Vec<String>,
     },
     Message {
         session: u32,
@@ -80,9 +88,61 @@ enum Out {
 
 struct Session {
     out: mpsc::UnboundedSender<Out>,
+    hello: Hello,
+    /// The agent's `initialize` and `initialized`, as it sent them.
+    handshake: Vec<String>,
+    /// Its latest calls that set a server's state (`STATEFUL`).
+    state: Vec<String>,
     /// Told to a listener; until then its events wait in `held`.
     announced: bool,
     held: Vec<McpEvent>,
+}
+
+impl Session {
+    fn open(&self, session: u32, resumed: bool) -> McpEvent {
+        McpEvent::Open {
+            session,
+            args: self.hello.args.clone(),
+            cwd: self.hello.cwd.clone(),
+            read_only: self.hello.read_only,
+            elicit: self.hello.elicit,
+            resumed,
+            replay: if resumed {
+                [&self.handshake[..], &self.state[..]].concat()
+            } else {
+                Vec::new()
+            },
+        }
+    }
+}
+
+/// The tools whose calls are a server's state: which film, which roots.
+const STATEFUL: [&str; 2] = ["open", "set_root"];
+/// How many of those calls are kept; the latest win.
+const STATE_KEPT: usize = 32;
+
+enum Kept {
+    Handshake,
+    State,
+    No,
+}
+
+/// Is this line one to replay to a resumed server?
+fn kept(line: &str) -> Kept {
+    let Ok(m) = serde_json::from_str::<serde_json::Value>(line) else {
+        return Kept::No;
+    };
+    match m["method"].as_str() {
+        Some("initialize" | "notifications/initialized") => Kept::Handshake,
+        Some("tools/call")
+            if m["params"]["name"]
+                .as_str()
+                .is_some_and(|n| STATEFUL.contains(&n)) =>
+        {
+            Kept::State
+        }
+        _ => Kept::No,
+    }
 }
 
 #[derive(Default)]
@@ -145,7 +205,9 @@ impl Relay {
     fn emit(&self, session: u32, event: McpEvent) {
         let mut inner = self.inner.lock().unwrap();
         let listener = inner.listener.clone();
-        let Some(s) = inner.sessions.get_mut(&session) else { return };
+        let Some(s) = inner.sessions.get_mut(&session) else {
+            return;
+        };
         match listener {
             Some(channel) if s.announced => {
                 let _ = channel.send(event);
@@ -154,12 +216,22 @@ impl Relay {
         }
     }
 
-    fn add(&self, out: mpsc::UnboundedSender<Out>) -> u32 {
+    fn add(&self, out: mpsc::UnboundedSender<Out>, hello: Hello) -> u32 {
         let id = {
             let mut inner = self.inner.lock().unwrap();
             inner.next += 1;
             let id = inner.next;
-            inner.sessions.insert(id, Session { out, announced: false, held: Vec::new() });
+            let session = Session {
+                out,
+                hello,
+                handshake: Vec::new(),
+                state: Vec::new(),
+                announced: false,
+                held: Vec::new(),
+            };
+            let open = session.open(id, false);
+            inner.sessions.insert(id, session);
+            inner.sessions.get_mut(&id).unwrap().held.push(open);
             id
         };
         self.counted();
@@ -168,7 +240,9 @@ impl Relay {
 
     fn announce_held(&self) {
         let mut inner = self.inner.lock().unwrap();
-        let Some(channel) = inner.listener.clone() else { return };
+        let Some(channel) = inner.listener.clone() else {
+            return;
+        };
         for s in inner.sessions.values_mut().filter(|s| !s.announced) {
             s.announced = true;
             for event in s.held.drain(..) {
@@ -183,6 +257,23 @@ impl Relay {
             let _ = s.out.send(Out::End);
             self.counted();
         }
+    }
+
+    /// A line from the agent, kept as well if it is one to replay.
+    fn received(&self, session: u32, line: String) {
+        if let Some(s) = self.inner.lock().unwrap().sessions.get_mut(&session) {
+            match kept(&line) {
+                Kept::Handshake if s.handshake.len() < 2 => s.handshake.push(line.clone()),
+                Kept::State => {
+                    s.state.push(line.clone());
+                    if s.state.len() > STATE_KEPT {
+                        s.state.remove(0);
+                    }
+                }
+                _ => {}
+            }
+        }
+        self.emit(session, McpEvent::Message { session, line });
     }
 
     /// A pipe has gone: forget it, and tell the window if it knew.
@@ -203,13 +294,15 @@ async fn serve(relay: Relay, stream: TcpStream, token: Arc<String>) {
     let mut lines = BufReader::new(read).lines();
     let hello = tokio::time::timeout(Duration::from_secs(10), lines.next_line()).await;
     let Ok(Ok(Some(hello))) = hello else { return };
-    let Ok(hello) = serde_json::from_str::<Hello>(&hello) else { return };
+    let Ok(hello) = serde_json::from_str::<Hello>(&hello) else {
+        return;
+    };
     if hello.token != *token {
         return;
     }
 
     let (out, mut outgoing) = mpsc::unbounded_channel();
-    let session = relay.add(out);
+    let session = relay.add(out, hello);
     tauri::async_runtime::spawn(async move {
         while let Some(Out::Line(line)) = outgoing.recv().await {
             if write.write_all(line.as_bytes()).await.is_err()
@@ -221,19 +314,9 @@ async fn serve(relay: Relay, stream: TcpStream, token: Arc<String>) {
         let _ = write.shutdown().await;
     });
 
-    relay.emit(
-        session,
-        McpEvent::Open {
-            session,
-            args: hello.args,
-            cwd: hello.cwd,
-            read_only: hello.read_only,
-            elicit: hello.elicit,
-        },
-    );
     relay.announce_held();
     while let Ok(Some(line)) = lines.next_line().await {
-        relay.emit(session, McpEvent::Message { session, line });
+        relay.received(session, line);
     }
     relay.closed(session);
 }
@@ -258,22 +341,17 @@ pub fn start(relay: Relay) -> std::io::Result<Discovery> {
     Ok(discovery)
 }
 
-/// The window is ready for pipes. Any it was serving before (a reload)
-/// are ended; any waiting are announced.
+/// The window is ready for pipes: those waiting are announced, and those
+/// a page before it was serving (a reload) are announced again.
 #[tauri::command]
 pub fn mcp_listen(relay: tauri::State<'_, Relay>, events: Channel<McpEvent>) {
-    let stale: Vec<u32> = {
+    {
         let mut inner = relay.inner.lock().unwrap();
         inner.listener = Some(events);
-        inner
-            .sessions
-            .iter()
-            .filter(|(_, s)| s.announced)
-            .map(|(id, _)| *id)
-            .collect()
-    };
-    for id in stale {
-        relay.remove(id);
+        for (id, s) in inner.sessions.iter_mut().filter(|(_, s)| s.announced) {
+            s.announced = false;
+            s.held = vec![s.open(*id, true)];
+        }
     }
     relay.announce_held();
 }
