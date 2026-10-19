@@ -52,13 +52,13 @@ normative artifact.
 |---|---|
 | `schema/` | **The source of truth for the format.** Entity and field declarations, the version, the registry generator and linter. |
 | `scf-core/` | The semantics, in TypeScript: resolution, structure, readiness, screenplay parsing, proposals. Environment-agnostic. |
-| `scf-app/` | The editor — a browser application over the same core, talking to the local host, with a CodeMirror screenplay editor and canonical query pages. |
-| `scf-host/` | The one local process that opens `.scf` files and serves them to the editor and the MCP: read-only queries, named writes from `scf-core`, loopback WebSocket with a token. See `docs/scf-write-ownership.md`. |
-| `scf-mcp/` | An MCP server over a `.scf` file, for AI assistants: a local stdio process and a client of the host, with one tool per canonical query, lookup, the shot-prompt composite, and write tools that plan first and change nothing until the plan is confirmed (`--read-only` removes them). See `docs/scf-mcp-design.md`. |
+| `scf-app/` | The editor — a desktop app (Tauri) over the same core, with a CodeMirror screenplay editor and canonical query pages. Its window owns the open files and serves the MCP. |
+| `scf-host/` | The host core: the one owner of each open `.scf`, which the editor's window runs — read-only queries, named writes from `scf-core`, snapshots and a journal. See `docs/scf-write-ownership.md`. |
+| `scf-mcp/` | The MCP tools for AI assistants, served by the editor (`scf-editor mcp`): one tool per canonical query, lookup, the shot-prompt composite, and write tools that plan first and change nothing until the plan is confirmed (`--read-only` removes them). See `docs/scf-mcp-design.md`. |
 | `fixtures/` | `hollow_creek.scf`, the conformance fixture and demo project, with the scripts that build it. |
 | `corpus/` | Screenplay parsing corpus. The public tier is checked in; `corpus/private` is not. |
 | `spec/` | **The normative specification.** `scf-spec.md` (what the format is), `stability.md` (what is safe to build against), `conformance.md` (what claiming SCF support means), `CHANGELOG.md`. Published artifacts: `scf-schema.sql` (physical DDL), `registry.schema.json` (JSON Schema for the registry), `finding-catalog.json` (the normative finding codes), `junction-keys.json`, `readiness-rubrics.json`, `scf.magic` (a `file(1)` pattern), `ARTIFACTS.md` + `SHA256SUMS`. `screenplay-tables.json` (the screenplay infrastructure tables and the `line_type` vocabulary). `api-surface.json` (every name importable from `scf-core`), `entity-reference.md` and `query-reference.md` (generated reading aids, not normative). `ARTIFACTS.md` lists every file the manifest covers — these four documents, the generated artifacts, the canonical query results and the blessed negative reports under `fixtures/` — and says how many. |
-| `docs/` | `what-is-scf.md`, `walkthrough.md`, `authoring-guide.md`, `glossary.md` and `faq.md` (start here if the format is new to you), `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `release-checklist.md` (what stands between here and 1.0), and the design records for the editor and the MCP server: `editor-mvp.md`, `narrative-workspaces.md`, `story-structure-design-record.md`, `scf-mcp-design.md`, and `scf-write-ownership.md` (why one host owns every open file, and the rules its writes keep). |
+| `docs/` | `what-is-scf.md`, `walkthrough.md`, `authoring-guide.md`, `glossary.md` and `faq.md` (start here if the format is new to you), `conventions.md` (the design record — why the format is the way it is), `schema-changelog.md`, `release-checklist.md` (what stands between here and 1.0), `developing.md` (setting up to work on the editor), and the design records for the editor and the MCP server: `editor-mvp.md`, `narrative-workspaces.md`, `story-structure-design-record.md`, `scf-mcp-design.md`, and `scf-write-ownership.md` (why one host owns every open file, and the rules its writes keep). |
 | `site/` | The documentation site. Renders the Markdown above; authors nothing except its own landing page. `npm run build` in `site/`. |
 
 ## Getting started
@@ -73,8 +73,10 @@ cd scf-app && npm ci && npm run dev         # the editor, in its window
 ```
 
 Nothing needs building first: the editor aliases `scf-core`, `scf-host`
-and `scf-mcp` to their TypeScript source. `scf-app/README.md` covers
-developing it.
+and `scf-mcp` to their TypeScript source. **[`docs/developing.md`](docs/developing.md)
+is the full setup for Windows, macOS and Linux** — the system packages
+the desktop shell needs, running the editor and the tests, and pointing
+an assistant at the dev app.
 
 The editor is a desktop app (Tauri). Its window owns every open file
 (`scf-host`'s core) and serves the MCP, so an assistant pointed at the
