@@ -1,0 +1,13 @@
+{
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "SCF in-app host spike",
+        "url": "spike.html",
+        "width": 900,
+        "height": 700
+      }
+    ]
+  }
+}

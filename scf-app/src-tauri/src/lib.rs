@@ -14,6 +14,11 @@
 //! replaced rather than retried. Under `tauri dev` the page is the Vite
 //! dev server's, which runs a host of its own and never asks.
 
+mod sql;
+mod sql_socket;
+#[cfg(any(debug_assertions, feature = "spike"))]
+mod spike;
+
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -92,8 +97,31 @@ async fn host_location() -> Result<Location, HostError> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![host_location])
+    let databases = sql::Databases::default();
+    let socket = sql_socket::start(databases.clone()).expect("a loopback port for SQL");
+    let builder = tauri::Builder::default().manage(databases).manage(socket);
+    #[cfg(any(debug_assertions, feature = "spike"))]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        host_location,
+        sql::sql_open,
+        sql::sql_exec,
+        sql::sql_close,
+        sql::file_fingerprint,
+        sql_socket::sql_socket,
+        spike::spike_setup,
+        spike::spike_copy,
+        spike::spike_report,
+    ]);
+    #[cfg(not(any(debug_assertions, feature = "spike")))]
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        host_location,
+        sql::sql_open,
+        sql::sql_exec,
+        sql::sql_close,
+        sql::file_fingerprint,
+        sql_socket::sql_socket,
+    ]);
+    builder
         .run(tauri::generate_context!())
         .expect("error while running the SCF editor");
 }
