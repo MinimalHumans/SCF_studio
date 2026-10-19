@@ -24,7 +24,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # in-app-host: the desktop app's own host, before it is proposed.
+    branches: [main, in-app-host]
     tags: ["schema-*"]
   pull_request:
   workflow_dispatch:
