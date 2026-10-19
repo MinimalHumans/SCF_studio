@@ -14,6 +14,7 @@
 //! replaced rather than retried. Under `tauri dev` the page is the Vite
 //! dev server's, which runs a host of its own and never asks.
 
+mod files;
 mod sql;
 mod sql_socket;
 #[cfg(any(debug_assertions, feature = "spike"))]
@@ -108,6 +109,15 @@ pub fn run() {
         sql::sql_close,
         sql::file_fingerprint,
         sql_socket::sql_socket,
+        files::fs_windows,
+        files::fs_real,
+        files::fs_exists,
+        files::fs_read_dir,
+        files::fs_read_text,
+        files::fs_append_text,
+        files::fs_create_file,
+        files::fs_mkdir,
+        files::fs_remove,
         spike::spike_setup,
         spike::spike_copy,
         spike::spike_report,
@@ -120,6 +130,15 @@ pub fn run() {
         sql::sql_close,
         sql::file_fingerprint,
         sql_socket::sql_socket,
+        files::fs_windows,
+        files::fs_real,
+        files::fs_exists,
+        files::fs_read_dir,
+        files::fs_read_text,
+        files::fs_append_text,
+        files::fs_create_file,
+        files::fs_mkdir,
+        files::fs_remove,
     ]);
     builder
         .run(tauri::generate_context!())

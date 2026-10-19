@@ -21,27 +21,13 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Row, SqlExec, SqlValue } from "@scf-core/db.ts";
 import type { Registry } from "@scf-core/registry.ts";
 import { createSession, type Session } from "@scf-core/session.ts";
+import { fromBase64, toBase64 } from "@scf-host/platform.ts";
 
 type SqlJson = string | number | null | { $b64: string };
 
 interface Rows {
   columns: string[];
   rows: SqlJson[][];
-}
-
-function toBase64(bytes: Uint8Array): string {
-  let bin = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  }
-  return btoa(bin);
-}
-
-function fromBase64(b64: string): Uint8Array {
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
-  return bytes;
 }
 
 function encode(v: SqlValue): SqlJson {
