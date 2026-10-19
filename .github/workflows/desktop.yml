@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 # A newer push makes an older build pointless.
 concurrency:
@@ -29,6 +30,15 @@ concurrency:
 env:
   NODE_VERSION: "24"
   RELEASE_TAG: desktop-latest
+  # Artifact Signing, reached by OIDC as the app registration whose
+  # federated credential trusts `tauri` (none of these are secrets).
+  # Only `tauri` signs; `in-app-host` builds unsigned.
+  AZURE_CLIENT_ID: cea87653-01f1-4308-9988-8ca28c971a70
+  AZURE_TENANT_ID: dbbfdd81-727c-4a58-a3f5-db66a2d489c1
+  AZURE_SUBSCRIPTION_ID: e3fd192a-87a3-4645-aa51-6744c2be6469
+  SIGNING_ENDPOINT: https://eus.codesigning.azure.net
+  SIGNING_ACCOUNT: krets-signing
+  SIGNING_PROFILE: scf-public-trust
 
 jobs:
   windows:
@@ -74,10 +84,43 @@ jobs:
       - run: npm ci
         working-directory: scf-app
 
-      # beforeBuildCommand builds the page first.
+      - name: azure login
+        if: github.ref == 'refs/heads/tauri'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: install trusted-signing-cli
+        if: github.ref == 'refs/heads/tauri'
+        run: cargo install trusted-signing-cli --locked
+
+      # beforeBuildCommand builds the page first. With signCommand set,
+      # tauri signs scf-editor.exe before bundling it, then the
+      # installer, so the portable copy packaged below is signed too.
       - name: tauri build
-        run: npm run tauri build
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}" -eq "refs/heads/tauri") {
+            $cmd = "trusted-signing-cli -e $env:SIGNING_ENDPOINT -a $env:SIGNING_ACCOUNT -c $env:SIGNING_PROFILE -d `"SCF Editor`" %1"
+            $config = @{ bundle = @{ windows = @{ signCommand = $cmd } } } | ConvertTo-Json -Compress -Depth 5
+            npm run tauri build -- --config $config
+          } else {
+            npm run tauri build
+          }
         working-directory: scf-app
+
+      - name: verify signatures
+        if: github.ref == 'refs/heads/tauri'
+        shell: pwsh
+        run: |
+          $release = "scf-app/src-tauri/target/release"
+          foreach ($file in "$release/scf-editor.exe", (Get-ChildItem "$release/bundle/nsis/*-setup.exe").FullName) {
+            $sig = Get-AuthenticodeSignature $file
+            "$file : $($sig.Status)"
+            if ($sig.Status -ne "Valid") { throw "$file is not validly signed" }
+          }
 
       - name: package
         id: package
@@ -123,6 +166,6 @@ jobs:
             --prerelease \
             --target "$GITHUB_SHA" \
             --title "Desktop (latest ${GITHUB_REF_NAME} build)" \
-            --notes "Unsigned Windows build of ${GITHUB_SHA::7} on \`${GITHUB_REF_NAME}\`. Replaced on every push; not a release." \
+            --notes "Signed Windows build of ${GITHUB_SHA::7} on \`${GITHUB_REF_NAME}\`. Replaced on every push; not a release." \
             "out/${{ steps.package.outputs.name }}.zip" \
             "${{ steps.package.outputs.setup }}"
