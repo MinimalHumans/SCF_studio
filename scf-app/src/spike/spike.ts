@@ -12,9 +12,15 @@
  *              the two resulting files must hold the same rows
  *
  * "node" is the dev server's host over its WebSocket, as the window
- * talks to it today. "socket" and "invoke" are scf-core here, on the
- * shell's SQLite (`src-tauri/src/sql.rs`), reached over its loopback
- * socket or through Tauri's `invoke`.
+ * talks to it today. "core" is the same host core run here, in the
+ * window, on the shell's files and SQLite (`tauriPlatform.ts`).
+ * "socket" and "invoke" are scf-core with no host at all, on the shell's
+ * SQLite (`src-tauri/src/sql.rs`) over its loopback socket or through
+ * Tauri's `invoke`.
+ *
+ * Then the in-window host does what only a host does: an agent's op
+ * (snapshot first, journalled), and `list`, inside its roots and not
+ * outside them.
  *
  *   npx tauri dev --config src-tauri/tauri.spike.json
  *   npx tauri dev --release --features spike --config src-tauri/tauri.spike.json
@@ -31,8 +37,12 @@ import { prepareImport } from "@scf-core/ops/importPipeline.ts";
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
 import { validationReport } from "@scf-core/report.ts";
 import { createSession } from "@scf-core/session.ts";
-import type { HostClient } from "@scf-host/client.ts";
+import {
+  HostClient, HostClientError, connectInProcess,
+} from "@scf-host/client.ts";
+import { createHostCore } from "@scf-host/core.ts";
 import { connectHost } from "../host/connection.ts";
+import { createTauriPlatform } from "../host/tauriPlatform.ts";
 import { openTauriDatabase, openTauriSession } from "../host/tauriSql.ts";
 
 const registry = loadRegistry(registryJson as unknown as RegistryJson);
@@ -111,14 +121,30 @@ async function roundtrips(exec: SqlExec): Promise<number> {
 
 type Via = "socket" | "invoke";
 const VIAS: Via[] = ["socket", "invoke"];
+type Host = "node" | "core";
+const HOSTS: Host[] = ["node", "core"];
 
 async function run(): Promise<Record<string, unknown>> {
   const setup = await invoke<Setup>("spike_setup");
   const sep = setup.work.includes("\\") ? "\\" : "/";
   const at = (name: string): string => `${setup.work}${sep}${name}`;
-  const host: HostClient = await connectHost({ name: "spike" });
+  const copy = (from: string, to: string): Promise<void> =>
+    invoke("spike_copy", { from: at(from), to: at(to) });
   const text = (r: unknown): string => `${JSON.stringify(r, null, 2)}\n`;
   const source = { source: "fixtures/hollow_creek.scf" };
+
+  // The host core, run here on the shell's files and SQLite, with its
+  // snapshots and journal in the work folder and that folder its root.
+  const core = createHostCore({
+    registry, platform: await createTauriPlatform(), version: "spike",
+    roots: [setup.work], snapshotDir: at("snapshots"),
+    journalDir: at("journal"),
+  });
+  const hosts: Record<Host, HostClient> = {
+    node: await connectHost({ name: "spike" }),
+    core: await HostClient.connect(connectInProcess(core.connect()),
+                                   { name: "spike" }),
+  };
 
   const version = async (exec: SqlExec): Promise<string> =>
     String((await exec("SELECT sqlite_version() AS v"))[0]?.["v"]);
@@ -134,16 +160,19 @@ async function run(): Promise<Record<string, unknown>> {
   const importDifference: Record<string, string | null> = {};
 
   // ── report ───────────────────────────────────────────────────────
-  await host.open(at("fixture-node.scf"), { readOnly: true });
-  {
+  await copy("fixture-tauri.scf", "fixture-core.scf");
+  for (const name of HOSTS) {
+    const host = hosts[name];
+    await host.open(at(`fixture-${name}.scf`), { readOnly: true });
     const read = counted(host.exec);
     const [report, ms] = await timed(() =>
       validationReport(read.exec, registry, source));
-    reportMs["node"] = ms;
-    reportStatements["node"] = read.n();
-    matchesFixture["node"] = text(report) === setup.reportJson;
-    roundtripMs["node"] = await roundtrips(host.exec);
-    sqlite["node"] = await version(host.exec);
+    reportMs[name] = ms;
+    reportStatements[name] = read.n();
+    matchesFixture[name] = text(report) === setup.reportJson;
+    reportDifference ??= firstDifference(setup.reportJson, text(report));
+    roundtripMs[name] = await roundtrips(host.exec);
+    sqlite[name] = await version(host.exec);
   }
   for (const via of VIAS) {
     const fixture = await openTauriSession(
@@ -156,7 +185,6 @@ async function run(): Promise<Record<string, unknown>> {
     matchesFixture[via] = text(report) === setup.reportJson;
     reportDifference ??= firstDifference(setup.reportJson, text(report));
     roundtripMs[via] = await roundtrips(fixture.exec);
-    sqlite["tauri"] = await version(fixture.exec);
     await fixture.close();
   }
 
@@ -167,9 +195,8 @@ async function run(): Promise<Record<string, unknown>> {
   await empty.write((ctx) =>
     initDatabase(ctx.exec, registry, { editorVersion: "spike" }));
   await empty.close();
-  for (const side of ["node", ...VIAS]) {
-    await invoke("spike_copy",
-                 { from: at("empty.scf"), to: at(`import-${side}.scf`) });
+  for (const side of [...HOSTS, ...VIAS]) {
+    await copy("empty.scf", `import-${side}.scf`);
   }
 
   const prepared = prepareImport(setup.fountain, "fountain");
@@ -184,14 +211,16 @@ async function run(): Promise<Record<string, unknown>> {
     },
   };
 
-  await host.open(at("import-node.scf"));
-  [, importMs["node"]] = await timed(() =>
-    host.call("import.apply", [accepted]));
-  const nodeDump = await dump(host.exec);
-  await host.dispose();
+  const dumps: Record<string, string> = {};
+  for (const name of HOSTS) {
+    const host = hosts[name];
+    await host.open(at(`import-${name}.scf`));
+    [, importMs[name]] = await timed(() =>
+      host.call("import.apply", [accepted]));
+    dumps[name] = await dump(host.exec);
+  }
 
   let importStatements = 0;
-  let rows = 0;
   for (const via of VIAS) {
     const db = await openTauriDatabase(at(`import-${via}.scf`), { via });
     const statements = counted(db.exec);
@@ -202,12 +231,42 @@ async function run(): Promise<Record<string, unknown>> {
     [, importMs[via]] = await timed(() =>
       callFn(film, "import.apply", [accepted]));
     importStatements = statements.n();
-    const tauriDump = await dump(db.exec);
-    rows = tauriDump.split("\n").filter((l) => !l.startsWith("#")).length;
-    importSame[via] = nodeDump === tauriDump;
-    importDifference[via] = firstDifference(nodeDump, tauriDump);
+    dumps[via] = await dump(db.exec);
     await film.close();
   }
+  for (const side of ["core", ...VIAS]) {
+    importSame[side] = dumps["node"] === dumps[side];
+    importDifference[side] = firstDifference(dumps["node"]!, dumps[side]!);
+  }
+
+  // ── the host core's own work, here ───────────────────────────────
+  // An agent's op takes a snapshot first and is journalled; `list`
+  // stays inside the roots.
+  const agent = await HostClient.connect(connectInProcess(core.connect()),
+                                         { name: "mcp: spike" });
+  await agent.open(at("import-core.scf"));
+  const added = await agent.op("record.create",
+    { entity: "character", values: { name: "Spike" } });
+  const heard = await hosts.core.journal();
+  const listed = await hosts.core.list(setup.work);
+  let outside: string | null = null;
+  try {
+    await hosts.core.list(at(".."));
+  } catch (e) {
+    outside = e instanceof HostClientError ? e.code : String(e);
+  }
+  const coreHost = {
+    snapshotTaken: added.snapshot !== undefined &&
+      await invoke<boolean>("fs_exists", { path: added.snapshot }),
+    revision: added.revision,
+    journal: heard.map((e) => `${e.by} ${e.via} ${e.name} ${String(e.ok)}`),
+    listed: listed.entries.map((e) => `${e.kind} ${e.name}`),
+    outsideRoots: outside,
+  };
+
+  await agent.dispose();
+  for (const host of Object.values(hosts)) await host.dispose();
+  await core.shutdown();
 
   return {
     sqlite,
@@ -220,11 +279,13 @@ async function run(): Promise<Record<string, unknown>> {
       script: "corpus/public/scripts/alexis-nexus.fountain",
       lines: setup.fountain.split("\n").length,
       statements: importStatements,
-      rows,
+      rows: dumps["node"]!.split("\n")
+        .filter((l) => !l.startsWith("#")).length,
       ms: importMs,
       sameAsNode: importSame,
       difference: importDifference,
     },
+    coreHost,
   };
 }
 
