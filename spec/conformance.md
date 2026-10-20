@@ -4,7 +4,7 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: release candidate (specification 1.0-rc.6).** Every section is specified. What is known to be
+**Status: release candidate (specification 1.0-rc.7).** Every section is specified. What is known to be
 unfinished is tracked in [stability.md](stability.md); the one check the
 validator cannot yet make is named in §4.
 
@@ -227,7 +227,7 @@ tell it has not been designed.
 
 Every artifact this section names is published at the specification
 version's tag and checksummed in `SHA256SUMS`. Fetch them from
-`spec-<version>` — for this document, `spec-1.0-rc.6` — never from
+`spec-<version>` — for this document, `spec-1.0-rc.7` — never from
 `main`; [ARTIFACTS.md](ARTIFACTS.md) gives each file's address, and
 which files the schema tag addresses as well.
 
@@ -487,7 +487,7 @@ your implementation behaved as described — and a reader can check.
 
 There is no second **maintained** implementation. An independent one
 has been written from the text for every reader run, by people without
-the reference code (nine so far, `docs/release-checklist.md` §D1), and
+the reference code (eleven so far, `docs/release-checklist.md` §D1), and
 none is kept current. Until one is, every rule in the
 specification is guaranteed only to be implementable in the way it was
 already implemented, which is the weakest form of that guarantee — and

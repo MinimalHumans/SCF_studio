@@ -95,6 +95,11 @@ for (const [id, path] of Object.entries(QUERY_PATHS)) {
       unresolved.push(`${id}: a step carries intent or ` +
                       "intentBySubjectType, not both");
     }
+    // A step resolved by a query is resolved by a canonical one with a
+    // rubric of its own, or the reader has no answer to count rows in.
+    if (s.resolvedBy !== undefined && !(s.resolvedBy in QUERY_PATHS)) {
+      unresolved.push(`${id}: resolvedBy ${s.resolvedBy} has no rubric`);
+    }
     if (s.filter !== undefined) {
       // The filter column must exist on every entity the step names,
       // or the step describes a subset that cannot be taken.
@@ -132,6 +137,7 @@ const rubrics = Object.entries(QUERY_PATHS)
       ...(s.intentBySubjectType === undefined
         ? {} : { intentBySubjectType: s.intentBySubjectType }),
       ...(s.appliesTo === undefined ? {} : { appliesTo: s.appliesTo }),
+      ...(s.resolvedBy === undefined ? {} : { resolvedBy: s.resolvedBy }),
       label: s.label,
     })),
   }))
@@ -165,7 +171,10 @@ const rubricDoc = {
     "with neither takes the target's own `intent`. A step whose " +
     "satisfying entities are `bundle` alone is a media step. " +
     "`appliesTo: \"seen\"` marks a step about how characters look, " +
-    "assessed only for characters seen at the position. `params` " +
+    "assessed only for characters seen at the position. `resolvedBy` " +
+    "names the canonical query whose answer at the position decides the " +
+    "step: only the rows that answer lets contribute satisfy it. " +
+    "`params` " +
     "are §12.9's names, `?` marking an optional one. Rows are narrowed " +
     "as the target query narrows (§12.9.1). `label` is derived " +
     "for display and is the only prose here — a consumer should never " +

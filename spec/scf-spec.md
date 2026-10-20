@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 1.0-rc.6 — release candidate.**
+**Version 1.0-rc.7 — release candidate.**
 Describes schema version **2.25**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -2722,7 +2722,12 @@ with no subject, or for Q13 with no `intent`, has nothing to assess and
 is not answered (§12.1.7). **Its `shot` and `scene` fix the position for
 every target** as §12.1.7 fixes a query's: a shot alone is at its scene
 — for Q02, Q05, Q06, Q07 and Q08 as for Q13 — and a shot outside the
-scene asked is not answered.
+scene asked is not answered. **The shot fixes the position for every
+step, the media step's Q13 answer included** (§12.9.1): Q05 and Q06 take
+no shot, but a Q14 for either asked at a shot asks its media step's Q13
+at that shot, so a `voice_identity` bundle applied there by a
+`character_shot_override` meets Q05's media step. Until 1.0-rc.7 the
+media step said "at the query's scene and shot", which read as either.
 
 **At a cut scene**, an empty position (§12.1.7), Q14 assesses what its
 target answers there: a step narrowed to the position finds nothing and
@@ -2736,7 +2741,7 @@ there.
 |---|---|
 | `target`, `targetName` | The query assessed. |
 | `findings` | Each with `severity`, the `entity` it concerns, and a message. **Ordered by severity**, `blocker` first and `ok` last; within one severity the order is the implementation's, and is not compared. |
-| `counts` | Findings per severity. |
+| `counts` | Findings per severity: every severity a key, zeros included. |
 
 **`entity` names one entity the step declares**: the one whose rows
 decided the finding — `costume` where a character has no costumes at
@@ -2799,6 +2804,7 @@ marked `required`, `recommended` or `optional`.
 | `intent` | Present on a media step (below): the asset intent whose bundle must resolve. The entity is `bundle` either way. |
 | `intentBySubjectType` | Present on a media step instead of `intent` where the intent depends on the kind of subject asked about: each kind mapped to its intent. Q02's maps a location to `environment` and a character or prop to `visual_identity`, as the Q13 answer Q02 nests is asked (§12.16). A media step with neither — Q13's own first step — takes the target's `intent` parameter. |
 | `appliesTo` | `"seen"` on a step about how characters look: assessed only for characters seen at the position (§12.9). Absent, the step applies whatever anyone's presence. |
+| `resolvedBy` | Present where the step's rows are ones a canonical query resolves: that query. The step is satisfied by what that query's answer lets contribute at the position, and by no other row (below). Q13's `entity_anchor` step and its shot-override step carry `"Q13"`. |
 | `purpose` | Why the step is there. Prose, for a person. |
 | `label` | **Derived** from the members above, for display. A consumer MUST NOT parse it. |
 
@@ -2832,8 +2838,8 @@ project.
 **A step's rows are narrowed as its target narrows**, to the subject and
 the position asked about. Readiness that narrowed differently from its
 target would report a gap the answer does not have, or miss one it does.
-Some steps name an entity their target does not itself read — Q07's
-`visual_identity` and `character_appearance_profile`, Q05's
+Some steps name an entity their target does not itself read — among
+them Q07's `visual_identity` and `character_appearance_profile`, Q05's
 `dialogue_rhythm` and `sound_perspective`, Q08's
 `location_sound_profile` — because whoever acts on the answer needs it
 beside the answer; they are narrowed by the same rules. Until 1.0-rc.6
@@ -2850,7 +2856,8 @@ to the position.
   sibling column holds `subjectType` and whose subject column holds the
   subject, where that sibling's options include the kind at all;
 - **one declared reference away** — a reference to an entity that has
-  such a column (§6.5): `relationship_state` reaches a character through
+  a reference to the subject's kind (§6.5), whatever that column is
+  named: `relationship_state` reaches a character through
   either of `character_relationship`'s character columns, and
   `costume_scene` through `costume.character_id`.
 
@@ -2876,18 +2883,37 @@ character, and Q02's costume step applied to a location.
   therefore ready on the scene's, which is what Q07 answers there; the
   published `Q14-Q07-shot12A` shows it. Narrowing by `shot_id` equality
   reported a missing layer the target returns;
-- **a column naming a parameter the query received** — `scene_id`, or
-  `shot_id` — by equality;
+- **a column naming a parameter the target takes** — `scene_id`, or
+  `shot_id` — by equality. A shot Q14 received for a target that takes
+  none fixes the position and narrows no column: Q08's `sound_cue` is
+  narrowed by its `scene_id`;
 - **`location_id`**, to the scene's location through `scene.location_id`.
 
 An entity with nothing to narrow it to the subject or the position is
 assessed across the file in that respect, because there is nothing to
 narrow it by.
 
+**A step over rows a query resolves is satisfied by what that query
+resolves**, at the position, and not by the rows the routes above
+reach. The rubric marks such a step with `resolvedBy`. Q13 resolves
+anchors and shot overrides: its `entity_anchor` step counts exactly the
+anchors Q13 lets contribute at the position — verified, of the intent's
+anchor type (§12.8's table), and, by §4.8, an anchor naming a variant
+only where that variant is in force, the subject's own anchors of the
+type displaced where an in-force variant has one — and its shot-override
+step only overrides whose bundle has the intent. The published
+`Q14-Q13-marcus-scene12` shows it: Marcus's one verified anchor names
+his young variant, which is not in force at scene 12, and his own anchor
+is a `candidate`, so Q13 there returns no anchor and the step is a
+`warning`. Until 1.0-rc.7 the step's only narrowing was its `filter`
+and the subject routes, which found that verified anchor and called him
+pinned at every scene but 25, where the variant is in force.
+
 **A media step** — one whose satisfying entities are `bundle` alone —
 is satisfied when **the subject asked about** has at least one reference
 of the step's intent in force at the position: its own Q13 answer
-(§12.8) at the query's scene and shot. A bundle bound to some other
+(§12.8) at the scene and the shot Q14 was asked about, whether or not
+the target takes a shot (§12.9). A bundle bound to some other
 subject does not satisfy it, and **neither does a binding of the
 subject's own that is excluded at the position**: Q13's first step names
 the four binding tables as context and is satisfied by `bundle` alone.

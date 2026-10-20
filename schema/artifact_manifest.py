@@ -235,6 +235,10 @@ GROUPS: list[tuple[str, str, str, list[tuple[str, str]]]] = [
         ("fixtures/expectations/Q14-Q02-ada-scene3.result.json",
          "Q14 for Q02 about a character only mentioned: the look steps "
          "do not apply. Spec §12.9."),
+        ("fixtures/expectations/Q14-Q13-marcus-scene12.result.json",
+         "Q14 for Q13 where the subject's only verified anchor is a "
+         "variant's, not in force at the position: a warning. Spec "
+         "§12.9.1."),
      ]),
 
     ("The canonical query parameters", "spec",

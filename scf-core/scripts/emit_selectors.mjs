@@ -242,6 +242,10 @@ const PARAMETERS = {
     character: { literal: null }, subjectType: { literal: "character" },
     subject: { selector: "ada" }, intent: { literal: null },
     scene: { selector: "scene3" }, shot: { literal: null } },
+  "Q14-Q13-marcus-scene12": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "marcus" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { literal: null } },
 };
 
 // ── Resolve, and check every selector actually matches ───────────────

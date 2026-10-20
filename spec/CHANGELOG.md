@@ -17,6 +17,85 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.7 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The seventh and last release candidate, limited to Q14**, from the
+eleventh independent reader run (`docs/release-checklist.md` §D1). It
+reproduced every published artifact outside Q14 exactly, conformed on
+all nine published Q14 results, and had no critical finding. Its two
+majors were both in §12.9.1: each let two readings of the text give
+different severities on a `recommended` or `required` step. Fixing them
+changes which Q14 severities are permitted, so under §11.5 this is a
+**minor** change. **No registry change; schema stays 2.25.** Taken under
+§11.0, which still holds. 1.0 is to be cut from this candidate without a
+further reader run; Q14 stays Provisional (`stability.md`).
+
+### §12.9.1 — a step over rows a query resolves (M1)
+
+- **A step over rows a query resolves is satisfied by what that query
+  resolves**, at the position, not by the rows §12.9.1's routes reach. A
+  rubric step gains `resolvedBy`, naming the query; Q13's
+  `entity_anchor` and shot-override steps carry `"Q13"`. The anchor step
+  therefore counts exactly the anchors Q13 lets contribute: verified, of
+  the intent's anchor type (§12.8), and a variant's only where §4.8 puts
+  that variant in force, the subject's own displaced where it does. The
+  override step counts only overrides whose bundle has the intent. The
+  routes alone found Marcus's one verified anchor, which names his young
+  variant, and called him pinned at every position; Q13 returns no
+  anchor for him outside scene 25. New worked example
+  `Q14-Q13-marcus-scene12`: the step is a `warning`. The generator
+  checks that `resolvedBy` names a query with a rubric.
+
+### §12.9 — the shot fixes the position for every step (M2)
+
+- A Q14 asked at a shot asks its media step's Q13 at that shot, whether
+  or not the target takes one: a `voice_identity` bundle applied by a
+  `character_shot_override` there meets Q05's media step. The media step
+  said "at the query's scene and shot", which read as Q14's or as the
+  target's. No worked example: the fixture's one shot override replaces
+  a `visual_identity` bundle, so no published position tells the readings
+  apart, and adding one would change the fixture and other published
+  results in the last candidate.
+- Consistently, a shot narrows a column only for a target that takes
+  one: "a column naming a parameter the target takes", not "the query
+  received" (m3). Q08's `sound_cue` is narrowed by its `scene_id`.
+
+### Reference
+
+`readiness.ts` already read Q13's anchors and overrides from
+`resolveMedia`, the code Q13 answers with, so the anchor step needed no
+change. Its Q05 and Q06 walkers asked their media step's Q13 without the
+shot; they now pass it. No published result changes.
+
+### Editorial
+
+- §12.9.1: "one declared reference away" is a reference to an entity
+  with a reference to the subject's kind, whatever the column is named,
+  as `character_relationship`'s `character_a_id` is (m2). The list of
+  steps naming an entity their target does not read gives examples, not
+  every one.
+- §12.9: `counts` has every severity as a key, zeros included (m8).
+- `conformance.md` §7: eleven reader-run implementations, not nine;
+  `stability.md`'s expectation-coverage row names scenes 7, 12, 16 and
+  19 and the Q07 target. README, site and `what-is-scf.md` status lines.
+
+### Left for after 1.0
+
+Run 11's other minors need a decision about behaviour, not a sentence,
+and are unchanged: a non-baseline binding with no filter and no range at
+a cut scene, and a scene-ranged one there (m1, §12.1.7, §12.8.1 — with
+rc.6's m4); whether a shot row naming a character its scene does not
+link, or makes `named`, counts as seen (m4, §4.6); Q14 asked without a
+required parameter or with a subject kind its target does not take (m5,
+§12.1.7); marking a cross-step finding and bounding its severity (m6);
+`entity` for a step that does not apply, on which the published results
+differ (m7); a cut subject asked about (m9, §12.1.2). rc.6's deferred
+m4, m6, m7, m8 and m11 are unchanged.
+
+---
+
 ## 1.0-rc.6 — 2026-10-20
 
 *Describes schema 2.25.*
