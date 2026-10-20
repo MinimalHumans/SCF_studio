@@ -161,11 +161,15 @@ const report = run(join(sandbox, "node_modules", ".bin",
 // imports from the package, opens a real .scf, and reports on it. It is
 // not about what the fixture happens to contain.
 //
-// Asserting `no findings` here would couple a packaging test to the
-// fixture's contents, and the fixture carries a deliberate `info`
-// finding. This file is a script rather than a test and does not run
-// under vitest, so it is easily missed when the fixture changes.
-const wanted = ["hollow_creek.scf", "(schema", "0 error", "0 warning"];
+// Asserting a finding count here would couple a packaging test to the
+// fixture's contents, and the fixture carries deliberate `info` and
+// `warning` findings (`hollow_creek.report.json` is where those are
+// pinned). So only what makes it a successful run is checked: it named
+// the file, read its schema, and found nothing that prevents reading.
+// This file is a script rather than a test and does not run under
+// vitest, so it is easily missed when the fixture changes.
+const wanted = ["hollow_creek.scf", "(schema", "0 error",
+                "This file is readable"];
 const missing = wanted.filter((s) => !report.includes(s));
 if (missing.length > 0) {
   console.error("[pack-test] the installed scf-check did not report as "
