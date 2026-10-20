@@ -119,6 +119,64 @@ async function cols(exec: SqlExec, table: string): Promise<Set<string>> {
 }
 
 /**
+ * `beat_order`, an unset one as 0, then row id — the one order every
+ * beat array in §12 takes (§12.2, §12.16, §12.17). Q05 used to put an
+ * unset order last while §12.17 said "as 0".
+ */
+export function byBeatOrder(a: Row, b: Row): number {
+  return ((asNum(a["beat_order"]) ?? 0) - (asNum(b["beat_order"]) ?? 0)) ||
+    ((asNum(a["id"]) ?? 0) - (asNum(b["id"]) ?? 0));
+}
+
+/**
+ * The position a cut scene stands for: one no row is keyed to and no
+ * story position contains (§12.1.7). Not null, which means "no position
+ * asked" and lets baselines alone apply in Q13; a cut scene was asked,
+ * and is a position with nothing at it.
+ */
+export const NOWHERE = -1;
+
+/**
+ * `sceneId`, or NOWHERE where that scene is cut (§6.6.1, §12.1.7). A
+ * query asked at a cut scene answers as at an empty position — §9.2's
+ * totality, and Q03's rule since 0.39 — rather than reading the rows
+ * still keyed to it, which are not cut themselves and so pass `rows()`.
+ */
+export async function positionInFilm(
+    ctx: ScfContext, sceneId: number | null): Promise<number | null> {
+  if (sceneId === null) return null;
+  const scene = (await rowsIncludingCut(ctx.exec, "scene", "id = ?",
+                                        [sceneId]))[0];
+  return scene !== undefined && excludeCut([scene]).length === 0
+    ? NOWHERE : sceneId;
+}
+
+/**
+ * The scene a query is answered at, given its `scene` and `shot`
+ * (§12.1.7). A shot fixes the position at its own scene: asked with no
+ * scene, the shot's scene is the position; asked with a scene it is not
+ * in, the question contradicts itself and is not answered. Q07 at scene
+ * 3 with shot 12-04 used to mix scene 3's palette with 12-04's design.
+ */
+export async function sceneOfPosition(
+    ctx: ScfContext, sceneId: number | null,
+    shotId: number | null): Promise<number | null> {
+  if (shotId === null) return positionInFilm(ctx, sceneId);
+  const shot = (await rowsIncludingCut(ctx.exec, "shot", "id = ?",
+                                       [shotId]))[0];
+  const own = asNum(shot?.["scene_id"]);
+  if (own === null) {
+    throw new Error("not answered: the shot asked about is in no scene " +
+                    "(§12.1.7)");
+  }
+  if (sceneId !== null && sceneId !== own) {
+    throw new Error("not answered: the shot asked about is not in the " +
+                    "scene asked about (§12.1.7)");
+  }
+  return positionInFilm(ctx, own);
+}
+
+/**
  * Story-position index per scene: scene id → 0-based position.
  *
  * Derived from the SCREENPLAY (spec §4.1), by delegating to
@@ -246,13 +304,7 @@ export async function resolveDescription(
     ctx.exec, "performance_beat",
     "character_id = ? AND scene_id = ? AND modality = ?",
     [characterId, sceneId, modality]);
-  beats.sort((a, b) => {
-    const ao = asNum(a["beat_order"]);
-    const bo = asNum(b["beat_order"]);
-    if ((ao === null) !== (bo === null)) return ao === null ? 1 : -1;
-    if ((ao ?? 0) !== (bo ?? 0)) return (ao ?? 0) - (bo ?? 0);
-    return (asNum(a["id"]) ?? 0) - (asNum(b["id"]) ?? 0);
-  });
+  beats.sort(byBeatOrder);
   return {
     modality,
     profile: profiles[0] ?? null,
@@ -837,11 +889,18 @@ export async function resolveMedia(
   // considered; one of this type that is not verified is considered,
   // excluded, and says so.
   const anchorType = ANCHOR_TYPE_FOR_INTENT[intent];
+  // An anchor whose asset is cut names a place in something that is not
+  // in the film (§6.6.1), and is not considered — no trail entry, as for
+  // a binding whose bundle is cut (§12.8). An ABSENT asset is different:
+  // the anchor is still in the film, dangling, and is kept.
+  const cutAssets = new Set((await rowsIncludingCut(
+    ctx.exec, "asset", "lifecycle_status = 'cut'")).map((r) => r["id"]));
   const ofType = (await rows(
     ctx.exec, "entity_anchor", "subject_type = ? AND subject_id = ?",
     [subject, subjectId]))
     .filter((a) => anchorType === undefined ||
-                   a["anchor_type"] === anchorType);
+                   a["anchor_type"] === anchorType)
+    .filter((a) => !cutAssets.has(a["asset_id"] ?? null));
   const verified = (a: Row): boolean =>
     a["canonical_status"] === null || a["canonical_status"] === undefined ||
     a["canonical_status"] === "" || a["canonical_status"] === "verified";
@@ -889,9 +948,11 @@ export async function resolveMedia(
       : null);
   }
 
-  // Shot overrides, most specific of all.
+  // Shot overrides, most specific of all. A kind with no override
+  // entity (a costume) has none to consider.
   const overrideAssets: Row[] = [];
-  if (shotId !== null) {
+  if (shotId !== null &&
+      ctx.registry.entities.has(`${subject}_shot_override`)) {
     const overrides = await rows(
       ctx.exec, `${subject}_shot_override`,
       `shot_id = ? AND ${idField} = ?`, [shotId, subjectId]);

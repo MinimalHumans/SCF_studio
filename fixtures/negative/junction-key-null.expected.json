@@ -1,0 +1,28 @@
+{
+  "about": "Two motif appearances on a prop, at no scene. Their natural keys (§6.3) agree except that `scene_id` and `domain` are NULL in both, and NULL key columns compare EQUAL (§6.4): one link, written twice. A reader comparing with SQL's `=` sees two distinct links and reports nothing.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.25",
+  "fileSchemaVersion": "2.25",
+  "source": "fixtures/negative/build/junction-key-null.scf",
+  "counts": {
+    "error": 0,
+    "warning": 1,
+    "info": 0
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "junction.duplicate_key",
+      "severity": "warning",
+      "table": "motif_appearance",
+      "rowIds": [
+        1,
+        2
+      ],
+      "message": "2 identical Motif Appearance rows describe the same link. Harmless, but one of them is noise.",
+      "count": 1,
+      "spec": "§6.4",
+      "title": "Link rows sharing a natural key"
+    }
+  ]
+}

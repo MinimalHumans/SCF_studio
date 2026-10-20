@@ -8,7 +8,7 @@
     "optional": "suggestion",
     "present": "ok"
   },
-  "$steps": "A step's `entities` are REGISTRY ENTITY NAMES, checked against the registry at generation time. `filter` narrows the step to a subset of those rows and its `values` are a disjunction; `intent` names the asset intent whose bundle must resolve. `label` is derived from those three for display and is the only prose here — a consumer should never parse it.",
+  "$steps": "A step's `entities` are REGISTRY ENTITY NAMES, checked against the registry at generation time. `satisfiedBy`, where present, names the ones whose rows decide the step; the others name a finding and cannot satisfy it. `filter` narrows the step to a subset of those rows and its `values` are a disjunction; `intent` names the asset intent whose bundle must resolve, and a step on `bundle` without one takes the target's own `intent`. `params` are §12.9's names, `?` marking an optional one. Rows are narrowed as the target query reads them (§12.9.1). `label` is derived for display and is the only prose here — a consumer should never parse it.",
   "$note": "Only queries with a generative or pre-flight consumer have a rubric. The analytic queries read whatever exists and have no readiness semantics of their own beyond the walkable queries they are built from — asking Q14 about one is answered by assessing those.",
   "queryCount": 6,
   "queries": [
@@ -16,9 +16,10 @@
       "query": "Q02",
       "name": "Subject in context",
       "params": [
+        "subjectType",
         "subject",
-        "subject_id",
-        "scene_id"
+        "scene",
+        "shot?"
       ],
       "description": "Everything needed to realize a subject in a scene; the character steps apply to a character subject only.",
       "steps": [
@@ -49,6 +50,9 @@
         {
           "entities": [
             "costume",
+            "costume_scene"
+          ],
+          "satisfiedBy": [
             "costume_scene"
           ],
           "requirement": "recommended",
@@ -86,8 +90,8 @@
       "query": "Q05",
       "name": "Voice direction",
       "params": [
-        "character_id",
-        "scene_id"
+        "character",
+        "scene"
       ],
       "description": "How this character's lines should sound in a scene.",
       "steps": [
@@ -158,8 +162,8 @@
       "query": "Q06",
       "name": "Physical direction",
       "params": [
-        "character_id",
-        "scene_id"
+        "character",
+        "scene"
       ],
       "description": "How this character moves/behaves in a scene.",
       "steps": [
@@ -203,11 +207,10 @@
           "filter": {
             "field": "modality",
             "values": [
-              "physical",
-              "facial"
+              "physical"
             ]
           },
-          "label": "performance_beat (physical/facial)"
+          "label": "performance_beat (physical)"
         },
         {
           "entities": [
@@ -232,8 +235,8 @@
       "query": "Q07",
       "name": "Look resolution",
       "params": [
-        "scene_id",
-        "shot_id?"
+        "scene",
+        "shot?"
       ],
       "description": "What a frame in this scene/shot should look like.",
       "steps": [
@@ -255,6 +258,14 @@
         },
         {
           "entities": [
+            "color_script"
+          ],
+          "requirement": "optional",
+          "purpose": "the color script's summary",
+          "label": "color_script"
+        },
+        {
+          "entities": [
             "color_script_entry"
           ],
           "requirement": "recommended",
@@ -268,6 +279,14 @@
           "requirement": "recommended",
           "purpose": "scene color opinion",
           "label": "scene_color_palette"
+        },
+        {
+          "entities": [
+            "look_development"
+          ],
+          "requirement": "optional",
+          "purpose": "look development root, on the shot cascade",
+          "label": "look_development"
         },
         {
           "entities": [
@@ -350,11 +369,11 @@
       "query": "Q13",
       "name": "Media resolution",
       "params": [
+        "subjectType",
         "subject",
-        "subject_id",
         "intent",
-        "scene_id?",
-        "shot_id?"
+        "scene?",
+        "shot?"
       ],
       "description": "Assets in force for a subject and intent.",
       "steps": [
@@ -362,12 +381,13 @@
           "entities": [
             "bundle",
             "character_asset_binding",
+            "costume_asset_binding",
             "location_asset_binding",
             "prop_asset_binding"
           ],
           "requirement": "required",
           "purpose": "something to resolve",
-          "label": "bundle + character_asset_binding + location_asset_binding + prop_asset_binding"
+          "label": "bundle + character_asset_binding + costume_asset_binding + location_asset_binding + prop_asset_binding"
         },
         {
           "entities": [

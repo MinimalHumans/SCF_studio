@@ -172,13 +172,17 @@ export function buildDispatch(
       if ((subjectType === null) !== (subjectUuid === null)) {
         throw new Error("subjectType and subject are given together");
       }
-      if (subjectType !== null && subjectType !== "character" &&
-          subjectType !== "prop" && subjectType !== "location") {
-        throw new Error(`subjectType must be character, prop or location`);
+      // Q13 takes a costume too (§12.8); Q02 does not (§12.16).
+      const kinds = target === "Q13"
+        ? ["character", "prop", "location", "costume"]
+        : ["character", "prop", "location"];
+      if (subjectType !== null && !kinds.includes(subjectType)) {
+        throw new Error(`subjectType must be ${kinds.join(", ")}`);
       }
       const subject = subjectType === null || subjectUuid === null
         ? null
-        : { type: subjectType as "character" | "prop" | "location",
+        : { type: subjectType as "character" | "prop" | "location" |
+                                 "costume",
             uuid: subjectUuid,
             id: await idOf(ctx, subjectType, subjectUuid) };
       return q14Result(ctx, target,

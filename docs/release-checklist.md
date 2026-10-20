@@ -500,7 +500,7 @@ reports and `SHA256SUMS`.
 
 | | Item | Notes |
 |---|---|---|
-| ◑ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. **Run 6 done 2026-10-16 against `spec-1.0-rc.1`: 4 critical, 13 major, 15 minor; rc.1 cannot be cut as 1.0.** 21 of 28 comparable results reproduced from the text alone, 15 of 15 negatives with three guesses. All addressed in **1.0-rc.2** (see below). **Run 7 done 2026-10-16 against `spec-1.0-rc.2`: 1 critical, 7 major, 13 minor.** 24 of 29 results from the text alone, 16 of 16 negatives, the fixture's report exact. Addressed in **1.0-rc.3**. **Run 8 done 2026-10-20 against `spec-1.0-rc.3`: 0 critical, 6 major, 14 minor.** 30 of 30 results, 16 of 16 negatives and the fixture's report from the text alone, all on the first run; the majors are two contradictions between MUSTs (§7.3/§4.5 ties, §0.3/§8.2 root mapping), an unstated finding grain for 37 codes, Q04's staging path, a wrong registry declaration and Q14's missing parameters. Addressed in **1.0-rc.4** on **schema 2.25**; a ninth run reads rc.4. |
+| ◑ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. **Run 6 done 2026-10-16 against `spec-1.0-rc.1`: 4 critical, 13 major, 15 minor; rc.1 cannot be cut as 1.0.** 21 of 28 comparable results reproduced from the text alone, 15 of 15 negatives with three guesses. All addressed in **1.0-rc.2** (see below). **Run 7 done 2026-10-16 against `spec-1.0-rc.2`: 1 critical, 7 major, 13 minor.** 24 of 29 results from the text alone, 16 of 16 negatives, the fixture's report exact. Addressed in **1.0-rc.3**. **Run 8 done 2026-10-20 against `spec-1.0-rc.3`: 0 critical, 6 major, 14 minor.** 30 of 30 results, 16 of 16 negatives and the fixture's report from the text alone, all on the first run; the majors are two contradictions between MUSTs (§7.3/§4.5 ties, §0.3/§8.2 root mapping), an unstated finding grain for 37 codes, Q04's staging path, a wrong registry declaration and Q14's missing parameters. Addressed in **1.0-rc.4** on **schema 2.25**. **Run 9 done 2026-10-20 against `spec-1.0-rc.4`: 0 critical, 6 major, 19 minor.** Every published result (31 exact, 3 Q14 per §12.9), 16 of 16 negatives and the fixture's report from the text alone, no guess load-bearing on any artifact; all six majors are in cases nothing published asked about — Q14's narrowing (four), a span whose start scene is cut, a shot asked without or outside its scene. Addressed in **1.0-rc.5**, schema unchanged at 2.25. A lighter run 10 checks only what rc.5 changed. |
 | ✅ | D2. Fixture: the night kitchen | Scenes 10 and 19 resolve the **day** baseline because the night variant is autumn and they are winter (`narrative-workspaces.md` §11). **Decided (§A11): the rule was wrong** — §12.17 now ranks time of day first. **Done in §B8:** both resolve the night variant, and a test pins it. |
 | ✅ | D3. Rules stated and exercised by nothing | `junction.endpoint_absent`, `structure.section_mismatch`, §12.17's zero-score baseline, `varies`, a `status` that disagrees with `lifecycle_status`, act and sequence renumbering under `derived` (§4.3). **Done 2026-10-16 (spec 0.68), a row each:** negative cases `junction-endpoint-absent` and `section-mismatch`, each raising its finding alone; church and ridge location variants published as `Q02-church-scene16` (`varies` wins on the wildcard alone) and `Q02-ridge-scene21` (nothing agrees, the baseline with three mismatches); scenes 3, 12, 19 at `draft`, `locked`, `revised`, and 12B `locked` and `cut`. Renumbering under `derived` and `fixed` was already tested in `structureCommit.test.ts`; `stability.md` said otherwise and now does not. |
 | ✅ | D4. An unknown `line_type` raises no finding | §1.3.1 closes the vocabulary at fifteen; the column is free text and nothing reports a sixteenth. **Decided (§A12): `line.type_unknown`, severity error.** Done in §B8, with a negative case. |
@@ -662,9 +662,9 @@ a missing sentence or an unexercised case. Report:
 
 1. ✅ Spec `1.0-rc.4`, schema 2.25: CHANGELOG, schema changelog,
    headers, every artifact re-blessed, manifest last.
-2. ○ Commit and push. Then, on that pushed commit, both annotated tags
+2. ✅ Commit and push. Then, on that pushed commit, both annotated tags
    — `schema-2.25` because `SCHEMA_VERSION` moved, `spec-1.0-rc.4` for
-   everything else — and nothing else moves:
+   everything else — and nothing else moves. *Both at `1c1aaca`.*
 
    ```sh
    git push origin main
@@ -675,16 +675,87 @@ a missing sentence or an unexercised case. Report:
    ```
 
    `schema-2.24` stays at `62a14cc` and `spec-1.0-rc.3` at `ff41afb`.
-3. ○ `check_pin.py --strict` green, then launch run 9 against
+3. ✅ `check_pin.py --strict` green, then launch run 9 against
    `spec-1.0-rc.4`, exporting the registry from `schema-2.25` with
-   m14's list.
+   m14's list. *Run 9, 2026-10-20: 0 critical, 6 major, 19 minor; an
+   rc.5 is needed.*
+
+**1.0-rc.5 — from run 9, prepared 2026-10-20.** **Schema 2.25,
+unchanged**: no fix touched `registry.json`, so `schema-2.25` addresses
+the seven schema files as it does today and takes no new tag. Run 9
+reproduced every published artifact from the text; its majors were all
+beyond the published positions. Report:
+`.claude/worktrees/wonderful-hopper-00c7ac/reader-run-9-report.md`
+(outside git).
+
+- **M1–M4, Q14** — one rule in §12.9.1: a step's rows are the ones its
+  target reads (subject one declared reference away; position by
+  pattern, by §7.3's shot fall-through, or by column). Rubric steps gain
+  `satisfiedBy` (Q02's costume step: `costume_scene` only); Q13's step 1
+  names `costume_asset_binding`; `entity_anchor` and shot overrides do
+  not apply to a costume. `readiness.ts` follows it. New worked examples
+  `Q14-Q02-eleanor-scene7`, `Q14-Q07-shot12A`, `Q14-Q13-shawl-scene12`.
+- **M5** — a span whose start scene is cut covers no scene (§5.5); new
+  code `structure.boundary_cut` (54 codes), negative case
+  `span-boundary-cut`. Q10's span membership now excludes cut rows, as
+  Q04's did.
+- **M6** — §12.1.7: a shot fixes the position at its scene; a shot
+  outside the scene asked is not answered (Q07, Q02, Q13, Q14). New case
+  `Q13-shot1204`.
+- **rc.4's three open edge cases, decided from the reference**: a Q10
+  carrier whose target is cut is dropped (the reference kept it with a
+  null name; §6.6.1's endpoint rule says drop, so the reference
+  changed), exercised by the published `Q10`; Q11 counts only rows keyed
+  by `scene_id`, exercised by the published `Q11` through a
+  sequence-keyed tone marker; null junction key columns compare equal,
+  negative case `junction-key-null`.
+- **m4** — fixture: cut Deputy Rourke linked into scenes 12 and 19 and
+  carrying Forgiveness. A reader ignoring cut endpoints now fails `Q04`,
+  `Q03` and `Q10`.
+- **Minors** — all nineteen addressed in the text, and where the
+  reference disagreed it now follows the text: m12 (a cut scene is an
+  empty position everywhere; Q04 returned its lines), m3 (one beat
+  order; Q05 sorted unset last), m11 (unknown line types ignored, per
+  §10.1), m14 (anchor on a cut asset not considered), m7/m8 (rubric
+  `params` and Q06's step), m16 (catalog ordering), m18 (no result for
+  a refused question). **m5 is left**: making `polymorphicTargets`
+  observable needs a cut variant whose id equals a live character's, a
+  contrived fixture row for a declaration whose reading the in-force
+  test already makes harmless.
+- **Latent bugs found on the way and fixed:** Q07's walker raised
+  severities outside its steps' ranges on absences the fixture never
+  has; Q08 skipped a step at a scene with no location; Q13 threw for a
+  costume at a shot (no `costume_shot_override` table); Q03's and Q02's
+  costume joins and Q03's motif join had no `ORDER BY`. None changes a
+  published result.
+
+**rc.5 day — tag only AFTER the commit is pushed.** Twice a tag has
+been created on the previous commit because it was made before the
+commit existed. Commit, push, read the new commit's hash, and name it
+in the tag command:
+
+1. ✅ Spec `1.0-rc.5`, schema 2.25: CHANGELOG, headers, every artifact
+   re-blessed, manifest last.
+2. ○ Commit and push `main`. Then, with `<commit>` the hash
+   `git rev-parse HEAD` prints for that pushed commit:
+
+   ```sh
+   git tag -a spec-1.0-rc.5 -m "spec 1.0-rc.5" <commit>
+   git push origin spec-1.0-rc.5
+   py schema/check_pin.py --strict
+   ```
+
+   No schema tag: `schema-2.25` stays at `1c1aaca`, as do
+   `spec-1.0-rc.4` there and `spec-1.0-rc.3` at `ff41afb`.
+3. ○ `check_pin.py --strict` green, then a lighter run 10 against
+   `spec-1.0-rc.5` that checks only what rc.5 changed.
 
 **1.0 day — after D1, and after anything it finds is fixed:**
 
 1. ○ Spec **1.0**: CHANGELOG entry; §11.0 changed from "becomes binding
    at 1.0" to binding; headers.
 2. ○ If D1 forces a further registry change, a new schema version and
-   a regeneration; otherwise 2.25 (rc.4) stands.
+   a regeneration; otherwise 2.25 (rc.4, unchanged in rc.5) stands.
 3. ○ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
 4. ○ 🔒 Annotated tag `spec-1.0`, pushed — and, only if step 2 made a
    new schema version, its `schema-X.Y` on the same commit. No existing

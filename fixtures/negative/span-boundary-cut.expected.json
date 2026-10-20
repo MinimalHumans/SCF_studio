@@ -1,0 +1,27 @@
+{
+  "about": "An act whose start scene is cut. A cut scene takes part in no span (§6.6.1), so Act II covers nothing and its scene stays in Act I (§5.5); the boundary is still there, so this is not `structure.boundary_dangling`, and without its own code the re-parenting would be silent.",
+  "reportFormat": "1.0",
+  "toolSchemaVersion": "2.25",
+  "fileSchemaVersion": "2.25",
+  "source": "fixtures/negative/build/span-boundary-cut.scf",
+  "counts": {
+    "error": 0,
+    "warning": 1,
+    "info": 0
+  },
+  "clean": true,
+  "findings": [
+    {
+      "code": "structure.boundary_cut",
+      "severity": "warning",
+      "table": "act",
+      "rowIds": [
+        2
+      ],
+      "message": "Act II starts at a cut scene, so it covers no scene and its scenes stay with the span before it (§5.5). Move its start to a scene in the film.",
+      "count": 1,
+      "spec": "§5.5",
+      "title": "Span starts at a cut scene"
+    }
+  ]
+}

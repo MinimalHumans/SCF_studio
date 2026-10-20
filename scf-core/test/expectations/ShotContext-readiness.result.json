@@ -171,7 +171,7 @@
         {
           "severity": "ok",
           "entity": "bundle",
-          "message": "Eleanor Cade: 7 visual_identity asset(s) resolve (0 from overrides)."
+          "message": "Eleanor Cade: 7 visual_identity asset(s) in force (0 from overrides)."
         }
       ],
       "counts": {
@@ -217,7 +217,7 @@
         {
           "severity": "ok",
           "entity": "performance_beat",
-          "message": "1 physical or facial beat(s) authored."
+          "message": "1 physical beat(s) authored."
         },
         {
           "severity": "ok",
@@ -268,7 +268,7 @@
         {
           "severity": "ok",
           "entity": "bundle",
-          "message": "Eleanor Cade: 1 voice asset(s) resolve."
+          "message": "Eleanor Cade: 1 voice asset(s) in force."
         },
         {
           "severity": "ok",
@@ -349,7 +349,7 @@
         {
           "severity": "ok",
           "entity": "bundle",
-          "message": "Marcus Cade: 3 visual_identity asset(s) resolve (0 from overrides)."
+          "message": "Marcus Cade: 3 visual_identity asset(s) in force (0 from overrides)."
         }
       ],
       "counts": {
@@ -395,7 +395,7 @@
         {
           "severity": "ok",
           "entity": "performance_beat",
-          "message": "1 physical or facial beat(s) authored."
+          "message": "No physical beats — the states and baseline carry it."
         },
         {
           "severity": "ok",

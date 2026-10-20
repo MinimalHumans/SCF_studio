@@ -17,6 +17,117 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.5 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The fifth release candidate**, from the ninth independent reader run
+(`docs/release-checklist.md` §D1). It reproduced every published result,
+every negative report and the fixture's report from the text alone, with
+no critical finding. Its six majors were all in cases nothing published
+asked about: Q14's narrowing in four places, a span whose start scene is
+cut, and a shot asked without its scene or outside it. **No registry
+change; schema stays 2.25.** Taken under §11.0, which still holds.
+
+### §12.9.1 — Q14 narrows as its target reads (M1–M4)
+
+One rule replaces "narrowed by whichever parameters the entities declare
+as a column" and "satisfied by any of them unless its `purpose` says
+otherwise": **a step's rows are the rows its target reads.** To the
+subject through a column naming it, or one declared reference away —
+so `relationship_state` applies to the character it belongs to (M1).
+To the position by pattern, by §7.3's fall-through where the target
+takes a shot, or by column — so a shot with no lighting of its own is
+ready on the scene's, as Q07 answers there (M3). A rubric step gains
+`satisfiedBy`: Q02's costume step is satisfied by a `costume_scene` here
+and by nothing else, which is what §12.9's own example always said (M2).
+Q13's rubric names `costume_asset_binding`; `entity_anchor` and the shot
+overrides do not apply to a costume (M4). "Does not apply" is now
+defined: every entity that could satisfy the step is keyed to a subject
+of another kind, or to a shot or location the position lacks. A media
+step names `bundle`; one with no `intent` takes the target's. New worked
+examples: `Q14-Q02-eleanor-scene7`, `Q14-Q07-shot12A`,
+`Q14-Q13-shawl-scene12`.
+
+The rubric's `params` use §12.9's names, and Q02's lists `shot` (m7).
+Q06's beat step is `physical` only, as Q06 returns (m8). Q07's rubric
+lists `color_script` and `look_development`, which the reference always
+reported. The reference's Q07 walker raised a `suggestion` for an absent
+`color_script_entry` (a `recommended` step, so `warning`) and a
+`warning` for an absent `shot_design` (`optional`); Q08's skipped
+`location_sound_profile` at a scene with no location; Q13 failed on a
+costume asked at a shot. All fixed; the fixture never exercised them.
+
+### §5.5 — a span whose start scene is cut covers no scene (M5)
+
+As an absent boundary would: its scenes belong to the span before it. It
+is not re-anchored, because a cut scene has no position to be next to.
+**New finding `structure.boundary_cut`** (warning), since the validator
+derives over cut scenes too and otherwise saw the span anchored. Negative
+case `span-boundary-cut`. Q10's span membership now excludes cut scenes
+and cut spans, as Q04's lineage always did; the two disagreed.
+
+### §12.1.7 — positions, and questions that are not answered (M6, m12, m18)
+
+**A shot fixes the position at its own scene**: asked alone (Q13, and
+Q14 for Q13) it is at its scene, which the envelope still records as
+null; asked with a scene it is not in, the question is not answered.
+`Q13-shot1204` shows the first. **A cut scene is an empty position for
+every query**, as Q03's always was: the reference's Q04 returned the cut
+scene's own screenplay lines, and Q05, Q07 and Q11 read rows still keyed
+to it. **A question that is not answered has no result** — no envelope
+with a null `result`.
+
+### Rules now stated
+
+- §6.4: null key columns compare equal (negative case `junction-key-null`).
+- §12.11: a connection whose target is cut is not a carrier, and is
+  absent from `carriers`; carriers are in connection row order (m13).
+- §12.13: a row keyed by `sequence_id` alone is at no scene for Q11.
+- §12.8: a binding to a cut bundle and an anchor on a cut asset are not
+  considered and have no trail entry (m14). The reference kept the
+  anchor as contributing with nothing to contribute; it now drops it.
+- §12.16: each character member's shape and order (m1, m2).
+- §12.2, §12.16: an unset `beat_order` sorts as 0 in every beat array
+  (m3). The reference's Q05 sorted it last and Q02 did not sort.
+- §12.4: Q03's `costumes` and `motifs` order (m1); §12.14: Q15's
+  `attached` in row order.
+- §12.17.1: an unknown `line_type` is not in `screenplay`, per §10.1;
+  `line_order` ties by row id (m11). The reference included such lines.
+- §4.5: a state resolved at or before its own scene is in force nowhere
+  (m9). §4.2.3: `scene_number` is read trimmed; empty is absent (m19).
+- §8.3: an unparseable identifier, root-name case, a bare root and a URL
+  (m10).
+- §12.1.6: the lowest-row-id sentence no longer reads as if `Q07-scene3`
+  did not exist (m17), and no longer claims every array's order is
+  stated (m1).
+- §2.1: implementation counts no longer go stale (m15).
+- §9.4's null-table and no-row-id ordering is in the catalog (m16).
+
+### Conformance and stability
+
+- `conformance.md` §5.1: the cut deputy and the sequence-keyed tone
+  marker; §5.3 and §7: eighteen negative cases; §7 counts runs, not
+  implementations.
+- `stability.md`: rows for Q14's narrowing and §12.1.7; 54 codes, 23
+  raised in a published report.
+
+### Artifacts
+
+- Fixture (m4): Deputy Rourke, cut, linked into scenes 12 and 19 and
+  carrying Forgiveness through an active connection; "Held breath", a
+  tone marker keyed to The Reckoning alone. `Q04`, `Q03`, `Q10` and
+  `Q11` are unchanged and now depend on the rules above.
+- New: `Q13-shot1204`, `Q14-Q02-eleanor-scene7`, `Q14-Q07-shot12A`,
+  `Q14-Q13-shawl-scene12`, the negative cases `span-boundary-cut` and
+  `junction-key-null`, and their selectors.
+- `readiness-rubrics.json`: `satisfiedBy`, renamed `params`, the
+  changed steps above. `finding-catalog.json`: 54 codes, and the
+  ordering's null rules. Q14 messages say "in force" where they said
+  "resolve" (m6).
+
+---
+
 ## 1.0-rc.4 — 2026-10-20
 
 *Describes schema 2.25.*

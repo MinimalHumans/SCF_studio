@@ -26,8 +26,8 @@
 
 import { q, type Row, type SqlValue } from "./db.ts";
 import {
-  latestState, resolveDirection, resolveMedia, rows, sceneOrder,
-  statesInForce,
+  latestState, resolveDirection, resolveMedia, rows, sceneOfPosition,
+  sceneOrder, statesInForce,
   type SceneOrder, type ScfContext,
 } from "./resolution.ts";
 import { QUERY_PATHS, type QueryPath } from "./queryPaths.ts";
@@ -126,7 +126,7 @@ async function readinessQ05(
   } else {
     out.push(f("ok", "bundle",
                `${who}: ${media.assets_most_specific_first.length} ` +
-               `voice asset(s) resolve.`));
+               `voice asset(s) in force.`));
   }
 
   const voc = await statesInForce(ctx, characterId, sceneId, "vocal", order);
@@ -215,13 +215,15 @@ async function readinessQ06(
              `${states.map((s) => s["name"]).join(", ") ||
                "none (baseline)"}.`));
 
-  const beats = (await rows(
-    ctx.exec, "performance_beat", "character_id=? AND scene_id=?",
-    [characterId, sceneId])).filter((b) =>
-      b["modality"] === "physical" || b["modality"] === "facial");
+  // Physical only, as Q06 reads them (§12.6): a facial beat is not in
+  // its answer, so it cannot make the answer ready.
+  const beats = await rows(
+    ctx.exec, "performance_beat",
+    "character_id=? AND scene_id=? AND modality='physical'",
+    [characterId, sceneId]);
   out.push(f("ok", "performance_beat", beats.length > 0
-    ? `${beats.length} physical or facial beat(s) authored.`
-    : "No physical or facial beats — the states and baseline carry it."));
+    ? `${beats.length} physical beat(s) authored.`
+    : "No physical beats — the states and baseline carry it."));
 
   const sceneRow = await rows(ctx.exec, "scene", "id=?", [sceneId]);
   const loc = sceneRow[0]?.["location_id"];
@@ -252,39 +254,37 @@ async function readinessQ07(
     ctx: ScfContext, sceneId: number, shotId: number | null,
     _order: SceneOrder): Promise<ReadinessFinding[]> {
   const out: ReadinessFinding[] = [];
-  const leaf = shotId !== null ? "shot_design" : "scene_color_palette";
-  const layers = new Map(await resolveDirection(ctx, leaf, sceneId, shotId));
+  // §12.9.1: each step's rows narrowed as §7.3 reads them. The shot
+  // cascade's chain holds every color and lighting entity the rubric
+  // names, and `fetchLayer` is §7.3's step 2: at a shot, the shot's own
+  // row, else the scene's row with no shot — so a shot with no lighting
+  // of its own is ready on the scene's, as Q07 answers there. Narrowing
+  // by `shot_id` equality instead warned about a layer Q07 returns.
+  const layers = new Map(await resolveDirection(ctx, "shot_design",
+                                                sceneId, shotId));
+  // Each absence within the range its step permits (§12.9.1): a
+  // `required` step's is a blocker, a `recommended` one's a warning, an
+  // `optional` one's `ok`, or a suggestion where the position makes it
+  // notable — and a shot with no design of its own is.
   const requirement: Record<string, [Severity, string]> = {
     project_color_palette: ["blocker",
       "no project color root — the cascade has nothing to resolve against"],
-    color_script_entry: ["suggestion",
+    color_script: ["ok", "no color script summary above the entries"],
+    color_script_entry: ["warning",
       "no position-keyed color intent in force at this scene"],
     scene_color_palette: ["warning", "no scene color opinion"],
+    look_development: ["ok", "no look development root"],
     lighting_design: ["warning", "no lighting design"],
-    shot_design: ["warning", "no shot design for the given shot"],
-    color_script: ["suggestion", "no color script summary"],
-    look_development: ["suggestion", "no look development root"],
+    shot_design: ["suggestion",
+      "no shot design for the given shot — it takes the scene's look"],
   };
-  let chain = ["project_color_palette", "color_script", "color_script_entry",
-               "scene_color_palette"];
-  if (shotId !== null) {
-    chain = [...chain, "look_development", "lighting_design", "shot_design"];
-  }
-  if (shotId === null) {
-    // Scene-level lighting is still a recommended opinion here; the
-    // shot's own design cannot be asked about without a shot.
-    const lighting = (await rows(ctx.exec, "lighting_design", "scene_id=?",
-                                 [sceneId])).filter((r) =>
-      r["shot_id"] === null || r["shot_id"] === undefined ||
-      r["shot_id"] === "");
-    out.push(lighting.length > 0
-      ? f("ok", "lighting_design", "lighting_design in force: " +
-          `${String(lighting[0]?.["name"] ?? `#${lighting[0]?.["id"]}`)}.`)
-      : f("warning", "lighting_design", "No lighting design."));
-    out.push(f("ok", "shot_design",
-               "No shot asked about — shot design does not apply."));
-  }
-  for (const entity of chain) {
+  for (const entity of Object.keys(requirement)) {
+    if (entity === "shot_design" && shotId === null) {
+      // Keyed by shot alone: with no shot asked, nothing to narrow to.
+      out.push(f("ok", entity,
+                 "No shot asked about — shot design does not apply."));
+      continue;
+    }
     const row = layers.get(entity);
     if (row !== undefined) {
       const label = (row["name"] !== null && row["name"] !== undefined &&
@@ -380,6 +380,11 @@ async function readinessQ08(
       out.push(f("warning", "location_sound_profile",
                  "This location has no sound profile."));
     }
+  } else {
+    // Reported either way: coverage is every step (§12.9.1).
+    out.push(f("ok", "location_sound_profile",
+               "The scene has no location — a room profile does not " +
+               "apply."));
   }
   const dialogue = await rows(ctx.exec, "dialogue_sound_design",
                               "scene_id=?", [sceneId]);
@@ -414,7 +419,7 @@ async function mediaStep(
         `binding for this intent.`)
     : f("ok", "bundle",
         `${who}: ${media.assets_most_specific_first.length} ` +
-        `${intent} asset(s) resolve ` +
+        `${intent} asset(s) in force ` +
         `(${media.override_assets.length} from overrides).`);
   return { finding, media };
 }
@@ -427,7 +432,14 @@ async function readinessQ13(
   const { finding, media } = await mediaStep(
     ctx, subject, subjectId, intent, sceneId, shotId, "blocker");
   const out: ReadinessFinding[] = [finding];
-  if (media.anchors.length > 0) {
+  // A step none of whose entities can be narrowed to the subject's kind
+  // does not apply to it (§12.9.1). `entity_anchor.subject_type` offers
+  // no `costume`, and the registry declares no costume shot override.
+  if (!anchorable(ctx, subject)) {
+    out.push(f("ok", "entity_anchor",
+               `Does not apply to a ${subject} — an anchor's subject is ` +
+               `a character, prop or location.`));
+  } else if (media.anchors.length > 0) {
     out.push(f("ok", "entity_anchor",
                `${media.anchors.length} verified anchor(s).`));
   } else {
@@ -437,7 +449,11 @@ async function readinessQ13(
   // Optional: an override is a shot-specific swap, and none is the
   // ordinary case — the bindings hold.
   const override = `${subject}_shot_override`;
-  if (shotId === null) {
+  if (!ctx.registry.entities.has(override)) {
+    out.push(f("ok", "character_shot_override",
+               `Does not apply to a ${subject} — no shot override ` +
+               `names one.`));
+  } else if (shotId === null) {
     out.push(f("ok", override,
                "No shot asked about — shot overrides do not apply."));
   } else if (media.override_assets.length > 0) {
@@ -451,6 +467,13 @@ async function readinessQ13(
   return out;
 }
 
+/** Whether `entity_anchor` can name this kind of subject. */
+function anchorable(ctx: ScfContext, subject: string): boolean {
+  const field = ctx.registry.entities.get("entity_anchor")?.fields
+    .find((x) => x.name === "subject_type");
+  return field?.options?.includes(subject) ?? false;
+}
+
 /** Q02's steps keyed by `character_id`, which a prop or location lacks. */
 const Q02_CHARACTER_STEPS = [
   "character_appearance_profile", "physical_character_profile",
@@ -460,14 +483,18 @@ const Q02_CHARACTER_STEPS = [
 
 async function readinessQ02(
     ctx: ScfContext, subject: string, subjectId: number, sceneId: number,
+    shotId: number | null,
     order: SceneOrder): Promise<ReadinessFinding[]> {
   if (subject !== "character") {
     // §12.9.1: a step none of whose entities can be narrowed to the
     // subject's kind does not apply to it, and says so.
     const out = Q02_CHARACTER_STEPS.map((entity) =>
       f("ok", entity, `Does not apply to a ${subject}.`));
-    out.push((await mediaStep(ctx, subject, subjectId, "visual_identity",
-                              sceneId, null, "blocker")).finding);
+    // Q02's nested Q13 (§12.16) asks a location for its environment.
+    out.push((await mediaStep(ctx, subject, subjectId,
+                              subject === "location"
+                                ? "environment" : "visual_identity",
+                              sceneId, shotId, "blocker")).finding);
     return out;
   }
   const characterId = subjectId;
@@ -489,6 +516,9 @@ async function readinessQ02(
       out.push(f(sev, table, `${who} has no ${what}.`));
     }
   }
+  // Satisfied by a `costume_scene` for this character here and by
+  // nothing else (the step's `satisfiedBy`): `costume` names the finding
+  // where there are none at all, and cannot satisfy it.
   const costumes = await rows(ctx.exec, "costume", "character_id=?",
                               [characterId]);
   const inForce: Row[] = [];
@@ -508,6 +538,8 @@ async function readinessQ02(
     out.push(f("warning", "costume", `${who} has no costumes.`));
   }
   // Optional, and absence is ordinary: no state means none has changed.
+  // Narrowed to the character one reference away (§12.9.1), through
+  // either of `character_relationship`'s character columns.
   const relationships = await ctx.exec(
     "SELECT id FROM character_relationship " +
     "WHERE character_a_id = ? OR character_b_id = ?",
@@ -531,7 +563,7 @@ async function readinessQ02(
       `${states.map((s) => s["name"]).join(", ")}.`
     : "No performance state in force — baseline holds (by design)."));
   out.push((await mediaStep(ctx, "character", characterId,
-                            "visual_identity", sceneId, null,
+                            "visual_identity", sceneId, shotId,
                             "blocker")).finding);
   return out;
 }
@@ -570,7 +602,10 @@ export async function readinessReport(
     throw new Error("Q14 for Q13 needs an intent");
   }
   const order = await sceneOrder(ctx);
-  const sceneId = params.scene_id ?? null;
+  // §12.1.7, for Q14 as for its target: a shot fixes the position at
+  // its own scene, and one outside the scene asked is not answered.
+  const sceneId = await sceneOfPosition(ctx, params.scene_id ?? null,
+                                        params.shot_id ?? null);
   const characterId = params.character_id ?? null;
   let findings: ReadinessFinding[];
   if (queryId === "Q05") {
@@ -593,7 +628,7 @@ export async function readinessReport(
     findings = await readinessQ02(
       ctx, params.subject ?? "character",
       (params.subject_id ?? characterId) as number, sceneId as number,
-      order);
+      params.shot_id ?? null, order);
   } else { // declared in QUERY_PATHS but not yet walkable
     findings = [];
   }

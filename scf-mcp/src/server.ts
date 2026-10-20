@@ -335,7 +335,7 @@ server.registerTool("readiness", {
     "target query and position, for pre-flight before writing a " +
     "prompt. Each target needs different params:\n" +
     "  Q02 (Subject in context) — subjectType + subject (or character), " +
-    "scene\n" +
+    "scene, shot?\n" +
     "  Q05 (Voice direction)    — character, scene\n" +
     "  Q06 (Physical direction) — character, scene\n" +
     "  Q07 (Look resolution)    — scene, shot?\n" +

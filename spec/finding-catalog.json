@@ -23,11 +23,11 @@
   ],
   "ordering": [
     "severity rank ascending",
-    "then code, lexicographic",
-    "then table, lexicographic",
-    "then lowest row id"
+    "then code, by code point",
+    "then table, by code point, a null table first",
+    "then lowest row id, a finding with no row ids first"
   ],
-  "codeCount": 53,
+  "codeCount": 54,
   "codes": [
     {
       "code": "asset.bundle_unbound",
@@ -291,6 +291,12 @@
       "code": "structure.boundary_absent",
       "severity": "warning",
       "title": "Span has no start scene",
+      "spec": "§5.5"
+    },
+    {
+      "code": "structure.boundary_cut",
+      "severity": "warning",
+      "title": "Span starts at a cut scene",
       "spec": "§5.5"
     },
     {

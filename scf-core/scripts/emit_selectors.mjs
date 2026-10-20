@@ -121,6 +121,15 @@ const SELECTORS = {
     sql: "SELECT id, uuid FROM location WHERE name = 'Ridge Forest'",
     note: "A location whose variants all disagree with scene 21.",
   },
+  scene7: {
+    sql: "SELECT id, uuid FROM scene WHERE scene_number = '7'",
+    note: "Eleanor is here, a relationship state is in force and she "
+        + "wears nothing assigned: Q02's costume step is unmet (§12.9.1).",
+  },
+  shawl: {
+    sql: "SELECT id, uuid FROM costume WHERE name = 'Ada''s shawl'",
+    note: "The costume with a binding: a Q13 subject no anchor can name.",
+  },
   plateV2: {
     sql: "SELECT id, uuid FROM asset "
        + "WHERE name = 'kitchen_night_plate_v2.exr'",
@@ -196,6 +205,21 @@ const PARAMETERS = {
     character: { literal: null }, subjectType: { literal: "character" },
     subject: { selector: "eleanor" }, intent: { literal: "visual_identity" },
     scene: { selector: "scene12" }, shot: { selector: "shot1204" } },
+  "Q13-shot1204": { subjectType: { literal: "character" },
+    subject: { selector: "eleanor" }, intent: { literal: "visual_identity" },
+    scene: { literal: null }, shot: { selector: "shot1204" } },
+  "Q14-Q02-eleanor-scene7": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "eleanor" }, intent: { literal: null },
+    scene: { selector: "scene7" }, shot: { literal: null } },
+  "Q14-Q07-shot12A": { target: { literal: "Q07" },
+    character: { literal: null }, subjectType: { literal: null },
+    subject: { literal: null }, intent: { literal: null },
+    scene: { selector: "scene12" }, shot: { selector: "shot12A" } },
+  "Q14-Q13-shawl-scene12": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "costume" },
+    subject: { selector: "shawl" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { literal: null } },
 };
 
 // ── Resolve, and check every selector actually matches ───────────────

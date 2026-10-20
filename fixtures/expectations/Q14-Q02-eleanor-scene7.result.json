@@ -1,0 +1,61 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q02",
+    "character": null,
+    "subjectType": "character",
+    "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "intent": null,
+    "scene": "c0a1f7bf-600f-48a9-af90-162079ee1f24",
+    "shot": null
+  },
+  "result": {
+    "target": "Q02",
+    "targetName": "Subject in context",
+    "findings": [
+      {
+        "severity": "warning",
+        "entity": "costume_scene",
+        "message": "Eleanor Cade has costumes but none assigned to this scene (pattern 1 requires explicit rows)."
+      },
+      {
+        "severity": "ok",
+        "entity": "character_appearance_profile",
+        "message": "Eleanor Cade: appearance baseline present."
+      },
+      {
+        "severity": "ok",
+        "entity": "physical_character_profile",
+        "message": "Eleanor Cade: physical baseline present."
+      },
+      {
+        "severity": "ok",
+        "entity": "vocal_profile",
+        "message": "Eleanor Cade: voice baseline present."
+      },
+      {
+        "severity": "ok",
+        "entity": "relationship_state",
+        "message": "1 relationship state(s) in force."
+      },
+      {
+        "severity": "ok",
+        "entity": "performance_state",
+        "message": "No performance state in force — baseline holds (by design)."
+      },
+      {
+        "severity": "ok",
+        "entity": "bundle",
+        "message": "Eleanor Cade: 6 visual_identity asset(s) in force (0 from overrides)."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 1,
+      "suggestion": 0,
+      "ok": 6
+    }
+  }
+}

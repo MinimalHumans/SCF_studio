@@ -21,6 +21,7 @@ import { projectScreenplayLines, sceneScriptLines }
   from "./screenplay/sceneScript.ts";
 import { readinessReport } from "./readiness.ts";
 import { byRelatedOrder } from "./relatedOrder.ts";
+import { LINE_TYPES } from "./fountain/types.ts";
 import type { FileLocator } from "./assets.ts";
 import {
   columnRoles, envelope, projectRow, uuidLookupForAll,
@@ -85,8 +86,9 @@ async function descriptionResult(
     ctx: ScfContext, characterUuid: string, sceneUuid: string,
     characterId: number, sceneId: number,
 ): Promise<QueryResult<Q05Result>> {
-  const resolved = await resolveDescription(ctx, characterId, sceneId,
-                                            modality);
+  const resolved = await resolveDescription(
+    ctx, characterId, await positionInFilm(ctx, sceneId) ?? sceneId,
+    modality);
   const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
 
   return envelope(query, ctx.registry,
@@ -131,9 +133,11 @@ export async function q07Result(
     ctx: ScfContext, sceneUuid: string, sceneId: number,
     shotUuid: string | null, shotId: number | null,
 ): Promise<QueryResult<Q07Result>> {
+  const position = await sceneOfPosition(ctx, sceneId, shotId);
   return directionResult(
     "Q07", shotId === null ? Q07_SCENE_LEAF : Q07_SHOT_LEAF,
-    ctx, sceneUuid, sceneId, shotUuid, shotId);
+    ctx, sceneUuid, position ?? sceneId, shotUuid,
+    position === NOWHERE ? null : shotId);
 }
 
 /** Q08 — Soundscape (§12.7). */
@@ -147,7 +151,8 @@ export const Q08_LEAF = "scene_music_design";
 export async function q08Result(
     ctx: ScfContext, sceneUuid: string, sceneId: number,
 ): Promise<QueryResult<Q07Result>> {
-  return directionResult("Q08", Q08_LEAF, ctx, sceneUuid, sceneId,
+  return directionResult("Q08", Q08_LEAF, ctx, sceneUuid,
+                         await positionInFilm(ctx, sceneId) ?? sceneId,
                          null, null);
 }
 
@@ -189,7 +194,8 @@ import { q } from "./db.ts";
 import type { Row, SqlValue } from "./db.ts";
 import {
   characterArcStateAt, excludeCut, motifStateAt, propStateAt,
-  relationshipStateAt, rows,
+  NOWHERE, byBeatOrder, positionInFilm, relationshipStateAt, rows, rowsIncludingCut,
+  sceneOfPosition,
   sceneOrder, selectLocationVariant, statesInForce, variantInForce,
 } from "./resolution.ts";
 import { actOf, deriveStructure, sceneOrderHint, sequenceOf } from
@@ -215,6 +221,7 @@ export interface Q03Composition {
 /** Everything true at one position. Rows, not a result. */
 export async function composeQ03(
     ctx: ScfContext, sceneId: number): Promise<Q03Composition> {
+  sceneId = await positionInFilm(ctx, sceneId) ?? sceneId; // §12.1.7
   const order = await sceneOrder(ctx);
   const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
     ?? null;
@@ -233,10 +240,12 @@ export async function composeQ03(
       presence: atScene.character.get(cid) ?? "seen",
       variant: await variantInForce(ctx, "character", cid, sceneId),
       states: await statesInForce(ctx, cid, sceneId, null, order),
+      // In the row order of the costume_scene links (§12.4), stated:
+      // a join's order is the query plan's otherwise.
       costumes: excludeCut(await ctx.exec(
         "SELECT c.* FROM costume_scene cs JOIN costume c " +
         "ON c.id = cs.costume_id WHERE cs.scene_id = ? " +
-        "AND c.character_id = ?", [sceneId, cid])),
+        "AND c.character_id = ? ORDER BY cs.id", [sceneId, cid])),
     });
   }
 
@@ -260,7 +269,8 @@ export async function composeQ03(
   const motifs = excludeCut(await ctx.exec(
     "SELECT m.name, m.lifecycle_status, a.domain, a.id " +
     "FROM motif_appearance a " +
-    "JOIN motif m ON m.id = a.motif_id WHERE a.scene_id = ?", [sceneId]))
+    "JOIN motif m ON m.id = a.motif_id WHERE a.scene_id = ? " +
+    "ORDER BY a.id", [sceneId]))
     .map(({ lifecycle_status: _drop, ...rest }) => rest);
 
   return { scene, characters, props, motifs };
@@ -297,6 +307,9 @@ async function variantName(ctx: ScfContext, subject: string, id: number,
 /** The state diff between two positions. Rows, not a result. */
 export async function composeQ12(
     ctx: ScfContext, a: number, b: number): Promise<Q12Composition> {
+  // §12.1.7: a cut side is an empty position, diffed like any other.
+  a = await positionInFilm(ctx, a) ?? a;
+  b = await positionInFilm(ctx, b) ?? b;
   const order = await sceneOrder(ctx);
   const sceneA = (await rows(ctx.exec, "scene", "id = ?", [a]))[0] ?? null;
   const sceneB = (await rows(ctx.exec, "scene", "id = ?", [b]))[0] ?? null;
@@ -555,8 +568,12 @@ export async function q13Result(
     shotUuid: string | null, shotId: number | null,
     locate: FileLocator = NO_ROOT, rootMapped = false,
 ): Promise<QueryResult<Q13Result>> {
+  // §12.1.7: a shot asked without a scene is a position, at its own
+  // scene. The envelope still records what was asked (§12.1.1).
+  const position = await sceneOfPosition(ctx, sceneId, shotId);
   const media = await resolveMedia(ctx, subject, subjectId, intent,
-                                   sceneId, shotId);
+                                   position,
+                                   position === NOWHERE ? null : shotId);
   const refs = await mediaReferences(media, locate);
 
   // `subjectType` and `intent` belong in the ENVELOPE, not only in the
@@ -613,11 +630,12 @@ export interface Q14Result {
 }
 
 /**
- * A Q14 subject of any kind (§12.9): what Q02 and Q13 are asked about.
+ * A Q14 subject of any kind (§12.9): what Q02 and Q13 are asked about —
+ * Q13's a costume too (§12.8).
  * `character` remains the parameter for the character-only targets.
  */
 export interface Q14Subject {
-  type: "character" | "prop" | "location";
+  type: "character" | "prop" | "location" | "costume";
   uuid: string;
   id: number;
 }
@@ -692,6 +710,7 @@ export interface Q09Result {
 export async function q09Result(
     ctx: ScfContext, sceneUuid: string, sceneId: number,
 ): Promise<QueryResult<Q09Result>> {
+  sceneId = await positionInFilm(ctx, sceneId) ?? sceneId; // §12.1.7
   const order = await sceneOrder(ctx);
   const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
     ?? null;
@@ -844,6 +863,13 @@ export async function q10Result(
     const sceneIds: number[] = [];
 
     if (targetId !== null && ctx.registry.entities.has(targetEntity)) {
+      // §6.6.1: a link whose endpoint is cut joins nothing, so a
+      // connection to a cut row is not a carrier at all — dropped, not
+      // kept with no scenes. An ABSENT target is different: the
+      // connection is still in the film, dangling, and stays (§12.11).
+      const cut = (await rowsIncludingCut(ctx.exec, targetEntity, "id = ?",
+                                          [targetId]))[0];
+      if (cut !== undefined && excludeCut([cut]).length === 0) continue;
       const target = (await rows(ctx.exec, targetEntity, "id = ?",
                                  [targetId]))[0];
       targetName = target?.["name"] === undefined || target["name"] === null
@@ -985,6 +1011,7 @@ export interface Q11Result {
 export async function q11Result(
     ctx: ScfContext, sceneUuid: string, sceneId: number,
 ): Promise<QueryResult<Q11Result>> {
+  sceneId = await positionInFilm(ctx, sceneId) ?? sceneId; // §12.1.7
   const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
   const one = async (entity: string, id: number | null): Promise<Row | null> =>
     id === null ? null
@@ -1069,14 +1096,18 @@ export const Q11_LEAF = "scene_emotional_target";
 /**
  * Scene-to-span membership, derived (§5.1). Used by Q10, where a theme
  * connected to an act reaches every scene the act covers.
+ *
+ * Over the film, as Q04's lineage is: a cut scene takes part in no span
+ * and a cut act is not one (§6.6.1), so a span whose start scene is cut
+ * covers nothing and its scenes stay with the span before it (§5.5).
+ * Reading every row here made Q10 and Q04 disagree about that span.
  */
 async function spanMembership(ctx: ScfContext) {
-  const scenes = await ctx.exec("SELECT * FROM scene");
-  const acts = await ctx.exec("SELECT * FROM act");
-  const sequences = await ctx.exec("SELECT * FROM sequence");
-  const headings = await ctx.exec(
-    "SELECT scene_id, line_order FROM screenplay_lines " +
-    "WHERE line_type = 'heading'");
+  const scenes = await rows(ctx.exec, "scene");
+  const acts = await rows(ctx.exec, "act");
+  const sequences = await rows(ctx.exec, "sequence");
+  const headings = await rows(ctx.exec, "screenplay_lines",
+                              "line_type = ?", ["heading"]);
   return deriveStructure(scenes, acts, sequences, sceneOrderHint(headings));
 }
 
@@ -1384,6 +1415,12 @@ export async function q02Result(
     subjectId: number, sceneUuid: string, sceneId: number,
     shotUuid: string | null, shotId: number | null,
 ): Promise<QueryResult<Q02Result>> {
+  const position = await sceneOfPosition(ctx, sceneId, shotId) ?? sceneId;
+  if (position === NOWHERE) {
+    // §12.1.7: the subject is still itself; nothing is at a cut scene.
+    sceneId = NOWHERE;
+    shotId = null;
+  }
   const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
   const order = await sceneOrder(ctx);
   const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
@@ -1407,8 +1444,8 @@ export async function q02Result(
   if (subjectType === "character") {
     costumes = excludeCut(await ctx.exec(
       "SELECT c.* FROM costume_scene cs JOIN costume c " +
-      "ON c.id = cs.costume_id WHERE cs.scene_id = ? AND c.character_id = ?",
-      [sceneId, subjectId]));
+      "ON c.id = cs.costume_id WHERE cs.scene_id = ? AND c.character_id = ? " +
+      "ORDER BY cs.id", [sceneId, subjectId]));
     for (const rel of await rows(
         ctx.exec, "character_relationship",
         "character_a_id = ? OR character_b_id = ?",
@@ -1427,9 +1464,9 @@ export async function q02Result(
     }
     performanceStates = await statesInForce(ctx, subjectId, sceneId, null,
                                             order);
-    beats = await rows(ctx.exec, "performance_beat",
-                       "character_id = ? AND scene_id = ?",
-                       [subjectId, sceneId]);
+    beats = (await rows(ctx.exec, "performance_beat",
+                        "character_id = ? AND scene_id = ?",
+                        [subjectId, sceneId])).sort(byBeatOrder);
   }
 
   if (subjectType === "location") {
@@ -1534,6 +1571,7 @@ export interface Q04Result {
 export async function q04Result(
     ctx: ScfContext, sceneUuid: string, sceneId: number,
 ): Promise<QueryResult<Q04Result>> {
+  sceneId = await positionInFilm(ctx, sceneId) ?? sceneId; // §12.1.7
   const lookup = await uuidLookupForAll(ctx.exec, ctx.registry);
   const scene = (await rows(ctx.exec, "scene", "id = ?", [sceneId]))[0]
     ?? null;
@@ -1571,9 +1609,6 @@ export async function q04Result(
     if (seq !== undefined) lineage.push({ entity: "sequence", row: seq });
   }
 
-  const byBeatOrder = (a: Row, b: Row): number =>
-    (Number(a["beat_order"]) || 0) - (Number(b["beat_order"]) || 0);
-
   const storyBeats = (await rows(ctx.exec, "story_beat", "scene_id = ?",
                                  [sceneId])).sort(byBeatOrder);
   const cast = excludeCut(await ctx.exec(
@@ -1600,7 +1635,13 @@ export async function q04Result(
   }
 
   // §3.4: located by the heading, never by the body lines' scene_id.
-  const screenplay = await sceneScriptLines(ctx.exec, sceneId);
+  // A line whose `line_type` is outside §1.3.1's closed set is a row the
+  // reader does not recognise, which §10.1 says to ignore: it is kept in
+  // the file and reported (`line.type_unknown`), and is not in the
+  // answer. It cannot be a heading, so it bounds nothing either.
+  const known = new Set<string>(LINE_TYPES);
+  const screenplay = (await sceneScriptLines(ctx.exec, sceneId))
+    .filter((l) => known.has(String(l["line_type"] ?? "")));
 
   // A staging beat has no scene of its own: it reaches one through its
   // container, a scene_blocking or an action_sequence (§12.17). Both
