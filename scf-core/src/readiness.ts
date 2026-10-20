@@ -96,7 +96,7 @@ function thinness(row: Row): number {
 
 async function readinessQ05(
     ctx: ScfContext, characterId: number, sceneId: number,
-    order: SceneOrder): Promise<ReadinessFinding[]> {
+    shotId: number | null, order: SceneOrder): Promise<ReadinessFinding[]> {
   const out: ReadinessFinding[] = [];
   const who = await name(ctx, "character", characterId);
   const profiles = await rows(ctx.exec, "vocal_profile", "character_id=?",
@@ -117,8 +117,11 @@ async function readinessQ05(
     }
   }
 
+  // At the shot where one was asked (§12.9.1): Q05 takes no shot, but
+  // the shot fixes the position for every step, and a voice override at
+  // it is in Q13's answer there.
   const media = await resolveMedia(ctx, "character", characterId,
-                                   "voice_identity", sceneId);
+                                   "voice_identity", sceneId, shotId);
   if (media.assets_most_specific_first.length === 0) {
     out.push(f("blocker", "bundle",
                `${who} has no voice_identity bundle — nothing for a ` +
@@ -183,7 +186,7 @@ async function readinessQ05(
 
 async function readinessQ06(
     ctx: ScfContext, characterId: number, sceneId: number,
-    order: SceneOrder): Promise<ReadinessFinding[]> {
+    shotId: number | null, order: SceneOrder): Promise<ReadinessFinding[]> {
   const out: ReadinessFinding[] = [];
   const who = await name(ctx, "character", characterId);
   const profiles = await rows(ctx.exec, "physical_character_profile",
@@ -247,7 +250,7 @@ async function readinessQ06(
   }
 
   const motion = await mediaStep(ctx, "character", characterId, "motion",
-                                 sceneId, null, "ok");
+                                 sceneId, shotId, "ok");
   out.push(motion.finding);
   return out;
 }
@@ -408,7 +411,9 @@ async function readinessQ08(
 
 /**
  * The media step (§12.9.1): the subject asked about has at least one
- * reference of the intent in force — its own Q13 answer at the position.
+ * reference of the intent in force — its own Q13 answer at the position,
+ * the shot included where one was asked, whether or not the target
+ * takes a shot.
  */
 async function mediaStep(
     ctx: ScfContext, subject: string, subjectId: number, intent: string,
@@ -662,10 +667,12 @@ export async function readinessReport(
   let findings: ReadinessFinding[];
   if (queryId === "Q05") {
     findings = await readinessQ05(ctx, characterId as number,
-                                  sceneId as number, order);
+                                  sceneId as number, params.shot_id ?? null,
+                                  order);
   } else if (queryId === "Q06") {
     findings = await readinessQ06(ctx, characterId as number,
-                                  sceneId as number, order);
+                                  sceneId as number, params.shot_id ?? null,
+                                  order);
   } else if (queryId === "Q07") {
     findings = await readinessQ07(ctx, sceneId as number,
                                   params.shot_id ?? null, order);

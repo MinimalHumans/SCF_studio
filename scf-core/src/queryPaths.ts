@@ -82,6 +82,18 @@ export interface QueryStep {
    */
   appliesTo?: "seen";
   /**
+   * The canonical query that RESOLVES this step's rows (§12.9.1): the
+   * step is satisfied by the rows that query's answer lets contribute
+   * at the position, and by no other row the step's entities hold.
+   * Q13's anchors are the case it exists for — §12.8 keeps only those
+   * of the intent's anchor type and verified, and §4.8 keeps a
+   * variant's only where it is in force and sets the subject's own
+   * aside there. Until rc.7 the step counted every verified anchor
+   * naming the subject, and called Marcus pinned at scenes where Q13
+   * returns no anchor for him.
+   */
+  resolvedBy?: string;
+  /**
    * Human-readable, DERIVED from the fields above. Present so a
    * renderer has something to print; never the machine-readable part.
    */
@@ -117,7 +129,8 @@ function labelFor(entities: string[], filter?: QueryStep["filter"],
 const step = (entities: string[], requirement: Requirement, purpose: string,
               extra: { filter?: QueryStep["filter"]; intent?: string;
                        intentBySubjectType?: Record<string, string>;
-                       satisfiedBy?: string[]; appliesTo?: "seen" } = {},
+                       satisfiedBy?: string[]; appliesTo?: "seen";
+                       resolvedBy?: string } = {},
              ): QueryStep => ({
   entities,
   ...(extra.satisfiedBy === undefined
@@ -129,6 +142,7 @@ const step = (entities: string[], requirement: Requirement, purpose: string,
   ...(extra.intentBySubjectType === undefined
     ? {} : { intentBySubjectType: extra.intentBySubjectType }),
   ...(extra.appliesTo === undefined ? {} : { appliesTo: extra.appliesTo }),
+  ...(extra.resolvedBy === undefined ? {} : { resolvedBy: extra.resolvedBy }),
   label: labelFor(entities, extra.filter, extra.intent,
                   extra.intentBySubjectType),
 });
@@ -243,12 +257,17 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
       step(["bundle", "character_asset_binding", "costume_asset_binding",
            "location_asset_binding", "prop_asset_binding"], "required",
            "something to resolve", { satisfiedBy: ["bundle"] }),
-      // Verified only, as Q13 reads anchors (§12.8): an unset status
-      // counts as verified, and a candidate pins nothing.
+      // The anchors Q13 lets contribute at the position (§12.8, §4.8):
+      // verified (an unset status counts, a candidate pins nothing), of
+      // the intent's anchor type, and a variant's only where it is in
+      // force. The filter is the part that holds everywhere.
       step(["entity_anchor"], "recommended", "identity pinning",
-           { filter: { field: "canonical_status", values: ["verified"] } }),
+           { filter: { field: "canonical_status", values: ["verified"] },
+             resolvedBy: "Q13" }),
+      // An override whose bundle has another intent is not in the answer.
       step(["character_shot_override", "location_shot_override",
-           "prop_shot_override"], "optional", "shot-specific swaps"),
+           "prop_shot_override"], "optional", "shot-specific swaps",
+           { resolvedBy: "Q13" }),
     ],
   },
 };

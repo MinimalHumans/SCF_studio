@@ -797,6 +797,7 @@ const CASES = [
   "Q13-shot1204", "Q14-Q02-eleanor-scene7", "Q14-Q07-shot12A",
   "Q14-Q13-shawl-scene12", "Q14-Q02-kitchen-scene10",
   "Q14-Q13-windchime-scene12", "Q14-Q02-ada-scene3",
+  "Q14-Q13-marcus-scene12",
 ] as const;
 const PUBLISHED = [
   "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
@@ -1037,6 +1038,30 @@ describe("per-case results — what one position cannot show", () => {
       expect(finding?.severity).toBe("ok");
       expect(finding?.message).toMatch(/not seen/);
     }
+  });
+
+  test("Q14 for Q13 where the only verified anchor is a variant's: " +
+       "Marcus, scene 12", async () => {
+    // §12.9.1: a step over rows the target resolves is satisfied by
+    // what it resolves. Marcus's one verified visual anchor names his
+    // young variant, in force at scene 25 only (§4.8), and his own is a
+    // candidate. Q13 at scene 12 returns no anchor, so the step is not
+    // met, though a verified row naming him exists.
+    const marcus = await sel(
+      "SELECT id, uuid FROM character WHERE name LIKE '%Marcus%'");
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, null, null,
+      { type: "character", uuid: marcus.uuid, id: marcus.id },
+      "visual_identity");
+    blessOrCheck("Q14-Q13-marcus-scene12", r);
+    expect(r.result.findings.find((f) => f.entity === "entity_anchor")
+      ?.severity).toBe("warning");
+    const q13 = await q13Result(fx.ctx, "character", marcus.uuid, marcus.id,
+      "visual_identity", scene12.uuid, scene12.id, null, null);
+    expect(q13.result.references.some((x) => x.provenance === "anchor"))
+      .toBe(false);
+    expect(q13.result.trail.some((t) => t.layer === "anchor" &&
+      t.excluded?.by === "variant_not_in_force")).toBe(true);
   });
 
   test("Q02 for a location: the kitchen at scene 10, ranked axes",

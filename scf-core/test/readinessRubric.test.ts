@@ -42,6 +42,7 @@ interface Step {
   filter?: { field: string; values: string[] };
   intent?: string;
   intentBySubjectType?: Record<string, string>;
+  resolvedBy?: string;
 }
 
 const published = JSON.parse(readFileSync(RUBRICS, "utf8")) as {
@@ -112,6 +113,19 @@ describe("the rubric and Q14 describe the same thing", () => {
   test("the published rubric covers exactly the walkable queries", () => {
     expect(published.queries.map((q) => q.query).sort())
       .toEqual(Object.keys(QUERY_PATHS).sort());
+  });
+
+  test("a step resolved by a query names one with a rubric", () => {
+    // §12.9.1: such a step is satisfied by that query's answer at the
+    // position, so the query must be one Q14 can ask. Q13's anchor and
+    // override steps carry it since 1.0-rc.7.
+    const resolved = published.queries.flatMap((q) => q.steps
+      .filter((s) => s.resolvedBy !== undefined)
+      .map((s) => [q.query, s.entities[0], s.resolvedBy]));
+    expect(resolved).toEqual([
+      ["Q13", "entity_anchor", "Q13"],
+      ["Q13", "character_shot_override", "Q13"],
+    ]);
   });
 
   test("Q14's findings name only entities the rubric declares", () => {
