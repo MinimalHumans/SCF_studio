@@ -99,8 +99,10 @@ names the asset intent whose bundle must resolve.
 |---|---|---|
 | `project_color_palette` | required | the direction cascade's color root |
 | `visual_identity` | required | material/aesthetic root |
+| `color_script` | optional | the color script's summary |
 | `color_script_entry` | recommended | position-keyed color intent (latest-wins) |
 | `scene_color_palette` | recommended | scene color opinion |
+| `look_development` | optional | look development root, on the shot cascade |
 | `lighting_design` | recommended | scene/shot lighting |
 | `shot_design` | optional | shot-level composition |
 | `character_appearance_profile` | recommended | each character seen at the position (§2.4.1, §4.6) |
@@ -156,7 +158,7 @@ names the asset intent whose bundle must resolve.
 | `physical_character_profile` | required | movement baseline |
 | `scene_blocking + action_sequence` | recommended | staging container |
 | `performance_state (physical)` | optional | modulation; absence = baseline holds |
-| `performance_beat (physical/facial)` | optional | moment direction |
+| `performance_beat (physical)` | optional | moment direction |
 | `character_environment_physicality` | optional | how they relate to this place |
 | `media: motion` | optional | motion reference |
 
@@ -216,7 +218,7 @@ names the asset intent whose bundle must resolve.
 
 | Step | | Why |
 |---|---|---|
-| `bundle + character_asset_binding + location_asset_binding + prop_asset_binding` | required | something to resolve |
+| `bundle + character_asset_binding + costume_asset_binding + location_asset_binding + prop_asset_binding` | required | something to resolve |
 | `entity_anchor` | recommended | identity pinning |
 | `character_shot_override + location_shot_override + prop_shot_override` | optional | shot-specific swaps |
 

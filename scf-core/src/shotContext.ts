@@ -256,9 +256,10 @@ async function intentsFor(
     ctx: ScfContext, subjectType: string, subjectId: number,
 ): Promise<string[]> {
   const intents = new Set<string>();
-  const key = `${subjectType}_id`;
+  // The targets asked about this kind by name: `character` is a
+  // parameter of Q05 and Q06 (§12.9's names, as the rubric lists them).
   for (const path of Object.values(QUERY_PATHS)) {
-    if (!path.params.includes(key)) continue;
+    if (!path.params.includes(subjectType)) continue;
     for (const step of path.steps) {
       if (step.intent !== undefined) intents.add(step.intent);
     }

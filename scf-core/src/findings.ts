@@ -104,6 +104,7 @@ export type FindingCode =
   // Spans — spec §5.4, §5.5
   | "structure.boundary_absent"
   | "structure.boundary_dangling"
+  | "structure.boundary_cut"
   | "structure.boundary_shared"
   | "structure.sequence_act_mismatch"
   | "structure.boundary_unnumbered"
@@ -298,6 +299,11 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
   "structure.boundary_dangling": {
     severity: "warning",
     title: "Span starts at a scene that is not present",
+    spec: "§5.5",
+  },
+  "structure.boundary_cut": {
+    severity: "warning",
+    title: "Span starts at a cut scene",
     spec: "§5.5",
   },
   "structure.boundary_shared": {
@@ -700,6 +706,31 @@ export async function collectFindings(
     out.push(make(code, f.message, {
       table: f.entity, rowIds, count: Math.max(1, rowIds.length),
     }));
+  }
+
+  // A span whose start scene is CUT. The derivation above runs over
+  // every scene, cut ones included (§9.5), so it sees the span anchored
+  // and says nothing; but a cut scene takes part in no span (§6.6.1),
+  // so in every answer about the film the span covers nothing and its
+  // scenes belong to the span before it (§5.5). That re-parenting is
+  // silent unless this says so. A cut span is not in the film either,
+  // and is not reported.
+  const cutScenes = new Set(scenes
+    .filter((s) => s["lifecycle_status"] === "cut")
+    .map((s) => Number(s["id"])));
+  for (const [rowsOf, table] of [[acts, "act"],
+                                 [sequences, "sequence"]] as const) {
+    for (const r of rowsOf) {
+      if (r["lifecycle_status"] === "cut") continue;
+      const start = r["start_scene_id"];
+      if (start === null || start === undefined ||
+          !cutScenes.has(Number(start))) continue;
+      out.push(make("structure.boundary_cut",
+        `${String(r["name"] ?? table)} starts at a cut scene, so it ` +
+        "covers no scene and its scenes stay with the span before it " +
+        "(§5.5). Move its start to a scene in the film.",
+        { table, rowIds: [Number(r["id"])] }));
+    }
   }
 
   // --- bound section lines (§1.3.1) ---

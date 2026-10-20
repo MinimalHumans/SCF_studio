@@ -303,6 +303,30 @@ describe("§12.4 Q03 — world state, away from scene 12", () => {
     expect(r.result.props).toEqual([]);
   });
 
+  test("every query asked at the cut scene answers an empty position",
+       async () => {
+    // §12.1.7, Q03's rule for every scene parameter. Rows still keyed
+    // to 12B are not cut themselves; Q04 used to return its heading and
+    // lines as the scene's screenplay. What does not depend on the
+    // position — Eleanor's voice baseline — still answers.
+    const cut = await fx.ctx.exec(
+      "SELECT id, uuid FROM scene WHERE lifecycle_status = 'cut'");
+    const id = Number(cut[0]?.["id"]);
+    const uuid = String(cut[0]?.["uuid"]);
+    const q04 = await q04Result(fx.ctx, uuid, id);
+    expect(q04.result.scene).toBeNull();
+    expect(q04.result.screenplay).toEqual([]);
+    expect(q04.parameters["scene"]).toBe(uuid);
+    const q05 = await q05Result(fx.ctx, eleanor.uuid, uuid, eleanor.id, id);
+    expect(q05.result.baseline).not.toBeNull();
+    expect([q05.result.states, q05.result.beats]).toEqual([[], []]);
+    const q11 = await q11Result(fx.ctx, uuid, id);
+    expect([q11.result.scene, q11.result.toneMarkers]).toEqual([null, []]);
+    const q12 = await q12Result(fx.ctx, uuid, scene12.uuid, id, scene12.id);
+    expect(q12.result.from).toBeNull();
+    expect(q12.result.to).not.toBeNull();
+  });
+
   test("every row in the result carries a uuid", async () => {
     const r = await q03Result(fx.ctx, scene19.uuid, scene19.id);
     for (const c of r.result.characters) {
@@ -770,6 +794,8 @@ const CASES = [
   "Q03-scene25", "Q04-scene25", "Q12-scene24-25", "Q12-scene25-24", "Q13-scene3",
   "Q13-scene25", "Q15-plate-v2", "Q07-scene3", "Q04-scene21",
   "Q14-Q02-locket-scene25", "Q14-Q13-eleanor-shot1204",
+  "Q13-shot1204", "Q14-Q02-eleanor-scene7", "Q14-Q07-shot12A",
+  "Q14-Q13-shawl-scene12",
 ] as const;
 const PUBLISHED = [
   "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
@@ -881,6 +907,80 @@ describe("per-case results — what one position cannot show", () => {
     blessOrCheck("Q14-Q13-eleanor-shot1204", r);
     expect(r.result.findings.map((f) => f.entity).sort()).toEqual(
       ["bundle", "character_shot_override", "entity_anchor"]);
+  });
+
+  test("Q13 asked with a shot and no scene: the shot's scene, 12-04",
+       async () => {
+    // §12.1.7: a shot fixes the position at its own scene. Read as no
+    // position, only baselines apply and the wounded binding is
+    // excluded as `not_baseline`; at scene 12 it is in force.
+    const r = await q13Result(fx.ctx, "character", eleanor.uuid, eleanor.id,
+      "visual_identity", null, null, shot1204.uuid, shot1204.id);
+    blessOrCheck("Q13-shot1204", r);
+    expect(r.parameters["scene"]).toBeNull();
+    expect(r.result.trail.filter((t) => t.layer === "binding")
+      .every((t) => t.excluded === null)).toBe(true);
+    const atScene = await q13Result(fx.ctx, "character", eleanor.uuid,
+      eleanor.id, "visual_identity", scene12.uuid, scene12.id,
+      shot1204.uuid, shot1204.id);
+    expect(r.result.references).toEqual(atScene.result.references);
+  });
+
+  test("a shot outside the scene asked is not answered", async () => {
+    // §12.1.7: the question contradicts itself. Q07 used to answer it
+    // with scene 3's palette under 12-04's lighting and design.
+    await expect(q07Result(fx.ctx, scene3.uuid, scene3.id,
+                           shot1204.uuid, shot1204.id))
+      .rejects.toThrow(/not answered/);
+    await expect(q13Result(fx.ctx, "character", eleanor.uuid, eleanor.id,
+      "visual_identity", scene3.uuid, scene3.id, shot1204.uuid,
+      shot1204.id)).rejects.toThrow(/not answered/);
+    await expect(q02Result(fx.ctx, "character", eleanor.uuid, eleanor.id,
+      scene3.uuid, scene3.id, shot1204.uuid, shot1204.id))
+      .rejects.toThrow(/not answered/);
+    await expect(q14Result(fx.ctx, "Q07", null, null, scene3.uuid,
+      scene3.id, shot1204.uuid, shot1204.id)).rejects.toThrow(/not answered/);
+  });
+
+  test("Q14 for Q02 about a character: Eleanor at scene 7", async () => {
+    // §12.9.1. Relationship states reach her one reference away, so the
+    // step applies and is met; her costumes cannot satisfy the costume
+    // step — only one worn here could, and none is (`satisfiedBy`).
+    const scene7 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '7'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene7.uuid, scene7.id, null, null,
+      { type: "character", uuid: eleanor.uuid, id: eleanor.id }, null);
+    blessOrCheck("Q14-Q02-eleanor-scene7", r);
+    const find = (e: string) => r.result.findings.find((f) => f.entity === e);
+    expect(find("relationship_state")?.message).not.toMatch(/not apply/);
+    expect(find("costume_scene")?.severity).toBe("warning");
+  });
+
+  test("Q14 for Q07 at a shot that falls through: 12A", async () => {
+    // §12.9.1 narrows as §7.3 reads: 12A has no lighting of its own and
+    // Q07 there returns the scene's, so the step is met.
+    const shot = await sel(
+      "SELECT id, uuid FROM shot WHERE shot_number = '12A'");
+    const r = await q14Result(fx.ctx, "Q07", null, null,
+      scene12.uuid, scene12.id, shot.uuid, shot.id);
+    blessOrCheck("Q14-Q07-shot12A", r);
+    expect(r.result.findings.find((f) => f.entity === "lighting_design")
+      ?.severity).toBe("ok");
+  });
+
+  test("Q14 for Q13 about a costume: Ada's shawl at scene 12", async () => {
+    // §12.9.1. The costume's binding meets the required step; no anchor
+    // and no shot override can name a costume, so those do not apply.
+    const shawl = await sel(
+      "SELECT id, uuid FROM costume WHERE name = 'Ada''s shawl'");
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, null, null,
+      { type: "costume", uuid: shawl.uuid, id: shawl.id },
+      "visual_identity");
+    blessOrCheck("Q14-Q13-shawl-scene12", r);
+    expect(r.result.findings.map((f) => f.severity))
+      .toEqual(["ok", "ok", "ok"]);
   });
 
   test("Q02 for a location: the kitchen at scene 10, ranked axes",

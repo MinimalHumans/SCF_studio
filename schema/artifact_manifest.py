@@ -214,6 +214,18 @@ GROUPS: list[tuple[str, str, str, list[tuple[str, str]]]] = [
          "Q14 for Q02 about a prop. Spec §12.9."),
         ("fixtures/expectations/Q14-Q13-eleanor-shot1204.result.json",
          "Q14 for Q13, every step reported. Spec §12.9."),
+        ("fixtures/expectations/Q13-shot1204.result.json",
+         "Q13 asked with a shot and no scene: the shot's scene is the "
+         "position. Spec §12.1.7."),
+        ("fixtures/expectations/Q14-Q02-eleanor-scene7.result.json",
+         "Q14 for Q02 about a character: a relationship state one "
+         "reference away, a costume owned and not worn. Spec §12.9.1."),
+        ("fixtures/expectations/Q14-Q07-shot12A.result.json",
+         "Q14 for Q07 at a shot that falls through to the scene's "
+         "lighting. Spec §12.9.1."),
+        ("fixtures/expectations/Q14-Q13-shawl-scene12.result.json",
+         "Q14 for Q13 about a costume: steps that do not apply. Spec "
+         "§12.9.1."),
      ]),
 
     ("The canonical query parameters", "spec",
@@ -258,6 +270,10 @@ GROUPS: list[tuple[str, str, str, list[tuple[str, str]]]] = [
          "A section line bound to an act renamed since. Spec conformance.md §5.3."),
         ("fixtures/negative/span-boundary-dangling.expected.json",
          "An act anchored to a scene that is not present. Spec conformance.md §5.3."),
+        ("fixtures/negative/span-boundary-cut.expected.json",
+         "An act whose start scene is cut: it covers no scene (§5.5). Spec conformance.md §5.3."),
+        ("fixtures/negative/junction-key-null.expected.json",
+         "Two links whose null key columns compare equal (§6.4). Spec conformance.md §5.3."),
         ("fixtures/negative/unknown-table.expected.json",
          "A table the registry does not declare. Spec conformance.md §5.3."),
         ("fixtures/negative/uuid-duplicate.expected.json",

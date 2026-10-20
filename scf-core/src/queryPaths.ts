@@ -36,6 +36,17 @@ export interface QueryStep {
    * registry and refuses to publish an unknown one.
    */
   entities: string[];
+  /**
+   * The entities whose rows decide the step (§12.9.1), where that is
+   * fewer than `entities`. The rest are context: they name a finding
+   * but cannot satisfy the step. `costume + costume_scene` is the case
+   * it exists for — a character's costumes say nothing about what is
+   * worn at this scene, so "satisfied by any of them" read literally
+   * reported a character wearing nothing here as ready.
+   *
+   * Absent means every entity the step names decides it.
+   */
+  satisfiedBy?: string[];
   requirement: Requirement;
   purpose: string;
   /**
@@ -46,7 +57,9 @@ export interface QueryStep {
   filter?: { field: string; values: string[] };
   /**
    * For a media step: the asset intent whose bundle must resolve. The
-   * entity is `bundle` either way; this says which one.
+   * entity is `bundle` either way; this says which one. A step on
+   * `bundle` with no intent (Q13's own) takes the target's `intent`
+   * parameter.
    */
   intent?: string;
   /**
@@ -58,6 +71,11 @@ export interface QueryStep {
 
 export interface QueryPath {
   name: string;
+  /**
+   * The target's parameters under Q14's names for them (§12.9), a
+   * trailing `?` marking an optional one. Envelope names, not row-id
+   * names: a third party reads this list against §12.9's table.
+   */
   params: string[];
   description: string;
   steps: QueryStep[];
@@ -73,9 +91,12 @@ function labelFor(entities: string[], filter?: QueryStep["filter"],
 }
 
 const step = (entities: string[], requirement: Requirement, purpose: string,
-              extra: { filter?: QueryStep["filter"]; intent?: string } = {},
+              extra: { filter?: QueryStep["filter"]; intent?: string;
+                       satisfiedBy?: string[] } = {},
              ): QueryStep => ({
   entities,
+  ...(extra.satisfiedBy === undefined
+    ? {} : { satisfiedBy: extra.satisfiedBy }),
   requirement,
   purpose,
   ...(extra.filter === undefined ? {} : { filter: extra.filter }),
@@ -86,7 +107,7 @@ const step = (entities: string[], requirement: Requirement, purpose: string,
 export const QUERY_PATHS: Record<string, QueryPath> = {
   Q02: {
     name: "Subject in context",
-    params: ["subject", "subject_id", "scene_id"],
+    params: ["subjectType", "subject", "scene", "shot?"],
     description: "Everything needed to realize a subject in a scene; the " +
                  "character steps apply to a character subject only.",
     steps: [
@@ -95,7 +116,8 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
       step(["physical_character_profile"], "recommended",
            "movement/face baseline"),
       step(["vocal_profile"], "optional", "voice baseline"),
-      step(["costume", "costume_scene"], "recommended", "what they wear here"),
+      step(["costume", "costume_scene"], "recommended", "what they wear here",
+           { satisfiedBy: ["costume_scene"] }),
       step(["relationship_state"], "optional",
            "where their relationships stand"),
       step(["performance_state"], "optional",
@@ -106,7 +128,7 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
   },
   Q05: {
     name: "Voice direction",
-    params: ["character_id", "scene_id"],
+    params: ["character", "scene"],
     description: "How this character's lines should sound in a scene.",
     steps: [
       step(["vocal_profile"], "required", "the voice baseline"),
@@ -123,7 +145,7 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
   },
   Q06: {
     name: "Physical direction",
-    params: ["character_id", "scene_id"],
+    params: ["character", "scene"],
     description: "How this character moves/behaves in a scene.",
     steps: [
       step(["physical_character_profile"], "required", "movement baseline"),
@@ -132,9 +154,11 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
       step(["performance_state"], "optional",
            "modulation; absence = baseline holds",
            { filter: { field: "modality", values: ["physical"] } }),
+      // Physical only: Q06 returns physical beats (§12.6), and a step
+      // counting what its target does not read reports a readiness the
+      // answer does not have. Facial beats are Q02's and Q04's.
       step(["performance_beat"], "optional", "moment direction",
-           { filter: { field: "modality",
-                       values: ["physical", "facial"] } }),
+           { filter: { field: "modality", values: ["physical"] } }),
       step(["character_environment_physicality"], "optional",
            "how they relate to this place"),
       step(["bundle"], "optional", "motion reference",
@@ -143,15 +167,18 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
   },
   Q07: {
     name: "Look resolution",
-    params: ["scene_id", "shot_id?"],
+    params: ["scene", "shot?"],
     description: "What a frame in this scene/shot should look like.",
     steps: [
       step(["project_color_palette"], "required",
            "the direction cascade's color root"),
       step(["visual_identity"], "required", "material/aesthetic root"),
+      step(["color_script"], "optional", "the color script's summary"),
       step(["color_script_entry"], "recommended",
            "position-keyed color intent (latest-wins)"),
       step(["scene_color_palette"], "recommended", "scene color opinion"),
+      step(["look_development"], "optional",
+           "look development root, on the shot cascade"),
       step(["lighting_design"], "recommended", "scene/shot lighting"),
       step(["shot_design"], "optional", "shot-level composition"),
       step(["character_appearance_profile"], "recommended",
@@ -173,11 +200,12 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
   },
   Q13: {
     name: "Media resolution",
-    params: ["subject", "subject_id", "intent", "scene_id?", "shot_id?"],
+    params: ["subjectType", "subject", "intent", "scene?", "shot?"],
     description: "Assets in force for a subject and intent.",
     steps: [
-      step(["bundle", "character_asset_binding", "location_asset_binding",
-           "prop_asset_binding"], "required", "something to resolve"),
+      step(["bundle", "character_asset_binding", "costume_asset_binding",
+           "location_asset_binding", "prop_asset_binding"], "required",
+           "something to resolve"),
       step(["entity_anchor"], "recommended", "identity pinning"),
       step(["character_shot_override", "location_shot_override",
            "prop_shot_override"], "optional", "shot-specific swaps"),

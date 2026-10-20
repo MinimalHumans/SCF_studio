@@ -63,9 +63,9 @@ const doc = {
     })),
   ordering: [
     "severity rank ascending",
-    "then code, lexicographic",
-    "then table, lexicographic",
-    "then lowest row id",
+    "then code, by code point",
+    "then table, by code point, a null table first",
+    "then lowest row id, a finding with no row ids first",
   ],
   codeCount: codes.length,
   codes: codes.map((code) => ({

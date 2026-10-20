@@ -4,7 +4,7 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: release candidate (specification 1.0-rc.4).** Every section is specified. What is known to be
+**Status: release candidate (specification 1.0-rc.5).** Every section is specified. What is known to be
 unfinished is tracked in [stability.md](stability.md); the one check the
 validator cannot yet make is named in §4.
 
@@ -227,7 +227,7 @@ tell it has not been designed.
 
 Every artifact this section names is published at the specification
 version's tag and checksummed in `SHA256SUMS`. Fetch them from
-`spec-<version>` — for this document, `spec-1.0-rc.4` — never from
+`spec-<version>` — for this document, `spec-1.0-rc.5` — never from
 `main`; [ARTIFACTS.md](ARTIFACTS.md) gives each file's address, and
 which files the schema tag addresses as well.
 
@@ -253,6 +253,17 @@ suites and MUST NOT change.
   (§6.6.1). Adding a cut row that nothing may notice is a stronger
   statement than having no cut rows at all — and it is why scene 12's
   pin below permits a cut row while permitting nothing else.
+- **A cut character, Deputy Rourke, is linked into scenes 12 and 19 and
+  carries the Forgiveness theme** through an active connection. He is
+  in no answer: not in the published `Q04`'s cast, not in `Q03` at 19,
+  and his connection is not among `Q10`'s carriers, nor counted on its
+  spine (§6.6.1, §12.11). Before 1.0-rc.5 the fixture's only cut rows
+  were reached by nothing a published result depended on, so a reader
+  that ignored cut endpoints reproduced every result; one that does now
+  fails three. Uncutting him MUST change those three.
+- **A tone marker is keyed to a sequence alone** — "Held breath", on
+  The Reckoning, which holds scene 12 — so the published `Q11` and
+  `Q04` show that a row keyed by its sequence is at no scene (§12.13).
 - **Twelve scenes carry action; scene `11` is a slugline only.** An SCF
   is legitimately an outline or a finished screenplay, and a conforming
   reader meets both in one file. Before 0.17 the fixture had no body
@@ -305,7 +316,7 @@ test an arbitrary file, which is what §4 is for.
 
 ### 5.3 Negative fixtures
 
-Sixteen cases in `fixtures/negative/`, each a minimal database plus
+Eighteen cases in `fixtures/negative/`, each a minimal database plus
 exactly the damage its name describes, with a blessed report beside it.
 
 Minimal on purpose: a case that trips three findings tells you nothing
@@ -468,14 +479,14 @@ your implementation behaved as described — and a reader can check.
 
 | Implementation | Role claimed | Basis |
 |---|---|---|
-| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all sixteen negative fixtures report as blessed. |
+| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all eighteen negative fixtures report as blessed. |
 | `scf-app` | Editor | The app suite passes, including the open→edit→save round trip and third-party content preservation across repeated cycles. |
 | — | Writer | No independent implementation exists. |
 
-There is no second **maintained** implementation. Eight independent
-ones have been written from the text by people without the reference
-code, each for one reader run (`stability.md`), and none is kept
-current. Until one is, every rule in the
+There is no second **maintained** implementation. An independent one
+has been written from the text for every reader run, by people without
+the reference code (nine so far, `docs/release-checklist.md` §D1), and
+none is kept current. Until one is, every rule in the
 specification is guaranteed only to be implementable in the way it was
 already implemented, which is the weakest form of that guarantee — and
 the reason §6 exists in a form a stranger could actually follow.

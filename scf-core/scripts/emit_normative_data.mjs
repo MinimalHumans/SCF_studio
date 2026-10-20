@@ -74,6 +74,14 @@ for (const [id, path] of Object.entries(QUERY_PATHS)) {
     for (const name of s.entities) {
       if (!registryEntities.has(name)) unresolved.push(`${id}: ${name}`);
     }
+    // `satisfiedBy` is a subset of `entities`: the step's context names
+    // a finding, and only an entity the step names can decide it.
+    for (const name of s.satisfiedBy ?? []) {
+      if (!s.entities.includes(name)) {
+        unresolved.push(`${id}: satisfiedBy ${name} is not among the ` +
+                        "step's entities");
+      }
+    }
     if (s.filter !== undefined) {
       // The filter column must exist on every entity the step names,
       // or the step describes a subset that cannot be taken.
@@ -103,6 +111,7 @@ const rubrics = Object.entries(QUERY_PATHS)
       // a registry entity, checked above. `label` is derived from it for
       // display and is the only prose here.
       entities: s.entities,
+      ...(s.satisfiedBy === undefined ? {} : { satisfiedBy: s.satisfiedBy }),
       requirement: s.requirement,
       purpose: s.purpose,
       ...(s.filter === undefined ? {} : { filter: s.filter }),
@@ -131,11 +140,16 @@ const rubricDoc = {
   },
   $steps:
     "A step's `entities` are REGISTRY ENTITY NAMES, checked against the " +
-    "registry at generation time. `filter` narrows the step to a subset " +
+    "registry at generation time. `satisfiedBy`, where present, names " +
+    "the ones whose rows decide the step; the others name a finding " +
+    "and cannot satisfy it. `filter` narrows the step to a subset " +
     "of those rows and its `values` are a disjunction; `intent` names " +
-    "the asset intent whose bundle must resolve. `label` is derived " +
-    "from those three for display and is the only prose here — a " +
-    "consumer should never parse it.",
+    "the asset intent whose bundle must resolve, and a step on " +
+    "`bundle` without one takes the target's own `intent`. `params` " +
+    "are §12.9's names, `?` marking an optional one. Rows are narrowed " +
+    "as the target query reads them (§12.9.1). `label` is derived " +
+    "for display and is the only prose here — a consumer should never " +
+    "parse it.",
   $note:
     "Only queries with a generative or pre-flight consumer have a " +
     "rubric. The analytic queries read whatever exists and have no " +

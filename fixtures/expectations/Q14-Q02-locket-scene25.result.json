@@ -48,7 +48,7 @@
       {
         "severity": "ok",
         "entity": "bundle",
-        "message": "Ada's locket: 6 visual_identity asset(s) resolve (0 from overrides)."
+        "message": "Ada's locket: 6 visual_identity asset(s) in force (0 from overrides)."
       }
     ],
     "counts": {
