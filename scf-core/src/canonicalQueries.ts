@@ -94,7 +94,8 @@ async function descriptionResult(
     {
       modality: resolved.modality,
       baseline: resolved.profile === null
-        ? null : projectRow(resolved.profile, refs(ctx, "vocal_profile"), lookup),
+        ? null : projectRow(resolved.profile, refs(ctx, modality === "vocal"
+            ? "vocal_profile" : "physical_character_profile"), lookup),
       states: resolved.states.map(
         (s) => projectRow(s, refs(ctx, "performance_state"), lookup)),
       modulations: resolved.modulations,
@@ -303,9 +304,12 @@ export async function composeQ12(
   const atB = await presenceAtScene(ctx, b);
 
   const characters: Q12Composition["characters"] = [];
+  // Both positions' links pooled in row-id order, each character at its
+  // first (§12.5). DISTINCT alone leaves the order to the query plan.
   for (const c of await ctx.exec(
-      "SELECT DISTINCT character_id FROM scene_character " +
-      "WHERE scene_id IN (?, ?)", [a, b])) {
+      "SELECT character_id FROM scene_character " +
+      "WHERE scene_id IN (?, ?) GROUP BY character_id ORDER BY MIN(id)",
+      [a, b])) {
     const cid = asId(c["character_id"]);
     if (cid === null) continue;
     const character = (await rows(ctx.exec, "character", "id = ?",

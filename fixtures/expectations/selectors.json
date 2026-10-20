@@ -48,6 +48,11 @@
       "note": "A shot in scene 3.",
       "uuid": "e9a73271-d1bd-48eb-98f1-afd3f28511e6"
     },
+    "shot12A": {
+      "sql": "SELECT id, uuid FROM shot WHERE shot_number = '12A'",
+      "note": "A shot in scene 12 with no lighting row of its own.",
+      "uuid": "88da6925-723e-4c0d-bd91-3b45ee0bdf8b"
+    },
     "scene10": {
       "sql": "SELECT id, uuid FROM scene WHERE scene_number = '10'",
       "note": "A winter night in the kitchen: §12.17 ranks time of day first, so the autumn night variant wins.",
@@ -309,6 +314,14 @@
       },
       "scene": {
         "selector": "scene19"
+      }
+    },
+    "Q07-shot12A": {
+      "scene": {
+        "selector": "scene12"
+      },
+      "shot": {
+        "selector": "shot12A"
       }
     },
     "Q12-scene24-25": {

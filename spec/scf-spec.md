@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 1.0-rc.2 — release candidate.**
+**Version 1.0-rc.3 — release candidate.**
 Describes schema version **2.24**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -339,7 +339,7 @@ all sixteen queries on one page. Both are derived and checked in CI.
 Where either disagrees with this document or with the registry, they are
 wrong. **The manifest covers this document and
 the other three specification documents**, so a reader can verify that
-the prose it built against is the prose that was published — five
+the prose it built against is the prose that was published — seven
 independent implementations have now been written from these files, and
 until 0.31 nothing let them confirm they had read the same bytes.
 
@@ -417,8 +417,15 @@ reason in every case: something resolves over them.** §12.17 ranks a
 location variant by its agreements on `time_of_day`, `weather` and
 `season`; §6.6.1 excludes a row on `lifecycle_status`; §9.4's severities
 and §12's own vocabularies decide result shapes. A finite set is what
-makes those answers the same in two implementations. An open vocabulary
-is for values a human reads, not values a resolver branches on.
+makes those answers the same in two implementations.
+
+**An open vocabulary may still be resolved over, on its known values
+only.** `bundle.intent` selects bindings by exact value and picks an
+anchor type (§12.8); `asset_relationship.relationship_type` `poster`
+places the film's poster (§8.6). An unlisted value matches only itself
+and means nothing beyond what those sections say of it. A value a
+resolver must be able to enumerate belongs in a closed vocabulary; one
+it only matches belongs in either.
 
 #### 2.4.1 Presence
 
@@ -925,6 +932,12 @@ A span covers every scene from its start to the start of the next span
 of the same kind. Non-contiguous membership is not expressible. An
 implementation MUST NOT invent a representation for it.
 
+"Every scene" is in story order (§4.1), so **a scene the screenplay does
+not contain belongs to whichever span of each kind runs to the end**:
+§4.1 sorts it after every scripted scene, and a span covers the scenes
+up to the next start. The fixture's scene 17 is in the last act and the
+last sequence, and its shadow row says so.
+
 ### 5.3 Acts and sequences are independent
 
 Acts and sequences are independent spans, **not** a hierarchy. A scene
@@ -951,7 +964,10 @@ membership from boundaries** (§5.1) rather than from these rows.
 
 Rows that no boundary explains MUST be reported as
 `structure.shadow_row_unexplained` (§9.4), and MUST NOT be silently
-deleted. Deleting authored data to satisfy a derivation is not a
+deleted. **The membership they are checked against is derived over every
+scene, cut ones included** (§9.5): a cut scene keeps the position its
+heading gives it, so a shadow row placing it in the span around that
+position is explained. The fixture's cut scene 12B has one. Deleting authored data to satisfy a derivation is not a
 migration.
 
 ### 5.5 Half-placed structure is valid
@@ -1196,7 +1212,12 @@ ordering — which is why a `scope: global` entity can appear after a
 
 ### 7.3 One row per entity, most specific first
 
-For each entity in the chain, a resolver selects **at most one row**:
+For each entity in the chain, a resolver selects **at most one row**.
+The steps are tried in order. **A shot with no row of its own falls
+through from step 2 to step 3 and takes the scene's row**; step 1 does
+not fall through, so a `latest_wins` entity with no row at or before the
+scene contributes nothing. Where a step matches several rows, it takes
+the lowest row id.
 
 1. If the entity's `positionPattern` is `latest_wins` and a scene is
    given, the row is the latest at or before that scene in story order
@@ -1536,9 +1557,58 @@ Severity describes the DATA, never acceptance of the file:
 | `info` | Worth reporting; nothing is wrong. |
 
 A report over one unchanged file MUST be deterministic: the same
-findings, in the same order, on every run. Ordering is by severity, then
-code, then table, then lowest row id. Without this a report cannot be
+findings, in the same order, on every run. Ordering is by severity
+(`error`, `warning`, `info`), then code, then table — both compared by
+code point, a null table first — then lowest row id, a finding with no
+row ids first. Without this a report cannot be
 diffed, which is most of what reporting is for.
+
+#### 9.4.1 What raises each code
+
+Most codes are raised where their section states the condition — §4.6
+and §4.7 tabulate theirs, §6.5 lists the relationship cases. The rest
+are stated here. `count` and `rowIds` are as §9.5 defines them, per
+finding before §9.5 merges one code on one table into one.
+
+| Code | Raised when | `table` | `rowIds` | `count` |
+|---|---|---|---|---|
+| `header.application_id_absent` | The header's `application_id` is not SCF's (§1.2). | null | empty | 1 |
+| `header.schema_version_mismatch` | The header's `user_version` encodes a schema version and `_scf_meta.schema_version` states a different one. | null | empty | 1 |
+| `header.schema_version_newer` | `_scf_meta.schema_version` is a higher major.minor than the version the reader implements (§11.2). | null | empty | 1 |
+| `extension.unknown_table` | A table that is not a registry entity, a §1.3.1 table or `_scf_meta`, `x_` tables included (§10.1). | that table | empty | 1 |
+| `identity.table_absent` | A registry entity's table is not in the file. A §1.3.1 table that is absent is not a finding: a file with no screenplay has none. | that table | empty | 1 |
+| `identity.uuid_column_absent` | A registry table, or a `uuidExtraTables` table (§1.3), that holds rows has no `uuid` column. Every check below on uuids covers the same tables. | the table | empty | its rows |
+| `identity.unique_index_absent` | A table with a `uuid` column has no UNIQUE index whose one column is `uuid`. | the table | empty | 1 |
+| `identity.uuid_missing` | Rows whose `uuid` is null or empty. | the table | those rows | their number |
+| `identity.uuid_malformed` | Rows whose non-empty `uuid` is not 8-4-4-4-12 hexadecimal, either case. | the table | those rows | their number |
+| `identity.uuid_duplicate` | A non-empty `uuid` on more than one row of one table, compared exactly. | the table | every row carrying a shared uuid | the number of shared uuids |
+| `junction.duplicate_key` | Rows of a link entity share every natural-key column (§6.3) and agree on every other authored column. | the link table | those rows | 1 per key |
+| `junction.duplicate_key_conflicting` | As above, and they disagree on at least one. | the link table | those rows | 1 per key |
+| `structure.boundary_absent` | An act or sequence has no `start_scene_id`. | `act` or `sequence` | the span | 1 |
+| `structure.boundary_dangling` | A `start_scene_id` names no scene in the file, cut or not. | `act` or `sequence` | the span | 1 |
+| `structure.boundary_unnumbered` | A span starts at a scene with no `scene_number`. | `act` or `sequence` | the span | 1 |
+| `structure.sequence_act_mismatch` | A sequence's scenes (§5.2) fall in more than one act (§5.3). | `sequence` | the sequence | 1 |
+| `structure.scenes_before_first_act` | At least one act boundary resolves, and scenes precede the earliest. No act resolving is `structure.boundary_absent` or `structure.boundary_dangling`, not this. | `scene` | those scenes | their number |
+
+**Seven codes describe a single row's version chain or external id**,
+and are raised by inspecting that row rather than the whole file. A
+validation report is not required to compute them, and the reference
+validator's does not; an implementation that reports them uses these
+conditions, on a row of a versionable entity:
+
+| Code | Raised when |
+|---|---|
+| `identity.self_parent` | `parent_id` names the row itself. |
+| `identity.chain_cycle` | Following `parent_id`, or `superseded_by_id`, returns to a row already visited. |
+| `identity.chain_fork` | More than one row names this row as its `parent_id`. |
+| `identity.chain_asymmetric` | `parent_id` or `superseded_by_id` names a row that does not exist, or `superseded_by_id` names a row whose `parent_id` is not this row. |
+| `identity.successor_without_timestamp` | The row has a `superseded_by_id` and no `superseded_at`. |
+| `identity.superseded_without_successor` | The row's `lifecycle_status` is `superseded` and it has no `superseded_by_id`. |
+| `identity.external_id_without_namespace` | The row has an `external_id` and no `external_id_namespace`. |
+
+`field.required_absent` and `junction.endpoint_absent` are raised once
+per required column, so a row missing two required values counts twice
+in `count` and appears once in `rowIds`.
 
 This vocabulary covers **whether a file is well-formed**. It does not
 cover whether a given query can be answered well from it — that is
@@ -1606,7 +1676,10 @@ finding about a table or the file has an empty `rowIds`.
 
 **Findings are computed over every row, cut ones included.** §6.6.1 says
 what a query answers, not what a validator reads: a reference from a cut
-row still uses its asset, and a link to a cut scene is still a link. A
+row still uses its asset, and a link to a cut scene is still a link. The
+same holds for what a finding derives: story order and span membership
+are derived over every scene, cut ones included, wherever a finding
+depends on them (§5.4). A
 cut row is not itself a finding (§6.6.2).
 
 A report MUST be byte-identical across two runs over an unchanged file.
@@ -1745,7 +1818,7 @@ a minor version at minimum, and MUST be recorded in the specification
 changelog.
 
 A **release candidate** carries `-rc.N` after the version it precedes:
-`1.0-rc.1` was the first candidate for 1.0, and `1.0-rc.2` the second. Its requirements are the
+`1.0-rc.1` was the first candidate for 1.0, `1.0-rc.2` the second and `1.0-rc.3` the third. Its requirements are the
 release's unless a later candidate changes them, and each candidate is
 recorded in the changelog like any version. §11.0 holds until the
 release itself, so a defect found in a candidate is fixed in the next
@@ -1801,7 +1874,7 @@ Every canonical query returns:
 |---|---|
 | `query` | The query's id, e.g. `"Q05"`. |
 | `resultFormat` | Version of this envelope, on its own track. A field added here is not a change to SCF. **Currently `1.0`**, and every published result carries it. |
-| `schemaVersion` | The schema the answering implementation read. |
+| `schemaVersion` | The schema version the answering implementation implements — its registry's — not the file's `_scf_meta.schema_version`. A result describes the answer, and the answer is shaped by the schema the implementation knows. |
 | `parameters` | What was asked. A parameter identifying a ROW is its **uuid**; a literal parameter — a query id, an enum value — appears as itself. **A row id MUST NOT appear**, so no parameter is a bare number. |
 | `result` | The query's own structure, defined per query below. |
 
@@ -1989,20 +2062,23 @@ instead of inferring it: §12.10 requires `densityThreshold` beside
 
 #### 12.1.5 Vocabularies and label lists
 
-Every string in a result is one of three things, and each query's
-section below MUST say which of the three each of its strings is:
+Every string in a result is one of the following, and each query's
+section below MUST say which each of its strings is:
 
 | | |
 |---|---|
 | **A stored value** | Carried through from a column. Its vocabulary, where it has one, is the registry's, and this section adds nothing to it. |
 | **A closed vocabulary** | A fixed set of strings **this specification** defines and a conforming implementation MUST produce exactly. Adding a member is a change to this specification. |
 | **A label list** | An array of bare strings, each the `name` of a row the result does not otherwise carry. |
+| **A formatted string** | Built from stored values by a format its section states exactly, and compared byte for byte. §12.17's `mismatches` is the only one. |
+| **Prose** | Written for a person, MUST NOT be parsed, and compared only as present or null (`conformance.md` §6.1): §12.8's `detail` and `excluded.reason`, and §12.9's finding messages. |
 
 The closed vocabularies of §12 are: the resolution states of §8.3, as
 they appear in §12.8's `state` and in every `counts` keyed by them; the
-readiness severities of §12.9; and §12.8's `provenance`. There are no
-others. A string not covered by one of them is a stored value or a label
-and is named as such where it appears.
+readiness severities of §12.9; and §12.8's `provenance`, a trail entry's
+`layer`, and `excluded.by`. There are no others. A string not covered
+by one of them is one of the other kinds above, and is named as such
+where it appears.
 
 **A label list is a convenience, not an identity.** A bare name cannot
 be resolved back to a row — two rows may carry the same one, and a name
@@ -2016,6 +2092,13 @@ person most wants to read it. Where a query carries a label list, its
 section below MUST name the column the labels are taken from.
 
 #### 12.1.6 Order within a result
+
+**Where a section takes "the" row of an entity a file may hold more than
+one of** — Q00's layers, Q05's `baseline`, a cascade layer (§7.3) — **it
+is the lowest row id among the rows that qualify**, cut rows excluded
+(§6.6.1). The fixture holds one of each, so no published result shows
+the rule; it is stated so that two implementations agree on a file that
+holds two.
 
 **Every array in a result is ordered, and each query's section below
 states the order for each of its arrays.** An array whose order is not
@@ -2063,7 +2146,7 @@ true of them here, and anything authored line by line.
 | Field | |
 |---|---|
 | `modality` | `"vocal"`. Q06 is the same query with `"physical"`. |
-| `baseline` | The character's `vocal_profile`, projected per §12.1.2, or **null** when none is authored. |
+| `baseline` | The character's `vocal_profile` — for Q06, their `physical_character_profile` — projected per §12.1.2, or **null** when none is authored. |
 | `states` | `performance_state` rows of this modality in force at this scene, resolved by §4.5 pattern 2, **oldest first**. |
 | `modulations` | The states' `modulations` merged oldest-first, so a later state overrides an earlier one key by key. Derived; carries no identity. |
 | `beats` | `performance_beat` rows for this character, scene and modality, in `beat_order` then row order. |
@@ -2117,7 +2200,7 @@ Parameter: `scene`.
 | Field | |
 |---|---|
 | `scene` | The scene itself, projected. Null when the position does not resolve — including when the scene is cut (§6.6.1). |
-| `characters` | Each character present, with their `presence` (§2.4.1), the `variant` in force there (§4.8; projected, or null), the `states` in force there (§4.5) and the `costumes` they are wearing. In the row order of this scene's `scene_character` rows (§12.1.6). |
+| `characters` | Each character present, with their `presence` (§2.4.1), the `variant` in force there (§4.8; projected, or null), the `states` in force there — `performance_state` rows of every modality, resolved by §4.5 pattern 2, oldest first, each projected — and the `costumes` they are wearing. In the row order of this scene's `scene_character` rows (§12.1.6). |
 | `props` | Each prop present, with its `presence` (§2.4.1), its `variant` in force (§4.8; projected, or null) and its `state` at this position by pattern 3, or null where none is yet established. |
 | `motifs` | Motif appearances at this position: name and domain. These come from a join rather than a table and carry no identity of their own. |
 
@@ -2139,7 +2222,7 @@ Parameters: `from`, `to`.
 | Field | |
 |---|---|
 | `from`, `to` | The two scenes, projected. |
-| `characters` | Each character present at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link them), `variantFrom` and `variantTo`, and `statesFrom` and `statesTo`. In the row order of the `scene_character` rows at the two positions, first appearance first — these are peers with no story position of their own (§12.1.6). |
+| `characters` | Each character present at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link them), `variantFrom` and `variantTo`, and `statesFrom` and `statesTo`. The `scene_character` rows of both positions are pooled in row-id order, and each character is placed at its first row — not `from`'s characters and then `to`'s. These are peers with no story position of their own (§12.1.6). |
 | `relationships` | Each relationship with a stage at either position: `{relationship, stageFrom, stageTo}`, the relationship projected, each stage its `stage_label` or null. In row order. |
 | `props` | Each prop with a state at either position, projected, with `presenceFrom` and `presenceTo` (§2.4.1; null at a position that does not link it), `variantFrom` and `variantTo`, and `whereFrom` and `whereTo`. |
 
@@ -2172,7 +2255,9 @@ forward in the script and backward by number.
 **How this character moves and behaves in this scene.**
 
 Q05 with `modality` `"physical"`. Same parameters, same result
-structure, different content. It is one definition rather than two
+structure, different content: **`baseline` is the character's
+`physical_character_profile`**, `states` and `beats` are those of
+modality `physical`. It is one definition rather than two
 because two would be two places for the shape to change.
 
 ### 12.7 Q08 — Soundscape
@@ -2252,6 +2337,19 @@ does not contribute:
 | `displaced` | The variant in force's uuid | A subject's own anchor, set aside by its variant's anchor of the same type. |
 | `canonical_status` | The anchor's status | An anchor that is not verified. |
 
+**Each excluded layer carries ONE `by`, the first that applies.** For
+a binding: `not_baseline`; then `before_scene_range`,
+`after_scene_range`; then `time_of_day_filter`, `variant_id`,
+`physical_state_filter`, `vocal_state_filter`; then `replaced`, which
+only a binding passing every filter can be. For an anchor:
+`canonical_status`, then `variant_not_in_force` or `displaced`. So an
+unverified anchor that a variant would also have displaced reports
+`canonical_status`, as the published `Q13-scene25` shows.
+
+**Anchors appear in `trail` in three runs**, each in row order: those
+excluded by `canonical_status`, then those excluded by
+`variant_not_in_force` or `displaced`, then those that contribute.
+
 **`excluded.reason` is prose**, written for a person, and like
 `detail` it MUST NOT be parsed and is not compared (`conformance.md`
 §6.1); `by` and `value` are the answer. A binding or override whose
@@ -2271,7 +2369,9 @@ The reference carries the asset's identity and the anchor's name in
 `anchorName`.
 
 **An intent is answered by anchors of one type**, and only anchors of
-that type are considered:
+that type are considered. An intent the table does not list — the
+registry's `behavior`, or an unlisted value of the open vocabulary —
+is restricted to no type: every anchor of the subject is considered.
 
 | `intent` | `anchor_type` |
 |---|---|
@@ -2280,8 +2380,11 @@ that type are considered:
 | `motion`, `performance` | `motion` |
 
 **Only a verified anchor contributes**: one whose `canonical_status` is
-`verified` or unset. Any other status — `candidate`, `deprecated` — is
-an anchor still being decided, and identity cannot rest on it. It is
+`verified`, null or empty. The vocabulary's other members — `candidate`,
+which is the registry's default, and `rejected` — mark an anchor still
+being decided or turned down, and identity cannot rest on it. An anchor
+written without a status is therefore a candidate and does not
+contribute. It is
 considered, does not contribute, and appears in `trail` excluded by
 `canonical_status`.
 
@@ -2828,8 +2931,9 @@ best describes this scene*:
    against `season`. An axis agrees only where **both** sides carry a
    value, compared case-insensitively and trimmed. An absent value on
    either side is not a disagreement. **A variant whose `time_of_day` is
-   `varies` agrees with any scene on that axis**: it is a wildcard, not
-   a time, and scoring it as a mismatch made the only value that says
+   `varies` agrees with any scene that carries a time of day**: it is a
+   wildcard, not a time — a scene with none still agrees with nothing,
+   as above — and scoring it as a mismatch made the only value that says
    "this dressing holds at any hour" the one value that could never win.
 2. **Compare the variants axis by axis, in that order.** A variant that
    agrees on an earlier axis beats one that does not, whatever either
@@ -2859,10 +2963,24 @@ otherwise, which is the record being more precise than the script rather
 than disagreeing with it.
 
 `mismatches` lists the axes where the CHOSEN variant disagrees with the
-scene — both carry a value and the values differ. It is an **array of
-strings**, each naming the scene's axis and both values, and it is a
-report rather than a rejection: a variant can be the best available and
-still be wrong, and saying so is more useful than choosing nothing.
+scene — both carry a value and the values differ. It is a report rather
+than a rejection: a variant can be the best available and still be
+wrong, and saying so is more useful than choosing nothing.
+
+**`mismatches` is an array of formatted strings** (§12.1.5), one per
+disagreeing axis in step 1's order, each exactly
+
+```
+<axis>: scene=<scene value> variant=<variant value>
+```
+
+where `<axis>` is the SCENE's column name — `time_of_day`,
+`weather_conditions` or `season` — and each value is the stored value,
+untrimmed and in its stored case, written as a JSON string: in double
+quotes, with JSON's escapes. So the fixture's scene 12 carries
+`season: scene="winter" variant="autumn"`. It is compared byte for byte
+(`conformance.md` §6.1), and a `varies` time of day never appears in it,
+because it never disagrees.
 
 The fixture exercises this too. Scene 12's kitchen dressing was built
 for an autumn night and reused in winter: it still wins on time of day
@@ -2953,7 +3071,7 @@ change to one without the other is a defect.
 | §2.1 registry structure | `scf-core/test/registrySchema.test.ts` |
 | §9.4 finding vocabulary | `scf-core/test/findings.test.ts`, `spec/finding-catalog.json` |
 | §4.3 numbering policy | `scf-core/test/numbering.test.ts` |
-| §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (15 cases) |
+| §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (16 cases) |
 | §9.5 serialised report | `scf-core/test/report.test.ts` |
 | §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |
 | §11.2–11.3 forward and backward compatibility | `scf-core/test/extensibility.test.ts`, `scf-app/test/roundTrip.test.ts` |

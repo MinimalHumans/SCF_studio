@@ -74,6 +74,8 @@ export interface StructureFinding {
   code: string;
   entity: "act" | "sequence" | "scene";
   rowId: number | null;
+  /** Every row the finding is about, where that is more than `rowId`. */
+  rowIds?: number[];
   message: string;
 }
 
@@ -376,10 +378,10 @@ export function structureFindings(
         // — the fixture's scene 17 does. What it lacks is a STORY
         // POSITION, which is what §4.1's fallback exists for.
         message: `${nameById.get(id) ?? "scene"} has no heading in the ` +
-                 "screenplay, so it has no story position and belongs " +
-                 "to no act. It sorts after every scene that does " +
-                 "(§4.1). Its record and everything linked to it are " +
-                 "untouched." });
+                 "screenplay. It sorts after every scene that does " +
+                 "(§4.1), so it belongs to whichever act and sequence " +
+                 "run to the end (§5.2). Its record and everything " +
+                 "linked to it are untouched." });
     }
   }
 
@@ -451,10 +453,12 @@ export function structureFindings(
   // A boundary on an unnumbered scene sorts after every numbered one.
   const unnumbered = new Set(structure.scenes
     .filter((s) => s.number === null).map((s) => s.id));
-  for (const span of [...structure.acts, ...structure.sequences]) {
-    if (unnumbered.has(span.startSceneId)) {
+  for (const [spans, entity] of [[structure.acts, "act"],
+                                 [structure.sequences, "sequence"]] as const) {
+    for (const span of spans) {
+      if (!unnumbered.has(span.startSceneId)) continue;
       out.push({ level: "info", code: "unnumbered-boundary",
-        entity: "act", rowId: span.id,
+        entity, rowId: span.id,
         message: `${span.name} starts at an unnumbered scene, which ` +
                  "sorts after every numbered one." });
     }
@@ -463,6 +467,7 @@ export function structureFindings(
   if (structure.unassignedSceneIds.length > 0 && structure.acts.length > 0) {
     out.push({ level: "info", code: "scenes-before-first-act",
       entity: "scene", rowId: null,
+      rowIds: [...structure.unassignedSceneIds].sort((a, b) => a - b),
       message: `${String(structure.unassignedSceneIds.length)} scene(s) ` +
                "come before the first act begins." });
   }

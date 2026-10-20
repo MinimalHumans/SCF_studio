@@ -17,7 +17,7 @@
 <p align="center">
   <a href="https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml"><img src="https://github.com/MinimalHumans/SCF_studio/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://minimalhumans.github.io/SCF_studio/"><img src="https://img.shields.io/badge/docs-minimalhumans.github.io-1b6393" alt="Documentation"></a>
-  <a href="spec/stability.md"><img src="https://img.shields.io/badge/spec-1.0--rc.2-ef393b" alt="Specification: 1.0 release candidate"></a>
+  <a href="spec/stability.md"><img src="https://img.shields.io/badge/spec-1.0--rc.3-ef393b" alt="Specification: 1.0 release candidate"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-1b6393" alt="Code licence: Apache-2.0"></a>
   <a href="spec/LICENSE"><img src="https://img.shields.io/badge/prose-CC%20BY%204.0-f4af3f" alt="Prose licence: CC BY 4.0"></a>
 </p>
@@ -41,7 +41,7 @@ An `.scf` file is a SQLite database. The schema is generated from one
 declaration; every consumer reads the generated registry.
 
 **Status: pre-1.0, release candidate.** The specification is at
-`spec/scf-spec.md`, as candidate `1.0-rc.2`,
+`spec/scf-spec.md`, as candidate `1.0-rc.3`,
 and `spec/stability.md` states what is safe to build against. Until 1.0
 ships, existing `.scf` files are disposable — there is no migration path
 and no backward compatibility owed to anything already written (spec
@@ -104,7 +104,7 @@ Conformance artifacts, all checked on every test run:
 | | |
 |---|---|
 | `fixtures/hollow_creek.scf` | The reference fixture. |
-| `fixtures/negative/` | Fifteen deliberately-broken cases with blessed reports, plus `CASES.json` so anyone can rebuild them. |
+| `fixtures/negative/` | Sixteen deliberately-broken cases with blessed reports, plus `CASES.json` so anyone can rebuild them. |
 | `fixtures/expectations/` | The sixteen canonical queries' normative results, a normative per-case result wherever one position cannot show a member, and the selectors that say what each was asked; plus rendered markdown for eight of them. The markdown is a convenience and is a contract for none. |
 
 `corpus/private` is not checked in, and the blocks that need it
@@ -148,7 +148,7 @@ states no rules. A rule found only in `docs/conventions.md` is a defect.
 | [`SECURITY.md`](SECURITY.md) | What is in scope, and how to report privately |
 | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) | Contributor Covenant 2.1 |
 
-A **defect** in the specification is an issue, not a proposal. Five
+A **defect** in the specification is an issue, not a proposal. Seven
 independent implementations have been written against this format and
 their authors found dozens of them; every one was worth having quickly
 and without ceremony. Proposals are for changes where the answer is

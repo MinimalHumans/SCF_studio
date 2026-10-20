@@ -4,7 +4,7 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: release candidate (specification 1.0-rc.2).** Every section is specified. What is known to be
+**Status: release candidate (specification 1.0-rc.3).** Every section is specified. What is known to be
 unfinished is tracked in [stability.md](stability.md); the one check the
 validator cannot yet make is named in §4.
 
@@ -180,7 +180,9 @@ Its scope, in order of value:
    `user_version` (§1.2);
 2. tables and columns present that the registry does not define — a
    report, not an error (§10.1);
-3. dangling references;
+3. dangling references where a code names them — a relationship
+   endpoint (§6.5), a span boundary (§5.5), a line anchor (§3.5); a
+   reference column naming a missing row has no general code;
 4. duplicate natural keys, and whether the duplicates agree (§6.4);
 5. relationship findings, all seven cases (§6.5);
 6. structural findings — spans with no boundary, boundaries on deleted
@@ -223,7 +225,7 @@ tell it has not been designed.
 
 Every artifact this section names is published at the specification
 version's tag and checksummed in `SHA256SUMS`. Fetch them from
-`spec-<version>` — for this document, `spec-1.0-rc.2` — never from
+`spec-<version>` — for this document, `spec-1.0-rc.3` — never from
 `main`; [ARTIFACTS.md](ARTIFACTS.md) gives each file's address, and
 which files the schema tag addresses as well.
 
@@ -293,7 +295,7 @@ test an arbitrary file, which is what §4 is for.
 
 ### 5.3 Negative fixtures
 
-Fifteen cases in `fixtures/negative/`, each a minimal database plus
+Sixteen cases in `fixtures/negative/`, each a minimal database plus
 exactly the damage its name describes, with a blessed report beside it.
 
 Minimal on purpose: a case that trips three findings tells you nothing
@@ -319,7 +321,8 @@ Covered: missing, malformed and duplicate uuids; a relationship endpoint
 that is absent, a contradictory pair, and one with no directionality; a
 span boundary on a scene that is not present; an asset identifier that
 escapes its root and one that is absolute; a bundle no binding reaches;
-an unknown table; an unstamped header; a screenplay line whose
+two orphaned assets, which are one finding with `count` 2 (§9.5's
+grain); an unknown table; an unstamped header; a screenplay line whose
 `line_type` is outside the published set (`line.type_unknown`); a link
 with a missing end (`junction.endpoint_absent`); and a section line
 bound to an act renamed since (`structure.section_mismatch`).
@@ -394,8 +397,9 @@ are runnable, which is the whole mechanism.
 
 **Reader.** Against `fixtures/hollow_creek.scf`:
 
-1. `scf-check` the fixture. It MUST exit 0, reporting findings whose
-   codes and severities come from
+1. Run your validator over the fixture — for the reference, `scf-check`.
+   It MUST report no `error` finding (`scf-check` exits 0), its findings'
+   codes and severities MUST come from
    [`finding-catalog.json`](finding-catalog.json), and its report MUST
    match [`hollow_creek.report.json`](../fixtures/hollow_creek.report.json)
    as step 3 compares a report.
@@ -451,11 +455,14 @@ your implementation behaved as described — and a reader can check.
 
 | Implementation | Role claimed | Basis |
 |---|---|---|
-| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all fifteen negative fixtures report as blessed. |
+| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all sixteen negative fixtures report as blessed. |
 | `scf-app` | Editor | The app suite passes, including the open→edit→save round trip and third-party content preservation across repeated cycles. |
 | — | Writer | No independent implementation exists. |
 
-There is no second implementation. Until there is, every rule in the
+There is no second **maintained** implementation. Seven independent
+ones have been written from the text by people without the reference
+code, each for one reader run (`stability.md`), and none is kept
+current. Until one is, every rule in the
 specification is guaranteed only to be implementable in the way it was
 already implemented, which is the weakest form of that guarantee — and
 the reason §6 exists in a form a stranger could actually follow.
