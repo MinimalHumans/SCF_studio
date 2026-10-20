@@ -148,6 +148,8 @@ const PARAMETERS = {
          intent: { literal: "visual_identity" },
          scene: { selector: "scene12" }, shot: { selector: "shot1204" } },
   Q14: { target: { literal: "Q05" }, character: { selector: "eleanor" },
+         subjectType: { literal: null }, subject: { literal: null },
+         intent: { literal: null },
          scene: { selector: "scene12" }, shot: { literal: null } },
   Q15: { entityType: { literal: "scene" }, row: { selector: "scene12" } },
   // Per-case results: where one position cannot show a member at all.
@@ -184,6 +186,16 @@ const PARAMETERS = {
     scene: { selector: "scene25" }, shot: { literal: null } },
   "Q15-plate-v2": { entityType: { literal: "asset" },
     row: { selector: "plateV2" } },
+  "Q07-scene3": { scene: { selector: "scene3" }, shot: { literal: null } },
+  "Q04-scene21": { scene: { selector: "scene21" } },
+  "Q14-Q02-locket-scene25": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "prop" },
+    subject: { selector: "locket" }, intent: { literal: null },
+    scene: { selector: "scene25" }, shot: { literal: null } },
+  "Q14-Q13-eleanor-shot1204": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "eleanor" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { selector: "shot1204" } },
 };
 
 // ── Resolve, and check every selector actually matches ───────────────

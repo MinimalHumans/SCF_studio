@@ -97,6 +97,26 @@ describe("adding a cut row changes no answer", () => {
                                "vocal")).toEqual([]);
   });
 
+  test("an unknown persistence is scene_only, never until_resolved",
+       async () => {
+    // §4.5: reading an unknown value as `until_resolved` would spread a
+    // state the reader does not understand across the rest of the story.
+    db = await fresh();
+    await db.exec(
+      "INSERT INTO character (name, uuid) VALUES ('E', 'c1')");
+    await db.exec(
+      "INSERT INTO scene (name, scene_number, uuid) VALUES ('S', '1', 's1')");
+    await db.exec(
+      "INSERT INTO scene (name, scene_number, uuid) VALUES ('T', '2', 's2')");
+    await db.exec(
+      "INSERT INTO performance_state (name, character_id, scene_id, " +
+      "modality, persistence, uuid) " +
+      "VALUES ('hoarse', 1, 1, 'vocal', 'until_healed', 'p1')");
+    const ctx = { exec: db.exec, registry };
+    expect((await statesInForce(ctx, 1, 1, "vocal")).length).toBe(1);
+    expect(await statesInForce(ctx, 1, 2, "vocal")).toEqual([]);
+  });
+
   test("a cut row keeps its uuid, so restoring it restores the row",
        async () => {
     // §6.6.2. Cut is not deletion; identity survives it.

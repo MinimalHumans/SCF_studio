@@ -1,0 +1,61 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q02",
+    "character": null,
+    "subjectType": "prop",
+    "subject": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
+    "intent": null,
+    "scene": "00000000-0000-4000-8000-003300000001",
+    "shot": null
+  },
+  "result": {
+    "target": "Q02",
+    "targetName": "Subject in context",
+    "findings": [
+      {
+        "severity": "ok",
+        "entity": "character_appearance_profile",
+        "message": "Does not apply to a prop."
+      },
+      {
+        "severity": "ok",
+        "entity": "physical_character_profile",
+        "message": "Does not apply to a prop."
+      },
+      {
+        "severity": "ok",
+        "entity": "vocal_profile",
+        "message": "Does not apply to a prop."
+      },
+      {
+        "severity": "ok",
+        "entity": "costume",
+        "message": "Does not apply to a prop."
+      },
+      {
+        "severity": "ok",
+        "entity": "relationship_state",
+        "message": "Does not apply to a prop."
+      },
+      {
+        "severity": "ok",
+        "entity": "performance_state",
+        "message": "Does not apply to a prop."
+      },
+      {
+        "severity": "ok",
+        "entity": "bundle",
+        "message": "Ada's locket: 6 visual_identity asset(s) resolve (0 from overrides)."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 0,
+      "suggestion": 0,
+      "ok": 7
+    }
+  }
+}

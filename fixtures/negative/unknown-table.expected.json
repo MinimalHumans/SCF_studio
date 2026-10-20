@@ -1,8 +1,8 @@
 {
   "about": "A table SCF does not define. Preserved and ignored (§10.1) — reported at info, because unknown usually means historical.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.24",
-  "fileSchemaVersion": "2.24",
+  "toolSchemaVersion": "2.25",
+  "fileSchemaVersion": "2.25",
   "source": "fixtures/negative/build/unknown-table.scf",
   "counts": {
     "error": 0,

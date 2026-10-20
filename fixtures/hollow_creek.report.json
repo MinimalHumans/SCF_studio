@@ -1,15 +1,27 @@
 {
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.24",
-  "fileSchemaVersion": "2.24",
+  "toolSchemaVersion": "2.25",
+  "fileSchemaVersion": "2.25",
   "source": "fixtures/hollow_creek.scf",
   "counts": {
     "error": 0,
-    "warning": 0,
+    "warning": 1,
     "info": 6
   },
   "clean": true,
   "findings": [
+    {
+      "code": "asset.identifier_absolute",
+      "severity": "warning",
+      "table": "asset",
+      "rowIds": [
+        55
+      ],
+      "message": "Asset identifier \"/Volumes/ArtDept/locket/locket_engraving_macro.tif\" is absolute; it will not travel with the file.",
+      "count": 1,
+      "spec": "§8.2",
+      "title": "Asset identifier is absolute and therefore non-portable"
+    },
     {
       "code": "asset.orphan",
       "severity": "info",

@@ -17,6 +17,134 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.4 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The fourth release candidate**, from the eighth independent reader run
+(`docs/release-checklist.md` §D1). It reproduced every published result,
+every negative report and the fixture's report from the text alone, and
+found two contradictions between normative rules and several unstated
+ones. **Schema 2.25** adds one registry member. Taken under §11.0, which
+still holds.
+
+### §4.5 and §7.3 — a `latest_wins` tie takes the highest row id
+
+§7.3 said a step matching several rows takes the lowest row id, and §4.5
+said pattern 3 takes the highest. The fixture holds the tie — two
+`color_script_entry` rows at scene 1 and two at scene 21 — so two readers
+each following one sentence gave different Q07 answers at four scenes.
+**Step 1 is pattern 3 and takes the highest**, as the state tables
+always did; steps 2–4 keep the lowest. §12.1.6 states the exception. The
+reference followed §7.3 in the cascade and §4.5 everywhere else, and now
+follows §4.5 in both. No published result changes; the new case result
+`Q07-scene3` pins it.
+
+### §0.3, §8.3, §12.8.1 — no root mapping makes rooted identifiers `unaddressed`
+
+Three sentences said every asset is `unaddressed` without a mapping,
+contradicting §8.2's absolute and `..` identifiers, which are
+`out-of-root` whatever the session. The identifier is now decided first,
+everywhere, as the reference always did; conformance §2.1 agrees. The
+fixture gains one bundled asset with an absolute identifier, so the
+published `Q02-locket-scene25` shows `out-of-root` beside `unaddressed`,
+and the fixture's report carries one warning,
+`asset.identifier_absolute`.
+
+### §9.4.1 — every code's `table`, `rowIds` and `count`
+
+The table covered 16 of the catalog's 53 codes. It now covers every one,
+read from the reference validator: the presence, line, relationship,
+asset, binding, structure, required-value and vocabulary codes, with the
+grain each is raised at before §9.5 merges it. A merged finding keeps
+the first message. §9.5: `counts` counts findings, not their `count`s.
+
+### §12.17 — staging beats reach their scene through either container
+
+`staging_beat` has no `scene_id`; it names a `scene_blocking` or an
+`action_sequence`. `stagingBeats` now takes both, ordered by
+`beat_order` then row id. The reference read only blocking, so Q04 at a
+scene whose staging is an action sequence lost its beats. New case
+result `Q04-scene21`. `detail` includes shot-level rows, and is not
+prose.
+
+### §12.1.2, §12.8 — `subject_variant_id` points into the variant table (schema 2.25)
+
+The registry declared `entity_anchor.subject_variant_id` polymorphic on
+`subject_type`, which names `character`, `prop` or `location`, while the
+row it names is in `character_variant`, `prop_variant` or
+`location_variant`. A resolver following the declaration read the
+fixture's variant anchor as Eleanor. Schema 2.25 adds
+`polymorphicTargets` to the field — the target per sibling value — and
+§12.1.2 says the sibling names the table only where no map is declared.
+`registry.schema.json` describes the member. The reference's where-used
+walk and orphan count honour it.
+
+### §12.9 — Q14 takes its target's parameters
+
+Q14 could not be asked about a prop or a location for Q02, or about Q13
+at all. It now declares `subjectType`, `subject` and `intent` beside
+`character`, `scene` and `shot`, all seven in its envelope; a subject
+narrows by its kind, a polymorphic subject column by its sibling, and a
+step that cannot apply to the subject's kind is reported `ok`, saying
+so. `findings` are ordered by severity, and `entity` is stated for a
+step naming several. The Q02 rubric's `params` name a subject. The
+reference's walkers now report every step of their rubrics — Q02, Q06,
+Q07, Q08 and Q13 each skipped some — and Q13's anchor step reports
+`warning` when absent, as `recommended` requires. `Q14.result.json`
+gains three null parameters; new worked examples
+`Q14-Q02-locket-scene25` and `Q14-Q13-eleanor-shot1204`. The MCP
+`readiness` tool and the editor's Q14 page take the new parameters.
+
+### Rules now stated
+
+- §1.2: `_scf_meta` is a key/value table, and `_scf_meta.schema_version`
+  means its `schema_version` row.
+- §4.5: a null `persistence` is `scene_only`; a `resolved_at_scene_id`
+  naming a scene with no story position resolves nothing. The reference
+  read an unknown `persistence` as `until_resolved`; it now reads it as
+  `scene_only`.
+- §8.5: the format string — the last extension, lowercased, no dot,
+  null where there is none.
+- §12.1.6: row order is a last resort, and every array in §12 now has
+  its order stated: Q03 and Q04 `props` and `cast` in link order, Q12
+  `props` in `prop` order, Q04 `blocking` and `detail` rows, Q11
+  `toneMarkers`, Q00 `themes`, Q01 `groups` and `thematicConnections`.
+- §12.8: a null or empty `canonical_status` is verified; a row written
+  without one carries the default `candidate`. Only a verified variant
+  anchor displaces. §12.8.2: a null `precedence` is 0, and the binding
+  named by `replaced` is the first `replace` binding above.
+- §12.16: which inapplicable Q02 members are `[]` and which null, and
+  `media` is Q13's body with `fromQuery` beside its members. The
+  reference reported the scene's location variant for a location
+  subject that is not the scene's location; it is now
+  `{variant: null, mismatches: []}`.
+- §12.17: `mismatches` escapes exactly as JSON requires and no more;
+  non-ASCII is written as itself.
+
+### Conformance and stability
+
+- `conformance.md` §6.1 step 3 names the header stamps and the
+  `_scf_meta` row the negative base database carries; step 2 says Q04's
+  `detail` is not prose. §5.1 lists the absolute asset, and corrects
+  `12A`'s row id against the cut `12B`.
+- `stability.md`: `provenance` is exercised; `12A`'s row id restated;
+  rows for Q14's parameters and §9.4.1.
+- Eight independent implementations (`conformance.md` §7, README, site,
+  `what-is-scf.md`).
+
+### Artifacts
+
+- New: `Q07-scene3`, `Q04-scene21`, `Q14-Q02-locket-scene25`,
+  `Q14-Q13-eleanor-shot1204`, and their selectors.
+- Every result, report and generated file carries schema 2.25. Beyond
+  that, only `Q02-locket-scene25` (the absolute reference), `Q14` (three
+  null parameters) and `hollow_creek.report.json` (the warning) change.
+- `api-surface.json`: `polymorphicTarget`, `polymorphicKindsFor` and
+  `Q14Subject` are exported.
+
+---
+
 ## 1.0-rc.3 — 2026-10-16
 
 *Describes schema 2.24.*

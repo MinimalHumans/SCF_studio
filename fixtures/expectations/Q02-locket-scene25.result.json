@@ -1,7 +1,7 @@
 {
   "query": "Q02",
   "resultFormat": "1.0",
-  "schemaVersion": "2.24",
+  "schemaVersion": "2.25",
   "parameters": {
     "subjectType": "prop",
     "subject": "6b740cf9-8f40-48c2-b104-81e43bcf95f6",
@@ -285,13 +285,26 @@
           "state": "unaddressed",
           "detail": "no root named @project is configured in this session",
           "sizeBytes": null
+        },
+        {
+          "uuid": "00000000-0000-4000-8000-00c400000001",
+          "anchorName": null,
+          "name": "locket_engraving_macro.tif",
+          "identifier": "/Volumes/ArtDept/locket/locket_engraving_macro.tif",
+          "format": "tif",
+          "role": "engraving",
+          "intent": "visual_identity",
+          "provenance": "bundle",
+          "state": "out-of-root",
+          "detail": "an absolute path resolves on this machine and nowhere else — it will not travel with the project",
+          "sizeBytes": null
         }
       ],
       "counts": {
         "resolved": 0,
         "missing": 0,
         "unmaterialised": 0,
-        "out-of-root": 0,
+        "out-of-root": 1,
         "unaddressed": 5
       },
       "rootMapped": false

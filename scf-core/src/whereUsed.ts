@@ -21,6 +21,7 @@ import { q } from "./db.ts";
 import { rows, type ScfContext } from "./resolution.ts";
 import { columnRoles, projectRow, uuidLookupForAll } from "./queryResult.ts";
 import { labelFieldOf } from "./naturalKey.ts";
+import { polymorphicKindsFor } from "./registry.ts";
 
 export interface Usage {
   /** The entity whose row points at the subject. */
@@ -79,11 +80,17 @@ export async function whereUsed(
         && field.polymorphicType !== "";
       if (!poly && field.referenceEntity !== entityType) continue;
       if (name === entityType && field.name === "id") continue;
+      // The sibling values that make this column point at `entityType`:
+      // `subject_variant_id` reaches `character_variant` under
+      // `character`, and never reaches `character` (§12.1.2).
+      const kinds = poly ? polymorphicKindsFor(field, entityType) : [];
+      if (poly && kinds.length === 0) continue;
 
       const where = poly
-        ? `${q(field.name)} = ? AND ${q(field.polymorphicType as string)} = ?`
+        ? `${q(field.name)} = ? AND ${q(field.polymorphicType as string)} ` +
+          `IN (${kinds.map(() => "?").join(", ")})`
         : `${q(field.name)} = ?`;
-      const params = poly ? [id, entityType] : [id];
+      const params = poly ? [id, ...kinds] : [id];
       for (const row of await rows(ctx.exec, name, where, params)) {
         const projected = projectRow(row, columnRoles(ctx.registry, name),
                                      lookup);

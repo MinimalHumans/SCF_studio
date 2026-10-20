@@ -178,11 +178,12 @@ export async function statesInForce(
         r["modality"] !== (STATE_MODALITY_FOR[modality] ?? modality)) {
       continue;
     }
-    const persistence = pyTruthy(r["persistence"])
-      ? String(r["persistence"]) : "scene_only";
-    if (persistence === "scene_only") {
+    // §4.5: anything but `until_resolved` — null and unknown values
+    // included — is `scene_only`, so a state the reader does not
+    // understand never spreads past its own scene.
+    if (r["persistence"] !== "until_resolved") {
       if (r["scene_id"] === sceneId) out.push(r);
-    } else { // until_resolved
+    } else {
       const keyed = ord.get(asNum(r["scene_id"]) ?? -1);
       if (keyed === undefined || keyed > here) continue;
       const resolved = ord.get(asNum(r["resolved_at_scene_id"]) ?? -1);
@@ -338,7 +339,8 @@ async function fetchLayer(
   const edef = ctx.registry.entities.get(entity);
   if (edef !== undefined && edef.positionPattern === "latest_wins" &&
       sceneId !== null) {
-    // Position-keyed intent: sparse rows, latest-at-or-before wins.
+    // Position-keyed intent: pattern 3, the same rule as latestState —
+    // a tie at the winning position goes to the highest row id (§4.5).
     const order = await sceneOrder(ctx);
     const here = order.get(sceneId);
     let best: Row | null = null;
@@ -346,7 +348,9 @@ async function fetchLayer(
     for (const row of await rows(ctx.exec, entity)) {
       const pos = order.get(asNum(row["scene_id"]) ?? -1);
       if (pos === undefined || here === undefined || pos > here) continue;
-      if (pos > bestPos) {
+      if (pos > bestPos ||
+          (pos === bestPos && best !== null &&
+           (asNum(row["id"]) ?? 0) > (asNum(best["id"]) ?? 0))) {
         best = row;
         bestPos = pos;
       }

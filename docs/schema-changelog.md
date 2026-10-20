@@ -20,6 +20,25 @@ takes a version of its own.
 *(Empty. The `bundle.intent` help text queued here in 0.55 shipped
 with 2.16.)*
 
+## 2.25
+
+From the eighth reader run (spec 1.0-rc.4, M5). To be tagged
+`schema-2.25` beside `spec-1.0-rc.4`; `schema-2.24` stays where it is,
+since a published tag is not moved.
+
+**Added:** `polymorphicTargets` on a field — for a polymorphic reference
+whose target is not the table its `polymorphicType` sibling names, the
+target entity per sibling value. `entity_anchor.subject_variant_id`
+declares `{character: character_variant, prop: prop_variant, location:
+location_variant}`. Before, it declared only `polymorphicType:
+subject_type`, so a generic resolver read a variant id as a row of the
+subject table — character 1 rather than character variant 1 on the
+fixture — and nothing failed. `registry.schema.json` describes the
+member; `lint_registry.py` requires the map to be total over the
+sibling's options and to name entities. The column's help text says the
+same. Additive: no column changes, and a registry consumer that ignores
+the member reads everything else as before.
+
 ## 2.24
 
 **The release schema** (release checklist §A7): the 1.0 decisions'

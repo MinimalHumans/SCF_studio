@@ -1,7 +1,7 @@
 {
   "query": "Q15",
   "resultFormat": "1.0",
-  "schemaVersion": "2.24",
+  "schemaVersion": "2.25",
   "parameters": {
     "entityType": "asset",
     "row": "16961c0a-8df6-475c-80f5-6eb4abfc7137"

@@ -22,7 +22,7 @@
  * pin the agreement instead: every entity Q14 reports must be one the
  * rubric declares for that query.
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
@@ -117,28 +117,33 @@ describe("the rubric and Q14 describe the same thing", () => {
     // The one that matters. `readiness.ts` assesses by hand, so it can
     // report an entity no step mentions — which is how a rubric and an
     // implementation drift apart while both look right on their own.
-    const q14 = JSON.parse(readFileSync(
-      join(ROOT, "fixtures", "expectations", "Q14.result.json"),
-      "utf8")) as {
+    // Every published Q14, the worked examples for other targets too.
+    const dir = join(ROOT, "fixtures", "expectations");
+    const files = readdirSync(dir).filter((f) =>
+      /^Q14(-.+)?\.result\.json$/.test(f));
+    expect(files.length).toBeGreaterThan(1);
+    for (const file of files) {
+      const q14 = JSON.parse(readFileSync(join(dir, file), "utf8")) as {
         parameters: { target: string };
         result: { findings: { entity: string }[] };
       };
 
-    const target = q14.parameters.target;
-    const rubric = published.queries.find((q) => q.query === target);
-    expect(rubric, `no rubric for ${target}`).toBeDefined();
+      const target = q14.parameters.target;
+      const rubric = published.queries.find((q) => q.query === target);
+      expect(rubric, `no rubric for ${target}`).toBeDefined();
 
-    const declared = new Set(rubric?.steps.flatMap((s) => s.entities));
-    const reported = [...new Set(
-      q14.result.findings.map((f) => f.entity))].sort();
+      const declared = new Set(rubric?.steps.flatMap((s) => s.entities));
+      const reported = [...new Set(
+        q14.result.findings.map((f) => f.entity))].sort();
 
-    const undeclared = reported.filter((e) => !declared.has(e));
-    expect(undeclared,
-           `${target}: Q14 reports ${undeclared.join(", ")}, which the ` +
-           "published rubric does not declare. Either readiness.ts " +
-           "assesses something the rubric omits, or the rubric names it " +
-           "differently — a third party reproducing the rubric would " +
-           "disagree with this implementation and could not tell why.")
-      .toEqual([]);
+      const undeclared = reported.filter((e) => !declared.has(e));
+      expect(undeclared,
+             `${target}: Q14 reports ${undeclared.join(", ")}, which the ` +
+             "published rubric does not declare. Either readiness.ts " +
+             "assesses something the rubric omits, or the rubric names it " +
+             "differently — a third party reproducing the rubric would " +
+             "disagree with this implementation and could not tell why.")
+        .toEqual([]);
+    }
   });
 });

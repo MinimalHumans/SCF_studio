@@ -4,7 +4,7 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: release candidate (specification 1.0-rc.3).** Every section is specified. What is known to be
+**Status: release candidate (specification 1.0-rc.4).** Every section is specified. What is known to be
 unfinished is tracked in [stability.md](stability.md); the one check the
 validator cannot yet make is named in §4.
 
@@ -61,8 +61,10 @@ A conforming Reader MUST NOT:
 - reject a file whose schema version is higher than it knows (§11.2).
 
 **Assets are optional for this role.** A Reader that does not resolve
-assets MUST report every asset as `unaddressed` (§8.3) rather than
-`missing`.
+assets MUST report every asset with a rooted identifier as
+`unaddressed` (§8.3) rather than `missing`. An absolute identifier, or
+one containing `..`, is `out-of-root` all the same: that state is
+decided by the identifier, and needs no resolution to report (§8.2).
 
 **`unmaterialised` is not required of any role.** Detecting a cloud
 placeholder is a property of the environment, not of the format (§8.3),
@@ -225,7 +227,7 @@ tell it has not been designed.
 
 Every artifact this section names is published at the specification
 version's tag and checksummed in `SHA256SUMS`. Fetch them from
-`spec-<version>` — for this document, `spec-1.0-rc.3` — never from
+`spec-<version>` — for this document, `spec-1.0-rc.4` — never from
 `main`; [ARTIFACTS.md](ARTIFACTS.md) gives each file's address, and
 which files the schema tag addresses as well.
 
@@ -239,7 +241,8 @@ suites and MUST NOT change.
   number.
 - **Screenplay order, scene-number order and row-id order are three
   DIFFERENT orders**, and MUST stay that way. `12A` sits mid-script with
-  a higher row id than the scenes either side of it; `16` follows `19` in the script and keeps its
+  a higher row id than the active scenes either side of it — 12 and 19
+  — though not than the cut `12B` just before it; `16` follows `19` in the script and keeps its
   number, which is legal because the project is `fixed` (§4.3). Until
   0.17 the three coincided, and a reader ordering by `scene_number`
   alone — the one thing §4.1 forbids — passed every blessed expectation.
@@ -263,10 +266,17 @@ suites and MUST NOT change.
   ACTIVE may be added to it. A **cut** row may be, precisely because
   §6.6.1 requires it to change nothing: the pin and the cut row test
   each other.
-- **Six assets have no file behind them, on purpose.** The costume
-  `.zip`, two `.wav`s, the two `.exr` plates and the locket `.glb` are the
+- **One asset's identifier is absolute, on purpose.** The locket's
+  engraving macro sits on an art department drive, so with no root
+  mapped its reference is `out-of-root` beside the locket's `unaddressed`
+  ones (§8.3), as the published `Q02-locket-scene25` shows, and the
+  fixture's report carries its one warning, `asset.identifier_absolute`.
+  Rooting it removes the only published `out-of-root`.
+- **Seven assets have no file behind them, on purpose.** The costume
+  `.zip`, two `.wav`s, the two `.exr` plates, the locket `.glb` and the
+  absolute `.tif` are the
   only non-`png`/`mp4` entries in an otherwise real folder tree, and
-  they are what keeps `zip`, `exr` and `glb` in the derived format set,
+  they are what keeps `zip`, `exr`, `glb` and `tif` in the derived format set,
   the `sound/` folder in the path tree, and something in the file that
   a browser cannot show. Tidying them away as fictional breaks three
   suites and removes the demonstration that a real project is not all
@@ -409,11 +419,14 @@ are runnable, which is the whole mechanism.
    `<Q>-<case>.result.json`, as JSON values (§12.1.6). **Two members are
    prose and are compared as present strings, not by content**: a
    reference's `detail` and a trail entry's `excluded.reason` (§12.8);
-   both are null in the same places. Q14 is compared as §12.9 says. The
+   both are null in the same places. No other member is prose: Q04's
+   `detail` is a list of projected rows and is compared as one. Q14 is compared as §12.9 says. The
    rendered markdown is **not** a contract for any query.
 3. Build the negative fixtures from
    [`CASES.json`](../fixtures/negative/CASES.json) — an empty conforming
-   database per `scf-schema.sql`, then each case's statements in order —
+   database per `scf-schema.sql`, **plus the header stamps of spec §1.2
+   and the `_scf_meta` row `schema_version`**, then each case's
+   statements in order —
    and validate each. Compare each finding of its blessed report by
    `code`, `severity`, `table`, `count` and `rowIds` (spec §9.5); its
    `message`, `title` and `spec` are for people and are not compared.
@@ -459,7 +472,7 @@ your implementation behaved as described — and a reader can check.
 | `scf-app` | Editor | The app suite passes, including the open→edit→save round trip and third-party content preservation across repeated cycles. |
 | — | Writer | No independent implementation exists. |
 
-There is no second **maintained** implementation. Seven independent
+There is no second **maintained** implementation. Eight independent
 ones have been written from the text by people without the reference
 code, each for one reader run (`stability.md`), and none is kept
 current. Until one is, every rule in the

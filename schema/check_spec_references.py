@@ -72,6 +72,9 @@ NOT_REGISTRY_NAMES = {
     # entry point conformance.md §3.1 names.
     "user_version", "application_id", "sqlite_sequence",
     "sqlite3_js_db_export",
+    # The `_scf_meta` key §1.2 names: a row of a key/value table, not
+    # a column.
+    "schema_version",
     # §1.3.1 names this deliberately, as the value that is NOT correct.
     "scene_heading",
     # §12.8's closed `excluded.by` vocabulary, where it is not already a

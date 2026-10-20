@@ -166,10 +166,26 @@ export function buildDispatch(
       const character = optional(p, "character");
       const scene = optional(p, "scene");
       const shot = optional(p, "shot");
+      // Q02 and Q13 are asked about a subject of any kind (§12.9).
+      const subjectType = optional(p, "subjectType");
+      const subjectUuid = optional(p, "subject");
+      if ((subjectType === null) !== (subjectUuid === null)) {
+        throw new Error("subjectType and subject are given together");
+      }
+      if (subjectType !== null && subjectType !== "character" &&
+          subjectType !== "prop" && subjectType !== "location") {
+        throw new Error(`subjectType must be character, prop or location`);
+      }
+      const subject = subjectType === null || subjectUuid === null
+        ? null
+        : { type: subjectType as "character" | "prop" | "location",
+            uuid: subjectUuid,
+            id: await idOf(ctx, subjectType, subjectUuid) };
       return q14Result(ctx, target,
         character, await optionalId(ctx, "character", character),
         scene, await optionalId(ctx, "scene", scene),
-        shot, await optionalId(ctx, "shot", shot));
+        shot, await optionalId(ctx, "shot", shot),
+        subject, optional(p, "intent"));
     },
 
     Q15: async (ctx, p) => {

@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.24",
+ "schemaVersion": "2.25",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.24"
+    "value": "2.25"
    },
    {
     "key": "updated_at",
@@ -699,6 +699,18 @@
     "version_label": "v1",
     "superseded_at": "2026-09-16 12:00:00",
     "superseded_by_id": 6
+   },
+   {
+    "id": 55,
+    "uuid": "00000000-0000-4000-8000-00c400000001",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "name": "locket_engraving_macro.tif",
+    "identifier": "/Volumes/ArtDept/locket/locket_engraving_macro.tif",
+    "description": "Macro of the engraving, still on the art department's drive rather than in the project.",
+    "tags": "[\"prop\",\"locket\"]",
+    "source": "Art department",
+    "lifecycle_status": "active"
    }
   ],
   "asset_relationship": [
@@ -1470,6 +1482,16 @@
     "asset_id": 53,
     "role_in_bundle": "reference sheet",
     "order": 1
+   },
+   {
+    "id": 56,
+    "uuid": "00000000-0000-4000-8000-00c400000002",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "bundle_id": 6,
+    "asset_id": 55,
+    "role_in_bundle": "engraving",
+    "order": 6
    }
   ],
   "character": [
@@ -7121,5 +7143,5 @@
    }
   ]
  },
- "rowCount": 551
+ "rowCount": 553
 }

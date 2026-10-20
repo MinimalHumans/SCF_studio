@@ -86,8 +86,9 @@ const step = (entities: string[], requirement: Requirement, purpose: string,
 export const QUERY_PATHS: Record<string, QueryPath> = {
   Q02: {
     name: "Subject in context",
-    params: ["character_id", "scene_id"],
-    description: "Everything needed to realize a character in a scene.",
+    params: ["subject", "subject_id", "scene_id"],
+    description: "Everything needed to realize a subject in a scene; the " +
+                 "character steps apply to a character subject only.",
     steps: [
       step(["character_appearance_profile"], "recommended",
            "static appearance baseline"),
