@@ -192,6 +192,9 @@ GROUPS: list[tuple[str, str, str, list[tuple[str, str]]]] = [
          "Q04 where variants are in force. Spec §12.17."),
         ("fixtures/expectations/Q05-scene19.result.json",
          "Q05 where a vocal state is in force. Spec §12.2."),
+        ("fixtures/expectations/Q07-shot12A.result.json",
+         "Q07 at a shot with no row of its own: the scene's applies (§7.3). "
+         "Spec §12.3."),
         ("fixtures/expectations/Q12-scene24-25.result.json",
          "Q12 into a variant. Spec §12.5."),
         ("fixtures/expectations/Q12-scene25-24.result.json",

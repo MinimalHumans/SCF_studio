@@ -134,7 +134,7 @@
     {
       "code": "identity.successor_without_timestamp",
       "severity": "info",
-      "title": "Successor row carries no timestamp",
+      "title": "Row names a successor and carries no superseded_at",
       "spec": "§6.1"
     },
     {
@@ -308,7 +308,7 @@
     {
       "code": "structure.boundary_unnumbered",
       "severity": "info",
-      "title": "Span carries no number",
+      "title": "Span starts at an unnumbered scene",
       "spec": "§5.5"
     },
     {

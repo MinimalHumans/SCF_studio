@@ -216,7 +216,7 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
   },
   "identity.successor_without_timestamp": {
     severity: "info",
-    title: "Successor row carries no timestamp",
+    title: "Row names a successor and carries no superseded_at",
     spec: "§6.1",
   },
   "identity.self_parent": {
@@ -312,7 +312,7 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
   },
   "structure.boundary_unnumbered": {
     severity: "info",
-    title: "Span carries no number",
+    title: "Span starts at an unnumbered scene",
     spec: "§5.5",
   },
   "structure.scenes_before_first_act": {
@@ -472,11 +472,16 @@ function make(code: FindingCode, message: string,
  * id. Two runs over one file must produce byte-identical output or the
  * report cannot be diffed, which is most of what a validator is for.
  */
+// Code-point order, as §9.4 states: a locale's collation is not a
+// property of the file.
+const byCodePoint = (a: string, b: string): number =>
+  a < b ? -1 : a > b ? 1 : 0;
+
 export function sortFindings(findings: Finding[]): Finding[] {
   return [...findings].sort((a, b) =>
     FINDING_SEVERITY_RANK[a.severity] - FINDING_SEVERITY_RANK[b.severity] ||
-    a.code.localeCompare(b.code) ||
-    (a.table ?? "").localeCompare(b.table ?? "") ||
+    byCodePoint(a.code, b.code) ||
+    byCodePoint(a.table ?? "", b.table ?? "") ||
     (a.rowIds[0] ?? 0) - (b.rowIds[0] ?? 0));
 }
 
@@ -691,8 +696,9 @@ export async function collectFindings(
   for (const f of structureFindings(structure, acts, sequences, hint)) {
     const code = STRUCTURE_CODES[f.code];
     if (code === undefined) continue;
+    const rowIds = f.rowIds ?? (f.rowId === null ? [] : [f.rowId]);
     out.push(make(code, f.message, {
-      table: f.entity, rowIds: f.rowId === null ? [] : [f.rowId],
+      table: f.entity, rowIds, count: Math.max(1, rowIds.length),
     }));
   }
 

@@ -83,6 +83,10 @@ const SELECTORS = {
     sql: "SELECT id, uuid FROM shot WHERE shot_number = '3B'",
     note: "A shot in scene 3.",
   },
+  shot12A: {
+    sql: "SELECT id, uuid FROM shot WHERE shot_number = '12A'",
+    note: "A shot in scene 12 with no lighting row of its own.",
+  },
   scene10: {
     sql: "SELECT id, uuid FROM scene WHERE scene_number = '10'",
     note: "A winter night in the kitchen: §12.17 ranks time of day first, "
@@ -166,6 +170,8 @@ const PARAMETERS = {
   "Q04-scene25": { scene: { selector: "scene25" } },
   "Q05-scene19": { character: { selector: "eleanor" },
     scene: { selector: "scene19" } },
+  "Q07-shot12A": { scene: { selector: "scene12" },
+    shot: { selector: "shot12A" } },
   "Q12-scene24-25": { from: { selector: "scene24" },
     to: { selector: "scene25" } },
   "Q12-scene25-24": { from: { selector: "scene25" },

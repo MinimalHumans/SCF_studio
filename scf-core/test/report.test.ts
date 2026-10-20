@@ -98,7 +98,7 @@ describe("the prose rendering agrees with the JSON", () => {
     // And something is unfinished, said plainly.
     expect(report.findings.map((f) => f.code))
       .toContain("structure.scene_not_in_script");
-    expect(text).toContain("no story position");
+    expect(text).toContain("has no heading in the screenplay");
   });
 
   test("a file with no findings at all says so without listing nothing",

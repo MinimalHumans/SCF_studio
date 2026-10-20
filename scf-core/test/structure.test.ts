@@ -172,6 +172,22 @@ describe("findings", () => {
       .filter((f) => f.code === "scenes-before-first-act");
     expect(found).toHaveLength(1);
     expect(found[0]!.level).toBe("info");
+    // §9.4.1: a finding about particular rows names them; an empty
+    // rowIds would read as a finding about the whole table (§9.5).
+    expect(found[0]!.rowIds).toEqual([100, 101, 102]);
+  });
+
+  test("a sequence's unnumbered boundary is reported on the sequence",
+       () => {
+    // §9.4.1: the table is the span's own. Reported on `act`, the row id
+    // would name an act that may not exist.
+    const mixed = [...scenes,
+      { id: 300, scene_number: null, name: "INT. LATE" } as Row];
+    const seqs = [seq(7, "Coda", 300)];
+    const structure = deriveStructure(mixed, [], seqs);
+    const found = structureFindings(structure, [], seqs)
+      .filter((f) => f.code === "unnumbered-boundary");
+    expect(found.map((f) => [f.entity, f.rowId])).toEqual([["sequence", 7]]);
   });
 });
 

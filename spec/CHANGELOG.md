@@ -17,6 +17,68 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.3 — 2026-10-16
+
+*Describes schema 2.24.*
+
+**The third release candidate**, from the seventh independent reader run
+(`docs/release-checklist.md` §D1). It reproduced 24 of 29 results, every
+negative report and the fixture's report from the text alone. What it
+found is sentences the text was missing, not missing rules. No schema
+change, and no published result changes shape; one case result is added.
+
+### §12.17 — `mismatches` has a stated format (the critical)
+
+Each entry is exactly `<axis>: scene=<value> variant=<value>`, the
+scene's column name and the two stored values as JSON strings. It was
+compared byte for byte and never stated. §12.1.5 now names formatted
+strings and prose as kinds of string, and lists the trail's `layer` and
+`excluded.by` among the closed vocabularies. A `varies` time of day
+agrees only with a scene that has a time.
+
+### Rules now stated
+
+- §7.3: a shot with no row of its own falls through to the scene's row;
+  `latest_wins` does not fall through; several matching rows give the
+  lowest row id. New case result `Q07-shot12A` exercises the
+  fall-through.
+- §12.5: Q12's characters are both positions' `scene_character` rows
+  pooled in row-id order.
+- §12.6, §12.2: Q06's `baseline` is `physical_character_profile`.
+- §12.4: Q03's `states` are `performance_state` rows of every modality.
+- §12.8: one `by` per excluded layer, in a stated precedence; the order
+  of anchors in `trail`; an intent outside the anchor table considers
+  every anchor; `canonical_status` names the registry's `candidate` and
+  `rejected` (the registry default is `candidate`).
+- §5.2: a scene the screenplay does not contain belongs to the spans that
+  run to the end. §5.4, §9.5: findings derive story order and membership
+  over every scene, cut ones included.
+- §9.4.1 (new): the condition, `table`, `rowIds` and `count` of every
+  code no other section states, including the seven single-row identity
+  codes a validation report need not compute. §9.4: findings are ordered
+  by code point, a null table first.
+- §12.1.1: `schemaVersion` is the implementation's schema, not the
+  file's. §12.1.6: "the" row is the lowest row id.
+- §2.4: an open vocabulary may be resolved over, on its known values.
+
+### Artifacts
+
+- `fixtures/expectations/Q07-shot12A.result.json`, new.
+- `finding-catalog.json`: `structure.boundary_unnumbered` is titled for
+  what it reports (a span starting at an unnumbered scene), and
+  `identity.successor_without_timestamp` names `superseded_at`.
+- The validator: `structure.boundary_unnumbered` reports a sequence's
+  boundary on `sequence`, not `act`; `structure.scenes_before_first_act`
+  names the scenes it is about. Neither is exercised by a published
+  report. `fixtures/hollow_creek.report.json`: scene 17's message no
+  longer says it belongs to no act.
+- Counts: sixteen negative cases (`conformance.md` §5.3, §7; Appendix A;
+  `stability.md`; README) and seven independent implementations;
+  `conformance.md` §7 says "maintained", and §6.1 and §4 no longer read
+  as instructions for the reference tool only.
+
+---
+
 ## 1.0-rc.2 — 2026-10-16
 
 *Describes schema 2.24.*

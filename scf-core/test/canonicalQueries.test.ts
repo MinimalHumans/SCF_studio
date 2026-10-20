@@ -765,7 +765,7 @@ describe("§12.15 Q01, §12.16 Q02, §12.17 Q04", () => {
  * any of them reproduced every published result byte for byte.
  */
 const CASES = [
-  "Q05-scene19", "Q02-marcus-scene25", "Q02-church-scene16",
+  "Q05-scene19", "Q07-shot12A", "Q02-marcus-scene25", "Q02-church-scene16",
   "Q02-ridge-scene21", "Q02-locket-scene25", "Q02-kitchen-scene10",
   "Q03-scene25", "Q04-scene25", "Q12-scene24-25", "Q12-scene25-24", "Q13-scene3",
   "Q13-scene25", "Q15-plate-v2",
@@ -787,6 +787,21 @@ describe("per-case results — what one position cannot show", () => {
     blessOrCheck("Q05-scene19", r);
     expect(r.result.states.map((x) => x.fields["name"])).toEqual(["wrung-out"]);
     expect(r.result.modulations).toEqual({ volume: "quieter" });
+  });
+
+  test("Q07 at a shot with no lighting row: the scene's row applies",
+       async () => {
+    // §7.3: a shot that misses at step 2 falls through to the scene row.
+    // 12-04 has its own lighting, so Q07 alone cannot tell a fall-through
+    // from a stop; a reader that stopped would drop the layer here.
+    const shot = await sel(
+      "SELECT id, uuid FROM shot WHERE shot_number = '12A'");
+    const r = await q07Result(fx.ctx, scene12.uuid, scene12.id,
+                              shot.uuid, shot.id);
+    blessOrCheck("Q07-shot12A", r);
+    const lighting = r.result.layers.find(
+      (l) => l.entity === "lighting_design");
+    expect(lighting?.row.fields["name"]).toBe("Sc 12 lighting");
   });
 
   test("Q02 for a character in a variant: Marcus as a boy, scene 25",
