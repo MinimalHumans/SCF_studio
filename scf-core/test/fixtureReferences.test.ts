@@ -11,6 +11,7 @@
 
 import { describe, expect, test } from "vitest";
 import { q } from "../src/db.ts";
+import { polymorphicTarget } from "../src/registry.ts";
 import { openFixture, registry } from "./setup.ts";
 
 describe("the fixture's references", () => {
@@ -34,7 +35,8 @@ describe("the fixture's references", () => {
             ` FROM ${q(entity)} WHERE ${q(f.name)} IS NOT NULL`);
           for (const row of found) {
             const target = poly !== undefined
-              ? String(row["target"] ?? "") : String(f.referenceEntity);
+              ? polymorphicTarget(f, String(row["target"] ?? "")) ?? "?"
+              : String(f.referenceEntity);
             if (!tables.has(target)) {
               dangling.push(`${entity}#${row["id"]}.${f.name} -> ${target}?`);
               continue;

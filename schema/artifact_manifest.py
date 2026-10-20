@@ -205,6 +205,15 @@ GROUPS: list[tuple[str, str, str, list[tuple[str, str]]]] = [
          "Q13 where a variant replaces the baseline. Spec §12.8."),
         ("fixtures/expectations/Q15-plate-v2.result.json",
          "Q15 on a versioned row: its chain (§6.1). Spec §12.14."),
+        ("fixtures/expectations/Q07-scene3.result.json",
+         "Q07 where two latest_wins rows tie: the higher row id (§4.5). "
+         "Spec §12.3."),
+        ("fixtures/expectations/Q04-scene21.result.json",
+         "Q04 where staging beats sit in an action sequence. Spec §12.17."),
+        ("fixtures/expectations/Q14-Q02-locket-scene25.result.json",
+         "Q14 for Q02 about a prop. Spec §12.9."),
+        ("fixtures/expectations/Q14-Q13-eleanor-shot1204.result.json",
+         "Q14 for Q13, every step reported. Spec §12.9."),
      ]),
 
     ("The canonical query parameters", "spec",

@@ -1,8 +1,8 @@
 {
   "about": "A cast link with no character. A link with a missing end connects nothing; the row is kept and reported (§9.1), as `junction.endpoint_absent` rather than `field.required_absent`, because what is missing is half of a relationship.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.24",
-  "fileSchemaVersion": "2.24",
+  "toolSchemaVersion": "2.25",
+  "fileSchemaVersion": "2.25",
   "source": "fixtures/negative/build/junction-endpoint-absent.scf",
   "counts": {
     "error": 0,

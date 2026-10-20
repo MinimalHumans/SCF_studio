@@ -1,8 +1,8 @@
 {
   "about": "A section line bound to an act whose record has since been renamed. The record answers queries and the line is the authoring handle (§1.3.1), so this is info: between commits the two may differ, and a line that has drifted is how an editor renames the wrong act.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.24",
-  "fileSchemaVersion": "2.24",
+  "toolSchemaVersion": "2.25",
+  "fileSchemaVersion": "2.25",
   "source": "fixtures/negative/build/section-mismatch.scf",
   "counts": {
     "error": 0,

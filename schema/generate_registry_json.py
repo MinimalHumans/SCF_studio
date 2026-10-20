@@ -64,6 +64,8 @@ def field_to_json(f: FieldDef) -> dict:
         out["referenceEntity"] = f.reference_entity
     if f.polymorphic_type:
         out["polymorphicType"] = f.polymorphic_type
+    if f.polymorphic_targets:
+        out["polymorphicTargets"] = dict(f.polymorphic_targets)
     if f.help_text:
         out["helpText"] = f.help_text
     if f.hidden:

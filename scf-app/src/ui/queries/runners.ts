@@ -730,6 +730,12 @@ const q14: QuerySpec = {
     { key: "target", label: "Target query", kind: "target" },
     { key: "character_id", label: "Character", kind: "character",
       optional: true },
+    // Q02 and Q13 are asked about a subject of any kind (§12.9).
+    { key: "subject", label: "Subject type", kind: "subjectType",
+      optional: true },
+    { key: "subject_id", label: "Subject", kind: "subjectId",
+      optional: true },
+    { key: "intent", label: "Intent", kind: "intent", optional: true },
     { key: "scene_id", label: "Scene", kind: "scene" },
     { key: "shot_id", label: "Shot", kind: "shot", optional: true },
   ],
@@ -737,10 +743,20 @@ const q14: QuerySpec = {
     const character = picked(values, "character_id");
     const scene = picked(values, "scene_id");
     const shot = picked(values, "shot_id");
+    const subjectRow = picked(values, "subject_id");
+    const subjectType = text(values, "subject", "character");
+    const subject = subjectRow === null ? null : {
+      type: subjectType as "character" | "prop" | "location",
+      uuid: subjectRow.uuid, id: subjectRow.id,
+    };
+    const intent = values["intent"];
     return q14Result(ctx, text(values, "target", "Q05"),
                      character?.uuid ?? null, character?.id ?? null,
                      scene?.uuid ?? null, scene?.id ?? null,
-                     shot?.uuid ?? null, shot?.id ?? null);
+                     shot?.uuid ?? null, shot?.id ?? null,
+                     subject,
+                     intent === null || intent === undefined
+                       ? null : String(intent));
   },
   toMarkdown: (payload) => {
     const p = body<Q14Result>(payload);

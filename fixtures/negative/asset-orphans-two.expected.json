@@ -1,8 +1,8 @@
 {
   "about": "Two assets nothing references. One condition on one table is one finding (§9.5): `asset.orphan` once, with `count` 2 and both rows in `rowIds` — not two findings, and not one row.",
   "reportFormat": "1.0",
-  "toolSchemaVersion": "2.24",
-  "fileSchemaVersion": "2.24",
+  "toolSchemaVersion": "2.25",
+  "fileSchemaVersion": "2.25",
   "source": "fixtures/negative/build/asset-orphans-two.scf",
   "counts": {
     "error": 0,

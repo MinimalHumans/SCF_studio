@@ -67,8 +67,35 @@ def lint_ownership_by_name() -> list[str]:
     return problems
 
 
+def lint_polymorphic_targets() -> list[str]:
+    """A per-value target map is total over its sibling's options, and
+    names only entities (spec §12.1.2)."""
+    problems: list[str] = []
+    for name, entity in ENTITY_REGISTRY.items():
+        by_name = {f.name: f for f in entity.fields}
+        for field in entity.fields:
+            targets = field.polymorphic_targets
+            if not targets:
+                continue
+            where = f"{name}.{field.name}"
+            sibling = by_name.get(field.polymorphic_type or "")
+            if sibling is None or not sibling.options:
+                problems.append(f"{where}: polymorphicTargets needs a "
+                                "closed sibling to key on.")
+                continue
+            if set(targets) != set(sibling.options):
+                problems.append(f"{where}: polymorphicTargets covers "
+                                f"{sorted(targets)}, its sibling allows "
+                                f"{sorted(sibling.options)}.")
+            for target in targets.values():
+                if target not in ENTITY_REGISTRY:
+                    problems.append(f"{where}: {target} is not an entity.")
+    return problems
+
+
 def main() -> int:
-    problems = lint_ontology() + lint_ownership_by_name()
+    problems = (lint_ontology() + lint_ownership_by_name()
+                + lint_polymorphic_targets())
     if problems:
         for p in problems:
             print(f"LINT: {p}")

@@ -1,0 +1,298 @@
+{
+  "query": "Q04",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "scene": "0ab2d511-97de-4090-8d4c-dedf55536222"
+  },
+  "result": {
+    "scene": {
+      "uuid": "0ab2d511-97de-4090-8d4c-dedf55536222",
+      "fields": {
+        "emotional_beat": "Fear for him, which is forgiveness starting",
+        "estimated_duration": "3:00",
+        "int_ext": "exterior",
+        "lifecycle_status": "active",
+        "location_uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+        "name": "EXT. RIDGE FOREST - NIGHT (STORM)",
+        "purpose": "Action as penance; he goes out into it.",
+        "scene_number": "21",
+        "season": "winter",
+        "status": "outline",
+        "summary": "Marcus pursues the runaway horses.",
+        "tension_level": "high",
+        "time_of_day": "night",
+        "tone": "chaotic",
+        "weather_conditions": "storm"
+      }
+    },
+    "lineage": [
+      {
+        "entity": "act",
+        "row": {
+          "uuid": "fde41370-ae80-4436-89ff-35f797fe49e2",
+          "fields": {
+            "act_number": 3,
+            "dramatic_question": "Is forgiveness possible once it is deserved?",
+            "function": "Say it, survive it, choose each other after.",
+            "lifecycle_status": "active",
+            "name": "Act 3 — The Truth",
+            "shift": "From rupture to an embrace at an open door.",
+            "start_scene_uuid": "05fa2295-4454-40bb-99d2-1cf1bb16c5b8",
+            "status": "outline",
+            "summary": "Marcus confesses. The storm takes the horses and he goes after them; she is afraid for him, which is the answer."
+          }
+        }
+      },
+      {
+        "entity": "sequence",
+        "row": {
+          "uuid": "c8fa6254-2ce7-4075-8a45-0990b6c93fad",
+          "fields": {
+            "conflict": "The weather, and what he is trying to work off.",
+            "goal": "Bring the horses in before the ridge floods.",
+            "lifecycle_status": "active",
+            "name": "The Storm",
+            "outcome": "He comes back down at dawn with two of the three.",
+            "purpose": "Penance as action.",
+            "sequence_number": 4,
+            "start_scene_uuid": "0ab2d511-97de-4090-8d4c-dedf55536222",
+            "status": "outline",
+            "turning_point": "She is waiting on the porch."
+          }
+        }
+      }
+    ],
+    "storyBeats": [
+      {
+        "uuid": "07f0c8dd-f8a2-43fc-a0a6-e956ea5fd0ea",
+        "fields": {
+          "beat_order": 1,
+          "beat_type": "action",
+          "description": "They are through the fence and gone.",
+          "lifecycle_status": "active",
+          "name": "The horses",
+          "pov_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "scene_uuid": "0ab2d511-97de-4090-8d4c-dedf55536222"
+        }
+      },
+      {
+        "uuid": "8e2feeab-91c8-4dd7-8c00-125daffa4363",
+        "fields": {
+          "beat_order": 2,
+          "beat_type": "decision",
+          "description": "He goes up the ridge in the dark.",
+          "lifecycle_status": "active",
+          "name": "Into it",
+          "pov_character_uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "scene_uuid": "0ab2d511-97de-4090-8d4c-dedf55536222"
+        }
+      }
+    ],
+    "cast": [
+      {
+        "character": {
+          "uuid": "145417ca-e8e5-4946-aba0-e83575dad182",
+          "fields": {
+            "age": "34",
+            "arc_description": "From a man performing ease to a man who says the true sentence and survives the silence after it.",
+            "archetype": "the returning prodigal",
+            "backstory": "Was at the creek the day Ada drowned and has never told anyone. Left within the month; sent money, never letters.",
+            "casting_status": "tbd",
+            "core_belief": "A debt can be worked off if you work hard enough.",
+            "external_goal": "Winter over at the homestead and mend what he can.",
+            "flaw": "Confesses only when cornered, then calls it honesty.",
+            "gender": "male",
+            "greatest_fear": "That his mother already knows.",
+            "internal_goal": "Absolution he cannot ask for directly.",
+            "lifecycle_status": "active",
+            "motivation": "To be told he is not what he believes he is.",
+            "name": "Marcus Cade",
+            "occupation": "Railroad surveyor",
+            "pronouns": "he/him",
+            "role": "deuteragonist",
+            "summary": "Thirty-four, back after seven years without warning. Carries his sister's locket and the reason he left."
+          }
+        },
+        "presence": "seen",
+        "variant": null
+      }
+    ],
+    "props": [
+      {
+        "prop": {
+          "uuid": "a09f2920-eb3d-4c6d-b6c9-900c799ab781",
+          "fields": {
+            "description": "The kitchen's only light after dark.",
+            "lifecycle_status": "active",
+            "name": "Oil lamp",
+            "narrative_significance": "Carried up the ridge in sc 21.",
+            "prop_type": "hand prop",
+            "realization_status": "sourced",
+            "story_function": "atmosphere"
+          }
+        },
+        "presence": "seen",
+        "variant": null
+      }
+    ],
+    "location": {
+      "uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+      "fields": {
+        "geography": "Willamette foothills, Oregon",
+        "key_features": "Doug fir, no path, the sound of water always somewhere below",
+        "lifecycle_status": "active",
+        "location_type": "exterior",
+        "name": "Ridge Forest",
+        "realization_status": "plate_captured",
+        "setting": "The timber above the homestead",
+        "time_period": "1889"
+      }
+    },
+    "locationVariant": {
+      "variant": {
+        "uuid": "00000000-0000-4000-8000-00d300000004",
+        "fields": {
+          "is_baseline": 1,
+          "lifecycle_status": "active",
+          "location_uuid": "e640a7e9-b817-46b3-b734-da7f90b0405a",
+          "name": "Ridge — autumn baseline",
+          "physical_differences": "Leaf litter; the trail clear",
+          "season": "autumn",
+          "time_of_day": "morning",
+          "weather": "overcast"
+        }
+      },
+      "mismatches": [
+        "time_of_day: scene=\"night\" variant=\"morning\"",
+        "weather_conditions: scene=\"storm\" variant=\"overcast\"",
+        "season: scene=\"winter\" variant=\"autumn\""
+      ]
+    },
+    "detail": [
+      {
+        "entity": "scene_emotional_target",
+        "rows": [
+          {
+            "uuid": "43a3eaf6-c0e5-4746-a1fc-82a538e15bd4",
+            "fields": {
+              "audience_character_relationship": "empathy",
+              "emotional_function": "build",
+              "lifecycle_status": "active",
+              "name": "Dread",
+              "primary_emotion": "dread",
+              "primary_intensity": "high",
+              "scene_uuid": "0ab2d511-97de-4090-8d4c-dedf55536222"
+            }
+          }
+        ]
+      },
+      {
+        "entity": "lighting_design",
+        "rows": [
+          {
+            "uuid": "bb5c7d32-46c1-40b1-89c9-58fa3e03a399",
+            "fields": {
+              "key_quality": "hard",
+              "key_source": "Carried lamp",
+              "lifecycle_status": "active",
+              "light_quality": "hard",
+              "lighting_style": "stylized",
+              "name": "sc 21 lighting",
+              "overall_mood": "Lantern and lightning; darkness as weather.",
+              "scene_uuid": "0ab2d511-97de-4090-8d4c-dedf55536222"
+            }
+          }
+        ]
+      }
+    ],
+    "blocking": [],
+    "stagingBeats": [
+      {
+        "uuid": "c354d618-36f5-429d-9ab8-6078c25cba0c",
+        "fields": {
+          "action_sequence_uuid": "91dffc8e-cbff-4e68-9966-148c52e9202d",
+          "beat_order": 1,
+          "camera_note": "handheld",
+          "description": "Vaults the fallen log.",
+          "lifecycle_status": "active",
+          "movement_description": "Reckless, forward-weighted.",
+          "name": "Vaults the fallen log."
+        }
+      },
+      {
+        "uuid": "aa27d889-722b-49d8-9c0c-4e0c2aac027d",
+        "fields": {
+          "action_sequence_uuid": "91dffc8e-cbff-4e68-9966-148c52e9202d",
+          "beat_order": 2,
+          "description": "Stops dead at the creek crossing — the hesitation, held.",
+          "lifecycle_status": "active",
+          "name": "Stops dead at the creek crossing — the hesitation, held."
+        }
+      }
+    ],
+    "screenplay": [
+      {
+        "uuid": "00000000-0000-4000-9000-000000000147",
+        "fields": {
+          "content": "EXT. RIDGE FOREST - NIGHT (STORM)",
+          "line_order": 147,
+          "line_type": "heading"
+        }
+      },
+      {
+        "uuid": "00000000-0000-4000-9000-000000000148",
+        "fields": {
+          "line_order": 148,
+          "line_type": "blank"
+        }
+      },
+      {
+        "uuid": "00000000-0000-4000-9000-000000000149",
+        "fields": {
+          "content": "Rain coming sideways through the pines. Marcus goes up the ridge after the horses with a lamp that is no use to him.",
+          "line_order": 149,
+          "line_type": "action"
+        }
+      },
+      {
+        "uuid": "00000000-0000-4000-9000-000000000150",
+        "fields": {
+          "line_order": 150,
+          "line_type": "blank"
+        }
+      },
+      {
+        "uuid": "00000000-0000-4000-9000-000000000151",
+        "fields": {
+          "content": "Ahead of him, hoofprints filling with water.",
+          "line_order": 151,
+          "line_type": "action"
+        }
+      },
+      {
+        "uuid": "00000000-0000-4000-9000-000000000152",
+        "fields": {
+          "line_order": 152,
+          "line_type": "blank"
+        }
+      },
+      {
+        "uuid": "00000000-0000-4000-9000-000000000153",
+        "fields": {
+          "content": "## The Open Door",
+          "line_order": 153,
+          "line_type": "section",
+          "metadata": "{\"section\": {\"depth\": 2, \"text\": \"The Open Door\"}, \"structureRef\": {\"kind\": \"sequence\", \"uuid\": \"fb35f765-6272-425c-9735-ae568d6a44f3\"}}"
+        }
+      },
+      {
+        "uuid": "00000000-0000-4000-9000-000000000154",
+        "fields": {
+          "line_order": 154,
+          "line_type": "blank"
+        }
+      }
+    ]
+  }
+}

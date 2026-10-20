@@ -44,10 +44,18 @@ describe("assetReferenceColumns", () => {
 });
 
 describe("the fixture's assets", () => {
-  test("every asset carries a rooted identifier after 2.7", async () => {
+  test("every asset is rooted at @project but the one absolute",
+       async () => {
+    // The engraving macro is absolute on purpose: §8.2's `out-of-root`
+    // has to appear in a published result, and only an identifier can
+    // put it there (§8.3).
     const assets = await listAssets(fixture.exec);
     expect(assets.length).toBeGreaterThan(0);
+    const absolute = assets.filter((a) => a.root === null);
+    expect(absolute.map((a) => a.name))
+      .toEqual(["locket_engraving_macro.tif"]);
     for (const a of assets) {
+      if (a.root === null) continue;
       expect(a.root, `${a.name ?? a.id}`).toBe("project");
       expect(a.identifier).toMatch(/^@project\//);
     }

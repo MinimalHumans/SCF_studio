@@ -1,7 +1,7 @@
 {
   "query": "Q02",
   "resultFormat": "1.0",
-  "schemaVersion": "2.24",
+  "schemaVersion": "2.25",
   "parameters": {
     "subjectType": "location",
     "subject": "69650632-3455-4d51-bb68-b69c3e320a81",

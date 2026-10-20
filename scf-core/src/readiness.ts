@@ -26,7 +26,8 @@
 
 import { q, type Row, type SqlValue } from "./db.ts";
 import {
-  resolveDirection, resolveMedia, rows, sceneOrder, statesInForce,
+  latestState, resolveDirection, resolveMedia, rows, sceneOrder,
+  statesInForce,
   type SceneOrder, type ScfContext,
 } from "./resolution.ts";
 import { QUERY_PATHS, type QueryPath } from "./queryPaths.ts";
@@ -214,6 +215,14 @@ async function readinessQ06(
              `${states.map((s) => s["name"]).join(", ") ||
                "none (baseline)"}.`));
 
+  const beats = (await rows(
+    ctx.exec, "performance_beat", "character_id=? AND scene_id=?",
+    [characterId, sceneId])).filter((b) =>
+      b["modality"] === "physical" || b["modality"] === "facial");
+  out.push(f("ok", "performance_beat", beats.length > 0
+    ? `${beats.length} physical or facial beat(s) authored.`
+    : "No physical or facial beats — the states and baseline carry it."));
+
   const sceneRow = await rows(ctx.exec, "scene", "id=?", [sceneId]);
   const loc = sceneRow[0]?.["location_id"];
   if (loc !== null && loc !== undefined && loc !== "" && loc !== 0) {
@@ -224,8 +233,18 @@ async function readinessQ06(
       out.push(f("suggestion", "character_environment_physicality",
                  `No environment physicality for ${who} at this ` +
                  `location — how do they relate to this place?`));
+    } else {
+      out.push(f("ok", "character_environment_physicality",
+                 `${who}: how they relate to this place is authored.`));
     }
+  } else {
+    out.push(f("ok", "character_environment_physicality",
+               "The scene has no location to relate to."));
   }
+
+  const motion = await mediaStep(ctx, "character", characterId, "motion",
+                                 sceneId, null, "ok");
+  out.push(motion.finding);
   return out;
 }
 
@@ -250,6 +269,20 @@ async function readinessQ07(
                "scene_color_palette"];
   if (shotId !== null) {
     chain = [...chain, "look_development", "lighting_design", "shot_design"];
+  }
+  if (shotId === null) {
+    // Scene-level lighting is still a recommended opinion here; the
+    // shot's own design cannot be asked about without a shot.
+    const lighting = (await rows(ctx.exec, "lighting_design", "scene_id=?",
+                                 [sceneId])).filter((r) =>
+      r["shot_id"] === null || r["shot_id"] === undefined ||
+      r["shot_id"] === "");
+    out.push(lighting.length > 0
+      ? f("ok", "lighting_design", "lighting_design in force: " +
+          `${String(lighting[0]?.["name"] ?? `#${lighting[0]?.["id"]}`)}.`)
+      : f("warning", "lighting_design", "No lighting design."));
+    out.push(f("ok", "shot_design",
+               "No shot asked about — shot design does not apply."));
   }
   for (const entity of chain) {
     const row = layers.get(entity);
@@ -295,14 +328,21 @@ async function readinessQ07(
       if (presence === "seen") seen.push({ cid, where: "in this scene" });
     }
   }
+  let unprofiled = 0;
   for (const { cid, where } of seen) {
     const profiles = await rows(ctx.exec, "character_appearance_profile",
                                 "character_id=?", [cid]);
     if (profiles.length === 0) {
+      unprofiled += 1;
       out.push(f("warning", "character_appearance_profile",
                  `${await name(ctx, "character", cid)} is ${where} ` +
                  `with no appearance profile.`));
     }
+  }
+  if (unprofiled === 0) {
+    out.push(f("ok", "character_appearance_profile", seen.length > 0
+      ? "Every character seen here has an appearance profile."
+      : "No character is seen here."));
   }
   return out;
 }
@@ -341,6 +381,11 @@ async function readinessQ08(
                  "This location has no sound profile."));
     }
   }
+  const dialogue = await rows(ctx.exec, "dialogue_sound_design",
+                              "scene_id=?", [sceneId]);
+  out.push(f("ok", "dialogue_sound_design", dialogue.length > 0
+    ? "Dialogue sound design authored."
+    : "No dialogue sound design — the scene's defaults hold."));
   const cues = [
     ...await rows(ctx.exec, "sound_cue", "scene_id=?", [sceneId]),
     ...await rows(ctx.exec, "music_cue", "scene_id=?", [sceneId]),
@@ -351,43 +396,89 @@ async function readinessQ08(
   return out;
 }
 
+/**
+ * The media step (§12.9.1): the subject asked about has at least one
+ * reference of the intent in force — its own Q13 answer at the position.
+ */
+async function mediaStep(
+    ctx: ScfContext, subject: string, subjectId: number, intent: string,
+    sceneId: number | null, shotId: number | null,
+    absent: Severity): Promise<{ finding: ReadinessFinding;
+                                 media: Awaited<ReturnType<typeof resolveMedia>> }> {
+  const who = await name(ctx, subject, subjectId);
+  const media = await resolveMedia(ctx, subject, subjectId, intent, sceneId,
+                                   shotId);
+  const finding = media.assets_most_specific_first.length === 0
+    ? f(absent, "bundle",
+        `${who}: no ${intent} assets resolve — no bundle/` +
+        `binding for this intent.`)
+    : f("ok", "bundle",
+        `${who}: ${media.assets_most_specific_first.length} ` +
+        `${intent} asset(s) resolve ` +
+        `(${media.override_assets.length} from overrides).`);
+  return { finding, media };
+}
+
 async function readinessQ13(
     ctx: ScfContext, subject: string, subjectId: number, intent: string,
     sceneId: number | null, shotId: number | null,
     _order: SceneOrder): Promise<ReadinessFinding[]> {
-  const out: ReadinessFinding[] = [];
   const who = await name(ctx, subject, subjectId);
-  const media = await resolveMedia(ctx, subject, subjectId, intent, sceneId,
-                                   shotId);
-  if (media.assets_most_specific_first.length === 0) {
-    out.push(f("blocker", "bundle",
-               `${who}: no ${intent} assets resolve — no bundle/` +
-               `binding for this intent.`));
-  } else {
-    out.push(f("ok", "bundle",
-               `${who}: ${media.assets_most_specific_first.length} ` +
-               `${intent} asset(s) resolve ` +
-               `(${media.override_assets.length} from overrides).`));
-  }
+  const { finding, media } = await mediaStep(
+    ctx, subject, subjectId, intent, sceneId, shotId, "blocker");
+  const out: ReadinessFinding[] = [finding];
   if (media.anchors.length > 0) {
     out.push(f("ok", "entity_anchor",
                `${media.anchors.length} verified anchor(s).`));
   } else {
-    out.push(f("suggestion", "entity_anchor",
+    out.push(f("warning", "entity_anchor",
                `No verified anchors for ${who} — identity is unpinned.`));
+  }
+  // Optional: an override is a shot-specific swap, and none is the
+  // ordinary case — the bindings hold.
+  const override = `${subject}_shot_override`;
+  if (shotId === null) {
+    out.push(f("ok", override,
+               "No shot asked about — shot overrides do not apply."));
+  } else if (media.override_assets.length > 0) {
+    out.push(f("ok", override,
+               `${media.override_assets.length} asset(s) from a shot ` +
+               `override.`));
+  } else {
+    out.push(f("ok", override,
+               "No shot override here — the bindings hold."));
   }
   return out;
 }
 
+/** Q02's steps keyed by `character_id`, which a prop or location lacks. */
+const Q02_CHARACTER_STEPS = [
+  "character_appearance_profile", "physical_character_profile",
+  "vocal_profile", "costume", "relationship_state",
+  "performance_state",
+];
+
 async function readinessQ02(
-    ctx: ScfContext, characterId: number, sceneId: number,
+    ctx: ScfContext, subject: string, subjectId: number, sceneId: number,
     order: SceneOrder): Promise<ReadinessFinding[]> {
+  if (subject !== "character") {
+    // §12.9.1: a step none of whose entities can be narrowed to the
+    // subject's kind does not apply to it, and says so.
+    const out = Q02_CHARACTER_STEPS.map((entity) =>
+      f("ok", entity, `Does not apply to a ${subject}.`));
+    out.push((await mediaStep(ctx, subject, subjectId, "visual_identity",
+                              sceneId, null, "blocker")).finding);
+    return out;
+  }
+  const characterId = subjectId;
   const out: ReadinessFinding[] = [];
   const who = await name(ctx, "character", characterId);
   const baselines: Array<[string, Severity, string]> = [
     ["character_appearance_profile", "warning", "appearance baseline"],
     ["physical_character_profile", "warning", "physical baseline"],
-    ["vocal_profile", "suggestion", "voice baseline"],
+    // Optional: an absent voice baseline is `ok` (§12.9.1) — nothing
+    // about a character at a position makes it notable by itself.
+    ["vocal_profile", "ok", "voice baseline"],
   ];
   for (const [table, sev, what] of baselines) {
     const present = await rows(ctx.exec, table, "character_id=?",
@@ -416,8 +507,32 @@ async function readinessQ02(
   } else {
     out.push(f("warning", "costume", `${who} has no costumes.`));
   }
-  out.push(...await readinessQ13(ctx, "character", characterId,
-                                 "visual_identity", sceneId, null, order));
+  // Optional, and absence is ordinary: no state means none has changed.
+  const relationships = await ctx.exec(
+    "SELECT id FROM character_relationship " +
+    "WHERE character_a_id = ? OR character_b_id = ?",
+    [characterId, characterId]);
+  let standing = 0;
+  for (const r of relationships) {
+    const s = await latestState(ctx, "relationship_state",
+                                "character_relationship_id",
+                                Number(r["id"]), sceneId, order);
+    if (s !== null) standing += 1;
+  }
+  out.push(f("ok", "relationship_state", standing > 0
+    ? `${standing} relationship state(s) in force.`
+    : "No relationship state in force — none has changed."));
+  const states = [
+    ...await statesInForce(ctx, characterId, sceneId, "physical", order),
+    ...await statesInForce(ctx, characterId, sceneId, "vocal", order),
+  ];
+  out.push(f("ok", "performance_state", states.length > 0
+    ? `Performance state(s) in force: ` +
+      `${states.map((s) => s["name"]).join(", ")}.`
+    : "No performance state in force — baseline holds (by design)."));
+  out.push((await mediaStep(ctx, "character", characterId,
+                            "visual_identity", sceneId, null,
+                            "blocker")).finding);
   return out;
 }
 
@@ -444,6 +559,16 @@ export async function readinessReport(
       `no readiness path for '${queryId}' ` +
       `(walkable: ${Object.keys(QUERY_PATHS).sort().join(", ")})`);
   }
+  // §12.9: Q14 takes the target's own parameters. Without them there
+  // is no position or subject to narrow a step to.
+  const subjectGiven = params.subject_id !== undefined ||
+    params.character_id !== undefined;
+  if ((queryId === "Q02" || queryId === "Q13") && !subjectGiven) {
+    throw new Error(`Q14 for ${queryId} needs a subject`);
+  }
+  if (queryId === "Q13" && params.intent === undefined) {
+    throw new Error("Q14 for Q13 needs an intent");
+  }
   const order = await sceneOrder(ctx);
   const sceneId = params.scene_id ?? null;
   const characterId = params.character_id ?? null;
@@ -461,12 +586,14 @@ export async function readinessReport(
     findings = await readinessQ08(ctx, sceneId as number, order);
   } else if (queryId === "Q13") {
     findings = await readinessQ13(ctx, params.subject ?? "character",
-                                  params.subject_id as number,
-                                  params.intent ?? "visual_identity",
+                                  (params.subject_id ?? characterId) as number,
+                                  params.intent as string,
                                   sceneId, params.shot_id ?? null, order);
   } else if (queryId === "Q02") {
-    findings = await readinessQ02(ctx, characterId as number,
-                                  sceneId as number, order);
+    findings = await readinessQ02(
+      ctx, params.subject ?? "character",
+      (params.subject_id ?? characterId) as number, sceneId as number,
+      order);
   } else { // declared in QUERY_PATHS but not yet walkable
     findings = [];
   }

@@ -74,7 +74,11 @@ npm run scf-check -- ../fixtures/hollow_creek.scf
 ```
 
 ```
-../fixtures/hollow_creek.scf  (schema 2.24)
+../fixtures/hollow_creek.scf  (schema 2.25)
+
+  warning  asset.identifier_absolute  [asset 55]
+           Asset identifier "/Volumes/ArtDept/locket/locket_engraving_macro.tif"
+           is absolute; it will not travel with the file.
 
   info     asset.orphan  [asset 54]
            Asset 54 is referenced by nothing.
@@ -83,7 +87,8 @@ npm run scf-check -- ../fixtures/hollow_creek.scf
            not invalid — nothing is rejected on write (§9.1).
   info     structure.scene_not_in_script  [scene 15]
            INT. HOLLOW CREEK CHURCH - VESTRY - DAY has no heading in the
-           screenplay, so it has no story position and belongs to no act…
+           screenplay. It sorts after every scene that does (§4.1), so it
+           belongs to whichever act and sequence run to the end (§5.2)…
   info     structure.sequence_act_mismatch  [sequence 1]
            The Reckoning spans Act 2 — The Thaw and Act 3 — The Truth.
            That is legal (§5.3); a presenter showing acts and sequences
@@ -95,11 +100,15 @@ npm run scf-check -- ../fixtures/hollow_creek.scf
   info     vocabulary.unlisted_value  [creative_decision 1]
            creative_decision.decision_type carries "sound", …
 
-  0 error, 0 warning, 6 info
+  0 error, 1 warning, 6 info
   This file is readable. Findings above are worth fixing, none prevent reading.
 ```
 
 **Read those, because they are the format's whole disposition.** A
+macro of the locket's engraving still points at the art department's
+drive, so it resolves on one machine and travels nowhere — a warning,
+because it is probably not what anyone meant, and not an error, because
+the file still says exactly what it says. A
 superseded plate is kept and nothing uses it any more. A shot
 has been planned before it was given a scene. A scene has been outlined
 and not yet written. A sequence runs across an act boundary, which is
@@ -109,7 +118,7 @@ vocabulary is simply the value. None is an error, none stops anything,
 and all are reported anyway — with what they mean and what is
 unaffected.
 
-Nothing is wrong with this file. Something in it is unfinished. Those
+Nothing in this file is an error. Something in it is unfinished. Those
 are different, and a format for work in progress has to be able to say
 which.
 

@@ -612,23 +612,44 @@ export interface Q14Result {
   counts: Record<string, number>;
 }
 
+/**
+ * A Q14 subject of any kind (§12.9): what Q02 and Q13 are asked about.
+ * `character` remains the parameter for the character-only targets.
+ */
+export interface Q14Subject {
+  type: "character" | "prop" | "location";
+  uuid: string;
+  id: number;
+}
+
 export async function q14Result(
     ctx: ScfContext, target: string,
     characterUuid: string | null, characterId: number | null,
     sceneUuid: string | null, sceneId: number | null,
     shotUuid: string | null, shotId: number | null,
+    subject: Q14Subject | null = null, intent: string | null = null,
 ): Promise<QueryResult<Q14Result>> {
+  // A character given as `character` is the subject of a Q02 or Q13
+  // asked without `subject`, so the old form keeps answering.
+  const subjectKind = subject?.type
+    ?? (characterId !== null ? "character" : undefined);
+  const subjectId = subject?.id ?? characterId ?? undefined;
   const report = await readinessReport(ctx, target, {
     character_id: characterId ?? undefined,
     scene_id: sceneId ?? undefined,
     shot_id: shotId ?? undefined,
+    subject: subjectKind,
+    subject_id: subjectId,
+    intent: intent ?? undefined,
   });
 
   // `report.params` carries the row ids it was called with. They do not
   // travel (§6.2), so the envelope carries the uuids instead and the
   // raw params are dropped rather than passed through.
   return envelope("Q14", ctx.registry, {
-    target, character: characterUuid, scene: sceneUuid, shot: shotUuid,
+    target, character: characterUuid,
+    subjectType: subject?.type ?? null, subject: subject?.uuid ?? null,
+    intent, scene: sceneUuid, shot: shotUuid,
   }, {
     target: report.query,
     targetName: report.meta.name,
@@ -1412,7 +1433,12 @@ export async function q02Result(
   }
 
   if (subjectType === "location") {
-    const [variant, mismatches] = await selectLocationVariant(ctx, sceneId);
+    // §12.17 chooses the variant of the SCENE's location. Asked about
+    // another location, nothing of this one is at the scene to dress it.
+    const sceneLocation = asId((await rows(ctx.exec, "scene", "id = ?",
+                                           [sceneId]))[0]?.["location_id"]);
+    const [variant, mismatches] = sceneLocation === subjectId
+      ? await selectLocationVariant(ctx, sceneId) : [null, []];
     locationVariant = {
       variant: variant === null
         ? null : projectRow(variant, refs(ctx, "location_variant"), lookup),
@@ -1552,10 +1578,12 @@ export async function q04Result(
                                  [sceneId])).sort(byBeatOrder);
   const cast = excludeCut(await ctx.exec(
     "SELECT c.* FROM scene_character sc JOIN character c " +
-    "ON c.id = sc.character_id WHERE sc.scene_id = ?", [sceneId]));
+    "ON c.id = sc.character_id WHERE sc.scene_id = ? ORDER BY sc.rowid",
+    [sceneId]));
   const props = excludeCut(await ctx.exec(
     "SELECT p.* FROM scene_prop sp JOIN prop p " +
-    "ON p.id = sp.prop_id WHERE sp.scene_id = ?", [sceneId]));
+    "ON p.id = sp.prop_id WHERE sp.scene_id = ? ORDER BY sp.rowid",
+    [sceneId]));
   const atScene = await presenceAtScene(ctx, sceneId);
 
   const locationId = asId(scene?.["location_id"]);
@@ -1574,15 +1602,27 @@ export async function q04Result(
   // §3.4: located by the heading, never by the body lines' scene_id.
   const screenplay = await sceneScriptLines(ctx.exec, sceneId);
 
+  // A staging beat has no scene of its own: it reaches one through its
+  // container, a scene_blocking or an action_sequence (§12.17). Both
+  // are read — an action sequence's beats are the scene's staging as
+  // much as the blocking's are.
   const blocking = await rows(ctx.exec, "scene_blocking", "scene_id = ?",
                               [sceneId]);
+  const actions = await rows(ctx.exec, "action_sequence", "scene_id = ?",
+                             [sceneId]);
   const stagingBeats: Row[] = [];
   for (const b of blocking) {
     stagingBeats.push(...await rows(ctx.exec, "staging_beat",
                                     "scene_blocking_id = ?",
                                     [asId(b["id"])]));
   }
-  stagingBeats.sort(byBeatOrder);
+  for (const a of actions) {
+    stagingBeats.push(...await rows(ctx.exec, "staging_beat",
+                                    "action_sequence_id = ?",
+                                    [asId(a["id"])]));
+  }
+  stagingBeats.sort((a, b) => byBeatOrder(a, b) ||
+    (Number(a["id"]) || 0) - (Number(b["id"]) || 0));
 
   // §4.8, per entry: who appears as which version. A package listing
   // Marcus in scene 25 without saying he is the boy is wrong for anyone

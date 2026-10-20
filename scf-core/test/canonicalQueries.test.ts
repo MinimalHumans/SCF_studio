@@ -768,7 +768,8 @@ const CASES = [
   "Q05-scene19", "Q07-shot12A", "Q02-marcus-scene25", "Q02-church-scene16",
   "Q02-ridge-scene21", "Q02-locket-scene25", "Q02-kitchen-scene10",
   "Q03-scene25", "Q04-scene25", "Q12-scene24-25", "Q12-scene25-24", "Q13-scene3",
-  "Q13-scene25", "Q15-plate-v2",
+  "Q13-scene25", "Q15-plate-v2", "Q07-scene3", "Q04-scene21",
+  "Q14-Q02-locket-scene25", "Q14-Q13-eleanor-shot1204",
 ] as const;
 const PUBLISHED = [
   "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
@@ -820,6 +821,66 @@ describe("per-case results — what one position cannot show", () => {
     blessOrCheck("Q02-locket-scene25", r);
     expect(r.result.propVariant?.fields["name"]).toBe("Ada's locket, new");
     expect(r.result.propState?.fields["whereabouts"]).toBe("on the creek bank");
+    // §8.2, §8.3: with no root mapped, the rooted references are
+    // `unaddressed` and the absolute one is still `out-of-root` — a
+    // property of the identifier, not of the session.
+    const states = r.result.media.references.map((x) => x.state);
+    expect(states.filter((s) => s === "out-of-root")).toHaveLength(1);
+    expect(states.filter((s) => s !== "out-of-root")
+      .every((s) => s === "unaddressed")).toBe(true);
+  });
+
+  test("Q07 where two latest_wins rows tie: the higher row id, scene 3",
+       async () => {
+    // §4.5 pattern 3, which §7.3's step 1 applies: two
+    // color_script_entry rows sit at scene 1, the latest position at or
+    // before scene 3, and the later-written one is in force. A reader
+    // taking the lowest id answers "Act 1 — cool and gray".
+    const scene3 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '3'");
+    const r = await q07Result(fx.ctx, scene3.uuid, scene3.id, null, null);
+    blessOrCheck("Q07-scene3", r);
+    const entry = r.result.layers.find(
+      (l) => l.entity === "color_script_entry");
+    expect(entry?.row.fields["name"]).toBe("slate, bark, bone");
+  });
+
+  test("Q04 where staging sits in an action sequence, scene 21",
+       async () => {
+    // §12.17: a staging beat reaches its scene through either container.
+    // Scene 21 has no blocking; its two beats are the storm pursuit's.
+    const scene21 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '21'");
+    const r = await q04Result(fx.ctx, scene21.uuid, scene21.id);
+    blessOrCheck("Q04-scene21", r);
+    expect(r.result.blocking).toEqual([]);
+    expect(r.result.stagingBeats.map((b) => b.fields["beat_order"]))
+      .toEqual([1, 2]);
+  });
+
+  test("Q14 for Q02 about a prop: the locket, scene 25", async () => {
+    // §12.9: Q14 takes its target's parameters, so Q02 can be asked
+    // about a prop; the character-only steps say they do not apply.
+    const locket = await sel("SELECT id, uuid FROM prop WHERE name LIKE '%locket%'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene25.uuid, scene25.id, null, null,
+      { type: "prop", uuid: locket.uuid, id: locket.id }, null);
+    blessOrCheck("Q14-Q02-locket-scene25", r);
+    expect(r.parameters["subjectType"]).toBe("prop");
+    expect(r.result.findings.find((f) => f.entity === "bundle")?.severity)
+      .toBe("ok");
+  });
+
+  test("Q14 for Q13: Eleanor's visual identity at shot 12-04", async () => {
+    // Every step of Q13's rubric is reported, the shot override
+    // included (§12.9.1 coverage).
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id,
+      { type: "character", uuid: eleanor.uuid, id: eleanor.id },
+      "visual_identity");
+    blessOrCheck("Q14-Q13-eleanor-shot1204", r);
+    expect(r.result.findings.map((f) => f.entity).sort()).toEqual(
+      ["bundle", "character_shot_override", "entity_anchor"]);
   });
 
   test("Q02 for a location: the kitchen at scene 10, ranked axes",

@@ -31,6 +31,10 @@ the fixture look arbitrary until you read why they were made:
   break every scene lookup in both suites.
 - **Some gaps are on purpose.** A fixture with nothing missing cannot
   exercise §9.2's requirement to answer usefully on half-placed data.
+- **One identifier is absolute on purpose.** Asset 55, the locket's
+  engraving macro, points at an art-department drive, so a published
+  result shows `out-of-root` beside `unaddressed` (spec §8.3). Rooting
+  it at `@project` removes the only case.
 - **`01` renamed Voss to Cade** across every text column, which is why
   no trace of the earlier name survives.
 

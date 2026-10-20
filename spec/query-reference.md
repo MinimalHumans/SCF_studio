@@ -230,7 +230,7 @@ Specified in **§12.9**. Normative result: [`fixtures/expectations/Q14.result.js
 
 Parameters: `target`, `character`, `scene`.
 
-The envelope also carries `shot` as null: the published result was computed without it. Whether the query accepts it at all is stated in the section above, not here.
+The envelope also carries `subjectType`, `subject`, `intent`, `shot` as null: the published result was computed without it. Whether the query accepts it at all is stated in the section above, not here.
 
 Result members: `target`, `targetName`, `findings`, `counts`.
 

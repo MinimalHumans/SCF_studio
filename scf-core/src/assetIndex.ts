@@ -24,7 +24,7 @@
 
 import { q, type SqlExec } from "./db.ts";
 import { formatOf, parseIdentifier } from "./assets.ts";
-import type { Registry } from "./registry.ts";
+import { polymorphicKindsFor, type Registry } from "./registry.ts";
 
 export interface AssetRow {
   id: number;
@@ -78,8 +78,10 @@ export async function listAssets(exec: SqlExec): Promise<AssetRow[]> {
  */
 export function assetReferenceColumns(
   registry: Registry,
-): { table: string; column: string; discriminator?: string }[] {
-  const out: { table: string; column: string; discriminator?: string }[] = [];
+): { table: string; column: string; discriminator?: string;
+       kinds?: string[] }[] {
+  const out: { table: string; column: string; discriminator?: string;
+               kinds?: string[] }[] = [];
   for (const [name, edef] of registry.entities) {
     for (const field of edef.fields) {
       if (name === "asset" && field.autoInjected) continue;
@@ -102,8 +104,13 @@ export function assetReferenceColumns(
       // is a list.
       if (field.polymorphicType !== undefined
           && field.polymorphicType !== "") {
-        out.push({ table: name, column: field.name,
-                   discriminator: field.polymorphicType });
+        // The sibling values under which this column means `asset` —
+        // not always "asset" itself (`polymorphicTargets`, §12.1.2).
+        const kinds = polymorphicKindsFor(field, "asset");
+        if (kinds.length > 0) {
+          out.push({ table: name, column: field.name,
+                     discriminator: field.polymorphicType, kinds });
+        }
       }
     }
   }
@@ -126,7 +133,7 @@ export async function orphanIds(
     .map((r) => String(r["name"])));
 
   const used = new Set<number>();
-  for (const { table, column, discriminator } of columns) {
+  for (const { table, column, discriminator, kinds } of columns) {
     if (!present.has(table)) continue;
     // A polymorphic column counts only on the rows where its
     // discriminator says `asset` — every other row points somewhere
@@ -137,8 +144,8 @@ export async function orphanIds(
           `WHERE ${q(column)} IS NOT NULL`)
       : await exec(
           `SELECT DISTINCT ${q(column)} AS ref FROM ${q(table)} ` +
-          `WHERE ${q(column)} IS NOT NULL AND ${q(discriminator)} = ?`,
-          ["asset"]);
+          `WHERE ${q(column)} IS NOT NULL AND ${q(discriminator)} IN ` +
+          `(${(kinds ?? []).map(() => "?").join(", ")})`, kinds ?? []);
     for (const row of rows) used.add(Number(row["ref"]));
   }
 
