@@ -4,7 +4,7 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: release candidate (specification 1.0-rc.5).** Every section is specified. What is known to be
+**Status: release candidate (specification 1.0-rc.6).** Every section is specified. What is known to be
 unfinished is tracked in [stability.md](stability.md); the one check the
 validator cannot yet make is named in §4.
 
@@ -227,7 +227,7 @@ tell it has not been designed.
 
 Every artifact this section names is published at the specification
 version's tag and checksummed in `SHA256SUMS`. Fetch them from
-`spec-<version>` — for this document, `spec-1.0-rc.5` — never from
+`spec-<version>` — for this document, `spec-1.0-rc.6` — never from
 `main`; [ARTIFACTS.md](ARTIFACTS.md) gives each file's address, and
 which files the schema tag addresses as well.
 
@@ -345,7 +345,9 @@ escapes its root and one that is absolute; a bundle no binding reaches;
 two orphaned assets, which are one finding with `count` 2 (§9.5's
 grain); an unknown table; an unstamped header; a screenplay line whose
 `line_type` is outside the published set (`line.type_unknown`); a link
-with a missing end (`junction.endpoint_absent`); and a section line
+with a missing end (`junction.endpoint_absent`); a link whose key
+columns are null, which compare equal (`junction.duplicate_key`); a span
+whose start scene is cut (`structure.boundary_cut`); and a section line
 bound to an act renamed since (`structure.section_mismatch`).
 
 ### 5.4 The canonical query expectations

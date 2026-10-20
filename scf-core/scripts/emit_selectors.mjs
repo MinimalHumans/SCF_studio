@@ -130,6 +130,16 @@ const SELECTORS = {
     sql: "SELECT id, uuid FROM costume WHERE name = 'Ada''s shawl'",
     note: "The costume with a binding: a Q13 subject no anchor can name.",
   },
+  ada: {
+    sql: "SELECT id, uuid FROM character WHERE name LIKE '%Ada%'",
+    note: "Mentioned at scene 3, not seen: Q02's look steps do not apply "
+        + "to her there (§12.9).",
+  },
+  windchime: {
+    sql: "SELECT id, uuid FROM prop WHERE name = 'Brass wind chime'",
+    note: "A prop whose one visual binding is scene-ranged from scene "
+        + "24: excluded earlier, so Q13 resolves nothing (§12.9.1).",
+  },
   plateV2: {
     sql: "SELECT id, uuid FROM asset "
        + "WHERE name = 'kitchen_night_plate_v2.exr'",
@@ -220,6 +230,18 @@ const PARAMETERS = {
     character: { literal: null }, subjectType: { literal: "costume" },
     subject: { selector: "shawl" }, intent: { literal: "visual_identity" },
     scene: { selector: "scene12" }, shot: { literal: null } },
+  "Q14-Q02-kitchen-scene10": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "location" },
+    subject: { selector: "kitchen" }, intent: { literal: null },
+    scene: { selector: "scene10" }, shot: { literal: null } },
+  "Q14-Q13-windchime-scene12": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "prop" },
+    subject: { selector: "windchime" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { literal: null } },
+  "Q14-Q02-ada-scene3": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "ada" }, intent: { literal: null },
+    scene: { selector: "scene3" }, shot: { literal: null } },
 };
 
 // ── Resolve, and check every selector actually matches ───────────────

@@ -1,0 +1,61 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q02",
+    "character": null,
+    "subjectType": "location",
+    "subject": "5559995a-7944-495a-ad6f-8352f381a296",
+    "intent": null,
+    "scene": "0fbb19d1-bddc-4e73-9637-9871367ddfe0",
+    "shot": null
+  },
+  "result": {
+    "target": "Q02",
+    "targetName": "Subject in context",
+    "findings": [
+      {
+        "severity": "blocker",
+        "entity": "bundle",
+        "message": "Farmhouse Kitchen: no environment assets in force here — none bound, or every binding excluded at this position."
+      },
+      {
+        "severity": "ok",
+        "entity": "character_appearance_profile",
+        "message": "Does not apply to a location."
+      },
+      {
+        "severity": "ok",
+        "entity": "physical_character_profile",
+        "message": "Does not apply to a location."
+      },
+      {
+        "severity": "ok",
+        "entity": "vocal_profile",
+        "message": "Does not apply to a location."
+      },
+      {
+        "severity": "ok",
+        "entity": "costume",
+        "message": "Does not apply to a location."
+      },
+      {
+        "severity": "ok",
+        "entity": "relationship_state",
+        "message": "Does not apply to a location."
+      },
+      {
+        "severity": "ok",
+        "entity": "performance_state",
+        "message": "Does not apply to a location."
+      }
+    ],
+    "counts": {
+      "blocker": 1,
+      "warning": 0,
+      "suggestion": 0,
+      "ok": 6
+    }
+  }
+}

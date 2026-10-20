@@ -8,7 +8,7 @@
     "optional": "suggestion",
     "present": "ok"
   },
-  "$steps": "A step's `entities` are REGISTRY ENTITY NAMES, checked against the registry at generation time. `satisfiedBy`, where present, names the ones whose rows decide the step; the others name a finding and cannot satisfy it. `filter` narrows the step to a subset of those rows and its `values` are a disjunction; `intent` names the asset intent whose bundle must resolve, and a step on `bundle` without one takes the target's own `intent`. `params` are §12.9's names, `?` marking an optional one. Rows are narrowed as the target query reads them (§12.9.1). `label` is derived for display and is the only prose here — a consumer should never parse it.",
+  "$steps": "A step's `entities` are REGISTRY ENTITY NAMES, checked against the registry at generation time. `satisfiedBy`, where present, names the ones whose rows decide the step; the others name a finding and cannot satisfy it. `filter` narrows the step to a subset of those rows and its `values` are a disjunction; `intent` names the asset intent whose bundle must resolve, `intentBySubjectType` names it per kind of subject asked about, and a step on `bundle` with neither takes the target's own `intent`. A step whose satisfying entities are `bundle` alone is a media step. `appliesTo: \"seen\"` marks a step about how characters look, assessed only for characters seen at the position. `params` are §12.9's names, `?` marking an optional one. Rows are narrowed as the target query narrows (§12.9.1). `label` is derived for display and is the only prose here — a consumer should never parse it.",
   "$note": "Only queries with a generative or pre-flight consumer have a rubric. The analytic queries read whatever exists and have no readiness semantics of their own beyond the walkable queries they are built from — asking Q14 about one is answered by assessing those.",
   "queryCount": 6,
   "queries": [
@@ -29,6 +29,7 @@
           ],
           "requirement": "recommended",
           "purpose": "static appearance baseline",
+          "appliesTo": "seen",
           "label": "character_appearance_profile"
         },
         {
@@ -37,6 +38,7 @@
           ],
           "requirement": "recommended",
           "purpose": "movement/face baseline",
+          "appliesTo": "seen",
           "label": "physical_character_profile"
         },
         {
@@ -57,6 +59,7 @@
           ],
           "requirement": "recommended",
           "purpose": "what they wear here",
+          "appliesTo": "seen",
           "label": "costume + costume_scene"
         },
         {
@@ -81,8 +84,12 @@
           ],
           "requirement": "required",
           "purpose": "assets to condition on",
-          "intent": "visual_identity",
-          "label": "media: visual_identity"
+          "intentBySubjectType": {
+            "character": "visual_identity",
+            "prop": "visual_identity",
+            "location": "environment"
+          },
+          "label": "media: character=visual_identity, prop=visual_identity, location=environment"
         }
       ]
     },
@@ -310,6 +317,7 @@
           ],
           "requirement": "recommended",
           "purpose": "each character seen at the position (§2.4.1, §4.6)",
+          "appliesTo": "seen",
           "label": "character_appearance_profile"
         }
       ]
@@ -318,7 +326,7 @@
       "query": "Q08",
       "name": "Soundscape",
       "params": [
-        "scene_id"
+        "scene"
       ],
       "description": "What this scene sounds like.",
       "steps": [
@@ -385,6 +393,9 @@
             "location_asset_binding",
             "prop_asset_binding"
           ],
+          "satisfiedBy": [
+            "bundle"
+          ],
           "requirement": "required",
           "purpose": "something to resolve",
           "label": "bundle + character_asset_binding + costume_asset_binding + location_asset_binding + prop_asset_binding"
@@ -395,7 +406,13 @@
           ],
           "requirement": "recommended",
           "purpose": "identity pinning",
-          "label": "entity_anchor"
+          "filter": {
+            "field": "canonical_status",
+            "values": [
+              "verified"
+            ]
+          },
+          "label": "entity_anchor (verified)"
         },
         {
           "entities": [

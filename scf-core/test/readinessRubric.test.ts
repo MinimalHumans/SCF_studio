@@ -41,6 +41,7 @@ interface Step {
   label: string;
   filter?: { field: string; values: string[] };
   intent?: string;
+  intentBySubjectType?: Record<string, string>;
 }
 
 const published = JSON.parse(readFileSync(RUBRICS, "utf8")) as {
@@ -98,7 +99,7 @@ describe("the published rubric resolves", () => {
             .toBeDefined();
         }
         if (step.label.startsWith("media:")) {
-          expect(step.intent,
+          expect(step.intent ?? step.intentBySubjectType,
                  `${q.query}: "${step.label}" names an intent in prose only`)
             .toBeDefined();
         }

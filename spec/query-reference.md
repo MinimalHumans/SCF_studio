@@ -219,7 +219,7 @@ names the asset intent whose bundle must resolve.
 | Step | | Why |
 |---|---|---|
 | `bundle + character_asset_binding + costume_asset_binding + location_asset_binding + prop_asset_binding` | required | something to resolve |
-| `entity_anchor` | recommended | identity pinning |
+| `entity_anchor (verified)` | recommended | identity pinning |
 | `character_shot_override + location_shot_override + prop_shot_override` | optional | shot-specific swaps |
 
 ---
@@ -338,7 +338,7 @@ names the asset intent whose bundle must resolve.
 | `costume + costume_scene` | recommended | what they wear here |
 | `relationship_state` | optional | where their relationships stand |
 | `performance_state` | optional | scene-scoped modulation (absence = baseline holds) |
-| `media: visual_identity` | required | assets to condition on |
+| `media: character=visual_identity, prop=visual_identity, location=environment` | required | assets to condition on |
 
 ---
 

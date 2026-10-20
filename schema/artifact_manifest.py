@@ -226,6 +226,15 @@ GROUPS: list[tuple[str, str, str, list[tuple[str, str]]]] = [
         ("fixtures/expectations/Q14-Q13-shawl-scene12.result.json",
          "Q14 for Q13 about a costume: steps that do not apply. Spec "
          "§12.9.1."),
+        ("fixtures/expectations/Q14-Q02-kitchen-scene10.result.json",
+         "Q14 for Q02 about a location: the media step asks for "
+         "`environment`. Spec §12.9.1."),
+        ("fixtures/expectations/Q14-Q13-windchime-scene12.result.json",
+         "Q14 for Q13 where the subject's binding is excluded at the "
+         "position: a blocker. Spec §12.9.1."),
+        ("fixtures/expectations/Q14-Q02-ada-scene3.result.json",
+         "Q14 for Q02 about a character only mentioned: the look steps "
+         "do not apply. Spec §12.9."),
      ]),
 
     ("The canonical query parameters", "spec",

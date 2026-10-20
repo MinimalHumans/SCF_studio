@@ -17,6 +17,96 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
+## 1.0-rc.6 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The sixth release candidate, limited to Q14**, from the tenth
+independent reader run (`docs/release-checklist.md` §D1). It reproduced
+all 57 published artifacts from the text alone, with no critical
+finding. Its four majors were all in §12.9.1's rubric, each two MUSTs
+giving different severities in a case nothing published asked about.
+Fixing them changes which Q14 severities are permitted, so under §11.5
+this is a **minor** change, not an editorial one. **No registry change;
+schema stays 2.25.** Taken under §11.0, which still holds. Nothing
+outside Q14 changed except wording.
+
+### §12.9.1 — the rubric says what the text says (M1–M4)
+
+- **A reference to `scene` or `shot` is a position, never a route to a
+  subject (M1).** Read literally, "one declared reference away" reached
+  `location` through `scene.location_id` from every scene-keyed entity,
+  so Q05's `dialogue_rhythm` did not apply to any character and Q02's
+  costume step applied to a location — the opposite of the section's own
+  examples. The reference already behaved this way.
+- **A media step is one satisfied by `bundle` alone (M2).** Q13's first
+  step gains `satisfiedBy: ["bundle"]`: the binding tables are context,
+  and a binding of the subject's that is excluded at the position does
+  not meet the step. The multi-entity rule called that `ok` and the
+  media rule a `blocker`; it is a `blocker`. New worked example
+  `Q14-Q13-windchime-scene12`.
+- **Look steps are marked (M3).** A rubric step gains `appliesTo:
+  "seen"`, on Q02's appearance, physical and costume steps and Q07's
+  `character_appearance_profile`. §12.9 says how it meets a subject: a
+  character subject not seen at the position — heard, named, or not
+  there — reports those steps as not applying. The reference assessed
+  them for anyone. New worked example `Q14-Q02-ada-scene3`.
+- **Q02's media intent is per kind of subject (M4).** The step's
+  `intent: "visual_identity"` becomes `intentBySubjectType`, mapping a
+  location to `environment` and a character or prop to
+  `visual_identity`, as §12.16 asks the Q13 answer Q02 nests. The
+  generator checks every intent against the registry's bundle intents.
+  New worked example `Q14-Q02-kitchen-scene10`: the fixture's kitchen
+  has no `environment` bundle, so the step is a `blocker`.
+
+### Rules now stated
+
+- §12.9.1: "does not apply" means the step cannot be narrowed to the
+  subject asked about by either route; an entity that reaches the
+  subject applies whatever else it names, as `costume_scene` names a
+  costume (m1).
+- §12.9.1: Q13's `entity_anchor` step counts verified anchors only, an
+  unset status counting as verified, as Q13 reads them; the step gains
+  `filter: canonical_status = verified`, and the `filter` member says an
+  unset value reads as the target reads it (m2).
+- §12.9.1: a step's rows are narrowed *as its target narrows*, not "the
+  rows its target reads" — some steps name entities their target does
+  not read (m3).
+- §12.9: every parameter is recorded in the envelope as asked; one the
+  target does not take is ignored, except `shot`, which fixes the
+  position for every target (m5). At a cut scene, Q14 assesses what its
+  target answers at that empty position, and no character is seen there
+  (m9).
+
+### Reference
+
+`readiness.ts` follows the rules above: Q02's look steps check presence
+(§2.4.1, §4.6) and its media intent is read from the rubric; Q07 sees no
+one at an empty position. Its Q05 walker raised a `suggestion` for
+absent vocal beats on a `recommended` step, outside the permitted range;
+it now raises a `warning`. The media step's message no longer says "no
+bundle/binding" where a binding exists and is excluded. No published
+result changes.
+
+### Editorial
+
+- Appendix A: eighteen negative cases, not sixteen; conformance §5.3's
+  list names `junction-key-null` and `span-boundary-cut` (m10).
+- The rubric's Q08 `params` is `scene`, §12.9's name (m10).
+- `stability.md`'s Q14 row; README, site and `what-is-scf.md` status
+  lines, and ten reader-run implementations.
+
+### Left for after 1.0
+
+Run 10's minors outside Q14 that are not wording are unchanged: shot-keyed
+rows at an empty position and a shot in no scene (m4, §12.1.7);
+`sequence_act_mismatch` derived over cut scenes (m6, §9.4.1); a link's
+hidden `name` in the duplicate comparison (m7, §6.4); a relationship to a
+cut character (m8, §6.6.1); a dangling binding's trail entry (m11, §12.8).
+Each needs a decision about behaviour, not a sentence.
+
+---
+
 ## 1.0-rc.5 — 2026-10-20
 
 *Describes schema 2.25.*

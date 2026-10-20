@@ -103,6 +103,16 @@
       "note": "The costume with a binding: a Q13 subject no anchor can name.",
       "uuid": "ec9d9eae-79f4-4b84-be16-c00f24d37b6f"
     },
+    "ada": {
+      "sql": "SELECT id, uuid FROM character WHERE name LIKE '%Ada%'",
+      "note": "Mentioned at scene 3, not seen: Q02's look steps do not apply to her there (§12.9).",
+      "uuid": "7cceb35d-fced-485b-ad73-8d73a9b2e41e"
+    },
+    "windchime": {
+      "sql": "SELECT id, uuid FROM prop WHERE name = 'Brass wind chime'",
+      "note": "A prop whose one visual binding is scene-ranged from scene 24: excluded earlier, so Q13 resolves nothing (§12.9.1).",
+      "uuid": "900960f7-f1de-4182-b536-9af27792add2"
+    },
     "plateV2": {
       "sql": "SELECT id, uuid FROM asset WHERE name = 'kitchen_night_plate_v2.exr'",
       "note": "A versioned asset: v1 superseded by v2 (§6.1).",
@@ -541,6 +551,75 @@
       },
       "scene": {
         "selector": "scene12"
+      },
+      "shot": {
+        "literal": null
+      }
+    },
+    "Q14-Q02-kitchen-scene10": {
+      "target": {
+        "literal": "Q02"
+      },
+      "character": {
+        "literal": null
+      },
+      "subjectType": {
+        "literal": "location"
+      },
+      "subject": {
+        "selector": "kitchen"
+      },
+      "intent": {
+        "literal": null
+      },
+      "scene": {
+        "selector": "scene10"
+      },
+      "shot": {
+        "literal": null
+      }
+    },
+    "Q14-Q13-windchime-scene12": {
+      "target": {
+        "literal": "Q13"
+      },
+      "character": {
+        "literal": null
+      },
+      "subjectType": {
+        "literal": "prop"
+      },
+      "subject": {
+        "selector": "windchime"
+      },
+      "intent": {
+        "literal": "visual_identity"
+      },
+      "scene": {
+        "selector": "scene12"
+      },
+      "shot": {
+        "literal": null
+      }
+    },
+    "Q14-Q02-ada-scene3": {
+      "target": {
+        "literal": "Q02"
+      },
+      "character": {
+        "literal": null
+      },
+      "subjectType": {
+        "literal": "character"
+      },
+      "subject": {
+        "selector": "ada"
+      },
+      "intent": {
+        "literal": null
+      },
+      "scene": {
+        "selector": "scene3"
       },
       "shot": {
         "literal": null

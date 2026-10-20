@@ -795,7 +795,8 @@ const CASES = [
   "Q13-scene25", "Q15-plate-v2", "Q07-scene3", "Q04-scene21",
   "Q14-Q02-locket-scene25", "Q14-Q13-eleanor-shot1204",
   "Q13-shot1204", "Q14-Q02-eleanor-scene7", "Q14-Q07-shot12A",
-  "Q14-Q13-shawl-scene12",
+  "Q14-Q13-shawl-scene12", "Q14-Q02-kitchen-scene10",
+  "Q14-Q13-windchime-scene12", "Q14-Q02-ada-scene3",
 ] as const;
 const PUBLISHED = [
   "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
@@ -981,6 +982,61 @@ describe("per-case results — what one position cannot show", () => {
     blessOrCheck("Q14-Q13-shawl-scene12", r);
     expect(r.result.findings.map((f) => f.severity))
       .toEqual(["ok", "ok", "ok"]);
+  });
+
+  test("Q14 for Q02 about a location: the kitchen at scene 10", async () => {
+    // §12.9.1. Q02's media step takes its intent per kind of subject, as
+    // the Q13 answer Q02 nests is asked (§12.16): `environment` for a
+    // location. The kitchen has `visual_identity` bundles and no
+    // `environment` one, so the required step is a blocker.
+    const kitchen = await sel(
+      "SELECT id, uuid FROM location WHERE name = 'Farmhouse Kitchen'");
+    const scene10 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '10'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene10.uuid, scene10.id, null, null,
+      { type: "location", uuid: kitchen.uuid, id: kitchen.id }, null);
+    blessOrCheck("Q14-Q02-kitchen-scene10", r);
+    const media = r.result.findings.find((f) => f.entity === "bundle");
+    expect(media?.severity).toBe("blocker");
+    expect(media?.message).toMatch(/environment/);
+  });
+
+  test("Q14 for Q13 with its binding excluded: the wind chime, scene 12",
+       async () => {
+    // §12.9.1. The chime's one visual binding is scene-ranged from scene
+    // 24, so at scene 12 Q13 resolves nothing. The binding tables are
+    // context (`satisfiedBy: ["bundle"]`): a binding that exists but is
+    // excluded here does not meet the step.
+    const chime = await sel(
+      "SELECT id, uuid FROM prop WHERE name = 'Brass wind chime'");
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, null, null,
+      { type: "prop", uuid: chime.uuid, id: chime.id }, "visual_identity");
+    blessOrCheck("Q14-Q13-windchime-scene12", r);
+    expect(r.result.findings.find((f) => f.entity === "bundle")?.severity)
+      .toBe("blocker");
+    const q13 = await q13Result(fx.ctx, "prop", chime.uuid, chime.id,
+      "visual_identity", scene12.uuid, scene12.id, null, null);
+    expect(q13.result.references).toEqual([]);
+    expect(q13.result.trail.some((t) => t.excluded !== null)).toBe(true);
+  });
+
+  test("Q14 for Q02 about a character only mentioned: Ada at scene 3",
+       async () => {
+    // §12.9. Ada is named at scene 3, not seen: the steps marked
+    // `appliesTo: "seen"` do not apply to her there, and say so.
+    const ada = await sel("SELECT id, uuid FROM character WHERE name LIKE '%Ada%'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene3.uuid, scene3.id, null, null,
+      { type: "character", uuid: ada.uuid, id: ada.id }, null);
+    blessOrCheck("Q14-Q02-ada-scene3", r);
+    for (const e of ["character_appearance_profile",
+                     "physical_character_profile", "costume_scene"]) {
+      const finding = r.result.findings.find((f) => f.entity === e);
+      expect(finding?.severity).toBe("ok");
+      expect(finding?.message).toMatch(/not seen/);
+    }
   });
 
   test("Q02 for a location: the kitchen at scene 10, ranked axes",

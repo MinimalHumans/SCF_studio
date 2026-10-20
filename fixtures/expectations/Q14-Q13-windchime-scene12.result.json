@@ -1,0 +1,41 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q13",
+    "character": null,
+    "subjectType": "prop",
+    "subject": "900960f7-f1de-4182-b536-9af27792add2",
+    "intent": "visual_identity",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": null
+  },
+  "result": {
+    "target": "Q13",
+    "targetName": "Media resolution",
+    "findings": [
+      {
+        "severity": "blocker",
+        "entity": "bundle",
+        "message": "Brass wind chime: no visual_identity assets in force here — none bound, or every binding excluded at this position."
+      },
+      {
+        "severity": "warning",
+        "entity": "entity_anchor",
+        "message": "No verified anchors for Brass wind chime — identity is unpinned."
+      },
+      {
+        "severity": "ok",
+        "entity": "prop_shot_override",
+        "message": "No shot asked about — shot overrides do not apply."
+      }
+    ],
+    "counts": {
+      "blocker": 1,
+      "warning": 1,
+      "suggestion": 0,
+      "ok": 1
+    }
+  }
+}
