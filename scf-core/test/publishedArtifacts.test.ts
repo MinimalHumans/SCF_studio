@@ -94,6 +94,7 @@ interface RubricDoc {
       label: string;
       filter?: { field: string; values: string[] };
       intent?: string;
+      intentBySubjectType?: Record<string, string>;
     }>;
   }>;
 }
@@ -169,7 +170,7 @@ describe("the published readiness rubrics (§12.9.1)", () => {
       for (const step of q.steps) {
         if (step.label.includes("(")) expect(step.filter).toBeDefined();
         if (step.label.startsWith("media:")) {
-          expect(step.intent).toBeDefined();
+          expect(step.intent ?? step.intentBySubjectType).toBeDefined();
         }
       }
     }

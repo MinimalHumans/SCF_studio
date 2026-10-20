@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # The SCF Format Specification
 
-**Version 1.0-rc.5 — release candidate.**
+**Version 1.0-rc.6 — release candidate.**
 Describes schema version **2.25**.
 Editors: Christopher Smallfield, Jesse Kretschmer (Minimal Humans).
 
@@ -2714,13 +2714,23 @@ target's own parameters**, under Q14's names for them:
 
 Q14 declares all seven — `target`, `character`, `subjectType`,
 `subject`, `intent`, `scene`, `shot` — so **all seven appear in its
-envelope** (§12.1.1), null where the target does not take one or it was
-not given. For Q02 and Q13, `character` alone stands for `subjectType`
-`character` with that subject. A Q14 for Q02 or Q13 with no subject, or
-for Q13 with no `intent`, has nothing to assess and is not answered
-(§12.1.7). Its `shot` and `scene` fix the position as the target's do
-(§12.1.7): a shot alone is at its scene, and a shot outside the scene is
-not answered.
+envelope** (§12.1.1), each as it was asked: null where it was not given.
+A parameter the target does not take is recorded there and otherwise
+ignored, except `shot`, below. For Q02 and Q13, `character` alone stands
+for `subjectType` `character` with that subject. A Q14 for Q02 or Q13
+with no subject, or for Q13 with no `intent`, has nothing to assess and
+is not answered (§12.1.7). **Its `shot` and `scene` fix the position for
+every target** as §12.1.7 fixes a query's: a shot alone is at its scene
+— for Q02, Q05, Q06, Q07 and Q08 as for Q13 — and a shot outside the
+scene asked is not answered.
+
+**At a cut scene**, an empty position (§12.1.7), Q14 assesses what its
+target answers there: a step narrowed to the position finds nothing and
+reports its absence by §12.9.1's table, and a step its target reads
+independently of the position — a character's baselines, a baseline
+binding, a project-level root — is assessed as anywhere. No character is
+seen at an empty position, so a step about how one looks does not apply
+there.
 
 | Field | |
 |---|---|
@@ -2755,7 +2765,22 @@ worked example of a conforming answer, not the only one.
 **A step about how characters look is assessed for the characters SEEN
 at the position**: at a shot, by §4.6; at a scene, by §2.4.1. A
 character who is only heard or only named has no look to design, and a
-finding asking for one could not be acted on.
+finding asking for one could not be acted on. **The rubric marks each
+such step `appliesTo: "seen"`** (§12.9.1): Q02's appearance, physical
+and costume steps, and Q07's `character_appearance_profile`.
+
+- **Where the target has no subject** — Q07 — the step is assessed for
+  each character seen at the position, and with none seen it is met.
+- **Where the subject is a character** — Q02 — the step applies only if
+  that character is seen at the position. One who is heard, named, or
+  not there at all reports it as not applying (§12.9.1), whatever is
+  authored for them. The published `Q14-Q02-ada-scene3` shows it: Ada is
+  mentioned at scene 3, so her appearance, physical and costume steps
+  do not apply, and her other steps are assessed as for anyone.
+
+Q02's media step is not marked: Q02 nests a Q13 answer whatever the
+subject's presence (§12.16). Until 1.0-rc.6 only the `purpose` of Q07's
+step said any of this, and nothing said how it met Q02's subject.
 
 #### 12.9.1 The rubric
 
@@ -2770,8 +2795,10 @@ marked `required`, `recommended` or `optional`.
 | `entities` | One or more **registry entity names**. Never prose. |
 | `satisfiedBy` | Present where only some of `entities` can satisfy the step: those. Absent, every entity named can. The others are context — they name a finding (§12.9) and cannot satisfy it. |
 | `requirement` | `required`, `recommended` or `optional`. |
-| `filter` | Present where the step is about a subset of those rows: a `field` and a disjunction of `values`. |
-| `intent` | Present on a media step: the asset intent whose bundle must resolve. The entity is `bundle` either way. A step on `bundle` without one — Q13's own first step — takes the target's `intent` parameter. |
+| `filter` | Present where the step is about a subset of those rows: a `field` and a disjunction of `values`. Where the target reads an unset value as one of them, so does the step: Q13 reads an anchor with no `canonical_status` as verified (§12.8), and so does Q13's `entity_anchor` step. |
+| `intent` | Present on a media step (below): the asset intent whose bundle must resolve. The entity is `bundle` either way. |
+| `intentBySubjectType` | Present on a media step instead of `intent` where the intent depends on the kind of subject asked about: each kind mapped to its intent. Q02's maps a location to `environment` and a character or prop to `visual_identity`, as the Q13 answer Q02 nests is asked (§12.16). A media step with neither — Q13's own first step — takes the target's `intent` parameter. |
+| `appliesTo` | `"seen"` on a step about how characters look: assessed only for characters seen at the position (§12.9). Absent, the step applies whatever anyone's presence. |
 | `purpose` | Why the step is there. Prose, for a person. |
 | `label` | **Derived** from the members above, for display. A consumer MUST NOT parse it. |
 
@@ -2802,11 +2829,18 @@ across the file. This was unstated, and it is the difference between
 project have one" — two questions with different answers on any real
 project.
 
-**A step's rows are the rows its target reads for the subject and the
-position asked about.** Readiness that disagreed with its target would
-report a gap the answer does not have, or miss one it does. Concretely,
-each entity a step can be satisfied by (its `satisfiedBy`, or every
-entity it names) is narrowed to the subject and to the position.
+**A step's rows are narrowed as its target narrows**, to the subject and
+the position asked about. Readiness that narrowed differently from its
+target would report a gap the answer does not have, or miss one it does.
+Some steps name an entity their target does not itself read — Q07's
+`visual_identity` and `character_appearance_profile`, Q05's
+`dialogue_rhythm` and `sound_perspective`, Q08's
+`location_sound_profile` — because whoever acts on the answer needs it
+beside the answer; they are narrowed by the same rules. Until 1.0-rc.6
+this said a step's rows were "the rows its target reads", which those
+steps are not. Concretely, each entity a step can be satisfied by (its
+`satisfiedBy`, or every entity it names) is narrowed to the subject and
+to the position.
 
 **To the subject**, by the first of these it has:
 
@@ -2819,6 +2853,14 @@ entity it names) is narrowed to the subject and to the position.
   such a column (§6.5): `relationship_state` reaches a character through
   either of `character_relationship`'s character columns, and
   `costume_scene` through `costume.character_id`.
+
+**A reference to `scene` or `shot` is a position, never a route to a
+subject.** `scene` declares `location_id`, but a `dialogue_rhythm` keyed
+to a scene is not thereby keyed to its location, and a binding's
+scene-range columns do not key it to one either. Until 1.0-rc.6 nothing
+said so, and read literally every scene-keyed entity was one reference
+away from a location: Q05's `dialogue_rhythm` did not apply to any
+character, and Q02's costume step applied to a location.
 
 **To the position**, by the first of these that applies:
 
@@ -2842,25 +2884,47 @@ An entity with nothing to narrow it to the subject or the position is
 assessed across the file in that respect, because there is nothing to
 narrow it by.
 
-**A media step** — one on `bundle` — is satisfied when **the subject
-asked about** has at least one reference of the step's intent in force
-at the position: its own Q13 answer (§12.8) at the query's scene and
-shot. A bundle bound to some other subject does not satisfy it. Q02's
-media step is judged by the Q13 answer Q02 nests (§12.16), whose intent
-for a location is `environment`.
+**A media step** — one whose satisfying entities are `bundle` alone —
+is satisfied when **the subject asked about** has at least one reference
+of the step's intent in force at the position: its own Q13 answer
+(§12.8) at the query's scene and shot. A bundle bound to some other
+subject does not satisfy it, and **neither does a binding of the
+subject's own that is excluded at the position**: Q13's first step names
+the four binding tables as context and is satisfied by `bundle` alone.
+The published `Q14-Q13-windchime-scene12` shows it: the wind chime's one
+`visual_identity` binding is scene-ranged from scene 24, so at scene 12
+it resolves nothing and the step is a `blocker`. Q02's media step takes
+its intent from `intentBySubjectType`, the intent of the Q13 answer Q02
+nests (§12.16): `environment` for a location. The published
+`Q14-Q02-kitchen-scene10` shows it: the fixture gives the kitchen
+`visual_identity` bundles and no `environment` one, so the step is a
+`blocker`.
+
+Until 1.0-rc.6 Q13's first step had no `satisfiedBy`, so a binding
+excluded at the position met it as one of several entities while the
+media rule called it a `blocker`; and Q02's step said `visual_identity`
+for every subject while this section said `environment` for a location.
 
 **A step does not apply where every entity that could satisfy it is
-keyed to something the question does not have**: to a subject of
-another kind, or to a shot or a location the position lacks. An entity
-keyed to no subject at all, as `dialogue_rhythm` is, is not of another
-kind; it is narrowed by the position alone. A step that does not apply
-is still reported — coverage is every step — as `ok`, saying so: Q02's character steps asked about a prop or a location; Q13's
-`entity_anchor` step and its shot overrides asked about a costume,
-since `entity_anchor.subject_type` does not offer `costume` and the
-registry declares no costume shot override; a shot-keyed step with no
-shot asked; a location-keyed one at a scene with no location. The
-published `Q14-Q02-locket-scene25` and `Q14-Q13-shawl-scene12` show it,
-and `Q14-Q13-eleanor-shot1204` a Q13 target with every step reported.
+keyed to something the question does not have**: to a subject it cannot
+be narrowed to by either route above — a subject of another kind — or
+to a shot or a location the position lacks. **An entity that reaches the
+subject asked about applies, whatever else it names**: `costume_scene`
+names a costume, and reaches a character through `costume.character_id`,
+so it applies to a character and not to a location. An entity keyed to
+no subject at all, as `dialogue_rhythm` is, is not of another kind; it
+is narrowed by the position alone. A step marked `appliesTo: "seen"`
+also does not apply to a character subject who is not seen at the
+position (§12.9). A step that does not apply is still reported —
+coverage is every step — as `ok`, saying so: Q02's character steps asked
+about a prop or a location; its look steps asked about a character only
+heard or named there; Q13's `entity_anchor` step and its shot overrides
+asked about a costume, since `entity_anchor.subject_type` does not offer
+`costume` and the registry declares no costume shot override; a
+shot-keyed step with no shot asked; a location-keyed one at a scene with
+no location. The published `Q14-Q02-locket-scene25`,
+`Q14-Q13-shawl-scene12` and `Q14-Q02-ada-scene3` show it, and
+`Q14-Q13-eleanor-shot1204` a Q13 target with every step reported.
 
 **A step naming several entities is satisfied by any of its satisfying
 entities with rows here**, each narrowed as above. Where the step
@@ -3401,7 +3465,7 @@ change to one without the other is a defect.
 | §2.1 registry structure | `scf-core/test/registrySchema.test.ts` |
 | §9.4 finding vocabulary | `scf-core/test/findings.test.ts`, `spec/finding-catalog.json` |
 | §4.3 numbering policy | `scf-core/test/numbering.test.ts` |
-| §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (16 cases) |
+| §9.4 finding behaviour on broken files | `scf-core/test/negativeFixtures.test.ts` (18 cases) |
 | §9.5 serialised report | `scf-core/test/report.test.ts` |
 | §11.1 additive-only schema changes | *unpinned — a policy, checked by review* |
 | §11.2–11.3 forward and backward compatibility | `scf-core/test/extensibility.test.ts`, `scf-app/test/roundTrip.test.ts` |

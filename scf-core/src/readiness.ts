@@ -157,7 +157,9 @@ async function readinessQ05(
     out.push(f("ok", "performance_beat",
                `${beats.length} vocal beat(s) authored.`));
   } else {
-    out.push(f("suggestion", "performance_beat",
+    // `recommended`, so an absence is a warning (§12.9.1); it was a
+    // suggestion, outside the range the step permits.
+    out.push(f("warning", "performance_beat",
                `No vocal beats for ${who} in this scene — lines ` +
                `render on baseline+state alone.`));
   }
@@ -251,7 +253,7 @@ async function readinessQ06(
 }
 
 async function readinessQ07(
-    ctx: ScfContext, sceneId: number, shotId: number | null,
+    ctx: ScfContext, sceneId: number | null, shotId: number | null,
     _order: SceneOrder): Promise<ReadinessFinding[]> {
   const out: ReadinessFinding[] = [];
   // §12.9.1: each step's rows narrowed as §7.3 reads them. The shot
@@ -314,7 +316,10 @@ async function readinessQ07(
   // A recorded character IS on screen in the shot; an inherited one is
   // only in its scene (§4.6), and the message must not claim more.
   const seen: Array<{ cid: number; where: string }> = [];
-  const atShot = shotId === null ? null : await presenceAtShot(ctx, shotId);
+  // No one is seen at an empty position (§12.9), a shot of a cut scene
+  // included, so the loops below run only where there is a scene.
+  const atShot = shotId === null || sceneId === null
+    ? null : await presenceAtShot(ctx, shotId);
   if (atShot !== null) {
     for (const s of atShot.subjects) {
       if (s.subjectType === "character" && s.presence === "seen") {
@@ -322,7 +327,7 @@ async function readinessQ07(
           ? "on screen in this shot" : "in this scene" });
       }
     }
-  } else {
+  } else if (sceneId !== null) {
     for (const [cid, presence] of
          (await presenceAtScene(ctx, sceneId)).character) {
       if (presence === "seen") seen.push({ cid, where: "in this scene" });
@@ -415,8 +420,8 @@ async function mediaStep(
                                    shotId);
   const finding = media.assets_most_specific_first.length === 0
     ? f(absent, "bundle",
-        `${who}: no ${intent} assets resolve — no bundle/` +
-        `binding for this intent.`)
+        `${who}: no ${intent} assets in force here — none bound, ` +
+        `or every binding excluded at this position.`)
     : f("ok", "bundle",
         `${who}: ${media.assets_most_specific_first.length} ` +
         `${intent} asset(s) in force ` +
@@ -481,6 +486,37 @@ const Q02_CHARACTER_STEPS = [
   "performance_state",
 ];
 
+/**
+ * Q02's media intent for a kind of subject, from the rubric's
+ * `intentBySubjectType` — the intent the Q13 answer Q02 nests asks
+ * (§12.16). Read from the rubric so the two cannot disagree again.
+ */
+function q02MediaIntent(subject: string): string {
+  const media = QUERY_PATHS["Q02"]?.steps
+    .find((s) => s.intentBySubjectType !== undefined);
+  return media?.intentBySubjectType?.[subject] ?? "visual_identity";
+}
+
+/**
+ * A character's presence at the position (§2.4.1 at a scene, §4.6 at a
+ * shot), or "absent" where it is not there at all — an empty position
+ * (§12.1.7) included.
+ */
+async function presenceAt(
+    ctx: ScfContext, characterId: number, sceneId: number | null,
+    shotId: number | null): Promise<string> {
+  // A shot of a cut scene is at that empty position too (§12.1.7).
+  if (sceneId === null) return "absent";
+  if (shotId !== null) {
+    const atShot = await presenceAtShot(ctx, shotId);
+    const s = atShot?.subjects.find((x) =>
+      x.subjectType === "character" && x.id === characterId);
+    return s?.presence ?? "absent";
+  }
+  return (await presenceAtScene(ctx, sceneId)).character.get(characterId)
+    ?? "absent";
+}
+
 async function readinessQ02(
     ctx: ScfContext, subject: string, subjectId: number, sceneId: number,
     shotId: number | null,
@@ -492,22 +528,36 @@ async function readinessQ02(
       f("ok", entity, `Does not apply to a ${subject}.`));
     // Q02's nested Q13 (§12.16) asks a location for its environment.
     out.push((await mediaStep(ctx, subject, subjectId,
-                              subject === "location"
-                                ? "environment" : "visual_identity",
+                              q02MediaIntent(subject),
                               sceneId, shotId, "blocker")).finding);
     return out;
   }
   const characterId = subjectId;
   const out: ReadinessFinding[] = [];
   const who = await name(ctx, "character", characterId);
-  const baselines: Array<[string, Severity, string]> = [
-    ["character_appearance_profile", "warning", "appearance baseline"],
-    ["physical_character_profile", "warning", "physical baseline"],
+  // §12.9: the steps marked `appliesTo: "seen"` are about how a
+  // character looks, and one who is only heard or named here has no
+  // look to design. They are reported, as not applying, and say why.
+  const presence = await presenceAt(ctx, characterId, sceneId, shotId);
+  const seen = presence === "seen";
+  const unseen = (entity: string): ReadinessFinding =>
+    f("ok", entity, presence === "absent"
+      ? `Does not apply: ${who} is not at this position — no look to ` +
+        `design.`
+      : `Does not apply: ${who} is ${presence} here, not seen — no look ` +
+        `to design.`);
+  const baselines: Array<[string, Severity, string, boolean]> = [
+    ["character_appearance_profile", "warning", "appearance baseline", true],
+    ["physical_character_profile", "warning", "physical baseline", true],
     // Optional: an absent voice baseline is `ok` (§12.9.1) — nothing
     // about a character at a position makes it notable by itself.
-    ["vocal_profile", "ok", "voice baseline"],
+    ["vocal_profile", "ok", "voice baseline", false],
   ];
-  for (const [table, sev, what] of baselines) {
+  for (const [table, sev, what, look] of baselines) {
+    if (look && !seen) {
+      out.push(unseen(table));
+      continue;
+    }
     const present = await rows(ctx.exec, table, "character_id=?",
                                [characterId]);
     if (present.length > 0) {
@@ -527,7 +577,9 @@ async function readinessQ02(
       ctx.exec, "costume_scene", "costume_id=? AND scene_id=?",
       [c["id"] ?? null, sceneId]));
   }
-  if (inForce.length > 0) {
+  if (!seen) {
+    out.push(unseen("costume_scene"));
+  } else if (inForce.length > 0) {
     out.push(f("ok", "costume_scene",
                `${inForce.length} costume assignment(s) for this scene.`));
   } else if (costumes.length > 0) {
@@ -563,7 +615,7 @@ async function readinessQ02(
       `${states.map((s) => s["name"]).join(", ")}.`
     : "No performance state in force — baseline holds (by design)."));
   out.push((await mediaStep(ctx, "character", characterId,
-                            "visual_identity", sceneId, shotId,
+                            q02MediaIntent("character"), sceneId, shotId,
                             "blocker")).finding);
   return out;
 }

@@ -1,0 +1,61 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q02",
+    "character": null,
+    "subjectType": "character",
+    "subject": "7cceb35d-fced-485b-ad73-8d73a9b2e41e",
+    "intent": null,
+    "scene": "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+    "shot": null
+  },
+  "result": {
+    "target": "Q02",
+    "targetName": "Subject in context",
+    "findings": [
+      {
+        "severity": "ok",
+        "entity": "character_appearance_profile",
+        "message": "Does not apply: Ada Cade is named here, not seen — no look to design."
+      },
+      {
+        "severity": "ok",
+        "entity": "physical_character_profile",
+        "message": "Does not apply: Ada Cade is named here, not seen — no look to design."
+      },
+      {
+        "severity": "ok",
+        "entity": "vocal_profile",
+        "message": "Ada Cade has no voice baseline."
+      },
+      {
+        "severity": "ok",
+        "entity": "costume_scene",
+        "message": "Does not apply: Ada Cade is named here, not seen — no look to design."
+      },
+      {
+        "severity": "ok",
+        "entity": "relationship_state",
+        "message": "No relationship state in force — none has changed."
+      },
+      {
+        "severity": "ok",
+        "entity": "performance_state",
+        "message": "No performance state in force — baseline holds (by design)."
+      },
+      {
+        "severity": "ok",
+        "entity": "bundle",
+        "message": "Ada Cade: 1 visual_identity asset(s) in force (0 from overrides)."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 0,
+      "suggestion": 0,
+      "ok": 7
+    }
+  }
+}

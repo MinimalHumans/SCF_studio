@@ -227,7 +227,7 @@
         {
           "severity": "ok",
           "entity": "bundle",
-          "message": "Eleanor Cade: no motion assets resolve — no bundle/binding for this intent."
+          "message": "Eleanor Cade: no motion assets in force here — none bound, or every binding excluded at this position."
         }
       ],
       "counts": {
@@ -405,7 +405,7 @@
         {
           "severity": "ok",
           "entity": "bundle",
-          "message": "Marcus Cade: no motion assets resolve — no bundle/binding for this intent."
+          "message": "Marcus Cade: no motion assets in force here — none bound, or every binding excluded at this position."
         }
       ],
       "counts": {

@@ -500,7 +500,7 @@ reports and `SHA256SUMS`.
 
 | | Item | Notes |
 |---|---|---|
-| ◑ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. **Run 6 done 2026-10-16 against `spec-1.0-rc.1`: 4 critical, 13 major, 15 minor; rc.1 cannot be cut as 1.0.** 21 of 28 comparable results reproduced from the text alone, 15 of 15 negatives with three guesses. All addressed in **1.0-rc.2** (see below). **Run 7 done 2026-10-16 against `spec-1.0-rc.2`: 1 critical, 7 major, 13 minor.** 24 of 29 results from the text alone, 16 of 16 negatives, the fixture's report exact. Addressed in **1.0-rc.3**. **Run 8 done 2026-10-20 against `spec-1.0-rc.3`: 0 critical, 6 major, 14 minor.** 30 of 30 results, 16 of 16 negatives and the fixture's report from the text alone, all on the first run; the majors are two contradictions between MUSTs (§7.3/§4.5 ties, §0.3/§8.2 root mapping), an unstated finding grain for 37 codes, Q04's staging path, a wrong registry declaration and Q14's missing parameters. Addressed in **1.0-rc.4** on **schema 2.25**. **Run 9 done 2026-10-20 against `spec-1.0-rc.4`: 0 critical, 6 major, 19 minor.** Every published result (31 exact, 3 Q14 per §12.9), 16 of 16 negatives and the fixture's report from the text alone, no guess load-bearing on any artifact; all six majors are in cases nothing published asked about — Q14's narrowing (four), a span whose start scene is cut, a shot asked without or outside its scene. Addressed in **1.0-rc.5**, schema unchanged at 2.25. A lighter run 10 checks only what rc.5 changed. |
+| ◑ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. **Run 6 done 2026-10-16 against `spec-1.0-rc.1`: 4 critical, 13 major, 15 minor; rc.1 cannot be cut as 1.0.** 21 of 28 comparable results reproduced from the text alone, 15 of 15 negatives with three guesses. All addressed in **1.0-rc.2** (see below). **Run 7 done 2026-10-16 against `spec-1.0-rc.2`: 1 critical, 7 major, 13 minor.** 24 of 29 results from the text alone, 16 of 16 negatives, the fixture's report exact. Addressed in **1.0-rc.3**. **Run 8 done 2026-10-20 against `spec-1.0-rc.3`: 0 critical, 6 major, 14 minor.** 30 of 30 results, 16 of 16 negatives and the fixture's report from the text alone, all on the first run; the majors are two contradictions between MUSTs (§7.3/§4.5 ties, §0.3/§8.2 root mapping), an unstated finding grain for 37 codes, Q04's staging path, a wrong registry declaration and Q14's missing parameters. Addressed in **1.0-rc.4** on **schema 2.25**. **Run 9 done 2026-10-20 against `spec-1.0-rc.4`: 0 critical, 6 major, 19 minor.** Every published result (31 exact, 3 Q14 per §12.9), 16 of 16 negatives and the fixture's report from the text alone, no guess load-bearing on any artifact; all six majors are in cases nothing published asked about — Q14's narrowing (four), a span whose start scene is cut, a shot asked without or outside its scene. Addressed in **1.0-rc.5**, schema unchanged at 2.25. **Run 10 done 2026-10-20 against `spec-1.0-rc.5`: 0 critical, 4 major, 11 minor.** All 57 published artifacts reproduced from the text (32 exact results, 6 Q14 by §12.9's terms, 18 negatives, the fixture's report); all four majors are in Q14's rubric (§12.9.1), and fixing them changes which Q14 severities are permitted, so §11.5 makes it a minor change, not a 1.0.x patch. **Decided by the user 2026-10-20:** a small **1.0-rc.6** limited to Q14, then a short run 11 checking only Q14 and anything rc.6 touched, then cut 1.0. |
 | ✅ | D2. Fixture: the night kitchen | Scenes 10 and 19 resolve the **day** baseline because the night variant is autumn and they are winter (`narrative-workspaces.md` §11). **Decided (§A11): the rule was wrong** — §12.17 now ranks time of day first. **Done in §B8:** both resolve the night variant, and a test pins it. |
 | ✅ | D3. Rules stated and exercised by nothing | `junction.endpoint_absent`, `structure.section_mismatch`, §12.17's zero-score baseline, `varies`, a `status` that disagrees with `lifecycle_status`, act and sequence renumbering under `derived` (§4.3). **Done 2026-10-16 (spec 0.68), a row each:** negative cases `junction-endpoint-absent` and `section-mismatch`, each raising its finding alone; church and ridge location variants published as `Q02-church-scene16` (`varies` wins on the wildcard alone) and `Q02-ridge-scene21` (nothing agrees, the baseline with three mismatches); scenes 3, 12, 19 at `draft`, `locked`, `revised`, and 12B `locked` and `cut`. Renumbering under `derived` and `fixed` was already tested in `structureCommit.test.ts`; `stability.md` said otherwise and now does not. |
 | ✅ | D4. An unknown `line_type` raises no finding | §1.3.1 closes the vocabulary at fifteen; the column is free text and nothing reports a sixteenth. **Decided (§A12): `line.type_unknown`, severity error.** Done in §B8, with a negative case. |
@@ -736,7 +736,7 @@ in the tag command:
 
 1. ✅ Spec `1.0-rc.5`, schema 2.25: CHANGELOG, headers, every artifact
    re-blessed, manifest last.
-2. ○ Commit and push `main`. Then, with `<commit>` the hash
+2. ✅ Commit and push `main`. Then, with `<commit>` the hash
    `git rev-parse HEAD` prints for that pushed commit:
 
    ```sh
@@ -747,15 +747,73 @@ in the tag command:
 
    No schema tag: `schema-2.25` stays at `1c1aaca`, as do
    `spec-1.0-rc.4` there and `spec-1.0-rc.3` at `ff41afb`.
-3. ○ `check_pin.py --strict` green, then a lighter run 10 against
-   `spec-1.0-rc.5` that checks only what rc.5 changed.
+   *`spec-1.0-rc.5` at `2da5dc4`.*
+3. ✅ `check_pin.py --strict` green, then a lighter run 10 against
+   `spec-1.0-rc.5` that checks only what rc.5 changed. *Run 10,
+   2026-10-20: 0 critical, 4 major, 11 minor, all majors in Q14; an
+   rc.6 limited to Q14 is needed.*
+
+**1.0-rc.6 — from run 10, prepared 2026-10-20, scoped to Q14.**
+**Schema 2.25, unchanged**: the rubric is a spec-side artifact and
+`registry.json` did not move, so `schema-2.25` takes no new tag. Run 10
+reproduced every published artifact from the text; its four majors
+were two MUSTs in §12.9.1 disagreeing off the published positions.
+Report: `.claude/worktrees/bold-chatelet-e3ce53/reader-run-10-report.md`
+(outside git).
+
+- **M1** — a reference to `scene` or `shot` is a position, never a
+  route to a subject (§12.9.1). The reference already behaved so.
+- **M2** — a media step is one satisfied by `bundle` alone; Q13's step 1
+  gains `satisfiedBy: ["bundle"]`, so a binding excluded at the position
+  is a `blocker`. New case `Q14-Q13-windchime-scene12`.
+- **M3** — rubric member `appliesTo: "seen"` on Q02's appearance,
+  physical and costume steps and Q07's appearance step; §12.9 says a
+  character subject not seen at the position reports them as not
+  applying. `readiness.ts` checks presence. New case `Q14-Q02-ada-scene3`.
+- **M4** — Q02's media step carries `intentBySubjectType` (`environment`
+  for a location), as §12.16 says; the generator checks intents against
+  the registry. New case `Q14-Q02-kitchen-scene10` (a blocker: the
+  fixture has no `environment` bundle).
+- **Minors done** — m1 ("does not apply" restated), m2 (`entity_anchor`
+  step filtered to verified, unset counting as verified), m3 ("narrowed
+  as its target narrows"), m5 (Q14 parameters and `shot` for any
+  target), m9 (Q14 at a cut scene), m10 (Appendix A's eighteen cases,
+  conformance §5.3's list, Q08's `params`).
+- **Left, outside Q14 and not wording** — m4 (shot-keyed rows at an
+  empty position; a shot in no scene, §12.1.7), m6
+  (`sequence_act_mismatch` over cut scenes), m7 (a link's hidden `name`
+  in §6.4's comparison), m8 (a relationship to a cut character), m11 (a
+  dangling binding's trail entry). Listed in the CHANGELOG.
+- **Latent bug found on the way and fixed:** Q05's walker raised a
+  `suggestion` for absent vocal beats on a `recommended` step, outside
+  its permitted range. No published result changes.
+
+**rc.6 day — tag only AFTER the commit is pushed:**
+
+1. ✅ Spec `1.0-rc.6`, schema 2.25: CHANGELOG, headers, every artifact
+   re-blessed, manifest last.
+2. ○ Commit and push `main`. Then, with `<commit>` the hash
+   `git rev-parse --short HEAD` prints for that pushed commit:
+
+   ```sh
+   git tag -a spec-1.0-rc.6 -m "spec 1.0-rc.6" <commit>
+   git push origin spec-1.0-rc.6
+   py schema/check_pin.py --strict
+   ```
+
+   No schema tag: `schema-2.25` stays at `1c1aaca`, `spec-1.0-rc.5` at
+   `2da5dc4`.
+3. ○ `check_pin.py --strict` green, then a short run 11 against
+   `spec-1.0-rc.6` that checks only Q14 (§12.9, §12.9.1, the rubric,
+   every `Q14*` result) and anything else rc.6 touched. Then 1.0.
 
 **1.0 day — after D1, and after anything it finds is fixed:**
 
 1. ○ Spec **1.0**: CHANGELOG entry; §11.0 changed from "becomes binding
    at 1.0" to binding; headers.
 2. ○ If D1 forces a further registry change, a new schema version and
-   a regeneration; otherwise 2.25 (rc.4, unchanged in rc.5) stands.
+   a regeneration; otherwise 2.25 (rc.4, unchanged in rc.5 and rc.6)
+   stands.
 3. ○ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
 4. ○ 🔒 Annotated tag `spec-1.0`, pushed — and, only if step 2 made a
    new schema version, its `schema-X.Y` on the same commit. No existing

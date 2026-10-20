@@ -11,7 +11,8 @@
  * Requirement levels:
  *   required     — absence blocks the query's consumer (Q14: blocker)
  *   recommended  — the query runs but the answer is impoverished (warning)
- *   optional     — enriches the answer (suggestion when absent)
+ *   optional     — enriches the answer (ok when absent, or a suggestion
+ *                  where the position makes the absence notable)
  *
  * Only queries with a defined generative/pre-flight consumer are walkable;
  * analytic queries (Q01, Q03, Q04, Q09–Q12, Q15) read whatever exists and
@@ -58,10 +59,28 @@ export interface QueryStep {
   /**
    * For a media step: the asset intent whose bundle must resolve. The
    * entity is `bundle` either way; this says which one. A step on
-   * `bundle` with no intent (Q13's own) takes the target's `intent`
-   * parameter.
+   * `bundle` with neither this nor `intentBySubjectType` (Q13's own)
+   * takes the target's `intent` parameter.
    */
   intent?: string;
+  /**
+   * For a media step whose intent depends on the kind of subject asked
+   * about: subject kind → intent. Q02's is the case it exists for — the
+   * Q13 answer Q02 nests asks a location for `environment` and any other
+   * subject for `visual_identity` (§12.16), and a single `intent` said
+   * `visual_identity` for all three, so every location was a blocker
+   * the text said it was not. Present instead of `intent`, never with it.
+   */
+  intentBySubjectType?: Record<string, string>;
+  /**
+   * `"seen"` on a step about how characters look (§12.9): it is assessed
+   * only for characters SEEN at the position (§2.4.1, §4.6). A target
+   * with a character subject not seen there — heard, named, or not there
+   * at all — reports the step as not applying; a target with no subject
+   * (Q07) assesses it for each character seen. Until rc.6 only Q07's
+   * `purpose` said so, and a reader had to guess for Q02.
+   */
+  appliesTo?: "seen";
   /**
    * Human-readable, DERIVED from the fields above. Present so a
    * renderer has something to print; never the machine-readable part.
@@ -83,8 +102,13 @@ export interface QueryPath {
 
 /** The display label, composed rather than authored. */
 function labelFor(entities: string[], filter?: QueryStep["filter"],
-                  intent?: string): string {
+                  intent?: string,
+                  intentBySubjectType?: Record<string, string>): string {
   if (intent !== undefined) return `media: ${intent}`;
+  if (intentBySubjectType !== undefined) {
+    return "media: " + Object.entries(intentBySubjectType)
+      .map(([kind, i]) => `${kind}=${i}`).join(", ");
+  }
   const base = entities.join(" + ");
   return filter === undefined
     ? base : `${base} (${filter.values.join("/")})`;
@@ -92,7 +116,8 @@ function labelFor(entities: string[], filter?: QueryStep["filter"],
 
 const step = (entities: string[], requirement: Requirement, purpose: string,
               extra: { filter?: QueryStep["filter"]; intent?: string;
-                       satisfiedBy?: string[] } = {},
+                       intentBySubjectType?: Record<string, string>;
+                       satisfiedBy?: string[]; appliesTo?: "seen" } = {},
              ): QueryStep => ({
   entities,
   ...(extra.satisfiedBy === undefined
@@ -101,7 +126,11 @@ const step = (entities: string[], requirement: Requirement, purpose: string,
   purpose,
   ...(extra.filter === undefined ? {} : { filter: extra.filter }),
   ...(extra.intent === undefined ? {} : { intent: extra.intent }),
-  label: labelFor(entities, extra.filter, extra.intent),
+  ...(extra.intentBySubjectType === undefined
+    ? {} : { intentBySubjectType: extra.intentBySubjectType }),
+  ...(extra.appliesTo === undefined ? {} : { appliesTo: extra.appliesTo }),
+  label: labelFor(entities, extra.filter, extra.intent,
+                  extra.intentBySubjectType),
 });
 
 export const QUERY_PATHS: Record<string, QueryPath> = {
@@ -112,18 +141,21 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
                  "character steps apply to a character subject only.",
     steps: [
       step(["character_appearance_profile"], "recommended",
-           "static appearance baseline"),
+           "static appearance baseline", { appliesTo: "seen" }),
       step(["physical_character_profile"], "recommended",
-           "movement/face baseline"),
+           "movement/face baseline", { appliesTo: "seen" }),
       step(["vocal_profile"], "optional", "voice baseline"),
       step(["costume", "costume_scene"], "recommended", "what they wear here",
-           { satisfiedBy: ["costume_scene"] }),
+           { satisfiedBy: ["costume_scene"], appliesTo: "seen" }),
       step(["relationship_state"], "optional",
            "where their relationships stand"),
       step(["performance_state"], "optional",
            "scene-scoped modulation (absence = baseline holds)"),
+      // Per subject kind, as the Q13 answer Q02 nests asks (§12.16).
       step(["bundle"], "required", "assets to condition on",
-           { intent: "visual_identity" }),
+           { intentBySubjectType: { character: "visual_identity",
+                                    prop: "visual_identity",
+                                    location: "environment" } }),
     ],
   },
   Q05: {
@@ -182,12 +214,13 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
       step(["lighting_design"], "recommended", "scene/shot lighting"),
       step(["shot_design"], "optional", "shot-level composition"),
       step(["character_appearance_profile"], "recommended",
-           "each character seen at the position (§2.4.1, §4.6)"),
+           "each character seen at the position (§2.4.1, §4.6)",
+           { appliesTo: "seen" }),
     ],
   },
   Q08: {
     name: "Soundscape",
-    params: ["scene_id"],
+    params: ["scene"],
     description: "What this scene sounds like.",
     steps: [
       step(["sonic_identity"], "required", "the sound world's root"),
@@ -203,10 +236,17 @@ export const QUERY_PATHS: Record<string, QueryPath> = {
     params: ["subjectType", "subject", "intent", "scene?", "shot?"],
     description: "Assets in force for a subject and intent.",
     steps: [
+      // A media step: only the subject's Q13 references satisfy it. The
+      // bindings are context — a binding that exists but is excluded at
+      // the position resolves nothing, and without `satisfiedBy` the
+      // multi-entity rule called it met (§12.9.1).
       step(["bundle", "character_asset_binding", "costume_asset_binding",
            "location_asset_binding", "prop_asset_binding"], "required",
-           "something to resolve"),
-      step(["entity_anchor"], "recommended", "identity pinning"),
+           "something to resolve", { satisfiedBy: ["bundle"] }),
+      // Verified only, as Q13 reads anchors (§12.8): an unset status
+      // counts as verified, and a candidate pins nothing.
+      step(["entity_anchor"], "recommended", "identity pinning",
+           { filter: { field: "canonical_status", values: ["verified"] } }),
       step(["character_shot_override", "location_shot_override",
            "prop_shot_override"], "optional", "shot-specific swaps"),
     ],
