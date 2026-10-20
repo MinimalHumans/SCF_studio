@@ -88,10 +88,25 @@ describe("scripts/start.mjs — scf-mcp from source, no build", () => {
       jsonrpc: "2.0", method: "notifications/initialized" })}\n`);
   }, SLOW);
 
-  afterAll(() => {
-    child.kill();
-    rmSync(scratch, { recursive: true, force: true });
-  });
+  afterAll(async () => {
+    // End the session the way a client does, by closing stdin. The
+    // launcher runs the server as its own child with this folder as its
+    // working directory, and on Windows `kill()` stops the launcher but
+    // not that child, which keeps the folder open (EPERM on removal).
+    // Closing stdin lets the server exit and the launcher follow it; the
+    // kill is only the fallback if it does not.
+    if (child.exitCode === null && child.signalCode === null) {
+      const gone = new Promise<void>((resolve) => {
+        child.once("exit", () => resolve());
+      });
+      child.stdin.end();
+      const timer = setTimeout(() => child.kill(), 5000);
+      await gone;
+      clearTimeout(timer);
+    }
+    rmSync(scratch, { recursive: true, force: true,
+                      maxRetries: 10, retryDelay: 100 });
+  }, SLOW);
 
   test("starts, and lists the tool surface", async () => {
     const reply = await send("tools/list");
