@@ -183,6 +183,7 @@ pub fn run() {
                 show(app);
             }
         }))
+        .plugin(tauri_plugin_opener::init())
         .manage(databases)
         .manage(socket)
         .manage(relay.clone())

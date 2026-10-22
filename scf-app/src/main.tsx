@@ -27,6 +27,7 @@ import "./styles.css";
 // In the desktop app the window also serves agents' MCP pipes.
 if ("__TAURI_INTERNALS__" in window) {
   void import("./mcp/windowMcp.ts").then((m) => m.serveMcp());
+  void import("./host/externalLinks.ts").then((m) => m.routeExternalLinks());
 }
 
 const rootEl = document.getElementById("root");

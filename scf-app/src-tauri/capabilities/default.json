@@ -1,7 +1,13 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The editor window. It runs the host and the MCP itself on the app's own commands, so it needs no plugin permissions.",
+  "description": "The editor window. It runs the host and the MCP itself on the app's own commands, so it needs no plugin permissions beyond opening links in the system browser.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://*" }, { "url": "http://*" }, { "url": "mailto:*" }]
+    }
+  ]
 }
