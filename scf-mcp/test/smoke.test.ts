@@ -8,8 +8,8 @@
  */
 
 import {
-  copyFileSync, existsSync, mkdtempSync, readdirSync, readlinkSync,
-  renameSync, rmSync, unlinkSync,
+  copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync,
+  readlinkSync, renameSync, rmSync, unlinkSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -83,6 +83,29 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(envelope.result.findings.map((f: { entity: string }) => f.entity)
       .sort()).toEqual(
         ["bundle", "character_shot_override", "entity_anchor"]);
+  });
+
+  test("readiness takes its target's parameters: Q02 for a prop " +
+      "subject", async () => {
+    // Spec §12.9: Q02 is assessed for a subject of any kind, and a step
+    // that does not apply to a prop is reported ok. The published worked
+    // example pins the whole result.
+    const expected = JSON.parse(readFileSync(join(HERE, "..", "..",
+      "fixtures", "expectations", "Q14-Q02-locket-scene25.result.json"),
+      "utf8"));
+    const result = await server.send("tools/call", {
+      name: "readiness", arguments: {
+        queryId: "Q02", params: {
+          subjectType: expected.parameters.subjectType,
+          subject: expected.parameters.subject,
+          scene: expected.parameters.scene,
+        },
+      },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    const envelope = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(envelope.parameters).toEqual(expected.parameters);
+    expect(envelope.result).toEqual(expected.result);
   });
 
   test("subject_in_context (Q02) resolves subjectType/subject/scene by " +
