@@ -90,15 +90,18 @@ describe("the prose rendering agrees with the JSON", () => {
     const text = renderReport(report);
     expect(text).toContain("hollow_creek.scf");
 
-    // Nothing is WRONG with it.
+    // Nothing is WRONG with it. Its one warning is the absolute
+    // identifier it carries on purpose (§8.2), which is non-portable
+    // and not an error.
     expect(report.counts.error).toBe(0);
-    expect(report.counts.warning).toBe(0);
+    expect(report.findings.filter((f) => f.severity === "warning")
+      .map((f) => f.code)).toEqual(["asset.identifier_absolute"]);
     expect(report.clean).toBe(true);
 
     // And something is unfinished, said plainly.
     expect(report.findings.map((f) => f.code))
       .toContain("structure.scene_not_in_script");
-    expect(text).toContain("no story position");
+    expect(text).toContain("has no heading in the screenplay");
   });
 
   test("a file with no findings at all says so without listing nothing",

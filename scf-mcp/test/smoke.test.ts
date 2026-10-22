@@ -64,6 +64,27 @@ describe("scf-mcp server — a default project set at startup", () => {
     expect(envelope.result.scene.fields.scene_number).toBe("12");
   });
 
+  test("readiness takes its target's parameters: Q13 by subject and " +
+      "intent", async () => {
+    // Spec §12.9: without subjectType, subject and intent, Q14 could not
+    // be asked about Q13 at all, and the tool silently dropped them.
+    const result = await server.send("tools/call", {
+      name: "readiness", arguments: {
+        queryId: "Q13", params: {
+          subjectType: "character", subject: ELEANOR,
+          intent: "visual_identity", scene: SCENE12, shot: SHOT1204,
+        },
+      },
+    }) as { content: Array<{ text: string }>; isError?: boolean };
+    expect(result.isError).toBeUndefined();
+    const envelope = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(envelope.parameters.subject).toBe(ELEANOR);
+    expect(envelope.parameters.intent).toBe("visual_identity");
+    expect(envelope.result.findings.map((f: { entity: string }) => f.entity)
+      .sort()).toEqual(
+        ["bundle", "character_shot_override", "entity_anchor"]);
+  });
+
   test("subject_in_context (Q02) resolves subjectType/subject/scene by " +
       "name, not a generic bag", async () => {
     const result = await server.send("tools/call", {

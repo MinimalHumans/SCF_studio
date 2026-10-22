@@ -104,6 +104,7 @@ export type FindingCode =
   // Spans — spec §5.4, §5.5
   | "structure.boundary_absent"
   | "structure.boundary_dangling"
+  | "structure.boundary_cut"
   | "structure.boundary_shared"
   | "structure.sequence_act_mismatch"
   | "structure.boundary_unnumbered"
@@ -216,7 +217,7 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
   },
   "identity.successor_without_timestamp": {
     severity: "info",
-    title: "Successor row carries no timestamp",
+    title: "Row names a successor and carries no superseded_at",
     spec: "§6.1",
   },
   "identity.self_parent": {
@@ -300,6 +301,11 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
     title: "Span starts at a scene that is not present",
     spec: "§5.5",
   },
+  "structure.boundary_cut": {
+    severity: "warning",
+    title: "Span starts at a cut scene",
+    spec: "§5.5",
+  },
   "structure.boundary_shared": {
     severity: "warning",
     title: "Two spans of the same kind start at one scene",
@@ -312,7 +318,7 @@ export const FINDING_CATALOG: Record<FindingCode, FindingSpec> = {
   },
   "structure.boundary_unnumbered": {
     severity: "info",
-    title: "Span carries no number",
+    title: "Span starts at an unnumbered scene",
     spec: "§5.5",
   },
   "structure.scenes_before_first_act": {
@@ -472,11 +478,16 @@ function make(code: FindingCode, message: string,
  * id. Two runs over one file must produce byte-identical output or the
  * report cannot be diffed, which is most of what a validator is for.
  */
+// Code-point order, as §9.4 states: a locale's collation is not a
+// property of the file.
+const byCodePoint = (a: string, b: string): number =>
+  a < b ? -1 : a > b ? 1 : 0;
+
 export function sortFindings(findings: Finding[]): Finding[] {
   return [...findings].sort((a, b) =>
     FINDING_SEVERITY_RANK[a.severity] - FINDING_SEVERITY_RANK[b.severity] ||
-    a.code.localeCompare(b.code) ||
-    (a.table ?? "").localeCompare(b.table ?? "") ||
+    byCodePoint(a.code, b.code) ||
+    byCodePoint(a.table ?? "", b.table ?? "") ||
     (a.rowIds[0] ?? 0) - (b.rowIds[0] ?? 0));
 }
 
@@ -691,9 +702,35 @@ export async function collectFindings(
   for (const f of structureFindings(structure, acts, sequences, hint)) {
     const code = STRUCTURE_CODES[f.code];
     if (code === undefined) continue;
+    const rowIds = f.rowIds ?? (f.rowId === null ? [] : [f.rowId]);
     out.push(make(code, f.message, {
-      table: f.entity, rowIds: f.rowId === null ? [] : [f.rowId],
+      table: f.entity, rowIds, count: Math.max(1, rowIds.length),
     }));
+  }
+
+  // A span whose start scene is CUT. The derivation above runs over
+  // every scene, cut ones included (§9.5), so it sees the span anchored
+  // and says nothing; but a cut scene takes part in no span (§6.6.1),
+  // so in every answer about the film the span covers nothing and its
+  // scenes belong to the span before it (§5.5). That re-parenting is
+  // silent unless this says so. A cut span is not in the film either,
+  // and is not reported.
+  const cutScenes = new Set(scenes
+    .filter((s) => s["lifecycle_status"] === "cut")
+    .map((s) => Number(s["id"])));
+  for (const [rowsOf, table] of [[acts, "act"],
+                                 [sequences, "sequence"]] as const) {
+    for (const r of rowsOf) {
+      if (r["lifecycle_status"] === "cut") continue;
+      const start = r["start_scene_id"];
+      if (start === null || start === undefined ||
+          !cutScenes.has(Number(start))) continue;
+      out.push(make("structure.boundary_cut",
+        `${String(r["name"] ?? table)} starts at a cut scene, so it ` +
+        "covers no scene and its scenes stay with the span before it " +
+        "(§5.5). Move its start to a scene in the film.",
+        { table, rowIds: [Number(r["id"])] }));
+    }
   }
 
   // --- bound section lines (§1.3.1) ---

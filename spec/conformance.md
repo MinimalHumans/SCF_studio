@@ -4,7 +4,7 @@
 Companion to [scf-spec.md](scf-spec.md). This document defines what it
 means to claim SCF support, so that the claim carries information.
 
-**Status: release candidate (specification 1.0-rc.3).** Every section is specified. What is known to be
+**Status: release candidate (specification 1.0-rc.7).** Every section is specified. What is known to be
 unfinished is tracked in [stability.md](stability.md); the one check the
 validator cannot yet make is named in §4.
 
@@ -61,8 +61,10 @@ A conforming Reader MUST NOT:
 - reject a file whose schema version is higher than it knows (§11.2).
 
 **Assets are optional for this role.** A Reader that does not resolve
-assets MUST report every asset as `unaddressed` (§8.3) rather than
-`missing`.
+assets MUST report every asset with a rooted identifier as
+`unaddressed` (§8.3) rather than `missing`. An absolute identifier, or
+one containing `..`, is `out-of-root` all the same: that state is
+decided by the identifier, and needs no resolution to report (§8.2).
 
 **`unmaterialised` is not required of any role.** Detecting a cloud
 placeholder is a property of the environment, not of the format (§8.3),
@@ -180,7 +182,9 @@ Its scope, in order of value:
    `user_version` (§1.2);
 2. tables and columns present that the registry does not define — a
    report, not an error (§10.1);
-3. dangling references;
+3. dangling references where a code names them — a relationship
+   endpoint (§6.5), a span boundary (§5.5), a line anchor (§3.5); a
+   reference column naming a missing row has no general code;
 4. duplicate natural keys, and whether the duplicates agree (§6.4);
 5. relationship findings, all seven cases (§6.5);
 6. structural findings — spans with no boundary, boundaries on deleted
@@ -223,7 +227,7 @@ tell it has not been designed.
 
 Every artifact this section names is published at the specification
 version's tag and checksummed in `SHA256SUMS`. Fetch them from
-`spec-<version>` — for this document, `spec-1.0-rc.3` — never from
+`spec-<version>` — for this document, `spec-1.0-rc.7` — never from
 `main`; [ARTIFACTS.md](ARTIFACTS.md) gives each file's address, and
 which files the schema tag addresses as well.
 
@@ -237,7 +241,8 @@ suites and MUST NOT change.
   number.
 - **Screenplay order, scene-number order and row-id order are three
   DIFFERENT orders**, and MUST stay that way. `12A` sits mid-script with
-  a higher row id than the scenes either side of it; `16` follows `19` in the script and keeps its
+  a higher row id than the active scenes either side of it — 12 and 19
+  — though not than the cut `12B` just before it; `16` follows `19` in the script and keeps its
   number, which is legal because the project is `fixed` (§4.3). Until
   0.17 the three coincided, and a reader ordering by `scene_number`
   alone — the one thing §4.1 forbids — passed every blessed expectation.
@@ -248,6 +253,17 @@ suites and MUST NOT change.
   (§6.6.1). Adding a cut row that nothing may notice is a stronger
   statement than having no cut rows at all — and it is why scene 12's
   pin below permits a cut row while permitting nothing else.
+- **A cut character, Deputy Rourke, is linked into scenes 12 and 19 and
+  carries the Forgiveness theme** through an active connection. He is
+  in no answer: not in the published `Q04`'s cast, not in `Q03` at 19,
+  and his connection is not among `Q10`'s carriers, nor counted on its
+  spine (§6.6.1, §12.11). Before 1.0-rc.5 the fixture's only cut rows
+  were reached by nothing a published result depended on, so a reader
+  that ignored cut endpoints reproduced every result; one that does now
+  fails three. Uncutting him MUST change those three.
+- **A tone marker is keyed to a sequence alone** — "Held breath", on
+  The Reckoning, which holds scene 12 — so the published `Q11` and
+  `Q04` show that a row keyed by its sequence is at no scene (§12.13).
 - **Twelve scenes carry action; scene `11` is a slugline only.** An SCF
   is legitimately an outline or a finished screenplay, and a conforming
   reader meets both in one file. Before 0.17 the fixture had no body
@@ -261,10 +277,17 @@ suites and MUST NOT change.
   ACTIVE may be added to it. A **cut** row may be, precisely because
   §6.6.1 requires it to change nothing: the pin and the cut row test
   each other.
-- **Six assets have no file behind them, on purpose.** The costume
-  `.zip`, two `.wav`s, the two `.exr` plates and the locket `.glb` are the
+- **One asset's identifier is absolute, on purpose.** The locket's
+  engraving macro sits on an art department drive, so with no root
+  mapped its reference is `out-of-root` beside the locket's `unaddressed`
+  ones (§8.3), as the published `Q02-locket-scene25` shows, and the
+  fixture's report carries its one warning, `asset.identifier_absolute`.
+  Rooting it removes the only published `out-of-root`.
+- **Seven assets have no file behind them, on purpose.** The costume
+  `.zip`, two `.wav`s, the two `.exr` plates, the locket `.glb` and the
+  absolute `.tif` are the
   only non-`png`/`mp4` entries in an otherwise real folder tree, and
-  they are what keeps `zip`, `exr` and `glb` in the derived format set,
+  they are what keeps `zip`, `exr`, `glb` and `tif` in the derived format set,
   the `sound/` folder in the path tree, and something in the file that
   a browser cannot show. Tidying them away as fictional breaks three
   suites and removes the demonstration that a real project is not all
@@ -293,7 +316,7 @@ test an arbitrary file, which is what §4 is for.
 
 ### 5.3 Negative fixtures
 
-Fifteen cases in `fixtures/negative/`, each a minimal database plus
+Eighteen cases in `fixtures/negative/`, each a minimal database plus
 exactly the damage its name describes, with a blessed report beside it.
 
 Minimal on purpose: a case that trips three findings tells you nothing
@@ -319,9 +342,12 @@ Covered: missing, malformed and duplicate uuids; a relationship endpoint
 that is absent, a contradictory pair, and one with no directionality; a
 span boundary on a scene that is not present; an asset identifier that
 escapes its root and one that is absolute; a bundle no binding reaches;
-an unknown table; an unstamped header; a screenplay line whose
+two orphaned assets, which are one finding with `count` 2 (§9.5's
+grain); an unknown table; an unstamped header; a screenplay line whose
 `line_type` is outside the published set (`line.type_unknown`); a link
-with a missing end (`junction.endpoint_absent`); and a section line
+with a missing end (`junction.endpoint_absent`); a link whose key
+columns are null, which compare equal (`junction.duplicate_key`); a span
+whose start scene is cut (`structure.boundary_cut`); and a section line
 bound to an act renamed since (`structure.section_mismatch`).
 
 ### 5.4 The canonical query expectations
@@ -394,8 +420,9 @@ are runnable, which is the whole mechanism.
 
 **Reader.** Against `fixtures/hollow_creek.scf`:
 
-1. `scf-check` the fixture. It MUST exit 0, reporting findings whose
-   codes and severities come from
+1. Run your validator over the fixture — for the reference, `scf-check`.
+   It MUST report no `error` finding (`scf-check` exits 0), its findings'
+   codes and severities MUST come from
    [`finding-catalog.json`](finding-catalog.json), and its report MUST
    match [`hollow_creek.report.json`](../fixtures/hollow_creek.report.json)
    as step 3 compares a report.
@@ -405,11 +432,14 @@ are runnable, which is the whole mechanism.
    `<Q>-<case>.result.json`, as JSON values (§12.1.6). **Two members are
    prose and are compared as present strings, not by content**: a
    reference's `detail` and a trail entry's `excluded.reason` (§12.8);
-   both are null in the same places. Q14 is compared as §12.9 says. The
+   both are null in the same places. No other member is prose: Q04's
+   `detail` is a list of projected rows and is compared as one. Q14 is compared as §12.9 says. The
    rendered markdown is **not** a contract for any query.
 3. Build the negative fixtures from
    [`CASES.json`](../fixtures/negative/CASES.json) — an empty conforming
-   database per `scf-schema.sql`, then each case's statements in order —
+   database per `scf-schema.sql`, **plus the header stamps of spec §1.2
+   and the `_scf_meta` row `schema_version`**, then each case's
+   statements in order —
    and validate each. Compare each finding of its blessed report by
    `code`, `severity`, `table`, `count` and `rowIds` (spec §9.5); its
    `message`, `title` and `spec` are for people and are not compared.
@@ -451,11 +481,14 @@ your implementation behaved as described — and a reader can check.
 
 | Implementation | Role claimed | Basis |
 |---|---|---|
-| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all fifteen negative fixtures report as blessed. |
+| `scf-core` | Reader | The canonical and readiness suites pass against the fixture; `scf-check` exits 0 on it; all eighteen negative fixtures report as blessed. |
 | `scf-app` | Editor | The app suite passes, including the open→edit→save round trip and third-party content preservation across repeated cycles. |
 | — | Writer | No independent implementation exists. |
 
-There is no second implementation. Until there is, every rule in the
+There is no second **maintained** implementation. An independent one
+has been written from the text for every reader run, by people without
+the reference code (eleven so far, `docs/release-checklist.md` §D1), and
+none is kept current. Until one is, every rule in the
 specification is guaranteed only to be implementable in the way it was
 already implemented, which is the weakest form of that guarantee — and
 the reason §6 exists in a form a stranger could actually follow.

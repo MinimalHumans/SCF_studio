@@ -1,0 +1,41 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q13",
+    "character": null,
+    "subjectType": "costume",
+    "subject": "ec9d9eae-79f4-4b84-be16-c00f24d37b6f",
+    "intent": "visual_identity",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": null
+  },
+  "result": {
+    "target": "Q13",
+    "targetName": "Media resolution",
+    "findings": [
+      {
+        "severity": "ok",
+        "entity": "bundle",
+        "message": "Ada's shawl: 1 visual_identity asset(s) in force (0 from overrides)."
+      },
+      {
+        "severity": "ok",
+        "entity": "entity_anchor",
+        "message": "Does not apply to a costume — an anchor's subject is a character, prop or location."
+      },
+      {
+        "severity": "ok",
+        "entity": "character_shot_override",
+        "message": "Does not apply to a costume — no shot override names one."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 0,
+      "suggestion": 0,
+      "ok": 3
+    }
+  }
+}

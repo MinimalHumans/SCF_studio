@@ -11,7 +11,7 @@ it found is one a generator already knows.
 So this check does not ban numbers. It compares them. For each quantity
 the generated files can state — entities, link entities, open fields,
 finding codes, exported names, manifest files, line types, canonical
-queries — it finds a number placed next to that noun in the reading
+queries, negative cases — it finds a number placed next to that noun in the reading
 documents and fails if the number is not the true one.
 
 What it deliberately leaves alone:
@@ -74,6 +74,7 @@ def truths() -> dict[str, int]:
         "manifest files": sum(1 for line in sums.splitlines() if line.strip()),
         "line types": len(lines),
         "canonical queries": 16,  # §12: fixed by the specification, Q00–Q15
+        "negative cases": load("fixtures/negative/CASES.json")["caseCount"],
         **{f"tier {t} entities": sum(1 for e in entities if e["tier"] == t)
            for t in range(7)},
     }
@@ -123,6 +124,11 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
                 re.I)),
     ("manifest files", re.compile(rf"\b{NUMBER}\s+(?:files|artifacts)\b", re.I)),
     ("line types", re.compile(rf"\b{NUMBER}\s+line types\b", re.I)),
+    ("negative cases",
+     re.compile(rf"\b{NUMBER}\s+(?:negative|deliberately-broken)\s+"
+                rf"(?:cases|fixtures)\b", re.I)),
+    ("negative cases",
+     re.compile(rf"\b{NUMBER}\s+cases in `fixtures/negative/`", re.I)),
     # "one table out of ninety-nine": the tables are the entities.
     ("entities", re.compile(rf"\btables?\s+out of\s+(?:the\s+)?{NUMBER}\b",
                             re.I)),

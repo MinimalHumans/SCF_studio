@@ -1,0 +1,41 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q13",
+    "character": null,
+    "subjectType": "character",
+    "subject": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "intent": "visual_identity",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
+  },
+  "result": {
+    "target": "Q13",
+    "targetName": "Media resolution",
+    "findings": [
+      {
+        "severity": "ok",
+        "entity": "bundle",
+        "message": "Eleanor Cade: 7 visual_identity asset(s) in force (1 from overrides)."
+      },
+      {
+        "severity": "ok",
+        "entity": "entity_anchor",
+        "message": "1 verified anchor(s)."
+      },
+      {
+        "severity": "ok",
+        "entity": "character_shot_override",
+        "message": "1 asset(s) from a shot override."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 0,
+      "suggestion": 0,
+      "ok": 3
+    }
+  }
+}

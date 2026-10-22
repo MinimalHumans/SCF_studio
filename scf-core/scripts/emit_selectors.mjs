@@ -83,6 +83,10 @@ const SELECTORS = {
     sql: "SELECT id, uuid FROM shot WHERE shot_number = '3B'",
     note: "A shot in scene 3.",
   },
+  shot12A: {
+    sql: "SELECT id, uuid FROM shot WHERE shot_number = '12A'",
+    note: "A shot in scene 12 with no lighting row of its own.",
+  },
   scene10: {
     sql: "SELECT id, uuid FROM scene WHERE scene_number = '10'",
     note: "A winter night in the kitchen: §12.17 ranks time of day first, "
@@ -117,6 +121,25 @@ const SELECTORS = {
     sql: "SELECT id, uuid FROM location WHERE name = 'Ridge Forest'",
     note: "A location whose variants all disagree with scene 21.",
   },
+  scene7: {
+    sql: "SELECT id, uuid FROM scene WHERE scene_number = '7'",
+    note: "Eleanor is here, a relationship state is in force and she "
+        + "wears nothing assigned: Q02's costume step is unmet (§12.9.1).",
+  },
+  shawl: {
+    sql: "SELECT id, uuid FROM costume WHERE name = 'Ada''s shawl'",
+    note: "The costume with a binding: a Q13 subject no anchor can name.",
+  },
+  ada: {
+    sql: "SELECT id, uuid FROM character WHERE name LIKE '%Ada%'",
+    note: "Mentioned at scene 3, not seen: Q02's look steps do not apply "
+        + "to her there (§12.9).",
+  },
+  windchime: {
+    sql: "SELECT id, uuid FROM prop WHERE name = 'Brass wind chime'",
+    note: "A prop whose one visual binding is scene-ranged from scene "
+        + "24: excluded earlier, so Q13 resolves nothing (§12.9.1).",
+  },
   plateV2: {
     sql: "SELECT id, uuid FROM asset "
        + "WHERE name = 'kitchen_night_plate_v2.exr'",
@@ -144,6 +167,8 @@ const PARAMETERS = {
          intent: { literal: "visual_identity" },
          scene: { selector: "scene12" }, shot: { selector: "shot1204" } },
   Q14: { target: { literal: "Q05" }, character: { selector: "eleanor" },
+         subjectType: { literal: null }, subject: { literal: null },
+         intent: { literal: null },
          scene: { selector: "scene12" }, shot: { literal: null } },
   Q15: { entityType: { literal: "scene" }, row: { selector: "scene12" } },
   // Per-case results: where one position cannot show a member at all.
@@ -166,6 +191,8 @@ const PARAMETERS = {
   "Q04-scene25": { scene: { selector: "scene25" } },
   "Q05-scene19": { character: { selector: "eleanor" },
     scene: { selector: "scene19" } },
+  "Q07-shot12A": { scene: { selector: "scene12" },
+    shot: { selector: "shot12A" } },
   "Q12-scene24-25": { from: { selector: "scene24" },
     to: { selector: "scene25" } },
   "Q12-scene25-24": { from: { selector: "scene25" },
@@ -178,6 +205,47 @@ const PARAMETERS = {
     scene: { selector: "scene25" }, shot: { literal: null } },
   "Q15-plate-v2": { entityType: { literal: "asset" },
     row: { selector: "plateV2" } },
+  "Q07-scene3": { scene: { selector: "scene3" }, shot: { literal: null } },
+  "Q04-scene21": { scene: { selector: "scene21" } },
+  "Q14-Q02-locket-scene25": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "prop" },
+    subject: { selector: "locket" }, intent: { literal: null },
+    scene: { selector: "scene25" }, shot: { literal: null } },
+  "Q14-Q13-eleanor-shot1204": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "eleanor" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { selector: "shot1204" } },
+  "Q13-shot1204": { subjectType: { literal: "character" },
+    subject: { selector: "eleanor" }, intent: { literal: "visual_identity" },
+    scene: { literal: null }, shot: { selector: "shot1204" } },
+  "Q14-Q02-eleanor-scene7": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "eleanor" }, intent: { literal: null },
+    scene: { selector: "scene7" }, shot: { literal: null } },
+  "Q14-Q07-shot12A": { target: { literal: "Q07" },
+    character: { literal: null }, subjectType: { literal: null },
+    subject: { literal: null }, intent: { literal: null },
+    scene: { selector: "scene12" }, shot: { selector: "shot12A" } },
+  "Q14-Q13-shawl-scene12": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "costume" },
+    subject: { selector: "shawl" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { literal: null } },
+  "Q14-Q02-kitchen-scene10": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "location" },
+    subject: { selector: "kitchen" }, intent: { literal: null },
+    scene: { selector: "scene10" }, shot: { literal: null } },
+  "Q14-Q13-windchime-scene12": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "prop" },
+    subject: { selector: "windchime" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { literal: null } },
+  "Q14-Q02-ada-scene3": { target: { literal: "Q02" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "ada" }, intent: { literal: null },
+    scene: { selector: "scene3" }, shot: { literal: null } },
+  "Q14-Q13-marcus-scene12": { target: { literal: "Q13" },
+    character: { literal: null }, subjectType: { literal: "character" },
+    subject: { selector: "marcus" }, intent: { literal: "visual_identity" },
+    scene: { selector: "scene12" }, shot: { literal: null } },
 };
 
 // ── Resolve, and check every selector actually matches ───────────────

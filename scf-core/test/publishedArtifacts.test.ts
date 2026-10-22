@@ -94,6 +94,7 @@ interface RubricDoc {
       label: string;
       filter?: { field: string; values: string[] };
       intent?: string;
+      intentBySubjectType?: Record<string, string>;
     }>;
   }>;
 }
@@ -169,7 +170,7 @@ describe("the published readiness rubrics (§12.9.1)", () => {
       for (const step of q.steps) {
         if (step.label.includes("(")) expect(step.filter).toBeDefined();
         if (step.label.startsWith("media:")) {
-          expect(step.intent).toBeDefined();
+          expect(step.intent ?? step.intentBySubjectType).toBeDefined();
         }
       }
     }
@@ -197,7 +198,7 @@ const cases = read("../../fixtures/negative/CASES.json") as {
 describe("the published negative-fixture recipes", () => {
   test("cover every case", () => {
     expect(cases.caseCount).toBe(cases.cases.length);
-    expect(cases.caseCount).toBe(16);
+    expect(cases.caseCount).toBe(18);
   });
 
   test("each case carries statements a third party could replay", () => {

@@ -2,7 +2,7 @@
 
 # Entity reference
 
-Schema **2.24** — **106 entities**.
+Schema **2.25** — **106 entities**.
 
 **Generated from `registry.json`. Not normative, and not hand-edited.**
 `spec/scf-spec.md` states the rules; the registry states the field set.
@@ -1586,7 +1586,7 @@ Known-good single frame, audio segment, or motion sample marked as canonical ref
 | `name` | text |  |  |
 | `subject_type` | select | **yes** | one of `character`, `prop`, `location`. Hard closed enum. Tools switch on this exhaustively. Distinct from the open-polymorphism entity_type used elsewhere. |
 | `subject_id` | integer | **yes** | Polymorphic reference into the table named by subject_type. |
-| `subject_variant_id` | integer |  | Optional. Polymorphic reference into the matching variant table (character_variant / prop_variant / location_variant). Spec §12.8: the anchor contributes only where §4.8 puts that variant in force, and there displaces the subject's own anchors of its type (proposal 0033). |
+| `subject_variant_id` | integer |  | Optional. Polymorphic reference into the subject kind's variant table, per polymorphicTargets: character_variant, prop_variant or location_variant, never the table subject_type names. Spec §12.8: the anchor contributes only where §4.8 puts that variant in force, and there displaces the subject's own anchors of its type (proposal 0033). |
 | `anchor_type` | select | **yes** | one of `visual`, `audio`, `motion` |
 | `asset_id` | reference | **yes** | → `asset` (resolves to `asset_uuid` in a result, §12.1.2) |
 | `frame_number` | integer |  |  |

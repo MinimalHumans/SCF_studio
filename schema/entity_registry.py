@@ -128,6 +128,14 @@ class FieldDef:
     #: so a correct implementation and a data-losing one produce
     #: identical output on all sixteen. Spec §12.1.2.
     polymorphic_type: str | None = None
+    #: For a polymorphic reference whose target is NOT the table its
+    #: sibling names: the target per sibling value. `entity_anchor`'s
+    #: `subject_type` says `character`, and `subject_variant_id` points
+    #: into `character_variant` — reading the sibling as the table name
+    #: resolves a variant id against the subject table, and on a file
+    #: where both ids exist nothing fails. Total over the sibling's
+    #: options. Spec §12.1.2.
+    polymorphic_targets: dict[str, str] | None = None
     #: On a LINK entity: a reference that QUALIFIES the link instead of
     #: being one of the rows it joins, so it is not part of the natural
     #: key (spec §6.3). `scene_character.variant_id` says which version of
@@ -2175,12 +2183,18 @@ register(EntityDef(
         FieldDef("subject_id", "Subject ID", "integer", required=True,
                  polymorphic_type="subject_type",
                  help_text="Polymorphic reference into the table named by subject_type."),
-        # Keyed by the SAME discriminator as subject_id: a variant of the
-        # subject is a row in whatever table subject_type names.
+        # Keyed by the SAME discriminator as subject_id, but into the
+        # subject kind's VARIANT table, which the sibling does not name.
         FieldDef("subject_variant_id", "Subject Variant ID", "integer",
                  polymorphic_type="subject_type",
-                 help_text="Optional. Polymorphic reference into the matching variant table "
-                           "(character_variant / prop_variant / location_variant). Spec §12.8: "
+                 polymorphic_targets={
+                     "character": "character_variant",
+                     "prop": "prop_variant",
+                     "location": "location_variant",
+                 },
+                 help_text="Optional. Polymorphic reference into the subject kind's variant "
+                           "table, per polymorphicTargets: character_variant, prop_variant or "
+                           "location_variant, never the table subject_type names. Spec §12.8: "
                            "the anchor contributes only where §4.8 puts that variant in force, "
                            "and there displaces the subject's own anchors of its type "
                            "(proposal 0033)."),

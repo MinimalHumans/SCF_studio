@@ -154,6 +154,54 @@ const CASES = [
     },
   },
   {
+    name: "span-boundary-cut",
+    about:
+      "An act whose start scene is cut. A cut scene takes part in no " +
+      "span (§6.6.1), so Act II covers nothing and its scene stays in " +
+      "Act I (§5.5); the boundary is still there, so this is not " +
+      "`structure.boundary_dangling`, and without its own code the " +
+      "re-parenting would be silent.",
+    damage: async (exec) => {
+      await exec(
+        "INSERT INTO scene (name, scene_number, uuid) " +
+        "VALUES ('INT. KITCHEN', '1', ?)", [uuid(1)]);
+      await exec(
+        "INSERT INTO scene (name, scene_number, lifecycle_status, uuid) " +
+        "VALUES ('EXT. RIDGE', '2', 'cut', ?)", [uuid(2)]);
+      await exec(
+        "INSERT INTO scene (name, scene_number, uuid) " +
+        "VALUES ('INT. CHURCH', '3', ?)", [uuid(3)]);
+      await exec(
+        "INSERT INTO act (name, act_number, start_scene_id, uuid) " +
+        "VALUES ('Act I', 1, 1, ?)", [uuid(4)]);
+      await exec(
+        "INSERT INTO act (name, act_number, start_scene_id, uuid) " +
+        "VALUES ('Act II', 2, 2, ?)", [uuid(5)]);
+    },
+  },
+  {
+    name: "junction-key-null",
+    about:
+      "Two motif appearances on a prop, at no scene. Their natural " +
+      "keys (§6.3) agree except that `scene_id` and `domain` are NULL " +
+      "in both, and NULL key columns compare EQUAL (§6.4): one link, " +
+      "written twice. A reader comparing with SQL's `=` sees two " +
+      "distinct links and reports nothing.",
+    damage: async (exec) => {
+      await exec("INSERT INTO motif (name, modality, uuid) " +
+                 "VALUES ('The locket', 'visual', ?)",
+                 [uuid(1)]);
+      await exec("INSERT INTO prop (name, uuid) VALUES ('Locket', ?)",
+                 [uuid(2)]);
+      for (const n of [3, 4]) {
+        await exec(
+          "INSERT INTO motif_appearance " +
+          "(motif_id, scene_id, entity_type, entity_id, uuid) " +
+          "VALUES (1, NULL, 'prop', 1, ?)", [uuid(n)]);
+      }
+    },
+  },
+  {
     name: "asset-escapes-root",
     about:
       "An identifier containing '..'. It cannot be resolved, and a " +

@@ -1,0 +1,64 @@
+{
+  "query": "Q07",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "scene": "20a9cb61-89eb-4649-b209-9ec9486a7fa1",
+    "shot": null
+  },
+  "result": {
+    "leaf": "scene_color_palette",
+    "layers": [
+      {
+        "entity": "project_color_palette",
+        "row": {
+          "uuid": "8d6337ee-2a99-40cc-bd4b-ab1e278ca497",
+          "fields": {
+            "lifecycle_status": "active",
+            "name": "Project Color Palette",
+            "primary_colors": [
+              "desaturated earth",
+              "hearth amber",
+              "creek slate"
+            ],
+            "saturation_philosophy": "desaturated",
+            "temperature_approach": "journey",
+            "temperature_associations": "Warm: hearth, forgiveness. Cool: the creek, the unsaid."
+          }
+        }
+      },
+      {
+        "entity": "color_script",
+        "row": {
+          "uuid": "3c56cf79-f311-423c-ae7e-0c7097f62880",
+          "fields": {
+            "arc_shape": "transformative",
+            "granularity": "per act",
+            "key_color_moments": "Sc 12: amber lamp against blue storm window.",
+            "lifecycle_status": "active",
+            "name": "Color Script",
+            "progression_description": "Act 1 cool and gray. Act 2: first true warmth enters at the kitchen — hearth amber vs. storm blue; warmth must feel earned, not gifted. Act 3: warm resolves."
+          }
+        }
+      },
+      {
+        "entity": "color_script_entry",
+        "row": {
+          "uuid": "04959cfa-7fe6-449a-9823-20101c91af14",
+          "fields": {
+            "emotional_intent": "Distance.",
+            "key_colors": [
+              "slate",
+              "bark",
+              "bone"
+            ],
+            "lifecycle_status": "active",
+            "name": "slate, bark, bone",
+            "scene_uuid": "32bf7b14-2f5f-41ee-bca0-7ee2d0888b4e",
+            "temperature": "cool"
+          }
+        }
+      }
+    ]
+  }
+}

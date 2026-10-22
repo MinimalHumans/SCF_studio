@@ -500,7 +500,7 @@ reports and `SHA256SUMS`.
 
 | | Item | Notes |
 |---|---|---|
-| ◑ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. **Run 6 done 2026-10-16 against `spec-1.0-rc.1`: 4 critical, 13 major, 15 minor; rc.1 cannot be cut as 1.0.** 21 of 28 comparable results reproduced from the text alone, 15 of 15 negatives with three guesses. All addressed in **1.0-rc.2** (see below); a seventh run reads rc.2. |
+| ◑ | **D1. A sixth reader run** | **The biggest risk on this list.** No run since 0.49. Twenty spec revisions (0.50–0.68 and 1.0-rc.1) and about thirty proposals of normative text since — §2.4.1 presence, §3.5 line anchors, §4.6–4.8, §12.8.1–12.8.2 — read by nobody outside the project. Runs 4 and 5 each found a critical that no published artifact could see. Run it **after** B2 and B4, so it reads a true document against artifacts that exercise it, and start it from `what-is-scf.md`: section 7 has never been read cold. It runs unattended — launch it as soon as B2/B4 land. **Run 6 done 2026-10-16 against `spec-1.0-rc.1`: 4 critical, 13 major, 15 minor; rc.1 cannot be cut as 1.0.** 21 of 28 comparable results reproduced from the text alone, 15 of 15 negatives with three guesses. All addressed in **1.0-rc.2** (see below). **Run 7 done 2026-10-16 against `spec-1.0-rc.2`: 1 critical, 7 major, 13 minor.** 24 of 29 results from the text alone, 16 of 16 negatives, the fixture's report exact. Addressed in **1.0-rc.3**. **Run 8 done 2026-10-20 against `spec-1.0-rc.3`: 0 critical, 6 major, 14 minor.** 30 of 30 results, 16 of 16 negatives and the fixture's report from the text alone, all on the first run; the majors are two contradictions between MUSTs (§7.3/§4.5 ties, §0.3/§8.2 root mapping), an unstated finding grain for 37 codes, Q04's staging path, a wrong registry declaration and Q14's missing parameters. Addressed in **1.0-rc.4** on **schema 2.25**. **Run 9 done 2026-10-20 against `spec-1.0-rc.4`: 0 critical, 6 major, 19 minor.** Every published result (31 exact, 3 Q14 per §12.9), 16 of 16 negatives and the fixture's report from the text alone, no guess load-bearing on any artifact; all six majors are in cases nothing published asked about — Q14's narrowing (four), a span whose start scene is cut, a shot asked without or outside its scene. Addressed in **1.0-rc.5**, schema unchanged at 2.25. **Run 10 done 2026-10-20 against `spec-1.0-rc.5`: 0 critical, 4 major, 11 minor.** All 57 published artifacts reproduced from the text (32 exact results, 6 Q14 by §12.9's terms, 18 negatives, the fixture's report); all four majors are in Q14's rubric (§12.9.1), and fixing them changes which Q14 severities are permitted, so §11.5 makes it a minor change, not a 1.0.x patch. **Decided by the user 2026-10-20:** a small **1.0-rc.6** limited to Q14, then a short run 11 checking only Q14 and anything rc.6 touched, then cut 1.0. **Run 11 done 2026-10-20 against `spec-1.0-rc.6`: 0 critical, 2 major, 9 minor.** All 78 checksummed artifacts verified; every non-Q14 result (32), all 18 negatives and the fixture's report reproduced exactly, and all 9 published Q14 results conform by §12.9's terms. Both majors are in Q14's rubric: Q13's `entity_anchor` step narrowed differently from Q13 (493 of 5,385 swept positions disagree, Marcus at scene 12 among them), and whether the media step's Q13 is asked at the shot. Criticals across runs 6–11: 4, 1, 0, 0, 0, 0. **Decided by the user 2026-10-20:** a tiny **1.0-rc.7** for those two majors, then cut **1.0 from rc.7 without another reader run**, Q14 staying Provisional. |
 | ✅ | D2. Fixture: the night kitchen | Scenes 10 and 19 resolve the **day** baseline because the night variant is autumn and they are winter (`narrative-workspaces.md` §11). **Decided (§A11): the rule was wrong** — §12.17 now ranks time of day first. **Done in §B8:** both resolve the night variant, and a test pins it. |
 | ✅ | D3. Rules stated and exercised by nothing | `junction.endpoint_absent`, `structure.section_mismatch`, §12.17's zero-score baseline, `varies`, a `status` that disagrees with `lifecycle_status`, act and sequence renumbering under `derived` (§4.3). **Done 2026-10-16 (spec 0.68), a row each:** negative cases `junction-endpoint-absent` and `section-mismatch`, each raising its finding alone; church and ridge location variants published as `Q02-church-scene16` (`varies` wins on the wildcard alone) and `Q02-ridge-scene21` (nothing agrees, the baseline with three mismatches); scenes 3, 12, 19 at `draft`, `locked`, `revised`, and 12B `locked` and `cut`. Renumbering under `derived` and `fixed` was already tested in `structureCommit.test.ts`; `stability.md` said otherwise and now does not. |
 | ✅ | D4. An unknown `line_type` raises no finding | §1.3.1 closes the vocabulary at fifteen; the column is free text and nothing reports a sixteenth. **Decided (§A12): `line.type_unknown`, severity error.** Done in §B8, with a negative case. |
@@ -572,27 +572,313 @@ booleans stay the stored 0/1, now stated (M2).
    `schema-2.24`, and everything else by `spec-1.0-rc.2`; `check_pin.py`
    checks each file against its own tag. **`schema-2.24` does not move**
    — its seven files are byte-identical where it already points.
-3. ○ Commit, then the annotated tag `spec-1.0-rc.2` on that commit,
-   pushed. No schema tag.
-4. ○ `check_pin.py --strict`, then launch run 7 against `spec-1.0-rc.2`.
+3. ✅ Commit, then the annotated tag `spec-1.0-rc.2` on that commit,
+   pushed. No schema tag. *`c408a59`.*
+4. ✅ `check_pin.py --strict`, then launch run 7 against `spec-1.0-rc.2`.
+   *Run 7, 2026-10-16: 1 critical, 7 major, 13 minor; an rc.3 is needed.*
 
-**1.0-rc.3 — editorial, prepared 2026-10-19.** Moving the editor's
-operations into scf-core changed `stability.md`'s file references and
-scf-core's exports (`api-surface.json`) after `spec-1.0-rc.2` was
-tagged. No requirement, schema, result or report changed.
+**1.0-rc.3 — from run 7, prepared 2026-10-16.** No schema change, no
+result changes shape. Run 7 reproduced 24 of 29 results, 16 of 16
+negatives and the fixture's report from the text alone; every finding
+was a missing sentence. Report: `.claude/reader-run-7/reader-run-7-report.md`
+(outside git).
 
-1. ✅ Spec `1.0-rc.3`: CHANGELOG, headers, manifest regenerated.
-2. ○ 🔒 Once on `main`: the annotated tag `spec-1.0-rc.3` on that
-   commit, pushed; then `check_pin.py --strict`. No schema tag.
-   Run 7, if not yet launched, goes against `spec-1.0-rc.3`.
+- **C1**: §12.17's `mismatches` format, stated exactly.
+- **Majors**: Q12's character order (M1); Q06's baseline (M2); findings
+  derive spans over cut scenes (M3) and unscripted scenes sit in the
+  last spans (M4); §9.4.1 states every code's condition (M5); one
+  `by` per excluded layer, in order (M6); §7.3's shot fall-through, with
+  the case result `Q07-shot12A` (M7).
+- **Minors**: m1–m10, m12, m13 in the text. Two latent validator bugs
+  found on the way and fixed (`boundary_unnumbered`'s table,
+  `scenes_before_first_act`'s rows). **m11 is not done**: the fixture has
+  no cut row that a link reaches, so §6.6.1's cut-endpoint rule has no
+  published artifact. Closing it means adding a cut character to the
+  fixture and re-blessing, which is a change to the conformance fixture
+  and is left for a decision.
+- **Decision to revisit**: an intent outside §12.8's anchor table
+  (`behavior`) is answered by every anchor type. The text now says what
+  the reference does; whether `behavior` should map to `motion` is open.
 
-**1.0 day — after D1, and after anything it finds is fixed:**
+**rc.3 day:**
 
-1. ○ Spec **1.0**: CHANGELOG entry; §11.0 changed from "becomes binding
-   at 1.0" to binding; headers.
-2. ○ If D1 forced a registry change, a new schema version and a
-   regeneration; otherwise 2.24 stands.
-3. ○ `python schema/artifact_manifest.py`, then `tools/verify.py`, green.
+1. ✅ Spec `1.0-rc.3`: CHANGELOG, headers, every artifact re-blessed.
+2. ✅ Commit, then the annotated tag `spec-1.0-rc.3` on that commit,
+   pushed. No schema tag; `schema-2.24` does not move. *`ff41afb`.*
+3. ✅ `check_pin.py --strict`, then launch run 8 against `spec-1.0-rc.3`,
+   exporting `scf-core/registry/registry.json` with m14's list.
+   *Run 8, 2026-10-20: 0 critical, 6 major, 14 minor; an rc.4 is
+   needed.*
+
+**1.0-rc.4 — from run 8, prepared 2026-10-20.** **Schema 2.25**, approved
+for M5. Run 8 reproduced 30 of 30 results, 16 of 16 negatives and the
+fixture's report from the text alone; every finding was a contradiction,
+a missing sentence or an unexercised case. Report:
+`.claude/worktrees/pensive-archimedes-8b9566/reader-run-8-report.md`
+(outside git).
+
+- **M1** — a `latest_wins` tie takes the highest row id (§4.5), stated
+  once in §7.3 step 1 and §12.1.6. The reference's cascade took the
+  lowest and its state tables the highest; `fetchLayer` now matches
+  `latestState`. New case `Q07-scene3`.
+- **M2** — without a root mapping, rooted identifiers are `unaddressed`
+  and absolute or `..` ones `out-of-root` (§0.3, §8.3, §12.8.1,
+  conformance §2.1). Fixture: asset 55, an absolute `.tif` in the
+  locket's bundle, so `Q02-locket-scene25` shows both states; the
+  fixture's report gains one warning.
+- **M3** — §9.4.1 states `table`, `rowIds` and `count` for all 53
+  codes, from `findings.ts` and its producers.
+- **M4** — `stagingBeats` takes beats through `scene_blocking` and
+  `action_sequence`; the reference read only blocking and now reads
+  both. New case `Q04-scene21`.
+- **M5** — `polymorphicTargets` (schema 2.25) on
+  `entity_anchor.subject_variant_id`; §12.1.2 and §12.8. `whereUsed`,
+  the orphan count and the fixture reference test honour it.
+- **M6** — Q14 takes `subjectType`, `subject` and `intent`
+  (`q14Result`, `readiness.ts`, scf-mcp `dispatch.ts`/`server.ts`, the
+  editor's Q14 page, selectors, §12.9). Every walker now reports every
+  rubric step, pinned by a coverage test. New worked examples
+  `Q14-Q02-locket-scene25`, `Q14-Q13-eleanor-shot1204`;
+  `Q14.result.json` gains three null parameters and nothing else.
+- **Minors** — all fourteen in the text: m1 (`_scf_meta`), m2
+  (conformance §6.1 step 3), m3 (`counts`), m4 (Q04 `detail`), m5
+  (format string), m6 and m7 (Q02 members, `media`), m8 and m9 (row
+  order; every array's order stated), m10 (Q14 `findings` order and
+  `entity`), m11 (`canonical_status`), m12 (`mismatches` escapes), m13
+  (Q04 `detail` is not prose), m14 (stale notes).
+- **Unexercised list** — stated: null `persistence`, a cut
+  `resolved_at_scene_id`, null `precedence`, which binding `replaced`
+  names, unverified variant anchors do not displace, Q14's `shot`.
+  **Left:** a carrier whose polymorphic target is cut (Q10), rows keyed
+  by `sequence_id` in Q11, and null junction key columns (§6.3) — each
+  needs a decision, not a sentence.
+- **Latent bugs found on the way and fixed:** an unknown `persistence`
+  was read as `until_resolved` (§4.5 says `scene_only`); Q02 reported
+  the scene's location variant for any location subject; `formatOf`
+  ignored `\` in an absolute Windows path; Q04's cast and props joins
+  had no `ORDER BY`. None changes a published result.
+
+**rc.4 day — tag only after the commit is pushed:**
+
+1. ✅ Spec `1.0-rc.4`, schema 2.25: CHANGELOG, schema changelog,
+   headers, every artifact re-blessed, manifest last.
+2. ✅ Commit and push. Then, on that pushed commit, both annotated tags
+   — `schema-2.25` because `SCHEMA_VERSION` moved, `spec-1.0-rc.4` for
+   everything else — and nothing else moves. *Both at `1c1aaca`.*
+
+   ```sh
+   git push origin main
+   git tag -a schema-2.25 -m 'schema 2.25'
+   git tag -a spec-1.0-rc.4 -m 'spec 1.0-rc.4'
+   git push origin schema-2.25 spec-1.0-rc.4
+   py schema/check_pin.py --strict
+   ```
+
+   `schema-2.24` stays at `62a14cc` and `spec-1.0-rc.3` at `ff41afb`.
+3. ✅ `check_pin.py --strict` green, then launch run 9 against
+   `spec-1.0-rc.4`, exporting the registry from `schema-2.25` with
+   m14's list. *Run 9, 2026-10-20: 0 critical, 6 major, 19 minor; an
+   rc.5 is needed.*
+
+**1.0-rc.5 — from run 9, prepared 2026-10-20.** **Schema 2.25,
+unchanged**: no fix touched `registry.json`, so `schema-2.25` addresses
+the seven schema files as it does today and takes no new tag. Run 9
+reproduced every published artifact from the text; its majors were all
+beyond the published positions. Report:
+`.claude/worktrees/wonderful-hopper-00c7ac/reader-run-9-report.md`
+(outside git).
+
+- **M1–M4, Q14** — one rule in §12.9.1: a step's rows are the ones its
+  target reads (subject one declared reference away; position by
+  pattern, by §7.3's shot fall-through, or by column). Rubric steps gain
+  `satisfiedBy` (Q02's costume step: `costume_scene` only); Q13's step 1
+  names `costume_asset_binding`; `entity_anchor` and shot overrides do
+  not apply to a costume. `readiness.ts` follows it. New worked examples
+  `Q14-Q02-eleanor-scene7`, `Q14-Q07-shot12A`, `Q14-Q13-shawl-scene12`.
+- **M5** — a span whose start scene is cut covers no scene (§5.5); new
+  code `structure.boundary_cut` (54 codes), negative case
+  `span-boundary-cut`. Q10's span membership now excludes cut rows, as
+  Q04's did.
+- **M6** — §12.1.7: a shot fixes the position at its scene; a shot
+  outside the scene asked is not answered (Q07, Q02, Q13, Q14). New case
+  `Q13-shot1204`.
+- **rc.4's three open edge cases, decided from the reference**: a Q10
+  carrier whose target is cut is dropped (the reference kept it with a
+  null name; §6.6.1's endpoint rule says drop, so the reference
+  changed), exercised by the published `Q10`; Q11 counts only rows keyed
+  by `scene_id`, exercised by the published `Q11` through a
+  sequence-keyed tone marker; null junction key columns compare equal,
+  negative case `junction-key-null`.
+- **m4** — fixture: cut Deputy Rourke linked into scenes 12 and 19 and
+  carrying Forgiveness. A reader ignoring cut endpoints now fails `Q04`,
+  `Q03` and `Q10`.
+- **Minors** — all nineteen addressed in the text, and where the
+  reference disagreed it now follows the text: m12 (a cut scene is an
+  empty position everywhere; Q04 returned its lines), m3 (one beat
+  order; Q05 sorted unset last), m11 (unknown line types ignored, per
+  §10.1), m14 (anchor on a cut asset not considered), m7/m8 (rubric
+  `params` and Q06's step), m16 (catalog ordering), m18 (no result for
+  a refused question). **m5 is left**: making `polymorphicTargets`
+  observable needs a cut variant whose id equals a live character's, a
+  contrived fixture row for a declaration whose reading the in-force
+  test already makes harmless.
+- **Latent bugs found on the way and fixed:** Q07's walker raised
+  severities outside its steps' ranges on absences the fixture never
+  has; Q08 skipped a step at a scene with no location; Q13 threw for a
+  costume at a shot (no `costume_shot_override` table); Q03's and Q02's
+  costume joins and Q03's motif join had no `ORDER BY`. None changes a
+  published result.
+
+**rc.5 day — tag only AFTER the commit is pushed.** Twice a tag has
+been created on the previous commit because it was made before the
+commit existed. Commit, push, read the new commit's hash, and name it
+in the tag command:
+
+1. ✅ Spec `1.0-rc.5`, schema 2.25: CHANGELOG, headers, every artifact
+   re-blessed, manifest last.
+2. ✅ Commit and push `main`. Then, with `<commit>` the hash
+   `git rev-parse HEAD` prints for that pushed commit:
+
+   ```sh
+   git tag -a spec-1.0-rc.5 -m "spec 1.0-rc.5" <commit>
+   git push origin spec-1.0-rc.5
+   py schema/check_pin.py --strict
+   ```
+
+   No schema tag: `schema-2.25` stays at `1c1aaca`, as do
+   `spec-1.0-rc.4` there and `spec-1.0-rc.3` at `ff41afb`.
+   *`spec-1.0-rc.5` at `2da5dc4`.*
+3. ✅ `check_pin.py --strict` green, then a lighter run 10 against
+   `spec-1.0-rc.5` that checks only what rc.5 changed. *Run 10,
+   2026-10-20: 0 critical, 4 major, 11 minor, all majors in Q14; an
+   rc.6 limited to Q14 is needed.*
+
+**1.0-rc.6 — from run 10, prepared 2026-10-20, scoped to Q14.**
+**Schema 2.25, unchanged**: the rubric is a spec-side artifact and
+`registry.json` did not move, so `schema-2.25` takes no new tag. Run 10
+reproduced every published artifact from the text; its four majors
+were two MUSTs in §12.9.1 disagreeing off the published positions.
+Report: `.claude/worktrees/bold-chatelet-e3ce53/reader-run-10-report.md`
+(outside git).
+
+- **M1** — a reference to `scene` or `shot` is a position, never a
+  route to a subject (§12.9.1). The reference already behaved so.
+- **M2** — a media step is one satisfied by `bundle` alone; Q13's step 1
+  gains `satisfiedBy: ["bundle"]`, so a binding excluded at the position
+  is a `blocker`. New case `Q14-Q13-windchime-scene12`.
+- **M3** — rubric member `appliesTo: "seen"` on Q02's appearance,
+  physical and costume steps and Q07's appearance step; §12.9 says a
+  character subject not seen at the position reports them as not
+  applying. `readiness.ts` checks presence. New case `Q14-Q02-ada-scene3`.
+- **M4** — Q02's media step carries `intentBySubjectType` (`environment`
+  for a location), as §12.16 says; the generator checks intents against
+  the registry. New case `Q14-Q02-kitchen-scene10` (a blocker: the
+  fixture has no `environment` bundle).
+- **Minors done** — m1 ("does not apply" restated), m2 (`entity_anchor`
+  step filtered to verified, unset counting as verified), m3 ("narrowed
+  as its target narrows"), m5 (Q14 parameters and `shot` for any
+  target), m9 (Q14 at a cut scene), m10 (Appendix A's eighteen cases,
+  conformance §5.3's list, Q08's `params`).
+- **Left, outside Q14 and not wording** — m4 (shot-keyed rows at an
+  empty position; a shot in no scene, §12.1.7), m6
+  (`sequence_act_mismatch` over cut scenes), m7 (a link's hidden `name`
+  in §6.4's comparison), m8 (a relationship to a cut character), m11 (a
+  dangling binding's trail entry). Listed in the CHANGELOG.
+- **Latent bug found on the way and fixed:** Q05's walker raised a
+  `suggestion` for absent vocal beats on a `recommended` step, outside
+  its permitted range. No published result changes.
+
+**rc.6 day — tag only AFTER the commit is pushed:**
+
+1. ✅ Spec `1.0-rc.6`, schema 2.25: CHANGELOG, headers, every artifact
+   re-blessed, manifest last.
+2. ✅ Commit and push `main`. Then, with `<commit>` the hash
+   `git rev-parse --short HEAD` prints for that pushed commit:
+
+   ```sh
+   git tag -a spec-1.0-rc.6 -m "spec 1.0-rc.6" <commit>
+   git push origin spec-1.0-rc.6
+   py schema/check_pin.py --strict
+   ```
+
+   No schema tag: `schema-2.25` stays at `1c1aaca`, `spec-1.0-rc.5` at
+   `2da5dc4`. *`spec-1.0-rc.6` at `aa02028`.*
+3. ✅ `check_pin.py --strict` green, then a short run 11 against
+   `spec-1.0-rc.6` that checks only Q14 (§12.9, §12.9.1, the rubric,
+   every `Q14*` result) and anything else rc.6 touched. *Run 11,
+   2026-10-20: 0 critical, 2 major, 9 minor, both majors in Q14; a tiny
+   rc.7, then 1.0 from it without another run.*
+
+**1.0-rc.7 — from run 11, prepared 2026-10-20, scoped to Q14, the last
+candidate.** **Schema 2.25, unchanged**: `registry.json` did not move.
+Every rule rc.7 touches that the fixture can show is pinned by a
+published worked example. Report:
+`.claude/worktrees/affectionate-haslett-9c78de/reader-run-11-report.md`
+(outside git).
+
+- **M1** — §12.9.1: a step over rows a query resolves is satisfied by
+  what that query resolves. Rubric member `resolvedBy: "Q13"` on Q13's
+  `entity_anchor` and shot-override steps, checked by the generator: the
+  anchor step counts only the anchors Q13 lets contribute (verified, the
+  intent's anchor type, §4.8's variant rules). `readiness.ts` already
+  read them from `resolveMedia`. New case `Q14-Q13-marcus-scene12` (a
+  warning: his one verified anchor is his variant's, not in force).
+- **M2** — §12.9: the shot fixes the position for every step, the media
+  step's Q13 answer included. `readiness.ts`'s Q05 and Q06 walkers now
+  pass the shot. **No worked example**: the fixture's one shot override
+  is a `visual_identity` bundle, so no published position separates the
+  readings, and adding a voice override would change the fixture and
+  other published results.
+- **Minors done (wording)** — m2 ("one declared reference away"), m3 (a
+  shot narrows a column only for a target that takes one, which keeps
+  M2's sentence and the reference consistent), m8 (`counts` keys), the
+  stale "nine so far" in conformance §7, `stability.md`'s coverage row,
+  the "among them" list in §12.9.1.
+- **Left for after 1.0, behaviour not wording** — m1 (a non-baseline
+  filterless binding, or a scene-ranged one, at a cut scene; with rc.6's
+  m4), m4 (§4.6 shot rows for a character not linked or `named`), m5
+  (Q14 without a required parameter or with a foreign subject kind), m6
+  (marking cross-step findings), m7 (`entity` for a step that does not
+  apply), m9 (a cut subject). rc.6's m4, m6, m7, m8, m11 stand. Listed
+  in the CHANGELOG.
+
+**rc.7 day — tag only AFTER the commit is pushed:**
+
+1. ✅ Spec `1.0-rc.7`, schema 2.25: CHANGELOG, headers, every artifact
+   re-blessed, manifest last.
+2. ○ Commit and push `main`. Then, with `<commit>` the hash
+   `git rev-parse --short HEAD` prints for that pushed commit:
+
+   ```sh
+   git tag -a spec-1.0-rc.7 -m "spec 1.0-rc.7" <commit>
+   git push origin spec-1.0-rc.7
+   py schema/check_pin.py --strict
+   ```
+
+   No schema tag: `schema-2.25` stays at `1c1aaca`, `spec-1.0-rc.6` at
+   `aa02028`.
+3. ○ `check_pin.py --strict` green. **No run 12** (the user's decision,
+   2026-10-20): 1.0 is cut from rc.7's text.
+
+**Unreleased — editorial, prepared 2026-10-19 as an rc.3 on the
+desktop branch.** Moving the editor's operations into scf-core changed
+`stability.md`'s file references and scf-core's exports
+(`api-surface.json`). No requirement, schema, result or report changed.
+It ships with the next release; it takes no tag of its own.
+
+**1.0 day — from rc.7, with no further reader run:**
+
+1. ○ Spec **1.0**, the text of rc.7 with no requirement changed: a
+   CHANGELOG entry saying so; §11.0 changed from "becomes binding at
+   1.0" to binding; §11.5's release-candidate paragraph in the past
+   tense; headers (`scf-spec.md`, `stability.md`, `conformance.md`),
+   README badge and status, `site/index.md` and `what-is-scf.md` status
+   lines, and conformance §5's `spec-<version>` example. Q14's rows in
+   `stability.md` stay Provisional.
+2. ○ Schema **2.25** stands (rc.4, unchanged in rc.5–rc.7): no
+   regeneration and no new schema tag.
+3. ○ `py schema/artifact_manifest.py`, then `py tools/verify.py`, green
+   but for the pin step until the tag below is pushed.
 4. ○ 🔒 Annotated tag `spec-1.0`, pushed — and, only if step 2 made a
    new schema version, its `schema-X.Y` on the same commit. No existing
    tag moves. Then `check_pin.py --strict`.

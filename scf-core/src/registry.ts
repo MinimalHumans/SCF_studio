@@ -36,6 +36,13 @@ export interface FieldDef {
    * also true of `external_id` and of two ordinary references.
    */
   polymorphicType?: string;
+  /**
+   * On a polymorphic reference whose target is NOT the table the sibling
+   * names: the target per sibling value (`entity_anchor.subject_variant_id`
+   * → `character_variant` where `subject_type` is `character`). Read it
+   * through `polymorphicTarget`, never the sibling's value directly.
+   */
+  polymorphicTargets?: Record<string, string>;
   helpText?: string;
   hidden?: boolean;
   /**
@@ -148,6 +155,31 @@ export function loadRegistry(json: RegistryJson): Registry {
     entities,
     order: json.entities.map((e) => e.name),
   };
+}
+
+/**
+ * The table a polymorphic column points into on a row whose sibling
+ * holds `kind` (spec §12.1.2): the field's `polymorphicTargets` entry
+ * where it declares one, else the sibling's value itself. Null for a
+ * value the map does not cover.
+ */
+export function polymorphicTarget(
+    field: FieldDef, kind: string): string | null {
+  if (field.polymorphicTargets !== undefined) {
+    return field.polymorphicTargets[kind] ?? null;
+  }
+  return kind;
+}
+
+/**
+ * The sibling values under which a polymorphic column points into
+ * `entity` — the inverse of `polymorphicTarget`.
+ */
+export function polymorphicKindsFor(
+    field: FieldDef, entity: string): string[] {
+  if (field.polymorphicTargets === undefined) return [entity];
+  return Object.entries(field.polymorphicTargets)
+    .filter(([, target]) => target === entity).map(([kind]) => kind);
 }
 
 /**

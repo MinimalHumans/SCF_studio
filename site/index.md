@@ -45,12 +45,12 @@ answer, and any conforming implementation produces it.
 ## Status
 
 **Pre-1.0 and honest about it.** The specification is a release
-candidate, `1.0-rc.3`, and until
+candidate, `1.0-rc.7`, and until
 1.0 ships there is no migration path and no backward compatibility owed
 to anything already written. What is safe to build against is stated,
 per subject, in [stability](stability.html) — including the things that
 are not.
 
-Five independent implementations have been written from these
+Eleven independent implementations — one per reader run — have been written from these
 documents by people with no access to the reference code. What they got
 wrong is what most of the specification's recent revisions are about.

@@ -2,10 +2,13 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q07",
       "character": null,
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": "404e480d-dde6-4b4f-9cd4-daec42d5bfa0"
     },
@@ -70,10 +73,13 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q08",
       "character": null,
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": null
     },
@@ -98,6 +104,11 @@
         },
         {
           "severity": "ok",
+          "entity": "dialogue_sound_design",
+          "message": "Dialogue sound design authored."
+        },
+        {
+          "severity": "ok",
           "entity": "sound_cue",
           "message": "1 cue(s) authored."
         }
@@ -106,17 +117,20 @@
         "blocker": 0,
         "warning": 0,
         "suggestion": 0,
-        "ok": 4
+        "ok": 5
       }
     }
   },
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q02",
       "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": null
     },
@@ -146,30 +160,38 @@
         },
         {
           "severity": "ok",
-          "entity": "bundle",
-          "message": "Eleanor Cade: 7 visual_identity asset(s) resolve (0 from overrides)."
+          "entity": "relationship_state",
+          "message": "1 relationship state(s) in force."
         },
         {
           "severity": "ok",
-          "entity": "entity_anchor",
-          "message": "1 verified anchor(s)."
+          "entity": "performance_state",
+          "message": "Performance state(s) in force: wounded."
+        },
+        {
+          "severity": "ok",
+          "entity": "bundle",
+          "message": "Eleanor Cade: 7 visual_identity asset(s) in force (0 from overrides)."
         }
       ],
       "counts": {
         "blocker": 0,
         "warning": 0,
         "suggestion": 0,
-        "ok": 6
+        "ok": 7
       }
     }
   },
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q06",
       "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": null
     },
@@ -191,23 +213,41 @@
           "severity": "ok",
           "entity": "performance_state",
           "message": "Physical states in force: wounded."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_beat",
+          "message": "1 physical beat(s) authored."
+        },
+        {
+          "severity": "ok",
+          "entity": "character_environment_physicality",
+          "message": "Eleanor Cade: how they relate to this place is authored."
+        },
+        {
+          "severity": "ok",
+          "entity": "bundle",
+          "message": "Eleanor Cade: no motion assets in force here — none bound, or every binding excluded at this position."
         }
       ],
       "counts": {
         "blocker": 0,
         "warning": 0,
         "suggestion": 0,
-        "ok": 3
+        "ok": 6
       }
     }
   },
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q05",
       "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": null
     },
@@ -228,7 +268,7 @@
         {
           "severity": "ok",
           "entity": "bundle",
-          "message": "Eleanor Cade: 1 voice asset(s) resolve."
+          "message": "Eleanor Cade: 1 voice asset(s) in force."
         },
         {
           "severity": "ok",
@@ -262,10 +302,13 @@
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q02",
       "character": "145417ca-e8e5-4946-aba0-e83575dad182",
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": null
     },
@@ -284,11 +327,6 @@
           "message": "Marcus Cade has costumes but none assigned to this scene (pattern 1 requires explicit rows)."
         },
         {
-          "severity": "suggestion",
-          "entity": "entity_anchor",
-          "message": "No verified anchors for Marcus Cade — identity is unpinned."
-        },
-        {
           "severity": "ok",
           "entity": "physical_character_profile",
           "message": "Marcus Cade: physical baseline present."
@@ -300,25 +338,38 @@
         },
         {
           "severity": "ok",
+          "entity": "relationship_state",
+          "message": "1 relationship state(s) in force."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_state",
+          "message": "No performance state in force — baseline holds (by design)."
+        },
+        {
+          "severity": "ok",
           "entity": "bundle",
-          "message": "Marcus Cade: 3 visual_identity asset(s) resolve (0 from overrides)."
+          "message": "Marcus Cade: 3 visual_identity asset(s) in force (0 from overrides)."
         }
       ],
       "counts": {
         "blocker": 0,
         "warning": 2,
-        "suggestion": 1,
-        "ok": 3
+        "suggestion": 0,
+        "ok": 5
       }
     }
   },
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q06",
       "character": "145417ca-e8e5-4946-aba0-e83575dad182",
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": null
     },
@@ -340,23 +391,41 @@
           "severity": "ok",
           "entity": "performance_state",
           "message": "Physical states in force: none (baseline)."
+        },
+        {
+          "severity": "ok",
+          "entity": "performance_beat",
+          "message": "No physical beats — the states and baseline carry it."
+        },
+        {
+          "severity": "ok",
+          "entity": "character_environment_physicality",
+          "message": "Marcus Cade: how they relate to this place is authored."
+        },
+        {
+          "severity": "ok",
+          "entity": "bundle",
+          "message": "Marcus Cade: no motion assets in force here — none bound, or every binding excluded at this position."
         }
       ],
       "counts": {
         "blocker": 0,
         "warning": 0,
         "suggestion": 0,
-        "ok": 3
+        "ok": 6
       }
     }
   },
   {
     "query": "Q14",
     "resultFormat": "1.0",
-    "schemaVersion": "2.24",
+    "schemaVersion": "2.25",
     "parameters": {
       "target": "Q05",
       "character": "145417ca-e8e5-4946-aba0-e83575dad182",
+      "subjectType": null,
+      "subject": null,
+      "intent": null,
       "scene": "06857531-3e91-41a9-95dd-3262407d8132",
       "shot": null
     },

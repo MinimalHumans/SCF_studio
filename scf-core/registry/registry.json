@@ -1,6 +1,6 @@
 {
   "$comment": "GENERATED FILE — do not hand-edit. Source of truth: schema/entity_registry.py. Regenerate with scripts/generate_registry_json.py.",
-  "schemaVersion": "2.24",
+  "schemaVersion": "2.25",
   "generatorVersion": "1.0.0",
   "frameworkColumns": [
     {
@@ -8298,7 +8298,12 @@
           "tab": "General",
           "autoInjected": false,
           "polymorphicType": "subject_type",
-          "helpText": "Optional. Polymorphic reference into the matching variant table (character_variant / prop_variant / location_variant). Spec §12.8: the anchor contributes only where §4.8 puts that variant in force, and there displaces the subject's own anchors of its type (proposal 0033)."
+          "polymorphicTargets": {
+            "character": "character_variant",
+            "prop": "prop_variant",
+            "location": "location_variant"
+          },
+          "helpText": "Optional. Polymorphic reference into the subject kind's variant table, per polymorphicTargets: character_variant, prop_variant or location_variant, never the table subject_type names. Spec §12.8: the anchor contributes only where §4.8 puts that variant in force, and there displaces the subject's own anchors of its type (proposal 0033)."
         },
         {
           "name": "anchor_type",

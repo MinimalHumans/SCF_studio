@@ -286,10 +286,12 @@ describe("the file stays valid across the cycle", () => {
     // asserting zero catches only the first.
     expect(before.findings.map((f) => f.code))
       .toEqual(after.findings.map((f) => f.code));
-    expect(before.findings.filter((f) => f.severity !== "info"))
-      .toEqual([]);
-    expect(after.findings.filter((f) => f.severity !== "info"))
-      .toEqual([]);
+    // Nothing above `info` but the absolute identifier the fixture
+    // carries on purpose (spec §8.2): a warning, never an error.
+    const serious = (r: typeof before): string[] => r.findings
+      .filter((f) => f.severity !== "info").map((f) => f.code);
+    expect(serious(before)).toEqual(["asset.identifier_absolute"]);
+    expect(serious(after)).toEqual(["asset.identifier_absolute"]);
   });
 
   test("the header stamps survive (spec §1.2)", async () => {

@@ -303,6 +303,30 @@ describe("§12.4 Q03 — world state, away from scene 12", () => {
     expect(r.result.props).toEqual([]);
   });
 
+  test("every query asked at the cut scene answers an empty position",
+       async () => {
+    // §12.1.7, Q03's rule for every scene parameter. Rows still keyed
+    // to 12B are not cut themselves; Q04 used to return its heading and
+    // lines as the scene's screenplay. What does not depend on the
+    // position — Eleanor's voice baseline — still answers.
+    const cut = await fx.ctx.exec(
+      "SELECT id, uuid FROM scene WHERE lifecycle_status = 'cut'");
+    const id = Number(cut[0]?.["id"]);
+    const uuid = String(cut[0]?.["uuid"]);
+    const q04 = await q04Result(fx.ctx, uuid, id);
+    expect(q04.result.scene).toBeNull();
+    expect(q04.result.screenplay).toEqual([]);
+    expect(q04.parameters["scene"]).toBe(uuid);
+    const q05 = await q05Result(fx.ctx, eleanor.uuid, uuid, eleanor.id, id);
+    expect(q05.result.baseline).not.toBeNull();
+    expect([q05.result.states, q05.result.beats]).toEqual([[], []]);
+    const q11 = await q11Result(fx.ctx, uuid, id);
+    expect([q11.result.scene, q11.result.toneMarkers]).toEqual([null, []]);
+    const q12 = await q12Result(fx.ctx, uuid, scene12.uuid, id, scene12.id);
+    expect(q12.result.from).toBeNull();
+    expect(q12.result.to).not.toBeNull();
+  });
+
   test("every row in the result carries a uuid", async () => {
     const r = await q03Result(fx.ctx, scene19.uuid, scene19.id);
     for (const c of r.result.characters) {
@@ -765,10 +789,15 @@ describe("§12.15 Q01, §12.16 Q02, §12.17 Q04", () => {
  * any of them reproduced every published result byte for byte.
  */
 const CASES = [
-  "Q05-scene19", "Q02-marcus-scene25", "Q02-church-scene16",
+  "Q05-scene19", "Q07-shot12A", "Q02-marcus-scene25", "Q02-church-scene16",
   "Q02-ridge-scene21", "Q02-locket-scene25", "Q02-kitchen-scene10",
   "Q03-scene25", "Q04-scene25", "Q12-scene24-25", "Q12-scene25-24", "Q13-scene3",
-  "Q13-scene25", "Q15-plate-v2",
+  "Q13-scene25", "Q15-plate-v2", "Q07-scene3", "Q04-scene21",
+  "Q14-Q02-locket-scene25", "Q14-Q13-eleanor-shot1204",
+  "Q13-shot1204", "Q14-Q02-eleanor-scene7", "Q14-Q07-shot12A",
+  "Q14-Q13-shawl-scene12", "Q14-Q02-kitchen-scene10",
+  "Q14-Q13-windchime-scene12", "Q14-Q02-ada-scene3",
+  "Q14-Q13-marcus-scene12",
 ] as const;
 const PUBLISHED = [
   "Q00", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "Q09",
@@ -789,6 +818,21 @@ describe("per-case results — what one position cannot show", () => {
     expect(r.result.modulations).toEqual({ volume: "quieter" });
   });
 
+  test("Q07 at a shot with no lighting row: the scene's row applies",
+       async () => {
+    // §7.3: a shot that misses at step 2 falls through to the scene row.
+    // 12-04 has its own lighting, so Q07 alone cannot tell a fall-through
+    // from a stop; a reader that stopped would drop the layer here.
+    const shot = await sel(
+      "SELECT id, uuid FROM shot WHERE shot_number = '12A'");
+    const r = await q07Result(fx.ctx, scene12.uuid, scene12.id,
+                              shot.uuid, shot.id);
+    blessOrCheck("Q07-shot12A", r);
+    const lighting = r.result.layers.find(
+      (l) => l.entity === "lighting_design");
+    expect(lighting?.row.fields["name"]).toBe("Sc 12 lighting");
+  });
+
   test("Q02 for a character in a variant: Marcus as a boy, scene 25",
        async () => {
     const r = await q02Result(fx.ctx, "character", marcusId.uuid,
@@ -805,6 +849,219 @@ describe("per-case results — what one position cannot show", () => {
     blessOrCheck("Q02-locket-scene25", r);
     expect(r.result.propVariant?.fields["name"]).toBe("Ada's locket, new");
     expect(r.result.propState?.fields["whereabouts"]).toBe("on the creek bank");
+    // §8.2, §8.3: with no root mapped, the rooted references are
+    // `unaddressed` and the absolute one is still `out-of-root` — a
+    // property of the identifier, not of the session.
+    const states = r.result.media.references.map((x) => x.state);
+    expect(states.filter((s) => s === "out-of-root")).toHaveLength(1);
+    expect(states.filter((s) => s !== "out-of-root")
+      .every((s) => s === "unaddressed")).toBe(true);
+  });
+
+  test("Q07 where two latest_wins rows tie: the higher row id, scene 3",
+       async () => {
+    // §4.5 pattern 3, which §7.3's step 1 applies: two
+    // color_script_entry rows sit at scene 1, the latest position at or
+    // before scene 3, and the later-written one is in force. A reader
+    // taking the lowest id answers "Act 1 — cool and gray".
+    const scene3 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '3'");
+    const r = await q07Result(fx.ctx, scene3.uuid, scene3.id, null, null);
+    blessOrCheck("Q07-scene3", r);
+    const entry = r.result.layers.find(
+      (l) => l.entity === "color_script_entry");
+    expect(entry?.row.fields["name"]).toBe("slate, bark, bone");
+  });
+
+  test("Q04 where staging sits in an action sequence, scene 21",
+       async () => {
+    // §12.17: a staging beat reaches its scene through either container.
+    // Scene 21 has no blocking; its two beats are the storm pursuit's.
+    const scene21 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '21'");
+    const r = await q04Result(fx.ctx, scene21.uuid, scene21.id);
+    blessOrCheck("Q04-scene21", r);
+    expect(r.result.blocking).toEqual([]);
+    expect(r.result.stagingBeats.map((b) => b.fields["beat_order"]))
+      .toEqual([1, 2]);
+  });
+
+  test("Q14 for Q02 about a prop: the locket, scene 25", async () => {
+    // §12.9: Q14 takes its target's parameters, so Q02 can be asked
+    // about a prop; the character-only steps say they do not apply.
+    const locket = await sel("SELECT id, uuid FROM prop WHERE name LIKE '%locket%'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene25.uuid, scene25.id, null, null,
+      { type: "prop", uuid: locket.uuid, id: locket.id }, null);
+    blessOrCheck("Q14-Q02-locket-scene25", r);
+    expect(r.parameters["subjectType"]).toBe("prop");
+    expect(r.result.findings.find((f) => f.entity === "bundle")?.severity)
+      .toBe("ok");
+  });
+
+  test("Q14 for Q13: Eleanor's visual identity at shot 12-04", async () => {
+    // Every step of Q13's rubric is reported, the shot override
+    // included (§12.9.1 coverage).
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, shot1204.uuid, shot1204.id,
+      { type: "character", uuid: eleanor.uuid, id: eleanor.id },
+      "visual_identity");
+    blessOrCheck("Q14-Q13-eleanor-shot1204", r);
+    expect(r.result.findings.map((f) => f.entity).sort()).toEqual(
+      ["bundle", "character_shot_override", "entity_anchor"]);
+  });
+
+  test("Q13 asked with a shot and no scene: the shot's scene, 12-04",
+       async () => {
+    // §12.1.7: a shot fixes the position at its own scene. Read as no
+    // position, only baselines apply and the wounded binding is
+    // excluded as `not_baseline`; at scene 12 it is in force.
+    const r = await q13Result(fx.ctx, "character", eleanor.uuid, eleanor.id,
+      "visual_identity", null, null, shot1204.uuid, shot1204.id);
+    blessOrCheck("Q13-shot1204", r);
+    expect(r.parameters["scene"]).toBeNull();
+    expect(r.result.trail.filter((t) => t.layer === "binding")
+      .every((t) => t.excluded === null)).toBe(true);
+    const atScene = await q13Result(fx.ctx, "character", eleanor.uuid,
+      eleanor.id, "visual_identity", scene12.uuid, scene12.id,
+      shot1204.uuid, shot1204.id);
+    expect(r.result.references).toEqual(atScene.result.references);
+  });
+
+  test("a shot outside the scene asked is not answered", async () => {
+    // §12.1.7: the question contradicts itself. Q07 used to answer it
+    // with scene 3's palette under 12-04's lighting and design.
+    await expect(q07Result(fx.ctx, scene3.uuid, scene3.id,
+                           shot1204.uuid, shot1204.id))
+      .rejects.toThrow(/not answered/);
+    await expect(q13Result(fx.ctx, "character", eleanor.uuid, eleanor.id,
+      "visual_identity", scene3.uuid, scene3.id, shot1204.uuid,
+      shot1204.id)).rejects.toThrow(/not answered/);
+    await expect(q02Result(fx.ctx, "character", eleanor.uuid, eleanor.id,
+      scene3.uuid, scene3.id, shot1204.uuid, shot1204.id))
+      .rejects.toThrow(/not answered/);
+    await expect(q14Result(fx.ctx, "Q07", null, null, scene3.uuid,
+      scene3.id, shot1204.uuid, shot1204.id)).rejects.toThrow(/not answered/);
+  });
+
+  test("Q14 for Q02 about a character: Eleanor at scene 7", async () => {
+    // §12.9.1. Relationship states reach her one reference away, so the
+    // step applies and is met; her costumes cannot satisfy the costume
+    // step — only one worn here could, and none is (`satisfiedBy`).
+    const scene7 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '7'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene7.uuid, scene7.id, null, null,
+      { type: "character", uuid: eleanor.uuid, id: eleanor.id }, null);
+    blessOrCheck("Q14-Q02-eleanor-scene7", r);
+    const find = (e: string) => r.result.findings.find((f) => f.entity === e);
+    expect(find("relationship_state")?.message).not.toMatch(/not apply/);
+    expect(find("costume_scene")?.severity).toBe("warning");
+  });
+
+  test("Q14 for Q07 at a shot that falls through: 12A", async () => {
+    // §12.9.1 narrows as §7.3 reads: 12A has no lighting of its own and
+    // Q07 there returns the scene's, so the step is met.
+    const shot = await sel(
+      "SELECT id, uuid FROM shot WHERE shot_number = '12A'");
+    const r = await q14Result(fx.ctx, "Q07", null, null,
+      scene12.uuid, scene12.id, shot.uuid, shot.id);
+    blessOrCheck("Q14-Q07-shot12A", r);
+    expect(r.result.findings.find((f) => f.entity === "lighting_design")
+      ?.severity).toBe("ok");
+  });
+
+  test("Q14 for Q13 about a costume: Ada's shawl at scene 12", async () => {
+    // §12.9.1. The costume's binding meets the required step; no anchor
+    // and no shot override can name a costume, so those do not apply.
+    const shawl = await sel(
+      "SELECT id, uuid FROM costume WHERE name = 'Ada''s shawl'");
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, null, null,
+      { type: "costume", uuid: shawl.uuid, id: shawl.id },
+      "visual_identity");
+    blessOrCheck("Q14-Q13-shawl-scene12", r);
+    expect(r.result.findings.map((f) => f.severity))
+      .toEqual(["ok", "ok", "ok"]);
+  });
+
+  test("Q14 for Q02 about a location: the kitchen at scene 10", async () => {
+    // §12.9.1. Q02's media step takes its intent per kind of subject, as
+    // the Q13 answer Q02 nests is asked (§12.16): `environment` for a
+    // location. The kitchen has `visual_identity` bundles and no
+    // `environment` one, so the required step is a blocker.
+    const kitchen = await sel(
+      "SELECT id, uuid FROM location WHERE name = 'Farmhouse Kitchen'");
+    const scene10 = await sel(
+      "SELECT id, uuid FROM scene WHERE scene_number = '10'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene10.uuid, scene10.id, null, null,
+      { type: "location", uuid: kitchen.uuid, id: kitchen.id }, null);
+    blessOrCheck("Q14-Q02-kitchen-scene10", r);
+    const media = r.result.findings.find((f) => f.entity === "bundle");
+    expect(media?.severity).toBe("blocker");
+    expect(media?.message).toMatch(/environment/);
+  });
+
+  test("Q14 for Q13 with its binding excluded: the wind chime, scene 12",
+       async () => {
+    // §12.9.1. The chime's one visual binding is scene-ranged from scene
+    // 24, so at scene 12 Q13 resolves nothing. The binding tables are
+    // context (`satisfiedBy: ["bundle"]`): a binding that exists but is
+    // excluded here does not meet the step.
+    const chime = await sel(
+      "SELECT id, uuid FROM prop WHERE name = 'Brass wind chime'");
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, null, null,
+      { type: "prop", uuid: chime.uuid, id: chime.id }, "visual_identity");
+    blessOrCheck("Q14-Q13-windchime-scene12", r);
+    expect(r.result.findings.find((f) => f.entity === "bundle")?.severity)
+      .toBe("blocker");
+    const q13 = await q13Result(fx.ctx, "prop", chime.uuid, chime.id,
+      "visual_identity", scene12.uuid, scene12.id, null, null);
+    expect(q13.result.references).toEqual([]);
+    expect(q13.result.trail.some((t) => t.excluded !== null)).toBe(true);
+  });
+
+  test("Q14 for Q02 about a character only mentioned: Ada at scene 3",
+       async () => {
+    // §12.9. Ada is named at scene 3, not seen: the steps marked
+    // `appliesTo: "seen"` do not apply to her there, and say so.
+    const ada = await sel("SELECT id, uuid FROM character WHERE name LIKE '%Ada%'");
+    const r = await q14Result(fx.ctx, "Q02", null, null,
+      scene3.uuid, scene3.id, null, null,
+      { type: "character", uuid: ada.uuid, id: ada.id }, null);
+    blessOrCheck("Q14-Q02-ada-scene3", r);
+    for (const e of ["character_appearance_profile",
+                     "physical_character_profile", "costume_scene"]) {
+      const finding = r.result.findings.find((f) => f.entity === e);
+      expect(finding?.severity).toBe("ok");
+      expect(finding?.message).toMatch(/not seen/);
+    }
+  });
+
+  test("Q14 for Q13 where the only verified anchor is a variant's: " +
+       "Marcus, scene 12", async () => {
+    // §12.9.1: a step over rows the target resolves is satisfied by
+    // what it resolves. Marcus's one verified visual anchor names his
+    // young variant, in force at scene 25 only (§4.8), and his own is a
+    // candidate. Q13 at scene 12 returns no anchor, so the step is not
+    // met, though a verified row naming him exists.
+    const marcus = await sel(
+      "SELECT id, uuid FROM character WHERE name LIKE '%Marcus%'");
+    const r = await q14Result(fx.ctx, "Q13", null, null,
+      scene12.uuid, scene12.id, null, null,
+      { type: "character", uuid: marcus.uuid, id: marcus.id },
+      "visual_identity");
+    blessOrCheck("Q14-Q13-marcus-scene12", r);
+    expect(r.result.findings.find((f) => f.entity === "entity_anchor")
+      ?.severity).toBe("warning");
+    const q13 = await q13Result(fx.ctx, "character", marcus.uuid, marcus.id,
+      "visual_identity", scene12.uuid, scene12.id, null, null);
+    expect(q13.result.references.some((x) => x.provenance === "anchor"))
+      .toBe(false);
+    expect(q13.result.trail.some((t) => t.layer === "anchor" &&
+      t.excluded?.by === "variant_not_in_force")).toBe(true);
   });
 
   test("Q02 for a location: the kitchen at scene 10, ranked axes",

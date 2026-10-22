@@ -99,8 +99,10 @@ names the asset intent whose bundle must resolve.
 |---|---|---|
 | `project_color_palette` | required | the direction cascade's color root |
 | `visual_identity` | required | material/aesthetic root |
+| `color_script` | optional | the color script's summary |
 | `color_script_entry` | recommended | position-keyed color intent (latest-wins) |
 | `scene_color_palette` | recommended | scene color opinion |
+| `look_development` | optional | look development root, on the shot cascade |
 | `lighting_design` | recommended | scene/shot lighting |
 | `shot_design` | optional | shot-level composition |
 | `character_appearance_profile` | recommended | each character seen at the position (§2.4.1, §4.6) |
@@ -156,7 +158,7 @@ names the asset intent whose bundle must resolve.
 | `physical_character_profile` | required | movement baseline |
 | `scene_blocking + action_sequence` | recommended | staging container |
 | `performance_state (physical)` | optional | modulation; absence = baseline holds |
-| `performance_beat (physical/facial)` | optional | moment direction |
+| `performance_beat (physical)` | optional | moment direction |
 | `character_environment_physicality` | optional | how they relate to this place |
 | `media: motion` | optional | motion reference |
 
@@ -216,8 +218,8 @@ names the asset intent whose bundle must resolve.
 
 | Step | | Why |
 |---|---|---|
-| `bundle + character_asset_binding + location_asset_binding + prop_asset_binding` | required | something to resolve |
-| `entity_anchor` | recommended | identity pinning |
+| `bundle + character_asset_binding + costume_asset_binding + location_asset_binding + prop_asset_binding` | required | something to resolve |
+| `entity_anchor (verified)` | recommended | identity pinning |
 | `character_shot_override + location_shot_override + prop_shot_override` | optional | shot-specific swaps |
 
 ---
@@ -230,7 +232,7 @@ Specified in **§12.9**. Normative result: [`fixtures/expectations/Q14.result.js
 
 Parameters: `target`, `character`, `scene`.
 
-The envelope also carries `shot` as null: the published result was computed without it. Whether the query accepts it at all is stated in the section above, not here.
+The envelope also carries `subjectType`, `subject`, `intent`, `shot` as null: the published result was computed without it. Whether the query accepts it at all is stated in the section above, not here.
 
 Result members: `target`, `targetName`, `findings`, `counts`.
 
@@ -336,7 +338,7 @@ names the asset intent whose bundle must resolve.
 | `costume + costume_scene` | recommended | what they wear here |
 | `relationship_state` | optional | where their relationships stand |
 | `performance_state` | optional | scene-scoped modulation (absence = baseline holds) |
-| `media: visual_identity` | required | assets to condition on |
+| `media: character=visual_identity, prop=visual_identity, location=environment` | required | assets to condition on |
 
 ---
 

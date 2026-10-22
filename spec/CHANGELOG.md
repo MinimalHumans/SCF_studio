@@ -17,15 +17,484 @@ time, so that a reader of an old spec knows what it was describing.
 
 ---
 
-## 1.0-rc.3 — 2026-10-19
+## Unreleased
 
-*Describes schema 2.24.*
+*Describes schema 2.25.*
 
 **Editorial.** No requirement changes, no schema change, and no result
 or report changes. `stability.md` names the files where the editor's
 operations now live in scf-core, and `api-surface.json` is regenerated
-for what scf-core now exports. A new candidate rather than a patch
-because `spec-1.0-rc.2` is published and a published tag does not move.
+for what scf-core now exports.
+
+## 1.0-rc.7 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The seventh and last release candidate, limited to Q14**, from the
+eleventh independent reader run (`docs/release-checklist.md` §D1). It
+reproduced every published artifact outside Q14 exactly, conformed on
+all nine published Q14 results, and had no critical finding. Its two
+majors were both in §12.9.1: each let two readings of the text give
+different severities on a `recommended` or `required` step. Fixing them
+changes which Q14 severities are permitted, so under §11.5 this is a
+**minor** change. **No registry change; schema stays 2.25.** Taken under
+§11.0, which still holds. 1.0 is to be cut from this candidate without a
+further reader run; Q14 stays Provisional (`stability.md`).
+
+### §12.9.1 — a step over rows a query resolves (M1)
+
+- **A step over rows a query resolves is satisfied by what that query
+  resolves**, at the position, not by the rows §12.9.1's routes reach. A
+  rubric step gains `resolvedBy`, naming the query; Q13's
+  `entity_anchor` and shot-override steps carry `"Q13"`. The anchor step
+  therefore counts exactly the anchors Q13 lets contribute: verified, of
+  the intent's anchor type (§12.8), and a variant's only where §4.8 puts
+  that variant in force, the subject's own displaced where it does. The
+  override step counts only overrides whose bundle has the intent. The
+  routes alone found Marcus's one verified anchor, which names his young
+  variant, and called him pinned at every position; Q13 returns no
+  anchor for him outside scene 25. New worked example
+  `Q14-Q13-marcus-scene12`: the step is a `warning`. The generator
+  checks that `resolvedBy` names a query with a rubric.
+
+### §12.9 — the shot fixes the position for every step (M2)
+
+- A Q14 asked at a shot asks its media step's Q13 at that shot, whether
+  or not the target takes one: a `voice_identity` bundle applied by a
+  `character_shot_override` there meets Q05's media step. The media step
+  said "at the query's scene and shot", which read as Q14's or as the
+  target's. No worked example: the fixture's one shot override replaces
+  a `visual_identity` bundle, so no published position tells the readings
+  apart, and adding one would change the fixture and other published
+  results in the last candidate.
+- Consistently, a shot narrows a column only for a target that takes
+  one: "a column naming a parameter the target takes", not "the query
+  received" (m3). Q08's `sound_cue` is narrowed by its `scene_id`.
+
+### Reference
+
+`readiness.ts` already read Q13's anchors and overrides from
+`resolveMedia`, the code Q13 answers with, so the anchor step needed no
+change. Its Q05 and Q06 walkers asked their media step's Q13 without the
+shot; they now pass it. No published result changes.
+
+### Editorial
+
+- §12.9.1: "one declared reference away" is a reference to an entity
+  with a reference to the subject's kind, whatever the column is named,
+  as `character_relationship`'s `character_a_id` is (m2). The list of
+  steps naming an entity their target does not read gives examples, not
+  every one.
+- §12.9: `counts` has every severity as a key, zeros included (m8).
+- `conformance.md` §7: eleven reader-run implementations, not nine;
+  `stability.md`'s expectation-coverage row names scenes 7, 12, 16 and
+  19 and the Q07 target. README, site and `what-is-scf.md` status lines.
+
+### Left for after 1.0
+
+Run 11's other minors need a decision about behaviour, not a sentence,
+and are unchanged: a non-baseline binding with no filter and no range at
+a cut scene, and a scene-ranged one there (m1, §12.1.7, §12.8.1 — with
+rc.6's m4); whether a shot row naming a character its scene does not
+link, or makes `named`, counts as seen (m4, §4.6); Q14 asked without a
+required parameter or with a subject kind its target does not take (m5,
+§12.1.7); marking a cross-step finding and bounding its severity (m6);
+`entity` for a step that does not apply, on which the published results
+differ (m7); a cut subject asked about (m9, §12.1.2). rc.6's deferred
+m4, m6, m7, m8 and m11 are unchanged.
+
+---
+
+## 1.0-rc.6 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The sixth release candidate, limited to Q14**, from the tenth
+independent reader run (`docs/release-checklist.md` §D1). It reproduced
+all 57 published artifacts from the text alone, with no critical
+finding. Its four majors were all in §12.9.1's rubric, each two MUSTs
+giving different severities in a case nothing published asked about.
+Fixing them changes which Q14 severities are permitted, so under §11.5
+this is a **minor** change, not an editorial one. **No registry change;
+schema stays 2.25.** Taken under §11.0, which still holds. Nothing
+outside Q14 changed except wording.
+
+### §12.9.1 — the rubric says what the text says (M1–M4)
+
+- **A reference to `scene` or `shot` is a position, never a route to a
+  subject (M1).** Read literally, "one declared reference away" reached
+  `location` through `scene.location_id` from every scene-keyed entity,
+  so Q05's `dialogue_rhythm` did not apply to any character and Q02's
+  costume step applied to a location — the opposite of the section's own
+  examples. The reference already behaved this way.
+- **A media step is one satisfied by `bundle` alone (M2).** Q13's first
+  step gains `satisfiedBy: ["bundle"]`: the binding tables are context,
+  and a binding of the subject's that is excluded at the position does
+  not meet the step. The multi-entity rule called that `ok` and the
+  media rule a `blocker`; it is a `blocker`. New worked example
+  `Q14-Q13-windchime-scene12`.
+- **Look steps are marked (M3).** A rubric step gains `appliesTo:
+  "seen"`, on Q02's appearance, physical and costume steps and Q07's
+  `character_appearance_profile`. §12.9 says how it meets a subject: a
+  character subject not seen at the position — heard, named, or not
+  there — reports those steps as not applying. The reference assessed
+  them for anyone. New worked example `Q14-Q02-ada-scene3`.
+- **Q02's media intent is per kind of subject (M4).** The step's
+  `intent: "visual_identity"` becomes `intentBySubjectType`, mapping a
+  location to `environment` and a character or prop to
+  `visual_identity`, as §12.16 asks the Q13 answer Q02 nests. The
+  generator checks every intent against the registry's bundle intents.
+  New worked example `Q14-Q02-kitchen-scene10`: the fixture's kitchen
+  has no `environment` bundle, so the step is a `blocker`.
+
+### Rules now stated
+
+- §12.9.1: "does not apply" means the step cannot be narrowed to the
+  subject asked about by either route; an entity that reaches the
+  subject applies whatever else it names, as `costume_scene` names a
+  costume (m1).
+- §12.9.1: Q13's `entity_anchor` step counts verified anchors only, an
+  unset status counting as verified, as Q13 reads them; the step gains
+  `filter: canonical_status = verified`, and the `filter` member says an
+  unset value reads as the target reads it (m2).
+- §12.9.1: a step's rows are narrowed *as its target narrows*, not "the
+  rows its target reads" — some steps name entities their target does
+  not read (m3).
+- §12.9: every parameter is recorded in the envelope as asked; one the
+  target does not take is ignored, except `shot`, which fixes the
+  position for every target (m5). At a cut scene, Q14 assesses what its
+  target answers at that empty position, and no character is seen there
+  (m9).
+
+### Reference
+
+`readiness.ts` follows the rules above: Q02's look steps check presence
+(§2.4.1, §4.6) and its media intent is read from the rubric; Q07 sees no
+one at an empty position. Its Q05 walker raised a `suggestion` for
+absent vocal beats on a `recommended` step, outside the permitted range;
+it now raises a `warning`. The media step's message no longer says "no
+bundle/binding" where a binding exists and is excluded. No published
+result changes.
+
+### Editorial
+
+- Appendix A: eighteen negative cases, not sixteen; conformance §5.3's
+  list names `junction-key-null` and `span-boundary-cut` (m10).
+- The rubric's Q08 `params` is `scene`, §12.9's name (m10).
+- `stability.md`'s Q14 row; README, site and `what-is-scf.md` status
+  lines, and ten reader-run implementations.
+
+### Left for after 1.0
+
+Run 10's minors outside Q14 that are not wording are unchanged: shot-keyed
+rows at an empty position and a shot in no scene (m4, §12.1.7);
+`sequence_act_mismatch` derived over cut scenes (m6, §9.4.1); a link's
+hidden `name` in the duplicate comparison (m7, §6.4); a relationship to a
+cut character (m8, §6.6.1); a dangling binding's trail entry (m11, §12.8).
+Each needs a decision about behaviour, not a sentence.
+
+---
+
+## 1.0-rc.5 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The fifth release candidate**, from the ninth independent reader run
+(`docs/release-checklist.md` §D1). It reproduced every published result,
+every negative report and the fixture's report from the text alone, with
+no critical finding. Its six majors were all in cases nothing published
+asked about: Q14's narrowing in four places, a span whose start scene is
+cut, and a shot asked without its scene or outside it. **No registry
+change; schema stays 2.25.** Taken under §11.0, which still holds.
+
+### §12.9.1 — Q14 narrows as its target reads (M1–M4)
+
+One rule replaces "narrowed by whichever parameters the entities declare
+as a column" and "satisfied by any of them unless its `purpose` says
+otherwise": **a step's rows are the rows its target reads.** To the
+subject through a column naming it, or one declared reference away —
+so `relationship_state` applies to the character it belongs to (M1).
+To the position by pattern, by §7.3's fall-through where the target
+takes a shot, or by column — so a shot with no lighting of its own is
+ready on the scene's, as Q07 answers there (M3). A rubric step gains
+`satisfiedBy`: Q02's costume step is satisfied by a `costume_scene` here
+and by nothing else, which is what §12.9's own example always said (M2).
+Q13's rubric names `costume_asset_binding`; `entity_anchor` and the shot
+overrides do not apply to a costume (M4). "Does not apply" is now
+defined: every entity that could satisfy the step is keyed to a subject
+of another kind, or to a shot or location the position lacks. A media
+step names `bundle`; one with no `intent` takes the target's. New worked
+examples: `Q14-Q02-eleanor-scene7`, `Q14-Q07-shot12A`,
+`Q14-Q13-shawl-scene12`.
+
+The rubric's `params` use §12.9's names, and Q02's lists `shot` (m7).
+Q06's beat step is `physical` only, as Q06 returns (m8). Q07's rubric
+lists `color_script` and `look_development`, which the reference always
+reported. The reference's Q07 walker raised a `suggestion` for an absent
+`color_script_entry` (a `recommended` step, so `warning`) and a
+`warning` for an absent `shot_design` (`optional`); Q08's skipped
+`location_sound_profile` at a scene with no location; Q13 failed on a
+costume asked at a shot. All fixed; the fixture never exercised them.
+
+### §5.5 — a span whose start scene is cut covers no scene (M5)
+
+As an absent boundary would: its scenes belong to the span before it. It
+is not re-anchored, because a cut scene has no position to be next to.
+**New finding `structure.boundary_cut`** (warning), since the validator
+derives over cut scenes too and otherwise saw the span anchored. Negative
+case `span-boundary-cut`. Q10's span membership now excludes cut scenes
+and cut spans, as Q04's lineage always did; the two disagreed.
+
+### §12.1.7 — positions, and questions that are not answered (M6, m12, m18)
+
+**A shot fixes the position at its own scene**: asked alone (Q13, and
+Q14 for Q13) it is at its scene, which the envelope still records as
+null; asked with a scene it is not in, the question is not answered.
+`Q13-shot1204` shows the first. **A cut scene is an empty position for
+every query**, as Q03's always was: the reference's Q04 returned the cut
+scene's own screenplay lines, and Q05, Q07 and Q11 read rows still keyed
+to it. **A question that is not answered has no result** — no envelope
+with a null `result`.
+
+### Rules now stated
+
+- §6.4: null key columns compare equal (negative case `junction-key-null`).
+- §12.11: a connection whose target is cut is not a carrier, and is
+  absent from `carriers`; carriers are in connection row order (m13).
+- §12.13: a row keyed by `sequence_id` alone is at no scene for Q11.
+- §12.8: a binding to a cut bundle and an anchor on a cut asset are not
+  considered and have no trail entry (m14). The reference kept the
+  anchor as contributing with nothing to contribute; it now drops it.
+- §12.16: each character member's shape and order (m1, m2).
+- §12.2, §12.16: an unset `beat_order` sorts as 0 in every beat array
+  (m3). The reference's Q05 sorted it last and Q02 did not sort.
+- §12.4: Q03's `costumes` and `motifs` order (m1); §12.14: Q15's
+  `attached` in row order.
+- §12.17.1: an unknown `line_type` is not in `screenplay`, per §10.1;
+  `line_order` ties by row id (m11). The reference included such lines.
+- §4.5: a state resolved at or before its own scene is in force nowhere
+  (m9). §4.2.3: `scene_number` is read trimmed; empty is absent (m19).
+- §8.3: an unparseable identifier, root-name case, a bare root and a URL
+  (m10).
+- §12.1.6: the lowest-row-id sentence no longer reads as if `Q07-scene3`
+  did not exist (m17), and no longer claims every array's order is
+  stated (m1).
+- §2.1: implementation counts no longer go stale (m15).
+- §9.4's null-table and no-row-id ordering is in the catalog (m16).
+
+### Conformance and stability
+
+- `conformance.md` §5.1: the cut deputy and the sequence-keyed tone
+  marker; §5.3 and §7: eighteen negative cases; §7 counts runs, not
+  implementations.
+- `stability.md`: rows for Q14's narrowing and §12.1.7; 54 codes, 23
+  raised in a published report.
+
+### Artifacts
+
+- Fixture (m4): Deputy Rourke, cut, linked into scenes 12 and 19 and
+  carrying Forgiveness through an active connection; "Held breath", a
+  tone marker keyed to The Reckoning alone. `Q04`, `Q03`, `Q10` and
+  `Q11` are unchanged and now depend on the rules above.
+- New: `Q13-shot1204`, `Q14-Q02-eleanor-scene7`, `Q14-Q07-shot12A`,
+  `Q14-Q13-shawl-scene12`, the negative cases `span-boundary-cut` and
+  `junction-key-null`, and their selectors.
+- `readiness-rubrics.json`: `satisfiedBy`, renamed `params`, the
+  changed steps above. `finding-catalog.json`: 54 codes, and the
+  ordering's null rules. Q14 messages say "in force" where they said
+  "resolve" (m6).
+
+---
+
+## 1.0-rc.4 — 2026-10-20
+
+*Describes schema 2.25.*
+
+**The fourth release candidate**, from the eighth independent reader run
+(`docs/release-checklist.md` §D1). It reproduced every published result,
+every negative report and the fixture's report from the text alone, and
+found two contradictions between normative rules and several unstated
+ones. **Schema 2.25** adds one registry member. Taken under §11.0, which
+still holds.
+
+### §4.5 and §7.3 — a `latest_wins` tie takes the highest row id
+
+§7.3 said a step matching several rows takes the lowest row id, and §4.5
+said pattern 3 takes the highest. The fixture holds the tie — two
+`color_script_entry` rows at scene 1 and two at scene 21 — so two readers
+each following one sentence gave different Q07 answers at four scenes.
+**Step 1 is pattern 3 and takes the highest**, as the state tables
+always did; steps 2–4 keep the lowest. §12.1.6 states the exception. The
+reference followed §7.3 in the cascade and §4.5 everywhere else, and now
+follows §4.5 in both. No published result changes; the new case result
+`Q07-scene3` pins it.
+
+### §0.3, §8.3, §12.8.1 — no root mapping makes rooted identifiers `unaddressed`
+
+Three sentences said every asset is `unaddressed` without a mapping,
+contradicting §8.2's absolute and `..` identifiers, which are
+`out-of-root` whatever the session. The identifier is now decided first,
+everywhere, as the reference always did; conformance §2.1 agrees. The
+fixture gains one bundled asset with an absolute identifier, so the
+published `Q02-locket-scene25` shows `out-of-root` beside `unaddressed`,
+and the fixture's report carries one warning,
+`asset.identifier_absolute`.
+
+### §9.4.1 — every code's `table`, `rowIds` and `count`
+
+The table covered 16 of the catalog's 53 codes. It now covers every one,
+read from the reference validator: the presence, line, relationship,
+asset, binding, structure, required-value and vocabulary codes, with the
+grain each is raised at before §9.5 merges it. A merged finding keeps
+the first message. §9.5: `counts` counts findings, not their `count`s.
+
+### §12.17 — staging beats reach their scene through either container
+
+`staging_beat` has no `scene_id`; it names a `scene_blocking` or an
+`action_sequence`. `stagingBeats` now takes both, ordered by
+`beat_order` then row id. The reference read only blocking, so Q04 at a
+scene whose staging is an action sequence lost its beats. New case
+result `Q04-scene21`. `detail` includes shot-level rows, and is not
+prose.
+
+### §12.1.2, §12.8 — `subject_variant_id` points into the variant table (schema 2.25)
+
+The registry declared `entity_anchor.subject_variant_id` polymorphic on
+`subject_type`, which names `character`, `prop` or `location`, while the
+row it names is in `character_variant`, `prop_variant` or
+`location_variant`. A resolver following the declaration read the
+fixture's variant anchor as Eleanor. Schema 2.25 adds
+`polymorphicTargets` to the field — the target per sibling value — and
+§12.1.2 says the sibling names the table only where no map is declared.
+`registry.schema.json` describes the member. The reference's where-used
+walk and orphan count honour it.
+
+### §12.9 — Q14 takes its target's parameters
+
+Q14 could not be asked about a prop or a location for Q02, or about Q13
+at all. It now declares `subjectType`, `subject` and `intent` beside
+`character`, `scene` and `shot`, all seven in its envelope; a subject
+narrows by its kind, a polymorphic subject column by its sibling, and a
+step that cannot apply to the subject's kind is reported `ok`, saying
+so. `findings` are ordered by severity, and `entity` is stated for a
+step naming several. The Q02 rubric's `params` name a subject. The
+reference's walkers now report every step of their rubrics — Q02, Q06,
+Q07, Q08 and Q13 each skipped some — and Q13's anchor step reports
+`warning` when absent, as `recommended` requires. `Q14.result.json`
+gains three null parameters; new worked examples
+`Q14-Q02-locket-scene25` and `Q14-Q13-eleanor-shot1204`. The MCP
+`readiness` tool and the editor's Q14 page take the new parameters.
+
+### Rules now stated
+
+- §1.2: `_scf_meta` is a key/value table, and `_scf_meta.schema_version`
+  means its `schema_version` row.
+- §4.5: a null `persistence` is `scene_only`; a `resolved_at_scene_id`
+  naming a scene with no story position resolves nothing. The reference
+  read an unknown `persistence` as `until_resolved`; it now reads it as
+  `scene_only`.
+- §8.5: the format string — the last extension, lowercased, no dot,
+  null where there is none.
+- §12.1.6: row order is a last resort, and every array in §12 now has
+  its order stated: Q03 and Q04 `props` and `cast` in link order, Q12
+  `props` in `prop` order, Q04 `blocking` and `detail` rows, Q11
+  `toneMarkers`, Q00 `themes`, Q01 `groups` and `thematicConnections`.
+- §12.8: a null or empty `canonical_status` is verified; a row written
+  without one carries the default `candidate`. Only a verified variant
+  anchor displaces. §12.8.2: a null `precedence` is 0, and the binding
+  named by `replaced` is the first `replace` binding above.
+- §12.16: which inapplicable Q02 members are `[]` and which null, and
+  `media` is Q13's body with `fromQuery` beside its members. The
+  reference reported the scene's location variant for a location
+  subject that is not the scene's location; it is now
+  `{variant: null, mismatches: []}`.
+- §12.17: `mismatches` escapes exactly as JSON requires and no more;
+  non-ASCII is written as itself.
+
+### Conformance and stability
+
+- `conformance.md` §6.1 step 3 names the header stamps and the
+  `_scf_meta` row the negative base database carries; step 2 says Q04's
+  `detail` is not prose. §5.1 lists the absolute asset, and corrects
+  `12A`'s row id against the cut `12B`.
+- `stability.md`: `provenance` is exercised; `12A`'s row id restated;
+  rows for Q14's parameters and §9.4.1.
+- Eight independent implementations (`conformance.md` §7, README, site,
+  `what-is-scf.md`).
+
+### Artifacts
+
+- New: `Q07-scene3`, `Q04-scene21`, `Q14-Q02-locket-scene25`,
+  `Q14-Q13-eleanor-shot1204`, and their selectors.
+- Every result, report and generated file carries schema 2.25. Beyond
+  that, only `Q02-locket-scene25` (the absolute reference), `Q14` (three
+  null parameters) and `hollow_creek.report.json` (the warning) change.
+- `api-surface.json`: `polymorphicTarget`, `polymorphicKindsFor` and
+  `Q14Subject` are exported.
+
+---
+
+## 1.0-rc.3 — 2026-10-16
+
+*Describes schema 2.24.*
+
+**The third release candidate**, from the seventh independent reader run
+(`docs/release-checklist.md` §D1). It reproduced 24 of 29 results, every
+negative report and the fixture's report from the text alone. What it
+found is sentences the text was missing, not missing rules. No schema
+change, and no published result changes shape; one case result is added.
+
+### §12.17 — `mismatches` has a stated format (the critical)
+
+Each entry is exactly `<axis>: scene=<value> variant=<value>`, the
+scene's column name and the two stored values as JSON strings. It was
+compared byte for byte and never stated. §12.1.5 now names formatted
+strings and prose as kinds of string, and lists the trail's `layer` and
+`excluded.by` among the closed vocabularies. A `varies` time of day
+agrees only with a scene that has a time.
+
+### Rules now stated
+
+- §7.3: a shot with no row of its own falls through to the scene's row;
+  `latest_wins` does not fall through; several matching rows give the
+  lowest row id. New case result `Q07-shot12A` exercises the
+  fall-through.
+- §12.5: Q12's characters are both positions' `scene_character` rows
+  pooled in row-id order.
+- §12.6, §12.2: Q06's `baseline` is `physical_character_profile`.
+- §12.4: Q03's `states` are `performance_state` rows of every modality.
+- §12.8: one `by` per excluded layer, in a stated precedence; the order
+  of anchors in `trail`; an intent outside the anchor table considers
+  every anchor; `canonical_status` names the registry's `candidate` and
+  `rejected` (the registry default is `candidate`).
+- §5.2: a scene the screenplay does not contain belongs to the spans that
+  run to the end. §5.4, §9.5: findings derive story order and membership
+  over every scene, cut ones included.
+- §9.4.1 (new): the condition, `table`, `rowIds` and `count` of every
+  code no other section states, including the seven single-row identity
+  codes a validation report need not compute. §9.4: findings are ordered
+  by code point, a null table first.
+- §12.1.1: `schemaVersion` is the implementation's schema, not the
+  file's. §12.1.6: "the" row is the lowest row id.
+- §2.4: an open vocabulary may be resolved over, on its known values.
+
+### Artifacts
+
+- `fixtures/expectations/Q07-shot12A.result.json`, new.
+- `finding-catalog.json`: `structure.boundary_unnumbered` is titled for
+  what it reports (a span starting at an unnumbered scene), and
+  `identity.successor_without_timestamp` names `superseded_at`.
+- The validator: `structure.boundary_unnumbered` reports a sequence's
+  boundary on `sequence`, not `act`; `structure.scenes_before_first_act`
+  names the scenes it is about. Neither is exercised by a published
+  report. `fixtures/hollow_creek.report.json`: scene 17's message no
+  longer says it belongs to no act.
+- Counts: sixteen negative cases (`conformance.md` §5.3, §7; Appendix A;
+  `stability.md`; README) and seven independent implementations;
+  `conformance.md` §7 says "maintained", and §6.1 and §4 no longer read
+  as instructions for the reference tool only.
+
+---
 
 ## 1.0-rc.2 — 2026-10-16
 

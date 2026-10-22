@@ -1,0 +1,71 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q07",
+    "character": null,
+    "subjectType": null,
+    "subject": null,
+    "intent": null,
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": "88da6925-723e-4c0d-bd91-3b45ee0bdf8b"
+  },
+  "result": {
+    "target": "Q07",
+    "targetName": "Look resolution",
+    "findings": [
+      {
+        "severity": "warning",
+        "entity": "character_appearance_profile",
+        "message": "Marcus Cade is in this scene with no appearance profile."
+      },
+      {
+        "severity": "suggestion",
+        "entity": "shot_design",
+        "message": "No shot design for the given shot — it takes the scene's look."
+      },
+      {
+        "severity": "ok",
+        "entity": "project_color_palette",
+        "message": "project_color_palette in force: Project Color Palette."
+      },
+      {
+        "severity": "ok",
+        "entity": "color_script",
+        "message": "color_script in force: Color Script."
+      },
+      {
+        "severity": "ok",
+        "entity": "color_script_entry",
+        "message": "color_script_entry in force: First warmth."
+      },
+      {
+        "severity": "ok",
+        "entity": "scene_color_palette",
+        "message": "scene_color_palette in force: Sc 12 palette."
+      },
+      {
+        "severity": "ok",
+        "entity": "look_development",
+        "message": "look_development in force: Look Development."
+      },
+      {
+        "severity": "ok",
+        "entity": "lighting_design",
+        "message": "lighting_design in force: Sc 12 lighting."
+      },
+      {
+        "severity": "ok",
+        "entity": "visual_identity",
+        "message": "Visual identity root present."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 1,
+      "suggestion": 1,
+      "ok": 7
+    }
+  }
+}

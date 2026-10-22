@@ -31,6 +31,17 @@ the fixture look arbitrary until you read why they were made:
   break every scene lookup in both suites.
 - **Some gaps are on purpose.** A fixture with nothing missing cannot
   exercise §9.2's requirement to answer usefully on half-placed data.
+- **One identifier is absolute on purpose.** Asset 55, the locket's
+  engraving macro, points at an art-department drive, so a published
+  result shows `out-of-root` beside `unaddressed` (spec §8.3). Rooting
+  it at `@project` removes the only case.
+- **One character is cut on purpose.** Deputy Rourke is linked into
+  scenes 12 and 19 and carries Forgiveness through an active connection,
+  so a reader that ignores cut endpoints changes the published Q04, Q03
+  and Q10 (spec §6.6.1). Restoring him removes the only cut endpoint a
+  published result depends on.
+- **One tone marker is keyed to a sequence alone**, so the published Q11
+  shows that such a row is at no scene (spec §12.13).
 - **`01` renamed Voss to Cade** across every text column, which is why
   no trace of the earlier name survives.
 

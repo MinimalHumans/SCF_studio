@@ -1,6 +1,6 @@
 {
  "$comment": "The Hollow Creek conformance fixture, as source. Authored in scf-app, dumped by fixtures/build/dump_fixture.py, rebuilt by build_fixture.py. Review changes HERE — the .scf beside it is a build output that happens to be checked in. Row ids and timestamps are preserved deliberately; see dump_fixture.py.",
- "schemaVersion": "2.24",
+ "schemaVersion": "2.25",
  "tables": {
   "_scf_meta": [
    {
@@ -9,7 +9,7 @@
    },
    {
     "key": "schema_version",
-    "value": "2.24"
+    "value": "2.25"
    },
    {
     "key": "updated_at",
@@ -699,6 +699,18 @@
     "version_label": "v1",
     "superseded_at": "2026-09-16 12:00:00",
     "superseded_by_id": 6
+   },
+   {
+    "id": 55,
+    "uuid": "00000000-0000-4000-8000-00c400000001",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "name": "locket_engraving_macro.tif",
+    "identifier": "/Volumes/ArtDept/locket/locket_engraving_macro.tif",
+    "description": "Macro of the engraving, still on the art department's drive rather than in the project.",
+    "tags": "[\"prop\",\"locket\"]",
+    "source": "Art department",
+    "lifecycle_status": "active"
    }
   ],
   "asset_relationship": [
@@ -1470,6 +1482,16 @@
     "asset_id": 53,
     "role_in_bundle": "reference sheet",
     "order": 1
+   },
+   {
+    "id": 56,
+    "uuid": "00000000-0000-4000-8000-00c400000002",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "bundle_id": 6,
+    "asset_id": 55,
+    "role_in_bundle": "engraving",
+    "order": 6
    }
   ],
   "character": [
@@ -1556,6 +1578,17 @@
     "motivation": "To get Eleanor back into the congregation.",
     "flaw": "Comfort delivered as instruction.",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 5,
+    "uuid": "00000000-0000-4000-8000-000500000001",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "name": "Deputy Rourke",
+    "role": "supporting",
+    "casting_status": "tbd",
+    "summary": "The county man who brought word of the drowning. Cut in the rc.5 pass: his news now arrives by letter. Kept, cut, so that a reader ignoring lifecycle_status puts him in scene 12's cast and on the forgiveness spine (spec §6.6.1).",
+    "lifecycle_status": "cut"
    }
   ],
   "character_appearance_profile": [
@@ -4884,6 +4917,24 @@
     "character_id": 2,
     "role_in_scene": "featured",
     "variant_id": 1
+   },
+   {
+    "id": 20,
+    "uuid": "00000000-0000-4000-8000-000500000020",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "scene_id": 7,
+    "character_id": 5,
+    "role_in_scene": "featured"
+   },
+   {
+    "id": 21,
+    "uuid": "00000000-0000-4000-8000-000500000021",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "scene_id": 9,
+    "character_id": 5,
+    "role_in_scene": "featured"
    }
   ],
   "scene_color_palette": [
@@ -6979,6 +7030,20 @@
     "subtlety_level": "clear",
     "notes": "The act carries it; no single scene in it states the theme outright.",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 13,
+    "uuid": "00000000-0000-4000-8000-000500000013",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "name": "Rourke is forgiveness the town extends and Eleanor will not.",
+    "theme_id": 1,
+    "entity_type": "character",
+    "entity_id": 5,
+    "nature_of_connection": "challenges",
+    "subtlety_level": "clear",
+    "notes": "Active, on a cut character: a link whose endpoint is cut joins nothing (§6.6.1), so Q10 drops it from carriers (§12.11).",
+    "lifecycle_status": "active"
    }
   ],
   "theme": [
@@ -7060,6 +7125,18 @@
     "intensity": "light",
     "mood_atmosphere": "Warmth with the cost still visible.",
     "lifecycle_status": "active"
+   },
+   {
+    "id": 6,
+    "uuid": "00000000-0000-4000-8000-000500000006",
+    "created_at": "2026-10-20 12:00:00",
+    "updated_at": "2026-10-20 12:00:00",
+    "name": "Held breath",
+    "sequence_id": 1,
+    "tone_descriptor": "held breath",
+    "intensity": "moderate",
+    "mood_atmosphere": "Keyed to The Reckoning, not to a scene: Q11 and Q04 read tone markers at a scene, so this one is in neither answer for scene 12 (§12.13).",
+    "lifecycle_status": "active"
    }
   ],
   "visual_identity": [
@@ -7121,5 +7198,5 @@
    }
   ]
  },
- "rowCount": 551
+ "rowCount": 558
 }

@@ -148,3 +148,34 @@ describe("Q13 / Q02", () => {
              f.severity === "warning")).toBe(true);
   });
 });
+
+describe("§12.9.1 coverage: every step of every rubric is reported", () => {
+  // Conformance for Q14 is coverage first. A walker that skips a step
+  // passes every severity check on the steps it does report, so this
+  // asks, per target, that each step has a finding naming one of its
+  // entities — at a scene, at a shot, and for a non-character subject.
+  test("each walkable target, at the positions it can be asked", async () => {
+    const locket = await fx.oneId("prop", "locket");
+    const sc25 = await fx.sceneByNumber(25);
+    const asks: Array<[string, Parameters<typeof readinessReport>[2]]> = [
+      ["Q05", { character_id: eleanor, scene_id: sc12 }],
+      ["Q06", { character_id: marcus, scene_id: sc21 }],
+      ["Q07", { scene_id: sc16 }],
+      ["Q07", { scene_id: sc12, shot_id: shot1204 }],
+      ["Q08", { scene_id: sc12 }],
+      ["Q02", { character_id: marcus, scene_id: sc12 }],
+      ["Q02", { subject: "prop", subject_id: locket, scene_id: sc25 }],
+      ["Q13", { subject: "character", subject_id: eleanor,
+                intent: "visual_identity", scene_id: sc12 }],
+    ];
+    for (const [target, params] of asks) {
+      const r = await readinessReport(fx.ctx, target, params);
+      const reported = new Set(r.findings.map((f) => f.entity));
+      for (const step of r.meta.steps) {
+        expect(step.entities.some((e) => reported.has(e)),
+               `${target} ${JSON.stringify(params)}: "${step.label}" ` +
+               "is not reported").toBe(true);
+      }
+    }
+  });
+});

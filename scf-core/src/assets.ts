@@ -101,7 +101,10 @@ export function projectIdentifier(path: string): string {
  */
 export function formatOf(identifier: string): string | null {
   const path = identifier.split("?")[0] ?? identifier;
-  const base = path.slice(path.lastIndexOf("/") + 1);
+  // Either separator: §8.2 normalises `\` to `/`, and an absolute
+  // Windows identifier is stored as written.
+  const base = path.slice(
+    Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")) + 1);
   const dot = base.lastIndexOf(".");
   if (dot <= 0 || dot === base.length - 1) return null;
   return base.slice(dot + 1).toLowerCase();

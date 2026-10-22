@@ -40,6 +40,8 @@ import { projectRow, type ProjectedRow, type UuidLookup }
  * this answer because the bound stops before them, not because they
  * were filtered.
  *
+ * Two lines sharing a `line_order` are taken in row id order (§12.17.1).
+ *
  * Bind the scene id three times.
  */
 export const SCENE_SCRIPT_SQL =
@@ -54,7 +56,7 @@ export const SCENE_SCRIPT_SQL =
   "       AND line_order > COALESCE(" +
   "         (SELECT MIN(line_order) FROM screenplay_lines " +
   "          WHERE scene_id = ? AND line_type = 'heading'), -1)), 9e18) " +
-  "ORDER BY line_order";
+  "ORDER BY line_order, id";
 
 export async function sceneScriptLines(
     exec: SqlExec, sceneId: number): Promise<Row[]> {

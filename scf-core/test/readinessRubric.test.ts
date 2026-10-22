@@ -22,7 +22,7 @@
  * pin the agreement instead: every entity Q14 reports must be one the
  * rubric declares for that query.
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
@@ -41,6 +41,8 @@ interface Step {
   label: string;
   filter?: { field: string; values: string[] };
   intent?: string;
+  intentBySubjectType?: Record<string, string>;
+  resolvedBy?: string;
 }
 
 const published = JSON.parse(readFileSync(RUBRICS, "utf8")) as {
@@ -98,7 +100,7 @@ describe("the published rubric resolves", () => {
             .toBeDefined();
         }
         if (step.label.startsWith("media:")) {
-          expect(step.intent,
+          expect(step.intent ?? step.intentBySubjectType,
                  `${q.query}: "${step.label}" names an intent in prose only`)
             .toBeDefined();
         }
@@ -113,32 +115,50 @@ describe("the rubric and Q14 describe the same thing", () => {
       .toEqual(Object.keys(QUERY_PATHS).sort());
   });
 
+  test("a step resolved by a query names one with a rubric", () => {
+    // §12.9.1: such a step is satisfied by that query's answer at the
+    // position, so the query must be one Q14 can ask. Q13's anchor and
+    // override steps carry it since 1.0-rc.7.
+    const resolved = published.queries.flatMap((q) => q.steps
+      .filter((s) => s.resolvedBy !== undefined)
+      .map((s) => [q.query, s.entities[0], s.resolvedBy]));
+    expect(resolved).toEqual([
+      ["Q13", "entity_anchor", "Q13"],
+      ["Q13", "character_shot_override", "Q13"],
+    ]);
+  });
+
   test("Q14's findings name only entities the rubric declares", () => {
     // The one that matters. `readiness.ts` assesses by hand, so it can
     // report an entity no step mentions — which is how a rubric and an
     // implementation drift apart while both look right on their own.
-    const q14 = JSON.parse(readFileSync(
-      join(ROOT, "fixtures", "expectations", "Q14.result.json"),
-      "utf8")) as {
+    // Every published Q14, the worked examples for other targets too.
+    const dir = join(ROOT, "fixtures", "expectations");
+    const files = readdirSync(dir).filter((f) =>
+      /^Q14(-.+)?\.result\.json$/.test(f));
+    expect(files.length).toBeGreaterThan(1);
+    for (const file of files) {
+      const q14 = JSON.parse(readFileSync(join(dir, file), "utf8")) as {
         parameters: { target: string };
         result: { findings: { entity: string }[] };
       };
 
-    const target = q14.parameters.target;
-    const rubric = published.queries.find((q) => q.query === target);
-    expect(rubric, `no rubric for ${target}`).toBeDefined();
+      const target = q14.parameters.target;
+      const rubric = published.queries.find((q) => q.query === target);
+      expect(rubric, `no rubric for ${target}`).toBeDefined();
 
-    const declared = new Set(rubric?.steps.flatMap((s) => s.entities));
-    const reported = [...new Set(
-      q14.result.findings.map((f) => f.entity))].sort();
+      const declared = new Set(rubric?.steps.flatMap((s) => s.entities));
+      const reported = [...new Set(
+        q14.result.findings.map((f) => f.entity))].sort();
 
-    const undeclared = reported.filter((e) => !declared.has(e));
-    expect(undeclared,
-           `${target}: Q14 reports ${undeclared.join(", ")}, which the ` +
-           "published rubric does not declare. Either readiness.ts " +
-           "assesses something the rubric omits, or the rubric names it " +
-           "differently — a third party reproducing the rubric would " +
-           "disagree with this implementation and could not tell why.")
-      .toEqual([]);
+      const undeclared = reported.filter((e) => !declared.has(e));
+      expect(undeclared,
+             `${target}: Q14 reports ${undeclared.join(", ")}, which the ` +
+             "published rubric does not declare. Either readiness.ts " +
+             "assesses something the rubric omits, or the rubric names it " +
+             "differently — a third party reproducing the rubric would " +
+             "disagree with this implementation and could not tell why.")
+        .toEqual([]);
+    }
   });
 });

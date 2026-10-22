@@ -328,8 +328,13 @@ describe("row identity (schema 2.3)", () => {
 
 describe("Q03 smoke: subjects present", () => {
   test("cast present at sc 12", async () => {
+    // In the film: the cut deputy's link to sc 12 is in the table and
+    // joins nothing (§6.6.1), so a reader that ignored lifecycle_status
+    // would put him in Q04's cast.
     const present = await fx.ctx.exec(
-      "SELECT character_id FROM scene_character WHERE scene_id=?",
+      "SELECT sc.character_id FROM scene_character sc " +
+      "JOIN character c ON c.id = sc.character_id " +
+      "WHERE sc.scene_id=? AND c.lifecycle_status IS NOT 'cut'",
       [sc[12]!]);
     expect(new Set(present.map((r) => r["character_id"])))
       .toEqual(new Set([eleanor, marcus]));

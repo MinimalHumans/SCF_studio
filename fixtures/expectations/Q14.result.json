@@ -1,10 +1,13 @@
 {
   "query": "Q14",
   "resultFormat": "1.0",
-  "schemaVersion": "2.24",
+  "schemaVersion": "2.25",
   "parameters": {
     "target": "Q05",
     "character": "1afb7bf0-8cee-4e2f-9e8e-015f9b2aaf64",
+    "subjectType": null,
+    "subject": null,
+    "intent": null,
     "scene": "06857531-3e91-41a9-95dd-3262407d8132",
     "shot": null
   },
@@ -25,7 +28,7 @@
       {
         "severity": "ok",
         "entity": "bundle",
-        "message": "Eleanor Cade: 1 voice asset(s) resolve."
+        "message": "Eleanor Cade: 1 voice asset(s) in force."
       },
       {
         "severity": "ok",

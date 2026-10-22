@@ -1,0 +1,41 @@
+{
+  "query": "Q14",
+  "resultFormat": "1.0",
+  "schemaVersion": "2.25",
+  "parameters": {
+    "target": "Q13",
+    "character": null,
+    "subjectType": "character",
+    "subject": "145417ca-e8e5-4946-aba0-e83575dad182",
+    "intent": "visual_identity",
+    "scene": "06857531-3e91-41a9-95dd-3262407d8132",
+    "shot": null
+  },
+  "result": {
+    "target": "Q13",
+    "targetName": "Media resolution",
+    "findings": [
+      {
+        "severity": "warning",
+        "entity": "entity_anchor",
+        "message": "No verified anchors for Marcus Cade — identity is unpinned."
+      },
+      {
+        "severity": "ok",
+        "entity": "bundle",
+        "message": "Marcus Cade: 3 visual_identity asset(s) in force (0 from overrides)."
+      },
+      {
+        "severity": "ok",
+        "entity": "character_shot_override",
+        "message": "No shot asked about — shot overrides do not apply."
+      }
+    ],
+    "counts": {
+      "blocker": 0,
+      "warning": 1,
+      "suggestion": 0,
+      "ok": 2
+    }
+  }
+}
