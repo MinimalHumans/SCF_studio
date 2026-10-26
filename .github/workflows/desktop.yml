@@ -1,17 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
-# The desktop app, built for Windows.
+# The desktop app, built for Windows and Linux.
 #
 # Separate from ci.yml because it publishes: every push to `main` or
-# `tauri` replaces one rolling prerelease, `desktop-latest`, with the
-# NSIS installer and a zip holding that installer plus a portable copy
-# (the app, which is its own MCP pipe, uninstalled). The same files are
-# also kept as a workflow artifact for each run.
+# `tauri` replaces one rolling prerelease, `desktop-latest`. Windows
+# gives the signed NSIS installer and a zip holding that installer plus
+# a portable copy (the app, which is its own MCP pipe, uninstalled);
+# Linux gives an AppImage and a .deb, unsigned, so the release carries
+# a SHA256SUMS. The same files are also kept as workflow artifacts for
+# each run.
 #
 # Pushing a tag `editor-X.Y.Z` makes a real release instead: the tag
 # must sit on `main` and match scf-app/package.json, and the release
-# (signed installer and zip) stays put, with the spec and schema tags
-# the build descends from in its notes. The rolling prerelease is left
-# alone.
+# stays put, with the spec and schema tags the build descends from in
+# its notes. The rolling prerelease is left alone.
 
 name: Desktop
 
@@ -33,6 +34,8 @@ concurrency:
 env:
   NODE_VERSION: "24"
   RELEASE_TAG: desktop-latest
+  # Builds that sign and publish: the two branches and release tags.
+  PUBLISH: ${{ github.ref_type == 'tag' || contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref) }}
   # Artifact Signing, reached by OIDC as the app registration whose
   # federated credential trusts `main`, `tauri` and the `editor-*` tags
   # (none of these are secrets).
@@ -44,21 +47,19 @@ env:
   SIGNING_PROFILE: scf-public-trust
 
 jobs:
-  windows:
-    name: Windows installer and portable zip
-    runs-on: windows-latest
-    env:
-      # Builds that sign and publish: the two branches and release tags.
-      SIGN: ${{ github.ref_type == 'tag' || contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref) }}
+  # A tag must match the app's version and sit on main, before any
+  # build time is spent. Runs on every push so the builds can depend on
+  # it unconditionally.
+  check:
+    name: Check the release tag
+    runs-on: ubuntu-latest
     steps:
-      # Full history, for the release check and the notes' spec/schema tags.
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: check the release tag
+      - name: tag matches package.json and is on main
         if: github.ref_type == 'tag'
-        shell: bash
         run: |
           version=$(node -p "require('./scf-app/package.json').version")
           if [ "$GITHUB_REF_NAME" != "editor-$version" ]; then
@@ -70,6 +71,13 @@ jobs:
             echo "::error::$GITHUB_REF_NAME is not on main"
             exit 1
           fi
+
+  windows:
+    name: Windows installer and portable zip
+    needs: check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
@@ -109,7 +117,7 @@ jobs:
         working-directory: scf-app
 
       - name: azure login
-        if: env.SIGN == 'true'
+        if: env.PUBLISH == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
@@ -119,7 +127,7 @@ jobs:
       # signtool plus Microsoft's Artifact Signing dlib, which takes its
       # credential from the azure/login session above (no client secret).
       - name: set up signtool
-        if: env.SIGN == 'true'
+        if: env.PUBLISH == 'true'
         shell: pwsh
         run: |
           nuget install Microsoft.Trusted.Signing.Client -Version 1.0.60 -x -OutputDirectory "$env:RUNNER_TEMP/signing"
@@ -148,7 +156,7 @@ jobs:
       - name: tauri build
         shell: pwsh
         run: |
-          if ($env:SIGN -eq "true") {
+          if ($env:PUBLISH -eq "true") {
             $cmd = "pwsh -NoProfile -File $env:RUNNER_TEMP/signing/sign.ps1 %1"
             $config = @{ bundle = @{ windows = @{ signCommand = $cmd } } } | ConvertTo-Json -Compress -Depth 5
             npm run tauri build -- --config $config
@@ -161,14 +169,14 @@ jobs:
       # signature it put on the copy inside the installer. The portable
       # copy is made from this one, so sign it again.
       - name: sign the portable exe
-        if: env.SIGN == 'true'
+        if: env.PUBLISH == 'true'
         shell: pwsh
         run: |
           & "$env:RUNNER_TEMP/signing/sign.ps1" "$PWD/scf-app/src-tauri/target/release/scf-editor.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: verify signatures
-        if: env.SIGN == 'true'
+        if: env.PUBLISH == 'true'
         shell: pwsh
         run: |
           $release = "scf-app/src-tauri/target/release"
@@ -209,30 +217,124 @@ jobs:
           name: ${{ steps.package.outputs.name }}
           path: out/${{ steps.package.outputs.name }}/
 
-      # Delete and recreate rather than edit, so the tag moves to this
-      # commit and the old assets go with it.
+      # What the release job publishes.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: |
+            out/${{ steps.package.outputs.name }}.zip
+            ${{ steps.package.outputs.setup }}
+
+  linux:
+    name: Linux AppImage and deb
+    needs: check
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            scf-core/package-lock.json
+            scf-host/package-lock.json
+            scf-mcp/package-lock.json
+            scf-app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: scf-app/src-tauri
+
+      # Built on 22.04, not latest: an AppImage runs only where its
+      # glibc is at least as new as the one it was built against.
+      - name: system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev \
+            libayatana-appindicator3-dev libssl-dev patchelf
+
+      - run: npm ci
+        working-directory: scf-core
+
+      - run: npm run build
+        working-directory: scf-core
+
+      - run: npm ci
+        working-directory: scf-host
+
+      - run: npm run build
+        working-directory: scf-host
+
+      - run: npm ci
+        working-directory: scf-mcp
+
+      - run: npm ci
+        working-directory: scf-app
+
+      # tauri.conf.json lists only the Windows installer, which a Linux
+      # build cannot make; the formats are named here instead.
+      - name: tauri build
+        run: npm run tauri build -- --bundles appimage deb
+        working-directory: scf-app
+
+      - name: package
+        id: package
+        run: |
+          version=$(node -p "require('./scf-app/package.json').version")
+          bundle=scf-app/src-tauri/target/release/bundle
+          mkdir -p out
+          cp "$bundle"/appimage/*.AppImage "out/SCF-Editor-$version-x86_64.AppImage"
+          cp "$bundle"/deb/*.deb "out/SCF-Editor-$version-amd64.deb"
+          chmod +x "out/SCF-Editor-$version-x86_64.AppImage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: out/*
+
+  # One release from both builds. Delete and recreate the rolling one
+  # rather than edit it, so its tag moves to this commit and the old
+  # assets go with it; a tagged release is created once and never
+  # replaced.
+  release:
+    name: Publish the release
+    needs: [windows, linux]
+    if: github.ref_type == 'tag' || contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+
+      - name: checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS
+
       - name: replace the desktop-latest prerelease
-        if: github.ref_type == 'branch' && env.SIGN == 'true'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
+        if: github.ref_type == 'branch'
         run: |
           gh release delete "$RELEASE_TAG" --cleanup-tag --yes || true
           gh release create "$RELEASE_TAG" \
             --prerelease \
             --target "$GITHUB_SHA" \
             --title "Desktop (latest ${GITHUB_REF_NAME} build)" \
-            --notes "Signed Windows build of ${GITHUB_SHA::7} on \`${GITHUB_REF_NAME}\`. Replaced on every push; not a release." \
-            "out/${{ steps.package.outputs.name }}.zip" \
-            "${{ steps.package.outputs.setup }}"
+            --notes "Windows (signed) and Linux (unsigned; see SHA256SUMS) builds of ${GITHUB_SHA::7} on \`${GITHUB_REF_NAME}\`. Replaced on every push; not a release." \
+            dist/*
 
-      # A release is created once and never replaced. A version with a
-      # hyphen (0.2.0-rc.1) is marked a prerelease.
+      # A version with a hyphen (0.2.0-rc.1) is marked a prerelease.
       - name: publish the release
         if: github.ref_type == 'tag'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           version=${GITHUB_REF_NAME#editor-}
           spec=$(git describe --tags --abbrev=0 --match 'spec-*' "$GITHUB_SHA" || echo none)
@@ -243,6 +345,5 @@ jobs:
             "${pre[@]}" \
             --verify-tag \
             --title "SCF Editor $version" \
-            --notes "Signed Windows build of ${GITHUB_SHA::7}. Built against \`$spec\` and \`$schema\`." \
-            "out/${{ steps.package.outputs.name }}.zip" \
-            "${{ steps.package.outputs.setup }}"
+            --notes "Windows (signed) and Linux (unsigned; see SHA256SUMS) builds of ${GITHUB_SHA::7}. Built against \`$spec\` and \`$schema\`." \
+            dist/*
