@@ -1,21 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # The desktop app, built for Windows.
 #
-# Separate from ci.yml because it publishes: every push to `tauri`
-# replaces one rolling prerelease, `desktop-latest`, with the NSIS
-# installer and a zip holding that installer plus a portable copy (the
-# app, which is its own MCP pipe, uninstalled). The same
-# files are also kept as a workflow artifact for each run.
+# Separate from ci.yml because it publishes: every push to `main` or
+# `tauri` replaces one rolling prerelease, `desktop-latest`, with the
+# NSIS installer and a zip holding that installer plus a portable copy
+# (the app, which is its own MCP pipe, uninstalled). The same files are
+# also kept as a workflow artifact for each run.
 #
-# `in-app-host` builds the same way but publishes nothing: its installer
-# is only the run's artifact, so `desktop-latest` stays `tauri`'s.
 # Release tags come later.
 
 name: Desktop
 
 on:
   push:
-    branches: [tauri, in-app-host]
+    branches: [main, tauri]
   workflow_dispatch:
 
 permissions:
@@ -31,8 +29,8 @@ env:
   NODE_VERSION: "24"
   RELEASE_TAG: desktop-latest
   # Artifact Signing, reached by OIDC as the app registration whose
-  # federated credential trusts `tauri` (none of these are secrets).
-  # Only `tauri` signs; `in-app-host` builds unsigned.
+  # federated credential trusts `main` and `tauri` (none of these are
+  # secrets).
   AZURE_CLIENT_ID: cea87653-01f1-4308-9988-8ca28c971a70
   AZURE_TENANT_ID: dbbfdd81-727c-4a58-a3f5-db66a2d489c1
   AZURE_SUBSCRIPTION_ID: e3fd192a-87a3-4645-aa51-6744c2be6469
@@ -85,7 +83,7 @@ jobs:
         working-directory: scf-app
 
       - name: azure login
-        if: github.ref == 'refs/heads/tauri'
+        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
         uses: azure/login@v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
@@ -95,7 +93,7 @@ jobs:
       # signtool plus Microsoft's Artifact Signing dlib, which takes its
       # credential from the azure/login session above (no client secret).
       - name: set up signtool
-        if: github.ref == 'refs/heads/tauri'
+        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
         shell: pwsh
         run: |
           nuget install Microsoft.Trusted.Signing.Client -Version 1.0.60 -x -OutputDirectory "$env:RUNNER_TEMP/signing"
@@ -124,7 +122,7 @@ jobs:
       - name: tauri build
         shell: pwsh
         run: |
-          if ("${{ github.ref }}" -eq "refs/heads/tauri") {
+          if ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/tauri") {
             $cmd = "pwsh -NoProfile -File $env:RUNNER_TEMP/signing/sign.ps1 %1"
             $config = @{ bundle = @{ windows = @{ signCommand = $cmd } } } | ConvertTo-Json -Compress -Depth 5
             npm run tauri build -- --config $config
@@ -137,14 +135,14 @@ jobs:
       # signature it put on the copy inside the installer. The portable
       # copy is made from this one, so sign it again.
       - name: sign the portable exe
-        if: github.ref == 'refs/heads/tauri'
+        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
         shell: pwsh
         run: |
           & "$env:RUNNER_TEMP/signing/sign.ps1" "$PWD/scf-app/src-tauri/target/release/scf-editor.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: verify signatures
-        if: github.ref == 'refs/heads/tauri'
+        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
         shell: pwsh
         run: |
           $release = "scf-app/src-tauri/target/release"
@@ -188,7 +186,7 @@ jobs:
       # Delete and recreate rather than edit, so the tag moves to this
       # commit and the old assets go with it.
       - name: replace the desktop-latest prerelease
-        if: github.ref == 'refs/heads/tauri'
+        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
