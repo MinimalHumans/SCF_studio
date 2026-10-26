@@ -37,8 +37,8 @@ env:
   # Builds that sign and publish: the two branches and release tags.
   PUBLISH: ${{ github.ref_type == 'tag' || contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref) }}
   # Artifact Signing, reached by OIDC as the app registration whose
-  # federated credential trusts `main`, `tauri` and the `editor-*` tags
-  # (none of these are secrets).
+  # federated credentials trust `main`, `tauri` and the `release`
+  # environment (none of these are secrets).
   AZURE_CLIENT_ID: cea87653-01f1-4308-9988-8ca28c971a70
   AZURE_TENANT_ID: dbbfdd81-727c-4a58-a3f5-db66a2d489c1
   AZURE_SUBSCRIPTION_ID: e3fd192a-87a3-4645-aa51-6744c2be6469
@@ -76,6 +76,10 @@ jobs:
     name: Windows installer and portable zip
     needs: check
     runs-on: windows-latest
+    # A tag build signs as the `release` environment (settings limit it
+    # to `editor-*` tags), which one Azure credential trusts for every
+    # release. Branch builds have no environment and sign as the branch.
+    environment: ${{ github.ref_type == 'tag' && 'release' || '' }}
     steps:
       - uses: actions/checkout@v7
 
