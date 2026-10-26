@@ -7,13 +7,18 @@
 # (the app, which is its own MCP pipe, uninstalled). The same files are
 # also kept as a workflow artifact for each run.
 #
-# Release tags come later.
+# Pushing a tag `editor-X.Y.Z` makes a real release instead: the tag
+# must sit on `main` and match scf-app/package.json, and the release
+# (signed installer and zip) stays put, with the spec and schema tags
+# the build descends from in its notes. The rolling prerelease is left
+# alone.
 
 name: Desktop
 
 on:
   push:
     branches: [main, tauri]
+    tags: ["editor-*"]
   workflow_dispatch:
 
 permissions:
@@ -29,8 +34,8 @@ env:
   NODE_VERSION: "24"
   RELEASE_TAG: desktop-latest
   # Artifact Signing, reached by OIDC as the app registration whose
-  # federated credential trusts `main` and `tauri` (none of these are
-  # secrets).
+  # federated credential trusts `main`, `tauri` and the `editor-*` tags
+  # (none of these are secrets).
   AZURE_CLIENT_ID: cea87653-01f1-4308-9988-8ca28c971a70
   AZURE_TENANT_ID: dbbfdd81-727c-4a58-a3f5-db66a2d489c1
   AZURE_SUBSCRIPTION_ID: e3fd192a-87a3-4645-aa51-6744c2be6469
@@ -42,8 +47,29 @@ jobs:
   windows:
     name: Windows installer and portable zip
     runs-on: windows-latest
+    env:
+      # Builds that sign and publish: the two branches and release tags.
+      SIGN: ${{ github.ref_type == 'tag' || contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref) }}
     steps:
+      # Full history, for the release check and the notes' spec/schema tags.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: check the release tag
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          version=$(node -p "require('./scf-app/package.json').version")
+          if [ "$GITHUB_REF_NAME" != "editor-$version" ]; then
+            echo "::error::$GITHUB_REF_NAME does not match scf-app/package.json ($version)"
+            exit 1
+          fi
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$GITHUB_REF_NAME is not on main"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v7
         with:
@@ -83,7 +109,7 @@ jobs:
         working-directory: scf-app
 
       - name: azure login
-        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
+        if: env.SIGN == 'true'
         uses: azure/login@v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
@@ -93,7 +119,7 @@ jobs:
       # signtool plus Microsoft's Artifact Signing dlib, which takes its
       # credential from the azure/login session above (no client secret).
       - name: set up signtool
-        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
+        if: env.SIGN == 'true'
         shell: pwsh
         run: |
           nuget install Microsoft.Trusted.Signing.Client -Version 1.0.60 -x -OutputDirectory "$env:RUNNER_TEMP/signing"
@@ -122,7 +148,7 @@ jobs:
       - name: tauri build
         shell: pwsh
         run: |
-          if ("${{ github.ref }}" -eq "refs/heads/main" -or "${{ github.ref }}" -eq "refs/heads/tauri") {
+          if ($env:SIGN -eq "true") {
             $cmd = "pwsh -NoProfile -File $env:RUNNER_TEMP/signing/sign.ps1 %1"
             $config = @{ bundle = @{ windows = @{ signCommand = $cmd } } } | ConvertTo-Json -Compress -Depth 5
             npm run tauri build -- --config $config
@@ -135,14 +161,14 @@ jobs:
       # signature it put on the copy inside the installer. The portable
       # copy is made from this one, so sign it again.
       - name: sign the portable exe
-        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
+        if: env.SIGN == 'true'
         shell: pwsh
         run: |
           & "$env:RUNNER_TEMP/signing/sign.ps1" "$PWD/scf-app/src-tauri/target/release/scf-editor.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: verify signatures
-        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
+        if: env.SIGN == 'true'
         shell: pwsh
         run: |
           $release = "scf-app/src-tauri/target/release"
@@ -186,7 +212,7 @@ jobs:
       # Delete and recreate rather than edit, so the tag moves to this
       # commit and the old assets go with it.
       - name: replace the desktop-latest prerelease
-        if: contains(fromJSON('["refs/heads/main", "refs/heads/tauri"]'), github.ref)
+        if: github.ref_type == 'branch' && env.SIGN == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -197,5 +223,26 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "Desktop (latest ${GITHUB_REF_NAME} build)" \
             --notes "Signed Windows build of ${GITHUB_SHA::7} on \`${GITHUB_REF_NAME}\`. Replaced on every push; not a release." \
+            "out/${{ steps.package.outputs.name }}.zip" \
+            "${{ steps.package.outputs.setup }}"
+
+      # A release is created once and never replaced. A version with a
+      # hyphen (0.2.0-rc.1) is marked a prerelease.
+      - name: publish the release
+        if: github.ref_type == 'tag'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=${GITHUB_REF_NAME#editor-}
+          spec=$(git describe --tags --abbrev=0 --match 'spec-*' "$GITHUB_SHA" || echo none)
+          schema=$(git describe --tags --abbrev=0 --match 'schema-*' "$GITHUB_SHA" || echo none)
+          pre=()
+          case "$version" in *-*) pre=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" \
+            "${pre[@]}" \
+            --verify-tag \
+            --title "SCF Editor $version" \
+            --notes "Signed Windows build of ${GITHUB_SHA::7}. Built against \`$spec\` and \`$schema\`." \
             "out/${{ steps.package.outputs.name }}.zip" \
             "${{ steps.package.outputs.setup }}"
