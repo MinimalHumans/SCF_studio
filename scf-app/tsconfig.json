@@ -32,8 +32,14 @@
       "@scf-mcp/*": [
         "../scf-mcp/src/*"
       ],
+      "@minimalhumans/scf-host": [
+        "../scf-host/src/index.ts"
+      ],
       "@minimalhumans/scf-host/client": [
         "../scf-host/src/client.ts"
+      ],
+      "@minimalhumans/scf-core/node": [
+        "../scf-core/src/node.ts"
       ],
       "@minimalhumans/scf-core": [
         "../scf-core/src/index.ts"
