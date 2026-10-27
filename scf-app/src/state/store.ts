@@ -388,10 +388,11 @@ const freshShootView = (): ShootMemory =>
  * The tail every open shares: land on the script, with nothing of the
  * previous project left behind, and resolve the asset root
  * (file-management-plan.md §3.2): a path `app.db` already has an
- * asset root for attaches silently; a path it has never seen offers a
- * suggestion when the film's own uuid, title or file name matches
- * another row's. Either way, the film's identity is kept current in
- * `app.db` for next time.
+ * asset root for attaches silently; one with no asset root yet —
+ * whether brand new or just never attached — offers a suggestion when
+ * the film's own uuid, title or file name matches another row's.
+ * Either way, the film's identity is kept current in `app.db` for
+ * next time.
  */
 async function finishOpen(
   set: (partial: Partial<AppState>) => void,
@@ -435,7 +436,13 @@ async function finishOpen(
     const existing = await store.getProject(path);
     if (existing?.assetRoot != null) {
       await applyAssetRoot(set, get, existing.assetRoot);
-    } else if (existing === null) {
+    } else {
+      // Unmapped, whether this path is brand new or was opened before
+      // and dismissed: either way there is no asset root yet, so a
+      // plausible match is worth offering again rather than only
+      // once, ever (Save As in particular leaves a row with no asset
+      // root the moment it runs, before the user has had any chance
+      // to attach one).
       const suggestions = await store.suggestionsFor(
         { uuid, title, baseName }, path);
       if (suggestions.length > 0) set({ suggestions });

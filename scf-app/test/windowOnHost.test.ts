@@ -416,5 +416,44 @@ describe("pairing an asset root on open", () => {
     expect(useStore.getState().suggestions).toBeNull();
     expect(useStore.getState().assetRoot).toBeNull();
   }, 60_000);
+
+  // The order a real session hit: Save As before the original ever had
+  // a folder, so the copy's row is written unmapped; attach the
+  // folder to the original afterwards; reopening the copy must still
+  // offer it, not treat the copy's existing-but-unmapped row as "app.db
+  // already looked at this, nothing to suggest".
+  test("Save As before attaching, then attaching the original, still " +
+      "offers the copy a suggestion later", async () => {
+    const { useStore } = await store();
+    const original = join(dir, "e-original.scf");
+    const assetDir = join(dir, "e-assets");
+    mkdirSync(assetDir, { recursive: true });
+
+    await openDemoAt(useStore, original);
+    const copy = join(dir, "e-original_v2.scf");
+    chooserPaths.push(copy);
+    await useStore.getState().saveProjectAs();
+    expect(useStore.getState().projectPath).toBe(copy);
+    expect(useStore.getState().assetRoot).toBeNull();
+    await useStore.getState().closeProject();
+
+    // The original gets its folder only now.
+    chooserPaths.push(original);
+    await useStore.getState().openFromPicker();
+    assetFolderPaths.push(assetDir);
+    await useStore.getState().attachFolder();
+    await useStore.getState().closeProject();
+
+    // The copy's row already existed (from Save As) but was never
+    // mapped — it must still be offered the original's folder.
+    chooserPaths.push(copy);
+    await useStore.getState().openFromPicker();
+    const suggestions = useStore.getState().suggestions;
+    expect(suggestions).not.toBeNull();
+    expect(suggestions?.[0]).toMatchObject({
+      scfPath: original, assetRoot: assetDir, strength: "uuid",
+    });
+    expect(useStore.getState().assetRoot).toBeNull();
+  }, 60_000);
 });
 
