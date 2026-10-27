@@ -8,13 +8,13 @@
 
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { AppConfigStore } from "./appConfig.ts";
+import type { AppStore } from "@minimalhumans/scf-host";
 import { makeNodeLocator } from "./nodeLocator.ts";
 import type { McpPlatform } from "./platform.ts";
 
 export interface NodePlatformOptions {
   connect: McpPlatform["connect"];
-  configStore: AppConfigStore;
+  appStore: AppStore;
 }
 
 export function makeNodePlatform(options: NodePlatformOptions): McpPlatform {
@@ -22,7 +22,7 @@ export function makeNodePlatform(options: NodePlatformOptions): McpPlatform {
     connect: options.connect,
     resolve: (path) => resolve(path),
     locator: makeNodeLocator,
-    configStore: options.configStore,
+    appStore: options.appStore,
     readText: (path) => readFile(path, "utf8"),
     log: (message) => { process.stderr.write(`${message}\n`); },
   };

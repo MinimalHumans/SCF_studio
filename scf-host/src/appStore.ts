@@ -1,0 +1,271 @@
+// SPDX-License-Identifier: Apache-2.0
+/**
+ * appStore.ts — `app.db` (docs/file-management-plan.md §3.1): one
+ * SQLite database, read and written by both the editor's window and
+ * the standalone MCP, that pairs a `.scf` with the folder its assets
+ * live in and keeps a permanent history of both. Keyed on each
+ * project's canonical path, not its uuid: more than one row may share a
+ * uuid (a versioned copy elsewhere, a Save As), and that is expected.
+ *
+ * Opening the underlying database is dependency-injected (`OpenAppDb`):
+ * the window supplies Tauri's SQL commands (`scf-app`
+ * `src/host/tauriSql.ts`), a Node process scf-core's `node.ts` driver
+ * (`nodeAppStore.ts` wraps it). Both already speak the same `SqlExec`
+ * seam this module runs its schema and queries over — this file owns
+ * only those, not a driver.
+ */
+
+import type { Row, SqlExec, SqlValue } from "@minimalhumans/scf-core";
+
+export interface AppDb {
+  exec: SqlExec;
+  close(): Promise<void>;
+}
+
+/** Opens `path`, creating an empty database if nothing is there yet. */
+export type OpenAppDb = (path: string) => Promise<AppDb>;
+
+/**
+ * What `appStore.ts` needs to recover from a corrupt `app.db`: enough to
+ * move the bad file aside and let a fresh one be created in its place.
+ * Each environment supplies its own (`nodeAppStore.ts` on Node; the
+ * window via Tauri commands).
+ */
+export interface AppStoreFs {
+  exists(path: string): Promise<boolean>;
+  remove(path: string): Promise<void>;
+  rename(from: string, to: string): Promise<void>;
+}
+
+export interface ProjectRow {
+  pathKey: string;
+  scfPath: string;
+  uuid: string | null;
+  title: string | null;
+  baseName: string | null;
+  assetRoot: string | null;
+  /** ISO 8601, UTC. */
+  lastOpened: string;
+}
+
+export interface TouchProjectFields {
+  uuid?: string | null;
+  title?: string | null;
+  baseName?: string | null;
+  assetRoot?: string | null;
+}
+
+export interface AppStore {
+  close(): Promise<void>;
+
+  /**
+   * Insert or update the row for `scfPath`'s canonical path: always
+   * `scfPath` and `lastOpened` (now). Any of `uuid`/`title`/`baseName`/
+   * `assetRoot` given (including explicitly `null`, to clear one) are
+   * written too; omitted ones are left as they were. Creates the row if
+   * none exists yet.
+   */
+  touchProject(scfPath: string, fields?: TouchProjectFields): Promise<ProjectRow>;
+  getProject(scfPath: string): Promise<ProjectRow | null>;
+  setAssetRoot(scfPath: string, assetRoot: string | null): Promise<ProjectRow>;
+  forgetProject(scfPath: string): Promise<void>;
+  /** Most recently opened first. */
+  recentProjects(limit?: number): Promise<ProjectRow[]>;
+
+  getPref(key: string): Promise<string | null>;
+  setPref(key: string, value: string): Promise<void>;
+}
+
+export interface OpenAppStoreOptions {
+  /** Windows path keys fold case; everywhere else they don't. */
+  caseInsensitiveKeys: boolean;
+  /**
+   * Called once, only when `app.db` is freshly created: returns
+   * absolute paths, most recently opened first, to seed as project rows
+   * with no uuid, title or asset root — the old `mcp-config.json`'s
+   * `recentFiles` (file-management-plan.md §3.1 "Migration"). Never
+   * called again once the schema has been stamped.
+   */
+  importLegacyRecentFiles?: () => Promise<readonly string[]>;
+}
+
+const SCHEMA_VERSION = 1;
+
+function pathKeyOf(scfPath: string, caseInsensitive: boolean): string {
+  return caseInsensitive ? scfPath.toLowerCase() : scfPath;
+}
+
+function str(v: SqlValue | undefined): string | null {
+  return v === null || v === undefined ? null : String(v);
+}
+
+function toProjectRow(row: Row): ProjectRow {
+  return {
+    pathKey: String(row["path_key"]),
+    scfPath: String(row["scf_path"]),
+    uuid: str(row["uuid"]),
+    title: str(row["title"]),
+    baseName: str(row["base_name"]),
+    assetRoot: str(row["asset_root"]),
+    lastOpened: String(row["last_opened"]),
+  };
+}
+
+async function verify(db: AppDb): Promise<AppDb> {
+  try {
+    const rows = await db.exec("PRAGMA quick_check");
+    const ok = rows.length === 1 && rows[0]?.["quick_check"] === "ok";
+    if (!ok) {
+      throw new Error(`app.db failed an integrity check: ${JSON.stringify(rows)}`);
+    }
+    return db;
+  } catch (e) {
+    await db.close().catch(() => undefined);
+    throw e;
+  }
+}
+
+/**
+ * Open `path`, verifying it. A file that cannot be opened or fails its
+ * integrity check is moved aside as `<path>.bak` (overwriting any
+ * earlier one) and a fresh database opened in its place — history is
+ * never silently dropped without leaving the old file. A path that does
+ * not exist yet is not corruption: that failure is rethrown as is.
+ */
+async function openVerified(
+    path: string, open: OpenAppDb, fs: AppStoreFs): Promise<AppDb> {
+  try {
+    return await verify(await open(path));
+  } catch (e) {
+    if (!(await fs.exists(path))) throw e;
+    const backup = `${path}.bak`;
+    await fs.remove(backup).catch(() => undefined);
+    await fs.rename(path, backup);
+    return await verify(await open(path));
+  }
+}
+
+async function migrate(
+    exec: SqlExec, caseInsensitiveKeys: boolean,
+    importLegacyRecentFiles?: () => Promise<readonly string[]>): Promise<void> {
+  const [row] = await exec("PRAGMA user_version");
+  const version = Number(row?.["user_version"] ?? 0);
+  if (version >= SCHEMA_VERSION) return;
+
+  await exec(`CREATE TABLE IF NOT EXISTS project (
+    path_key    TEXT PRIMARY KEY,
+    scf_path    TEXT NOT NULL,
+    uuid        TEXT,
+    title       TEXT,
+    base_name   TEXT,
+    asset_root  TEXT,
+    last_opened TEXT NOT NULL
+  )`);
+  await exec(
+    "CREATE INDEX IF NOT EXISTS project_uuid ON project (uuid)");
+  await exec(
+    "CREATE INDEX IF NOT EXISTS project_title ON project (title COLLATE NOCASE)");
+  await exec(`CREATE TABLE IF NOT EXISTS pref (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )`);
+
+  if (importLegacyRecentFiles !== undefined) {
+    const paths = await importLegacyRecentFiles();
+    // Synthetic, strictly decreasing timestamps: recentProjects() orders
+    // by last_opened, and the import has no real history to give it.
+    const now = Date.now();
+    for (let i = 0; i < paths.length; i++) {
+      const scfPath = paths[i];
+      if (scfPath === undefined) continue;
+      await exec(
+        "INSERT OR IGNORE INTO project (path_key, scf_path, last_opened) " +
+        "VALUES (?, ?, ?)",
+        [pathKeyOf(scfPath, caseInsensitiveKeys), scfPath,
+         new Date(now - i).toISOString()]);
+    }
+  }
+
+  // Not bound: PRAGMA does not take parameters, and this is a fixed
+  // constant, never user input.
+  await exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+}
+
+function createStore(db: AppDb, caseInsensitiveKeys: boolean): AppStore {
+  const keyOf = (scfPath: string) => pathKeyOf(scfPath, caseInsensitiveKeys);
+
+  const getProject: AppStore["getProject"] = async (scfPath) => {
+    const rows = await db.exec(
+      "SELECT path_key, scf_path, uuid, title, base_name, asset_root, " +
+      "last_opened FROM project WHERE path_key = ?",
+      [keyOf(scfPath)]);
+    return rows.length === 0 ? null : toProjectRow(rows[0]!);
+  };
+
+  const touchProject: AppStore["touchProject"] = async (scfPath, fields = {}) => {
+    const pathKey = keyOf(scfPath);
+    const now = new Date().toISOString();
+    const given = (
+      ["uuid", "title", "baseName", "assetRoot"] as const
+    ).filter((key) => fields[key] !== undefined);
+    const column = { uuid: "uuid", title: "title", baseName: "base_name",
+                      assetRoot: "asset_root" } as const;
+    const setClauses = [
+      "scf_path = excluded.scf_path", "last_opened = excluded.last_opened",
+      ...given.map((key) => `${column[key]} = ?`),
+    ];
+    await db.exec(
+      "INSERT INTO project " +
+      "(path_key, scf_path, last_opened, uuid, title, base_name, asset_root) " +
+      "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+      `ON CONFLICT(path_key) DO UPDATE SET ${setClauses.join(", ")}`,
+      [pathKey, scfPath, now,
+       fields.uuid ?? null, fields.title ?? null, fields.baseName ?? null,
+       fields.assetRoot ?? null,
+       ...given.map((key) => fields[key] ?? null)]);
+    const row = await getProject(scfPath);
+    if (row === null) throw new Error(`internal: lost project row for ${scfPath}`);
+    return row;
+  };
+
+  return {
+    close: () => db.close(),
+    touchProject,
+    getProject,
+    setAssetRoot: (scfPath, assetRoot) => touchProject(scfPath, { assetRoot }),
+    forgetProject: async (scfPath) => {
+      await db.exec("DELETE FROM project WHERE path_key = ?", [keyOf(scfPath)]);
+    },
+    recentProjects: async (limit = 20) => {
+      const rows = await db.exec(
+        "SELECT path_key, scf_path, uuid, title, base_name, asset_root, " +
+        "last_opened FROM project ORDER BY last_opened DESC LIMIT ?",
+        [limit]);
+      return rows.map(toProjectRow);
+    },
+    getPref: async (key) => {
+      const rows = await db.exec("SELECT value FROM pref WHERE key = ?", [key]);
+      return rows.length === 0 ? null : String(rows[0]!["value"]);
+    },
+    setPref: async (key, value) => {
+      await db.exec(
+        "INSERT INTO pref (key, value) VALUES (?, ?) " +
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        [key, value]);
+    },
+  };
+}
+
+export async function openAppStore(
+    path: string, open: OpenAppDb, fs: AppStoreFs,
+    options: OpenAppStoreOptions): Promise<AppStore> {
+  const db = await openVerified(path, open, fs);
+  // WAL plus a busy timeout: the editor's window and the standalone MCP
+  // can both have app.db open and writing at once (file-management-plan
+  // §3.1, decision 10; risk "Two writers").
+  await db.exec("PRAGMA journal_mode = WAL");
+  await db.exec("PRAGMA busy_timeout = 5000");
+  await migrate(
+    db.exec, options.caseInsensitiveKeys, options.importLegacyRecentFiles);
+  return createStore(db, options.caseInsensitiveKeys);
+}

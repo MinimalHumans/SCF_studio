@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 export * from "./protocol.ts";
 export {
+  openAppStore,
+  type AppDb, type AppStore, type AppStoreFs, type OpenAppDb,
+  type OpenAppStoreOptions, type ProjectRow, type TouchProjectFields,
+} from "./appStore.ts";
+export { openNodeAppStore } from "./nodeAppStore.ts";
+export {
   HostFailure, canonicalPath, createHostCore,
   type HostConnection, type HostCore, type HostCoreOptions,
 } from "./hostCore.ts";

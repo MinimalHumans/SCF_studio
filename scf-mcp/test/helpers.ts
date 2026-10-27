@@ -16,11 +16,10 @@ import {
   loadRegistry, type RegistryJson,
 } from "@minimalhumans/scf-core";
 import registryJson from "@minimalhumans/scf-core/registry.json" with { type: "json" };
-import { createHostCore } from "@minimalhumans/scf-host";
+import { createHostCore, openNodeAppStore } from "@minimalhumans/scf-host";
 import { HostClient, connectInProcess } from "@minimalhumans/scf-host/client";
 import { parseConfig } from "../src/config.ts";
 import { createScfMcpServer } from "../src/mcpServer.ts";
-import { makeNodeConfigStore } from "../src/nodeConfigStore.ts";
 import { makeNodePlatform } from "../src/nodePlatform.ts";
 import type { McpPlatform } from "../src/platform.ts";
 
@@ -59,9 +58,9 @@ export type Elicit = (message: string) =>
 
 /**
  * A server with these arguments. Each gets its own config directory, so
- * the persisted recent-files list (nodeConfigStore.ts) never touches the
- * real user's, and tests do not leak into each other; pass `configDir`
- * to share one across two servers, e.g. to prove persistence survives a
+ * its `app.db` (scf-host `nodeAppStore.ts`) never touches the real
+ * user's, and tests do not leak into each other; pass `configDir` to
+ * share one across two servers, e.g. to prove persistence survives a
  * restart.
  */
 export async function startServer(
@@ -71,7 +70,7 @@ export async function startServer(
   const platform: McpPlatform = makeNodePlatform({
     connect: (name) =>
       HostClient.connect(connectInProcess(core.connect()), { name }),
-    configStore: makeNodeConfigStore(configDir),
+    appStore: await openNodeAppStore(join(configDir, "app.db")),
   });
   const config = await parseConfig(args, {
     readText: platform.readText, resolve: platform.resolve,

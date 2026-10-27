@@ -155,6 +155,14 @@ pub async fn fs_mkdir(path: String) -> Result<(), String> {
     std::fs::create_dir_all(&path).map_err(|e| err(Path::new(&path), e))
 }
 
+/// Move or rename a file, overwriting `to` if it is already there.
+/// Not part of the host platform: `app.db`'s own corruption recovery
+/// (scf-host `appStore.ts`) is the only caller.
+#[tauri::command]
+pub async fn fs_rename(from: String, to: String) -> Result<(), String> {
+    std::fs::rename(&from, &to).map_err(|e| err(Path::new(&from), e))
+}
+
 /// Gone, if it was there. A file, as Node's `rmSync(path, { force })`.
 #[tauri::command]
 pub async fn fs_remove(path: String) -> Result<(), String> {

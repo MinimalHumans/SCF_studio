@@ -438,6 +438,80 @@ describe("scf-mcp server — recent_files persists across restarts", () => {
   });
 });
 
+describe("scf-mcp server — set_root persists and a later open falls " +
+    "back to it", () => {
+  test("a stored asset root is attached silently when open is given none",
+      async () => {
+    const configDir = mkdtempSync(join(tmpdir(), "scf-mcp-test-"));
+    try {
+      const first = await startServer([], configDir);
+      try {
+        await first.send("tools/call", {
+          name: "open", arguments: { scfPath: FIXTURE },
+        });
+        await callTool(first, "set_root", {
+          roots: { project: HERE },
+        });
+      } finally {
+        first.kill();
+      }
+
+      const second = await startServer([], configDir);
+      try {
+        const result = await callTool(second, "open", { scfPath: FIXTURE });
+        expect(result.isError).toBe(false);
+        const summary = result.json as
+          { rootMapped: boolean; roots: Record<string, string> };
+        expect(summary.rootMapped).toBe(true);
+        expect(summary.roots["project"]).toBe(HERE);
+      } finally {
+        second.kill();
+      }
+    } finally {
+      rmSync(configDir, { recursive: true, force: true });
+    }
+  });
+
+  test("an explicit root at open always wins over the stored one, and " +
+      "replaces it", async () => {
+    const configDir = mkdtempSync(join(tmpdir(), "scf-mcp-test-"));
+    try {
+      const first = await startServer([], configDir);
+      try {
+        await callTool(first, "open", {
+          scfPath: FIXTURE, roots: { project: HERE },
+        });
+      } finally {
+        first.kill();
+      }
+
+      const other = dirname(HERE);
+      const second = await startServer([], configDir);
+      try {
+        const opened = await callTool(second, "open", {
+          scfPath: FIXTURE, roots: { project: other },
+        });
+        const openedSummary = opened.json as { roots: Record<string, string> };
+        expect(openedSummary.roots["project"]).toBe(other);
+      } finally {
+        second.kill();
+      }
+
+      // The explicit root from the second server replaced the first's.
+      const third = await startServer([], configDir);
+      try {
+        const result = await callTool(third, "open", { scfPath: FIXTURE });
+        const summary = result.json as { roots: Record<string, string> };
+        expect(summary.roots["project"]).toBe(other);
+      } finally {
+        third.kill();
+      }
+    } finally {
+      rmSync(configDir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("scf-mcp server — no film is held open between calls", () => {
   test("a film the server has answered from can be renamed and deleted " +
        "while it runs", async () => {

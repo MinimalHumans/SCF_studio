@@ -55,10 +55,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
-  listEntities, q00Result, queryMarkdown, resolveNaturalKey, shotContext,
-  shotMedia, shotReadiness, whereUsed,
+  listEntities, PROJECT_ROOT, q00Result, queryMarkdown, resolveNaturalKey,
+  shotContext, shotMedia, shotReadiness, whereUsed,
 } from "@minimalhumans/scf-core";
-import type { ServerConfig } from "./config.ts";
+import type { RootMap, ServerConfig } from "./config.ts";
 import { registerJournalTool, registerWriteTools } from "./writeTools.ts";
 import { buildDispatch, type QueryParams } from "./dispatch.ts";
 import type { McpPlatform } from "./platform.ts";
@@ -151,6 +151,36 @@ export async function createScfMcpServer(
     cache.setAgentName(server.server.getClientVersion()?.name);
   };
 
+  /**
+   * Open `scfPathInput`, falling back to the asset root `app.db` has on
+   * file for it when the caller gives none of its own — an explicit
+   * `roots` argument always wins, for this call and from now on
+   * (file-management-plan.md Step 1). Persisting is fire-and-forget: a
+   * failed or slow write never blocks a tool call, and loses at most
+   * the convenience of remembering it for next time.
+   */
+  async function openAndRemember(scfPathInput: string, roots: RootMap) {
+    const scfPath = platform.resolve(scfPathInput);
+    const explicitRoot = roots[PROJECT_ROOT];
+    let effectiveRoots = roots;
+    if (explicitRoot === undefined) {
+      const stored = await platform.appStore.getProject(scfPath);
+      if (stored?.assetRoot != null) {
+        effectiveRoots = { ...roots, [PROJECT_ROOT]: stored.assetRoot };
+      }
+    }
+    const project = cache.openProject(scfPath, effectiveRoots);
+    platform.appStore
+      .touchProject(scfPath, explicitRoot === undefined ? {} : {
+        assetRoot: explicitRoot,
+      })
+      .catch((e: unknown) => {
+        platform.log(
+          `[mcp] failed to persist ${scfPath} in app.db: ${String(e)}`);
+      });
+    return project;
+  }
+
   server.registerTool("open", {
     description: "Open (or switch to) a film, optionally mapping asset " +
       "roots. This is the only tool that takes a file path — every other " +
@@ -168,7 +198,7 @@ export async function createScfMcpServer(
     },
   }, async ({ scfPath, roots }) => {
     try {
-      const project = cache.openProject(scfPath, roots ?? {});
+      const project = await openAndRemember(scfPath, roots ?? {});
       return ok(await cache.withProject(async ({ ctx, revision, readOnly }) => {
         const brief = await q00Result(ctx);
         const scenes = await listEntities(ctx, "scene");
@@ -196,10 +226,10 @@ export async function createScfMcpServer(
       "opened first, one per line — a hint for `open` when you don't " +
       "already have the full path.",
     inputSchema: {},
-  }, () => {
-    const paths = cache.recentProjects();
-    return text(paths.length === 0
-      ? "(no films opened yet)" : paths.join("\n"));
+  }, async () => {
+    const rows = await platform.appStore.recentProjects();
+    return text(rows.length === 0
+      ? "(no films opened yet)" : rows.map((r) => r.scfPath).join("\n"));
   });
 
   server.registerTool("set_root", {
@@ -217,6 +247,15 @@ export async function createScfMcpServer(
   }, async ({ roots }) => {
     try {
       const project = cache.setRoots(roots);
+      const explicitRoot = roots[PROJECT_ROOT];
+      if (explicitRoot !== undefined) {
+        platform.appStore
+          .touchProject(project.scfPath, { assetRoot: explicitRoot })
+          .catch((e: unknown) => {
+            platform.log(`[mcp] failed to persist ${project.scfPath} in ` +
+              `app.db: ${String(e)}`);
+          });
+      }
       return ok({ roots: project.roots, rootMapped: project.rootMapped });
     } catch (e) {
       return err(e);
@@ -417,10 +456,8 @@ export async function createScfMcpServer(
     }
   });
 
-  // Recent files first: opening the `--scf` film puts it at their head.
-  cache.loadRecent((await platform.configStore.read()).recentFiles);
   if (config.scfPath !== undefined) {
-    cache.openProject(config.scfPath, config.roots);
+    await openAndRemember(config.scfPath, config.roots);
   }
   return server;
 }

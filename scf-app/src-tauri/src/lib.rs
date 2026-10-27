@@ -251,6 +251,7 @@ pub fn run() {
         files::fs_create_file,
         files::fs_mkdir,
         files::fs_remove,
+        files::fs_rename,
     ]);
     builder
         .build(tauri::generate_context!())

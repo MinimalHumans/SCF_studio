@@ -29,9 +29,11 @@
  * itself — there is exactly one film active at a time, and
  * `open`/`set_root` are how it changes.
  *
- * The recent-files list is the session's too, but it persists past it:
- * every change is written through the platform's AppConfigStore
- * (appConfig.ts), fire-and-forget.
+ * The recent-files list and each project's asset root outlive the
+ * session: both are `app.db` (file-management-plan.md §3.1), read and
+ * written directly through `platform.appStore` by the `open`,
+ * `recent_files` and `set_root` tool handlers (mcpServer.ts) — this
+ * cache holds no history of its own.
  */
 
 import {
@@ -98,20 +100,7 @@ export interface ProjectCache {
    */
   withProject<T>(fn: (project: OpenProject) => Promise<T>,
                  project?: Project): Promise<T>;
-  /** Paths this session (and past ones) has opened, most recently
-   *  opened first — a hint for `open` when the caller doesn't have a
-   *  full path in hand. */
-  recentProjects(): readonly string[];
-  /**
-   * Restore a previously-persisted recent-files list (most recently
-   * opened first) at startup, without writing it straight back to the
-   * store that just handed it to us.
-   */
-  loadRecent(paths: readonly string[]): void;
 }
-
-/** Bounded, and persisted through the platform's config store. */
-const RECENT_MAX = 20;
 
 export function createProjectCache(
     platform: McpPlatform, options: { readOnly: boolean }): ProjectCache {
@@ -126,22 +115,6 @@ export function createProjectCache(
    */
   const known = new Map<string, Project>();
   let lastUsed: string | null = null;
-  const recent: string[] = [];
-
-  function touchRecent(scfPath: string): void {
-    const idx = recent.indexOf(scfPath);
-    if (idx !== -1) recent.splice(idx, 1);
-    recent.unshift(scfPath);
-    recent.length = Math.min(recent.length, RECENT_MAX);
-
-    // Fire-and-forget: a failed or out-of-order write loses at most the
-    // convenience of the most recent entry, never a tool call.
-    platform.configStore.write({ recentFiles: [...recent] })
-      .catch((e: unknown) => {
-        platform.log(
-          `[projectCache] failed to persist recent files: ${String(e)}`);
-      });
-  }
 
   /** Merge `roots` into `project` in place. No-op when `roots` is empty. */
   function applyRoots(project: Project, roots: RootMap): void {
@@ -171,7 +144,6 @@ export function createProjectCache(
       }
       applyRoots(project, roots);
       lastUsed = scfPath;
-      touchRecent(scfPath);
       return project;
     },
 
@@ -204,12 +176,6 @@ export function createProjectCache(
         await host.closeFilm().catch(() => {});
         await host.dispose();
       }
-    },
-
-    recentProjects: () => recent,
-    loadRecent(paths) {
-      recent.length = 0;
-      recent.push(...paths.slice(0, RECENT_MAX));
     },
   };
   return cache;
