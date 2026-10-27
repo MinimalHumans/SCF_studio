@@ -105,7 +105,7 @@ Generated, but from the specification's sections and the reference implementatio
 | Artifact | SHA-256 | What it is |
 |---|---|---|
 | `spec/query-reference.md` | `2beb834e79aca986…` | All sixteen queries in one page, generated from §12, the published results and `queryPaths.ts`. Not normative. |
-| `spec/api-surface.json` | `ba42b4380acaaeaf…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
+| `spec/api-surface.json` | `8393228bd1764303…` | Every name importable from `@minimalhumans/scf-core`, per entry point, with its kind. |
 | `spec/readiness-rubrics.json` | `88f70ae37afce441…` | What Q14 assesses, per target query. Spec §12.9.1. |
 | `spec/finding-catalog.json` | `721b3eab3826be90…` | The normative finding catalog. Spec §9.4 requires every code and severity to come from here. |
 
