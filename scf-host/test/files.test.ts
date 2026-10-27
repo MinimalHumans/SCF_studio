@@ -2,7 +2,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test }
   from "vitest";
 import {
-  existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync,
+  existsSync, mkdirSync, readFileSync, symlinkSync,
 } from "node:fs";
 import { join } from "node:path";
 import { createHostCore, type HostConnection, type HostCore }
@@ -63,39 +63,34 @@ describe("files and the window's call table", () => {
     expect(existsSync(bad)).toBe(false);
   });
 
-  test("create and list stay inside the roots, links included", async () => {
+  test("create stays inside the configured roots, links included",
+      async () => {
     expect((await err("create", { path: join(ws.dir, "escape.scf") })).code)
-      .toBe("outside_roots");
-    expect((await err("list", { path: ws.dir })).code)
       .toBe("outside_roots");
     const link = join(root, "films", "link");
     symlinkSync(ws.dir, link, "junction");   // no privilege needed on Windows
     expect((await err("create", { path: join(link, "x.scf") })).code)
       .toBe("outside_roots");
-    expect((await err("list", { path: link })).code).toBe("outside_roots");
     expect((await err("create", {
       path: join(root, "..", "..", "etc", "x.scf") })).code)
       .toBe("outside_roots");
   });
 
-  test("list shows folders first, then .scf files, and hides the rest",
+  test("with no roots configured, create and saveAs accept any path",
       async () => {
-    writeFileSync(join(root, "films", "a.scf"), "");
-    writeFileSync(join(root, "films", "notes.txt"), "");
-    writeFileSync(join(root, "films", ".hidden.scf"), "");
-    const r = await ok("list", { path: join(root, "films") }) as {
-      parent: string | null;
-      entries: { name: string; kind: string }[] };
-    expect(r.entries.map((e) => `${e.kind}:${e.name}`))
-      .toEqual(["dir:sub", "scf:a.scf"]);
-    expect(r.parent).toBe(root);
-    const top = await ok("list", {}) as {
-      path: string | null; entries: { path: string }[] };
-    expect(top.path).toBeNull();
-    expect(top.entries.map((e) => e.path)).toEqual([root]);
-    const atRoot = await ok("list", { path: root }) as
-      { parent: string | null };
-    expect(atRoot.parent).toBeNull();
+    const unconfined = createHostCore({ registry });
+    const cu = unconfined.connect();
+    try {
+      const path = join(ws.dir, "anywhere.scf");
+      const r = await cu.handle("create", { path });
+      if (!r.ok) throw new Error(`${r.error.code}: ${r.error.message}`);
+      expect(existsSync(path)).toBe(true);
+      const moved = join(ws.dir, "elsewhere.scf");
+      const saved = await cu.handle("saveAs", { path: moved });
+      if (!saved.ok) throw new Error(`${saved.error.code}`);
+    } finally {
+      await unconfined.shutdown();
+    }
   });
 
   test("saveAs copies the committed state and moves the connection",

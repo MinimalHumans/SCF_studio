@@ -43,9 +43,10 @@ not work in a browser tab.
 - **Beside an installed copy**: the dev app has its own identifier
   (`src-tauri/tauri.dev.json`), so its own data folder, settings and MCP
   pipe, and its window says "(dev)". Both can run at once.
-- **Folders**: the host lists your home, and in a debug build the
-  checkout's `fixtures/` and `templates/` as well; `SCF_HOST_ROOTS` (a
-  path-delimited list) replaces them.
+- **Folders**: open/new/save-as use the OS's own dialogs, with no
+  confinement to any particular folder; `SCF_HOST_ROOTS` (a
+  path-delimited list) opts back into confining `create`/`saveAs` to
+  it.
 - **An assistant on the dev app**: point it at
   `src-tauri/target/debug/scf-editor.exe mcp` (`scf-editor` elsewhere),
   which `npm run dev` builds. A debug pipe only connects to a running
@@ -115,8 +116,8 @@ SQLite (rusqlite) over a loopback socket, files, the MCP pipes' relay
   host still has the file, so a refresh walks straight back in. An
   explicit Close sets `scf:auto-resume=0` so closed stays closed.
 - **Choosing a file** goes through `ProjectChooser`
-  (`files/projectChooser.ts`): today a dialog listing folders from the
-  host (`ChooserDialog`), later the operating system's own dialog. The
+  (`files/projectChooser.ts`), implemented over the OS's own Open/Save
+  dialogs (`files/tauriChooser.ts`, tauri-plugin-dialog). The
   **asset folder** is still acquired in the browser (`FileAdapter`,
   `files/fileAdapter.ts`) as a read-only directory handle, remembered
   per project path in IndexedDB (`files/handleStore.ts`); Chromium

@@ -154,9 +154,9 @@ journal, MCP settings) is in:
 | Linux | `~/.local/share/com.minimalhumans.scf-editor.dev/` (or `$XDG_DATA_HOME`) |
 | Windows | `%APPDATA%\com.minimalhumans.scf-editor.dev\` |
 
-It can open and create films anywhere under your home folder, and the
-checkout's `fixtures/` and `templates/`. `SCF_HOST_ROOTS` (a list of
-folders, separated as `PATH` is) replaces that.
+It can open, create and save films anywhere on the machine; `SCF_HOST_ROOTS`
+(a list of folders, separated as `PATH` is) confines `create`/`saveAs` to
+them instead.
 
 ## 4. Run the tests
 

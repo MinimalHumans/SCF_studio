@@ -37,12 +37,11 @@ const { memory } = vi.hoisted(() => {
 
 const chooserPaths: (string | null)[] = [];
 
-vi.mock("../src/files/hostChooser", () => ({
-  createHostChooser: () => ({
+vi.mock("../src/files/tauriChooser", () => ({
+  createTauriChooser: () => ({
     chooseExisting: () => Promise.resolve(chooserPaths.shift() ?? null),
     chooseNew: () => Promise.resolve(chooserPaths.shift() ?? null),
   }),
-  useChooser: { getState: () => ({ request: null }) },
 }));
 
 let dir: string;

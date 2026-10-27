@@ -26,7 +26,7 @@ import {
 } from "@minimalhumans/scf-core";
 import {
   PROTOCOL_VERSION,
-  type DirEntry, type ErrorCode, type HostError, type HostEvent,
+  type ErrorCode, type HostError, type HostEvent,
   type HostMethods, type JournalEntry,
   type JsonRow, type MethodName, type SqlJson,
 } from "./protocol.ts";
@@ -329,12 +329,18 @@ class HostCoreImpl implements HostCore {
     return target;
   }
 
-  /** `path` in its `real` spelling, if that is at or below a root. */
+  /**
+   * `path` in its `real` spelling, if that is at or below a root — or
+   * unconditionally, when no roots are configured (the desktop app's
+   * default: file-management-plan.md decision 1). `SCF_HOST_ROOTS`
+   * (or an explicit `roots` option) is what opts back into confinement.
+   */
   private async inRoots(path: string): Promise<string | null> {
     // `real` judges a path that does not exist yet by its nearest
     // existing parent, so a link cannot smuggle a new file out.
     const real = await this.platform.real(path);
     const roots = await this.roots;
+    if (roots.length === 0) return real;
     return roots.some((root) => this.platform.paths.within(root, real))
       ? real : null;
   }
@@ -454,46 +460,6 @@ class HostCoreImpl implements HostCore {
     c.film = film;
     c.readOnly = readOnly;
     return { path: film.path, revision: this.revisionOf(film), readOnly };
-  }
-
-  private async list(path: string | undefined):
-      Promise<HostMethods["list"][1]> {
-    const { basename, dirname, join } = this.platform.paths;
-    if (path === undefined) {
-      return {
-        path: null, parent: null,
-        entries: (await this.roots).map((r): DirEntry =>
-          ({ name: basename(r) || r, kind: "dir", path: r })),
-      };
-    }
-    const dir = await this.requireInRoots(path);
-    let found;
-    try {
-      found = await this.platform.readDir(dir);
-    } catch {
-      throw new HostFailure("not_found", `cannot read ${dir}`);
-    }
-    const entries: DirEntry[] = [];
-    // Unreadable entries are already left out.
-    for (const e of found.sort((a, b) => a.name.localeCompare(b.name))) {
-      if (e.name.startsWith(".")) continue;
-      const full = join(dir, e.name);
-      if (e.kind === "dir") {
-        entries.push({ name: e.name, kind: "dir", path: full });
-      } else if (e.kind === "file" && e.name.toLowerCase().endsWith(".scf")) {
-        entries.push({ name: e.name, kind: "scf", path: full, size: e.size,
-                       modified: e.modified });
-      }
-    }
-    // Directories first, so the way down is always at the top.
-    entries.sort((a, b) =>
-      (a.kind === b.kind ? 0 : a.kind === "dir" ? -1 : 1));
-    const up = dirname(dir);
-    return {
-      path: dir,
-      parent: up !== dir && await this.inRoots(up) !== null ? up : null,
-      entries,
-    };
   }
 
   /**
@@ -635,8 +601,6 @@ class HostCoreImpl implements HostCore {
         await this.leave(c);
         return this.attach(c, await this.openFilm(target, false), false);
       }
-      case "list":
-        return this.list(typeof p["path"] === "string" ? p["path"] : undefined);
       case "close":
         await this.leave(c);
         return null;

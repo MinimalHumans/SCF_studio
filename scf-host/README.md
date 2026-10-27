@@ -53,10 +53,10 @@ cannot be taken, the write is refused.
 
 ## Settings
 
-The window's host takes its roots from `SCF_HOST_ROOTS` (a
-path-delimited list), or else the user's home, plus the checkout's
-`fixtures/` and `templates/` in a debug build. Snapshots and the journal
-are kept in the app's data folder.
+The window's host is unconfined by default (paths come from the shell's
+own dialogs); `SCF_HOST_ROOTS` (a path-delimited list) opts back into
+confining `create`/`saveAs` to it. Snapshots and the journal are kept in
+the app's data folder.
 
 ## Limits
 

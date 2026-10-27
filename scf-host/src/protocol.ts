@@ -60,16 +60,6 @@ export interface GateFindingInfo {
   description: string;
 }
 
-export interface DirEntry {
-  name: string;
-  /** A folder to descend into, or a `.scf` to open. */
-  kind: "dir" | "scf";
-  /** Absolute, as the host spells it. */
-  path: string;
-  size?: number;
-  modified?: string;
-}
-
 export interface HostRequest {
   id: number;
   method: string;
@@ -113,20 +103,18 @@ export interface HostMethods {
   /**
    * Make a new `.scf` and open it. With `bytes` (base64) the file is
    * those bytes, checked to be an SCF; without, it is an empty film.
-   * Never overwrites, and only under the host's roots.
+   * Never overwrites, and confined to the host's roots when any are
+   * configured (the desktop app has none by default).
    */
   create: [{ path: string; bytes?: string; editorVersion?: string },
            { path: string; revision: number; readOnly: boolean }];
   /**
    * Copy the open film to a new path and move this connection there.
-   * The old file is left as it was. Never overwrites; roots only.
+   * The old file is left as it was. Never overwrites; same root
+   * confinement as `create`.
    */
   saveAs: [{ path: string },
            { path: string; revision: number; readOnly: boolean }];
-  /** Folders and `.scf` files under the roots. No path lists the roots. */
-  list: [{ path?: string },
-         { path: string | null; parent: string | null;
-           entries: DirEntry[] }];
   close: [Record<string, never>, null];
   /** Re-read the file after an `external_change`. Revisions keep rising. */
   reload: [Record<string, never>, { revision: number }];

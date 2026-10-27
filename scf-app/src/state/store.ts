@@ -16,8 +16,8 @@ import { loadRegistry, type Registry, type RegistryJson }
 import { q, type Row, type SqlExec, type SqlValue } from "@scf-core/db.ts";
 import { FsAccessAdapter, type FileAdapter }
   from "../files/fileAdapter.ts";
-import { createHostChooser } from "../files/hostChooser.ts";
 import type { ProjectChooser } from "../files/projectChooser.ts";
+import { createTauriChooser } from "../files/tauriChooser.ts";
 import { getHost } from "../host/hostClient.ts";
 import type { HostClient } from "@scf-host/client.ts";
 import { buildReferenceGraph, type IncomingRef,
@@ -49,8 +49,8 @@ const EDITOR_VERSION = "scf-app 0.1.0";
 
 /** The asset folder is the one thing still acquired through the browser. */
 const adapter: FileAdapter = new FsAccessAdapter();
-/** How the user names a `.scf`; the host lists folders for it today. */
-const chooser: ProjectChooser = createHostChooser();
+/** How the user names a `.scf`: the OS's own Open/Save dialogs. */
+const chooser: ProjectChooser = createTauriChooser();
 
 /**
  * scf-core's read seam, app-wide. Reads go to the host's read-only

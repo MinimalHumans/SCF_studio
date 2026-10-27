@@ -30,9 +30,9 @@ use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct HostSetup {
-    /// Folders a client may browse and create files under:
-    /// `SCF_HOST_ROOTS`, or else the user's home, and in a debug build
-    /// the checkout's `fixtures/` and `templates/` too.
+    /// Folders `create`/`saveAs` are confined to, from `SCF_HOST_ROOTS`.
+    /// Empty (the default) means unconfined — the normal case, since
+    /// paths come from the shell's own dialogs now.
     roots: Vec<String>,
     /// Where snapshots and the journal are kept.
     data_dir: String,
@@ -41,24 +41,16 @@ struct HostSetup {
 
 #[tauri::command]
 fn host_setup(app: AppHandle) -> Result<HostSetup, String> {
+    // The desktop app has full machine access (file-management-plan.md
+    // decision 1): no folder confinement by default, now that native
+    // dialogs (not the host's own `list`) are how a path is picked.
+    // `SCF_HOST_ROOTS` remains an opt-in restriction, for a sandboxed
+    // manual run or a future automated UI test.
     let roots: Vec<PathBuf> = match std::env::var_os("SCF_HOST_ROOTS") {
         Some(v) if !v.is_empty() => std::env::split_paths(&v)
             .filter(|p| !p.as_os_str().is_empty())
             .collect(),
-        _ => {
-            let mut roots = vec![app.path().home_dir().map_err(|e| e.to_string())?];
-            if cfg!(debug_assertions) {
-                let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-                roots.extend(
-                    ["fixtures", "templates"]
-                        .map(|d| repo.join(d))
-                        .into_iter()
-                        .filter(|p| p.is_dir())
-                        .filter_map(|p| dunce::canonicalize(p).ok()),
-                );
-            }
-            roots
-        }
+        _ => Vec::new(),
     };
     let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     let text = |p: PathBuf| p.to_string_lossy().into_owned();
@@ -184,6 +176,7 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(databases)
         .manage(socket)
         .manage(relay.clone())

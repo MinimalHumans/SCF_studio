@@ -22,8 +22,8 @@ import { ConfigError, USAGE, parseConfig, type RootMap }
   from "@scf-mcp/config.ts";
 import { createScfMcpServer } from "@scf-mcp/mcpServer.ts";
 import type { McpPlatform } from "@scf-mcp/platform.ts";
-import { openTauriAppStore } from "../host/tauriAppStore.ts";
 import { createTauriPlatform } from "../host/tauriPlatform.ts";
+import { windowAppStore } from "../host/windowAppStore.ts";
 import { windowHostTransport } from "../host/windowHost.ts";
 
 type McpEvent =
@@ -106,36 +106,11 @@ class PipeTransport implements Transport {
   }
 }
 
-/**
- * The old recent-files list, read once to seed `app.db` the first time
- * it is created (file-management-plan.md §3.1 "Migration");
- * `mcp-config.json` itself is left untouched.
- */
-function readLegacyRecentFiles(
-    path: string, readText: (p: string) => Promise<string>):
-    () => Promise<string[]> {
-  return async () => {
-    try {
-      const parsed = JSON.parse(await readText(path)) as
-        { recentFiles?: unknown };
-      return Array.isArray(parsed.recentFiles) &&
-        parsed.recentFiles.every((p) => typeof p === "string")
-        ? parsed.recentFiles : [];
-    } catch {
-      return [];
-    }
-  };
-}
-
 /** Listen for pipes, and serve each one that comes. */
 export async function serveMcp(): Promise<void> {
   const files = await createTauriPlatform();
   const { paths } = files;
-  const { dataDir } = await invoke<{ dataDir: string }>("host_setup");
-  const appStore = await openTauriAppStore(paths.join(dataDir, "app.db"), {
-    importLegacyRecentFiles: readLegacyRecentFiles(
-      paths.join(dataDir, "mcp-config.json"), files.readText),
-  });
+  const appStore = await windowAppStore();
 
   // As scf-mcp's nodeLocator: an unknown root is undefined, a known one
   // with nothing there is null.

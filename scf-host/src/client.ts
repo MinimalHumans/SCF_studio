@@ -294,10 +294,6 @@ export class HostClient {
     return r;
   }
 
-  list(path?: string): Promise<HostMethods["list"][1]> {
-    return this.send("list", path === undefined ? {} : { path });
-  }
-
   /** Recent writes to the open film and who made them. */
   async journal(limit?: number): Promise<JournalEntry[]> {
     return (await this.send("journal",
