@@ -2,7 +2,6 @@
 import { useEffect, useRef } from "react";
 import { useStore } from "../state/store.ts";
 import { Workbench } from "./Workbench.tsx";
-import { ChooserDialog } from "./ChooserDialog.tsx";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
 import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
 
@@ -119,9 +118,6 @@ export function App(): JSX.Element {
     void resumeLast();
   }, [phase, hostStatus, lastSession, resumeLast]);
 
-  // The chooser is mounted over whichever screen asked for it: the
-  // start screen to open or create, the workbench to Save As.
-  const screen = phase === "multitab" ? <MultiTabScreen />
+  return phase === "multitab" ? <MultiTabScreen />
     : phase === "open" ? <Workbench /> : <StartScreen />;
-  return <>{screen}<ChooserDialog /></>;
 }

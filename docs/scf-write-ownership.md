@@ -126,12 +126,12 @@ mismatched protocol.
 
 ## 4. Choosing a file
 
-A browser cannot hand a host a file path. Until Tauri provides a native
-dialog:
+A browser cannot hand a host a file path, so the desktop shell does:
 
-- The window gets a **host-side file chooser**: the host lists
-  directories and `*.scf` under a configured set of roots, plus a recent
-  list. The user picks; the host opens by path.
+- The window uses the **operating system's own open and save dialogs**
+  (Tauri's dialog plugin), which return a path; the host opens by path.
+  Opening works anywhere the dialog reaches; creating and Save As are
+  still limited to the host's roots.
 - The MCP already works in paths.
 - The host canonicalises paths at the boundary (see §8, WSL) and the
   canonical path is the session key.

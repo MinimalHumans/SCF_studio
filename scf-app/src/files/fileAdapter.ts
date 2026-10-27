@@ -50,9 +50,11 @@ export interface AttachedRoot {
 export interface FileAdapter {
   /**
    * Pick the project's folder and check it holds `fileName` at its
-   * root. Returns null if the user cancels. Read-only.
+   * root. `filePath` is the host's path for that file, when there is
+   * one. Returns null if the user cancels. Read-only.
    */
-  attachRoot(fileName: string | null): Promise<AttachedRoot | null>;
+  attachRoot(fileName: string | null,
+             filePath?: string | null): Promise<AttachedRoot | null>;
   /** Whether a remembered root still has a live grant, in the mode it
    *  was granted under. */
   rootPermission(root: unknown, mode: RootMode): Promise<RootPermission>;
@@ -66,8 +68,64 @@ function describe(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/** One entry of a folder as the host sees it. */
+export interface HostEntry {
+  name: string;
+  kind: "dir" | "file" | "other";
+  size: number;
+}
+
+/** The host's listing of a folder, by path. */
+export type ListHostFolder = (path: string) => Promise<HostEntry[]>;
+
+/** The folder part of a host path, in either spelling. */
+function folderOf(path: string): string | null {
+  const cut = Math.max(path.lastIndexOf("\\"), path.lastIndexOf("/"));
+  return cut > 0 ? path.slice(0, cut) : null;
+}
+
+/**
+ * Whether `root` is the folder at `dir`, judged by what both can see:
+ * the same name, and every entry the browser lists is in the host's
+ * listing with the same kind (and size, for files), and every folder
+ * the host lists is in the browser's. Files are compared one way only,
+ * because the browser leaves out names it will not hand to a page.
+ */
+async function sameFolder(root: FileSystemDirectoryHandle, dir: string,
+                          list: ListHostFolder): Promise<boolean> {
+  const base = dir.split(/[\\/]/).pop() ?? dir;
+  if (base.toLowerCase() !== root.name.toLowerCase()) return false;
+  const host = new Map((await list(dir)).map((e) => [e.name, e]));
+  const seen = new Set<string>();
+  for await (const [name, handle] of root.entries()) {
+    seen.add(name);
+    const there = host.get(name);
+    if (there === undefined) return false;
+    if (handle.kind === "directory") {
+      if (there.kind !== "dir") return false;
+    } else {
+      const file = await (handle as FileSystemFileHandle).getFile();
+      if (there.kind !== "file" || there.size !== file.size) return false;
+    }
+  }
+  for (const e of host.values()) {
+    if (e.kind === "dir" && !e.name.startsWith(".") && !seen.has(e.name)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /** Chromium File System Access implementation. */
 export class FsAccessAdapter implements FileAdapter {
+  /**
+   * `listHost`, when given, is the desktop shell's own view of the
+   * disk. It is used only when the browser will not look the project
+   * file up by name — Chromium refuses any name ending `.scf`, which
+   * is also a Windows shell-command extension it treats as dangerous.
+   */
+  constructor(private readonly listHost: ListHostFolder | null = null) {}
+
   static folderSupported(): boolean {
     return "showDirectoryPicker" in window;
   }
@@ -82,7 +140,7 @@ export class FsAccessAdapter implements FileAdapter {
    * rather than listed, so it answers on machines where listing a
    * folder returns nothing at all (conventions §9).
    */
-  async attachRoot(fileName: string | null):
+  async attachRoot(fileName: string | null, filePath: string | null = null):
       Promise<AttachedRoot | null> {
     let root: FileSystemDirectoryHandle;
     try {
@@ -112,6 +170,18 @@ export class FsAccessAdapter implements FileAdapter {
       if (!(e instanceof DOMException && e.name === "NotFoundError")) {
         console.debug("[attachRoot] could not look for the file:",
                       describe(e));
+        // The browser gave no answer; the host can, by path.
+        const dir = filePath === null ? null : folderOf(filePath);
+        if (dir !== null && this.listHost !== null) {
+          try {
+            if (await sameFolder(root, dir, this.listHost)) {
+              segments = [fileName];
+            }
+          } catch (e2) {
+            console.debug("[attachRoot] could not compare with the host:",
+                          describe(e2));
+          }
+        }
       }
     }
     return { root, permission,

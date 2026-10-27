@@ -14,9 +14,10 @@ import registryJson from "@registry/registry.json" with { type: "json" };
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { q, type Row, type SqlExec, type SqlValue } from "@scf-core/db.ts";
-import { FsAccessAdapter, type FileAdapter }
+import { invoke } from "@tauri-apps/api/core";
+import { FsAccessAdapter, type FileAdapter, type HostEntry }
   from "../files/fileAdapter.ts";
-import { createHostChooser } from "../files/hostChooser.ts";
+import { createNativeChooser } from "../files/nativeChooser.ts";
 import type { ProjectChooser } from "../files/projectChooser.ts";
 import { getHost } from "../host/hostClient.ts";
 import type { HostClient } from "@scf-host/client.ts";
@@ -47,10 +48,12 @@ export const referenceGraph: Map<string, IncomingRef[]> =
 
 const EDITOR_VERSION = "scf-app 0.1.0";
 
-/** The asset folder is the one thing still acquired through the browser. */
-const adapter: FileAdapter = new FsAccessAdapter();
-/** How the user names a `.scf`; the host lists folders for it today. */
-const chooser: ProjectChooser = createHostChooser();
+/** The asset folder is the one thing still acquired through the browser;
+ *  the shell's listing checks it when the browser cannot. */
+const adapter: FileAdapter = new FsAccessAdapter(
+  (path) => invoke<HostEntry[]>("fs_read_dir", { path }));
+/** How the user names a `.scf`: the operating system's own dialogs. */
+const chooser: ProjectChooser = createNativeChooser();
 
 /**
  * scf-core's read seam, app-wide. Reads go to the host's read-only
@@ -685,7 +688,7 @@ export const useStore = create<AppState>((set, get) => ({
     const { projectPath, projectName } = get();
     set({ attachError: null });
     try {
-      const attached = await adapter.attachRoot(projectName);
+      const attached = await adapter.attachRoot(projectName, projectPath);
       if (attached === null) return;                     // user cancelled
       if (attached.pairing !== null &&
           attached.pairing.kind !== "at-root") {
