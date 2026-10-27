@@ -415,17 +415,30 @@ which is what conformance CI and the scripts already use.
 ### 5.2 Root mapping is configuration, and its absence is an answer
 
 `q13Result` already takes a `FileLocator` and a `rootMapped` flag, so
-the seam exists — the server's job is to supply it from config:
+the seam exists — the server's job is to supply it from config or the
+shared project store:
 
-```
-{ scf: "/path/to/film.scf",
-  roots: { project: "/vol/film", plates: "/vol/plates" } }
+```json
+{ "scf": "/path/to/film.scf",
+  "roots": { "project": "/vol/film", "plates": "/vol/plates" } }
 ```
 
-`FileLocator` returns `undefined` for a root it does not know, which is
-deliberately different from `null` for a file that is not there. Keep
-that distinction all the way out to the agent: §8.3's `unaddressed` for
-an unmapped root, `missing` for a mapped root with nothing at the path.
+**The stored pairing (`app.db`).** When no explicit root mapping is
+configured, the server queries the desktop app's shared store (`app.db`
+in the application data directory):
+- If the film path has an `asset_root` remembered there (from an earlier
+  session in the editor or MCP), it attaches automatically.
+- Calling the `set_root` tool saves the mapping back to `app.db`, so
+  folder associations made by an agent persist into the editor.
+- The `recent_files` tool queries `recentProjects()` from `app.db`,
+  giving agents the same persistent history the editor displays on its
+  start screen.
+
+`FileLocator` (via the host's `assets` module) returns `undefined` for a
+root it does not know, which is deliberately different from `null` for a
+file that is not there. Keep that distinction all the way out to the
+agent: §8.3's `unaddressed` for an unmapped root, `missing` for a mapped
+root with nothing at the path.
 
 **Do not omit unresolvable references.** "I know what is in force but
 cannot locate it" is different information from "there is nothing," and

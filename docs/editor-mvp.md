@@ -215,6 +215,12 @@ ships, and section 7 prose, which is now largely written
 
 ## 7a. ✅ Attaching the folder to an open file
 
+> **Superseded in the desktop app (file-management-plan.md).**
+> The browser folder handles, `classifyRootPairing()`, and IndexedDB
+> handle storage described below were replaced by native OS dialogs,
+> path-based asset resolution through the host's `assets` module, and
+> persistent app-level pairing in `app.db`.
+
 The folder-first open (`openProject()`) is one gesture when directory
 listing works and a diagnostic panel when it does not. The awkwardness
 was never the UI; it was that the app had to *work out* which `.scf` in

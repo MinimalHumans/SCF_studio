@@ -572,47 +572,37 @@ namespace.
 `spec §0.3` is explicit that the unit of interchange is the `.scf`.
 This subsection is about why the *editor* asks for a folder anyway.
 
-The File System Access API cannot return a parent directory from a file
-handle — there is no `getParent()`, by design. A `.scf` opened on its
-own therefore cannot see what sits beside it, which is why an asset next
-to the file is unreachable through the file.
+The `.scf` file and the asset root are independent. A project file and
+its media may sit in the same directory, in separate trees, or on
+different volumes (e.g., the `.scf` on a fast local SSD and production
+plates on a shared network drive). The format does not dictate folder
+layout, and the `.scf` never stores an absolute path or machine-local
+folder mapping inside itself (§0.3, §8.2) — doing so would break the
+file's portability the moment it moves to another machine.
 
-The editor now opens the `.scf` through its host, which works in paths,
-so the file and the folder arrive separately: the file first, then the
-asset folder in a second gesture, accepted only if it holds a file with
-the project's name at its root. The sections below that describe a
-single folder gesture and a folder scan are the rules for
-`chooseProjectFile()` and for any tool that lists a folder; the editor
-no longer scans.
+Instead, the pairing between a `.scf` path and its asset root is
+machine-local and app-level. Both the desktop editor and the MCP share a
+single SQLite store (`app.db` in the application data directory):
 
-Discovery scans the root only, non-recursive, for `*.scf`. Exactly one
-is a valid project; zero or several is reported for the user to resolve
-rather than guessed at. A `.scf` in a subfolder is never a candidate —
-those are layers. SQLite's `-wal`, `-shm` and `-journal` sidecars are
-not projects either, and their presence is reported on its own, since it
-usually means the project is open somewhere else.
+- **Path hits apply silently.** When a `.scf` is opened at a path
+  `app.db` already knows, its remembered asset root is attached
+  without prompting.
+- **UUID hits auto-assign.** When a file is opened at an unmapped path (a
+  copy, a versioned filename, or a Save As), matching an existing project
+  by its `uuid` auto-assigns that project's asset root. The `uuid` is the
+  film's durable identity across copies and locations.
+- **Title and name hits are suggested.** Plausible matches found only
+  by project title or file base name are offered in a suggestion dialog,
+  never applied automatically.
+- **Any folder is accepted.** Attaching an asset folder is not gated on
+  the `.scf` living inside it. Whether a chosen folder actually holds the
+  media is reported by running asset resolution across all `@project/...`
+  identifiers after attaching (e.g., "38 of 40 assets found"), making
+  missing files visible without refusing the user's choice.
 
-**Discovery is an optimisation, not the mechanism.** Directory listing
-is not reliably available: a locked-down Windows machine returned zero
-entries for an ordinary Desktop folder, through three separate
-iterators, with permission granted and nothing thrown — and did the same
-in a bare DevTools console, so no application code was involved.
-Enterprise policy is the likely cause and there is nothing to work
-around. What a project needs is the root handle plus the `.scf`; when
-listing cannot supply the second, the user names it in a second gesture,
-and the resulting session is identical. A folder that lists is one
-gesture; a folder that does not is two.
-
-`chooseProjectFile()` takes a list of names rather than a directory
-handle, so the rule holds without a browser. It carries `seen` — every
-root file the scan found — so "no .scf here" can show its evidence
-rather than being an unarguable assertion.
-
-A folder-first open used to be granted **readwrite**, because the `.scf`
-was saved through a handle taken from the root. That route is gone: the
-host writes the `.scf`, and the editor asks the browser for the asset
-folder **read-only**, so the read-only rule below is a sandbox rather
-than a discipline.
+Asset access is read-only and consolidated in the host's `assets` module,
+which resolves `@project/...` identifiers against the active root and
+enforces that paths cannot escape it (`..`).
 
 ### `entity_anchor.region_box`
 
@@ -649,56 +639,23 @@ and changing its bytes under that tag would have served a different
 file than `SHA256SUMS` claims. This section keeps the reasoning; the
 help text is what binds.
 
-### The other order: the file first
+### Attaching an asset root
 
-Opening a lone `.scf` still works, and `spec §0.3` makes that the
-normative case rather than a degraded one. What it used to be was a dead
-end for assets: the file was open, its folder was unreachable, and the
-only way to fix that was to close the project and open it again the
-other way.
+The desktop editor opens files via native OS dialogs with full machine
+access — no folder confinement, cross-drive restrictions or browser
+directory handles.
 
-It is not a dead end. The platform will not walk from a file to its
-parent, but `FileSystemDirectoryHandle.resolve()` will say whether a
-folder the user *names* contains that file, and where. So the folder can
-be asked for second, from inside an open session, and the pairing
-**checked** rather than assumed:
+Attaching an asset folder happens in a separate gesture from the topbar
+or project workspace. Any folder the user selects is accepted: the
+editor does not require the `.scf` to reside inside the folder, nor does
+it scan directory trees guessing which file was intended.
 
-| `resolve()` | Meaning | What happens |
-| --- | --- | --- |
-| `["x.scf"]` | the folder holds the file directly | this is the project; `@project` is it |
-| `["sub", "x.scf"]` | the folder is an ancestor | refused: every asset would address one level too high |
-| `null` | the file is not below the folder | refused: wrong folder, or another copy of the same project |
-
-`classifyRootPairing()` is that rule, and like `chooseProjectFile()` it
-takes names rather than handles so it holds without a browser.
-
-**This order guesses at nothing.** Discovery has to work out which of
-several `.scf` files was meant, and cannot when listing returns nothing;
-file-first never asks that question, because the user has already
-answered it, and `resolve()` traverses rather than enumerates so it
-answers on the machines where the scan is blind. It costs two gestures
-always, where discovery costs one sometimes — but `startIn` opens the
-directory picker inside the file's own folder, so the second gesture is
-usually a single click on an already-highlighted folder.
-
-It also asks for the smaller grant. The write handle came from the file
-picker, so the folder is only ever read, and this route asks for `read`.
-Here the read-only rule *is* a sandbox rather than a discipline. The
-grant mode therefore has to be carried with the handle: querying a
-`read` grant for `readwrite` reports `prompt`, which would show a
-perfectly working folder as needing reconnection forever.
-
-A session with **no `.scf` on disk** — the demo, an unsaved new project
-— can still be given a folder, and nothing can check it: there is no
-file for the folder to contain. That session is marked unverified and
-says so, because an asset resolving from the wrong folder looks exactly
-like one resolving from the right one.
-
-Which folder belongs to which file is remembered as a *pairing*, keyed
-by `isSameEntry()`. A single remembered root was a latent defect: open
-project A as a folder, then open B's `.scf` on its own, and a resume
-paired B's file with A's folder. Nothing reported it, because a stale
-root resolves perfectly well — against another film's assets.
+Instead, the check that a folder is *this project's* is the **resolution
+report** run immediately after attaching: each `@project/...` identifier
+is resolved against the root, and the topbar reports the count (e.g.,
+"38 of 40 assets found"). If a folder is moved, deleted, or unmounted,
+the entry in `app.db` is preserved, the root is flagged as missing
+("assets: not found at X"), and the topbar offers Change… to locate it.
 
 ### Resolution states
 

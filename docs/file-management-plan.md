@@ -1,9 +1,10 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # File management in the desktop editor — implementation plan
 
-**Status: planned, not started.** Written 2026-10-27 from a design
-discussion. Nothing here is built. Development is expected to move to a
-Windows machine before implementation begins.
+**Status: completed.** Implemented and verified across Steps 0–5 (Docker
+dev image, app.db shared store, native dialogs with unconfined machine
+access, path-based asset resolution, pairing & suggestions on open, and
+documentation).
 
 ## 1. Why
 

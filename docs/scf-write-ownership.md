@@ -126,19 +126,19 @@ mismatched protocol.
 
 ## 4. Choosing a file
 
-A browser cannot hand a host a file path. Until Tauri provides a native
-dialog:
+The desktop app uses native OS dialogs (`tauri-plugin-dialog`) for
+opening films, Save As, creating projects, and picking asset folders:
 
-- The window gets a **host-side file chooser**: the host lists
-  directories and `*.scf` under a configured set of roots, plus a recent
-  list. The user picks; the host opens by path.
-- The MCP already works in paths.
+- **Full machine access.** The desktop app has no folder confinement
+  and can open files across any drive letter, UNC path, or mapped
+  network drive. `SCF_HOST_ROOTS` remains available as an opt-in
+  restriction for sandboxed test environments.
+- **The MCP works in paths directly.**
 - The host canonicalises paths at the boundary (see §8, WSL) and the
   canonical path is the session key.
-
-The **asset folder** keeps today's File System Access handle for now;
-resolving assets through the host (and dropping the handle store, object
-URL cache and locator) is a follow-on, not part of the first cut.
+- **Asset folder pairing.** Handled via `app.db` (SQLite in the app data
+  directory), shared between the editor and MCP. Asset reads are
+  consolidated in the host's `assets` module.
 
 ## 5. Safety
 
@@ -180,8 +180,8 @@ is not "just localhost":
 - Check the `Origin` header on the WebSocket upgrade against the Vite
   dev origin; a web page the user happens to visit must not be able to
   reach the host.
-- The file chooser lists only under configured roots and never follows a
-  path outside them.
+- Path access is unrestricted for native OS dialogs by default;
+  opt-in confinement remains configurable via `SCF_HOST_ROOTS`.
 - Every write is attributable to a client (§5).
 
 ## 8. Platform notes
@@ -316,4 +316,5 @@ So an agent and the editor share one owner of each film again, the
 window's core. The Node host, and the MCP run from Node, were then
 removed: development is the app in its own window (`npm run dev`), and
 the tests run the same core on Node's files and SQLite, in-process.
-The file chooser is still the host-side one; the native dialog is next.
+The file chooser uses native OS dialogs with full machine access and
+`app.db`-backed asset root pairing.

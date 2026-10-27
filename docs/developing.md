@@ -146,7 +146,7 @@ While it runs:
 
 The dev app has its own identity, so it runs beside an installed SCF
 Editor without sharing anything with it. Its data (snapshots, the write
-journal, MCP settings) is in:
+journal, MCP settings, and `app.db` history and pairings) is in:
 
 | | |
 |---|---|
@@ -154,9 +154,10 @@ journal, MCP settings) is in:
 | Linux | `~/.local/share/com.minimalhumans.scf-editor.dev/` (or `$XDG_DATA_HOME`) |
 | Windows | `%APPDATA%\com.minimalhumans.scf-editor.dev\` |
 
-It can open, create and save films anywhere on the machine; `SCF_HOST_ROOTS`
-(a list of folders, separated as `PATH` is) confines `create`/`saveAs` to
-them instead.
+Files and asset folders are opened through native OS dialogs with full
+machine access across drives and network shares; `SCF_HOST_ROOTS` (a list
+of folders, separated as `PATH` is) remains available to confine
+`create`/`saveAs` to them instead.
 
 ## 4. Run the tests
 
@@ -188,6 +189,16 @@ python3 tools/verify.py --fast
 The editor's tests take tens of seconds the first time, while Vite
 transforms the sources. If one times out on a slow machine, run it again
 before suspecting it.
+
+### Docker (CI parity)
+
+To run the full check suite in an isolated Linux container matching CI
+without local toolchain dependencies:
+
+```sh
+docker build -f docker/dev.Dockerfile -t scf-dev .
+docker run --rm -v "$(pwd):/workspace" -w /workspace scf-dev ./docker/run-checks.sh
+```
 
 ## 5. Point an assistant at the dev app
 

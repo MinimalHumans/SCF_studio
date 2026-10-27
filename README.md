@@ -81,7 +81,9 @@ an assistant at the dev app.
 The editor is a desktop app (Tauri). Its window owns every open file
 (`scf-host`'s core) and serves the MCP, so an assistant pointed at the
 app (`scf-editor mcp`) works on the same film as the person at the editor;
-connecting one is in [`scf-mcp/README.md`](scf-mcp/README.md). The
+connecting one is in [`scf-mcp/README.md`](scf-mcp/README.md). Files and
+asset folders are opened via native OS dialogs across any drive or network
+share; pairings and recent project history are stored in `app.db`. The
 editor opens with a start screen; every change is written to the `.scf`
 as it is made (there is no Save button — undo is the safety net), and the
 demo asks where to put its copy first.
