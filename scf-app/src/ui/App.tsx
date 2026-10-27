@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useRef } from "react";
 import { useStore } from "../state/store.ts";
+import { RecentProjects } from "./RecentProjects.tsx";
+import { SuggestionDialog } from "./SuggestionDialog.tsx";
 import { Workbench } from "./Workbench.tsx";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
 import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
@@ -36,9 +38,8 @@ function StartScreen(): JSX.Element {
           </button>
           <button disabled={!ready}
                   onClick={() => void openFromPicker()}
-                  title="Opens the file. Its asset folder is attached
-afterwards, from the topbar — the browser cannot find the folder from
-the file, but it can confirm the one you name holds it.">
+                  title="If app.db already knows this file's asset folder
+it is attached automatically; otherwise choose it from the topbar.">
             Open an SCF File
           </button>
           <button disabled={!ready} onClick={() => void openDemo()}>
@@ -57,6 +58,7 @@ the file, but it can confirm the one you name holds it.">
         {phase === "start" && errorMessage !== null && (
           <p className="start-error">{errorMessage}</p>
         )}
+        {ready && <RecentProjects />}
       </div>
       <a className="start-maker" href="https://www.minimalhumans.com"
          target="_blank" rel="noopener noreferrer">
@@ -118,6 +120,7 @@ export function App(): JSX.Element {
     void resumeLast();
   }, [phase, hostStatus, lastSession, resumeLast]);
 
-  return phase === "multitab" ? <MultiTabScreen />
-    : phase === "open" ? <Workbench /> : <StartScreen />;
+  if (phase === "multitab") return <MultiTabScreen />;
+  if (phase !== "open") return <StartScreen />;
+  return <><Workbench /><SuggestionDialog /></>;
 }

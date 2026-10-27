@@ -8,14 +8,17 @@
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test,
          vi } from "vitest";
-import { mkdtempSync, realpathSync, rmSync, readFileSync, existsSync }
-  from "node:fs";
+import {
+  mkdirSync, mkdtempSync, realpathSync, rmSync, readFileSync, existsSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import registryJson from "@registry/registry.json" with { type: "json" };
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
+import type { AppStore } from "@scf-host/appStore.ts";
 import { HostClient, connectInProcess } from "@scf-host/client.ts";
 import { createHostCore, type HostCore } from "@scf-host/hostCore.ts";
+import { openNodeAppStore } from "@scf-host/nodeAppStore.ts";
 
 /**
  * The few browser globals the store touches. A real jsdom would also
@@ -44,25 +47,33 @@ vi.mock("../src/files/tauriChooser", () => ({
   }),
 }));
 
-/** A fake app.db: this file tests the window against the host, not
- *  asset-root persistence, so a minimal in-memory stand-in is enough
- *  to keep `finishOpen`/`saveProjectAs` from reaching a real Tauri
- *  `invoke` that does not exist in this environment. */
-const assetRoots = new Map<string, string | null>();
+const assetFolderPaths: (string | null)[] = [];
+vi.mock("../src/files/assetFolderChooser", () => ({
+  chooseAssetFolder: () => Promise.resolve(assetFolderPaths.shift() ?? null),
+}));
+
+/** Only `fs_exists` is needed here (`applyAssetRoot`'s existence
+ *  check); anything else means a test reached for something this
+ *  file does not yet stub. */
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: (cmd: string, args?: { path?: string }) => {
+    if (cmd === "fs_exists") {
+      return Promise.resolve(existsSync(args?.path ?? ""));
+    }
+    return Promise.reject(new Error(`invoke(${cmd}) is not mocked here`));
+  },
+}));
+
+/**
+ * The real Node app.db (scf-host `nodeAppStore.ts`), not a hand-rolled
+ * stand-in: the suggestion matching this file tests has real logic
+ * behind it (uuid/title/base-name queries), and duplicating that logic
+ * in a fake would only prove the fake agrees with itself. A fresh
+ * database per test, same as the fresh `assetRoots` map this replaces.
+ */
+let appStore: AppStore;
 vi.mock("../src/host/windowAppStore", () => ({
-  windowAppStore: () => Promise.resolve({
-    getProject: (path: string) => Promise.resolve(
-      assetRoots.has(path) ? { assetRoot: assetRoots.get(path) ?? null }
-        : null),
-    setAssetRoot: (path: string, assetRoot: string | null) => {
-      assetRoots.set(path, assetRoot);
-      return Promise.resolve();
-    },
-    touchProject: (path: string, fields: { assetRoot?: string | null }) => {
-      if (fields.assetRoot !== undefined) assetRoots.set(path, fields.assetRoot);
-      return Promise.resolve();
-    },
-  }),
+  windowAppStore: () => Promise.resolve(appStore),
 }));
 
 let dir: string;
@@ -99,10 +110,19 @@ afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-beforeEach(() => { chooserPaths.length = 0; memory.clear(); assetRoots.clear(); });
+let appStoreDir: string;
+beforeEach(async () => {
+  chooserPaths.length = 0;
+  assetFolderPaths.length = 0;
+  memory.clear();
+  appStoreDir = mkdtempSync(join(tmpdir(), "scf-window-appdb-"));
+  appStore = await openNodeAppStore(join(appStoreDir, "app.db"));
+});
 afterEach(async () => {
   const { useStore } = await import("../src/state/store");
   await useStore.getState().closeProject();
+  await appStore.close();
+  rmSync(appStoreDir, { recursive: true, force: true });
 });
 
 async function store() {
@@ -285,5 +305,116 @@ describe("the window on the host", () => {
     const n = await exec("SELECT COUNT(*) AS n FROM scene");
     expect(Number(n[0]!["n"])).toBeGreaterThan(0);
   }, 120_000);
+});
+
+/**
+ * Step 4: pairing on open (file-management-plan.md §3.2). Each test
+ * opens the real demo fixture at a fresh path — it carries a real
+ * uuid and title ("Hollow Creek") baked into its bytes, which a brand
+ * new empty project does not have.
+ */
+describe("pairing an asset root on open", () => {
+  async function openDemoAt(
+      useStore: Awaited<ReturnType<typeof store>>["useStore"], path: string,
+  ): Promise<void> {
+    const demo = readFileSync(join(
+      __dirname, "..", "public", "hollow_creek.scf"));
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve(
+      new Response(demo, { status: 200 }))));
+    chooserPaths.push(path);
+    await useStore.getState().openDemo();
+    vi.unstubAllGlobals();
+  }
+
+  test("a path app.db already knows attaches its asset root silently",
+      async () => {
+    const { useStore } = await store();
+    const path = join(dir, "a.scf");
+    const assetDir = join(dir, "a-assets");
+    mkdirSync(assetDir, { recursive: true });
+
+    await openDemoAt(useStore, path);
+    assetFolderPaths.push(assetDir);
+    await useStore.getState().attachFolder();
+    expect(useStore.getState().assetRoot).toBe(assetDir);
+    await useStore.getState().closeProject();
+
+    // The file already exists now: reopen it, do not recreate it.
+    chooserPaths.push(path);
+    await useStore.getState().openFromPicker();
+    expect(useStore.getState().assetRoot).toBe(assetDir);
+    expect(useStore.getState().suggestions).toBeNull();
+  }, 60_000);
+
+  test("a uuid match on a brand-new path is offered, never applied",
+      async () => {
+    const { useStore } = await store();
+    const pathA = join(dir, "b-first.scf");
+    const assetDir = join(dir, "b-assets");
+    mkdirSync(assetDir, { recursive: true });
+
+    await openDemoAt(useStore, pathA);
+    assetFolderPaths.push(assetDir);
+    await useStore.getState().attachFolder();
+    await useStore.getState().closeProject();
+
+    // Same bytes, same uuid, a path app.db has never seen.
+    const pathB = join(dir, "b-second.scf");
+    await openDemoAt(useStore, pathB);
+    const suggestions = useStore.getState().suggestions;
+    expect(suggestions).not.toBeNull();
+    expect(suggestions?.[0]).toMatchObject({
+      scfPath: pathA, assetRoot: assetDir, strength: "uuid",
+    });
+    // Offering is not applying.
+    expect(useStore.getState().assetRoot).toBeNull();
+  }, 60_000);
+
+  test("choosing a suggestion attaches it and persists for next time",
+      async () => {
+    const { useStore } = await store();
+    const pathA = join(dir, "c-first.scf");
+    const assetDir = join(dir, "c-assets");
+    mkdirSync(assetDir, { recursive: true });
+
+    await openDemoAt(useStore, pathA);
+    assetFolderPaths.push(assetDir);
+    await useStore.getState().attachFolder();
+    await useStore.getState().closeProject();
+
+    const pathB = join(dir, "c-second.scf");
+    await openDemoAt(useStore, pathB);
+    const suggestion = useStore.getState().suggestions?.[0];
+    expect(suggestion).toBeDefined();
+    await useStore.getState().chooseSuggestion(suggestion!);
+    expect(useStore.getState().assetRoot).toBe(assetDir);
+    expect(useStore.getState().suggestions).toBeNull();
+    await useStore.getState().closeProject();
+
+    // Reopening B now finds its OWN row — a path hit, not a suggestion.
+    chooserPaths.push(pathB);
+    await useStore.getState().openFromPicker();
+    expect(useStore.getState().assetRoot).toBe(assetDir);
+    expect(useStore.getState().suggestions).toBeNull();
+  }, 60_000);
+
+  test("dismissing a suggestion opens the project unmapped", async () => {
+    const { useStore } = await store();
+    const pathA = join(dir, "d-first.scf");
+    const assetDir = join(dir, "d-assets");
+    mkdirSync(assetDir, { recursive: true });
+
+    await openDemoAt(useStore, pathA);
+    assetFolderPaths.push(assetDir);
+    await useStore.getState().attachFolder();
+    await useStore.getState().closeProject();
+
+    const pathB = join(dir, "d-second.scf");
+    await openDemoAt(useStore, pathB);
+    expect(useStore.getState().suggestions).not.toBeNull();
+    useStore.getState().dismissSuggestions();
+    expect(useStore.getState().suggestions).toBeNull();
+    expect(useStore.getState().assetRoot).toBeNull();
+  }, 60_000);
 });
 

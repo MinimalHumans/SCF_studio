@@ -55,8 +55,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
-  listEntities, PROJECT_ROOT, q00Result, queryMarkdown, resolveNaturalKey,
-  shotContext, shotMedia, shotReadiness, whereUsed,
+  baseNameOf, listEntities, PROJECT_ROOT, q00Result, queryMarkdown,
+  resolveNaturalKey, shotContext, shotMedia, shotReadiness, whereUsed,
 } from "@minimalhumans/scf-core";
 import type { RootMap, ServerConfig } from "./config.ts";
 import { registerJournalTool, registerWriteTools } from "./writeTools.ts";
@@ -151,13 +151,20 @@ export async function createScfMcpServer(
     cache.setAgentName(server.server.getClientVersion()?.name);
   };
 
+  /** The file name of a host path, so a path either separator spells. */
+  const nameOf = (path: string): string => path.split(/[\\/]/).pop() ?? path;
+
   /**
    * Open `scfPathInput`, falling back to the asset root `app.db` has on
    * file for it when the caller gives none of its own — an explicit
    * `roots` argument always wins, for this call and from now on
    * (file-management-plan.md Step 1). Persisting is fire-and-forget: a
    * failed or slow write never blocks a tool call, and loses at most
-   * the convenience of remembering it for next time.
+   * the convenience of remembering it for next time. A pure local
+   * write, so it is fast enough that a check immediately after calling
+   * this (recent_files, say) reliably sees it land — unlike
+   * `rememberIdentity` below, which needs a host round trip and must
+   * not be folded in here for exactly that reason.
    */
   async function openAndRemember(scfPathInput: string, roots: RootMap) {
     const scfPath = platform.resolve(scfPathInput);
@@ -179,6 +186,31 @@ export async function createScfMcpServer(
           `[mcp] failed to persist ${scfPath} in app.db: ${String(e)}`);
       });
     return project;
+  }
+
+  /**
+   * The film's own uuid and name, and the file's base name, kept
+   * current on every open (file-management-plan.md §3.2 points 1 and
+   * 4) — step 4's suggestion matching reads them. Takes an already-
+   * fetched brief where the caller has one (the `open` tool does, for
+   * its own response) rather than opening a second connection to get
+   * one; fire-and-forget either way, same reasoning as
+   * `openAndRemember`.
+   */
+  function rememberIdentity(
+      project: ReturnType<typeof cache.openProject>,
+      brief: Awaited<ReturnType<typeof q00Result>>): void {
+    const row = brief.result.layers.find((l) => l.entity === "project")
+      ?.row;
+    const nameRaw = row?.fields["name"];
+    platform.appStore.touchProject(project.scfPath, {
+      uuid: row?.uuid ?? null,
+      title: typeof nameRaw === "string" ? nameRaw : null,
+      baseName: baseNameOf(nameOf(project.scfPath)),
+    }).catch((e: unknown) => {
+      platform.log(`[mcp] failed to persist ${project.scfPath}'s identity ` +
+        `in app.db: ${String(e)}`);
+    });
   }
 
   server.registerTool("open", {
@@ -205,6 +237,7 @@ export async function createScfMcpServer(
         const shots = await listEntities(ctx, "shot");
         const name = brief.result.layers.find((l) => l.entity === "project")
           ?.row.fields["name"] ?? null;
+        rememberIdentity(project, brief);
         return {
           opened: project.scfPath,
           project: name,
@@ -457,7 +490,13 @@ export async function createScfMcpServer(
   });
 
   if (config.scfPath !== undefined) {
-    await openAndRemember(config.scfPath, config.roots);
+    const project = await openAndRemember(config.scfPath, config.roots);
+    await cache.withProject(({ ctx }) => q00Result(ctx), project)
+      .then((brief) => { rememberIdentity(project, brief); })
+      .catch((e: unknown) => {
+        platform.log(`[mcp] could not read ${project.scfPath}'s identity ` +
+          `at startup: ${String(e)}`);
+      });
   }
   return server;
 }

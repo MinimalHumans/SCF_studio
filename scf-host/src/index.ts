@@ -3,7 +3,8 @@ export * from "./protocol.ts";
 export {
   openAppStore,
   type AppDb, type AppStore, type AppStoreFs, type OpenAppDb,
-  type OpenAppStoreOptions, type ProjectRow, type TouchProjectFields,
+  type OpenAppStoreOptions, type ProjectRow, type ProjectSuggestion,
+  type SuggestionInput, type TouchProjectFields,
 } from "./appStore.ts";
 export {
   createAssetAccess, type AssetAccess, type ByteRange,

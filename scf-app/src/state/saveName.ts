@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
+import { bumpVersionSuffix, withoutScfExtension } from "@scf-core/projectName.ts";
+
 /**
  * Filename the Save-As picker opens with.
  *
@@ -9,26 +11,19 @@
  *   hollow_creek-004.scf  → hollow_creek-005.scf   (zero padding kept)
  * A project that has no file yet (the demo, a new project) is only given
  * the extension — there is no earlier version to step past.
+ *
+ * The stepping rule itself is `scf-core`'s `bumpVersionSuffix`, shared
+ * with the open-time weak match (file-management-plan.md §3.2) so the
+ * two never disagree about what counts as "the same project, another
+ * version."
  */
 export function suggestSaveAsName(
     current: string | null, bump = false): string {
   if (current === null || current.trim() === "") return "project.scf";
-  const name = current;
-  const hasExt = /\.scf$/i.test(name);
-  const base = hasExt ? name.slice(0, -4) : name;
+  const hasExt = /\.scf$/i.test(current);
+  const base = withoutScfExtension(current);
   if (!bump || !hasExt) return `${base || "project"}.scf`;
-  const versioned = /^(.*?)([._-]?v)(\d+)$/i.exec(base);
-  if (versioned !== null) {
-    return `${versioned[1]}${versioned[2]}` +
-           `${String(Number(versioned[3]) + 1)}.scf`;
-  }
-  const numbered = /^(.*?)([._-])(\d+)$/.exec(base);
-  if (numbered !== null) {
-    const digits = numbered[3] ?? "";
-    const next = String(Number(digits) + 1).padStart(digits.length, "0");
-    return `${numbered[1]}${numbered[2]}${next}.scf`;
-  }
-  return `${base}_v2.scf`;
+  return `${bumpVersionSuffix(base)}.scf`;
 }
 
 /**

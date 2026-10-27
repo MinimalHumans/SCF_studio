@@ -188,3 +188,89 @@ describe("corruption", () => {
     expect(existsSync(`${path}.bak`)).toBe(false);
   });
 });
+
+describe("suggestionsFor", () => {
+  test("a uuid hit is offered, most recent first, never applied",
+      async () => {
+    const store = await openNodeAppStore(join(dir, "app.db"));
+    try {
+      // Touched first, so it is the OLDER of the two by last_opened —
+      // named for when it happened, not alphabetically.
+      await store.touchProject("/films/touched-first.scf", { uuid: "u1" });
+      // last_opened is millisecond-resolution; without a gap the two
+      // touches can tie and the order between them is then undefined.
+      await new Promise((r) => { setTimeout(r, 2); });
+      await store.touchProject("/films/touched-second.scf", { uuid: "u1" });
+      const suggestions = await store.suggestionsFor(
+        { uuid: "u1", title: null, baseName: null }, "/films/new.scf");
+      expect(suggestions.map((s) => s.scfPath)).toEqual([
+        "/films/touched-second.scf", "/films/touched-first.scf",
+      ]);
+      expect(suggestions.every((s) => s.strength === "uuid")).toBe(true);
+      // Offering never writes anything.
+      expect(await store.getProject("/films/new.scf")).toBeNull();
+    } finally {
+      await store.close();
+    }
+  });
+
+  test("a title or base-name hit is offered when there is no uuid hit",
+      async () => {
+    const store = await openNodeAppStore(join(dir, "app.db"));
+    try {
+      await store.touchProject(
+        "/films/by-title.scf", { title: "Hollow Creek" });
+      await store.touchProject(
+        "/films/by-base.scf", { baseName: "hollow_creek" });
+      const suggestions = await store.suggestionsFor({
+        uuid: null, title: "Hollow Creek", baseName: "hollow_creek",
+      }, "/films/new.scf");
+      expect(suggestions.map((s) => s.scfPath).sort()).toEqual([
+        "/films/by-base.scf", "/films/by-title.scf",
+      ]);
+      expect(suggestions.every((s) => s.strength === "name")).toBe(true);
+    } finally {
+      await store.close();
+    }
+  });
+
+  test("a uuid hit suppresses a weak hit on the same row", async () => {
+    const store = await openNodeAppStore(join(dir, "app.db"));
+    try {
+      await store.touchProject("/films/old.scf",
+        { uuid: "u1", title: "Hollow Creek" });
+      const suggestions = await store.suggestionsFor(
+        { uuid: "u1", title: "Hollow Creek", baseName: null },
+        "/films/new.scf");
+      expect(suggestions).toHaveLength(1);
+      expect(suggestions[0]?.strength).toBe("uuid");
+    } finally {
+      await store.close();
+    }
+  });
+
+  test("the path itself is never offered as its own suggestion",
+      async () => {
+    const store = await openNodeAppStore(join(dir, "app.db"));
+    try {
+      await store.touchProject("/films/a.scf", { uuid: "u1" });
+      const suggestions = await store.suggestionsFor(
+        { uuid: "u1", title: null, baseName: null }, "/films/a.scf");
+      expect(suggestions).toEqual([]);
+    } finally {
+      await store.close();
+    }
+  });
+
+  test("nothing to go on offers nothing", async () => {
+    const store = await openNodeAppStore(join(dir, "app.db"));
+    try {
+      await store.touchProject("/films/a.scf", { title: "Something else" });
+      const suggestions = await store.suggestionsFor(
+        { uuid: null, title: null, baseName: null }, "/films/new.scf");
+      expect(suggestions).toEqual([]);
+    } finally {
+      await store.close();
+    }
+  });
+});

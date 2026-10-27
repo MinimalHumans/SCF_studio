@@ -55,6 +55,22 @@ export interface TouchProjectFields {
   assetRoot?: string | null;
 }
 
+export interface SuggestionInput {
+  uuid: string | null;
+  title: string | null;
+  /** Already run through `baseNameOf` (scf-core `projectName.ts`) — a
+   *  raw file name would never match the stored, already-stripped
+   *  column. */
+  baseName: string | null;
+}
+
+export interface ProjectSuggestion extends ProjectRow {
+  /** Why this row was offered: a uuid match, or a title/base-name one.
+   *  Never applied automatically either way (decision 7) — strength is
+   *  only how the suggestion dialog orders and labels them. */
+  strength: "uuid" | "name";
+}
+
 export interface AppStore {
   close(): Promise<void>;
 
@@ -71,6 +87,15 @@ export interface AppStore {
   forgetProject(scfPath: string): Promise<void>;
   /** Most recently opened first. */
   recentProjects(limit?: number): Promise<ProjectRow[]>;
+  /**
+   * Other rows that might be this same project, for a path `app.db`
+   * has never seen (file-management-plan.md §3.2 point 3): a uuid
+   * match first (strong), most recently opened within each group,
+   * then a title or base-name match (weak) — never both for the same
+   * row. Excludes `excludeScfPath` itself.
+   */
+  suggestionsFor(input: SuggestionInput,
+                 excludeScfPath: string): Promise<ProjectSuggestion[]>;
 
   getPref(key: string): Promise<string | null>;
   setPref(key: string, value: string): Promise<void>;
@@ -242,6 +267,41 @@ function createStore(db: AppDb, caseInsensitiveKeys: boolean): AppStore {
         "last_opened FROM project ORDER BY last_opened DESC LIMIT ?",
         [limit]);
       return rows.map(toProjectRow);
+    },
+
+    suggestionsFor: async (input, excludeScfPath) => {
+      const excludeKey = keyOf(excludeScfPath);
+      const columns = "path_key, scf_path, uuid, title, base_name, " +
+        "asset_root, last_opened";
+
+      const strongRows = input.uuid === null ? [] : await db.exec(
+        `SELECT ${columns} FROM project ` +
+        "WHERE uuid = ? AND path_key != ? ORDER BY last_opened DESC",
+        [input.uuid, excludeKey]);
+      const strong = strongRows.map(toProjectRow);
+      const strongKeys = new Set(strong.map((r) => r.pathKey));
+
+      const weakConditions: string[] = [];
+      const weakParams: SqlValue[] = [excludeKey];
+      if (input.title !== null) {
+        weakConditions.push("title = ? COLLATE NOCASE");
+        weakParams.push(input.title);
+      }
+      if (input.baseName !== null) {
+        weakConditions.push("base_name = ? COLLATE NOCASE");
+        weakParams.push(input.baseName);
+      }
+      const weakRows = weakConditions.length === 0 ? [] : await db.exec(
+        `SELECT ${columns} FROM project WHERE path_key != ? AND ` +
+        `(${weakConditions.join(" OR ")}) ORDER BY last_opened DESC`,
+        weakParams);
+      const weak = weakRows.map(toProjectRow)
+        .filter((r) => !strongKeys.has(r.pathKey));
+
+      return [
+        ...strong.map((r): ProjectSuggestion => ({ ...r, strength: "uuid" })),
+        ...weak.map((r): ProjectSuggestion => ({ ...r, strength: "name" })),
+      ];
     },
     getPref: async (key) => {
       const rows = await db.exec("SELECT value FROM pref WHERE key = ?", [key]);

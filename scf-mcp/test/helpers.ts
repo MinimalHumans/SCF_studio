@@ -67,10 +67,11 @@ export async function startServer(
     args: string[], configDir: string = mkdtempSync(
       join(tmpdir(), "scf-mcp-test-")),
     elicit?: Elicit): Promise<Server> {
+  const appStore = await openNodeAppStore(join(configDir, "app.db"));
   const platform: McpPlatform = makeNodePlatform({
     connect: (name) =>
       HostClient.connect(connectInProcess(core.connect()), { name }),
-    appStore: await openNodeAppStore(join(configDir, "app.db")),
+    appStore,
   });
   const config = await parseConfig(args, {
     readText: platform.readText, resolve: platform.resolve,
@@ -114,7 +115,15 @@ export async function startServer(
   });
   await client.send(
     { jsonrpc: "2.0", method: "notifications/initialized" });
-  return { send, kill: () => { void server.close(); }, pid: process.pid };
+  return {
+    send,
+    // Closes app.db's own connection too: on Windows, a caller that
+    // then removes `configDir` (most do, in a `finally`) gets EPERM if
+    // this is left open — unlike Linux/macOS, Windows refuses to
+    // delete a file a handle is still held on.
+    kill: () => { void server.close(); void appStore.close(); },
+    pid: process.pid,
+  };
 }
 
 

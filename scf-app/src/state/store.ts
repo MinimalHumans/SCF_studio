@@ -15,11 +15,13 @@ import registryJson from "@registry/registry.json" with { type: "json" };
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { q, type Row, type SqlExec, type SqlValue } from "@scf-core/db.ts";
+import { baseNameOf } from "@scf-core/projectName.ts";
 import { chooseAssetFolder } from "../files/assetFolderChooser.ts";
 import type { ProjectChooser } from "../files/projectChooser.ts";
 import { createTauriChooser } from "../files/tauriChooser.ts";
 import { getHost } from "../host/hostClient.ts";
 import { windowAppStore } from "../host/windowAppStore.ts";
+import type { ProjectSuggestion } from "@scf-host/appStore.ts";
 import type { HostClient } from "@scf-host/client.ts";
 import { buildReferenceGraph, type IncomingRef,
          type NavigableSubject } from "./registryGraph.ts";
@@ -112,6 +114,20 @@ interface AppState {
   /** "missing" when `assetRoot` is set but the folder cannot be found
    *  on disk right now (moved, an unmounted network drive, …). */
   assetRootStatus: "unmapped" | "ok" | "missing";
+  /** Shown when the current film's path is new to `app.db` but a uuid
+   *  or title/base-name match suggests where its assets might be
+   *  (file-management-plan.md §3.2 point 3). Null when there is
+   *  nothing to offer, or once the dialog has been answered. Never
+   *  applied on its own — the whole point of a suggestion. */
+  suggestions: ProjectSuggestion[] | null;
+  /** Apply a suggestion's asset root to the open film and close the
+   *  dialog. */
+  chooseSuggestion: (suggestion: ProjectSuggestion) => Promise<void>;
+  /** Close the dialog without applying anything; the film stays
+   *  unmapped. */
+  dismissSuggestions: () => void;
+  /** Forget one suggested entry (its ✕) without closing the dialog. */
+  forgetSuggestion: (suggestion: ProjectSuggestion) => Promise<void>;
   /** Bumped when the ENVIRONMENT changes rather than the data: a folder
    *  attached. Asset resolution and Q13 depend on it and must re-run;
    *  `revision` cannot carry it, because `revision !== lastSavedRevision`
@@ -180,6 +196,10 @@ interface AppState {
   closeProject: () => Promise<void>;
   setAssetPrefix: (prefix: string) => void;
   openFromPicker: () => Promise<void>;
+  /** Open a path directly — the start screen's recent-projects list,
+   *  which already has one. Same path as `openFromPicker`, without
+   *  the dialog. */
+  openRecentProject: (path: string) => Promise<void>;
   /** Attach the asset folder to the film that is open. Must run
    *  inside a click: it opens a picker. */
   attachFolder: () => Promise<void>;
@@ -366,8 +386,12 @@ const freshShootView = (): ShootMemory =>
 
 /**
  * The tail every open shares: land on the script, with nothing of the
- * previous project left behind, and pick up the asset root `app.db`
- * has on file for this project (file-management-plan.md §3.2).
+ * previous project left behind, and resolve the asset root
+ * (file-management-plan.md §3.2): a path `app.db` already has an
+ * asset root for attaches silently; a path it has never seen offers a
+ * suggestion when the film's own uuid, title or file name matches
+ * another row's. Either way, the film's identity is kept current in
+ * `app.db` for next time.
  */
 async function finishOpen(
   set: (partial: Partial<AppState>) => void,
@@ -393,11 +417,51 @@ async function finishOpen(
         lastSession: path, revision, hostLost: false,
         externalChange: false, errorMessage: null,
         externalEdit: null,
-        assetRoot: null, assetRootStatus: "unmapped",
+        assetRoot: null, assetRootStatus: "unmapped", suggestions: null,
         environmentRevision: get().environmentRevision + 1 });
-  const project = await (await windowAppStore()).getProject(path);
-  if (project?.assetRoot != null) {
-    await applyAssetRoot(set, get, project.assetRoot);
+
+  // Bookkeeping must never cost the user their session: a film that
+  // opened is open regardless of whether app.db can be read right now.
+  try {
+    const [rows, store] = await Promise.all([
+      exec("SELECT uuid, name FROM project LIMIT 1"), windowAppStore(),
+    ]);
+    const uuidRaw = rows[0]?.["uuid"];
+    const nameRaw = rows[0]?.["name"];
+    const uuid = typeof uuidRaw === "string" ? uuidRaw : null;
+    const title = typeof nameRaw === "string" ? nameRaw : null;
+    const baseName = baseNameOf(nameOf(path));
+
+    const existing = await store.getProject(path);
+    if (existing?.assetRoot != null) {
+      await applyAssetRoot(set, get, existing.assetRoot);
+    } else if (existing === null) {
+      const suggestions = await store.suggestionsFor(
+        { uuid, title, baseName }, path);
+      if (suggestions.length > 0) set({ suggestions });
+    }
+    await store.touchProject(path, { uuid, title, baseName });
+  } catch (e) {
+    console.warn("[finishOpen] could not resolve the asset root:", e);
+  }
+}
+
+/** Open an already-known path: the chooser's result, or a row from
+ *  the start screen's recent-projects list. */
+async function openPath(
+  set: (partial: Partial<AppState>) => void,
+  get: () => AppState,
+  path: string,
+): Promise<void> {
+  set({ phase: "loading", errorMessage: null });
+  try {
+    const host = await getHost();
+    bindHost(host);
+    const opened = await host.open(path, {
+      migrate: true, editorVersion: EDITOR_VERSION });
+    await finishOpen(set, get, opened.path, opened.revision);
+  } catch (e) {
+    set({ phase: "error", errorMessage: describeError(e) });
   }
 }
 
@@ -420,6 +484,7 @@ export const useStore = create<AppState>((set, get) => ({
   dismissExternalEdit: () => useStore.setState({ externalEdit: null }),
   assetRoot: null,
   assetRootStatus: "unmapped",
+  suggestions: null,
   environmentRevision: 0,
   revision: 0,
 
@@ -538,17 +603,10 @@ export const useStore = create<AppState>((set, get) => ({
   openFromPicker: async () => {
     const path = await chooser.chooseExisting();
     if (path === null) return;                           // user cancelled
-    set({ phase: "loading", errorMessage: null });
-    try {
-      const host = await getHost();
-      bindHost(host);
-      const opened = await host.open(path, {
-        migrate: true, editorVersion: EDITOR_VERSION });
-      await finishOpen(set, get, opened.path, opened.revision);
-    } catch (e) {
-      set({ phase: "error", errorMessage: describeError(e) });
-    }
+    await openPath(set, get, path);
   },
+
+  openRecentProject: (path) => openPath(set, get, path),
 
   /**
    * The folder, asked for after the file — the other half of file-first
@@ -559,6 +617,10 @@ export const useStore = create<AppState>((set, get) => ({
    */
   attachFolder: async () => {
     const { projectPath } = get();
+    // "Choose a different folder…" reaches this from the suggestion
+    // dialog too; either way, calling this answers the question the
+    // dialog was asking.
+    set({ suggestions: null });
     try {
       const path = await chooseAssetFolder();
       if (path === null) return;                          // user cancelled
@@ -574,6 +636,36 @@ export const useStore = create<AppState>((set, get) => ({
       set({ errorMessage: `Could not attach the asset folder: ${
         describeError(e)}` });
     }
+  },
+
+  chooseSuggestion: async (suggestion) => {
+    const { projectPath } = get();
+    if (projectPath === null || suggestion.assetRoot === null) return;
+    set({ suggestions: null });
+    try {
+      await (await windowAppStore())
+        .setAssetRoot(projectPath, suggestion.assetRoot);
+      await applyAssetRoot(set, get, suggestion.assetRoot);
+    } catch (e) {
+      set({ errorMessage: `Could not attach the asset folder: ${
+        describeError(e)}` });
+    }
+  },
+
+  dismissSuggestions: () => set({ suggestions: null }),
+
+  forgetSuggestion: async (suggestion) => {
+    try {
+      await (await windowAppStore()).forgetProject(suggestion.scfPath);
+    } catch (e) {
+      set({ errorMessage: `Could not forget that entry: ${
+        describeError(e)}` });
+      return;
+    }
+    set((s) => ({
+      suggestions: s.suggestions === null ? null
+        : s.suggestions.filter((row) => row.pathKey !== suggestion.pathKey),
+    }));
   },
 
   setAssetPrefix: (assetPrefix) => set({ assetPrefix }),
@@ -630,7 +722,7 @@ export const useStore = create<AppState>((set, get) => ({
   selectedPropId: null, propTab: "Profile",
   assetPrefix: "", openRow: null, draft: null,
           selectedSubject: null, assetRoot: null,
-          assetRootStatus: "unmapped" });
+          assetRootStatus: "unmapped", suggestions: null });
     try {
       await (await getHost()).closeFilm();
     } catch {
@@ -643,6 +735,11 @@ export const useStore = create<AppState>((set, get) => ({
    * version up (hollow_creek_v2.scf) or rename without leaving the
    * editor. The old file is left exactly as it was; there is nothing to
    * save first, because every edit is already in it.
+   *
+   * The new path's row in `app.db` carries the same uuid, title and
+   * asset root as the old one (file-management-plan.md §3.2) — read
+   * fresh from the film rather than copied from the old row, since
+   * nothing here guarantees that row still exists.
    */
   saveProjectAs: async () => {
     const { projectName, assetRoot } = get();
@@ -656,9 +753,18 @@ export const useStore = create<AppState>((set, get) => ({
       set({ projectPath: copied.path, projectName: nameOf(copied.path),
             lastSession: copied.path,
             revision: Math.max(get().revision, copied.revision) });
-      if (assetRoot !== null) {
-        await (await windowAppStore()).touchProject(
-          copied.path, { assetRoot });
+      try {
+        const rows = await exec("SELECT uuid, name FROM project LIMIT 1");
+        const uuidRaw = rows[0]?.["uuid"];
+        const nameRaw = rows[0]?.["name"];
+        await (await windowAppStore()).touchProject(copied.path, {
+          uuid: typeof uuidRaw === "string" ? uuidRaw : null,
+          title: typeof nameRaw === "string" ? nameRaw : null,
+          baseName: baseNameOf(nameOf(copied.path)),
+          assetRoot,
+        });
+      } catch (e) {
+        console.warn("[saveProjectAs] could not persist app.db identity:", e);
       }
     } catch (e) {
       set({ errorMessage: `Save As failed: ${describeError(e)}` });

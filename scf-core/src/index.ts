@@ -185,6 +185,10 @@ export {
   chooseProjectFile, isProjectFile,
 } from "./project.ts";
 
+export {
+  baseNameOf, bumpVersionSuffix, stripVersionSuffix, withoutScfExtension,
+} from "./projectName.ts";
+
 // ── The queries ──────────────────────────────────────────────────
 // Spec §12. Sixteen queries, each with a published normative result.
 export {
