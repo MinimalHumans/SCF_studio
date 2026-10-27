@@ -196,9 +196,12 @@ To run the full check suite in an isolated Linux container matching CI
 without local toolchain dependencies:
 
 ```sh
-docker build -f docker/dev.Dockerfile -t scf-dev .
-docker run --rm -v "$(pwd):/workspace" -w /workspace scf-dev ./docker/run-checks.sh
+docker/ci.sh
 ```
+
+Builds the image (`docker/dev.Dockerfile`) and runs the same
+install/typecheck/test/build steps as `ci.yml`, plus a `cargo check` of
+the Tauri shell (`docker/run-checks.sh`), in one command.
 
 ## 5. Point an assistant at the dev app
 
