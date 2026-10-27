@@ -39,9 +39,9 @@ export function SuggestionDialog(): JSX.Element | null {
                     same project
                   </span>
                 )}
-                <div className="muted small">{s.scfPath}</div>
+                <div className="muted small">From: {s.scfPath}</div>
                 <div className="muted small">
-                  {s.assetRoot ?? "(no folder attached there either)"}
+                  Assets: {s.assetRoot ?? "(no folder attached there either)"}
                 </div>
               </div>
               <div className="suggestion-row-actions">

@@ -10,6 +10,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test,
          vi } from "vitest";
 import {
   mkdirSync, mkdtempSync, realpathSync, rmSync, readFileSync, existsSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -19,6 +20,7 @@ import type { AppStore } from "@scf-host/appStore.ts";
 import { HostClient, connectInProcess } from "@scf-host/client.ts";
 import { createHostCore, type HostCore } from "@scf-host/hostCore.ts";
 import { openNodeAppStore } from "@scf-host/nodeAppStore.ts";
+import { openNodeDatabase } from "@minimalhumans/scf-core/node";
 
 /**
  * The few browser globals the store touches. A real jsdom would also
@@ -346,7 +348,7 @@ describe("pairing an asset root on open", () => {
     expect(useStore.getState().suggestions).toBeNull();
   }, 60_000);
 
-  test("a uuid match on a brand-new path is offered, never applied",
+  test("a uuid match on a brand-new path is auto-assigned silently",
       async () => {
     const { useStore } = await store();
     const pathA = join(dir, "b-first.scf");
@@ -361,16 +363,12 @@ describe("pairing an asset root on open", () => {
     // Same bytes, same uuid, a path app.db has never seen.
     const pathB = join(dir, "b-second.scf");
     await openDemoAt(useStore, pathB);
-    const suggestions = useStore.getState().suggestions;
-    expect(suggestions).not.toBeNull();
-    expect(suggestions?.[0]).toMatchObject({
-      scfPath: pathA, assetRoot: assetDir, strength: "uuid",
-    });
-    // Offering is not applying.
-    expect(useStore.getState().assetRoot).toBeNull();
+    expect(useStore.getState().suggestions).toBeNull();
+    // Auto-assigned by UUID identity.
+    expect(useStore.getState().assetRoot).toBe(assetDir);
   }, 60_000);
 
-  test("choosing a suggestion attaches it and persists for next time",
+  test("choosing a weak suggestion attaches it and persists for next time",
       async () => {
     const { useStore } = await store();
     const pathA = join(dir, "c-first.scf");
@@ -382,10 +380,18 @@ describe("pairing an asset root on open", () => {
     await useStore.getState().attachFolder();
     await useStore.getState().closeProject();
 
+    // Different uuid, same title / baseName: weak match, offered in dialog.
     const pathB = join(dir, "c-second.scf");
-    await openDemoAt(useStore, pathB);
+    writeFileSync(pathB, readFileSync(pathA));
+    const db = await openNodeDatabase(pathB);
+    await db.exec("UPDATE project SET uuid = 'different-uuid-c'");
+    await db.close();
+
+    chooserPaths.push(pathB);
+    await useStore.getState().openFromPicker();
     const suggestion = useStore.getState().suggestions?.[0];
     expect(suggestion).toBeDefined();
+    expect(suggestion?.strength).toBe("name");
     await useStore.getState().chooseSuggestion(suggestion!);
     expect(useStore.getState().assetRoot).toBe(assetDir);
     expect(useStore.getState().suggestions).toBeNull();
@@ -398,7 +404,7 @@ describe("pairing an asset root on open", () => {
     expect(useStore.getState().suggestions).toBeNull();
   }, 60_000);
 
-  test("dismissing a suggestion opens the project unmapped", async () => {
+  test("dismissing a weak suggestion opens the project unmapped", async () => {
     const { useStore } = await store();
     const pathA = join(dir, "d-first.scf");
     const assetDir = join(dir, "d-assets");
@@ -409,8 +415,15 @@ describe("pairing an asset root on open", () => {
     await useStore.getState().attachFolder();
     await useStore.getState().closeProject();
 
+    // Different uuid, same title / baseName.
     const pathB = join(dir, "d-second.scf");
-    await openDemoAt(useStore, pathB);
+    writeFileSync(pathB, readFileSync(pathA));
+    const db = await openNodeDatabase(pathB);
+    await db.exec("UPDATE project SET uuid = 'different-uuid-d'");
+    await db.close();
+
+    chooserPaths.push(pathB);
+    await useStore.getState().openFromPicker();
     expect(useStore.getState().suggestions).not.toBeNull();
     useStore.getState().dismissSuggestions();
     expect(useStore.getState().suggestions).toBeNull();
@@ -419,11 +432,10 @@ describe("pairing an asset root on open", () => {
 
   // The order a real session hit: Save As before the original ever had
   // a folder, so the copy's row is written unmapped; attach the
-  // folder to the original afterwards; reopening the copy must still
-  // offer it, not treat the copy's existing-but-unmapped row as "app.db
-  // already looked at this, nothing to suggest".
-  test("Save As before attaching, then attaching the original, still " +
-      "offers the copy a suggestion later", async () => {
+  // folder to the original afterwards; reopening the copy auto-assigns
+  // by UUID match.
+  test("Save As before attaching, then attaching the original, " +
+      "auto-assigns the folder to the copy later by UUID", async () => {
     const { useStore } = await store();
     const original = join(dir, "e-original.scf");
     const assetDir = join(dir, "e-assets");
@@ -445,15 +457,11 @@ describe("pairing an asset root on open", () => {
     await useStore.getState().closeProject();
 
     // The copy's row already existed (from Save As) but was never
-    // mapped — it must still be offered the original's folder.
+    // mapped — opening it now finds the UUID match and auto-assigns.
     chooserPaths.push(copy);
     await useStore.getState().openFromPicker();
-    const suggestions = useStore.getState().suggestions;
-    expect(suggestions).not.toBeNull();
-    expect(suggestions?.[0]).toMatchObject({
-      scfPath: original, assetRoot: assetDir, strength: "uuid",
-    });
-    expect(useStore.getState().assetRoot).toBeNull();
+    expect(useStore.getState().suggestions).toBeNull();
+    expect(useStore.getState().assetRoot).toBe(assetDir);
   }, 60_000);
 });
 

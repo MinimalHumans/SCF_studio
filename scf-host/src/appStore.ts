@@ -92,7 +92,9 @@ export interface AppStore {
    * has never seen (file-management-plan.md §3.2 point 3): a uuid
    * match first (strong), most recently opened within each group,
    * then a title or base-name match (weak) — never both for the same
-   * row. Excludes `excludeScfPath` itself.
+   * row. Only rows with an asset root attached are offered (there is
+   * nothing to suggest from an unmapped project). Excludes
+   * `excludeScfPath` itself.
    */
   suggestionsFor(input: SuggestionInput,
                  excludeScfPath: string): Promise<ProjectSuggestion[]>;
@@ -276,7 +278,8 @@ function createStore(db: AppDb, caseInsensitiveKeys: boolean): AppStore {
 
       const strongRows = input.uuid === null ? [] : await db.exec(
         `SELECT ${columns} FROM project ` +
-        "WHERE uuid = ? AND path_key != ? ORDER BY last_opened DESC",
+        "WHERE uuid = ? AND path_key != ? AND asset_root IS NOT NULL " +
+        "AND asset_root != '' ORDER BY last_opened DESC",
         [input.uuid, excludeKey]);
       const strong = strongRows.map(toProjectRow);
       const strongKeys = new Set(strong.map((r) => r.pathKey));
@@ -293,6 +296,7 @@ function createStore(db: AppDb, caseInsensitiveKeys: boolean): AppStore {
       }
       const weakRows = weakConditions.length === 0 ? [] : await db.exec(
         `SELECT ${columns} FROM project WHERE path_key != ? AND ` +
+        `asset_root IS NOT NULL AND asset_root != '' AND ` +
         `(${weakConditions.join(" OR ")}) ORDER BY last_opened DESC`,
         weakParams);
       const weak = weakRows.map(toProjectRow)

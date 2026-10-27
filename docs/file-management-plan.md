@@ -46,9 +46,13 @@ These were settled in discussion and are not reopened by this plan.
    tiny; nothing is pruned automatically.
 6. **The project `uuid` is the identity** a mapping is matched on. The
    path is the primary key of a record; the title is a weaker hint.
-7. **No automatic assignment from a guess.** A path match is applied
-   silently (it is the exact file the user opened before). Anything
-   found by uuid, title or base name is offered, never applied.
+7. **Auto-assign on UUID match; no automatic assignment from a guess.**
+   A path match is applied silently (exact file opened before). A UUID
+   match is the project's own identity across copies, versions and
+   locations: when opening an unmapped path, a matching row's asset root
+   is auto-assigned silently. Anything found only by title or base name
+   is a weak guess and is offered in the suggestion dialog, never applied
+   automatically.
 8. **Forgetting is frictionless.** Every remembered entry has an ✕, as
    in a browser's history. These are conveniences and are easy to
    rebuild.
@@ -132,14 +136,15 @@ On every `open` (editor or MCP):
      found at X", and offer Choose… (see §3.5).
    - **Found, no `asset_root`:** the project opens unmapped; the topbar
      offers Choose…
-3. **Not found:** look for suggestions, most recently used first, from:
-   1. rows with the same `uuid` (strong);
+3. **Not found or unmapped:** check for existing mappings with an asset
+   root attached:
+   1. rows with the same `uuid` (strong identity): auto-assign the asset
+      root silently and persist it for this path.
    2. rows with an exact (case-insensitive) `title` match, or the same
       `base_name` with its version suffix stripped by the same rule as
-      `suggestSaveAsName` (weak).
-   If there are any, show the suggestion dialog (§3.5). Choosing one
-   copies its `asset_root` to a new row for this path. Choosing nothing
-   opens the project unmapped.
+      `suggestSaveAsName` (weak): show the suggestion dialog (§3.5).
+      Choosing one copies its `asset_root` to this path. Choosing nothing
+      opens the project unmapped.
 4. Update `uuid`, `title`, `base_name` and `last_opened` on every open.
 
 After any attach, run the existing asset resolution check and show the

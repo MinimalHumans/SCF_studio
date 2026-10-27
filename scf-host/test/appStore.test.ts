@@ -196,11 +196,15 @@ describe("suggestionsFor", () => {
     try {
       // Touched first, so it is the OLDER of the two by last_opened —
       // named for when it happened, not alphabetically.
-      await store.touchProject("/films/touched-first.scf", { uuid: "u1" });
+      await store.touchProject("/films/touched-first.scf", {
+        uuid: "u1", assetRoot: "/assets/first",
+      });
       // last_opened is millisecond-resolution; without a gap the two
       // touches can tie and the order between them is then undefined.
       await new Promise((r) => { setTimeout(r, 2); });
-      await store.touchProject("/films/touched-second.scf", { uuid: "u1" });
+      await store.touchProject("/films/touched-second.scf", {
+        uuid: "u1", assetRoot: "/assets/second",
+      });
       const suggestions = await store.suggestionsFor(
         { uuid: "u1", title: null, baseName: null }, "/films/new.scf");
       expect(suggestions.map((s) => s.scfPath)).toEqual([
@@ -219,9 +223,9 @@ describe("suggestionsFor", () => {
     const store = await openNodeAppStore(join(dir, "app.db"));
     try {
       await store.touchProject(
-        "/films/by-title.scf", { title: "Hollow Creek" });
+        "/films/by-title.scf", { title: "Hollow Creek", assetRoot: "/assets/hc" });
       await store.touchProject(
-        "/films/by-base.scf", { baseName: "hollow_creek" });
+        "/films/by-base.scf", { baseName: "hollow_creek", assetRoot: "/assets/hc" });
       const suggestions = await store.suggestionsFor({
         uuid: null, title: "Hollow Creek", baseName: "hollow_creek",
       }, "/films/new.scf");
@@ -238,7 +242,7 @@ describe("suggestionsFor", () => {
     const store = await openNodeAppStore(join(dir, "app.db"));
     try {
       await store.touchProject("/films/old.scf",
-        { uuid: "u1", title: "Hollow Creek" });
+        { uuid: "u1", title: "Hollow Creek", assetRoot: "/assets/hc" });
       const suggestions = await store.suggestionsFor(
         { uuid: "u1", title: "Hollow Creek", baseName: null },
         "/films/new.scf");
@@ -253,9 +257,22 @@ describe("suggestionsFor", () => {
       async () => {
     const store = await openNodeAppStore(join(dir, "app.db"));
     try {
-      await store.touchProject("/films/a.scf", { uuid: "u1" });
+      await store.touchProject("/films/a.scf", { uuid: "u1", assetRoot: "/assets/a" });
       const suggestions = await store.suggestionsFor(
         { uuid: "u1", title: null, baseName: null }, "/films/a.scf");
+      expect(suggestions).toEqual([]);
+    } finally {
+      await store.close();
+    }
+  });
+
+  test("a matching project with no asset root is never offered", async () => {
+    const store = await openNodeAppStore(join(dir, "app.db"));
+    try {
+      // Same uuid, but no asset root attached to it.
+      await store.touchProject("/films/unmapped.scf", { uuid: "u1" });
+      const suggestions = await store.suggestionsFor(
+        { uuid: "u1", title: null, baseName: null }, "/films/new.scf");
       expect(suggestions).toEqual([]);
     } finally {
       await store.close();
@@ -265,7 +282,9 @@ describe("suggestionsFor", () => {
   test("nothing to go on offers nothing", async () => {
     const store = await openNodeAppStore(join(dir, "app.db"));
     try {
-      await store.touchProject("/films/a.scf", { title: "Something else" });
+      await store.touchProject("/films/a.scf", {
+        title: "Something else", assetRoot: "/assets/a",
+      });
       const suggestions = await store.suggestionsFor(
         { uuid: null, title: null, baseName: null }, "/films/new.scf");
       expect(suggestions).toEqual([]);

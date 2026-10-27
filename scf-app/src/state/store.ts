@@ -434,20 +434,29 @@ async function finishOpen(
     const baseName = baseNameOf(nameOf(path));
 
     const existing = await store.getProject(path);
-    if (existing?.assetRoot != null) {
-      await applyAssetRoot(set, get, existing.assetRoot);
+    let resolvedRoot = existing?.assetRoot ?? null;
+    if (resolvedRoot !== null) {
+      await applyAssetRoot(set, get, resolvedRoot);
     } else {
       // Unmapped, whether this path is brand new or was opened before
-      // and dismissed: either way there is no asset root yet, so a
-      // plausible match is worth offering again rather than only
-      // once, ever (Save As in particular leaves a row with no asset
-      // root the moment it runs, before the user has had any chance
-      // to attach one).
+      // and dismissed: either way there is no asset root yet.
       const suggestions = await store.suggestionsFor(
         { uuid, title, baseName }, path);
-      if (suggestions.length > 0) set({ suggestions });
+      // When the UUID is a match and the current root is null, auto-assign
+      // the other root folder (most recently opened if several exist).
+      const uuidMatch = suggestions.find(
+        (s) => s.strength === "uuid" && s.assetRoot !== null);
+      if (uuidMatch?.assetRoot != null) {
+        resolvedRoot = uuidMatch.assetRoot;
+        await applyAssetRoot(set, get, resolvedRoot);
+      } else if (suggestions.length > 0) {
+        set({ suggestions });
+      }
     }
-    await store.touchProject(path, { uuid, title, baseName });
+    await store.touchProject(path, {
+      uuid, title, baseName,
+      ...(resolvedRoot !== null ? { assetRoot: resolvedRoot } : {}),
+    });
   } catch (e) {
     console.warn("[finishOpen] could not resolve the asset root:", e);
   }
