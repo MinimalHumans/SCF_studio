@@ -62,8 +62,8 @@ export function AssetThumb({ identifier, size = "sm", region = null,
    *  for one can report a box that does not fit its asset. */
   onRegion?: (applied: boolean) => void;
 }): JSX.Element {
-  const { projectRoot, environmentRevision } = useStore();
-  const root = projectRoot as FileSystemDirectoryHandle | null;
+  const { assetRoot, environmentRevision } = useStore();
+  const root = assetRoot;
   const box = useRef<HTMLDivElement | null>(null);
 
   const [visible, setVisible] = useState(false);
@@ -205,7 +205,7 @@ export function AssetThumb({ identifier, size = "sm", region = null,
  * reads only what is needed to show one frame until it plays.
  */
 function VideoThumb({ root, path, alt, playOnHover }: {
-  root: FileSystemDirectoryHandle | null;
+  root: string | null;
   path: string;
   alt: string;
   playOnHover: boolean;

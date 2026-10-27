@@ -38,7 +38,7 @@ vi.mock("../src/files/assetLocator.ts", () => ({
   makeLocator: () => async () => null,
   fileAt: async () => {
     io.files += 1;
-    return io.file ? ({ name: "f" } as unknown as File) : null;
+    return io.file ? new Uint8Array([1, 2, 3]) : null;
   },
 }));
 
@@ -46,7 +46,7 @@ const { clearResolutions, clearStoredThumbnails, resolveCached,
         thumbnailFor } =
   await import("../src/files/thumbnailCache.ts");
 
-const ROOT = { name: "p" } as unknown as FileSystemDirectoryHandle;
+const ROOT = "/projects/p";
 const RES = (mtime: string, sizeBytes: number) => ({
   identifier: { root: "project", path: "a.png" }, state: "resolved",
   format: "png", sizeBytes, mtime, detail: null,

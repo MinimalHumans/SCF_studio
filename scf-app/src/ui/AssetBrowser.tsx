@@ -34,7 +34,7 @@ import { planRelink, type RelinkChange } from "@scf-core/assets.ts";
 import { previewCapability } from "@scf-core/preview.ts";
 import { planAssetImport, type ImportPlan } from "@scf-core/assetImport.ts";
 import { pickAssetFiles, pickAssetFolder }
-  from "../files/assetLocator.ts";
+  from "../files/assetPicker.ts";
 import {
   listBundles, planBundleAdd, type BundleSummary,
 } from "@scf-core/bundling.ts";
@@ -210,19 +210,19 @@ export function AssetPathRail(): JSX.Element {
  * rows is not one anybody wants to discover afterwards.
  */
 function ImportAssets({ onDone }: { onDone: () => void }): JSX.Element {
-  const { projectRoot } = useStore();
+  const { assetRoot } = useStore();
   const [plan, setPlan] = useState<ImportPlan | null>(null);
   const [outside, setOutside] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<number | null>(null);
 
-  const root = projectRoot as FileSystemDirectoryHandle | null;
+  const root = assetRoot;
 
   if (root === null) {
     return (
       <p className="muted asset-import-note">
-        Open the project as a folder to import assets — an identifier is
-        addressed relative to it.
+        Attach the project's asset folder to import assets — an identifier
+        is addressed relative to it.
       </p>
     );
   }

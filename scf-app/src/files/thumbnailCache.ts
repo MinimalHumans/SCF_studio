@@ -136,7 +136,7 @@ const resolutions = new Map<string, Promise<Resolution>>();
  * `unaddressed` stops being true.
  */
 export function resolveCached(
-  root: FileSystemDirectoryHandle | null,
+  root: string | null,
   identifier: string | null,
   epoch: number,
 ): Promise<Resolution> {
@@ -195,18 +195,16 @@ function remember(key: string, value: Thumbnail): void {
  * always" is the wrong standard when being wrong means showing one
  * film's frame under another film's asset.
  *
- * The root's NAME rather than its handle identity, because a handle is
- * an object and persisted entries have to survive a reload, where every
- * handle is new. Two folders can share a name; combined with the full
- * relative path, mtime and size that is a heuristic rather than a
- * proof — the same class the rest of asset resolution rests on.
+ * The root's path, combined with the full relative path, mtime and
+ * size, is a heuristic rather than a proof — the same class the rest
+ * of asset resolution rests on.
  */
-function keyFor(root: FileSystemDirectoryHandle | null, path: string,
+function keyFor(root: string | null, path: string,
                 r: Resolution, region: RegionBox | null): string {
   const stamp = `${r.mtime ?? "?"}:${r.sizeBytes ?? "?"}`;
   const box = region === null
     ? "full" : `${region.x},${region.y},${region.w},${region.h}`;
-  return `${root?.name ?? "-"}|${path}|${stamp}|${THUMB_PX}|${box}`;
+  return `${root ?? "-"}|${path}|${stamp}|${THUMB_PX}|${box}`;
 }
 
 /**
@@ -223,17 +221,18 @@ function keyFor(root: FileSystemDirectoryHandle | null, path: string,
  * for.
  */
 async function draw(
-  file: File, region: RegionBox | null,
+  bytes: Uint8Array, region: RegionBox | null,
 ): Promise<Thumbnail | null> {
+  const blob = new Blob([new Uint8Array(bytes)]);
   let source: ImageBitmap | null = null;
   let regionApplied = false;
   try {
     if (region === null) {
-      source = await createImageBitmap(file, {
+      source = await createImageBitmap(blob, {
         resizeWidth: THUMB_PX, resizeQuality: "high",
       });
     } else {
-      const full = await createImageBitmap(file);
+      const full = await createImageBitmap(blob);
       if (regionFits(region, full.width, full.height)) {
         source = await createImageBitmap(
           full, region.x, region.y, region.w, region.h,
@@ -244,7 +243,7 @@ async function draw(
         // A box measured on a different file. Showing the whole frame
         // is the honest answer; clamping would present a corner of this
         // image as the thing the anchor names.
-        source = await createImageBitmap(file, {
+        source = await createImageBitmap(blob, {
           resizeWidth: THUMB_PX, resizeQuality: "high",
         });
         full.close();
@@ -283,7 +282,7 @@ async function draw(
  * the first visit.
  */
 export async function thumbnailFor(
-  root: FileSystemDirectoryHandle | null,
+  root: string | null,
   path: string,
   resolution: Resolution,
   region: RegionBox | null,
@@ -310,9 +309,9 @@ export async function thumbnailFor(
       return value;
     }
 
-    const file = await fileAt(root, path);
-    if (file === null) return null;
-    const drawn = await draw(file, region);
+    const bytes = await fileAt(root, path);
+    if (bytes === null) return null;
+    const drawn = await draw(bytes, region);
     if (drawn === null) return null;
 
     const finalKey = drawn.regionApplied || region === null

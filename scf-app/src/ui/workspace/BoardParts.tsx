@@ -4,7 +4,7 @@
  * share: how files arrive, a tile, and what is in force "as of" a scene.
  */
 import { call } from "../../state/api.ts";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ImportCandidate } from "@scf-core/assetImport.ts";
 import { resolveMedia } from "@scf-core/resolution.ts";
 import { exec, registry, useStore } from "../../state/store.ts";
@@ -13,8 +13,9 @@ import {
   type Owner, type Purpose, type Tile,
 } from "@scf-core/ops/mediaOps.ts";
 import type { ChangeUndo } from "@scf-core/ops/undoChange.ts";
-import { addressHandles, beginDrop } from "../../files/dropIntake.ts";
-import { pickAssetFiles } from "../../files/assetLocator.ts";
+import { addressPaths } from "../../files/dropIntake.ts";
+import { pickAssetFiles } from "../../files/assetPicker.ts";
+import { registerDropZone } from "../../files/nativeDrop.ts";
 import { AssetThumb } from "../AssetThumb.tsx";
 import { scopeSummary } from "./AnchorScope.tsx";
 import { useQuery } from "../useQuery.ts";
@@ -79,13 +80,12 @@ export function FileIntake({ onFiles, compact = false, exclude }: {
   compact?: boolean;
   exclude?: Set<number>;
 }): JSX.Element {
-  const { projectRoot, rootPermission, attachFolder, regrantRoot } =
-    useStore();
+  const { assetRoot, attachFolder } = useStore();
   const [notice, setNotice] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [choosing, setChoosing] = useState(false);
-  const root = rootPermission === "granted"
-    ? projectRoot as FileSystemDirectoryHandle | null : null;
+  const dropRef = useRef<HTMLDivElement | null>(null);
+  const root = assetRoot;
 
   const receive = (candidates: ImportCandidate[], outside: string[],
                    folders: string[]): void => {
@@ -106,36 +106,33 @@ export function FileIntake({ onFiles, compact = false, exclude }: {
     }
   };
 
+  // The shell reports one drag state for the whole window, not per
+  // element (nativeDrop.ts), so this zone is only told about drags
+  // over its own bounds, and only acts when a root is attached.
+  useEffect(() => registerDropZone({
+    element: () => dropRef.current,
+    onOver: (over) => { setDragging(root !== null && over); },
+    onDrop: (paths) => {
+      setDragging(false);
+      if (root === null) return;
+      void addressPaths(root, paths).then((intake) =>
+        receive(intake.candidates, intake.outside, intake.folders))
+        .catch((err: unknown) => fail("Could not read the drop", err));
+    },
+  }), [root]);
+
   return (
     <>
-      <div className={"board-drop" + (dragging ? " over" : "") +
+      <div ref={dropRef}
+           className={"board-drop" + (dragging ? " over" : "") +
                       (root === null ? " closed" : "") +
-                      (compact ? " compact" : "")}
-           onDragOver={(e) => {
-             if (root === null) return;
-             e.preventDefault();
-             e.dataTransfer.dropEffect = "link";
-             setDragging(true);
-           }}
-           onDragLeave={() => setDragging(false)}
-           onDrop={(e) => {
-             setDragging(false);
-             if (root === null) return;
-             e.preventDefault();
-             const pending = beginDrop(e.dataTransfer);
-             void addressHandles(root, pending).then((intake) =>
-               receive(intake.candidates, intake.outside, intake.folders))
-               .catch((err: unknown) => fail("Could not read the drop", err));
-           }}>
+                      (compact ? " compact" : "")}>
         {root === null ? (
           <p>
-            {compact ? "" : projectRoot === null
-              ? "Connect the project folder to drop files here. "
-              : "Reconnect the project folder to drop files here. "}
+            {compact ? "" : "Attach the project folder to drop files here. "}
             <button className="ghost tiny"
-                    onClick={() => void (projectRoot === null
-                      ? attachFolder() : regrantRoot())}>
-              {projectRoot === null ? "Connect folder" : "Reconnect folder"}
+                    onClick={() => void attachFolder()}>
+              Connect folder
             </button>
           </p>
         ) : (

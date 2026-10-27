@@ -9,7 +9,7 @@
  * same moment, and four URLs for one file is four things to revoke and
  * three chances to leak.
  *
- * So: refcounted, keyed by root handle plus path. Acquire returns the
+ * So: refcounted, keyed by root path plus path. Acquire returns the
  * URL and increments; release decrements and revokes at zero. The
  * revoke is deferred by a grace period, because React unmounts and
  * remounts a row constantly while scrolling or re-rendering, and a URL
@@ -48,20 +48,9 @@ interface Entry {
 const GRACE_MS = 5000;
 
 const entries = new Map<string, Entry>();
-/** Roots are handles, so the key is an identity, not a name: two
- *  different folders can hold the same relative path. */
-const rootIds = new WeakMap<object, number>();
-let nextRootId = 1;
 
-function keyFor(root: FileSystemDirectoryHandle | null,
-                path: string): string {
-  if (root === null) return `-:${path}`;
-  let id = rootIds.get(root);
-  if (id === undefined) {
-    id = nextRootId++;
-    rootIds.set(root, id);
-  }
-  return `${id}:${path}`;
+function keyFor(root: string | null, path: string): string {
+  return `${root ?? "-"}:${path}`;
 }
 
 /**
@@ -73,7 +62,7 @@ function keyFor(root: FileSystemDirectoryHandle | null,
  * pins a file for the life of the session.
  */
 export async function acquire(
-  root: FileSystemDirectoryHandle | null, path: string,
+  root: string | null, path: string,
 ): Promise<string | null> {
   const key = keyFor(root, path);
   let entry = entries.get(key);
@@ -106,7 +95,7 @@ export async function acquire(
 
 /** Give back a reference. Revokes once nothing holds it. */
 export function release(
-  root: FileSystemDirectoryHandle | null, path: string,
+  root: string | null, path: string,
 ): void {
   const key = keyFor(root, path);
   const entry = entries.get(key);

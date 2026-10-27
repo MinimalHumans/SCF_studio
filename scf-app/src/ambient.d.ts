@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Ambient declarations: the File System Access API (Chromium; not yet in
- * lib.dom) and the build identity Vite injects.
+ * Ambient declarations: the build identity Vite injects.
  */
 
 /** Build identity, replaced at build time by vite.config.ts. */
@@ -10,65 +9,3 @@ declare const __APP_VERSION__: string;
 declare const __APP_COMMIT__: string;
 /** Build date, YYYY-MM-DD. */
 declare const __APP_BUILT__: string;
-
-interface FilePickerAcceptType {
-  description?: string;
-  accept: Record<string, string[]>;
-}
-
-interface OpenFilePickerOptions {
-  types?: FilePickerAcceptType[];
-  excludeAcceptAllOption?: boolean;
-  multiple?: boolean;
-}
-
-interface Window {
-  showOpenFilePicker(
-    options?: OpenFilePickerOptions): Promise<FileSystemFileHandle[]>;
-}
-
-/* P2: the folder half of the API. `entries()` is the async iterator the
- * root scan walks; the permission pair is what makes a remembered
- * directory handle usable after a reload. Neither is in lib.dom yet. */
-interface DirectoryPickerOptions {
-  id?: string;
-  mode?: "read" | "readwrite";
-  startIn?: FileSystemHandle | string;
-}
-
-interface FileSystemHandlePermissionDescriptor {
-  mode?: "read" | "readwrite";
-}
-
-interface FileSystemDirectoryHandle {
-  entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
-  /** Path segments from this directory down to a descendant, or null if
-   *  the handle is not below it. Traversal, not enumeration — it works
-   *  on machines where entries() returns nothing. */
-  resolve(possibleDescendant: FileSystemHandle): Promise<string[] | null>;
-  keys(): AsyncIterableIterator<string>;
-  queryPermission(
-    descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
-  requestPermission(
-    descriptor?: FileSystemHandlePermissionDescriptor): Promise<PermissionState>;
-}
-
-interface Window {
-  showDirectoryPicker(
-    options?: DirectoryPickerOptions): Promise<FileSystemDirectoryHandle>;
-}
-
-
-/* Directory upload: pre-dates the File System Access API and walks the
- * folder inside the picker process, so it works where entries() does
- * not. Still not in lib.dom as a standard property. */
-interface HTMLInputElement {
-  webkitdirectory: boolean;
-}
-
-interface DataTransferItem {
-  /** Chromium: a real handle for a dropped file, so its place under the
-   *  project folder can be resolved. Must be called during the drop
-   *  event; the item is dead afterwards. */
-  getAsFileSystemHandle?(): Promise<FileSystemHandle | null>;
-}

@@ -112,6 +112,38 @@ pub async fn fs_read_text(path: String) -> Result<String, String> {
     std::fs::read_to_string(&path).map_err(|e| err(Path::new(&path), e))
 }
 
+/// Bytes at `path`, base64, optionally a range: from `offset` (default
+/// 0) for `length` bytes (default: to the end). The host's assets
+/// module (scf-host `assets.ts`) is the only caller; a preview or
+/// thumbnail never needs a whole multi-gigabyte plate in memory.
+#[tauri::command]
+pub async fn fs_read_range(
+    path: String,
+    offset: Option<u64>,
+    length: Option<u64>,
+) -> Result<String, String> {
+    use std::io::{Read, Seek, SeekFrom};
+    let file = Path::new(&path);
+    let mut f = std::fs::File::open(file).map_err(|e| err(file, e))?;
+    if let Some(off) = offset {
+        f.seek(SeekFrom::Start(off)).map_err(|e| err(file, e))?;
+    }
+    let bytes = match length {
+        Some(len) => {
+            let mut buf = vec![0u8; len as usize];
+            let n = f.read(&mut buf).map_err(|e| err(file, e))?;
+            buf.truncate(n);
+            buf
+        }
+        None => {
+            let mut buf = Vec::new();
+            f.read_to_end(&mut buf).map_err(|e| err(file, e))?;
+            buf
+        }
+    };
+    Ok(B64.encode(bytes))
+}
+
 /// Replace the file's text, making the folder if need be.
 #[tauri::command]
 pub async fn fs_write_text(path: String, text: String) -> Result<(), String> {

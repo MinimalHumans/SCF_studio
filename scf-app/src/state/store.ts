@@ -10,15 +10,16 @@
  */
 
 import { create } from "zustand";
+import { invoke } from "@tauri-apps/api/core";
 import registryJson from "@registry/registry.json" with { type: "json" };
 import { loadRegistry, type Registry, type RegistryJson }
   from "@scf-core/registry.ts";
 import { q, type Row, type SqlExec, type SqlValue } from "@scf-core/db.ts";
-import { FsAccessAdapter, type FileAdapter }
-  from "../files/fileAdapter.ts";
+import { chooseAssetFolder } from "../files/assetFolderChooser.ts";
 import type { ProjectChooser } from "../files/projectChooser.ts";
 import { createTauriChooser } from "../files/tauriChooser.ts";
 import { getHost } from "../host/hostClient.ts";
+import { windowAppStore } from "../host/windowAppStore.ts";
 import type { HostClient } from "@scf-host/client.ts";
 import { buildReferenceGraph, type IncomingRef,
          type NavigableSubject } from "./registryGraph.ts";
@@ -27,16 +28,12 @@ import { call } from "./api.ts";
 import { rowLabel } from "@scf-core/displayName.ts";
 import { type UndoEntry } from "@scf-core/ops/undoDelete.ts";
 import { type ChangeUndo } from "@scf-core/ops/undoChange.ts";
-import {
-  forgetRoot, recallPairFor, rememberPair, rememberRoot,
-} from "../files/handleStore.ts";
 import { resolveAllAssets, type ResolutionReport }
   from "@scf-core/assets.ts";
 import { makeLocator } from "../files/assetLocator.ts";
 import { revokeAll } from "../files/objectUrlCache.ts";
 import { clearResolutions } from "../files/thumbnailCache.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
-import type { RootMode, RootPermission } from "../files/fileAdapter.ts";
 
 export { suggestSaveAsName };
 
@@ -47,8 +44,6 @@ export const referenceGraph: Map<string, IncomingRef[]> =
 
 const EDITOR_VERSION = "scf-app 0.1.0";
 
-/** The asset folder is the one thing still acquired through the browser. */
-const adapter: FileAdapter = new FsAccessAdapter();
 /** How the user names a `.scf`: the OS's own Open/Save dialogs. */
 const chooser: ProjectChooser = createTauriChooser();
 
@@ -98,8 +93,6 @@ interface AppState {
   projectName: string | null;
   /** The open film's path on the host; null when none is open. */
   projectPath: string | null;
-  /** Whether the browser can supply an asset folder (Chromium). */
-  folderSupported: boolean;
   /** The window's link to the host: starting (retried), ready, or
    *  given up on with a reason. */
   hostStatus: "connecting" | "ready" | "unavailable";
@@ -113,34 +106,18 @@ interface AppState {
    *  so it is attributed rather than appearing from nowhere. */
   externalEdit: { by: string; revision: number } | null;
   dismissExternalEdit: () => void;
-  /** The project's asset folder handle, or null when none is attached.
-   *  Assets can only resolve when this is set. */
-  projectRoot: unknown | null;
-  rootPermission: RootPermission;
-  /** Which grant the root was acquired under. Carried because querying
-   *  in the wrong mode misreports a working folder as needing
-   *  reconnection. */
-  rootMode: RootMode;
-  /** Whether anything CHECKED that this folder holds the open file.
-   *  False for a root attached to a session with no file on disk — the
-   *  demo, an unsaved project — where the pairing is the user's word
-   *  and the UI has to say so rather than imply a check happened. */
-  rootVerified: boolean;
+  /** The project's asset folder, or null when none is attached. Assets
+   *  can only resolve when this is set and `assetRootStatus` is "ok". */
+  assetRoot: string | null;
+  /** "missing" when `assetRoot` is set but the folder cannot be found
+   *  on disk right now (moved, an unmounted network drive, …). */
+  assetRootStatus: "unmapped" | "ok" | "missing";
   /** Bumped when the ENVIRONMENT changes rather than the data: a folder
-   *  attached, a permission re-granted. Asset resolution and Q13 depend
-   *  on it and must re-run; `revision` cannot carry it, because
-   *  `revision !== lastSavedRevision` is what marks the project unsaved
-   *  and attaching a folder writes nothing. */
+   *  attached. Asset resolution and Q13 depend on it and must re-run;
+   *  `revision` cannot carry it, because `revision !== lastSavedRevision`
+   *  is what marks the project unsaved and attaching a folder writes
+   *  nothing to the film. */
   environmentRevision: number;
-  /** Why the last attach was refused, for the topbar. Null when there
-   *  is nothing to say. */
-  attachError: string | null;
-  /** Whether files can be reached THROUGH the root handle. Separate
-   *  from listing: a machine can block enumeration and still traverse,
-   *  or block both. P3's resolver depends on traversal and not at all
-   *  on listing, so this is the capability that matters. */
-  rootTraversal: "ok" | "blocked" | "unknown";
-  rootTraversalError: string | null;
   revision: number;
 
   navMode: NavMode;
@@ -206,11 +183,8 @@ interface AppState {
   /** Attach the asset folder to the film that is open. Must run
    *  inside a click: it opens a picker. */
   attachFolder: () => Promise<void>;
-  dismissAttachError: () => void;
   /** Resolve every asset against the current root. Never throws. */
   resolveAssets: () => Promise<ResolutionReport>;
-  /** Re-ask for a remembered root. Must run inside a click. */
-  regrantRoot: () => Promise<void>;
   newProject: () => Promise<void>;
   /** Copy the film to a new path and carry on there: rename or version
    *  up. Every edit is already in the file; there is no Save. */
@@ -321,82 +295,17 @@ function describeError(e: unknown): string {
 }
 
 /**
- * Can files be reached THROUGH this root?
+ * Put an asset root into the session: check it is there, wire the
+ * locator, and tell the views to re-resolve.
  *
- * Probed with the project's own filename, which is the exact string
- * P3's resolver would use — no typing, no paste artefacts, and the
- * answer arrives without anyone opening a console.
- *
- * Lives here rather than inside the open path because attaching a
- * folder mid-session needs the identical answer, and a second copy of
- * this reasoning would eventually disagree with the first.
+ * Shared by every caller that sets the root (opening a project that has
+ * one on file, attaching a new one): whichever way it arrived,
+ * everything downstream is identical.
  */
-async function probeTraversal(
-  root: FileSystemDirectoryHandle, fileName: string | null,
-): Promise<{ rootTraversal: "ok" | "blocked";
-             rootTraversalError: string | null }> {
-  // A session with no file on disk (demo, unsaved project) has no
-  // name to probe with, so the synthetic probe is the only one.
-  if (fileName !== null) {
-    try {
-      await root.getFileHandle(fileName);
-      return { rootTraversal: "ok", rootTraversalError: null };
-    } catch (e) {
-      return await syntheticProbe(root, describeError(e));
-    }
-  }
-  return await syntheticProbe(root, null);
-}
-
-/**
- * The second probe, with a name that cannot exist. The two failures
- * mean opposite things: NotFoundError proves traversal WORKS and the
- * first failure was about that particular name, while a repeat of the
- * first error means the capability itself is unavailable. One sample
- * cannot tell them apart.
- */
-async function syntheticProbe(
-  root: FileSystemDirectoryHandle, first: string | null,
-): Promise<{ rootTraversal: "ok" | "blocked";
-             rootTraversalError: string | null }> {
-  try {
-    await root.getFileHandle("__scf_traversal_probe__.tmp");
-    return { rootTraversal: "ok", rootTraversalError: null };
-  } catch (e) {
-    if (e instanceof DOMException && e.name === "NotFoundError") {
-      return {
-        rootTraversal: "ok",
-        rootTraversalError: first === null ? null
-          : `traversal works — but this project's own filename was ` +
-            `rejected by the browser (${first}), so its assets resolve ` +
-            `and it alone does not`,
-      };
-    }
-    return {
-      rootTraversal: "blocked",
-      rootTraversalError: first === null
-        ? describeError(e)
-        : `${first} (probe with a synthetic name: ${describeError(e)})`,
-    };
-  }
-}
-
-/**
- * Put a root into the session: probe it, wire the locator, remember it
- * against the file it belongs to, and tell the views to re-resolve.
- *
- * Shared by both acquisition orders, in one place rather than two:
- * whichever way the folder arrived, everything downstream is identical,
- * which is what conventions §9 claims ("the resulting session is
- * identical in every respect").
- */
-async function applyRoot(
+async function applyAssetRoot(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
-  root: FileSystemDirectoryHandle,
-  opts: { filePath: string | null; fileName: string | null;
-          mode: RootMode;
-          verified: boolean },
+  assetRoot: string,
 ): Promise<void> {
   // Anything held now describes the PREVIOUS root. Bytes from a project
   // the user has left are worse than a blank thumbnail, because they
@@ -405,17 +314,10 @@ async function applyRoot(
   // paths are not.
   revokeAll();
   clearResolutions();
-  const probe = await probeTraversal(root, opts.fileName);
-  await rememberRoot(root);
-  await rememberPair(opts.filePath, root, opts.mode);
-  setAssetLocator(makeLocator(root));
-  set({ projectRoot: root,
-        rootPermission: await adapter.rootPermission(root, opts.mode),
-        rootMode: opts.mode,
-        rootVerified: opts.verified,
-        attachError: null,
-        environmentRevision: get().environmentRevision + 1,
-        ...probe });
+  setAssetLocator(makeLocator(assetRoot));
+  const exists = await invoke<boolean>("fs_exists", { path: assetRoot });
+  set({ assetRoot, assetRootStatus: exists ? "ok" : "missing",
+        environmentRevision: get().environmentRevision + 1 });
 }
 
 export interface ShootMemory {
@@ -464,13 +366,8 @@ const freshShootView = (): ShootMemory =>
 
 /**
  * The tail every open shares: land on the script, with nothing of the
- * previous project left behind, and pick up the asset folder this
- * project was last used with.
- *
- * The folder is recalled by the project's path, and its permission is
- * reported rather than requested: a reload drops the permission, and
- * asking outside a click is refused by the browser anyway. The topbar
- * offers the re-grant.
+ * previous project left behind, and pick up the asset root `app.db`
+ * has on file for this project (file-management-plan.md §3.2).
  */
 async function finishOpen(
   set: (partial: Partial<AppState>) => void,
@@ -480,7 +377,7 @@ async function finishOpen(
   localStorage.setItem("scf:auto-resume", "1");
   localStorage.setItem("scf:last-session", path);
   // Clear the root EXPLICITLY. Opening a film while another is live
-  // otherwise leaves `projectRoot` untouched, and the new project
+  // otherwise leaves `assetRoot` untouched, and the new project
   // inherits the old one's folder — addressing every asset against
   // another film's disk. Nothing reports it, because a stale root
   // resolves perfectly well.
@@ -496,16 +393,11 @@ async function finishOpen(
         lastSession: path, revision, hostLost: false,
         externalChange: false, errorMessage: null,
         externalEdit: null,
-        projectRoot: null, rootPermission: "none", rootMode: "read",
-        rootVerified: false, attachError: null,
-        rootTraversal: "unknown", rootTraversalError: null,
+        assetRoot: null, assetRootStatus: "unmapped",
         environmentRevision: get().environmentRevision + 1 });
-  const pair = await recallPairFor(path);
-  if (pair !== null) {
-    await applyRoot(set, get, pair.root as FileSystemDirectoryHandle, {
-      filePath: path, fileName: nameOf(path),
-      mode: pair.mode, verified: true,
-    });
+  const project = await (await windowAppStore()).getProject(path);
+  if (project?.assetRoot != null) {
+    await applyAssetRoot(set, get, project.assetRoot);
   }
 }
 
@@ -520,21 +412,15 @@ export const useStore = create<AppState>((set, get) => ({
   errorMessage: null,
   projectName: null,
   projectPath: null,
-  folderSupported: FsAccessAdapter.folderSupported(),
   hostStatus: "connecting",
   hostError: null,
   hostLost: false,
   externalChange: false,
   externalEdit: null,
   dismissExternalEdit: () => useStore.setState({ externalEdit: null }),
-  projectRoot: null,
-  rootPermission: "none",
-  rootMode: "read",
-  rootVerified: false,
+  assetRoot: null,
+  assetRootStatus: "unmapped",
   environmentRevision: 0,
-  attachError: null,
-  rootTraversal: "unknown",
-  rootTraversalError: null,
   revision: 0,
 
   // The script is what a project is FOR: opening anywhere else means a
@@ -667,66 +553,37 @@ export const useStore = create<AppState>((set, get) => ({
   /**
    * The folder, asked for after the file — the other half of file-first
    * opening, and the only route to assets for a session that started
-   * from a plain `.scf`.
-   *
-   * The refusal is the point. `resolve()` says whether the picked
-   * folder actually holds this file, and anything other than "at its
-   * root" is reported and dropped rather than accepted. A wrong
-   * acceptance would not fail loudly: every identifier would resolve
-   * against the wrong place, some of them successfully, and the project
-   * would look fine while pointing at another film's assets.
-   *
-   * A session with no file on disk cannot be checked at all. That is
-   * not a reason to refuse — it is the demo, and pointing it at a
-   * downloaded asset folder is a legitimate thing to want — but the
-   * session is marked unverified and the topbar says so.
+   * from a plain `.scf`. Any folder the user picks is accepted; what it
+   * actually resolves is `resolveAssets`'s business, shown after
+   * attaching rather than gated here.
    */
   attachFolder: async () => {
-    const { projectPath, projectName } = get();
-    set({ attachError: null });
+    const { projectPath } = get();
     try {
-      const attached = await adapter.attachRoot(projectName);
-      if (attached === null) return;                     // user cancelled
-      if (attached.pairing !== null &&
-          attached.pairing.kind !== "at-root") {
-        set({ attachError: attached.pairing.message });
-        return;
+      const path = await chooseAssetFolder();
+      if (path === null) return;                          // user cancelled
+      if (projectPath !== null) {
+        await (await windowAppStore()).setAssetRoot(projectPath, path);
       }
-      await applyRoot(set, get, attached.root, {
-        filePath: projectPath, fileName: projectName,
-        mode: "read", verified: attached.pairing !== null,
-      });
+      await applyAssetRoot(set, get, path);
     } catch (e) {
       // A failed attach must not cost the user their session: this is
       // an addition to an open project, not an open. Reported inline
       // rather than through `phase: "error"`, which unmounts the
       // workbench.
-      set({ attachError: describeError(e) });
+      set({ errorMessage: `Could not attach the asset folder: ${
+        describeError(e)}` });
     }
   },
-
-  dismissAttachError: () => set({ attachError: null }),
 
   setAssetPrefix: (assetPrefix) => set({ assetPrefix }),
 
   resolveAssets: async () => {
-    const root = get().projectRoot as FileSystemDirectoryHandle | null;
+    const { assetRoot } = get();
     // Keep the query layer's locator in step with the session: Q13
     // reports what resolves, and a stale root would make it lie.
-    setAssetLocator(root === null ? null : makeLocator(root));
-    return resolveAllAssets(exec, makeLocator(root));
-  },
-
-  regrantRoot: async () => {
-    const { projectRoot, rootMode } = get();
-    if (projectRoot === null) return;
-    // Re-asked in the mode it was granted under, and the environment
-    // counter is bumped either way: a folder that has just come back
-    // means every asset view is showing an answer from when it was
-    // gone.
-    set({ rootPermission:
-            await adapter.requestRootPermission(projectRoot, rootMode),
-          environmentRevision: get().environmentRevision + 1 });
+    setAssetLocator(assetRoot === null ? null : makeLocator(assetRoot));
+    return resolveAllAssets(exec, makeLocator(assetRoot));
   },
 
   newProject: async () => {
@@ -772,18 +629,13 @@ export const useStore = create<AppState>((set, get) => ({
   asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
   selectedPropId: null, propTab: "Profile",
   assetPrefix: "", openRow: null, draft: null,
-          selectedSubject: null, projectRoot: null,
-          rootPermission: "none", rootTraversal: "unknown",
-          rootMode: "read", rootVerified: false, attachError: null,
-          rootTraversalError: null });
+          selectedSubject: null, assetRoot: null,
+          assetRootStatus: "unmapped" });
     try {
       await (await getHost()).closeFilm();
     } catch {
       // The host is gone or never had it; either way it is closed.
     }
-    // Closing is deliberate: forget the folder so the next open starts
-    // clean rather than inheriting this one's.
-    await forgetRoot();
   },
 
   /**
@@ -793,7 +645,7 @@ export const useStore = create<AppState>((set, get) => ({
    * save first, because every edit is already in it.
    */
   saveProjectAs: async () => {
-    const { projectName, projectRoot, rootMode } = get();
+    const { projectName, assetRoot } = get();
     const path = await chooser.chooseNew(
       suggestSaveAsName(projectName, true));
     if (path === null) return;
@@ -804,11 +656,9 @@ export const useStore = create<AppState>((set, get) => ({
       set({ projectPath: copied.path, projectName: nameOf(copied.path),
             lastSession: copied.path,
             revision: Math.max(get().revision, copied.revision) });
-      // The folder was verified against the old file's name; remember it
-      // for the new path, but the check is no longer a fact.
-      if (projectRoot !== null) {
-        await rememberPair(copied.path, projectRoot, rootMode);
-        set({ rootVerified: false });
+      if (assetRoot !== null) {
+        await (await windowAppStore()).touchProject(
+          copied.path, { assetRoot });
       }
     } catch (e) {
       set({ errorMessage: `Save As failed: ${describeError(e)}` });

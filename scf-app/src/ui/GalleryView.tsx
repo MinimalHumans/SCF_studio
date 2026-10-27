@@ -67,7 +67,7 @@ const nameOf = (it: GalleryItem): string =>
  * top to bottom.
  */
 export function GalleryView(): JSX.Element {
-  const { revision, projectRoot, environmentRevision } = useStore();
+  const { revision, assetRoot, environmentRevision } = useStore();
   const [opts, setOpts] = useRememberedOptions(OPTIONS_KEY, withDefaults);
   const [all, setAll] = useState<GalleryItem[] | null>(null);
   const [viewing, setViewing] = useState<number | null>(null);
@@ -96,19 +96,18 @@ export function GalleryView(): JSX.Element {
   useEffect(() => {
     if (all === null) return;
     let cancelled = false;
-    const root = projectRoot as FileSystemDirectoryHandle | null;
     void Promise.all(all.map(async (it) => {
       const identifier = typeof it.asset["identifier"] === "string"
         ? it.asset["identifier"] : null;
-      const r = await resolveCached(root, identifier, environmentRevision);
+      const r = await resolveCached(assetRoot, identifier, environmentRevision);
       return [Number(it.asset["id"]), r.state] as const;
     })).then((pairs) => {
       if (!cancelled) setStates(new Map(pairs));
     });
     return () => { cancelled = true; };
-  }, [all, projectRoot, environmentRevision]);
-  // A new folder or permission is a fresh chance for a file to load.
-  useEffect(() => { setBroken(new Set()); }, [projectRoot, environmentRevision]);
+  }, [all, assetRoot, environmentRevision]);
+  // A new folder is a fresh chance for a file to load.
+  useEffect(() => { setBroken(new Set()); }, [assetRoot, environmentRevision]);
   const markBroken = (id: number): void => setBroken((prev) =>
     prev.has(id) ? prev : new Set(prev).add(id));
 
@@ -218,7 +217,7 @@ export function GalleryView(): JSX.Element {
         </div>
       </div>
 
-      {all !== null && projectRoot === null && (
+      {all !== null && assetRoot === null && (
         <p className="muted gl-note">
           No project folder is attached, so no file can be found to show.
           Attach the folder from the top bar.
@@ -232,7 +231,7 @@ export function GalleryView(): JSX.Element {
               "characters, locations, props or shots and they gather here."
             : absent > 0
               ? "None of these files could be found" +
-                (projectRoot === null ? "" : " in the project folder") +
+                (assetRoot === null ? "" : " in the project folder") +
                 ". “Missing files” shows where they would be."
               : "Nothing matches. Try “Everything”, or include other files."}
         </p>

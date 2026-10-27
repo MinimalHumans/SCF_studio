@@ -16,7 +16,8 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
-import type { FileLocator } from "@scf-core/assets.ts";
+import { PROJECT_ROOT, type FileLocator } from "@scf-core/assets.ts";
+import { createAssetAccess } from "@scf-host/assets.ts";
 import { HostClient } from "@scf-host/client.ts";
 import { ConfigError, USAGE, parseConfig, type RootMap }
   from "@scf-mcp/config.ts";
@@ -35,8 +36,6 @@ type McpEvent =
       replay: string[] }
   | { kind: "message"; session: number; line: string }
   | { kind: "closed"; session: number };
-
-interface Stat { size: number; modified: string }
 
 const send = (session: number, line: string): Promise<void> =>
   invoke("mcp_send", { session, line });
@@ -111,18 +110,10 @@ export async function serveMcp(): Promise<void> {
   const files = await createTauriPlatform();
   const { paths } = files;
   const appStore = await windowAppStore();
+  const assetAccess = createAssetAccess(files);
 
-  // As scf-mcp's nodeLocator: an unknown root is undefined, a known one
-  // with nothing there is null.
-  const locator = (roots: RootMap): FileLocator => async (root, path) => {
-    if (root === null) return undefined;
-    const base = roots[root];
-    if (base === undefined) return undefined;
-    const stat = await invoke<Stat | null>(
-      "fs_stat", { path: paths.join(base, path) });
-    return stat === null ? null
-      : { materialised: true, sizeBytes: stat.size, mtime: stat.modified };
-  };
+  const locator = (roots: RootMap): FileLocator =>
+    assetAccess.locate(roots[PROJECT_ROOT] ?? null);
 
   const platformFor = (cwd: string): McpPlatform => ({
     connect: async (name) =>

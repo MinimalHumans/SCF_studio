@@ -249,7 +249,7 @@ const STATE_LABEL: Record<ResolutionState, string> = {
 function AssetResolution({ identifier }: {
   identifier: SqlValue | undefined;
 }): JSX.Element | null {
-  const { projectRoot } = useStore();
+  const { assetRoot } = useStore();
   const [state, setState] = useState<Resolution | null>(null);
   const raw = identifier === null || identifier === undefined
     ? null : String(identifier);
@@ -257,12 +257,11 @@ function AssetResolution({ identifier }: {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const root = projectRoot as FileSystemDirectoryHandle | null;
-      const r = await resolveIdentifier(raw, makeLocator(root));
+      const r = await resolveIdentifier(raw, makeLocator(assetRoot));
       if (!cancelled) setState(r);
     })();
     return () => { cancelled = true; };
-  }, [raw, projectRoot]);
+  }, [raw, assetRoot]);
 
   if (state === null) return null;
 
@@ -280,7 +279,7 @@ function AssetResolution({ identifier }: {
       {state.detail !== null && (
         <span className="form-resolution-detail">{state.detail}</span>
       )}
-      {projectRoot === null && state.state === "missing" && (
+      {assetRoot === null && state.state === "missing" && (
         <span className="form-resolution-detail">
           — this session has no project folder attached, so nothing can
           resolve

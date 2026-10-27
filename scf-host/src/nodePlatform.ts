@@ -5,8 +5,8 @@
  */
 
 import {
-  appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync,
-  realpathSync, rmSync, statSync, writeFileSync,
+  appendFileSync, closeSync, existsSync, mkdirSync, openSync, readdirSync,
+  readFileSync, readSync, realpathSync, rmSync, statSync, writeFileSync,
 } from "node:fs";
 import { createHash } from "node:crypto";
 import {
@@ -55,6 +55,25 @@ export const nodePlatform: HostPlatform = {
   },
 
   exists: (path) => Promise.resolve(existsSync(path)),
+  stat: async (path) => {
+    try {
+      const st = statSync(path);
+      return { size: st.size, modified: st.mtime.toISOString() };
+    } catch {
+      return null;
+    }
+  },
+  readBytes: async (path, range) => {
+    if (range === undefined) return new Uint8Array(readFileSync(path));
+    const fd = openSync(path, "r");
+    try {
+      const buf = Buffer.alloc(range.length);
+      const n = readSync(fd, buf, 0, range.length, range.offset);
+      return new Uint8Array(buf.subarray(0, n));
+    } finally {
+      closeSync(fd);
+    }
+  },
   readDir: async (path) => {
     const out: PlatformDirEntry[] = [];
     for (const name of readdirSync(path)) {

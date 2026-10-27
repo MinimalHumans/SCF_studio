@@ -44,6 +44,27 @@ vi.mock("../src/files/tauriChooser", () => ({
   }),
 }));
 
+/** A fake app.db: this file tests the window against the host, not
+ *  asset-root persistence, so a minimal in-memory stand-in is enough
+ *  to keep `finishOpen`/`saveProjectAs` from reaching a real Tauri
+ *  `invoke` that does not exist in this environment. */
+const assetRoots = new Map<string, string | null>();
+vi.mock("../src/host/windowAppStore", () => ({
+  windowAppStore: () => Promise.resolve({
+    getProject: (path: string) => Promise.resolve(
+      assetRoots.has(path) ? { assetRoot: assetRoots.get(path) ?? null }
+        : null),
+    setAssetRoot: (path: string, assetRoot: string | null) => {
+      assetRoots.set(path, assetRoot);
+      return Promise.resolve();
+    },
+    touchProject: (path: string, fields: { assetRoot?: string | null }) => {
+      if (fields.assetRoot !== undefined) assetRoots.set(path, fields.assetRoot);
+      return Promise.resolve();
+    },
+  }),
+}));
+
 let dir: string;
 let core: HostCore;
 let other: HostClient;
@@ -78,7 +99,7 @@ afterAll(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-beforeEach(() => { chooserPaths.length = 0; memory.clear(); });
+beforeEach(() => { chooserPaths.length = 0; memory.clear(); assetRoots.clear(); });
 afterEach(async () => {
   const { useStore } = await import("../src/state/store");
   await useStore.getState().closeProject();

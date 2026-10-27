@@ -118,11 +118,13 @@ SQLite (rusqlite) over a loopback socket, files, the MCP pipes' relay
 - **Choosing a file** goes through `ProjectChooser`
   (`files/projectChooser.ts`), implemented over the OS's own Open/Save
   dialogs (`files/tauriChooser.ts`, tauri-plugin-dialog). The
-  **asset folder** is still acquired in the browser (`FileAdapter`,
-  `files/fileAdapter.ts`) as a read-only directory handle, remembered
-  per project path in IndexedDB (`files/handleStore.ts`); Chromium
-  re-asks for permission after a reload, which is unavoidable and
-  correct.
+  **asset folder** is a plain path the same way: picked with
+  `files/assetFolderChooser.ts`, stored per project path in `app.db`
+  (`@scf-host/appStore.ts`, shared through `host/windowAppStore.ts`)
+  rather than a browser directory handle — no permission to re-ask
+  for, and the standalone MCP can read the same mapping. Asset bytes
+  are read through the shell (`@scf-host/assets.ts`,
+  `files/assetLocator.ts`), not the browser's file APIs.
 - **One window at a time.** A second tab is refused (a Web Lock):
   two windows would each commit their own copy of the script over the
   other's.

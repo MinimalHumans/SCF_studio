@@ -46,8 +46,8 @@ export function useShotFrames(): Map<number, string> {
 export function useFrameUrl(identifier: string | null,
                             kinds: readonly PreviewKind[] = ["image"]):
     string | null {
-  const { projectRoot, environmentRevision } = useStore();
-  const root = projectRoot as FileSystemDirectoryHandle | null;
+  const { assetRoot, environmentRevision } = useStore();
+  const root = assetRoot;
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {

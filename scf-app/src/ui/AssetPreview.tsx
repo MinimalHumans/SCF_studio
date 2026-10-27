@@ -42,7 +42,7 @@ function Unavailable({ cap, state }: {
 export function AssetPreview({ identifier }: {
   identifier: string | null;
 }): JSX.Element | null {
-  const { projectRoot } = useStore();
+  const { assetRoot } = useStore();
   const [resolution, setResolution] = useState<Resolution | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [text, setText] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export function AssetPreview({ identifier }: {
     localStorage.setItem("scf:preview-loop", on ? "1" : "0");
   };
 
-  const root = projectRoot as FileSystemDirectoryHandle | null;
+  const root = assetRoot;
 
   useEffect(() => {
     let cancelled = false;

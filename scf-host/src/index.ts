@@ -5,6 +5,9 @@ export {
   type AppDb, type AppStore, type AppStoreFs, type OpenAppDb,
   type OpenAppStoreOptions, type ProjectRow, type TouchProjectFields,
 } from "./appStore.ts";
+export {
+  createAssetAccess, type AssetAccess, type ByteRange,
+} from "./assets.ts";
 export { openNodeAppStore } from "./nodeAppStore.ts";
 export {
   HostFailure, canonicalPath, createHostCore,

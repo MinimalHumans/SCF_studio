@@ -12,7 +12,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { posixPaths, windowsPaths } from "@scf-host/paths.ts";
 import {
-  toBase64, type HostPlatform, type PlatformDirEntry,
+  fromBase64, toBase64, type HostPlatform, type PlatformDirEntry,
 } from "@scf-host/platform.ts";
 import { openTauriDatabase, openTauriSession } from "./tauriSql.ts";
 
@@ -27,6 +27,10 @@ export async function createTauriPlatform(): Promise<HostPlatform> {
     openReader: (path) => openTauriDatabase(path, { readOnly: true }),
 
     exists: (path) => invoke<boolean>("fs_exists", { path }),
+    stat: (path) =>
+      invoke<{ size: number; modified: string } | null>("fs_stat", { path }),
+    readBytes: async (path, range) => fromBase64(await invoke<string>(
+      "fs_read_range", { path, offset: range?.offset, length: range?.length })),
     readDir: (path) => invoke<PlatformDirEntry[]>("fs_read_dir", { path }),
     readText: (path) => invoke<string>("fs_read_text", { path }),
     appendText: (path, text) => invoke("fs_append_text", { path, text }),

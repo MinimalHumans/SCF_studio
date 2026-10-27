@@ -33,8 +33,8 @@ vi.mock("../src/files/assetLocator.ts", () => ({
 const { acquire, release, revokeAll } =
   await import("../src/files/objectUrlCache.ts");
 
-const ROOT = { name: "project" } as unknown as FileSystemDirectoryHandle;
-const OTHER = { name: "project" } as unknown as FileSystemDirectoryHandle;
+const ROOT = "/projects/a";
+const OTHER = "/projects/b";
 
 let revoked: string[] = [];
 
@@ -118,8 +118,6 @@ describe("objectUrlCache", () => {
        async () => {
     const a = await acquire(ROOT, "assets/x.png");
     const b = await acquire(OTHER, "assets/x.png");
-    // Roots are handles, so the key is identity — two folders can hold
-    // the same relative path, and a name would collide them.
     expect(a).not.toBe(b);
     expect(reads.count).toBe(2);
   });

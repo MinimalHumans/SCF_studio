@@ -62,6 +62,13 @@ export interface HostPlatform {
   exists(path: string): Promise<boolean>;
   /** A folder's entries, any that cannot be read left out. */
   readDir(path: string): Promise<PlatformDirEntry[]>;
+  /** A plain file's size and time, or null when there is nothing there.
+   *  Unlike `readDir`'s entries, this asks about one exact path. */
+  stat(path: string): Promise<{ size: number; modified: string } | null>;
+  /** Raw bytes of a file, or a byte range of it (the assets module's
+   *  previews and ranged reads). Whole file when `range` is omitted. */
+  readBytes(path: string,
+            range?: { offset: number; length: number }): Promise<Uint8Array>;
   readText(path: string): Promise<string>;
   /** Append, making the folder if need be. */
   appendText(path: string, text: string): Promise<void>;

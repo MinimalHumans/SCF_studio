@@ -239,6 +239,7 @@ pub fn run() {
         files::fs_read_dir,
         files::fs_stat,
         files::fs_read_text,
+        files::fs_read_range,
         files::fs_write_text,
         files::fs_append_text,
         files::fs_create_file,

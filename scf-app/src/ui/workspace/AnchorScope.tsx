@@ -57,8 +57,8 @@ export function scopeSummary(tile: Tile, audio: boolean): string | null {
 function useAssetUrl(identifier: string | null, allowBig: boolean): {
   url: string | null; resolution: Resolution | null; big: boolean;
 } {
-  const { projectRoot } = useStore();
-  const root = projectRoot as FileSystemDirectoryHandle | null;
+  const { assetRoot } = useStore();
+  const root = assetRoot;
   const [resolution, setResolution] = useState<Resolution | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const path = identifier === null ? null : parseIdentifier(identifier)?.path ?? null;

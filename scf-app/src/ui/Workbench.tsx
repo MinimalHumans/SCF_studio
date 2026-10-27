@@ -282,83 +282,34 @@ export function Workbench(): JSX.Element {
  * it one.
  *
  * Silent when the root is granted and checked; there is nothing to say.
- * A reload keeps the handle and drops the grant, so the re-grant lives
- * here as one click inside a user gesture; the browser rejects the
- * request anywhere else, and that restriction is the point of the
- * prompt.
- *
- * "no folder" is a BUTTON, not a label. The platform will not walk from
- * a file to its parent, but it will confirm that a folder the user names
- * contains that file — the same gesture as the re-grant, in the same
- * place, for the same reason.
+ * "no folder" is a BUTTON, not a label: the same native dialog as
+ * attaching a new one, with no permission model to manage — the OS
+ * already handed the app the path.
  */
 function RootStatus(): JSX.Element | null {
-  const { projectRoot, rootPermission, rootTraversal, rootTraversalError,
-          rootVerified, attachError, attachFolder, dismissAttachError,
-          folderSupported, regrantRoot } = useStore();
+  const { assetRoot, assetRootStatus, attachFolder } = useStore();
 
-  const refusal = attachError === null ? null : (
-    <button className="topbar-root-refusal"
-            onClick={dismissAttachError}
-            title="Click to dismiss">
-      {attachError}
-    </button>
-  );
-
-  if (projectRoot === null) {
+  if (assetRoot === null) {
     return (
-      <>
-        <button className="ghost tiny topbar-root-attach"
-                onClick={() => void attachFolder()}
-                disabled={!folderSupported}
-                title="No project folder, so assets cannot resolve. Pick
-the folder this .scf lives in — the browser cannot find it from the file,
-but it can confirm the one you name is the right one.">
-          no folder
-        </button>
-        {refusal}
-      </>
-    );
-  }
-  if (rootPermission === "granted" && rootTraversal === "blocked") {
-    return (
-      <span className="topbar-root topbar-root-blocked"
-            title={`The folder is connected, but files cannot be reached
-through it on this machine, so assets will not resolve. ` +
-              (rootTraversalError ?? "")}>
-        folder unreadable
-      </span>
-    );
-  }
-  // Granted, readable, but nothing confirmed it is the right folder —
-  // the session had no file on disk to check against. Said out loud
-  // rather than left silent: an asset that resolves from the wrong
-  // folder looks exactly like one that resolves from the right one.
-  if (rootPermission === "granted" && !rootVerified) {
-    return (
-      <>
-        <span className="topbar-root muted"
-              title="Folder connected, but this session has no .scf on
-disk, so nothing could check that the folder is the right one. Assets
-resolve against whatever is in it.">
-          folder unverified
-        </span>
-        {refusal}
-      </>
-    );
-  }
-  if (rootPermission === "granted") return refusal;
-  return (
-    <>
-      <button className="ghost tiny topbar-root-regrant"
-              onClick={() => void regrantRoot()}
-              title="This session remembers the project folder but lost
-permission to read it on reload.">
-        Reconnect folder
+      <button className="ghost tiny topbar-root-attach"
+              onClick={() => void attachFolder()}
+              title="No project folder, so assets cannot resolve. Choose
+the folder this project's assets live in.">
+        no folder
       </button>
-      {refusal}
-    </>
-  );
+    );
+  }
+  if (assetRootStatus === "missing") {
+    return (
+      <button className="ghost tiny topbar-root-blocked"
+              onClick={() => void attachFolder()}
+              title={`${assetRoot} could not be found — it may have moved
+or be on a drive that is not connected right now. Click to choose again.`}>
+        folder not found
+      </button>
+    );
+  }
+  return null;
 }
 
 /**

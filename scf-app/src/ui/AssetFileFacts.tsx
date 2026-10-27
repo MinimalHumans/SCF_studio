@@ -36,13 +36,13 @@ function humanBytes(n: number): string {
 export function AssetFileFacts({ identifier }: {
   identifier: string | null;
 }): JSX.Element | null {
-  const { projectRoot } = useStore();
+  const { assetRoot } = useStore();
   const [meta, setMeta] = useState<FileMetadata | null>(null);
   const [size, setSize] = useState<number | null>(null);
   const [modified, setModified] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
 
-  const root = projectRoot as FileSystemDirectoryHandle | null;
+  const root = assetRoot;
   const parsed = identifier === null ? null : parseIdentifier(identifier);
 
   useEffect(() => {

@@ -1,70 +1,60 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
  * dropIntake.ts — files dropped on a reference board, as project
- * addresses.
+ * addresses (file-management-plan.md Step 3).
  *
  * Conventions §9: SCF never copies, ingests or generates files. A drop
- * is therefore a way of POINTING: Chromium hands back a real handle for
- * a dropped file, the project root resolves it to a path, and that path
- * is the identifier. A file inside the project folder becomes
- * `@project/references/eleanor/front.png` with nothing written to disk.
+ * is therefore a way of POINTING: the shell's drag-and-drop event
+ * (`nativeDrop.ts`) hands back real, absolute paths, and a path inside
+ * the asset root becomes `@project/references/eleanor/front.png` with
+ * nothing written to disk.
  *
- * A file from anywhere else cannot be pointed at — the browser does not
- * reveal its location, and an address that only resolves on this
- * machine would not be portable anyway. It is reported by name so the
- * writer can move it into the folder and drop it again.
+ * A path from anywhere else cannot be pointed at — an address that only
+ * resolves on this machine would not be portable — and is reported by
+ * name so the writer can move it into the folder and drop it again.
  */
 
-import { projectIdentifier } from "@scf-core/assets.ts";
+import type { HostPlatform } from "@scf-host/platform.ts";
+import { createTauriPlatform } from "../host/tauriPlatform.ts";
 import type { ImportCandidate } from "@scf-core/assetImport.ts";
+import { candidateFor, isOutside } from "./pathIdentifier.ts";
 
 export interface Intake {
   candidates: ImportCandidate[];
-  /** Files that are not inside the project folder, by name. */
+  /** Paths that are not inside the asset root, by name. */
   outside: string[];
   /** Dropped folders, which a board does not take. */
   folders: string[];
 }
 
-/**
- * Start reading a drop. MUST be called synchronously inside the drop
- * handler: the items are only valid during the event, so the handle
- * requests are made now and awaited later.
- */
-export function beginDrop(dt: DataTransfer):
-    Array<Promise<FileSystemHandle | null>> {
-  const out: Array<Promise<FileSystemHandle | null>> = [];
-  for (const item of Array.from(dt.items)) {
-    if (item.kind !== "file") continue;
-    if (typeof item.getAsFileSystemHandle !== "function") continue;
-    out.push(item.getAsFileSystemHandle().catch(() => null));
+/** Whether `path` is a directory — probed by trying to read it as one,
+ *  since the host has no dedicated "kind of entry" command for a
+ *  single arbitrary path. */
+async function isDirectory(
+    platform: HostPlatform, path: string): Promise<boolean> {
+  try {
+    await platform.readDir(path);
+    return true;
+  } catch {
+    return false;
   }
-  return out;
 }
 
-/** Where each handle sits under the root, if it does. */
-export async function addressHandles(
-    root: FileSystemDirectoryHandle,
-    pending: Array<Promise<FileSystemHandle | null>>): Promise<Intake> {
+/** Address real, absolute paths — from a drop, or anywhere else the
+ *  shell can hand them over — against the asset root. */
+export async function addressPaths(
+    assetRoot: string, paths: readonly string[]): Promise<Intake> {
+  const platform = await createTauriPlatform();
   const intake: Intake = { candidates: [], outside: [], folders: [] };
-  for (const h of await Promise.all(pending)) {
-    if (h === null) continue;
-    if (h.kind === "directory") { intake.folders.push(h.name); continue; }
-    let segments: string[] | null = null;
-    try { segments = await root.resolve(h); } catch { segments = null; }
-    if (segments === null || segments.length === 0) {
-      intake.outside.push(h.name);
+  for (const path of paths) {
+    const name = platform.paths.basename(path);
+    if (await isDirectory(platform, path)) {
+      intake.folders.push(name);
       continue;
     }
-    let sizeBytes: number | null = null;
-    let mtime: string | null = null;
-    try {
-      const file = await (h as FileSystemFileHandle).getFile();
-      sizeBytes = file.size;
-      mtime = new Date(file.lastModified).toISOString();
-    } catch { /* a hint, not a requirement */ }
-    intake.candidates.push({ identifier: projectIdentifier(segments.join("/")),
-                             name: h.name, sizeBytes, mtime });
+    const result = await candidateFor(platform, assetRoot, path);
+    if (isOutside(result)) intake.outside.push(result.outside);
+    else intake.candidates.push(result);
   }
   return intake;
 }

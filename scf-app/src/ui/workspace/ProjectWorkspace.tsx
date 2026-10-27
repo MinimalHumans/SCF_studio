@@ -211,7 +211,7 @@ function ProjectSection(): JSX.Element {
 function ProjectPoster({ single }: {
   single: ReturnType<typeof useSingleton>;
 }): JSX.Element {
-  const { revision, openEntityRow, projectRoot, attachFolder } = useStore();
+  const { revision, openEntityRow, assetRoot, attachFolder } = useStore();
   const [posters, setPosters] = useState<MediaTile[] | null>(null);
   const [adding, setAdding] = useState(false);
 
@@ -250,7 +250,7 @@ function ProjectPoster({ single }: {
       {poster !== undefined && (
         <>
           <div className="project-poster-image">
-            {projectRoot === null ? (
+            {assetRoot === null ? (
               // The demo opens with no folder, and every asset reads
               // unresolved; say what would show it rather than that.
               <div className="asset-preview asset-preview-none">
@@ -495,58 +495,30 @@ function TitlePagePreview({ get }: { get: (key: string) => string }):
 // ---------------------------------------------------------------------------
 
 function FolderSection(): JSX.Element {
-  const { projectRoot, rootPermission, rootTraversal, rootTraversalError,
-          rootVerified, attachError, attachFolder, dismissAttachError,
-          folderSupported, regrantRoot } = useStore();
-  const name = (projectRoot as { name?: string } | null)?.name ?? null;
+  const { assetRoot, assetRootStatus, attachFolder } = useStore();
 
-  let status: JSX.Element;
-  if (projectRoot === null) {
-    status = <p>No folder. Assets cannot resolve until the folder this
-             .scf lives in is chosen.</p>;
-  } else if (rootPermission !== "granted") {
-    status = <p><strong>{name}</strong> — remembered, but this session
-             lost permission to read it on reload.</p>;
-  } else if (rootTraversal === "blocked") {
-    status = <p className="ws-field-error"><strong>{name}</strong> —
-             connected, but files cannot be reached through it on this
-             machine. {rootTraversalError ?? ""}</p>;
-  } else if (!rootVerified) {
-    status = <p><strong>{name}</strong> — connected, but unverified:
-             this session has no .scf on disk to check the folder
-             against, so assets resolve against whatever is in it.</p>;
-  } else {
-    status = <p><strong>{name}</strong> — connected, and confirmed to
-             hold this project's .scf.</p>;
-  }
+  const status = assetRoot === null
+    ? <p>No folder. Assets cannot resolve until the folder this
+         project's assets live in is chosen.</p>
+    : assetRootStatus === "missing"
+      ? <p className="ws-field-error"><strong>{assetRoot}</strong> —
+           not found. It may have moved, or be on a drive that is not
+           connected right now.</p>
+      : <p><strong>{assetRoot}</strong></p>;
 
   return (
     <section className="ws-section">
       <h3>Project folder</h3>
       <p className="ws-section-note">
-        The folder holding the .scf and the assets it points at. The same
-        control as the topbar's folder button.
+        The folder holding the assets this project's identifiers point at.
+        The same control as the topbar's folder button.
       </p>
       {status}
       <div className="project-folder-actions">
-        {projectRoot !== null && rootPermission !== "granted" && (
-          <button onClick={() => void regrantRoot()}>Reconnect folder</button>
-        )}
-        <button onClick={() => void attachFolder()}
-                disabled={!folderSupported}
-                title={folderSupported ? undefined
-                  : "This browser cannot open folders."}>
-          {projectRoot === null ? "Choose folder…" : "Change folder…"}
+        <button onClick={() => void attachFolder()}>
+          {assetRoot === null ? "Choose folder…" : "Change folder…"}
         </button>
       </div>
-      {attachError !== null && (
-        <p className="ws-field-error" role="alert">
-          {attachError}{" "}
-          <button className="ghost tiny" onClick={dismissAttachError}>
-            dismiss
-          </button>
-        </p>
-      )}
     </section>
   );
 }
