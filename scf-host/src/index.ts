@@ -7,9 +7,15 @@ export {
   type SuggestionInput, type TouchProjectFields,
 } from "./appStore.ts";
 export {
+  actorKindOf, firstUuidIn, openAuditStore,
+  type AuditActor, type AuditEvent, type AuditEventInput, type AuditFilter,
+  type AuditScope, type AuditStore, type AuditVerification,
+} from "./auditStore.ts";
+export {
   createAssetAccess, type AssetAccess, type ByteRange,
 } from "./assets.ts";
 export { openNodeAppStore } from "./nodeAppStore.ts";
+export { openNodeAuditStore } from "./nodeAuditStore.ts";
 export {
   HostFailure, canonicalPath, createHostCore,
   type HostConnection, type HostCore, type HostCoreOptions,

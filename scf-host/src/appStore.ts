@@ -159,7 +159,7 @@ async function verify(db: AppDb): Promise<AppDb> {
  * never silently dropped without leaving the old file. A path that does
  * not exist yet is not corruption: that failure is rethrown as is.
  */
-async function openVerified(
+export async function openVerified(
     path: string, open: OpenAppDb, fs: AppStoreFs): Promise<AppDb> {
   try {
     return await verify(await open(path));
