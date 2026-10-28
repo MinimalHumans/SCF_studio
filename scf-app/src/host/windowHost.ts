@@ -21,6 +21,7 @@ import { createHostCore, type HostCore } from "@scf-host/core.ts";
 import registryJson from "@registry/registry.json" with { type: "json" };
 import { loadRegistry, type RegistryJson } from "@scf-core/registry.ts";
 import { createTauriPlatform } from "./tauriPlatform.ts";
+import { windowAuditStore } from "./windowAuditStore.ts";
 
 interface HostSetup {
   roots: string[];
@@ -36,12 +37,21 @@ async function start(): Promise<HostCore> {
   ]);
   // A reload leaves the last page's films open in the shell.
   await invoke("sql_reset");
+  // After the reset, which closes every database the last page opened.
+  // A trail that cannot be opened must not keep films from opening: the
+  // host runs without it and says so.
+  const audit = await windowAuditStore().catch((e: unknown) => {
+    console.error("audit trail unavailable:", e);
+    return undefined;
+  });
   const { join } = platform.paths;
   return createHostCore({
     registry: loadRegistry(registryJson as unknown as RegistryJson),
     platform, version: setup.version, roots: setup.roots,
     snapshotDir: join(setup.dataDir, "snapshots"),
     journalDir: join(setup.dataDir, "journal"),
+    ...(audit === undefined ? {} : { audit }),
+    onAuditError: (e) => { console.error("audit trail write failed:", e); },
   });
 }
 

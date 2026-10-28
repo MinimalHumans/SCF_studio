@@ -34,6 +34,9 @@ import {
   fromBase64, toBase64, type HostPlatform, type PlatformDatabase,
 } from "./platform.ts";
 import { refuseQuery } from "./readGuard.ts";
+import {
+  actorKindOf, firstUuidIn, type AuditActor, type AuditStore,
+} from "./auditStore.ts";
 
 /** Thrown inside a handler to answer with a specific code. */
 export class HostFailure extends Error {
@@ -67,6 +70,18 @@ export interface HostCoreOptions {
   snapshotDir?: string;
   /** Where the write journal is appended, one file per film. */
   journalDir?: string;
+  /**
+   * Where the audit trail goes (auditStore.ts). Every write, open, close
+   * and outside change to a film is appended to it, by whichever client
+   * made it. Without it nothing is recorded (tests).
+   */
+  audit?: Pick<AuditStore, "append">;
+  /**
+   * Called when the audit trail could not be written. The write it
+   * describes is never refused or undone for that, so this is the only
+   * place the failure surfaces.
+   */
+  onAuditError?: (error: unknown) => void;
   /** Snapshots kept per film. */
   snapshotsKept?: number;
   /**
@@ -91,6 +106,10 @@ interface Film {
   /** Added to the session's revision, so a reload never repeats one. */
   base: number;
   journal: JournalEntry[];
+  /** The film's own uuid (its `project` row), for the audit trail. */
+  uuid: string | null;
+  /** An outside change has been recorded and not yet reloaded away. */
+  externalLogged: boolean;
 }
 
 export interface HostConnection {
@@ -232,6 +251,8 @@ class HostCoreImpl implements HostCore {
   /** When each film was last snapshotted, across closes and reopens. */
   private readonly snapshotTimes = new Map<string, number>();
   private readonly onShutdown: (() => void) | undefined;
+  private readonly auditSink: Pick<AuditStore, "append"> | undefined;
+  private readonly onAuditError: ((error: unknown) => void) | undefined;
   /**
    * The last revision each film reached before it was closed. A film is
    * closed whenever its last client lets go, and a tool that planned a
@@ -256,6 +277,30 @@ class HostCoreImpl implements HostCore {
     this.snapshotsKept = options.snapshotsKept ?? 10;
     this.snapshotEveryMs = options.snapshotEveryMs ?? 600_000;
     this.onShutdown = options.onShutdown;
+    this.auditSink = options.audit;
+    this.onAuditError = options.onAuditError;
+  }
+
+  /** One line in the audit trail; a failure to write it is reported, not thrown. */
+  private async audit(
+      who: { kind: AuditActor; name: string }, film: Film, action: string,
+      detail: { summary?: string; targetUuid?: string | null } = {}):
+      Promise<void> {
+    if (this.auditSink === undefined) return;
+    try {
+      await this.auditSink.append({
+        actorKind: who.kind, actorName: who.name, scope: "project",
+        projectUuid: film.uuid, projectPath: film.path, action,
+        targetUuid: detail.targetUuid ?? null,
+        summary: detail.summary ?? null,
+      });
+    } catch (e) {
+      this.onAuditError?.(e);
+    }
+  }
+
+  private asUser(c: ConnectionImpl): { kind: AuditActor; name: string } {
+    return { kind: actorKindOf(c.name), name: c.name };
   }
 
   /** A short stable name for a film's files in a shared directory. */
@@ -379,6 +424,10 @@ class HostCoreImpl implements HostCore {
     const film = c.film;
     c.film = null;
     if (film === null) return;
+    // Recorded while this client still holds the film, and before it lets
+    // go: the wait must not sit between the last client leaving and the
+    // check that closes the file, or two leaving together close it twice.
+    await this.audit(this.asUser(c), film, "project.close");
     film.connections.delete(c);
     if (film.connections.size === 0) await this.closeFilm(film);
   }
@@ -449,9 +498,21 @@ class HostCoreImpl implements HostCore {
       path: key, session, reader, connections: new Set(),
       base: this.lastRevisions.get(key) ?? 0,
       journal: await this.readJournalTail(key),
+      uuid: await this.uuidOf(session),
+      externalLogged: false,
     };
     this.films.set(key, film);
     return film;
+  }
+
+  private async uuidOf(session: Session): Promise<string | null> {
+    try {
+      const [row] = await session.exec("SELECT uuid FROM project LIMIT 1");
+      const uuid = row?.["uuid"];
+      return typeof uuid === "string" ? uuid : null;
+    } catch {
+      return null;
+    }
   }
 
   private attach(c: ConnectionImpl, film: Film,
@@ -481,6 +542,13 @@ class HostCoreImpl implements HostCore {
         "read_only", "this connection opened the file read-only");
     }
     if (await film.session.hasExternalChange()) {
+      if (!film.externalLogged) {
+        film.externalLogged = true;
+        await this.audit(
+          { kind: "external", name: "outside the host" }, film,
+          "file.external_change",
+          { summary: `noticed when ${c.name} tried to write` });
+      }
       throw new HostFailure(
         "external_change",
         "the file was changed outside the host; reload before writing");
@@ -506,6 +574,7 @@ class HostCoreImpl implements HostCore {
     }
     const snapshot = what.snapshot ? await this.snapshot(film) : undefined;
     const before = this.revisionOf(film);
+    const args = JSON.stringify(p["args"] ?? null).slice(0, 500);
     let failure: unknown;
     try {
       const out = await run(
@@ -520,11 +589,17 @@ class HostCoreImpl implements HostCore {
       await this.record(film, {
         at: new Date().toISOString(), revision, by: c.name,
         via: what.via, name: what.name,
-        args: JSON.stringify(p["args"] ?? null).slice(0, 500),
+        args,
         ok: failure === undefined,
         ...(failure === undefined ? {} : { error: failure instanceof Error
           ? failure.message.slice(0, 300) : String(failure) }),
       });
+      await this.audit(
+        this.asUser(c), film, `${what.via}.${what.name}`,
+        { targetUuid: firstUuidIn(args),
+          summary: failure === undefined ? args : `failed: ${
+            failure instanceof Error ? failure.message : String(failure)
+          } ${args}` });
       if (revision !== before) {
         this.broadcast(film, {
           event: "revision", path: film.path, revision, by: c.name,
@@ -557,7 +632,10 @@ class HostCoreImpl implements HostCore {
           path, p["migrate"] === true,
           typeof p["editorVersion"] === "string"
             ? p["editorVersion"] : undefined);
-        return this.attach(c, film, p["readOnly"] === true);
+        const opened = this.attach(c, film, p["readOnly"] === true);
+        await this.audit(this.asUser(c), film, "project.open",
+          p["readOnly"] === true ? { summary: "read-only" } : {});
+        return opened;
       }
       case "create": {
         const path = await this.requireInRoots(
@@ -579,7 +657,9 @@ class HostCoreImpl implements HostCore {
             typeof p["editorVersion"] === "string"
               ? p["editorVersion"] : undefined,
             bytes === undefined);
-          return this.attach(c, film, false);
+          const created = this.attach(c, film, false);
+          await this.audit(this.asUser(c), film, "project.create");
+          return created;
         } catch (e) {
           // A file we just made and could not open is not worth keeping.
           await this.platform.remove(path);
@@ -599,7 +679,11 @@ class HostCoreImpl implements HostCore {
           await ctx.exec("VACUUM INTO ?", [target]);
         });
         await this.leave(c);
-        return this.attach(c, await this.openFilm(target, false), false);
+        const copy = await this.openFilm(target, false);
+        const attached = this.attach(c, copy, false);
+        await this.audit(this.asUser(c), copy, "project.saveAs",
+          { summary: `from ${film.path}` });
+        return attached;
       }
       case "close":
         await this.leave(c);
@@ -617,6 +701,8 @@ class HostCoreImpl implements HostCore {
         film.session = fresh;
         film.reader = reader;
         film.base = last;
+        film.externalLogged = false;
+        await this.audit(this.asUser(c), film, "project.reload");
         this.broadcast(film, {
           event: "reload", path: film.path, revision: last,
         });
