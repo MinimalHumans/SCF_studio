@@ -4,6 +4,8 @@ import { useStore } from "../state/store.ts";
 import { RecentProjects } from "./RecentProjects.tsx";
 import { SuggestionDialog } from "./SuggestionDialog.tsx";
 import { Workbench } from "./Workbench.tsx";
+import { TitleStrip } from "./chrome/TitleStrip.tsx";
+import { useAppCommands } from "./chrome/useAppCommands.tsx";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
 import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
 
@@ -91,6 +93,24 @@ function MultiTabScreen(): JSX.Element {
   );
 }
 
+/**
+ * The title strip above the screens that have no project: the window has
+ * no frame of its own on Windows, so without this the start screen would
+ * have nothing to drag, no window buttons, and no way to quit.
+ */
+function StartShell({ children }: { children: JSX.Element }): JSX.Element {
+  const { ctx, about } = useAppCommands({
+    hasProject: false, identityOpen: false, toggleIdentity: () => undefined,
+  });
+  return (
+    <div className="start-shell">
+      <TitleStrip ctx={ctx} showProject={false} />
+      {about}
+      {children}
+    </div>
+  );
+}
+
 export function App(): JSX.Element {
   const phase = useStore((s) => s.phase);
   const hostStatus = useStore((s) => s.hostStatus);
@@ -120,7 +140,7 @@ export function App(): JSX.Element {
     void resumeLast();
   }, [phase, hostStatus, lastSession, resumeLast]);
 
-  if (phase === "multitab") return <MultiTabScreen />;
-  if (phase !== "open") return <StartScreen />;
+  if (phase === "multitab") return <StartShell><MultiTabScreen /></StartShell>;
+  if (phase !== "open") return <StartShell><StartScreen /></StartShell>;
   return <><Workbench /><SuggestionDialog /></>;
 }

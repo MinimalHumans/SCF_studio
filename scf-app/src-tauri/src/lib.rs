@@ -9,9 +9,13 @@
 //!
 //! An agent can start the app: the pipe runs it with `--background`, and
 //! the window stays hidden. The app then lives as long as some agent is
-//! connected, or until the person opens it, which shows the window. A
-//! window closed while an agent is connected is only hidden, and the app
-//! exits when the last one goes.
+//! connected, and exits a little after the last one goes, unless a person
+//! has opened the window, which keeps it until they quit.
+//!
+//! The app has a tray icon, so a hidden app can be seen and reached: it
+//! says how many assistants are connected, opens the window on a click,
+//! and quits from its menu (and from File > Exit). Closing the window
+//! leaves the app in the tray rather than ending it.
 
 mod files;
 mod mcp_relay;
@@ -21,10 +25,14 @@ mod sql_socket;
 mod token;
 
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use serde::Serialize;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
 /// What the window's own host is given (`src/host/windowHost.ts`).
 #[derive(Serialize)]
@@ -73,7 +81,121 @@ fn main_window(app: &AppHandle) -> Option<tauri::WebviewWindow> {
     app.get_webview_window("main")
 }
 
+/// Whether a person has had the window up. An app an agent started and
+/// nobody has opened leaves when it is unused; one that has been seen
+/// stays, in the tray, until it is quit.
+#[derive(Default)]
+struct Seen(AtomicBool);
+
+/// Whether the tray icon exists. Without one, closing the window cannot
+/// leave the app anywhere to be found, so it ends the app as usual.
+#[derive(Default)]
+struct TrayUp(AtomicBool);
+
+/// The tray menu's Quit, whose label says what quitting costs.
+struct QuitItem(MenuItem<tauri::Wry>);
+
+fn assistants(n: usize) -> String {
+    if n == 1 {
+        "1 assistant".into()
+    } else {
+        format!("{n} assistants")
+    }
+}
+
+fn tooltip(n: usize) -> String {
+    let name = if cfg!(debug_assertions) { "SCF Editor (dev)" } else { "SCF Editor" };
+    if n == 0 {
+        name.into()
+    } else {
+        format!("{name} \u{2014} {} connected", assistants(n))
+    }
+}
+
+fn quit_text(n: usize) -> String {
+    if n == 0 {
+        "Quit SCF Editor".into()
+    } else {
+        format!("Quit SCF Editor ({} connected)…", assistants(n))
+    }
+}
+
+fn build_tray(app: &AppHandle) -> tauri::Result<()> {
+    let open = MenuItem::with_id(app, "open", "Open SCF Editor", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", quit_text(0), true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&open, &PredefinedMenuItem::separator(app)?, &quit])?;
+    let mut tray = TrayIconBuilder::with_id("main")
+        .tooltip(tooltip(0))
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            "open" => show(app),
+            "quit" => request_quit(app),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                show(tray.app_handle());
+            }
+        });
+    if let Some(icon) = app.default_window_icon() {
+        tray = tray.icon(icon.clone());
+    }
+    tray.build(app)?;
+    app.manage(QuitItem(quit));
+    Ok(())
+}
+
+/// Whether the quit question is already on screen, so a second click on
+/// Exit does not stack another.
+#[derive(Default)]
+struct Asking(AtomicBool);
+
+/// Quit, from the tray or File > Exit. Immediately when nobody is
+/// connected; otherwise only once the person has said they mean it, since
+/// quitting ends each assistant's connection and whatever it was doing.
+fn request_quit(app: &AppHandle) {
+    let n = app.state::<mcp_relay::Relay>().count();
+    if n == 0 {
+        app.exit(0);
+        return;
+    }
+    if app.state::<Asking>().0.swap(true, Ordering::Relaxed) {
+        return;
+    }
+    let handle = app.clone();
+    app.dialog()
+        .message(format!(
+            "{} connected to SCF Editor. Quitting disconnects {} and ends \
+             anything {} is doing.",
+            if n == 1 { "1 assistant is".to_string() } else { format!("{n} assistants are") },
+            if n == 1 { "it" } else { "them" },
+            if n == 1 { "it" } else { "they" },
+        ))
+        .title("Quit SCF Editor?")
+        .kind(MessageDialogKind::Warning)
+        .buttons(MessageDialogButtons::OkCancelCustom("Quit".into(), "Cancel".into()))
+        .show(move |quit| {
+            handle.state::<Asking>().0.store(false, Ordering::Relaxed);
+            if quit {
+                handle.exit(0);
+            }
+        });
+}
+
+/// Quit the app, from the window's File > Exit.
+#[tauri::command]
+fn quit_app(app: AppHandle) {
+    request_quit(&app);
+}
+
 fn show(app: &AppHandle) {
+    app.state::<Seen>().0.store(true, Ordering::Relaxed);
     if let Some(w) = main_window(app) {
         let _ = w.show();
         let _ = w.unminimize();
@@ -85,14 +207,15 @@ fn hidden(app: &AppHandle) -> bool {
     main_window(app).is_none_or(|w| !w.is_visible().unwrap_or(false))
 }
 
-/// Exit in a while, if the window is still hidden and by then there has
+/// Exit in a while, if nobody has opened the window and by then there has
 /// been no pipe for that long.
 fn exit_if_unused(app: &AppHandle) {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(LINGER).await;
         let idle = app.state::<mcp_relay::Relay>().idle_for();
-        if hidden(&app) && idle.is_some_and(|d| d >= LINGER) {
+        let seen = app.state::<Seen>().0.load(Ordering::Relaxed);
+        if hidden(&app) && !seen && idle.is_some_and(|d| d >= LINGER) {
             app.exit(0);
         }
     });
@@ -177,6 +300,9 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(Seen::default())
+        .manage(Asking::default())
+        .manage(TrayUp::default())
         .manage(databases)
         .manage(socket)
         .manage(relay.clone())
@@ -208,8 +334,20 @@ pub fn run() {
                 window = window.title("SCF Editor (dev)");
             }
             window.build()?;
+            match build_tray(&handle) {
+                Ok(()) => handle.state::<TrayUp>().0.store(true, Ordering::Relaxed),
+                // A desktop with no tray (some Linux ones) still works;
+                // closing the window then ends the app, as it always did.
+                Err(e) => eprintln!("scf-editor: no tray icon: {e}"),
+            }
             let on_count = handle.clone();
             relay.on_count(move |n| {
+                if let Some(tray) = on_count.tray_by_id("main") {
+                    let _ = tray.set_tooltip(Some(tooltip(n)));
+                }
+                if let Some(quit) = on_count.try_state::<QuitItem>() {
+                    let _ = quit.0.set_text(quit_text(n));
+                }
                 if n == 0 && hidden(&on_count) {
                     exit_if_unused(&on_count);
                 }
@@ -223,7 +361,10 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                if window.state::<mcp_relay::Relay>().count() > 0 {
+                // Closing leaves the app in the tray; without a tray, only
+                // an app an agent is using is kept (hidden) rather than ended.
+                let tray = window.state::<TrayUp>().0.load(Ordering::Relaxed);
+                if tray || window.state::<mcp_relay::Relay>().count() > 0 {
                     api.prevent_close();
                     let _ = window.hide();
                 }
@@ -231,6 +372,7 @@ pub fn run() {
         });
     let builder = builder.invoke_handler(tauri::generate_handler![
         host_setup,
+        quit_app,
         sql::sql_open,
         sql::sql_close,
         sql::sql_reset,

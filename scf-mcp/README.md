@@ -16,7 +16,15 @@ machine except as the answers your assistant asks for.
 are its clients, so a film open in both is one session: a change either
 makes, the other sees. If the app is not running, the pipe starts it in
 the background, window hidden; such an app exits a little after its last
-assistant leaves, unless someone has opened its window.
+assistant leaves, unless someone has opened its window. While it runs
+it has a tray icon, so a background copy can be seen, opened or quit.
+
+Point the assistant at the executable with the argument `mcp` and
+nothing else. A config left over from the old Node server (the
+executable followed by `…/server.js`) is not an MCP launch: it starts
+the app as if you had opened it, window and all, every time the
+assistant starts its servers. The executable now refuses a `.js`
+argument and says so.
 
 **It reads, and it can change a film — carefully.** Most tools read.
 The write tools (`create_row`, `update_row`, `delete_row`, `add_shot`,

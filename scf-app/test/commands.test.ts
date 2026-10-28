@@ -10,7 +10,7 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
   assetRoot: "ok", developerMode: true,
   newProject: vi.fn(), openProject: vi.fn(), saveProjectAs: vi.fn(),
   closeProject: vi.fn(), attachFolder: vi.fn(), toggleIdentity: vi.fn(),
-  showAbout: vi.fn(), ...over,
+  showAbout: vi.fn(), exitApp: vi.fn(), ...over,
 });
 
 const key = (k: string, mods: { shift?: boolean; alt?: boolean } = {}) => ({
@@ -24,7 +24,7 @@ describe("menu model", () => {
     expect(m.map((g) => g.name)).toEqual(["File", "View", "Help"]);
     expect(m[0]!.items.map((i) => i.id)).toEqual([
       "file.new", "file.open", "file.saveAs", "file.assetRoot",
-      "file.close", "file.settings"]);
+      "file.close", "file.settings", "file.exit"]);
   });
 
   test("project commands are off without a project", () => {
@@ -88,6 +88,14 @@ describe("running commands", () => {
     expect(c.saveProjectAs).toHaveBeenCalledOnce();
   });
 
+  test("Exit is always there, with or without a project", () => {
+    const c = ctx({ hasProject: false, hostReady: false });
+    const exit = menuModel(c)[0]!.items.find((i) => i.id === "file.exit")!;
+    expect(exit.disabled).toBe(false);
+    expect(runCommand("file.exit", c)).toBe(true);
+    expect(c.exitApp).toHaveBeenCalledOnce();
+  });
+
   test("an unavailable or unknown command does nothing", () => {
     const c = ctx({ hasProject: false });
     expect(runCommand("file.close", c)).toBe(false);
@@ -99,6 +107,7 @@ describe("running commands", () => {
 describe("shortcuts", () => {
   test("a bound key finds its command", () => {
     expect(commandForKey(key("o"))?.id).toBe("file.open");
+    expect(commandForKey(key("q"))?.id).toBe("file.exit");
     expect(commandForKey(key("S", { shift: true }))?.id).toBe("file.saveAs");
     expect(commandForKey({ ...key("o"), ctrlKey: false, metaKey: true })?.id)
       .toBe("file.open");

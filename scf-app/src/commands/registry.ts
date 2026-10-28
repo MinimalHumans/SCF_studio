@@ -30,6 +30,8 @@ export interface CommandContext {
   toggleIdentity(): void;
   identityOpen: boolean;
   showAbout(): void;
+  /** Quit the app, which closing the window no longer does. */
+  exitApp(): void;
 }
 
 export interface Command {
@@ -75,6 +77,11 @@ export const COMMANDS: readonly Command[] = [
   { id: "file.settings", label: "Settings", menu: "File",
     shortcut: "Ctrl+,", pending: "Not built yet", run: () => undefined },
 
+  // Closing the window leaves the app in the tray, so quitting has to be
+  // somewhere plain to find.
+  { id: "file.exit", label: "Exit", menu: "File", shortcut: "Ctrl+Q",
+    run: (c) => { c.exitApp(); } },
+
   { id: "view.mediaQueue", label: "Media queue", menu: "View",
     pending: "Not built yet", run: () => undefined },
   { id: "view.auditLog", label: "Audit log", menu: "View",
@@ -89,7 +96,7 @@ export const COMMANDS: readonly Command[] = [
 
 /** Where separators fall: before the first command of each of these. */
 const SEPARATE_BEFORE = new Set([
-  "file.assetRoot", "file.close", "file.settings",
+  "file.assetRoot", "file.close", "file.settings", "file.exit",
 ]);
 
 export interface MenuItem {

@@ -14,8 +14,13 @@ executable as a stdio pipe (`src-tauri/src/pipe.rs`), which the shell
 relays to the window (`mcp_relay.rs`), so an assistant and the editor
 share one host. The pipe starts the app with its window hidden when it
 is not running; such an app exits a little after its last assistant
-leaves, unless someone has opened the window. Closing the window while
-an assistant is connected only hides it.
+leaves, unless someone has opened the window. The app has a tray icon,
+which says how many assistants are connected, opens the window on a
+click, and quits from its menu; closing the window leaves the app there
+rather than ending it, and File > Exit (Ctrl+Q) ends it. Quitting with
+an assistant connected asks first, since it ends their connections. On a desktop
+with no tray, closing the window ends the app unless an assistant is
+connected, as before.
 
 ## Developing
 

@@ -25,12 +25,14 @@ function draftDirty(draft: { values: unknown; original: unknown } | null):
  * is laid out for more (docs/ui-rework-tabs.md §5), and the tab is the
  * one place a project's problems are shown.
  */
-export function TitleStrip({ ctx, search, status }: {
+export function TitleStrip({ ctx, search, status, showProject = true }: {
   ctx: CommandContext;
   /** The search box, until the palette replaces it. */
-  search: ReactNode;
+  search?: ReactNode;
   /** Folder and outside-edit state of the active project. */
-  status: ReactNode;
+  status?: ReactNode;
+  /** False on the start screen, where there is no project to tab. */
+  showProject?: boolean;
 }): JSX.Element {
   const { projectName, hostLost, assetRootStatus, externalChange,
           externalEdit, draft } = useStore();
@@ -47,20 +49,23 @@ export function TitleStrip({ ctx, search, status }: {
     <header className={"title-strip" + (frameless ? " frameless" : "")}>
       <AppMenu ctx={ctx} />
       <img className="title-mark" src={logoSmallCloud} alt="SCF" />
-      <div className="tab-list" role="tablist" aria-label="Open projects">
-        <div className={"tab active" + (state === null ? "" : ` tab-${state}`)}
-             role="tab" aria-selected="true" title={why ?? projectName ?? ""}>
-          <span className="tab-title">{projectName}</span>
-          {state !== null && (
-            <span className="tab-state" role="img" aria-label={why ?? ""}>
-              {TAB_GLYPH[state]}
-            </span>
-          )}
+      {showProject && (
+        <div className="tab-list" role="tablist" aria-label="Open projects">
+          <div className={"tab active" +
+                          (state === null ? "" : ` tab-${state}`)}
+               role="tab" aria-selected="true" title={why ?? projectName ?? ""}>
+            <span className="tab-title">{projectName}</span>
+            {state !== null && (
+              <span className="tab-state" role="img" aria-label={why ?? ""}>
+                {TAB_GLYPH[state]}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       <div className="title-drag" data-tauri-drag-region />
       {search}
-      <div className="title-status">{status}</div>
+      {status !== undefined && <div className="title-status">{status}</div>}
       {frameless && <WindowControls />}
     </header>
   );

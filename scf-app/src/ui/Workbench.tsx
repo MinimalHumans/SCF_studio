@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useStore } from "../state/store.ts";
-import { useRememberedFlag } from "./useRememberedFlag.ts";
 import { CategoryTree } from "./CategoryTree.tsx";
 import { SubjectNav } from "./SubjectNav.tsx";
 import { SubjectView } from "./SubjectView.tsx";
@@ -59,10 +58,7 @@ import { IdentityPanel } from "./IdentityPanel.tsx";
 import { AssetBrowser, AssetPathRail } from "./AssetBrowser.tsx";
 import { ActivityBar } from "./workspace/ActivityBar.tsx";
 import { TitleStrip } from "./chrome/TitleStrip.tsx";
-import { AboutDialog } from "./chrome/AboutDialog.tsx";
-import {
-  commandForKey, runCommand, type CommandContext,
-} from "../commands/registry.ts";
+import { useAppCommands } from "./chrome/useAppCommands.tsx";
 import { CharacterRail, SubjectRail } from "./workspace/CharacterRail.tsx";
 import { LocationWorkspace } from "./workspace/LocationWorkspace.tsx";
 import { PropWorkspace } from "./workspace/PropWorkspace.tsx";
@@ -145,37 +141,12 @@ export function Workbench(): JSX.Element {
   // rather than a seventh nav tab, because it reads whatever row is
   // already open.
   const [identityOpen, setIdentityOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [developerMode] = useRememberedFlag("scf:developer");
-  const { navMode, openRow, selectedEntityType, selectedSubject,
-          assetRoot, assetRootStatus, hostStatus, newProject, openFromPicker, saveProjectAs,
-          closeProject, attachFolder } = useStore();
-
-  // What the menu and the shortcuts act through (commands/registry.ts).
-  const commandCtx: CommandContext = {
-    hasProject: true, hostReady: hostStatus === "ready",
-    newProject: () => { void newProject(); },
-    openProject: () => { void openFromPicker(); },
-    saveProjectAs: () => { void saveProjectAs(); },
-    closeProject: () => { void closeProject(); },
-    attachFolder: () => { void attachFolder(); },
-    assetRoot: assetRoot === null ? "unset"
-      : assetRootStatus === "missing" ? "missing" : "ok",
-    developerMode,
+  const { navMode, openRow, selectedEntityType, selectedSubject } =
+    useStore();
+  const { ctx: commandCtx, about } = useAppCommands({
+    hasProject: true, identityOpen,
     toggleIdentity: () => { setIdentityOpen((v) => !v); },
-    identityOpen, showAbout: () => { setAboutOpen(true); },
-  };
-  const ctxRef = useRef(commandCtx);
-  ctxRef.current = commandCtx;
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent): void => {
-      const command = commandForKey(e);
-      if (command === undefined) return;
-      if (runCommand(command.id, ctxRef.current)) e.preventDefault();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  });
 
   const main = openRow !== null
     ? <EntityForm key={`${openRow.entity}:${String(openRow.id)}`} />
@@ -252,7 +223,7 @@ export function Workbench(): JSX.Element {
       <HostBanner />
       <TitleStrip ctx={commandCtx} search={<SearchBox />}
                   status={<><RootStatus /><SaveControls /></>} />
-      {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      {about}
       <div className="panels">
         <ActivityBar />
         {railContent !== null && (
