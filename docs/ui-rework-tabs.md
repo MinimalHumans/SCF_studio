@@ -41,7 +41,7 @@ Facts the design rests on, read from the tree:
 |---|---|---|
 | Scope | one open SCF file | app |
 | Count | many, one per file; opening an already-open file focuses it | singleton per tool: Media queue, Audit log, Settings |
-| Owns | host connection, folder state, save state, external-edit state, nav memory | nothing project-specific; may filter by project |
+| Owns | host connection, folder state, external-edit state, nav memory | nothing project-specific; may filter by project |
 | Sidebar | the activity bar and rail for that project | none, or the tool's own nav (Settings sections) |
 
 Project identity is the host's canonical path (`platform.real`), so two
@@ -107,7 +107,7 @@ CodeMirror proves unreliable.
 
 ## 5. Title strip
 
-`[menu] [Project A ●] [Project B] [+] ...drag region... [palette] [gear] [window controls]`
+`[menu] [Project A ●] [Project B] [+] ...drag region... [palette] [window controls]`
 
 - **Window chrome.** Needs `decorations: false` on the main window and
   our own minimize/maximize/close, a `data-tauri-drag-region` spacer,
@@ -116,8 +116,13 @@ CodeMirror proves unreliable.
   11 before committing to this; if they regress, the fallback is
   `titleBarOverlay`-style native controls with our content to their
   left.
-- **Menu (hamburger).** File: Open, Save as, Close project, Attach
-  folder. View: Media queue, Audit log, Developer (Identity). Help:
+- **Menu (hamburger).** File: New, Open, Save as, the asset root
+  command, Close project, Settings. The asset root command names what it
+  will do: "Select…" before a folder is chosen, "Change…" once it is
+  found, "Locate…" when the chosen folder is gone. View: Media queue,
+  Audit log, and Row identity, which appears only when Developer mode is
+  on (a Settings > Developer toggle; until Settings exists it is the
+  `scf:developer` flag in local storage). Help:
   About with schema and build (what `topbar-schema` shows now). macOS:
   native menu, same command ids.
 - **One command registry** feeds the hamburger, the palette and the
@@ -134,16 +139,19 @@ CodeMirror proves unreliable.
 - **Palette (Ctrl+K)** replaces `SearchBox`. Scope: commands, tool tabs,
   open projects, and entity search within the active project. Entity
   search reuses the existing query; the palette is only the new host.
-- **Gear** opens the Settings tool tab. Not in any sidebar.
+- **Settings** is a File menu item (Ctrl+,) that opens the Settings tool
+  tab. No gear in the strip, and nothing in any sidebar.
 
 ## 6. Status bar
 
 Left: active project's folder state, empty when healthy. Centre/right:
 queue summary (`3 active · 12 queued`, active-job progress), click
 opens the Queue tab; media-server connection state beside it,
-disconnected in the warning colour. Far right: save state of the active
-project. All three read the active context or the app store; the bar
-itself has no state.
+disconnected in the warning colour. There is no save state: every change
+is written as it is made, so there is nothing to report until a write
+fails, and that already shows as the tab's warning and the host banner.
+The bar reads the active context or the app store and has no state of
+its own.
 
 ## 7. Services
 
@@ -273,7 +281,7 @@ Each step ships and leaves the app working.
    of tabs.
 4. **Title strip shell**: custom chrome, hamburger, tab strip with a
    single project tab, tool-tab host with Settings as the first tool tab,
-   bottom status bar (folder and save state only).
+   bottom status bar (folder state only).
 5. **Multiple project tabs**: open-in-new-tab, focus-if-open, the
    section 4 unmount/flush rules, per-tab dots, close confirm, and
    reopen-all on reload.

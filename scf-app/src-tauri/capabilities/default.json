@@ -1,11 +1,16 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The editor window. It runs the host and the MCP itself on the app's own commands, and needs plugin permissions only for the native file/folder dialogs and opening links in the system browser.",
+  "description": "The editor window. It runs the host and the MCP itself on the app's own commands, and needs plugin permissions only for the native file/folder dialogs and opening links in the system browser, and window permissions for the title strip, which is the title bar where the frame is not drawn.",
   "windows": ["main"],
   "permissions": [
     "core:default",
     "dialog:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-minimize",
+    "core:window:allow-close",
     {
       "identifier": "opener:allow-open-url",
       "allow": [{ "url": "https://*" }, { "url": "http://*" }, { "url": "mailto:*" }]

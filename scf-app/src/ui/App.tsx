@@ -39,7 +39,7 @@ function StartScreen(): JSX.Element {
           <button disabled={!ready}
                   onClick={() => void openFromPicker()}
                   title="If app.db already knows this file's asset folder
-it is attached automatically; otherwise choose it from the topbar.">
+it is attached automatically; otherwise choose it from the File menu.">
             Open an SCF File
           </button>
           <button disabled={!ready} onClick={() => void openDemo()}>

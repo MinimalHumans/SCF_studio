@@ -197,6 +197,12 @@ pub fn run() {
                 .expect("tauri.conf.json has the main window");
             let mut window =
                 tauri::WebviewWindowBuilder::from_config(&handle, &config)?.visible(!background);
+            // Windows draws no frame of its own: the title strip is the
+            // title bar, with its own window controls. Elsewhere the
+            // native frame stays until that has been tried there.
+            if cfg!(windows) {
+                window = window.decorations(false);
+            }
             if cfg!(debug_assertions) {
                 // Beside an installed copy, which has its own data and pipe.
                 window = window.title("SCF Editor (dev)");

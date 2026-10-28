@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-import { registry, useStore } from "../state/store.ts";
+import { useStore } from "../state/store.ts";
+import { useRememberedFlag } from "./useRememberedFlag.ts";
 import { CategoryTree } from "./CategoryTree.tsx";
 import { SubjectNav } from "./SubjectNav.tsx";
 import { SubjectView } from "./SubjectView.tsx";
@@ -14,7 +15,6 @@ import { undoSummary } from "@scf-core/ops/undoDelete.ts";
 import { ShootView } from "./ShootView.tsx";
 import { ScriptReader } from "./ScriptReader.tsx";
 import { useStore as useStoreRaw } from "../state/store.ts";
-import logoSmallCloud from "../assets/logoSmall_cloud.svg";
 import logoFullWhite from "../assets/logoFull_white.svg";
 import { Component, useEffect, useRef, useState, type ReactNode }
   from "react";
@@ -58,6 +58,11 @@ import { SceneRail } from "./SceneRail.tsx";
 import { IdentityPanel } from "./IdentityPanel.tsx";
 import { AssetBrowser, AssetPathRail } from "./AssetBrowser.tsx";
 import { ActivityBar } from "./workspace/ActivityBar.tsx";
+import { TitleStrip } from "./chrome/TitleStrip.tsx";
+import { AboutDialog } from "./chrome/AboutDialog.tsx";
+import {
+  commandForKey, runCommand, type CommandContext,
+} from "../commands/registry.ts";
 import { CharacterRail, SubjectRail } from "./workspace/CharacterRail.tsx";
 import { LocationWorkspace } from "./workspace/LocationWorkspace.tsx";
 import { PropWorkspace } from "./workspace/PropWorkspace.tsx";
@@ -140,8 +145,37 @@ export function Workbench(): JSX.Element {
   // rather than a seventh nav tab, because it reads whatever row is
   // already open.
   const [identityOpen, setIdentityOpen] = useState(false);
-  const { projectName, navMode, openRow,
-          selectedEntityType, selectedSubject } = useStore();
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [developerMode] = useRememberedFlag("scf:developer");
+  const { navMode, openRow, selectedEntityType, selectedSubject,
+          assetRoot, assetRootStatus, hostStatus, newProject, openFromPicker, saveProjectAs,
+          closeProject, attachFolder } = useStore();
+
+  // What the menu and the shortcuts act through (commands/registry.ts).
+  const commandCtx: CommandContext = {
+    hasProject: true, hostReady: hostStatus === "ready",
+    newProject: () => { void newProject(); },
+    openProject: () => { void openFromPicker(); },
+    saveProjectAs: () => { void saveProjectAs(); },
+    closeProject: () => { void closeProject(); },
+    attachFolder: () => { void attachFolder(); },
+    assetRoot: assetRoot === null ? "unset"
+      : assetRootStatus === "missing" ? "missing" : "ok",
+    developerMode,
+    toggleIdentity: () => { setIdentityOpen((v) => !v); },
+    identityOpen, showAbout: () => { setAboutOpen(true); },
+  };
+  const ctxRef = useRef(commandCtx);
+  ctxRef.current = commandCtx;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      const command = commandForKey(e);
+      if (command === undefined) return;
+      if (runCommand(command.id, ctxRef.current)) e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const main = openRow !== null
     ? <EntityForm key={`${openRow.entity}:${String(openRow.id)}`} />
@@ -216,27 +250,9 @@ export function Workbench(): JSX.Element {
         </div>
       )}
       <HostBanner />
-      <header className="topbar">
-        <img className="topbar-mark" src={logoSmallCloud} alt="SCF" />
-        <span className="topbar-project">{projectName}</span>
-        <span className="topbar-schema"
-              title={`scf-app ${__APP_VERSION__} · ${__APP_COMMIT__}` +
-                     ` · built ${__APP_BUILT__}`}>
-          schema {registry.schemaVersion} · v{__APP_VERSION__}
-        </span>
-        <RootStatus />
-        <button className="ghost tiny"
-                aria-pressed={identityOpen}
-                title="Row identity: uuid coverage, lookup, version chains"
-                onClick={() => setIdentityOpen((v) => !v)}>
-          Identity
-        </button>
-        <SearchBox />
-        <SaveControls />
-          <button onClick={() => void useStoreRaw.getState().closeProject()}>
-            Close project
-          </button>
-      </header>
+      <TitleStrip ctx={commandCtx} search={<SearchBox />}
+                  status={<><RootStatus /><SaveControls /></>} />
+      {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
       <div className="panels">
         <ActivityBar />
         {railContent !== null && (
@@ -337,12 +353,12 @@ function UndoToast(): JSX.Element | null {
 
 /**
  * There is no Save: the host writes every change to the file as it is
- * made. What is left is Save As (version up, or rename), and a quiet
- * statement of the fact so nobody goes looking for the button.
+ * made. What is left is a quiet statement of the fact so nobody goes
+ * looking for the button; Save As (version up, or rename) is in the
+ * File menu.
  */
 function SaveControls(): JSX.Element {
-  const { saveProjectAs, projectPath, externalEdit, dismissExternalEdit } =
-    useStore();
+  const { projectPath, externalEdit, dismissExternalEdit } = useStore();
   return (
     <>
       {externalEdit !== null && (
@@ -352,16 +368,6 @@ function SaveControls(): JSX.Element {
           edited by {externalEdit.by}
         </button>
       )}
-      <span className="topbar-saved muted"
-            title={`Every change is written to ${projectPath ?? "the file"
-                    } as you make it.`}>
-        saved
-      </span>
-      <button onClick={() => void saveProjectAs()}
-              title={"Copy to a new .scf file (version up or rename); " +
-                     "the project then follows that file"}>
-        Save as…
-      </button>
     </>
   );
 }
