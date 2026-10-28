@@ -37,6 +37,9 @@ import { refuseQuery } from "./readGuard.ts";
 import {
   actorKindOf, firstUuidIn, type AuditActor, type AuditStore,
 } from "./auditStore.ts";
+import {
+  describeTarget, planTarget, readRow, type TargetFacts,
+} from "./auditTarget.ts";
 
 /** Thrown inside a handler to answer with a specific code. */
 export class HostFailure extends Error {
@@ -284,13 +287,15 @@ class HostCoreImpl implements HostCore {
   /** One line in the audit trail; a failure to write it is reported, not thrown. */
   private async audit(
       who: { kind: AuditActor; name: string }, film: Film, action: string,
-      detail: { summary?: string; targetUuid?: string | null } = {}):
+      detail: { summary?: string; targetUuid?: string | null;
+                targetEntity?: string | null } = {}):
       Promise<void> {
     if (this.auditSink === undefined) return;
     try {
       await this.auditSink.append({
         actorKind: who.kind, actorName: who.name, scope: "project",
         projectUuid: film.uuid, projectPath: film.path, action,
+        targetEntity: detail.targetEntity ?? null,
         targetUuid: detail.targetUuid ?? null,
         summary: detail.summary ?? null,
       });
@@ -505,6 +510,22 @@ class HostCoreImpl implements HostCore {
     return film;
   }
 
+  /** The row a write touched, as it stands after the write. */
+  private async targetFacts(
+      film: Film, plan: NonNullable<ReturnType<typeof planTarget>>,
+      before: Row | null, outcome: unknown, failure: unknown):
+      Promise<TargetFacts> {
+    // A create's row is known only by the id the write returned.
+    const id = plan.id ?? (failure === undefined && typeof outcome === "number"
+      ? outcome : null);
+    const after = plan.kind === "delete" || id === null ? null
+      : await readRow(film.reader.exec, this.registry, plan.entity, id)
+        .catch(() => null);
+    return describeTarget(
+      this.registry,
+      plan.kind === "create" ? { ...plan, id } : plan, before, after);
+  }
+
   private async uuidOf(session: Session): Promise<string | null> {
     try {
       const [row] = await session.exec("SELECT uuid FROM project LIMIT 1");
@@ -575,10 +596,20 @@ class HostCoreImpl implements HostCore {
     const snapshot = what.snapshot ? await this.snapshot(film) : undefined;
     const before = this.revisionOf(film);
     const args = JSON.stringify(p["args"] ?? null).slice(0, 500);
+    // The row this write addresses, read ahead of it so that what
+    // changed can be said afterwards. Without an audit trail there is
+    // nobody to tell, so nothing is read.
+    const plan = this.auditSink === undefined ? null
+      : planTarget(this.registry, what.via, what.name, p["args"]);
+    const rowBefore = plan?.id == null ? null : await readRow(
+      film.reader.exec, this.registry, plan.entity, plan.id)
+      .catch(() => null);
+    let outcome: unknown;
     let failure: unknown;
     try {
       const out = await run(
         film, expected === undefined ? undefined : expected - film.base);
+      outcome = out.result;
       return { result: out.result, revision: film.base + out.revision,
                ...(snapshot === undefined ? {} : { snapshot }) };
     } catch (e) {
@@ -594,12 +625,15 @@ class HostCoreImpl implements HostCore {
         ...(failure === undefined ? {} : { error: failure instanceof Error
           ? failure.message.slice(0, 300) : String(failure) }),
       });
+      const facts = plan === null ? null
+        : await this.targetFacts(film, plan, rowBefore, outcome, failure);
+      const failed = failure === undefined ? "" : `failed: ${
+        failure instanceof Error ? failure.message : String(failure)} `;
       await this.audit(
         this.asUser(c), film, `${what.via}.${what.name}`,
-        { targetUuid: firstUuidIn(args),
-          summary: failure === undefined ? args : `failed: ${
-            failure instanceof Error ? failure.message : String(failure)
-          } ${args}` });
+        { targetEntity: facts?.entity ?? null,
+          targetUuid: facts?.uuid ?? firstUuidIn(args),
+          summary: `${failed}${facts?.summary ?? args}` });
       if (revision !== before) {
         this.broadcast(film, {
           event: "revision", path: film.path, revision, by: c.name,

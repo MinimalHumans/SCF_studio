@@ -71,6 +71,9 @@ export interface AuditFilter {
   targetUuid?: string;
   /** Substring of the action or summary. */
   search?: string;
+  /** Leave out open/close/reload events, which an assistant makes around
+   *  every tool call and which bury the changes. */
+  hideLifecycle?: boolean;
   /** Inclusive ISO 8601 bounds on `at`. */
   since?: string;
   until?: string;
@@ -212,6 +215,7 @@ function where(f: AuditFilter): { sql: string; params: SqlValue[] } {
       "(action LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\')");
     params.push(like, like);
   }
+  if (f.hideLifecycle === true) clauses.push("action NOT LIKE 'project.%'");
   if (f.since !== undefined) { clauses.push("at >= ?"); params.push(f.since); }
   if (f.until !== undefined) { clauses.push("at <= ?"); params.push(f.until); }
   if (f.beforeId !== undefined) {

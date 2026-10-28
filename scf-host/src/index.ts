@@ -12,6 +12,10 @@ export {
   type AuditScope, type AuditStore, type AuditVerification,
 } from "./auditStore.ts";
 export {
+  describeTarget, fieldChanges, planTarget, readRow,
+  type TargetFacts, type TargetPlan,
+} from "./auditTarget.ts";
+export {
   createAssetAccess, type AssetAccess, type ByteRange,
 } from "./assets.ts";
 export { openNodeAppStore } from "./nodeAppStore.ts";

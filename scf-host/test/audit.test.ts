@@ -108,19 +108,20 @@ describe("host audit trail", () => {
     expect(await actions()).toEqual(["project.open"]);
   });
 
-  test("the film's uuid and a uuid in the arguments are kept", async () => {
+  test("the film's uuid is kept; a uuid in the arguments is the fallback",
+      async () => {
     const c = await connect("window");
     await ok(c, "open", { path });
     const [row] = await ok(c, "query",
       { sql: "SELECT uuid FROM project LIMIT 1" }) as { uuid: string | null }[];
-    const target = "33333333-3333-4333-8333-333333333333";
-    await c.handle("op", {
-      name: "record.create",
-      args: { entity: "character", values: { name: "Ada", notes: target } } });
+    // No single row is addressed, so the only clue is what was passed.
+    const mentioned = "33333333-3333-4333-8333-333333333333";
+    await c.handle("call", {
+      name: "titlePage.setKey", args: ["Notes", mentioned] });
     const last = (await audit.query({ limit: 1 }))[0]!;
     expect(last.projectUuid).toBe(row?.uuid ?? null);
-    expect(last.targetUuid).toBe(target);
-    expect(await audit.query({ targetUuid: target })).toHaveLength(1);
+    expect(last.targetUuid).toBe(mentioned);
+    expect(await audit.query({ targetUuid: mentioned })).toHaveLength(1);
   });
 
   test("a change behind the host's back is recorded once, as external",
@@ -145,5 +146,97 @@ describe("host audit trail", () => {
     const r = await create(c, "Ada");
     expect(r.ok).toBe(true);
     expect(failures.length).toBeGreaterThan(0);
+  });
+
+  describe("the row a write touched", () => {
+    const makeCharacter = async (c: HostConnection, name: string) => {
+      const r = await create(c, name);
+      if (!r.ok) throw new Error(r.error.message);
+      return (r.result as { result: number }).result;
+    };
+    const uuidOf = async (c: HostConnection, id: number) => {
+      const [row] = await ok(c, "query", {
+        sql: "SELECT uuid FROM character WHERE id = ?", params: [id] }) as
+        { uuid: string }[];
+      return row!.uuid;
+    };
+
+    test("a create is attached to the new row", async () => {
+      const c = await connect("window");
+      await ok(c, "open", { path });
+      const id = await makeCharacter(c, "Ada");
+      const e = (await audit.query({ limit: 1 }))[0]!;
+      expect(e.targetEntity).toBe("character");
+      expect(e.targetUuid).toBe(await uuidOf(c, id));
+      expect(e.summary).toBe('created character "Ada"');
+    });
+
+    test("an update says which fields changed, from what to what",
+        async () => {
+      const c = await connect("mcp: Claude Desktop");
+      await ok(c, "open", { path });
+      const id = await makeCharacter(c, "Ada");
+      await ok(c, "op", {
+        name: "record.update",
+        args: { entity: "character", id,
+                values: { name: "Ada Cade", role: "protagonist" } } });
+      const e = (await audit.query({ limit: 1 }))[0]!;
+      expect(e.targetUuid).toBe(await uuidOf(c, id));
+      expect(e.summary).toContain('name: "Ada" → "Ada Cade"');
+      expect(e.summary).toContain('role: ∅ → "protagonist"');
+      // Everything that happened to this row, found by its uuid.
+      expect((await audit.query({ targetUuid: e.targetUuid! }))
+        .map((x) => x.summary?.split(" ")[0]))
+        .toEqual(["character", "created"]);
+    });
+
+    test("an update through the window's positional call is attached too",
+        async () => {
+      const c = await connect("window");
+      await ok(c, "open", { path });
+      const id = await makeCharacter(c, "Ada");
+      await ok(c, "call", {
+        name: "record.update",
+        args: ["character", id, { name: "Ada Cade" }] });
+      const e = (await audit.query({ limit: 1 }))[0]!;
+      expect(e.action).toBe("call.record.update");
+      expect(e.targetUuid).toBe(await uuidOf(c, id));
+      expect(e.summary).toContain('name: "Ada" → "Ada Cade"');
+    });
+
+    test("a delete keeps the uuid of the row that is gone", async () => {
+      const c = await connect("window");
+      await ok(c, "open", { path });
+      const id = await makeCharacter(c, "Ada");
+      const uuid = await uuidOf(c, id);
+      await ok(c, "op", {
+        name: "record.delete", args: { entity: "character", id } });
+      const e = (await audit.query({ limit: 1 }))[0]!;
+      expect(e.targetUuid).toBe(uuid);
+      expect(e.summary).toBe('deleted character "Ada"');
+    });
+
+    test("a failed update still says which row it was aimed at", async () => {
+      const c = await connect("window");
+      await ok(c, "open", { path });
+      const id = await makeCharacter(c, "Ada");
+      const r = await c.handle("call", {
+        name: "record.update", args: ["character", id, { name: "B" }],
+        expectedRevision: 0 });
+      expect(r.ok).toBe(false);
+      // A refused stale write is not a write, so nothing is recorded.
+      expect((await audit.query({ limit: 1 }))[0]!.summary)
+        .toBe('created character "Ada"');
+    });
+
+    test("a write that addresses no single row has no target", async () => {
+      const c = await connect("window");
+      await ok(c, "open", { path });
+      await ok(c, "call", {
+        name: "titlePage.setKey", args: ["Title", "Hollow Creek"] });
+      const e = (await audit.query({ limit: 1 }))[0]!;
+      expect(e.targetUuid).toBeNull();
+      expect(e.targetEntity).toBeNull();
+    });
   });
 });

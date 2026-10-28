@@ -84,6 +84,16 @@ describe("append and query", () => {
     expect(await store.count({ scope: "project" })).toBe(3);
   });
 
+  test("lifecycle events can be left out", async () => {
+    await store.append(event({ action: "project.open" }));
+    await store.append(event({ action: "op.record.update" }));
+    await store.append(event({ action: "project.close" }));
+    expect(await store.query({ hideLifecycle: true }))
+      .toHaveLength(1);
+    expect(await store.count({ hideLifecycle: true })).toBe(1);
+    expect(await store.count()).toBe(3);
+  });
+
   test("filters by time", async () => {
     await store.append(event({ at: "2026-01-01T00:00:00.000Z" }));
     await store.append(event({ at: "2026-06-01T00:00:00.000Z" }));
