@@ -14,3 +14,14 @@ scf-core/LICENSE
 scf-core/NOTICE
 scf-mcp/LICENSE
 scf-mcp/NOTICE
+
+# Local working notes
+/history-rewrite/
+/docs/azure_signing.md
+/docs/binaries-simple.*
+/docs/bug-heading-prefix-case.md
+/docs/host-architecture*.dot
+/docs/host-architecture*.png
+/docs/new-api-exports.md
+/docs/tauri-new-api-exports.md
+/message.txt
