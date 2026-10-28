@@ -85,6 +85,15 @@ export interface AuditFilter {
   order?: "asc" | "desc";
 }
 
+/** A project the log has events for, newest activity first. */
+export interface AuditProject {
+  path: string;
+  uuid: string | null;
+  events: number;
+  /** ISO 8601 time of its latest event. */
+  last: string;
+}
+
 export type AuditVerification =
   | { ok: true; count: number }
   | { ok: false; brokenAt: number | null; reason: string };
@@ -93,6 +102,8 @@ export interface AuditStore {
   append(input: AuditEventInput): Promise<AuditEvent>;
   query(filter?: AuditFilter): Promise<AuditEvent[]>;
   count(filter?: AuditFilter): Promise<number>;
+  /** Every project with events, for a filter to choose from. */
+  projects(): Promise<AuditProject[]>;
   /** Walk the chain and say where it first breaks. */
   verify(): Promise<AuditVerification>;
   /** Every matching event, one JSON object per line, oldest first. */
@@ -283,6 +294,18 @@ function createStore(db: AppDb): AuditStore {
       const [row] = await db.exec(
         `SELECT COUNT(*) AS n FROM audit_event${sql}`, params);
       return Number(row?.["n"] ?? 0);
+    },
+
+    projects: async () => {
+      const rows = await db.exec(
+        "SELECT project_path, MAX(project_uuid) AS project_uuid, " +
+        "COUNT(*) AS n, MAX(at) AS last FROM audit_event " +
+        "WHERE project_path IS NOT NULL GROUP BY project_path " +
+        "ORDER BY last DESC");
+      return rows.map((r) => ({
+        path: String(r["project_path"]), uuid: str(r["project_uuid"]),
+        events: Number(r["n"]), last: String(r["last"]),
+      }));
     },
 
     verify: async () => {

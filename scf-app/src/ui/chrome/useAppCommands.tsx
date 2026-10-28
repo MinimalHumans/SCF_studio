@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useStore } from "../../state/store.ts";
+import { useTabs } from "../../state/tabs.ts";
 import {
   commandForKey, runCommand, type CommandContext,
 } from "../../commands/registry.ts";
@@ -39,6 +40,7 @@ export function useAppCommands(screen: {
     identityOpen: screen.identityOpen,
     showAbout: () => { setAboutOpen(true); },
     exitApp: () => { void invoke("quit_app"); },
+    openAuditLog: () => { useTabs.getState().openTool("audit"); },
   };
 
   const ctxRef = useRef(ctx);

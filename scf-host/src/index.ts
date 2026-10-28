@@ -9,7 +9,8 @@ export {
 export {
   actorKindOf, firstUuidIn, openAuditStore,
   type AuditActor, type AuditEvent, type AuditEventInput, type AuditFilter,
-  type AuditScope, type AuditStore, type AuditVerification,
+  type AuditProject, type AuditScope, type AuditStore,
+  type AuditVerification,
 } from "./auditStore.ts";
 export {
   describeTarget, fieldChanges, planTarget, readRow,

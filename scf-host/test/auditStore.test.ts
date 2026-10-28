@@ -94,6 +94,21 @@ describe("append and query", () => {
     expect(await store.count()).toBe(3);
   });
 
+  test("projects lists each path with its events, newest first", async () => {
+    await store.append(event({ projectPath: "/a.scf", projectUuid: "u",
+                               at: "2026-01-01T00:00:00.000Z" }));
+    await store.append(event({ projectPath: "/b.scf", projectUuid: "u",
+                               at: "2026-03-01T00:00:00.000Z" }));
+    await store.append(event({ projectPath: "/a.scf", projectUuid: "u",
+                               at: "2026-02-01T00:00:00.000Z" }));
+    await store.append(event({ scope: "app", projectPath: null,
+                               projectUuid: null }));
+    expect(await store.projects()).toEqual([
+      { path: "/b.scf", uuid: "u", events: 1, last: "2026-03-01T00:00:00.000Z" },
+      { path: "/a.scf", uuid: "u", events: 2, last: "2026-02-01T00:00:00.000Z" },
+    ]);
+  });
+
   test("filters by time", async () => {
     await store.append(event({ at: "2026-01-01T00:00:00.000Z" }));
     await store.append(event({ at: "2026-06-01T00:00:00.000Z" }));

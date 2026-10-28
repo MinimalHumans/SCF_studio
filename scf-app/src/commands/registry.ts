@@ -32,6 +32,8 @@ export interface CommandContext {
   showAbout(): void;
   /** Quit the app, which closing the window no longer does. */
   exitApp(): void;
+  /** Open the audit log tab, or bring it forward. */
+  openAuditLog(): void;
 }
 
 export interface Command {
@@ -85,7 +87,7 @@ export const COMMANDS: readonly Command[] = [
   { id: "view.mediaQueue", label: "Media queue", menu: "View",
     pending: "Not built yet", run: () => undefined },
   { id: "view.auditLog", label: "Audit log", menu: "View",
-    pending: "Not built yet", run: () => undefined },
+    run: (c) => { c.openAuditLog(); } },
   { id: "view.identity", label: "Row identity", menu: "View",
     hidden: (c) => !c.developerMode, disabled: needsProject, checked: (c) => c.identityOpen,
     run: (c) => { c.toggleIdentity(); } },

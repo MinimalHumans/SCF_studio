@@ -6,6 +6,8 @@ import { SuggestionDialog } from "./SuggestionDialog.tsx";
 import { Workbench } from "./Workbench.tsx";
 import { TitleStrip } from "./chrome/TitleStrip.tsx";
 import { useAppCommands } from "./chrome/useAppCommands.tsx";
+import { ToolPane } from "./tools/ToolPane.tsx";
+import { useTabs } from "../state/tabs.ts";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
 import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
 
@@ -102,11 +104,12 @@ function StartShell({ children }: { children: JSX.Element }): JSX.Element {
   const { ctx, about } = useAppCommands({
     hasProject: false, identityOpen: false, toggleIdentity: () => undefined,
   });
+  const front = useTabs((t) => t.active);
   return (
     <div className="start-shell">
       <TitleStrip ctx={ctx} showProject={false} />
       {about}
-      {children}
+      {front === "project" ? children : <ToolPane id={front} />}
     </div>
   );
 }

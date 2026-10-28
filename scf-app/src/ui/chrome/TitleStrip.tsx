@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ReactNode } from "react";
 import { useStore } from "../../state/store.ts";
+import { TOOL_TITLES, useTabs } from "../../state/tabs.ts";
 import {
   tabStatus, tabStatusText, type CommandContext, type TabStatusInput,
 } from "../../commands/registry.ts";
@@ -37,6 +38,8 @@ export function TitleStrip({ ctx, search, status, showProject = true }: {
   const { projectName, hostLost, assetRootStatus, externalChange,
           externalEdit, draft } = useStore();
   const frameless = useFrameless();
+  const { tools, active, closeTool, showProject: showProjectTab } = useTabs();
+  const projectFront = active === "project";
 
   const input: TabStatusInput = {
     hostLost, assetRootStatus, externalChange,
@@ -49,11 +52,12 @@ export function TitleStrip({ ctx, search, status, showProject = true }: {
     <header className={"title-strip" + (frameless ? " frameless" : "")}>
       <AppMenu ctx={ctx} />
       <img className="title-mark" src={logoSmallCloud} alt="SCF" />
-      {showProject && (
-        <div className="tab-list" role="tablist" aria-label="Open projects">
-          <div className={"tab active" +
+      <div className="tab-list" role="tablist" aria-label="Open tabs">
+        {showProject && (
+          <div className={"tab" + (projectFront ? " active" : "") +
                           (state === null ? "" : ` tab-${state}`)}
-               role="tab" aria-selected="true" title={why ?? projectName ?? ""}>
+               role="tab" aria-selected={projectFront}
+               title={why ?? projectName ?? ""} onClick={showProjectTab}>
             <span className="tab-title">{projectName}</span>
             {state !== null && (
               <span className="tab-state" role="img" aria-label={why ?? ""}>
@@ -61,8 +65,24 @@ export function TitleStrip({ ctx, search, status, showProject = true }: {
               </span>
             )}
           </div>
-        </div>
-      )}
+        )}
+        {tools.map((id) => (
+          <div key={id} className={"tab tab-tool" +
+                                   (active === id ? " active" : "")}
+               role="tab" aria-selected={active === id}
+               onClick={() => useTabs.getState().openTool(id)}
+               onAuxClick={(e) => {
+                 if (e.button === 1) { e.preventDefault(); closeTool(id); }
+               }}>
+            <span className="tab-title">{TOOL_TITLES[id]}</span>
+            <button className="tab-close ghost" aria-label={`Close ${
+                      TOOL_TITLES[id]}`}
+                    onClick={(e) => { e.stopPropagation(); closeTool(id); }}>
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
       <div className="title-drag" data-tauri-drag-region />
       {search}
       {status !== undefined && <div className="title-status">{status}</div>}

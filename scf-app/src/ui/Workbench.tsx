@@ -59,6 +59,8 @@ import { AssetBrowser, AssetPathRail } from "./AssetBrowser.tsx";
 import { ActivityBar } from "./workspace/ActivityBar.tsx";
 import { TitleStrip } from "./chrome/TitleStrip.tsx";
 import { useAppCommands } from "./chrome/useAppCommands.tsx";
+import { ToolPane } from "./tools/ToolPane.tsx";
+import { useTabs } from "../state/tabs.ts";
 import { CharacterRail, SubjectRail } from "./workspace/CharacterRail.tsx";
 import { LocationWorkspace } from "./workspace/LocationWorkspace.tsx";
 import { PropWorkspace } from "./workspace/PropWorkspace.tsx";
@@ -143,6 +145,7 @@ export function Workbench(): JSX.Element {
   const [identityOpen, setIdentityOpen] = useState(false);
   const { navMode, openRow, selectedEntityType, selectedSubject } =
     useStore();
+  const front = useTabs((t) => t.active);
   const { ctx: commandCtx, about } = useAppCommands({
     hasProject: true, identityOpen,
     toggleIdentity: () => { setIdentityOpen((v) => !v); },
@@ -224,6 +227,7 @@ export function Workbench(): JSX.Element {
       <TitleStrip ctx={commandCtx} search={<SearchBox />}
                   status={<><RootStatus /><SaveControls /></>} />
       {about}
+      {front !== "project" ? <ToolPane id={front} /> : (
       <div className="panels">
         <ActivityBar />
         {railContent !== null && (
@@ -260,6 +264,7 @@ export function Workbench(): JSX.Element {
           <IdentityPanel onClose={() => setIdentityOpen(false)} />
         )}
       </div>
+      )}
     </div>
   );
 }
