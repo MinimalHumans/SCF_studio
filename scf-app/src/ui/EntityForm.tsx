@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useMemo, useState } from "react";
+import { confirm } from "@tauri-apps/plugin-dialog";
 import { isDirty, registry, useStore } from "../state/store.ts";
 import type { SqlValue } from "@scf-core/db.ts";
 import {
@@ -87,11 +88,13 @@ export function EntityForm(): JSX.Element | null {
           {!creating && (
             <button className="danger"
                     onClick={() => {
-                      if (window.confirm(
+                      void confirm(
                         `Delete this ${edef.label.toLowerCase()}? ` +
-                        `Rows that reference it keep their reference.`)) {
-                        void deleteRow(openRow.entity, openRow.id as number);
-                      }
+                        `Rows that reference it keep their reference.`,
+                        { title: "Delete", kind: "warning" },
+                      ).then((ok) => {
+                        if (ok) void deleteRow(openRow.entity, openRow.id as number);
+                      });
                     }}>
               Delete
             </button>

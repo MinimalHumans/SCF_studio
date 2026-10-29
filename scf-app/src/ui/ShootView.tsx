@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import { confirm } from "@tauri-apps/plugin-dialog";
 import { call } from "../state/api.ts";
 import { useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import type { Row } from "@scf-core/db.ts";
@@ -285,11 +286,13 @@ export function ShootView(): JSX.Element {
                   title="Delete this shot permanently"
                   onClick={() => {
                     const label = authored === "" ? "this shot" : authored;
-                    if (window.confirm(
+                    void confirm(
                       `Delete ${label} permanently? To take it out of ` +
-                      "the film but keep it, use cut instead.")) {
-                      void run(call("shoot.removeShot", id));
-                    }
+                      "the film but keep it, use cut instead.",
+                      { title: "Delete", kind: "warning" },
+                    ).then((ok) => {
+                      if (ok) void run(call("shoot.removeShot", id));
+                    });
                   }}>×</button>
         </div>
         {open.has(`media:shot:${String(id)}`) && (
