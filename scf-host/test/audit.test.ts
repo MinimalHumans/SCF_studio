@@ -168,7 +168,7 @@ describe("host audit trail", () => {
       const e = (await audit.query({ limit: 1 }))[0]!;
       expect(e.targetEntity).toBe("character");
       expect(e.targetUuid).toBe(await uuidOf(c, id));
-      expect(e.summary).toBe('created character "Ada"');
+      expect(e.summary).toBe('created character "Ada" — name: "Ada"; casting_status: "tbd"');
     });
 
     test("an update says which fields changed, from what to what",
@@ -213,7 +213,7 @@ describe("host audit trail", () => {
         name: "record.delete", args: { entity: "character", id } });
       const e = (await audit.query({ limit: 1 }))[0]!;
       expect(e.targetUuid).toBe(uuid);
-      expect(e.summary).toBe('deleted character "Ada"');
+      expect(e.summary).toBe('deleted character "Ada" — name: "Ada"; casting_status: "tbd"');
     });
 
     test("a failed update still says which row it was aimed at", async () => {
@@ -226,7 +226,7 @@ describe("host audit trail", () => {
       expect(r.ok).toBe(false);
       // A refused stale write is not a write, so nothing is recorded.
       expect((await audit.query({ limit: 1 }))[0]!.summary)
-        .toBe('created character "Ada"');
+        .toBe('created character "Ada" — name: "Ada"; casting_status: "tbd"');
     });
 
     test("a write that addresses no single row has no target", async () => {
@@ -238,5 +238,25 @@ describe("host audit trail", () => {
       expect(e.targetUuid).toBeNull();
       expect(e.targetEntity).toBeNull();
     });
+
+    test("undoing a delete reads as a restore, not a delete", async () => {
+      const c = await connect("window");
+      await ok(c, "open", { path });
+      const id = await makeCharacter(c, "Ada");
+      const [row] = await ok(c, "query", {
+        sql: "SELECT * FROM character WHERE id = ?", params: [id] }) as
+        Record<string, unknown>[];
+      await ok(c, "op", {
+        name: "record.delete", args: { entity: "character", id } });
+      await ok(c, "call", {
+        name: "undo.delete",
+        args: [{ entity: "character", id, label: "Ada", row, dependants: [] }] });
+      const e = (await audit.query({ limit: 1 }))[0]!;
+      expect(e.action).toBe("call.undo.delete");
+      expect(e.targetEntity).toBe("character");
+      expect(e.targetUuid).toBe(row!["uuid"]);
+      expect(e.summary).toBe('restored character "Ada"');
+    });
+
   });
 });

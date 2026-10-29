@@ -114,10 +114,56 @@ export function fieldChanges(
     .map((f) => `${f.name}: ${show(before[f.name])} → ${show(after[f.name])}`);
 }
 
+/** `field: "value"` for each authored field that has one — a create or
+ *  delete has no before/after to diff, so this is what stands in for
+ *  it: the row's own content at the moment it was made or lost. Fields
+ *  with nothing in them are left out, so a freshly created row (most
+ *  fields still unset) does not read as a wall of empties. */
+export function fieldSnapshot(
+    registry: Registry, entity: string, row: Row): string[] {
+  const edef = registry.entities.get(entity);
+  if (edef === undefined) return [];
+  return edef.fields
+    .filter((f) => !f.autoInjected && f.name in row &&
+                   row[f.name] !== null && row[f.name] !== undefined && row[f.name] !== "")
+    .map((f) => `${f.name}: ${show(row[f.name])}`);
+}
+
 export interface TargetFacts {
-  entity: string;
+  /** Null for a write that touches more than one row (an undone change
+   *  spanning several tables), which names no single entity. */
+  entity: string | null;
   uuid: string | null;
   summary: string;
+}
+
+/**
+ * `undo.delete` and `undo.change` restore a row (or several) straight
+ * from their own call arguments — what to put back travels with the
+ * call, so there is nothing to read from the database first, and none
+ * of `planTarget`'s before/after machinery applies. Without this, their
+ * audit entry falls back to dumping the whole restored row as JSON,
+ * which both reads as nothing a person wrote (just noise) and, once
+ * cut to the trail's size limit, often stops being valid JSON at all.
+ * Returns null for any other action, so the plain args-dump fallback
+ * still covers whatever this does not know how to describe.
+ */
+export function describeUndo(name: string, args: unknown): TargetFacts | null {
+  if (!Array.isArray(args) || args.length !== 1) return null;
+  const [entry] = args as unknown[];
+  if (!isRecord(entry)) return null;
+  if (name === "undo.delete") {
+    const { entity, label, row } = entry;
+    if (typeof entity !== "string" || typeof label !== "string") return null;
+    const uuid = isRecord(row) && typeof row["uuid"] === "string" ? row["uuid"] : null;
+    return { entity, uuid, summary: `restored ${entity} ${JSON.stringify(label)}` };
+  }
+  if (name === "undo.change") {
+    const { label } = entry;
+    if (typeof label !== "string") return null;
+    return { entity: null, uuid: null, summary: `Undid: ${label}` };
+  }
+  return null;
 }
 
 /**
@@ -135,12 +181,24 @@ export function describeTarget(
     : JSON.stringify(rowLabel(edef, plan.entity, row));
   const what = `${plan.entity} ${label}`;
   switch (plan.kind) {
-    case "create":
+    case "create": {
+      if (after === null) {
+        return { entity: plan.entity, uuid, summary: `create ${plan.entity}` };
+      }
+      const fields = fieldSnapshot(registry, plan.entity, after);
       return { entity: plan.entity, uuid,
-               summary: after === null ? `create ${plan.entity}`
-                 : `created ${what}` };
-    case "delete":
-      return { entity: plan.entity, uuid, summary: `deleted ${what}` };
+               summary: fields.length === 0 ? `created ${what}`
+                 : `created ${what} — ${fields.join("; ")}` };
+    }
+    case "delete": {
+      if (before === null) {
+        return { entity: plan.entity, uuid, summary: `deleted ${what}` };
+      }
+      const fields = fieldSnapshot(registry, plan.entity, before);
+      return { entity: plan.entity, uuid,
+               summary: fields.length === 0 ? `deleted ${what}`
+                 : `deleted ${what} — ${fields.join("; ")}` };
+    }
     default: {
       if (before === null || after === null) {
         return { entity: plan.entity, uuid, summary: `changed ${what}` };

@@ -38,7 +38,7 @@ import {
   actorKindOf, firstUuidIn, type AuditActor, type AuditStore,
 } from "./auditStore.ts";
 import {
-  describeTarget, planTarget, readRow, type TargetFacts,
+  describeTarget, describeUndo, planTarget, readRow, type TargetFacts,
 } from "./auditTarget.ts";
 
 /** Thrown inside a handler to answer with a specific code. */
@@ -625,8 +625,9 @@ class HostCoreImpl implements HostCore {
         ...(failure === undefined ? {} : { error: failure instanceof Error
           ? failure.message.slice(0, 300) : String(failure) }),
       });
-      const facts = plan === null ? null
-        : await this.targetFacts(film, plan, rowBefore, outcome, failure);
+      const facts = plan !== null
+        ? await this.targetFacts(film, plan, rowBefore, outcome, failure)
+        : describeUndo(what.name, p["args"]);
       const failed = failure === undefined ? "" : `failed: ${
         failure instanceof Error ? failure.message : String(failure)} `;
       await this.audit(

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, test } from "vitest";
-import { fieldChanges, planTarget } from "../src/auditTarget.ts";
+import {
+  describeUndo, fieldChanges, fieldSnapshot, planTarget,
+} from "../src/auditTarget.ts";
 import { registry } from "./helpers.ts";
 
 describe("planTarget", () => {
@@ -48,5 +50,43 @@ describe("fieldChanges", () => {
       { name: "a" }, { name: "b".repeat(200) });
     expect(change!.length).toBeLessThan(120);
     expect(change).toContain("…");
+  });
+});
+
+describe("fieldSnapshot", () => {
+  test("authored fields that have something in them, nothing empty", () => {
+    expect(fieldSnapshot(registry, "character",
+      { name: "Ada", role: null }))
+      .toEqual(['name: "Ada"']);
+  });
+
+  test("an unknown entity has no fields to snapshot", () => {
+    expect(fieldSnapshot(registry, "no_such", { name: "Ada" })).toEqual([]);
+  });
+});
+
+describe("describeUndo", () => {
+  test("a restored delete names its row, not just its JSON", () => {
+    expect(describeUndo("undo.delete", [{
+      entity: "character", id: 2, label: "Marcus Cade",
+      row: { id: 2, uuid: "abc-123", name: "Marcus Cade" }, dependants: [],
+    }])).toEqual({
+      entity: "character", uuid: "abc-123",
+      summary: 'restored character "Marcus Cade"',
+    });
+  });
+
+  test("an undone change has no single row, but still has its own label", () => {
+    expect(describeUndo("undo.change",
+      [{ label: "Added 2 files to Eleanor's look", created: [], before: [] }]))
+      .toEqual({ entity: null, uuid: null,
+                 summary: "Undid: Added 2 files to Eleanor's look" });
+  });
+
+  test("anything else, or a shape it doesn't recognize, is declined", () => {
+    expect(describeUndo("record.update", [{ entity: "character" }])).toBeNull();
+    expect(describeUndo("undo.delete", [{ not: "an entry" }])).toBeNull();
+    expect(describeUndo("undo.delete", [])).toBeNull();
+    expect(describeUndo("undo.delete", { entity: "character" })).toBeNull();
   });
 });
