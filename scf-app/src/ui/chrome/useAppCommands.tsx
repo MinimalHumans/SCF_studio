@@ -40,7 +40,7 @@ export function useAppCommands(screen: {
     identityOpen: screen.identityOpen,
     showAbout: () => { setAboutOpen(true); },
     exitApp: () => { void invoke("quit_app"); },
-    openAuditLog: () => { useTabs.getState().openTool("audit"); },
+    openEventLog: () => { useTabs.getState().openTool("events"); },
   };
 
   const ctxRef = useRef(ctx);

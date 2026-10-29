@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ToolId } from "../../state/tabs.ts";
-import { AuditView } from "./AuditView.tsx";
+import { EventLogView } from "./EventLogView.tsx";
 
 /** The front tool tab's content, in place of a project's panels. */
 export function ToolPane({ id }: { id: ToolId }): JSX.Element {
   return (
     <main className="tool-pane">
-      {id === "audit" && <AuditView />}
+      {id === "events" && <EventLogView />}
     </main>
   );
 }

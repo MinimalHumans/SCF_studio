@@ -6,30 +6,30 @@ beforeEach(() => { useTabs.setState({ tools: [], active: "project" }); });
 
 describe("tool tabs", () => {
   test("opening a tool brings it to the front", () => {
-    useTabs.getState().openTool("audit");
+    useTabs.getState().openTool("events");
     expect(useTabs.getState()).toMatchObject({
-      tools: ["audit"], active: "audit" });
+      tools: ["events"], active: "events" });
   });
 
   test("opening one that is open focuses it instead of adding another", () => {
     const { openTool, showProject } = useTabs.getState();
-    openTool("audit");
+    openTool("events");
     showProject();
-    openTool("audit");
-    expect(useTabs.getState().tools).toEqual(["audit"]);
-    expect(useTabs.getState().active).toBe("audit");
+    openTool("events");
+    expect(useTabs.getState().tools).toEqual(["events"]);
+    expect(useTabs.getState().active).toBe("events");
   });
 
   test("closing the front tool returns to the project", () => {
-    useTabs.getState().openTool("audit");
-    useTabs.getState().closeTool("audit");
+    useTabs.getState().openTool("events");
+    useTabs.getState().closeTool("events");
     expect(useTabs.getState()).toMatchObject({ tools: [], active: "project" });
   });
 
   test("closing a tool that is behind leaves the front where it was", () => {
-    useTabs.getState().openTool("audit");
+    useTabs.getState().openTool("events");
     useTabs.getState().showProject();
-    useTabs.getState().closeTool("audit");
+    useTabs.getState().closeTool("events");
     expect(useTabs.getState().active).toBe("project");
   });
 });

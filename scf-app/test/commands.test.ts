@@ -10,7 +10,7 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
   assetRoot: "ok", developerMode: true,
   newProject: vi.fn(), openProject: vi.fn(), saveProjectAs: vi.fn(),
   closeProject: vi.fn(), attachFolder: vi.fn(), toggleIdentity: vi.fn(),
-  showAbout: vi.fn(), exitApp: vi.fn(), openAuditLog: vi.fn(), ...over,
+  showAbout: vi.fn(), exitApp: vi.fn(), openEventLog: vi.fn(), ...over,
 });
 
 const key = (k: string, mods: { shift?: boolean; alt?: boolean } = {}) => ({
@@ -48,12 +48,12 @@ describe("menu model", () => {
     expect(runCommand("view.mediaQueue", ctx())).toBe(false);
   });
 
-  test("the audit log opens with or without a project", () => {
+  test("the event log opens with or without a project", () => {
     const c = ctx({ hasProject: false });
-    const item = menuModel(c)[1]!.items.find((i) => i.id === "view.auditLog")!;
+    const item = menuModel(c)[1]!.items.find((i) => i.id === "view.eventLog")!;
     expect(item.disabled).toBe(false);
-    expect(runCommand("view.auditLog", c)).toBe(true);
-    expect(c.openAuditLog).toHaveBeenCalledOnce();
+    expect(runCommand("view.eventLog", c)).toBe(true);
+    expect(c.openEventLog).toHaveBeenCalledOnce();
   });
 
   test("the asset root command says what it will do", () => {

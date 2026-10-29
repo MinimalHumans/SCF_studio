@@ -9,10 +9,10 @@
 
 import { create } from "zustand";
 
-export type ToolId = "audit";
+export type ToolId = "events";
 
 export const TOOL_TITLES: Record<ToolId, string> = {
-  audit: "Audit log",
+  events: "Event log",
 };
 
 interface TabsState {
