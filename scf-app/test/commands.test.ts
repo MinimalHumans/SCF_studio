@@ -2,7 +2,7 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   COMMANDS, commandForKey, menuModel, runCommand, tabStatus, tabStatusText,
-  type CommandContext, type TabStatusInput,
+  topLevelItems, type CommandContext, type TabStatusInput,
 } from "../src/commands/registry.ts";
 
 const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
@@ -24,7 +24,15 @@ describe("menu model", () => {
     expect(m.map((g) => g.name)).toEqual(["File", "View", "Help"]);
     expect(m[0]!.items.map((i) => i.id)).toEqual([
       "file.new", "file.open", "file.saveAs", "file.assetRoot",
-      "file.close", "file.settings", "file.exit"]);
+      "file.close", "file.settings"]);
+  });
+
+  test("Exit sits below every group, not inside one", () => {
+    const m = menuModel(ctx());
+    for (const g of m) {
+      expect(g.items.some((i) => i.id === "file.exit")).toBe(false);
+    }
+    expect(topLevelItems(ctx()).map((i) => i.id)).toEqual(["file.exit"]);
   });
 
   test("project commands are off without a project", () => {
@@ -42,10 +50,10 @@ describe("menu model", () => {
   });
 
   test("tools that are not built are listed but cannot be run", () => {
-    const view = menuModel(ctx())[1]!;
-    const queue = view.items.find((i) => i.id === "view.mediaQueue")!;
-    expect(queue).toMatchObject({ disabled: true, hint: "Not built yet" });
-    expect(runCommand("view.mediaQueue", ctx())).toBe(false);
+    const file = menuModel(ctx())[0]!;
+    const settings = file.items.find((i) => i.id === "file.settings")!;
+    expect(settings).toMatchObject({ disabled: true, hint: "Not built yet" });
+    expect(runCommand("file.settings", ctx())).toBe(false);
   });
 
   test("the event log opens with or without a project", () => {
@@ -98,7 +106,7 @@ describe("running commands", () => {
 
   test("Exit is always there, with or without a project", () => {
     const c = ctx({ hasProject: false, hostReady: false });
-    const exit = menuModel(c)[0]!.items.find((i) => i.id === "file.exit")!;
+    const exit = topLevelItems(c).find((i) => i.id === "file.exit")!;
     expect(exit.disabled).toBe(false);
     expect(runCommand("file.exit", c)).toBe(true);
     expect(c.exitApp).toHaveBeenCalledOnce();

@@ -1,18 +1,49 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useRef, useState } from "react";
 import {
-  menuModel, runCommand, type CommandContext,
+  menuModel, runCommand, topLevelItems, type CommandContext,
+  type MenuItem,
 } from "../../commands/registry.ts";
 
 /**
  * The hamburger. A full menu bar will not fit beside the tabs in the
- * title row, so File, View and Help are headed groups in one popup:
- * one click to open it, one to run a command.
+ * title row, so File, View and Help are headed groups in one popup,
+ * one click to open it, one to run a command — with top-level commands
+ * such as Exit below all of them, so they stay the true bottom of the
+ * popup rather than the bottom of whichever group they'd sit in.
  */
+function MenuItemButton({ item, ctx, onRun }: {
+  item: MenuItem; ctx: CommandContext; onRun: () => void;
+}): JSX.Element {
+  return (
+    <div>
+      {item.separatorBefore && (
+        <div className="app-menu-sep" role="separator" />
+      )}
+      <button role={item.checked ? "menuitemcheckbox" : "menuitem"}
+              aria-checked={item.checked ? true : undefined}
+              className="app-menu-item" disabled={item.disabled}
+              title={item.hint ?? undefined}
+              onClick={() => { onRun(); runCommand(item.id, ctx); }}>
+        <span className="app-menu-check" aria-hidden="true">
+          {item.checked ? "✓" : ""}
+        </span>
+        <span className="app-menu-label">{item.label}</span>
+        {item.hint !== null
+          ? <span className="app-menu-shortcut">{item.hint}</span>
+          : item.shortcut !== null && (
+            <span className="app-menu-shortcut">{item.shortcut}</span>
+          )}
+      </button>
+    </div>
+  );
+}
+
 export function AppMenu({ ctx }: { ctx: CommandContext }): JSX.Element {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const groups = menuModel(ctx);
+  const bottom = topLevelItems(ctx);
 
   useEffect(() => {
     if (!open) return;
@@ -66,36 +97,20 @@ export function AppMenu({ ctx }: { ctx: CommandContext }): JSX.Element {
             <div key={g.name} role="group" aria-label={g.name}>
               <div className="app-menu-heading">{g.name}</div>
               {g.items.map((item) => (
-                <div key={item.id}>
-                  {item.separatorBefore && (
-                    <div className="app-menu-sep" role="separator" />
-                  )}
-                  <button role={item.checked ? "menuitemcheckbox"
-                                              : "menuitem"}
-                          aria-checked={item.checked ? true : undefined}
-                          className="app-menu-item"
-                          disabled={item.disabled}
-                          title={item.hint ?? undefined}
-                          onClick={() => {
-                            setOpen(false);
-                            runCommand(item.id, ctx);
-                          }}>
-                    <span className="app-menu-check" aria-hidden="true">
-                      {item.checked ? "✓" : ""}
-                    </span>
-                    <span className="app-menu-label">{item.label}</span>
-                    {item.hint !== null
-                      ? <span className="app-menu-shortcut">{item.hint}</span>
-                      : item.shortcut !== null && (
-                        <span className="app-menu-shortcut">
-                          {item.shortcut}
-                        </span>
-                      )}
-                  </button>
-                </div>
+                <MenuItemButton key={item.id} item={item} ctx={ctx}
+                                onRun={() => setOpen(false)} />
               ))}
             </div>
           ))}
+          {bottom.length > 0 && (
+            <div role="group">
+              <div className="app-menu-sep" role="separator" />
+              {bottom.map((item) => (
+                <MenuItemButton key={item.id} item={item} ctx={ctx}
+                                onRun={() => setOpen(false)} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

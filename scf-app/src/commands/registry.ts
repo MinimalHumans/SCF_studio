@@ -53,6 +53,10 @@ export interface Command {
   disabled?(ctx: CommandContext): boolean;
   /** A checkmark in the menu, for a command that switches something. */
   checked?(ctx: CommandContext): boolean;
+  /** Rendered after every group, heading-less, instead of inside `menu`
+   *  — the true bottom of the one-popup menu, not just the bottom of
+   *  its own group. */
+  topLevel?: boolean;
   run(ctx: CommandContext): void;
 }
 
@@ -80,12 +84,11 @@ export const COMMANDS: readonly Command[] = [
     shortcut: "Ctrl+,", pending: "Not built yet", run: () => undefined },
 
   // Closing the window leaves the app in the tray, so quitting has to be
-  // somewhere plain to find.
+  // somewhere plain to find. It sits below every group, not inside one,
+  // so it stays the last thing in the popup regardless of their order.
   { id: "file.exit", label: "Exit", menu: "File", shortcut: "Ctrl+Q",
-    run: (c) => { c.exitApp(); } },
+    topLevel: true, run: (c) => { c.exitApp(); } },
 
-  { id: "view.mediaQueue", label: "Media queue", menu: "View",
-    pending: "Not built yet", run: () => undefined },
   { id: "view.eventLog", label: "Event log", menu: "View",
     run: (c) => { c.openEventLog(); } },
   { id: "view.identity", label: "Row identity", menu: "View",
@@ -98,7 +101,7 @@ export const COMMANDS: readonly Command[] = [
 
 /** Where separators fall: before the first command of each of these. */
 const SEPARATE_BEFORE = new Set([
-  "file.assetRoot", "file.close", "file.settings", "file.exit",
+  "file.assetRoot", "file.close", "file.settings",
 ]);
 
 export interface MenuItem {
@@ -119,23 +122,36 @@ export interface MenuGroup {
 
 const MENU_ORDER: readonly MenuName[] = ["File", "View", "Help"];
 
-/** The menu as it stands for `ctx`: every command placed, enabled or not. */
+const toMenuItem = (c: Command, ctx: CommandContext): MenuItem => ({
+  id: c.id,
+  label: typeof c.label === "function" ? c.label(ctx) : c.label,
+  shortcut: c.shortcut ?? null,
+  disabled: c.pending !== undefined || (c.disabled?.(ctx) ?? false),
+  checked: c.checked?.(ctx) ?? false,
+  hint: c.pending ?? null,
+  separatorBefore: SEPARATE_BEFORE.has(c.id),
+});
+
+/** The menu as it stands for `ctx`: every grouped command placed,
+ *  enabled or not. Top-level commands are left to `topLevelItems`. */
 export function menuModel(
     ctx: CommandContext, commands: readonly Command[] = COMMANDS):
     MenuGroup[] {
   return MENU_ORDER.map((name) => ({
     name,
-    items: commands.filter((c) => c.menu === name &&
-                                  !(c.hidden?.(ctx) ?? false)).map((c) => ({
-      id: c.id,
-      label: typeof c.label === "function" ? c.label(ctx) : c.label,
-      shortcut: c.shortcut ?? null,
-      disabled: c.pending !== undefined || (c.disabled?.(ctx) ?? false),
-      checked: c.checked?.(ctx) ?? false,
-      hint: c.pending ?? null,
-      separatorBefore: SEPARATE_BEFORE.has(c.id),
-    })),
+    items: commands.filter((c) => c.menu === name && !c.topLevel &&
+                                  !(c.hidden?.(ctx) ?? false))
+      .map((c) => toMenuItem(c, ctx)),
   }));
+}
+
+/** Commands shown below every group, heading-less, in registry order. */
+export function topLevelItems(
+    ctx: CommandContext, commands: readonly Command[] = COMMANDS):
+    MenuItem[] {
+  return commands.filter((c) => (c.topLevel ?? false) &&
+                                 !(c.hidden?.(ctx) ?? false))
+    .map((c) => toMenuItem(c, ctx));
 }
 
 /** Run a command by id, unless it is unavailable. True when it ran. */
