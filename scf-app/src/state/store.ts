@@ -36,6 +36,9 @@ import { makeLocator } from "../files/assetLocator.ts";
 import { revokeAll } from "../files/objectUrlCache.ts";
 import { clearResolutions } from "../files/thumbnailCache.ts";
 import { setAssetLocator } from "../ui/queries/runners.ts";
+import { useProjectTabs, type ProjectMemory } from "./projectTabs.ts";
+import { UNREACHABLE, unwatchProject, watchProject } from "./projectWatch.ts";
+import { OPEN_TABS_PREF, useSettings } from "./settings.ts";
 
 export { suggestSaveAsName };
 
@@ -81,7 +84,7 @@ export interface OpenRow {
   id: number | null;
 }
 
-interface FormDraft {
+export interface FormDraft {
   entity: string;
   id: number | null;
   values: Record<string, SqlValue>;
@@ -91,6 +94,11 @@ interface FormDraft {
 
 interface AppState {
   phase: "start" | "loading" | "open" | "error" | "multitab";
+  /** True while the live tab is switching to another tab that was
+   *  already open. `phase` stays "open" throughout — the workbench
+   *  shell (title strip, tabs) never unmounts for this — so Workbench
+   *  reads this to show an in-place placeholder instead. */
+  switchingTab: boolean;
   errorMessage: string | null;
   projectName: string | null;
   /** The open film's path on the host; null when none is open. */
@@ -190,9 +198,10 @@ interface AppState {
   /** After `externalChange`: read the file again from disk. */
   reloadFromDisk: () => Promise<void>;
   openDemo: () => Promise<void>;
-  resumeLast: () => Promise<void>;
-  /** Path of the last film opened, for resuming after a reload. */
-  lastSession: string | null;
+  /** Reopen every tab this window had open before it last quit —
+   *  the live one live, the rest backgrounded and watched — unless
+   *  the user has turned that off in Settings. */
+  resumeTabs: () => Promise<void>;
   closeProject: () => Promise<void>;
   setAssetPrefix: (prefix: string) => void;
   openFromPicker: () => Promise<void>;
@@ -200,6 +209,18 @@ interface AppState {
    *  which already has one. Same path as `openFromPicker`, without
    *  the dialog. */
   openRecentProject: (path: string) => Promise<void>;
+  /** Bring an already-open tab to the front: background the current
+   *  project (keep its connection, remember where it was, watch it
+   *  for outside changes) and open this one on the live connection. */
+  switchProjectTab: (path: string) => Promise<void>;
+  /** The File menu's "Open Recent": focus the path's tab if it is
+   *  already open (live or backgrounded), otherwise open it as a new
+   *  one. */
+  openOrFocus: (path: string) => Promise<void>;
+  /** Close one tab. The live tab falls back to another open tab, or to
+   *  the start screen if it was the last one; a backgrounded tab just
+   *  stops being watched. */
+  closeProjectTab: (path: string) => Promise<void>;
   /** Attach the asset folder to the film that is open. Must run
    *  inside a click: it opens a picker. */
   attachFolder: () => Promise<void>;
@@ -279,7 +300,20 @@ if (import.meta.hot) {
 }
 
 /** The file name of a host path, for the title and the Save As suggestion. */
-const nameOf = (path: string): string => path.split(/[\\/]/).pop() ?? path;
+export const nameOf = (path: string): string =>
+  path.split(/[\\/]/).pop() ?? path;
+
+/**
+ * Whether two path strings name the same tab, before either has gone
+ * through the host's own canonicalisation (`host.open` always returns
+ * the same string for the same file, which is what every *open* tab is
+ * keyed by — this is only for matching a raw string against that,
+ * before opening it: the File menu's Open Recent, or a restored tab at
+ * startup). Good enough to recognise "already open" in the common
+ * case; not a filesystem-level identity check.
+ */
+const samePath = (a: string, b: string): boolean =>
+  a === b || a.toLowerCase() === b.toLowerCase();
 
 /** Hosts whose events and closing this store already listens to. */
 const bound = new WeakSet<HostClient>();
@@ -384,6 +418,65 @@ const freshShootView = (): ShootMemory =>
   ({ open: new Set(), showEmpty: readShootPref("showEmpty", true),
      hideCut: readShootPref("hideCut", false), scrollTop: 0 });
 
+/** The fields a tab switch would otherwise unmount and lose, captured
+ *  so switching back restores them (projectTabs.ts) — including an open
+ *  record and any unsaved edits in it: a switch backgrounds a tab, it
+ *  does not discard what you were doing in it. */
+function snapshotMemory(get: () => AppState): ProjectMemory {
+  const s = get();
+  return {
+    navMode: s.navMode, assetPrefix: s.assetPrefix, listSort: s.listSort,
+    subjectType: s.subjectType, selectedQuery: s.selectedQuery,
+    selectedEntityType: s.selectedEntityType,
+    selectedSubject: s.selectedSubject,
+    selectedCharacterId: s.selectedCharacterId, characterTab: s.characterTab,
+    asOfSceneId: s.asOfSceneId, selectedLocationId: s.selectedLocationId,
+    locationTab: s.locationTab, selectedPropId: s.selectedPropId,
+    propTab: s.propTab, schemaCollapsed: s.schemaCollapsed,
+    shootView: s.shootView, openRow: s.openRow, draft: s.draft,
+  };
+}
+
+/**
+ * Before the live connection leaves for another path: if the project it
+ * is leaving is still an open tab (not one being closed outright),
+ * remember where it was and start watching it for outside changes
+ * while it is not the live one.
+ */
+async function backgroundCurrentProject(get: () => AppState): Promise<void> {
+  const { phase, projectPath } = get();
+  if (phase !== "open" || projectPath === null) return;
+  if (!useProjectTabs.getState().tabs.some((t) => t.path === projectPath)) {
+    return; // being closed, not backgrounded — nothing to remember
+  }
+  useProjectTabs.getState().setMemory(projectPath, snapshotMemory(get));
+  void watchProject(projectPath);
+}
+
+/** Back to the start screen with nothing open: `closeProjectTab`'s path
+ *  when the tab it closes was the last one. */
+async function closeToStart(
+  set: (partial: Partial<AppState>) => void,
+): Promise<void> {
+  revokeAll();
+  clearResolutions();
+  setAssetLocator(null);
+  set({ phase: "start", projectPath: null, projectName: null,
+        errorMessage: null, hostLost: false, externalChange: false,
+        navMode: "intro", selectedCharacterId: null, characterTab: "Profile",
+        shootView: freshShootView(),
+        asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
+        selectedPropId: null, propTab: "Profile",
+        assetPrefix: "", openRow: null, draft: null,
+        selectedSubject: null, assetRoot: null,
+        assetRootStatus: "unmapped", suggestions: null });
+  try {
+    await (await getHost()).closeFilm();
+  } catch {
+    // The host is gone or never had it; either way it is closed.
+  }
+}
+
 /**
  * The tail every open shares: land on the script, with nothing of the
  * previous project left behind, and resolve the asset root
@@ -399,8 +492,6 @@ async function finishOpen(
   get: () => AppState,
   path: string, revision: number,
 ): Promise<void> {
-  localStorage.setItem("scf:auto-resume", "1");
-  localStorage.setItem("scf:last-session", path);
   // Clear the root EXPLICITLY. Opening a film while another is live
   // otherwise leaves `assetRoot` untouched, and the new project
   // inherits the old one's folder — addressing every asset against
@@ -415,11 +506,25 @@ async function finishOpen(
         selectedLocationId: null, selectedPropId: null,
         openRow: null, draft: null, undo: null, lastChange: null,
         phase: "open", projectName: nameOf(path), projectPath: path,
-        lastSession: path, revision, hostLost: false,
+        revision, hostLost: false,
         externalChange: false, errorMessage: null,
         externalEdit: null,
         assetRoot: null, assetRootStatus: "unmapped", suggestions: null,
         environmentRevision: get().environmentRevision + 1 });
+
+  // This path is becoming the live tab: it needs no background watch
+  // (the main connection now reports its revision directly), and if it
+  // was visited before this session, restore where it was left rather
+  // than the "intro" landing set above.
+  void unwatchProject(path);
+  const revisited = useProjectTabs.getState().tabs.some(
+    (t) => t.path === path);
+  useProjectTabs.getState().upsert(path, nameOf(path));
+  useProjectTabs.getState().setProblem(path, null);
+  if (revisited) {
+    const memory = useProjectTabs.getState().memoryOf(path);
+    if (memory !== undefined) set(memory);
+  }
 
   // Bookkeeping must never cost the user their session: a film that
   // opened is open regardless of whether app.db can be read right now.
@@ -463,32 +568,55 @@ async function finishOpen(
 }
 
 /** Open an already-known path: the chooser's result, or a row from
- *  the start screen's recent-projects list. */
+ *  the start screen's recent-projects list or the File menu's Open
+ *  Recent. */
 async function openPath(
   set: (partial: Partial<AppState>) => void,
   get: () => AppState,
   path: string,
 ): Promise<void> {
-  set({ phase: "loading", errorMessage: null });
+  // A tab already live, switching to another one that is also already
+  // open (or was), keeps `phase` at "open" throughout — the workbench
+  // shell never unmounts for this, `switchingTab` stands in for
+  // `phase: "loading"` instead (Workbench.tsx) — there is no reason to
+  // flash the start screen between two tabs that both already have a
+  // place to land. A first open, with nothing live yet, still has
+  // nowhere else to show "opening" but there.
+  const alreadyOpen = get().phase === "open";
+  // Noted before backgrounding changes it: if this open fails, falling
+  // back to what was live is better than losing the whole workbench
+  // over one tab whose file turned out to be gone.
+  const fallback = alreadyOpen ? get().projectPath : null;
+  await backgroundCurrentProject(get);
+  set(alreadyOpen ? { switchingTab: true, errorMessage: null }
+                  : { phase: "loading", errorMessage: null });
   try {
     const host = await getHost();
     bindHost(host);
     const opened = await host.open(path, {
       migrate: true, editorVersion: EDITOR_VERSION });
     await finishOpen(set, get, opened.path, opened.revision);
+    set({ switchingTab: false });
   } catch (e) {
-    set({ phase: "error", errorMessage: describeError(e) });
+    useProjectTabs.getState().upsert(path, nameOf(path));
+    useProjectTabs.getState().setProblem(path, UNREACHABLE);
+    if (fallback !== null && fallback !== path) {
+      await openPath(set, get, fallback);
+    } else {
+      set({ phase: "error", errorMessage: describeError(e),
+            switchingTab: false });
+    }
   }
 }
 
 export const useStore = create<AppState>((set, get) => ({
   phase: "start",
+  switchingTab: false,
   schemaCollapsed: new Set<string>(),
   shootView: freshShootView(),
   subjectType: "character",
   undo: null,
   lastChange: null,
-  lastSession: localStorage.getItem("scf:last-session"),
   errorMessage: null,
   projectName: null,
   projectPath: null,
@@ -572,6 +700,7 @@ export const useStore = create<AppState>((set, get) => ({
     // written straight to its file.
     const path = await chooser.chooseNew("Hollow Creek (demo).scf");
     if (path === null) return;
+    await backgroundCurrentProject(get);
     set({ phase: "loading", errorMessage: null });
     try {
       const res = await fetch("/hollow_creek.scf");
@@ -595,24 +724,57 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  /** Reopen the film this window had open before a reload. */
-  resumeLast: async () => {
-    const path = localStorage.getItem("scf:last-session");
-    if (path === null) return;
-    set({ phase: "loading", errorMessage: null });
+  resumeTabs: async () => {
+    if (!useSettings.getState().rememberTabs) return;
+    const stored = await (await windowAppStore())
+      .getPref(OPEN_TABS_PREF).catch(() => null);
+    if (stored === null || stored === "") return;
+    let data: { tabs?: { path: string; title: string }[];
+                activePath?: string | null };
     try {
-      const host = await getHost();
-      bindHost(host);
-      const opened = await host.open(path, {
-        migrate: true, editorVersion: EDITOR_VERSION });
-      await finishOpen(set, get, opened.path, opened.revision);
-    } catch (e) {
-      // The file moved or was deleted: forget it, so the start screen
-      // is offered next time instead of the same failure.
-      localStorage.removeItem("scf:last-session");
-      set({ phase: "start", lastSession: null,
-            errorMessage: `Could not reopen ${nameOf(path)}: ${
-              describeError(e)}` });
+      data = JSON.parse(stored) as typeof data;
+    } catch {
+      return; // not worth failing the launch over a corrupt pref
+    }
+    const remembered = data.tabs ?? [];
+    if (remembered.length === 0) return;
+
+    // Try the path that was active last, then the rest in their saved
+    // order, until one actually opens live; every path still gets its
+    // tab back regardless, backgrounded and watched (which marks its
+    // own `problem` if IT cannot be reopened either).
+    const ordered = [...remembered];
+    const activeAt = ordered.findIndex((t) => t.path === data.activePath);
+    if (activeAt > 0) ordered.unshift(...ordered.splice(activeAt, 1));
+
+    set({ phase: "loading", errorMessage: null });
+    let liveOpened = false;
+    for (const t of ordered) {
+      if (liveOpened) {
+        useProjectTabs.getState().upsert(t.path, t.title);
+        void watchProject(t.path);
+        continue;
+      }
+      try {
+        const host = await getHost();
+        bindHost(host);
+        const opened = await host.open(t.path, {
+          migrate: true, editorVersion: EDITOR_VERSION });
+        await finishOpen(set, get, opened.path, opened.revision);
+        liveOpened = true;
+      } catch {
+        useProjectTabs.getState().upsert(t.path, t.title);
+        useProjectTabs.getState().setProblem(t.path, UNREACHABLE);
+      }
+    }
+    if (!liveOpened) {
+      const first = ordered[0];
+      set({ phase: "start",
+            errorMessage: ordered.length === 1 && first !== undefined
+              ? `Could not reopen ${nameOf(first.path)}: it may have ` +
+                "moved or been deleted."
+              : "None of the files open last time could be reopened — " +
+                "they may have moved or been deleted." });
     }
   },
 
@@ -699,6 +861,7 @@ export const useStore = create<AppState>((set, get) => ({
     // file from its first moment, and every edit is written to it.
     const path = await chooser.chooseNew("Untitled.scf");
     if (path === null) return;
+    await backgroundCurrentProject(get);
     // "loading" first, and awaited into the next task, so mounted views
     // unmount before the host switches films. A view whose query lands
     // between the two films would read the wrong one.
@@ -715,34 +878,41 @@ export const useStore = create<AppState>((set, get) => ({
     }
   },
 
-  /** Back to the start screen. The film is already in its file; the
-   *  host lets go of it when this window does. */
+  /** Close the live tab. */
   closeProject: async () => {
-    // Disarm auto-resume BEFORE the phase change, not after the awaits
-    // below. App's resume effect fires the moment phase becomes "start"
-    // and reads this flag synchronously, so writing it later means a
-    // close bounces straight back into the project it just left.
-    localStorage.setItem("scf:auto-resume", "0");
-    // Thumbnails hold object URLs into the folder being left.
-    revokeAll();
-    clearResolutions();
-    setAssetLocator(null);
-    // Leave the workbench FIRST. Closing the film under mounted views
-    // leaves their in-flight queries — and the script editor's
-    // blur-triggered commit — resolving against no film.
-    set({ phase: "start", projectPath: null, projectName: null,
-          errorMessage: null, hostLost: false, externalChange: false,
-          navMode: "intro", selectedCharacterId: null, characterTab: "Profile",
-          shootView: freshShootView(),
-  asOfSceneId: null, selectedLocationId: null, locationTab: "Profile",
-  selectedPropId: null, propTab: "Profile",
-  assetPrefix: "", openRow: null, draft: null,
-          selectedSubject: null, assetRoot: null,
-          assetRootStatus: "unmapped", suggestions: null });
-    try {
-      await (await getHost()).closeFilm();
-    } catch {
-      // The host is gone or never had it; either way it is closed.
+    const { projectPath } = get();
+    if (projectPath !== null) await get().closeProjectTab(projectPath);
+  },
+
+  switchProjectTab: (path) =>
+    path === get().projectPath ? Promise.resolve() : openPath(set, get, path),
+
+  openOrFocus: async (path) => {
+    const already = useProjectTabs.getState().tabs.find(
+      (t) => samePath(t.path, path));
+    await (already === undefined
+      ? openPath(set, get, path) : get().switchProjectTab(already.path));
+  },
+
+  closeProjectTab: async (path) => {
+    const { projectPath } = get();
+    if (path !== projectPath) {
+      // A backgrounded tab: nothing live to close, just stop watching it.
+      await unwatchProject(path);
+      useProjectTabs.getState().remove(path);
+      return;
+    }
+    // The live tab. Drop it from the list FIRST, so backgrounding (which
+    // checks the list) does not try to keep it around for a path that is
+    // on its way out.
+    useProjectTabs.getState().remove(path);
+    const next = useProjectTabs.getState().tabs[0];
+    if (next !== undefined) {
+      // Opening the next tab on the same connection leaves this film —
+      // the host closes it once nothing else has it open (core.ts).
+      await openPath(set, get, next.path);
+    } else {
+      await closeToStart(set);
     }
   },
 
@@ -758,16 +928,18 @@ export const useStore = create<AppState>((set, get) => ({
    * nothing here guarantees that row still exists.
    */
   saveProjectAs: async () => {
-    const { projectName, assetRoot } = get();
+    const { projectPath, projectName, assetRoot } = get();
     const path = await chooser.chooseNew(
       suggestSaveAsName(projectName, true));
     if (path === null) return;
     try {
       const host = await getHost();
       const copied = await host.saveAs(path);
-      localStorage.setItem("scf:last-session", copied.path);
+      if (projectPath !== null) {
+        useProjectTabs.getState().rename(
+          projectPath, copied.path, nameOf(copied.path));
+      }
       set({ projectPath: copied.path, projectName: nameOf(copied.path),
-            lastSession: copied.path,
             revision: Math.max(get().revision, copied.revision) });
       try {
         const rows = await exec("SELECT uuid, name FROM project LIMIT 1");
@@ -987,6 +1159,49 @@ export function isDirty(draft: FormDraft | null): boolean {
   if (draft === null) return false;
   return Object.keys(draft.values).some(
     (k) => (draft.values[k] ?? null) !== (draft.original[k] ?? null));
+}
+
+/** What `resumeTabs` reads back (kept in sync with it by inspection,
+ *  not a shared type, since the two run in different modules' scope
+ *  and the shape is tiny). */
+function serializeTabs(): string {
+  return JSON.stringify({
+    tabs: useProjectTabs.getState().tabs.map(
+      (t) => ({ path: t.path, title: t.title })),
+    activePath: useStore.getState().projectPath,
+  });
+}
+
+let persistedTabs: string | null = null;
+let persisting = Promise.resolve();
+
+/** Save the open-tabs list to `app.db` whenever it (or the live path)
+ *  actually changes — skipped entirely when the user has turned
+ *  "remember open tabs" off, and de-duplicated against the last write
+ *  so a background tab's dot flipping does not trigger one. */
+function persistTabs(): void {
+  if (!useSettings.getState().rememberTabs) return;
+  const snapshot = serializeTabs();
+  if (snapshot === persistedTabs) return;
+  persistedTabs = snapshot;
+  persisting = persisting.then(async () => {
+    try {
+      await (await windowAppStore()).setPref(OPEN_TABS_PREF, snapshot);
+    } catch (e) {
+      console.warn("[persistTabs] could not save the open tabs:", e);
+    }
+  });
+}
+
+useProjectTabs.subscribe(persistTabs);
+useStore.subscribe((s, prev) => {
+  if (s.projectPath !== prev.projectPath) persistTabs();
+});
+
+/** Tests only: wait for every `persistTabs` write queued so far to land
+ *  in `app.db` before simulating a restart. */
+export async function flushTabPersistence(): Promise<void> {
+  await persisting;
 }
 
 guardSingleTab();

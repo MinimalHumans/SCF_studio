@@ -8,6 +8,7 @@ import { TitleStrip } from "./chrome/TitleStrip.tsx";
 import { useAppCommands } from "./chrome/useAppCommands.tsx";
 import { ToolPane } from "./tools/ToolPane.tsx";
 import { useTabs } from "../state/tabs.ts";
+import { useProjectTabs } from "../state/projectTabs.ts";
 import { useSettings } from "../state/settings.ts";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
 import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
@@ -106,9 +107,14 @@ function StartShell({ children }: { children: JSX.Element }): JSX.Element {
     hasProject: false, identityOpen: false, toggleIdentity: () => undefined,
   });
   const front = useTabs((t) => t.active);
+  // No tab is live here (the start screen only shows when nothing is),
+  // but a tab a resume could not reopen, or one left backgrounded while
+  // this tab failed, is still worth showing — closable, and clickable
+  // to try again.
+  const hasTabs = useProjectTabs((s) => s.tabs.length > 0);
   return (
     <div className="start-shell">
-      <TitleStrip ctx={ctx} showProject={false} />
+      <TitleStrip ctx={ctx} showProject={hasTabs} />
       {about}
       {settings}
       {licenses}
@@ -121,8 +127,8 @@ export function App(): JSX.Element {
   const phase = useStore((s) => s.phase);
   const hostStatus = useStore((s) => s.hostStatus);
   const connect = useStore((s) => s.connect);
-  const resumeLast = useStore((s) => s.resumeLast);
-  const lastSession = useStore((s) => s.lastSession);
+  const resumeTabs = useStore((s) => s.resumeTabs);
+  const settingsLoaded = useSettings((s) => s.loaded);
   const tried = useRef(false);
   const connecting = useRef(false);
 
@@ -135,17 +141,15 @@ export function App(): JSX.Element {
     void useSettings.getState().load();
   }, [connect]);
 
-  // A refresh is not a close. The host still has the file and the path
-  // is in browser storage, so walk straight back in — unless the last
-  // thing the user did was close the project, in which case the start
-  // screen is what they asked for.
+  // Launching (or a dev reload) reopens whatever was open before, tab
+  // for tab — unless the setting is off, which `resumeTabs` itself
+  // checks once it has an answer from `load` above to check.
   useEffect(() => {
-    if (tried.current || phase !== "start" || lastSession === null) return;
-    if (hostStatus !== "ready") return;
+    if (tried.current || phase !== "start") return;
+    if (hostStatus !== "ready" || !settingsLoaded) return;
     tried.current = true;
-    if (localStorage.getItem("scf:auto-resume") === "0") return;
-    void resumeLast();
-  }, [phase, hostStatus, lastSession, resumeLast]);
+    void resumeTabs();
+  }, [phase, hostStatus, settingsLoaded, resumeTabs]);
 
   if (phase === "multitab") return <StartShell><MultiTabScreen /></StartShell>;
   if (phase !== "open") return <StartShell><StartScreen /></StartShell>;

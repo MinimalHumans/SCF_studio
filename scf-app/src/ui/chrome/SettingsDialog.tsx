@@ -6,10 +6,11 @@
  * showing, not a tool tab competing with project and event-log tabs
  * for the same row.
  *
- * Sections, left to right: Developer (the row identity inspector's
- * on/off switch), Projects (the SCF-to-folder pairings `app.db` keeps),
- * Event log (manual retention). Each owns its own fetch and its own
- * error state, so one section's failure cannot blank the others.
+ * Sections, left to right: General (tab-remembering), Developer (the
+ * row identity inspector's on/off switch), Projects (the SCF-to-folder
+ * pairings `app.db` keeps), Event log (manual retention). Each owns its
+ * own fetch and its own error state, so one section's failure cannot
+ * blank the others.
  */
 
 import { useEffect, useState } from "react";
@@ -24,13 +25,33 @@ import { useSettings } from "../../state/settings.ts";
 const describe = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
 
-type Section = "developer" | "projects" | "eventLog";
+type Section = "general" | "developer" | "projects" | "eventLog";
 
 const SECTIONS: { id: Section; label: string }[] = [
+  { id: "general", label: "General" },
   { id: "developer", label: "Developer" },
   { id: "projects", label: "Projects" },
   { id: "eventLog", label: "Event log" },
 ];
+
+function GeneralSection(): JSX.Element {
+  const { rememberTabs, setRememberTabs } = useSettings();
+  return (
+    <section>
+      <h3>General</h3>
+      <label className="settings-check">
+        <input type="checkbox" checked={rememberTabs}
+               onChange={(e) => void setRememberTabs(e.target.checked)} />
+        Remember open tabs
+      </label>
+      <p className="muted small">
+        Reopens every file that was open last time, tab for tab, the next
+        time the editor starts. Turning it off also forgets the tabs
+        that were remembered.
+      </p>
+    </section>
+  );
+}
 
 function DeveloperSection(): JSX.Element {
   const { developerMode, setDeveloperMode } = useSettings();
@@ -222,7 +243,7 @@ function EventLogSection(): JSX.Element {
 
 export function SettingsDialog({ onClose }: { onClose: () => void }):
     JSX.Element {
-  const [section, setSection] = useState<Section>("developer");
+  const [section, setSection] = useState<Section>("general");
   return (
     <div className="modal-scrim" role="dialog" aria-modal="true"
          aria-labelledby="settings-dialog-title"
@@ -249,6 +270,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }):
             ))}
           </nav>
           <div className="settings-content">
+            {section === "general" && <GeneralSection />}
             {section === "developer" && <DeveloperSection />}
             {section === "projects" && <ProjectsSection />}
             {section === "eventLog" && <EventLogSection />}

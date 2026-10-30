@@ -177,10 +177,37 @@ ul { list-style: none; margin: 0; padding: 0; }
 .app-menu-shortcut { font: 11px var(--mono); color: var(--paper-dim); }
 
 .tab-list { display: flex; align-items: flex-end; align-self: stretch; min-width: 0; }
+.tab-scroll-area {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+}
+.tab-scroll {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-scroll::-webkit-scrollbar { display: none; }
+.tab-scroll-arrow {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 20px;
+  height: 24px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 4px;
+}
 .tab {
   display: flex;
   align-items: center;
   gap: 7px;
+  flex: 0 0 auto;
   max-width: 260px;
   padding: 0 12px;
   height: 31px;
@@ -190,12 +217,27 @@ ul { list-style: none; margin: 0; padding: 0; }
   border-radius: 5px 5px 0 0;
   margin-bottom: -1px;
 }
+.tab-project { cursor: default; touch-action: none; }
+.tab-project.dragging { opacity: 0.6; }
 .title-mark { display: block; height: 22px; width: auto; margin: 0 4px 0 2px; }
 .tab-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tab-state { font-size: 11px; line-height: 1; }
 .tab-problem .tab-state { color: var(--amber); }
 .tab-external .tab-state { color: var(--amber); }
 .tab-dirty .tab-state { color: var(--paper-dim); }
+.tab-add {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 24px;
+  height: 24px;
+  margin: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  border-radius: 5px;
+}
 
 .window-controls { display: flex; align-self: stretch; }
 .window-control {

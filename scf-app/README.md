@@ -117,9 +117,11 @@ SQLite (rusqlite) over a loopback socket, files, the MCP pipes' relay
   Everything that changes the film is a named call from
   `scf-core/src/ops/calls.ts`, made through `call()` in
   `state/api.ts`; a test (`test/noInlineWrites.test.ts`) pins both.
-- **Reload resumes.** The film's path is in browser storage, and the
-  host still has the file, so a refresh walks straight back in. An
-  explicit Close sets `scf:auto-resume=0` so closed stays closed.
+- **Tabs resume.** The open tabs (paths and titles, not their state)
+  are kept in `app.db`'s `pref` table (`state/store.ts` `persistTabs`),
+  written on every open/close/switch; a launch (or a dev reload) walks
+  back into all of them (`resumeTabs`) unless Settings > General >
+  "Remember open tabs" is off, which also forgets what was open.
 - **Choosing a file** goes through `ProjectChooser`
   (`files/projectChooser.ts`), implemented over the OS's own Open/Save
   dialogs (`files/tauriChooser.ts`, tauri-plugin-dialog). The

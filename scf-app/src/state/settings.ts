@@ -14,14 +14,22 @@ import { windowAppStore } from "../host/windowAppStore.ts";
 import { windowAuditStore } from "../host/windowAuditStore.ts";
 
 const DEVELOPER_MODE_PREF = "developerMode";
+const REMEMBER_TABS_PREF = "rememberOpenTabs";
+/** Where the open-tab list itself is kept (projectTabs.ts, written by
+ *  store.ts); named here because turning this setting off also clears
+ *  it. */
+export const OPEN_TABS_PREF = "openTabs";
 
 interface SettingsState {
   /** False until `load` has returned once. */
   loaded: boolean;
   /** Developer-only tools (the row identity inspector); off by default. */
   developerMode: boolean;
+  /** Reopen every tab that was open last time, on by default. */
+  rememberTabs: boolean;
   load(): Promise<void>;
   setDeveloperMode(on: boolean): Promise<void>;
+  setRememberTabs(on: boolean): Promise<void>;
 }
 
 /** A settings change is app-scope, not a project write, so it is
@@ -37,11 +45,20 @@ async function logSettingsChange(action: string, summary: string):
 export const useSettings = create<SettingsState>((set) => ({
   loaded: false,
   developerMode: false,
+  // Optimistic default: correct for everyone who has never touched the
+  // setting, and overwritten by the real value the moment `load` returns
+  // — so a tab opened in the instant before that happens is still worth
+  // remembering rather than assumed throwaway.
+  rememberTabs: true,
 
   load: async () => {
     const store = await windowAppStore();
-    const value = await store.getPref(DEVELOPER_MODE_PREF);
-    set({ developerMode: value === "1", loaded: true });
+    const [developerMode, rememberTabs] = await Promise.all([
+      store.getPref(DEVELOPER_MODE_PREF), store.getPref(REMEMBER_TABS_PREF),
+    ]);
+    set({ developerMode: developerMode === "1",
+          rememberTabs: rememberTabs === null ? true : rememberTabs === "1",
+          loaded: true });
   },
 
   setDeveloperMode: async (on) => {
@@ -50,5 +67,16 @@ export const useSettings = create<SettingsState>((set) => ({
     set({ developerMode: on });
     await logSettingsChange(
       "settings.developerMode", on ? "turned on" : "turned off");
+  },
+
+  setRememberTabs: async (on) => {
+    const store = await windowAppStore();
+    await store.setPref(REMEMBER_TABS_PREF, on ? "1" : "0");
+    // Turning it off forgets what was open, too — otherwise flipping it
+    // back on later would resurrect a stale list nobody asked to keep.
+    if (!on) await store.setPref(OPEN_TABS_PREF, "");
+    set({ rememberTabs: on });
+    await logSettingsChange(
+      "settings.rememberTabs", on ? "turned on" : "turned off");
   },
 }));

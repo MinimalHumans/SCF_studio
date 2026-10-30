@@ -123,15 +123,18 @@ beforeEach(async () => {
 afterEach(async () => {
   const { useStore } = await import("../src/state/store");
   await useStore.getState().closeProject();
+  const { useProjectTabs } = await import("../src/state/projectTabs");
+  useProjectTabs.setState({ tabs: [] });
   await appStore.close();
   rmSync(appStoreDir, { recursive: true, force: true });
 });
 
 async function store() {
-  const { useStore, exec } = await import("../src/state/store");
+  const { useStore, exec, flushTabPersistence } =
+    await import("../src/state/store");
   const { call } = await import("../src/state/api");
   await useStore.getState().connect();
-  return { useStore, exec, call };
+  return { useStore, exec, call, flushTabPersistence };
 }
 
 describe("the window on the host", () => {
@@ -184,25 +187,24 @@ describe("the window on the host", () => {
     expect(useStore.getState().externalEdit).toBeNull();
   }, 60_000);
 
-  test("opening an existing file, and reopening it after a reload",
+  test("opening an existing file, and reopening it after a restart",
       async () => {
-    const { useStore, exec, call } = await store();
+    const { useStore, exec, call, flushTabPersistence } = await store();
     const path = join(dir, "keep.scf");
     chooserPaths.push(path);
     await useStore.getState().newProject();
     await call("record.create", "character", { name: "KEPT" });
-    await useStore.getState().closeProject();
-
-    chooserPaths.push(path);
-    await useStore.getState().openFromPicker();
-    expect(useStore.getState().phase).toBe("open");
     expect(await exec("SELECT name FROM character"))
       .toEqual([{ name: "KEPT" }]);
+    await flushTabPersistence();
 
-    // A reload keeps the path, not the host connection's state.
-    useStore.setState({ phase: "start" });
-    localStorage.setItem("scf:auto-resume", "1");
-    await useStore.getState().resumeLast();
+    // A restart keeps the path, not the host connection's state — the
+    // in-memory tab list is gone too, same as a real relaunch; only
+    // what persistTabs wrote to app.db survives.
+    const { useProjectTabs } = await import("../src/state/projectTabs");
+    useStore.setState({ phase: "start", projectPath: null });
+    useProjectTabs.setState({ tabs: [] });
+    await useStore.getState().resumeTabs();
     expect(useStore.getState().phase).toBe("open");
     expect(useStore.getState().projectPath).toBe(path);
   }, 60_000);
@@ -210,12 +212,19 @@ describe("the window on the host", () => {
   test("resuming a file that has gone says so and offers the start screen",
       async () => {
     const { useStore } = await store();
-    localStorage.setItem("scf:last-session", join(dir, "gone.scf"));
-    await useStore.getState().resumeLast();
+    const { OPEN_TABS_PREF } = await import("../src/state/settings");
+    const path = join(dir, "gone.scf");
+    await appStore.setPref(OPEN_TABS_PREF, JSON.stringify({
+      tabs: [{ path, title: "gone.scf" }], activePath: path,
+    }));
+    await useStore.getState().resumeTabs();
     const st = useStore.getState();
     expect(st.phase).toBe("start");
     expect(st.errorMessage).toContain("gone.scf");
-    expect(localStorage.getItem("scf:last-session")).toBeNull();
+    // Kept, not forgotten — marked broken rather than silently dropped.
+    const { useProjectTabs } = await import("../src/state/projectTabs");
+    const tab = useProjectTabs.getState().tabs.find((t) => t.path === path);
+    expect(tab?.problem).not.toBeNull();
   }, 60_000);
 
   test("Save As copies, follows the new file, and leaves the old one",

@@ -214,6 +214,12 @@ export function Workbench(): JSX.Element {
     (navMode === "structure" || navMode === "shoot");
 
   const errorMessage = useStoreRaw((st) => st.errorMessage);
+  // Set while the live tab is switching to another already-open one:
+  // the chrome (title strip, tabs) stays put, and this is shown in
+  // place of the content that is between projects, rather than
+  // unmounting the whole workbench to the start screen for a moment
+  // (store.ts `openPath`).
+  const switchingTab = useStoreRaw((st) => st.switchingTab);
   return (
     <div className="workbench">
       {errorMessage !== null && (
@@ -229,7 +235,8 @@ export function Workbench(): JSX.Element {
       {about}
       {settings}
       {licenses}
-      {front !== "project" ? <ToolPane id={front} /> : (
+      {switchingTab ? <div className="panels panels-switching" /> :
+       front !== "project" ? <ToolPane id={front} /> : (
       <div className="panels">
         <ActivityBar />
         {railContent !== null && (

@@ -1,10 +1,25 @@
 <!-- SPDX-License-Identifier: CC-BY-4.0 -->
 # UI rework: project tabs, tool tabs, status bar
 
-**Status: design, nothing built.** Covers the title-strip tab model, the
-bottom status bar, and the app-scoped services behind the tool tabs
-(media queue, settings, audit log). Windows first; macOS keeps its
-native menu.
+**Status: partially built.** The title strip, the hamburger menu, tool
+tabs (event log, Settings as its own dialog) and now multiple project
+tabs are shipped. The status bar and the media-queue/audit services in
+§7 are still design only. Windows first; macOS keeps its native menu.
+
+**Multiple project tabs shipped a simplified model, not §3/§4's.**
+Rather than the per-project `createProjectStore` context split §3
+describes, there is still exactly one live project (one `useStore`, one
+host connection, module singletons untouched). Other open tabs
+(`state/projectTabs.ts`) are a path, a title and a small remembered nav
+state (`ProjectMemory`) — not a second copy of the whole store.
+Switching a tab backgrounds the current one (snapshots that memory,
+opens a lightweight read-only watch connection — `state/projectWatch.ts`
+— so an outside edit still shows as the tab's dot) and opens the target
+on the one live connection. §3/§4's full context-per-tab refactor is
+still undone; this works without it because nothing today needs two
+projects truly live at once. Tabs persist across a restart in `app.db`
+(`state/store.ts` `persistTabs`/`resumeTabs`), gated by Settings >
+General > "Remember open tabs" (on by default).
 
 ## 1. What the code does today
 
@@ -131,10 +146,14 @@ CodeMirror proves unreliable.
   found, connection lost) as a warning glyph; external edit pending;
   dirty. Folder-not-found moves from the topbar's `RootStatus` to here
   and to the status bar's left side.
-- **Tab behaviour, built first:** overflow scroll with the `+` pinned,
-  drag reorder, Ctrl+Tab / Ctrl+Shift+Tab, Ctrl+W, middle-click close,
-  confirm on close when the project has non-terminal media jobs or a
-  dirty draft. `Alt+digit` section shortcuts stay and act on the active
+- **Tab behaviour.** Done: overflow scroll with arrows at whichever side
+  has hidden tabs, drag reorder, the `+` pinned, middle-click close.
+  Still missing: Ctrl+Tab / Ctrl+Shift+Tab, Ctrl+W, and a close confirm
+  (a dirty draft is silently discarded on tab switch today, same as
+  switching sections within one project already did — see §4's note on
+  that being the one place the simplified model can lose data; no
+  media jobs yet to gate on). `Alt+digit` section shortcuts stay and act
+  on the active
   project.
 - **Palette (Ctrl+K)** replaces `SearchBox`. Scope: commands, tool tabs,
   open projects, and entity search within the active project. Entity
@@ -282,9 +301,12 @@ Each step ships and leaves the app working.
 4. **Title strip shell**: custom chrome, hamburger, tab strip with a
    single project tab, tool-tab host with Settings as the first tool tab,
    bottom status bar (folder state only).
-5. **Multiple project tabs**: open-in-new-tab, focus-if-open, the
-   section 4 unmount/flush rules, per-tab dots, close confirm, and
-   reopen-all on reload.
+5. **Multiple project tabs — done, via the simplified model noted at the
+   top rather than §3's context refactor:** open-in-new-tab,
+   focus-if-open (Open and Open Recent alike), background+watch instead
+   of the section 4 unmount/flush rules, per-tab dots including a
+   backgrounded tab's outside changes, reopen-all on restart (gated by
+   a setting). Still missing: close confirm on a dirty draft.
 6. **Audit viewer tab.**
 7. **Media server sidecar**, queue tab and status-bar summary.
 
