@@ -10,8 +10,8 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
   assetRoot: "ok", developerMode: true,
   newProject: vi.fn(), openProject: vi.fn(), saveProjectAs: vi.fn(),
   closeProject: vi.fn(), attachFolder: vi.fn(), toggleIdentity: vi.fn(),
-  showAbout: vi.fn(), showSettings: vi.fn(), exitApp: vi.fn(),
-  openEventLog: vi.fn(), ...over,
+  showAbout: vi.fn(), showSettings: vi.fn(), showLicenses: vi.fn(),
+  exitApp: vi.fn(), openEventLog: vi.fn(), ...over,
 });
 
 const key = (k: string, mods: { shift?: boolean; alt?: boolean } = {}) => ({
@@ -64,6 +64,14 @@ describe("menu model", () => {
     expect(item.disabled).toBe(false);
     expect(runCommand("view.eventLog", c)).toBe(true);
     expect(c.openEventLog).toHaveBeenCalledOnce();
+  });
+
+  test("Open Source Licenses sits in Help, next to About", () => {
+    const c = ctx({ hasProject: false });
+    expect(menuModel(c)[2]!.items.map((i) => i.id))
+      .toEqual(["help.about", "help.licenses"]);
+    expect(runCommand("help.licenses", c)).toBe(true);
+    expect(c.showLicenses).toHaveBeenCalledOnce();
   });
 
   test("the asset root command says what it will do", () => {

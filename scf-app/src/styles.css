@@ -271,6 +271,36 @@ ul { list-style: none; margin: 0; padding: 0; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .settings-pairing-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.modal.licenses-dialog {
+  background: var(--ink-0, #12151a); border: 1px solid var(--line);
+  border-radius: 6px; width: min(640px, 92vw); max-height: 86vh;
+  padding: 16px 20px; display: flex; flex-direction: column;
+}
+.licenses-controls {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin: 8px 0 10px;
+}
+.licenses-tabs { display: flex; gap: 4px; }
+.licenses-tab {
+  background: none; border: 1px solid transparent; color: var(--paper-dim);
+  padding: 4px 10px; border-radius: 4px; cursor: pointer;
+}
+.licenses-tab:hover { background: var(--ink-2); color: var(--paper); }
+.licenses-tab.active {
+  background: var(--ink-2); color: var(--paper); font-weight: 600;
+}
+.licenses-content { flex: 1; overflow-y: auto; min-height: 0; }
+.licenses-list {
+  list-style: none; margin: 0; padding: 0; display: flex;
+  flex-direction: column; gap: 2px;
+}
+.licenses-row {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 10px;
+  align-items: baseline; padding: 4px 6px; border-radius: 4px;
+}
+.licenses-row:hover { background: var(--ink-2); }
+.licenses-tag { color: var(--paper-dim); font-size: 0.9em; }
 .panels { flex: 1; display: flex; min-height: 0; }
 .rail {
   width: 240px;

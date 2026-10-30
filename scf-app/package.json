@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "bless-queries": "vitest run test/queryExpectations.test.ts --mode bless"
+    "bless-queries": "vitest run test/queryExpectations.test.ts --mode bless",
+    "gen:licenses": "node ../tools/gen_licenses.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

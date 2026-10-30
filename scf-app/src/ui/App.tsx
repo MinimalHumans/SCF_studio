@@ -102,7 +102,7 @@ function MultiTabScreen(): JSX.Element {
  * have nothing to drag, no window buttons, and no way to quit.
  */
 function StartShell({ children }: { children: JSX.Element }): JSX.Element {
-  const { ctx, about, settings } = useAppCommands({
+  const { ctx, about, settings, licenses } = useAppCommands({
     hasProject: false, identityOpen: false, toggleIdentity: () => undefined,
   });
   const front = useTabs((t) => t.active);
@@ -111,6 +111,7 @@ function StartShell({ children }: { children: JSX.Element }): JSX.Element {
       <TitleStrip ctx={ctx} showProject={false} />
       {about}
       {settings}
+      {licenses}
       {front === "project" ? children : <ToolPane id={front} />}
     </div>
   );

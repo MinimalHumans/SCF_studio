@@ -9,6 +9,7 @@ import {
 import { useSettings } from "../../state/settings.ts";
 import { AboutDialog } from "./AboutDialog.tsx";
 import { SettingsDialog } from "./SettingsDialog.tsx";
+import { LicensesDialog } from "./LicensesDialog.tsx";
 
 /**
  * What the menu and the shortcuts act through, for whichever screen has
@@ -24,9 +25,11 @@ export function useAppCommands(screen: {
   ctx: CommandContext;
   about: JSX.Element | null;
   settings: JSX.Element | null;
+  licenses: JSX.Element | null;
 } {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [licensesOpen, setLicensesOpen] = useState(false);
   const developerMode = useSettings((s) => s.developerMode);
   const { assetRoot, assetRootStatus, hostStatus, newProject,
           openFromPicker, saveProjectAs, closeProject, attachFolder } =
@@ -46,6 +49,7 @@ export function useAppCommands(screen: {
     identityOpen: screen.identityOpen,
     showAbout: () => { setAboutOpen(true); },
     showSettings: () => { setSettingsOpen(true); },
+    showLicenses: () => { setLicensesOpen(true); },
     exitApp: () => { void invoke("quit_app"); },
     openEventLog: () => { useTabs.getState().openTool("events"); },
   };
@@ -68,5 +72,7 @@ export function useAppCommands(screen: {
       : null,
     settings: settingsOpen
       ? <SettingsDialog onClose={() => setSettingsOpen(false)} /> : null,
+    licenses: licensesOpen
+      ? <LicensesDialog onClose={() => setLicensesOpen(false)} /> : null,
   };
 }

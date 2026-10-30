@@ -146,7 +146,7 @@ export function Workbench(): JSX.Element {
   const { navMode, openRow, selectedEntityType, selectedSubject } =
     useStore();
   const front = useTabs((t) => t.active);
-  const { ctx: commandCtx, about, settings } = useAppCommands({
+  const { ctx: commandCtx, about, settings, licenses } = useAppCommands({
     hasProject: true, identityOpen,
     toggleIdentity: () => { setIdentityOpen((v) => !v); },
   });
@@ -228,6 +228,7 @@ export function Workbench(): JSX.Element {
                   status={<><RootStatus /><SaveControls /></>} />
       {about}
       {settings}
+      {licenses}
       {front !== "project" ? <ToolPane id={front} /> : (
       <div className="panels">
         <ActivityBar />

@@ -31,6 +31,7 @@ export interface CommandContext {
   identityOpen: boolean;
   showAbout(): void;
   showSettings(): void;
+  showLicenses(): void;
   /** Quit the app, which closing the window no longer does. */
   exitApp(): void;
   /** Open the event log tab, or bring it forward. */
@@ -99,6 +100,8 @@ export const COMMANDS: readonly Command[] = [
 
   { id: "help.about", label: "About SCF Editor", menu: "Help",
     run: (c) => { c.showAbout(); } },
+  { id: "help.licenses", label: "Open Source Licenses", menu: "Help",
+    run: (c) => { c.showLicenses(); } },
 ];
 
 /** Where separators fall: before the first command of each of these. */
