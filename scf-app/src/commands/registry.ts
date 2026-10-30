@@ -30,6 +30,7 @@ export interface CommandContext {
   toggleIdentity(): void;
   identityOpen: boolean;
   showAbout(): void;
+  showSettings(): void;
   /** Quit the app, which closing the window no longer does. */
   exitApp(): void;
   /** Open the event log tab, or bring it forward. */
@@ -81,7 +82,7 @@ export const COMMANDS: readonly Command[] = [
   // App-wide rather than the project's, so it is offered with no
   // project open too.
   { id: "file.settings", label: "Settings", menu: "File",
-    shortcut: "Ctrl+,", pending: "Not built yet", run: () => undefined },
+    shortcut: "Ctrl+,", run: (c) => { c.showSettings(); } },
 
   // Closing the window leaves the app in the tray, so quitting has to be
   // somewhere plain to find. It sits below every group, not inside one,
@@ -92,6 +93,7 @@ export const COMMANDS: readonly Command[] = [
   { id: "view.eventLog", label: "Event log", menu: "View",
     run: (c) => { c.openEventLog(); } },
   { id: "view.identity", label: "Row identity", menu: "View",
+    shortcut: "Ctrl+I",
     hidden: (c) => !c.developerMode, disabled: needsProject, checked: (c) => c.identityOpen,
     run: (c) => { c.toggleIdentity(); } },
 

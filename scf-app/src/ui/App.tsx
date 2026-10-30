@@ -8,6 +8,7 @@ import { TitleStrip } from "./chrome/TitleStrip.tsx";
 import { useAppCommands } from "./chrome/useAppCommands.tsx";
 import { ToolPane } from "./tools/ToolPane.tsx";
 import { useTabs } from "../state/tabs.ts";
+import { useSettings } from "../state/settings.ts";
 import logoBigCloud from "../assets/logoBig_cloud.svg";
 import logoMinimalHumans from "../assets/minimalHumans_logoShort.svg";
 
@@ -101,7 +102,7 @@ function MultiTabScreen(): JSX.Element {
  * have nothing to drag, no window buttons, and no way to quit.
  */
 function StartShell({ children }: { children: JSX.Element }): JSX.Element {
-  const { ctx, about } = useAppCommands({
+  const { ctx, about, settings } = useAppCommands({
     hasProject: false, identityOpen: false, toggleIdentity: () => undefined,
   });
   const front = useTabs((t) => t.active);
@@ -109,6 +110,7 @@ function StartShell({ children }: { children: JSX.Element }): JSX.Element {
     <div className="start-shell">
       <TitleStrip ctx={ctx} showProject={false} />
       {about}
+      {settings}
       {front === "project" ? children : <ToolPane id={front} />}
     </div>
   );
@@ -129,6 +131,7 @@ export function App(): JSX.Element {
     if (connecting.current) return;
     connecting.current = true;
     void connect();
+    void useSettings.getState().load();
   }, [connect]);
 
   // A refresh is not a close. The host still has the file and the path

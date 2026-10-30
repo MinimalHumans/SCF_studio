@@ -6,22 +6,28 @@ import { useTabs } from "../../state/tabs.ts";
 import {
   commandForKey, runCommand, type CommandContext,
 } from "../../commands/registry.ts";
-import { useRememberedFlag } from "../useRememberedFlag.ts";
+import { useSettings } from "../../state/settings.ts";
 import { AboutDialog } from "./AboutDialog.tsx";
+import { SettingsDialog } from "./SettingsDialog.tsx";
 
 /**
  * What the menu and the shortcuts act through, for whichever screen has
  * the title strip: the open project's workbench or the start screen.
- * Also owns the About dialog and the keyboard shortcuts, so each screen
- * only says what is true of it.
+ * Also owns the About and Settings dialogs and the keyboard shortcuts,
+ * so each screen only says what is true of it.
  */
 export function useAppCommands(screen: {
   hasProject: boolean;
   identityOpen: boolean;
   toggleIdentity(): void;
-}): { ctx: CommandContext; about: JSX.Element | null } {
+}): {
+  ctx: CommandContext;
+  about: JSX.Element | null;
+  settings: JSX.Element | null;
+} {
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [developerMode] = useRememberedFlag("scf:developer");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const developerMode = useSettings((s) => s.developerMode);
   const { assetRoot, assetRootStatus, hostStatus, newProject,
           openFromPicker, saveProjectAs, closeProject, attachFolder } =
     useStore();
@@ -39,6 +45,7 @@ export function useAppCommands(screen: {
     toggleIdentity: screen.toggleIdentity,
     identityOpen: screen.identityOpen,
     showAbout: () => { setAboutOpen(true); },
+    showSettings: () => { setSettingsOpen(true); },
     exitApp: () => { void invoke("quit_app"); },
     openEventLog: () => { useTabs.getState().openTool("events"); },
   };
@@ -59,5 +66,7 @@ export function useAppCommands(screen: {
     ctx,
     about: aboutOpen ? <AboutDialog onClose={() => setAboutOpen(false)} />
       : null,
+    settings: settingsOpen
+      ? <SettingsDialog onClose={() => setSettingsOpen(false)} /> : null,
   };
 }

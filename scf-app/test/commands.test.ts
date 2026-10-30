@@ -10,7 +10,8 @@ const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
   assetRoot: "ok", developerMode: true,
   newProject: vi.fn(), openProject: vi.fn(), saveProjectAs: vi.fn(),
   closeProject: vi.fn(), attachFolder: vi.fn(), toggleIdentity: vi.fn(),
-  showAbout: vi.fn(), exitApp: vi.fn(), openEventLog: vi.fn(), ...over,
+  showAbout: vi.fn(), showSettings: vi.fn(), exitApp: vi.fn(),
+  openEventLog: vi.fn(), ...over,
 });
 
 const key = (k: string, mods: { shift?: boolean; alt?: boolean } = {}) => ({
@@ -38,9 +39,8 @@ describe("menu model", () => {
   test("project commands are off without a project", () => {
     const file = menuModel(ctx({ hasProject: false }))[0]!;
     const off = file.items.filter((i) => i.disabled).map((i) => i.id);
-    // Settings is not built yet, whatever is open.
-    expect(off).toEqual(
-      ["file.saveAs", "file.assetRoot", "file.close", "file.settings"]);
+    // Settings is app-wide, so it stays enabled with no project open.
+    expect(off).toEqual(["file.saveAs", "file.assetRoot", "file.close"]);
   });
 
   test("nothing opens or makes a file until the host is ready", () => {
@@ -49,11 +49,13 @@ describe("menu model", () => {
     expect(file.items.find((i) => i.id === "file.new")!.disabled).toBe(true);
   });
 
-  test("tools that are not built are listed but cannot be run", () => {
-    const file = menuModel(ctx())[0]!;
-    const settings = file.items.find((i) => i.id === "file.settings")!;
-    expect(settings).toMatchObject({ disabled: true, hint: "Not built yet" });
-    expect(runCommand("file.settings", ctx())).toBe(false);
+  test("Settings opens with or without a project", () => {
+    const c = ctx({ hasProject: false });
+    const settings = menuModel(c)[0]!.items
+      .find((i) => i.id === "file.settings")!;
+    expect(settings.disabled).toBe(false);
+    expect(runCommand("file.settings", c)).toBe(true);
+    expect(c.showSettings).toHaveBeenCalledOnce();
   });
 
   test("the event log opens with or without a project", () => {
@@ -138,6 +140,11 @@ describe("shortcuts", () => {
 
   test("Shift distinguishes Save as from a bare S", () => {
     expect(commandForKey(key("s"))).toBeUndefined();
+  });
+
+  test("Ctrl+I is bound to row identity, Ctrl+, to Settings", () => {
+    expect(commandForKey(key("i"))?.id).toBe("view.identity");
+    expect(commandForKey(key(","))?.id).toBe("file.settings");
   });
 });
 
