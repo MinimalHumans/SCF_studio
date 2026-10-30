@@ -291,8 +291,19 @@ ul { list-style: none; margin: 0; padding: 0; }
   background: var(--ink-2); color: var(--paper); font-weight: 600;
 }
 .licenses-content { flex: 1; overflow-y: auto; min-height: 0; }
-.licenses-list {
+.licenses-groups {
   list-style: none; margin: 0; padding: 0; display: flex;
+  flex-direction: column; gap: 2px;
+}
+.licenses-group-head {
+  display: flex; align-items: baseline; gap: 8px; width: 100%;
+  background: none; border: none; color: var(--paper); text-align: left;
+  padding: 6px; border-radius: 4px; cursor: pointer;
+}
+.licenses-group-head:hover { background: var(--ink-2); }
+.licenses-group-caret { color: var(--paper-dim); width: 1em; }
+.licenses-list {
+  list-style: none; margin: 0 0 4px; padding: 0 0 0 24px; display: flex;
   flex-direction: column; gap: 2px;
 }
 .licenses-row {

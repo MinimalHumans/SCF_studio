@@ -1,3012 +1,4214 @@
 {
-  "generatedAt": "2026-10-30T13:21:14.574Z",
+  "generatedAt": "2026-10-30T13:26:20.648Z",
   "npm": [
     {
       "name": "@codemirror/autocomplete",
       "version": "6.20.3",
-      "license": "MIT"
-    },
-    {
-      "name": "@codemirror/commands",
-      "version": "6.10.4",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/autocomplete",
+      "isRoot": true
     },
     {
       "name": "@codemirror/language",
       "version": "6.12.4",
-      "license": "MIT"
-    },
-    {
-      "name": "@codemirror/state",
-      "version": "6.7.1",
-      "license": "MIT"
-    },
-    {
-      "name": "@codemirror/view",
-      "version": "6.43.6",
-      "license": "MIT"
-    },
-    {
-      "name": "@hono/node-server",
-      "version": "2.1.5",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/autocomplete",
+      "isRoot": false
     },
     {
       "name": "@lezer/common",
       "version": "1.5.2",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/autocomplete",
+      "isRoot": false
     },
     {
       "name": "@lezer/highlight",
       "version": "1.2.3",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/autocomplete",
+      "isRoot": false
     },
     {
       "name": "@lezer/lr",
       "version": "1.4.10",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/autocomplete",
+      "isRoot": false
+    },
+    {
+      "name": "@codemirror/commands",
+      "version": "6.10.4",
+      "license": "MIT",
+      "group": "@codemirror/commands",
+      "isRoot": true
+    },
+    {
+      "name": "@codemirror/state",
+      "version": "6.7.1",
+      "license": "MIT",
+      "group": "@codemirror/state",
+      "isRoot": true
     },
     {
       "name": "@marijn/find-cluster-break",
       "version": "1.0.3",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/state",
+      "isRoot": false
     },
     {
-      "name": "@modelcontextprotocol/sdk",
-      "version": "1.32.1",
-      "license": "MIT"
-    },
-    {
-      "name": "@tauri-apps/api",
-      "version": "2.12.4",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "@tauri-apps/plugin-dialog",
-      "version": "2.8.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "@tauri-apps/plugin-opener",
-      "version": "2.7.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "@types/prop-types",
-      "version": "15.7.15",
-      "license": "MIT"
-    },
-    {
-      "name": "@types/react",
-      "version": "18.3.31",
-      "license": "MIT"
-    },
-    {
-      "name": "accepts",
-      "version": "2.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "ajv",
-      "version": "8.20.0",
-      "license": "MIT"
-    },
-    {
-      "name": "ajv-formats",
-      "version": "3.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "body-parser",
-      "version": "2.3.0",
-      "license": "MIT"
-    },
-    {
-      "name": "bytes",
-      "version": "3.1.2",
-      "license": "MIT"
-    },
-    {
-      "name": "call-bind-apply-helpers",
-      "version": "1.0.2",
-      "license": "MIT"
-    },
-    {
-      "name": "call-bound",
-      "version": "1.0.4",
-      "license": "MIT"
-    },
-    {
-      "name": "content-disposition",
-      "version": "2.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "content-type",
-      "version": "2.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "cookie",
-      "version": "0.7.2",
-      "license": "MIT"
-    },
-    {
-      "name": "cookie-signature",
-      "version": "1.2.2",
-      "license": "MIT"
-    },
-    {
-      "name": "cors",
-      "version": "2.8.6",
-      "license": "MIT"
+      "name": "@codemirror/view",
+      "version": "6.43.6",
+      "license": "MIT",
+      "group": "@codemirror/view",
+      "isRoot": true
     },
     {
       "name": "crelt",
       "version": "1.0.7",
-      "license": "MIT"
-    },
-    {
-      "name": "cross-spawn",
-      "version": "7.0.6",
-      "license": "MIT"
-    },
-    {
-      "name": "csstype",
-      "version": "3.2.3",
-      "license": "MIT"
-    },
-    {
-      "name": "debug",
-      "version": "4.4.3",
-      "license": "MIT"
-    },
-    {
-      "name": "depd",
-      "version": "2.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "dunder-proto",
-      "version": "1.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "ee-first",
-      "version": "1.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "encodeurl",
-      "version": "2.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "es-define-property",
-      "version": "1.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "es-errors",
-      "version": "1.3.0",
-      "license": "MIT"
-    },
-    {
-      "name": "es-object-atoms",
-      "version": "1.1.2",
-      "license": "MIT"
-    },
-    {
-      "name": "escape-html",
-      "version": "1.0.3",
-      "license": "MIT"
-    },
-    {
-      "name": "etag",
-      "version": "1.8.1",
-      "license": "MIT"
-    },
-    {
-      "name": "eventsource",
-      "version": "3.0.7",
-      "license": "MIT"
-    },
-    {
-      "name": "eventsource-parser",
-      "version": "3.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "express",
-      "version": "5.3.0",
-      "license": "MIT"
-    },
-    {
-      "name": "express-rate-limit",
-      "version": "8.7.1",
-      "license": "MIT"
-    },
-    {
-      "name": "fast-deep-equal",
-      "version": "3.1.3",
-      "license": "MIT"
-    },
-    {
-      "name": "fast-uri",
-      "version": "3.1.8",
-      "license": "BSD-3-Clause"
-    },
-    {
-      "name": "finalhandler",
-      "version": "2.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "forwarded",
-      "version": "0.2.0",
-      "license": "MIT"
-    },
-    {
-      "name": "fresh",
-      "version": "2.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "function-bind",
-      "version": "1.1.2",
-      "license": "MIT"
-    },
-    {
-      "name": "get-intrinsic",
-      "version": "1.3.0",
-      "license": "MIT"
-    },
-    {
-      "name": "get-proto",
-      "version": "1.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "gopd",
-      "version": "1.2.0",
-      "license": "MIT"
-    },
-    {
-      "name": "has-symbols",
-      "version": "1.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "hasown",
-      "version": "2.0.4",
-      "license": "MIT"
-    },
-    {
-      "name": "hono",
-      "version": "4.13.13",
-      "license": "MIT"
-    },
-    {
-      "name": "http-errors",
-      "version": "2.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "iconv-lite",
-      "version": "0.7.3",
-      "license": "MIT"
-    },
-    {
-      "name": "inherits",
-      "version": "2.0.4",
-      "license": "ISC"
-    },
-    {
-      "name": "ip-address",
-      "version": "10.7.4",
-      "license": "MIT"
-    },
-    {
-      "name": "ipaddr.js",
-      "version": "1.9.1",
-      "license": "MIT"
-    },
-    {
-      "name": "is-promise",
-      "version": "4.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "isexe",
-      "version": "2.0.0",
-      "license": "ISC"
-    },
-    {
-      "name": "jose",
-      "version": "6.2.12",
-      "license": "MIT"
-    },
-    {
-      "name": "js-tokens",
-      "version": "4.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "json-schema-traverse",
-      "version": "1.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "json-schema-typed",
-      "version": "8.0.2",
-      "license": "BSD-2-Clause"
-    },
-    {
-      "name": "loose-envify",
-      "version": "1.4.0",
-      "license": "MIT"
-    },
-    {
-      "name": "math-intrinsics",
-      "version": "1.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "media-typer",
-      "version": "1.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "merge-descriptors",
-      "version": "2.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "mime-db",
-      "version": "1.54.0",
-      "license": "MIT"
-    },
-    {
-      "name": "mime-types",
-      "version": "3.0.2",
-      "license": "MIT"
-    },
-    {
-      "name": "ms",
-      "version": "2.1.3",
-      "license": "MIT"
-    },
-    {
-      "name": "negotiator",
-      "version": "1.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "object-assign",
-      "version": "4.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "object-inspect",
-      "version": "1.13.4",
-      "license": "MIT"
-    },
-    {
-      "name": "on-finished",
-      "version": "2.4.1",
-      "license": "MIT"
-    },
-    {
-      "name": "once",
-      "version": "1.4.0",
-      "license": "ISC"
-    },
-    {
-      "name": "parseurl",
-      "version": "1.3.3",
-      "license": "MIT"
-    },
-    {
-      "name": "path-key",
-      "version": "3.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "path-to-regexp",
-      "version": "8.4.2",
-      "license": "MIT"
-    },
-    {
-      "name": "pkce-challenge",
-      "version": "5.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "proxy-addr",
-      "version": "2.0.8",
-      "license": "MIT"
-    },
-    {
-      "name": "qs",
-      "version": "6.16.1",
-      "license": "BSD-3-Clause"
-    },
-    {
-      "name": "range-parser",
-      "version": "1.3.0",
-      "license": "MIT"
-    },
-    {
-      "name": "raw-body",
-      "version": "3.0.2",
-      "license": "MIT"
-    },
-    {
-      "name": "react",
-      "version": "18.3.1",
-      "license": "MIT"
-    },
-    {
-      "name": "react-dom",
-      "version": "18.3.1",
-      "license": "MIT"
-    },
-    {
-      "name": "require-from-string",
-      "version": "2.0.2",
-      "license": "MIT"
-    },
-    {
-      "name": "router",
-      "version": "2.2.0",
-      "license": "MIT"
-    },
-    {
-      "name": "safer-buffer",
-      "version": "2.1.2",
-      "license": "MIT"
-    },
-    {
-      "name": "scheduler",
-      "version": "0.23.2",
-      "license": "MIT"
-    },
-    {
-      "name": "send",
-      "version": "1.2.1",
-      "license": "MIT"
-    },
-    {
-      "name": "serve-static",
-      "version": "2.2.1",
-      "license": "MIT"
-    },
-    {
-      "name": "setprototypeof",
-      "version": "1.2.0",
-      "license": "ISC"
-    },
-    {
-      "name": "shebang-command",
-      "version": "2.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "shebang-regex",
-      "version": "3.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "side-channel",
-      "version": "1.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "side-channel-list",
-      "version": "1.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "side-channel-map",
-      "version": "1.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "side-channel-weakmap",
-      "version": "1.0.2",
-      "license": "MIT"
-    },
-    {
-      "name": "statuses",
-      "version": "2.0.2",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/view",
+      "isRoot": false
     },
     {
       "name": "style-mod",
       "version": "4.1.3",
-      "license": "MIT"
-    },
-    {
-      "name": "toidentifier",
-      "version": "1.0.1",
-      "license": "MIT"
-    },
-    {
-      "name": "type-is",
-      "version": "2.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "unpipe",
-      "version": "1.0.0",
-      "license": "MIT"
-    },
-    {
-      "name": "vary",
-      "version": "1.1.2",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/view",
+      "isRoot": false
     },
     {
       "name": "w3c-keyname",
       "version": "2.2.8",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "@codemirror/view",
+      "isRoot": false
+    },
+    {
+      "name": "@hono/node-server",
+      "version": "2.1.5",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "@modelcontextprotocol/sdk",
+      "version": "1.32.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": true
+    },
+    {
+      "name": "accepts",
+      "version": "2.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "ajv",
+      "version": "8.20.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "body-parser",
+      "version": "2.3.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "bytes",
+      "version": "3.1.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "call-bind-apply-helpers",
+      "version": "1.0.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "call-bound",
+      "version": "1.0.4",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "content-disposition",
+      "version": "2.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "content-type",
+      "version": "1.0.5",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "cookie",
+      "version": "0.7.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "cookie-signature",
+      "version": "1.2.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "cors",
+      "version": "2.8.6",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "cross-spawn",
+      "version": "7.0.6",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "depd",
+      "version": "2.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "dunder-proto",
+      "version": "1.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "ee-first",
+      "version": "1.1.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "encodeurl",
+      "version": "2.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "es-errors",
+      "version": "1.3.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "es-object-atoms",
+      "version": "1.1.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "escape-html",
+      "version": "1.0.3",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "etag",
+      "version": "1.8.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "eventsource",
+      "version": "3.0.7",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "eventsource-parser",
+      "version": "3.1.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "express",
+      "version": "5.3.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "express-rate-limit",
+      "version": "8.7.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "fast-deep-equal",
+      "version": "3.1.3",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "fast-uri",
+      "version": "3.1.8",
+      "license": "BSD-3-Clause",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "finalhandler",
+      "version": "2.1.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "forwarded",
+      "version": "0.2.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "fresh",
+      "version": "2.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "function-bind",
+      "version": "1.1.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "get-intrinsic",
+      "version": "1.3.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "get-proto",
+      "version": "1.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "gopd",
+      "version": "1.2.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "has-symbols",
+      "version": "1.1.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "hasown",
+      "version": "2.0.4",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "hono",
+      "version": "4.13.13",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "http-errors",
+      "version": "2.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "iconv-lite",
+      "version": "0.7.3",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "inherits",
+      "version": "2.0.4",
+      "license": "ISC",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "ip-address",
+      "version": "10.7.4",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "ipaddr.js",
+      "version": "1.9.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "is-promise",
+      "version": "4.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "isexe",
+      "version": "2.0.0",
+      "license": "ISC",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "jose",
+      "version": "6.2.12",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "json-schema-traverse",
+      "version": "1.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "json-schema-typed",
+      "version": "8.0.2",
+      "license": "BSD-2-Clause",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "math-intrinsics",
+      "version": "1.1.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "media-typer",
+      "version": "1.1.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "merge-descriptors",
+      "version": "2.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "mime-db",
+      "version": "1.54.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "mime-types",
+      "version": "3.0.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "negotiator",
+      "version": "1.1.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "object-assign",
+      "version": "4.1.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "object-inspect",
+      "version": "1.13.4",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "on-finished",
+      "version": "2.4.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "once",
+      "version": "1.4.0",
+      "license": "ISC",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "parseurl",
+      "version": "1.3.3",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "path-key",
+      "version": "3.1.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "path-to-regexp",
+      "version": "8.4.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "pkce-challenge",
+      "version": "5.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "proxy-addr",
+      "version": "2.0.8",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "qs",
+      "version": "6.16.1",
+      "license": "BSD-3-Clause",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "range-parser",
+      "version": "1.3.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "raw-body",
+      "version": "3.0.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "require-from-string",
+      "version": "2.0.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "router",
+      "version": "2.2.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "safer-buffer",
+      "version": "2.1.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "send",
+      "version": "1.2.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "serve-static",
+      "version": "2.2.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "setprototypeof",
+      "version": "1.2.0",
+      "license": "ISC",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "shebang-command",
+      "version": "2.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "shebang-regex",
+      "version": "3.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "side-channel",
+      "version": "1.1.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "side-channel-list",
+      "version": "1.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "side-channel-map",
+      "version": "1.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "side-channel-weakmap",
+      "version": "1.0.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "statuses",
+      "version": "2.0.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "toidentifier",
+      "version": "1.0.1",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "type-is",
+      "version": "2.1.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "unpipe",
+      "version": "1.0.0",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "vary",
+      "version": "1.1.2",
+      "license": "MIT",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
     },
     {
       "name": "which",
       "version": "2.0.2",
-      "license": "ISC"
+      "license": "ISC",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
     },
     {
       "name": "wrappy",
       "version": "1.0.2",
-      "license": "ISC"
-    },
-    {
-      "name": "zod",
-      "version": "4.6.7",
-      "license": "MIT"
+      "license": "ISC",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
     },
     {
       "name": "zod-to-json-schema",
       "version": "3.25.2",
-      "license": "ISC"
+      "license": "ISC",
+      "group": "@modelcontextprotocol/sdk",
+      "isRoot": false
+    },
+    {
+      "name": "@tauri-apps/api",
+      "version": "2.12.4",
+      "license": "Apache-2.0 OR MIT",
+      "group": "@tauri-apps/api",
+      "isRoot": true
+    },
+    {
+      "name": "@tauri-apps/plugin-dialog",
+      "version": "2.8.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "@tauri-apps/plugin-dialog",
+      "isRoot": true
+    },
+    {
+      "name": "@tauri-apps/plugin-opener",
+      "version": "2.7.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "@tauri-apps/plugin-opener",
+      "isRoot": true
+    },
+    {
+      "name": "@types/prop-types",
+      "version": "15.7.15",
+      "license": "MIT",
+      "group": "@types/prop-types",
+      "isRoot": false
+    },
+    {
+      "name": "@types/react",
+      "version": "18.3.31",
+      "license": "MIT",
+      "group": "@types/react",
+      "isRoot": false
+    },
+    {
+      "name": "csstype",
+      "version": "3.2.3",
+      "license": "MIT",
+      "group": "csstype",
+      "isRoot": false
+    },
+    {
+      "name": "js-tokens",
+      "version": "4.0.0",
+      "license": "MIT",
+      "group": "react",
+      "isRoot": false
+    },
+    {
+      "name": "loose-envify",
+      "version": "1.4.0",
+      "license": "MIT",
+      "group": "react",
+      "isRoot": false
+    },
+    {
+      "name": "react",
+      "version": "18.3.1",
+      "license": "MIT",
+      "group": "react",
+      "isRoot": true
+    },
+    {
+      "name": "react-dom",
+      "version": "18.3.1",
+      "license": "MIT",
+      "group": "react-dom",
+      "isRoot": true
+    },
+    {
+      "name": "scheduler",
+      "version": "0.23.2",
+      "license": "MIT",
+      "group": "react-dom",
+      "isRoot": false
+    },
+    {
+      "name": "zod",
+      "version": "4.6.7",
+      "license": "MIT",
+      "group": "zod",
+      "isRoot": true
     },
     {
       "name": "zustand",
       "version": "5.0.14",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "zustand",
+      "isRoot": true
     }
   ],
   "cargo": [
     {
-      "name": "adler2",
-      "version": "2.0.1",
-      "license": "0BSD OR MIT OR Apache-2.0"
-    },
-    {
-      "name": "aho-corasick",
-      "version": "1.1.5",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "alloc-no-stdlib",
-      "version": "3.0.0",
-      "license": "BSD-3-Clause"
-    },
-    {
-      "name": "alloc-stdlib",
-      "version": "0.3.0",
-      "license": "BSD-3-Clause"
+      "name": "base64",
+      "version": "0.23.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "base64",
+      "isRoot": true
     },
     {
       "name": "android_system_properties",
       "version": "0.1.6",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "anyhow",
-      "version": "1.0.104",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "async-broadcast",
-      "version": "0.7.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "async-channel",
-      "version": "2.5.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "async-executor",
-      "version": "1.14.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "async-io",
-      "version": "2.6.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "async-lock",
-      "version": "3.4.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "async-process",
-      "version": "2.5.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "async-recursion",
-      "version": "1.2.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "async-signal",
-      "version": "0.2.14",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "async-task",
-      "version": "4.7.1",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "async-trait",
-      "version": "0.1.92",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "atk",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "atk-sys",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "atomic-waker",
-      "version": "1.1.2",
-      "license": "Apache-2.0 OR MIT"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "autocfg",
       "version": "1.5.1",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "base64",
-      "version": "0.21.7",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "base64",
-      "version": "0.22.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "base64",
-      "version": "0.23.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "bit-set",
-      "version": "0.8.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "bit-vec",
-      "version": "0.8.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "bitflags",
-      "version": "1.3.2",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "bitflags",
-      "version": "2.13.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "block-buffer",
-      "version": "0.10.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "block-buffer",
-      "version": "0.12.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "block2",
-      "version": "0.6.2",
-      "license": "MIT"
-    },
-    {
-      "name": "blocking",
-      "version": "1.7.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "brotli",
-      "version": "9.0.0",
-      "license": "BSD-3-Clause AND MIT"
-    },
-    {
-      "name": "brotli-decompressor",
-      "version": "6.0.1",
-      "license": "BSD-3-Clause/MIT"
-    },
-    {
-      "name": "bs58",
-      "version": "0.5.1",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "bumpalo",
-      "version": "3.20.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "bytemuck",
-      "version": "1.25.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "byteorder",
-      "version": "1.5.0",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "bytes",
-      "version": "1.12.1",
-      "license": "MIT"
-    },
-    {
-      "name": "cairo-rs",
-      "version": "0.18.5",
-      "license": "MIT"
-    },
-    {
-      "name": "cairo-sys-rs",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "camino",
-      "version": "1.2.6",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "cargo_metadata",
-      "version": "0.19.2",
-      "license": "MIT"
-    },
-    {
-      "name": "cargo_toml",
-      "version": "1.0.1",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "cargo-platform",
-      "version": "0.1.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "cc",
-      "version": "1.8.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "cesu8",
-      "version": "1.1.0",
-      "license": "Apache-2.0/MIT"
-    },
-    {
-      "name": "cfb",
-      "version": "0.14.0",
-      "license": "MIT"
-    },
-    {
-      "name": "cfg-expr",
-      "version": "0.15.8",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "cfg-if",
-      "version": "1.0.5",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "chacha20",
-      "version": "0.10.2",
-      "license": "MIT OR Apache-2.0"
+      "license": "Apache-2.0 OR MIT",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "chrono",
       "version": "0.4.45",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "combine",
-      "version": "4.6.9",
-      "license": "MIT"
-    },
-    {
-      "name": "concurrent-queue",
-      "version": "2.5.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "const-oid",
-      "version": "0.10.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "cookie",
-      "version": "0.18.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "core-foundation",
-      "version": "0.10.1",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": true
     },
     {
       "name": "core-foundation-sys",
       "version": "0.8.7",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "core-graphics",
-      "version": "0.25.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "core-graphics-types",
-      "version": "0.2.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "cpufeatures",
-      "version": "0.2.17",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "cpufeatures",
-      "version": "0.3.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "crc32fast",
-      "version": "1.5.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "crossbeam-channel",
-      "version": "0.5.17",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "crossbeam-utils",
-      "version": "0.8.23",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "crypto-common",
-      "version": "0.1.7",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "crypto-common",
-      "version": "0.2.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "cssparser",
-      "version": "0.37.0",
-      "license": "MPL-2.0"
-    },
-    {
-      "name": "cssparser-macros",
-      "version": "0.7.1",
-      "license": "MPL-2.0"
-    },
-    {
-      "name": "ctor",
-      "version": "1.0.13",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "darling",
-      "version": "0.24.1",
-      "license": "MIT"
-    },
-    {
-      "name": "darling_core",
-      "version": "0.24.1",
-      "license": "MIT"
-    },
-    {
-      "name": "darling_macro",
-      "version": "0.24.1",
-      "license": "MIT"
-    },
-    {
-      "name": "data-encoding",
-      "version": "2.11.1",
-      "license": "MIT"
-    },
-    {
-      "name": "dbus",
-      "version": "0.9.12",
-      "license": "Apache-2.0/MIT"
-    },
-    {
-      "name": "defmt",
-      "version": "1.2.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "defmt-macros",
-      "version": "1.2.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "defmt-parser",
-      "version": "1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "deranged",
-      "version": "0.5.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "derive_more",
-      "version": "2.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "derive_more-impl",
-      "version": "2.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "digest",
-      "version": "0.10.7",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "digest",
-      "version": "0.11.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "dirs",
-      "version": "7.0.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "dirs-sys",
-      "version": "0.5.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "dispatch2",
-      "version": "0.3.1",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "displaydoc",
-      "version": "0.2.7",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "dlopen2",
-      "version": "0.8.2",
-      "license": "MIT"
-    },
-    {
-      "name": "dlopen2_derive",
-      "version": "0.4.3",
-      "license": "MIT"
-    },
-    {
-      "name": "dom_query",
-      "version": "0.28.0",
-      "license": "MIT"
-    },
-    {
-      "name": "dpi",
-      "version": "0.1.2",
-      "license": "Apache-2.0 AND MIT"
-    },
-    {
-      "name": "dtoa",
-      "version": "1.0.11",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "dtoa-short",
-      "version": "0.3.5",
-      "license": "MPL-2.0"
-    },
-    {
-      "name": "dunce",
-      "version": "1.0.5",
-      "license": "CC0-1.0 OR MIT-0 OR Apache-2.0"
-    },
-    {
-      "name": "dyn-clone",
-      "version": "1.0.20",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "embed_plist",
-      "version": "1.2.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "embed-resource",
-      "version": "3.0.12",
-      "license": "MIT"
-    },
-    {
-      "name": "endi",
-      "version": "1.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "enumflags2",
-      "version": "0.7.12",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "enumflags2_derive",
-      "version": "0.7.12",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "equivalent",
-      "version": "1.0.3",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "erased-serde",
-      "version": "0.4.10",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "errno",
-      "version": "0.3.14",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "event-listener",
-      "version": "5.4.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "event-listener-strategy",
-      "version": "0.5.4",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "fallible-iterator",
-      "version": "0.3.0",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "fallible-streaming-iterator",
-      "version": "0.1.9",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "fastrand",
-      "version": "2.5.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "fdeflate",
-      "version": "0.3.7",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "field-offset",
-      "version": "0.3.6",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "find-msvc-tools",
-      "version": "0.1.14",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "flate2",
-      "version": "1.1.10",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "fnv",
-      "version": "1.0.7",
-      "license": "Apache-2.0 / MIT"
-    },
-    {
-      "name": "foldhash",
-      "version": "0.2.0",
-      "license": "Zlib"
-    },
-    {
-      "name": "foreign-types",
-      "version": "0.5.0",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "foreign-types-macros",
-      "version": "0.2.4",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "foreign-types-shared",
-      "version": "0.3.1",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "form_urlencoded",
-      "version": "1.2.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-channel",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-core",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-executor",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-io",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-lite",
-      "version": "2.6.1",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "futures-macro",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-sink",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-task",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "futures-util",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "gdk",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "gdk-pixbuf",
-      "version": "0.18.5",
-      "license": "MIT"
-    },
-    {
-      "name": "gdk-pixbuf-sys",
-      "version": "0.18.0",
-      "license": "MIT"
-    },
-    {
-      "name": "gdk-sys",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "gdkwayland-sys",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "gdkx11",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "gdkx11-sys",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "generic-array",
-      "version": "0.14.7",
-      "license": "MIT"
-    },
-    {
-      "name": "getrandom",
-      "version": "0.3.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "getrandom",
-      "version": "0.4.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "gio",
-      "version": "0.18.4",
-      "license": "MIT"
-    },
-    {
-      "name": "gio-sys",
-      "version": "0.18.1",
-      "license": "MIT"
-    },
-    {
-      "name": "glib",
-      "version": "0.18.5",
-      "license": "MIT"
-    },
-    {
-      "name": "glib-macros",
-      "version": "0.18.5",
-      "license": "MIT"
-    },
-    {
-      "name": "glib-sys",
-      "version": "0.18.1",
-      "license": "MIT"
-    },
-    {
-      "name": "glob",
-      "version": "0.3.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "gobject-sys",
-      "version": "0.18.0",
-      "license": "MIT"
-    },
-    {
-      "name": "gtk",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "gtk-sys",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "gtk3-macros",
-      "version": "0.18.2",
-      "license": "MIT"
-    },
-    {
-      "name": "hashbrown",
-      "version": "0.12.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "hashbrown",
-      "version": "0.16.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "hashbrown",
-      "version": "0.17.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "hashlink",
-      "version": "0.12.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "heck",
-      "version": "0.4.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "heck",
-      "version": "0.5.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "hermit-abi",
-      "version": "0.5.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "hex",
-      "version": "0.4.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "html5ever",
-      "version": "0.39.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "http",
-      "version": "1.5.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "http-body",
-      "version": "1.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "http-body-util",
-      "version": "0.1.5",
-      "license": "MIT"
-    },
-    {
-      "name": "httparse",
-      "version": "1.10.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "hybrid-array",
-      "version": "0.4.15",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "hyper",
-      "version": "1.12.0",
-      "license": "MIT"
-    },
-    {
-      "name": "hyper-util",
-      "version": "0.1.21",
-      "license": "MIT"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "iana-time-zone",
       "version": "0.1.65",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "iana-time-zone-haiku",
       "version": "0.1.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "ico",
-      "version": "0.5.0",
-      "license": "MIT"
-    },
-    {
-      "name": "icu_collections",
-      "version": "2.3.0",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "icu_locale_core",
-      "version": "2.3.0",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "icu_normalizer",
-      "version": "2.3.0",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "icu_normalizer_data",
-      "version": "2.3.0",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "icu_properties",
-      "version": "2.3.0",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "icu_properties_data",
-      "version": "2.3.0",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "icu_provider",
-      "version": "2.3.1",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "ident_case",
-      "version": "1.0.1",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "idna",
-      "version": "1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "idna_adapter",
-      "version": "1.2.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "indexmap",
-      "version": "1.9.3",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "indexmap",
-      "version": "2.14.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "infer",
-      "version": "0.22.0",
-      "license": "MIT"
-    },
-    {
-      "name": "ipnet",
-      "version": "2.12.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "is-docker",
-      "version": "0.2.0",
-      "license": "MIT"
-    },
-    {
-      "name": "is-wsl",
-      "version": "0.4.0",
-      "license": "MIT"
-    },
-    {
-      "name": "itoa",
-      "version": "1.0.18",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "javascriptcore-rs",
-      "version": "1.1.2",
-      "license": "MIT"
-    },
-    {
-      "name": "javascriptcore-rs-sys",
-      "version": "1.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "jiff",
-      "version": "0.2.38",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "jiff-core",
-      "version": "0.1.1",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "jiff-static",
-      "version": "0.2.38",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "jiff-tzdb",
-      "version": "0.1.9",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "jiff-tzdb-platform",
-      "version": "0.1.3",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "jni",
-      "version": "0.21.1",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "jni-sys",
-      "version": "0.3.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "jni-sys",
-      "version": "0.4.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "jni-sys-macros",
-      "version": "0.4.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "js-sys",
-      "version": "0.3.106",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "json-patch",
-      "version": "4.2.0",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "jsonptr",
-      "version": "0.7.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "keyboard-types",
-      "version": "0.8.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "libappindicator",
-      "version": "0.9.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "libappindicator-sys",
-      "version": "0.9.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "libc",
-      "version": "0.2.191",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "libdbus-sys",
-      "version": "0.2.7",
-      "license": "Apache-2.0/MIT"
-    },
-    {
-      "name": "libloading",
-      "version": "0.7.4",
-      "license": "ISC"
-    },
-    {
-      "name": "libredox",
-      "version": "0.1.25",
-      "license": "MIT"
-    },
-    {
-      "name": "libsqlite3-sys",
-      "version": "0.38.2",
-      "license": "MIT"
-    },
-    {
-      "name": "linux-raw-sys",
-      "version": "0.12.1",
-      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "litemap",
-      "version": "0.8.3",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "lock_api",
-      "version": "0.4.14",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "log",
       "version": "0.4.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "markup5ever",
-      "version": "0.39.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "memchr",
-      "version": "2.8.3",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "memoffset",
-      "version": "0.9.1",
-      "license": "MIT"
-    },
-    {
-      "name": "mime",
-      "version": "0.3.17",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "miniz_oxide",
-      "version": "0.8.9",
-      "license": "MIT OR Zlib OR Apache-2.0"
-    },
-    {
-      "name": "miniz_oxide",
-      "version": "0.9.1",
-      "license": "MIT OR Zlib OR Apache-2.0"
-    },
-    {
-      "name": "mio",
-      "version": "1.2.4",
-      "license": "MIT"
-    },
-    {
-      "name": "muda",
-      "version": "0.20.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "ndk",
-      "version": "0.9.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "ndk-context",
-      "version": "0.1.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "ndk-sys",
-      "version": "0.6.0+11769913",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "new_debug_unreachable",
-      "version": "1.0.6",
-      "license": "MIT"
-    },
-    {
-      "name": "num_enum",
-      "version": "0.7.6",
-      "license": "BSD-3-Clause OR MIT OR Apache-2.0"
-    },
-    {
-      "name": "num_enum_derive",
-      "version": "0.7.6",
-      "license": "BSD-3-Clause OR MIT OR Apache-2.0"
-    },
-    {
-      "name": "num-conv",
-      "version": "0.2.2",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "num-traits",
       "version": "0.2.19",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "objc2",
-      "version": "0.6.5",
-      "license": "MIT"
-    },
-    {
-      "name": "objc2-app-kit",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-cloud-kit",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-core-data",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-core-foundation",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-core-graphics",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-core-image",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-core-location",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-core-text",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-encode",
-      "version": "4.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "objc2-exception-helper",
-      "version": "0.1.1",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-foundation",
-      "version": "0.3.2",
-      "license": "MIT"
-    },
-    {
-      "name": "objc2-io-surface",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-quartz-core",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-ui-kit",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-user-notifications",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "objc2-web-kit",
-      "version": "0.3.2",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "once_cell",
-      "version": "1.21.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "open",
-      "version": "5.4.4",
-      "license": "MIT"
-    },
-    {
-      "name": "option-ext",
-      "version": "0.2.0",
-      "license": "MPL-2.0"
-    },
-    {
-      "name": "ordered-stream",
-      "version": "0.2.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "pango",
-      "version": "0.18.3",
-      "license": "MIT"
-    },
-    {
-      "name": "pango-sys",
-      "version": "0.18.0",
-      "license": "MIT"
-    },
-    {
-      "name": "parking",
-      "version": "2.2.1",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "parking_lot",
-      "version": "0.12.5",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "parking_lot_core",
-      "version": "0.9.12",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "percent-encoding",
-      "version": "2.3.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "phf",
-      "version": "0.13.1",
-      "license": "MIT"
-    },
-    {
-      "name": "phf_codegen",
-      "version": "0.13.1",
-      "license": "MIT"
-    },
-    {
-      "name": "phf_generator",
-      "version": "0.13.1",
-      "license": "MIT"
-    },
-    {
-      "name": "phf_macros",
-      "version": "0.13.1",
-      "license": "MIT"
-    },
-    {
-      "name": "phf_shared",
-      "version": "0.13.1",
-      "license": "MIT"
-    },
-    {
-      "name": "pin-project-lite",
-      "version": "0.2.17",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "piper",
-      "version": "0.2.5",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "pkg-config",
-      "version": "0.3.34",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "plist",
-      "version": "1.10.1",
-      "license": "MIT"
-    },
-    {
-      "name": "png",
-      "version": "0.17.16",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "png",
-      "version": "0.18.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "polling",
-      "version": "3.11.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "portable-atomic",
-      "version": "1.15.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "portable-atomic-util",
-      "version": "0.2.8",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "potential_utf",
-      "version": "0.1.6",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "powerfmt",
-      "version": "0.2.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "precomputed-hash",
-      "version": "0.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "proc-macro-crate",
-      "version": "1.3.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "proc-macro-crate",
-      "version": "2.0.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "proc-macro-crate",
-      "version": "3.5.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "proc-macro-error",
-      "version": "1.0.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "proc-macro-error-attr",
-      "version": "1.0.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "proc-macro2",
-      "version": "1.0.107",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "quick-xml",
-      "version": "0.42.0",
-      "license": "MIT"
-    },
-    {
-      "name": "quote",
-      "version": "1.0.47",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "r-efi",
-      "version": "5.3.0",
-      "license": "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
-    },
-    {
-      "name": "r-efi",
-      "version": "6.0.0",
-      "license": "MIT OR Apache-2.0 OR LGPL-2.1-or-later"
-    },
-    {
-      "name": "rand",
-      "version": "0.10.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "rand_core",
-      "version": "0.10.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "raw-window-handle",
-      "version": "0.6.2",
-      "license": "MIT OR Apache-2.0 OR Zlib"
-    },
-    {
-      "name": "redox_syscall",
-      "version": "0.5.18",
-      "license": "MIT"
-    },
-    {
-      "name": "redox_users",
-      "version": "0.5.3",
-      "license": "MIT"
-    },
-    {
-      "name": "ref-cast",
-      "version": "1.0.27",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "ref-cast-impl",
-      "version": "1.0.27",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "regex",
-      "version": "1.13.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "regex-automata",
-      "version": "0.4.18",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "regex-syntax",
-      "version": "0.8.11",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "reqwest",
-      "version": "0.13.5",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "rfd",
-      "version": "0.16.1",
-      "license": "MIT"
-    },
-    {
-      "name": "rsqlite-vfs",
-      "version": "0.1.1",
-      "license": "MIT"
-    },
-    {
-      "name": "rusqlite",
-      "version": "0.40.2",
-      "license": "MIT"
-    },
-    {
-      "name": "rustc_version",
-      "version": "0.4.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "rustc-hash",
-      "version": "2.1.3",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "rustix",
-      "version": "1.1.5",
-      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "rustversion",
-      "version": "1.0.23",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "same-file",
-      "version": "1.0.6",
-      "license": "Unlicense/MIT"
-    },
-    {
-      "name": "schemars",
-      "version": "0.8.22",
-      "license": "MIT"
-    },
-    {
-      "name": "schemars",
-      "version": "0.9.0",
-      "license": "MIT"
-    },
-    {
-      "name": "schemars",
-      "version": "1.2.3",
-      "license": "MIT"
-    },
-    {
-      "name": "schemars_derive",
-      "version": "0.8.22",
-      "license": "MIT"
-    },
-    {
-      "name": "scopeguard",
-      "version": "1.2.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "selectors",
-      "version": "0.38.0",
-      "license": "MPL-2.0"
-    },
-    {
-      "name": "semver",
-      "version": "1.0.28",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde",
-      "version": "1.0.229",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_core",
-      "version": "1.0.229",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_derive",
-      "version": "1.0.229",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_derive_internals",
-      "version": "0.29.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_json",
-      "version": "1.0.154",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_repr",
-      "version": "0.1.21",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_spanned",
-      "version": "0.6.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_spanned",
-      "version": "1.1.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_with",
-      "version": "3.24.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde_with_macros",
-      "version": "3.24.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serde-untagged",
-      "version": "0.1.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serialize-to-javascript",
-      "version": "0.1.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "serialize-to-javascript-impl",
-      "version": "0.1.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "servo_arc",
-      "version": "0.4.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "sha1",
-      "version": "0.11.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "sha2",
-      "version": "0.10.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "shlex",
-      "version": "2.0.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "signal-hook-registry",
-      "version": "1.4.8",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "simd-adler32",
-      "version": "0.3.10",
-      "license": "MIT"
-    },
-    {
-      "name": "siphasher",
-      "version": "1.0.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "slab",
-      "version": "0.4.12",
-      "license": "MIT"
-    },
-    {
-      "name": "smallvec",
-      "version": "1.16.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "socket2",
-      "version": "0.6.5",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "softbuffer",
-      "version": "0.4.8",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "soup3",
-      "version": "0.5.0",
-      "license": "MIT"
-    },
-    {
-      "name": "soup3-sys",
-      "version": "0.5.0",
-      "license": "MIT"
-    },
-    {
-      "name": "sqlite-wasm-rs",
-      "version": "0.5.5",
-      "license": "MIT"
-    },
-    {
-      "name": "stable_deref_trait",
-      "version": "1.2.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "static_vcruntime",
-      "version": "3.0.0",
-      "license": "MIT OR Apache-2.0 OR Zlib"
-    },
-    {
-      "name": "string_cache",
-      "version": "0.9.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "string_cache_codegen",
-      "version": "0.6.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "strsim",
-      "version": "0.11.1",
-      "license": "MIT"
-    },
-    {
-      "name": "swift-rs",
-      "version": "1.0.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "syn",
-      "version": "1.0.109",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "syn",
       "version": "2.0.119",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "syn",
-      "version": "3.0.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "sync_wrapper",
-      "version": "1.0.2",
-      "license": "Apache-2.0"
-    },
-    {
-      "name": "synstructure",
-      "version": "0.14.0",
-      "license": "MIT"
-    },
-    {
-      "name": "system-deps",
-      "version": "6.2.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "tao",
-      "version": "0.37.1",
-      "license": "Apache-2.0"
-    },
-    {
-      "name": "tao-macros",
-      "version": "0.1.4",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "target-lexicon",
-      "version": "0.12.16",
-      "license": "Apache-2.0 WITH LLVM-exception"
-    },
-    {
-      "name": "tauri",
-      "version": "2.12.4",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-build",
-      "version": "2.7.3",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-codegen",
-      "version": "2.7.3",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-macros",
-      "version": "2.7.3",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-plugin",
-      "version": "2.7.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-plugin-dialog",
-      "version": "2.8.3",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-plugin-fs",
-      "version": "2.7.1",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-plugin-opener",
-      "version": "2.7.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-plugin-single-instance",
-      "version": "2.5.4",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-runtime",
-      "version": "2.12.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-runtime-wry",
-      "version": "2.12.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-utils",
-      "version": "2.10.2",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tauri-winres",
-      "version": "0.3.6",
-      "license": "MIT"
-    },
-    {
-      "name": "tempfile",
-      "version": "3.27.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "tendril",
-      "version": "0.5.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "thiserror",
-      "version": "1.0.69",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "thiserror",
-      "version": "2.0.21",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "thiserror-impl",
-      "version": "1.0.69",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "thiserror-impl",
-      "version": "2.0.21",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "time",
-      "version": "0.3.55",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "time-core",
-      "version": "0.1.9",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "time-macros",
-      "version": "0.2.32",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "tinystr",
-      "version": "0.8.4",
-      "license": "Unicode-3.0"
-    },
-    {
-      "name": "tinyvec",
-      "version": "1.13.3",
-      "license": "Zlib OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "tokio",
-      "version": "1.53.3",
-      "license": "MIT"
-    },
-    {
-      "name": "tokio-macros",
-      "version": "2.7.2",
-      "license": "MIT"
-    },
-    {
-      "name": "tokio-tungstenite",
-      "version": "0.30.0",
-      "license": "MIT"
-    },
-    {
-      "name": "tokio-util",
-      "version": "0.7.20",
-      "license": "MIT"
-    },
-    {
-      "name": "toml",
-      "version": "0.8.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml",
-      "version": "1.1.8+spec-1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml_datetime",
-      "version": "0.6.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml_datetime",
-      "version": "1.1.2+spec-1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml_edit",
-      "version": "0.19.15",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml_edit",
-      "version": "0.20.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml_edit",
-      "version": "0.25.17+spec-1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml_parser",
-      "version": "1.1.5+spec-1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "toml_writer",
-      "version": "1.1.3+spec-1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "tower",
-      "version": "0.5.3",
-      "license": "MIT"
-    },
-    {
-      "name": "tower-http",
-      "version": "0.6.11",
-      "license": "MIT"
-    },
-    {
-      "name": "tower-layer",
-      "version": "0.3.3",
-      "license": "MIT"
-    },
-    {
-      "name": "tower-service",
-      "version": "0.3.3",
-      "license": "MIT"
-    },
-    {
-      "name": "tracing",
-      "version": "0.1.44",
-      "license": "MIT"
-    },
-    {
-      "name": "tracing-attributes",
-      "version": "0.1.31",
-      "license": "MIT"
-    },
-    {
-      "name": "tracing-core",
-      "version": "0.1.36",
-      "license": "MIT"
-    },
-    {
-      "name": "tray-icon",
-      "version": "0.25.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "try-lock",
-      "version": "0.2.5",
-      "license": "MIT"
-    },
-    {
-      "name": "tungstenite",
-      "version": "0.30.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "typeid",
-      "version": "1.0.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "typenum",
-      "version": "1.20.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "uds_windows",
-      "version": "1.2.1",
-      "license": "MIT"
-    },
-    {
-      "name": "unicode-ident",
-      "version": "1.0.27",
-      "license": "(MIT OR Apache-2.0) AND Unicode-3.0"
-    },
-    {
-      "name": "unicode-segmentation",
-      "version": "1.13.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "url",
-      "version": "2.5.8",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "urlpattern",
-      "version": "0.6.0",
-      "license": "MIT"
-    },
-    {
-      "name": "utf8_iter",
-      "version": "1.0.4",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "uuid",
-      "version": "1.28.0",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "vcpkg",
-      "version": "0.2.15",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "version_check",
-      "version": "0.9.5",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "version-compare",
-      "version": "0.2.1",
-      "license": "MIT"
-    },
-    {
-      "name": "vswhom",
-      "version": "0.1.0",
-      "license": "MIT"
-    },
-    {
-      "name": "vswhom-sys",
-      "version": "0.1.3",
-      "license": "MIT"
-    },
-    {
-      "name": "walkdir",
-      "version": "2.5.0",
-      "license": "Unlicense/MIT"
-    },
-    {
-      "name": "want",
-      "version": "0.3.2",
-      "license": "MIT"
-    },
-    {
-      "name": "wasi",
-      "version": "0.11.1+wasi-snapshot-preview1",
-      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "wasip2",
-      "version": "1.0.4+wasi-0.2.12",
-      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
-    },
-    {
-      "name": "wasm-bindgen",
-      "version": "0.2.129",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "wasm-bindgen-futures",
-      "version": "0.4.79",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "wasm-bindgen-macro",
-      "version": "0.2.129",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "wasm-bindgen-macro-support",
-      "version": "0.2.129",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "wasm-bindgen-shared",
-      "version": "0.2.129",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "wasm-streams",
-      "version": "0.5.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "web_atoms",
-      "version": "0.2.6",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "web-sys",
-      "version": "0.3.106",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "web-time",
-      "version": "1.1.0",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "webkit2gtk",
-      "version": "2.0.2",
-      "license": "MIT"
-    },
-    {
-      "name": "webkit2gtk-sys",
-      "version": "2.0.2",
-      "license": "MIT"
-    },
-    {
-      "name": "webview2-com",
-      "version": "0.39.1",
-      "license": "MIT"
-    },
-    {
-      "name": "webview2-com-macros",
-      "version": "0.8.1",
-      "license": "MIT"
-    },
-    {
-      "name": "webview2-com-sys",
-      "version": "0.39.1",
-      "license": "MIT"
-    },
-    {
-      "name": "winapi",
-      "version": "0.3.9",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "winapi-i686-pc-windows-gnu",
-      "version": "0.4.0",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "winapi-util",
-      "version": "0.1.11",
-      "license": "Unlicense OR MIT"
-    },
-    {
-      "name": "winapi-x86_64-pc-windows-gnu",
-      "version": "0.4.0",
-      "license": "MIT/Apache-2.0"
-    },
-    {
-      "name": "window-vibrancy",
-      "version": "0.8.1",
-      "license": "Apache-2.0 OR MIT"
-    },
-    {
-      "name": "windows",
-      "version": "0.62.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_aarch64_gnullvm",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_aarch64_gnullvm",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_aarch64_msvc",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_aarch64_msvc",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_i686_gnu",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_i686_gnu",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_i686_gnullvm",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_i686_msvc",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_i686_msvc",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_x86_64_gnu",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_x86_64_gnu",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_x86_64_gnullvm",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_x86_64_gnullvm",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_x86_64_msvc",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows_x86_64_msvc",
-      "version": "0.53.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows-collections",
-      "version": "0.3.2",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "windows-core",
       "version": "0.62.2",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows-future",
-      "version": "0.3.2",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "windows-implement",
       "version": "0.60.2",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "windows-interface",
       "version": "0.59.3",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows-link",
-      "version": "0.2.1",
-      "license": "MIT OR Apache-2.0"
-    },
-    {
-      "name": "windows-numerics",
-      "version": "0.3.1",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "windows-result",
       "version": "0.4.1",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
       "name": "windows-strings",
       "version": "0.5.1",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "chrono",
+      "isRoot": false
     },
     {
-      "name": "windows-sys",
-      "version": "0.45.0",
-      "license": "MIT OR Apache-2.0"
+      "name": "dirs",
+      "version": "7.0.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "dirs",
+      "isRoot": true
     },
     {
-      "name": "windows-sys",
-      "version": "0.60.2",
-      "license": "MIT OR Apache-2.0"
+      "name": "dirs-sys",
+      "version": "0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "dirs",
+      "isRoot": false
+    },
+    {
+      "name": "libredox",
+      "version": "0.1.25",
+      "license": "MIT",
+      "group": "dirs",
+      "isRoot": false
+    },
+    {
+      "name": "option-ext",
+      "version": "0.2.0",
+      "license": "MPL-2.0",
+      "group": "dirs",
+      "isRoot": false
+    },
+    {
+      "name": "redox_users",
+      "version": "0.5.3",
+      "license": "MIT",
+      "group": "dirs",
+      "isRoot": false
+    },
+    {
+      "name": "thiserror",
+      "version": "2.0.21",
+      "license": "MIT OR Apache-2.0",
+      "group": "dirs",
+      "isRoot": false
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "2.0.21",
+      "license": "MIT OR Apache-2.0",
+      "group": "dirs",
+      "isRoot": false
+    },
+    {
+      "name": "windows-link",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "dirs",
+      "isRoot": false
     },
     {
       "name": "windows-sys",
       "version": "0.61.2",
-      "license": "MIT OR Apache-2.0"
+      "license": "MIT OR Apache-2.0",
+      "group": "dirs",
+      "isRoot": false
     },
     {
-      "name": "windows-targets",
-      "version": "0.42.2",
-      "license": "MIT OR Apache-2.0"
+      "name": "dunce",
+      "version": "1.0.5",
+      "license": "CC0-1.0 OR MIT-0 OR Apache-2.0",
+      "group": "dunce",
+      "isRoot": true
     },
     {
-      "name": "windows-targets",
-      "version": "0.53.5",
-      "license": "MIT OR Apache-2.0"
+      "name": "futures-core",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "futures-util",
+      "isRoot": false
     },
     {
-      "name": "windows-threading",
-      "version": "0.2.1",
-      "license": "MIT OR Apache-2.0"
+      "name": "futures-io",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "futures-util",
+      "isRoot": false
     },
     {
-      "name": "windows-version",
-      "version": "0.1.7",
-      "license": "MIT OR Apache-2.0"
+      "name": "futures-macro",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "futures-util",
+      "isRoot": false
     },
     {
-      "name": "winnow",
-      "version": "0.5.40",
-      "license": "MIT"
+      "name": "futures-sink",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "futures-util",
+      "isRoot": false
     },
     {
-      "name": "winnow",
-      "version": "1.0.4",
-      "license": "MIT"
+      "name": "futures-task",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "futures-util",
+      "isRoot": false
     },
     {
-      "name": "winreg",
-      "version": "0.56.0",
-      "license": "MIT"
+      "name": "futures-util",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "futures-util",
+      "isRoot": true
+    },
+    {
+      "name": "pin-project-lite",
+      "version": "0.2.17",
+      "license": "Apache-2.0 OR MIT",
+      "group": "futures-util",
+      "isRoot": false
+    },
+    {
+      "name": "slab",
+      "version": "0.4.12",
+      "license": "MIT",
+      "group": "futures-util",
+      "isRoot": false
+    },
+    {
+      "name": "cfg-if",
+      "version": "1.0.5",
+      "license": "MIT OR Apache-2.0",
+      "group": "getrandom",
+      "isRoot": false
+    },
+    {
+      "name": "getrandom",
+      "version": "0.3.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "getrandom",
+      "isRoot": true
+    },
+    {
+      "name": "libc",
+      "version": "0.2.191",
+      "license": "MIT OR Apache-2.0",
+      "group": "getrandom",
+      "isRoot": false
+    },
+    {
+      "name": "r-efi",
+      "version": "5.3.0",
+      "license": "MIT OR Apache-2.0 OR LGPL-2.1-or-later",
+      "group": "getrandom",
+      "isRoot": false
+    },
+    {
+      "name": "wasip2",
+      "version": "1.0.4+wasi-0.2.12",
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "group": "getrandom",
+      "isRoot": false
     },
     {
       "name": "wit-bindgen",
       "version": "0.57.1",
-      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "group": "getrandom",
+      "isRoot": false
     },
     {
-      "name": "writeable",
-      "version": "0.6.4",
-      "license": "Unicode-3.0"
+      "name": "bitflags",
+      "version": "2.13.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "wry",
-      "version": "0.57.0",
-      "license": "Apache-2.0 OR MIT"
+      "name": "bumpalo",
+      "version": "3.20.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "x11",
-      "version": "2.21.0",
-      "license": "MIT"
+      "name": "cc",
+      "version": "1.8.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "x11-dl",
-      "version": "2.21.0",
-      "license": "MIT"
+      "name": "fallible-iterator",
+      "version": "0.3.0",
+      "license": "MIT/Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "yoke",
-      "version": "0.8.3",
-      "license": "Unicode-3.0"
+      "name": "fallible-streaming-iterator",
+      "version": "0.1.9",
+      "license": "MIT/Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "yoke-derive",
-      "version": "0.8.4",
-      "license": "Unicode-3.0"
+      "name": "find-msvc-tools",
+      "version": "0.1.14",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zbus",
-      "version": "5.19.0",
-      "license": "MIT"
+      "name": "foldhash",
+      "version": "0.2.0",
+      "license": "Zlib",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zbus_macros",
-      "version": "5.19.0",
-      "license": "MIT"
+      "name": "hashbrown",
+      "version": "0.16.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zbus_names",
-      "version": "4.3.5",
-      "license": "MIT"
+      "name": "hashbrown",
+      "version": "0.17.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zcheapstr",
-      "version": "1.1.0",
-      "license": "MIT"
+      "name": "hashlink",
+      "version": "0.12.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zerofrom",
-      "version": "0.1.8",
-      "license": "Unicode-3.0"
+      "name": "js-sys",
+      "version": "0.3.106",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zerofrom-derive",
-      "version": "0.1.8",
-      "license": "Unicode-3.0"
+      "name": "libsqlite3-sys",
+      "version": "0.38.2",
+      "license": "MIT",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zerotrie",
-      "version": "0.2.5",
-      "license": "Unicode-3.0"
+      "name": "once_cell",
+      "version": "1.21.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zerovec",
-      "version": "0.11.8",
-      "license": "Unicode-3.0"
+      "name": "pkg-config",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zerovec-derive",
-      "version": "0.11.6",
-      "license": "Unicode-3.0"
+      "name": "rsqlite-vfs",
+      "version": "0.1.1",
+      "license": "MIT",
+      "group": "rusqlite",
+      "isRoot": false
     },
     {
-      "name": "zlib-rs",
-      "version": "0.6.8",
-      "license": "Zlib"
+      "name": "rusqlite",
+      "version": "0.40.2",
+      "license": "MIT",
+      "group": "rusqlite",
+      "isRoot": true
+    },
+    {
+      "name": "rustversion",
+      "version": "1.0.23",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "shlex",
+      "version": "2.0.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "smallvec",
+      "version": "1.16.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "sqlite-wasm-rs",
+      "version": "0.5.5",
+      "license": "MIT",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "vcpkg",
+      "version": "0.2.15",
+      "license": "MIT/Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "wasm-bindgen",
+      "version": "0.2.129",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "wasm-bindgen-macro",
+      "version": "0.2.129",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "wasm-bindgen-macro-support",
+      "version": "0.2.129",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "wasm-bindgen-shared",
+      "version": "0.2.129",
+      "license": "MIT OR Apache-2.0",
+      "group": "rusqlite",
+      "isRoot": false
+    },
+    {
+      "name": "proc-macro2",
+      "version": "1.0.107",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde",
+      "isRoot": false
+    },
+    {
+      "name": "quote",
+      "version": "1.0.47",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde",
+      "isRoot": false
+    },
+    {
+      "name": "serde",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde",
+      "isRoot": true
+    },
+    {
+      "name": "serde_core",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde",
+      "isRoot": false
+    },
+    {
+      "name": "serde_derive",
+      "version": "1.0.229",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde",
+      "isRoot": false
+    },
+    {
+      "name": "syn",
+      "version": "3.0.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde",
+      "isRoot": false
+    },
+    {
+      "name": "unicode-ident",
+      "version": "1.0.27",
+      "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+      "group": "serde",
+      "isRoot": false
+    },
+    {
+      "name": "itoa",
+      "version": "1.0.18",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde_json",
+      "isRoot": false
+    },
+    {
+      "name": "memchr",
+      "version": "2.8.3",
+      "license": "Unlicense OR MIT",
+      "group": "serde_json",
+      "isRoot": false
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.154",
+      "license": "MIT OR Apache-2.0",
+      "group": "serde_json",
+      "isRoot": true
     },
     {
       "name": "zmij",
       "version": "1.0.23",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "serde_json",
+      "isRoot": false
+    },
+    {
+      "name": "adler2",
+      "version": "2.0.1",
+      "license": "0BSD OR MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "atk",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "atk-sys",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "atomic-waker",
+      "version": "1.1.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "base64",
+      "version": "0.22.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "block-buffer",
+      "version": "0.10.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "block2",
+      "version": "0.6.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "bytemuck",
+      "version": "1.25.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "byteorder",
+      "version": "1.5.0",
+      "license": "Unlicense OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "cairo-rs",
+      "version": "0.18.5",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "cairo-sys-rs",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "cesu8",
+      "version": "1.1.0",
+      "license": "Apache-2.0/MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "cfg-expr",
+      "version": "0.15.8",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "combine",
+      "version": "4.6.9",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "cookie",
+      "version": "0.18.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "core-foundation",
+      "version": "0.10.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "core-graphics",
+      "version": "0.25.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "core-graphics-types",
+      "version": "0.2.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "cpufeatures",
+      "version": "0.2.17",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "crc32fast",
+      "version": "1.5.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "crossbeam-channel",
+      "version": "0.5.17",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "crossbeam-utils",
+      "version": "0.8.23",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "crypto-common",
+      "version": "0.1.7",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "dbus",
+      "version": "0.9.12",
+      "license": "Apache-2.0/MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "digest",
+      "version": "0.10.7",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "dispatch2",
+      "version": "0.3.1",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "dlopen2",
+      "version": "0.8.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "dlopen2_derive",
+      "version": "0.4.3",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "dpi",
+      "version": "0.1.2",
+      "license": "Apache-2.0 AND MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "embed_plist",
+      "version": "1.2.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "fdeflate",
+      "version": "0.3.7",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "field-offset",
+      "version": "0.3.6",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "flate2",
+      "version": "1.1.10",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "foreign-types",
+      "version": "0.5.0",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "foreign-types-macros",
+      "version": "0.2.4",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "foreign-types-shared",
+      "version": "0.3.1",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "futures-channel",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "futures-executor",
+      "version": "0.3.34",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gdk",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gdk-pixbuf",
+      "version": "0.18.5",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gdk-pixbuf-sys",
+      "version": "0.18.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gdk-sys",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gdkwayland-sys",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gdkx11",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gdkx11-sys",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "generic-array",
+      "version": "0.14.7",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gio",
+      "version": "0.18.4",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gio-sys",
+      "version": "0.18.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "glib",
+      "version": "0.18.5",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "glib-macros",
+      "version": "0.18.5",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "glib-sys",
+      "version": "0.18.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gobject-sys",
+      "version": "0.18.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gtk",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gtk-sys",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "gtk3-macros",
+      "version": "0.18.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "heck",
+      "version": "0.4.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "http-body",
+      "version": "1.1.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "http-body-util",
+      "version": "0.1.5",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "hyper",
+      "version": "1.12.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "hyper-util",
+      "version": "0.1.21",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "ico",
+      "version": "0.5.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "ipnet",
+      "version": "2.12.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "javascriptcore-rs",
+      "version": "1.1.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "javascriptcore-rs-sys",
+      "version": "1.1.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "jni",
+      "version": "0.21.1",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "jni-sys",
+      "version": "0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "jni-sys",
+      "version": "0.4.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "jni-sys-macros",
+      "version": "0.4.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "keyboard-types",
+      "version": "0.8.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "libappindicator",
+      "version": "0.9.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "libappindicator-sys",
+      "version": "0.9.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "libdbus-sys",
+      "version": "0.2.7",
+      "license": "Apache-2.0/MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "libloading",
+      "version": "0.7.4",
+      "license": "ISC",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "memoffset",
+      "version": "0.9.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "mime",
+      "version": "0.3.17",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "miniz_oxide",
+      "version": "0.8.9",
+      "license": "MIT OR Zlib OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "miniz_oxide",
+      "version": "0.9.1",
+      "license": "MIT OR Zlib OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "muda",
+      "version": "0.20.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "ndk",
+      "version": "0.9.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "ndk-context",
+      "version": "0.1.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "ndk-sys",
+      "version": "0.6.0+11769913",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "num_enum",
+      "version": "0.7.6",
+      "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "num_enum_derive",
+      "version": "0.7.6",
+      "license": "BSD-3-Clause OR MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2",
+      "version": "0.6.5",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-app-kit",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-cloud-kit",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-core-data",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-core-foundation",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-core-graphics",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-core-image",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-core-location",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-core-text",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-encode",
+      "version": "4.1.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-exception-helper",
+      "version": "0.1.1",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-foundation",
+      "version": "0.3.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-io-surface",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-quartz-core",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-ui-kit",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-user-notifications",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "objc2-web-kit",
+      "version": "0.3.2",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "pango",
+      "version": "0.18.3",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "pango-sys",
+      "version": "0.18.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "png",
+      "version": "0.17.16",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "png",
+      "version": "0.18.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "proc-macro-crate",
+      "version": "1.3.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "proc-macro-crate",
+      "version": "2.0.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "proc-macro-crate",
+      "version": "3.5.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "proc-macro-error",
+      "version": "1.0.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "proc-macro-error-attr",
+      "version": "1.0.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "raw-window-handle",
+      "version": "0.6.2",
+      "license": "MIT OR Apache-2.0 OR Zlib",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "reqwest",
+      "version": "0.13.5",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "serde_repr",
+      "version": "0.1.21",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "serde_spanned",
+      "version": "0.6.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "serialize-to-javascript",
+      "version": "0.1.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "serialize-to-javascript-impl",
+      "version": "0.1.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "sha2",
+      "version": "0.10.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "simd-adler32",
+      "version": "0.3.10",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "softbuffer",
+      "version": "0.4.8",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "soup3",
+      "version": "0.5.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "soup3-sys",
+      "version": "0.5.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "syn",
+      "version": "1.0.109",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "sync_wrapper",
+      "version": "1.0.2",
+      "license": "Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "system-deps",
+      "version": "6.2.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tao",
+      "version": "0.37.1",
+      "license": "Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tao-macros",
+      "version": "0.1.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "target-lexicon",
+      "version": "0.12.16",
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tauri",
+      "version": "2.12.4",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": true
+    },
+    {
+      "name": "tauri-codegen",
+      "version": "2.7.3",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-macros",
+      "version": "2.7.3",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-runtime",
+      "version": "2.12.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-runtime-wry",
+      "version": "2.12.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "thiserror",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tokio-util",
+      "version": "0.7.20",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "toml",
+      "version": "0.8.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "toml_datetime",
+      "version": "0.6.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.19.15",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.20.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "toml_edit",
+      "version": "0.25.17+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tower",
+      "version": "0.5.3",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tower-http",
+      "version": "0.6.11",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tower-layer",
+      "version": "0.3.3",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tower-service",
+      "version": "0.3.3",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tracing",
+      "version": "0.1.44",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tracing-attributes",
+      "version": "0.1.31",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tracing-core",
+      "version": "0.1.36",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "tray-icon",
+      "version": "0.25.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "try-lock",
+      "version": "0.2.5",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "unicode-segmentation",
+      "version": "1.13.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "version_check",
+      "version": "0.9.5",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "version-compare",
+      "version": "0.2.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "want",
+      "version": "0.3.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "wasm-bindgen-futures",
+      "version": "0.4.79",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "wasm-streams",
+      "version": "0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "web-sys",
+      "version": "0.3.106",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "webkit2gtk",
+      "version": "2.0.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "webkit2gtk-sys",
+      "version": "2.0.2",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "webview2-com",
+      "version": "0.39.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "webview2-com-macros",
+      "version": "0.8.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "webview2-com-sys",
+      "version": "0.39.1",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "winapi",
+      "version": "0.3.9",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "winapi-i686-pc-windows-gnu",
+      "version": "0.4.0",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "winapi-x86_64-pc-windows-gnu",
+      "version": "0.4.0",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "window-vibrancy",
+      "version": "0.8.1",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows",
+      "version": "0.62.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows-collections",
+      "version": "0.3.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows-future",
+      "version": "0.3.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows-numerics",
+      "version": "0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.45.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.42.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows-threading",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "windows-version",
+      "version": "0.1.7",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "winnow",
+      "version": "0.5.40",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "wry",
+      "version": "0.57.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "x11",
+      "version": "2.21.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "x11-dl",
+      "version": "2.21.0",
+      "license": "MIT",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "zlib-rs",
+      "version": "0.6.8",
+      "license": "Zlib",
+      "group": "tauri",
+      "isRoot": false
+    },
+    {
+      "name": "aho-corasick",
+      "version": "1.1.5",
+      "license": "Unlicense OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "alloc-no-stdlib",
+      "version": "3.0.0",
+      "license": "BSD-3-Clause",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "alloc-stdlib",
+      "version": "0.3.0",
+      "license": "BSD-3-Clause",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "anyhow",
+      "version": "1.0.104",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "base64",
+      "version": "0.21.7",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "bit-set",
+      "version": "0.8.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "bit-vec",
+      "version": "0.8.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "bitflags",
+      "version": "1.3.2",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "brotli",
+      "version": "9.0.0",
+      "license": "BSD-3-Clause AND MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "brotli-decompressor",
+      "version": "6.0.1",
+      "license": "BSD-3-Clause/MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "bs58",
+      "version": "0.5.1",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "camino",
+      "version": "1.2.6",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "cargo_metadata",
+      "version": "0.19.2",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "cargo_toml",
+      "version": "1.0.1",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "cargo-platform",
+      "version": "0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "cfb",
+      "version": "0.14.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "cssparser",
+      "version": "0.37.0",
+      "license": "MPL-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "cssparser-macros",
+      "version": "0.7.1",
+      "license": "MPL-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "ctor",
+      "version": "1.0.13",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "darling",
+      "version": "0.24.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "darling_core",
+      "version": "0.24.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "darling_macro",
+      "version": "0.24.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "defmt",
+      "version": "1.2.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "defmt-macros",
+      "version": "1.2.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "defmt-parser",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "deranged",
+      "version": "0.5.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "derive_more",
+      "version": "2.1.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "derive_more-impl",
+      "version": "2.1.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "displaydoc",
+      "version": "0.2.7",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "dom_query",
+      "version": "0.28.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "dtoa",
+      "version": "1.0.11",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "dtoa-short",
+      "version": "0.3.5",
+      "license": "MPL-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "dyn-clone",
+      "version": "1.0.20",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "embed-resource",
+      "version": "3.0.12",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "equivalent",
+      "version": "1.0.3",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "erased-serde",
+      "version": "0.4.10",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "fastrand",
+      "version": "2.5.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "fnv",
+      "version": "1.0.7",
+      "license": "Apache-2.0 / MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "form_urlencoded",
+      "version": "1.2.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "glob",
+      "version": "0.3.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "hashbrown",
+      "version": "0.12.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "heck",
+      "version": "0.5.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "hex",
+      "version": "0.4.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "html5ever",
+      "version": "0.39.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "icu_collections",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "icu_locale_core",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "icu_normalizer",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "icu_normalizer_data",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "icu_properties",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "icu_properties_data",
+      "version": "2.3.0",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "icu_provider",
+      "version": "2.3.1",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "ident_case",
+      "version": "1.0.1",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "idna",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "idna_adapter",
+      "version": "1.2.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "indexmap",
+      "version": "1.9.3",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "indexmap",
+      "version": "2.14.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "infer",
+      "version": "0.22.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "jiff",
+      "version": "0.2.38",
+      "license": "Unlicense OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "jiff-core",
+      "version": "0.1.1",
+      "license": "Unlicense OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "jiff-static",
+      "version": "0.2.38",
+      "license": "Unlicense OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "jiff-tzdb",
+      "version": "0.1.9",
+      "license": "Unlicense OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "jiff-tzdb-platform",
+      "version": "0.1.3",
+      "license": "Unlicense OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "json-patch",
+      "version": "4.2.0",
+      "license": "MIT/Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "jsonptr",
+      "version": "0.7.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "litemap",
+      "version": "0.8.3",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "lock_api",
+      "version": "0.4.14",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "markup5ever",
+      "version": "0.39.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "new_debug_unreachable",
+      "version": "1.0.6",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "num-conv",
+      "version": "0.2.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "parking_lot",
+      "version": "0.12.5",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "parking_lot_core",
+      "version": "0.9.12",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "percent-encoding",
+      "version": "2.3.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "phf",
+      "version": "0.13.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "phf_codegen",
+      "version": "0.13.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "phf_generator",
+      "version": "0.13.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "phf_macros",
+      "version": "0.13.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "phf_shared",
+      "version": "0.13.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "plist",
+      "version": "1.10.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "portable-atomic",
+      "version": "1.15.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "portable-atomic-util",
+      "version": "0.2.8",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "potential_utf",
+      "version": "0.1.6",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "powerfmt",
+      "version": "0.2.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "precomputed-hash",
+      "version": "0.1.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "quick-xml",
+      "version": "0.42.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "redox_syscall",
+      "version": "0.5.18",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "ref-cast",
+      "version": "1.0.27",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "ref-cast-impl",
+      "version": "1.0.27",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "regex",
+      "version": "1.13.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "regex-automata",
+      "version": "0.4.18",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "regex-syntax",
+      "version": "0.8.11",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "rustc_version",
+      "version": "0.4.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "rustc-hash",
+      "version": "2.1.3",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "same-file",
+      "version": "1.0.6",
+      "license": "Unlicense/MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "schemars",
+      "version": "0.8.22",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "schemars",
+      "version": "0.9.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "schemars",
+      "version": "1.2.3",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "schemars_derive",
+      "version": "0.8.22",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "scopeguard",
+      "version": "1.2.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "selectors",
+      "version": "0.38.0",
+      "license": "MPL-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "semver",
+      "version": "1.0.28",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "serde_derive_internals",
+      "version": "0.29.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "serde_spanned",
+      "version": "1.1.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "serde_with",
+      "version": "3.24.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "serde_with_macros",
+      "version": "3.24.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "serde-untagged",
+      "version": "0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "servo_arc",
+      "version": "0.4.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "siphasher",
+      "version": "1.0.4",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "stable_deref_trait",
+      "version": "1.2.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "static_vcruntime",
+      "version": "3.0.0",
+      "license": "MIT OR Apache-2.0 OR Zlib",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "string_cache",
+      "version": "0.9.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "string_cache_codegen",
+      "version": "0.6.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "strsim",
+      "version": "0.11.1",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "swift-rs",
+      "version": "1.0.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "synstructure",
+      "version": "0.14.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-build",
+      "version": "2.7.3",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": true
+    },
+    {
+      "name": "tauri-utils",
+      "version": "2.10.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-winres",
+      "version": "0.3.6",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "tendril",
+      "version": "0.5.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "time",
+      "version": "0.3.55",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "time-core",
+      "version": "0.1.9",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "time-macros",
+      "version": "0.2.32",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "tinystr",
+      "version": "0.8.4",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "tinyvec",
+      "version": "1.13.3",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "toml",
+      "version": "1.1.8+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "toml_datetime",
+      "version": "1.1.2+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "toml_parser",
+      "version": "1.1.5+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "toml_writer",
+      "version": "1.1.3+spec-1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "typeid",
+      "version": "1.0.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "url",
+      "version": "2.5.8",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "urlpattern",
+      "version": "0.6.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "utf8_iter",
+      "version": "1.0.4",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "uuid",
+      "version": "1.28.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "vswhom",
+      "version": "0.1.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "vswhom-sys",
+      "version": "0.1.3",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "walkdir",
+      "version": "2.5.0",
+      "license": "Unlicense/MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "web_atoms",
+      "version": "0.2.6",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "web-time",
+      "version": "1.1.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "winapi-util",
+      "version": "0.1.11",
+      "license": "Unlicense OR MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "winnow",
+      "version": "1.0.4",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "winreg",
+      "version": "0.56.0",
+      "license": "MIT",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "writeable",
+      "version": "0.6.4",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "yoke",
+      "version": "0.8.3",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "yoke-derive",
+      "version": "0.8.4",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "zerofrom",
+      "version": "0.1.8",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "zerofrom-derive",
+      "version": "0.1.8",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "zerotrie",
+      "version": "0.2.5",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "zerovec",
+      "version": "0.11.8",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "zerovec-derive",
+      "version": "0.11.6",
+      "license": "Unicode-3.0",
+      "group": "tauri-build",
+      "isRoot": false
+    },
+    {
+      "name": "rfd",
+      "version": "0.16.1",
+      "license": "MIT",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-plugin",
+      "version": "2.7.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-plugin-dialog",
+      "version": "2.8.3",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-dialog",
+      "isRoot": true
+    },
+    {
+      "name": "tauri-plugin-fs",
+      "version": "2.7.1",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_aarch64_gnullvm",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_aarch64_msvc",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_i686_gnu",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_i686_gnullvm",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_i686_msvc",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_x86_64_gnu",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_x86_64_gnullvm",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows_x86_64_msvc",
+      "version": "0.53.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows-sys",
+      "version": "0.60.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "windows-targets",
+      "version": "0.53.5",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-dialog",
+      "isRoot": false
+    },
+    {
+      "name": "is-docker",
+      "version": "0.2.0",
+      "license": "MIT",
+      "group": "tauri-plugin-opener",
+      "isRoot": false
+    },
+    {
+      "name": "is-wsl",
+      "version": "0.4.0",
+      "license": "MIT",
+      "group": "tauri-plugin-opener",
+      "isRoot": false
+    },
+    {
+      "name": "open",
+      "version": "5.4.4",
+      "license": "MIT",
+      "group": "tauri-plugin-opener",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-plugin-opener",
+      "version": "2.7.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-opener",
+      "isRoot": true
+    },
+    {
+      "name": "async-broadcast",
+      "version": "0.7.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-channel",
+      "version": "2.5.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-executor",
+      "version": "1.14.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-io",
+      "version": "2.6.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-lock",
+      "version": "3.4.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-process",
+      "version": "2.5.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-recursion",
+      "version": "1.2.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-signal",
+      "version": "0.2.14",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-task",
+      "version": "4.7.1",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "async-trait",
+      "version": "0.1.92",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "blocking",
+      "version": "1.7.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "concurrent-queue",
+      "version": "2.5.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "endi",
+      "version": "1.1.1",
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "enumflags2",
+      "version": "0.7.12",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "enumflags2_derive",
+      "version": "0.7.12",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "errno",
+      "version": "0.3.14",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "event-listener",
+      "version": "5.4.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "event-listener-strategy",
+      "version": "0.5.4",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "futures-lite",
+      "version": "2.6.1",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "hermit-abi",
+      "version": "0.5.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "linux-raw-sys",
+      "version": "0.12.1",
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "ordered-stream",
+      "version": "0.2.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "parking",
+      "version": "2.2.1",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "piper",
+      "version": "0.2.5",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "polling",
+      "version": "3.11.0",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "rustix",
+      "version": "1.1.5",
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "signal-hook-registry",
+      "version": "1.4.8",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "tauri-plugin-single-instance",
+      "version": "2.5.4",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": true
+    },
+    {
+      "name": "tempfile",
+      "version": "3.27.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "uds_windows",
+      "version": "1.2.1",
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "zbus",
+      "version": "5.19.0",
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "zbus_macros",
+      "version": "5.19.0",
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "zbus_names",
+      "version": "4.3.5",
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "zcheapstr",
+      "version": "1.1.0",
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
     },
     {
       "name": "zvariant",
       "version": "5.15.1",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
     },
     {
       "name": "zvariant_derive",
       "version": "5.15.1",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
     },
     {
       "name": "zvariant_utils",
       "version": "4.2.0",
-      "license": "MIT"
+      "license": "MIT",
+      "group": "tauri-plugin-single-instance",
+      "isRoot": false
+    },
+    {
+      "name": "bytes",
+      "version": "1.12.1",
+      "license": "MIT",
+      "group": "tokio",
+      "isRoot": false
+    },
+    {
+      "name": "mio",
+      "version": "1.2.4",
+      "license": "MIT",
+      "group": "tokio",
+      "isRoot": false
+    },
+    {
+      "name": "socket2",
+      "version": "0.6.5",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio",
+      "isRoot": false
+    },
+    {
+      "name": "tokio",
+      "version": "1.53.3",
+      "license": "MIT",
+      "group": "tokio",
+      "isRoot": true
+    },
+    {
+      "name": "tokio-macros",
+      "version": "2.7.2",
+      "license": "MIT",
+      "group": "tokio",
+      "isRoot": false
+    },
+    {
+      "name": "wasi",
+      "version": "0.11.1+wasi-snapshot-preview1",
+      "license": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+      "group": "tokio",
+      "isRoot": false
+    },
+    {
+      "name": "block-buffer",
+      "version": "0.12.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "chacha20",
+      "version": "0.10.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "const-oid",
+      "version": "0.10.2",
+      "license": "Apache-2.0 OR MIT",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "cpufeatures",
+      "version": "0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "crypto-common",
+      "version": "0.2.2",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "data-encoding",
+      "version": "2.11.1",
+      "license": "MIT",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "digest",
+      "version": "0.11.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "getrandom",
+      "version": "0.4.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "http",
+      "version": "1.5.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "httparse",
+      "version": "1.10.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "hybrid-array",
+      "version": "0.4.15",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "r-efi",
+      "version": "6.0.0",
+      "license": "MIT OR Apache-2.0 OR LGPL-2.1-or-later",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "rand",
+      "version": "0.10.3",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "rand_core",
+      "version": "0.10.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "sha1",
+      "version": "0.11.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "tokio-tungstenite",
+      "version": "0.30.0",
+      "license": "MIT",
+      "group": "tokio-tungstenite",
+      "isRoot": true
+    },
+    {
+      "name": "tungstenite",
+      "version": "0.30.0",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
+    },
+    {
+      "name": "typenum",
+      "version": "1.20.1",
+      "license": "MIT OR Apache-2.0",
+      "group": "tokio-tungstenite",
+      "isRoot": false
     }
   ]
 }

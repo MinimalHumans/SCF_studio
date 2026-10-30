@@ -6,6 +6,12 @@
  * from package-lock.json and `cargo metadata`; nothing here fetches
  * or computes a license, so a new dependency only shows up once that
  * script is run again and the result is committed.
+ *
+ * Grouped by the directly-declared dependency that pulled each
+ * package in (`group`), since a flat list of hundreds of transitive
+ * crates says nothing about why any one of them is there. Groups
+ * collapse by default — `tauri` alone accounts for over a third of
+ * the Cargo list — and a search expands only the groups that match.
  */
 
 import { useMemo, useState } from "react";
@@ -15,6 +21,8 @@ interface PackageRow {
   name: string;
   version: string;
   license: string;
+  group: string;
+  isRoot: boolean;
 }
 
 type Ecosystem = "npm" | "cargo";
@@ -25,20 +33,62 @@ const manifest = licenses as {
   cargo: PackageRow[];
 };
 
-function PackageList({ rows }: { rows: PackageRow[] }): JSX.Element {
-  if (rows.length === 0) {
-    return <p className="muted small">No packages match.</p>;
+interface Group {
+  name: string;
+  root: PackageRow | null;
+  members: PackageRow[];
+}
+
+function groupRows(rows: PackageRow[]): Group[] {
+  const byGroup = new Map<string, PackageRow[]>();
+  for (const r of rows) {
+    const list = byGroup.get(r.group);
+    if (list === undefined) byGroup.set(r.group, [r]);
+    else list.push(r);
   }
+  return [...byGroup.entries()].map(([name, members]) => ({
+    name,
+    root: members.find((m) => m.isRoot) ?? null,
+    members: members.filter((m) => !m.isRoot),
+  })).sort((a, b) =>
+    b.members.length + (b.root !== null ? 1 : 0) -
+    (a.members.length + (a.root !== null ? 1 : 0)));
+}
+
+function PackageRowView({ p }: { p: PackageRow }): JSX.Element {
   return (
-    <ul className="licenses-list">
-      {rows.map((p) => (
-        <li key={`${p.name}@${p.version}`} className="licenses-row">
-          <span className="mono">{p.name}</span>
-          <span className="muted small mono">{p.version}</span>
-          <span className="licenses-tag">{p.license}</span>
-        </li>
-      ))}
-    </ul>
+    <li className="licenses-row">
+      <span className="mono">{p.name}</span>
+      <span className="muted small mono">{p.version}</span>
+      <span className="licenses-tag">{p.license}</span>
+    </li>
+  );
+}
+
+function GroupView({ group, expanded, onToggle, forceOpen }: {
+  group: Group; expanded: boolean; onToggle: () => void; forceOpen: boolean;
+}): JSX.Element {
+  const open = expanded || forceOpen;
+  const total = group.members.length + (group.root !== null ? 1 : 0);
+  return (
+    <li className="licenses-group">
+      <button className="licenses-group-head" onClick={onToggle}
+              aria-expanded={open}>
+        <span className="licenses-group-caret">{open ? "▾" : "▸"}</span>
+        <span className="mono">{group.name}</span>
+        <span className="muted small">
+          {total === 1 ? "direct dependency" : `pulls in ${String(total - 1)}`}
+        </span>
+      </button>
+      {open && (
+        <ul className="licenses-list">
+          {group.root !== null && <PackageRowView p={group.root} />}
+          {group.members.map((p) => (
+            <PackageRowView key={`${p.name}@${p.version}`} p={p} />
+          ))}
+        </ul>
+      )}
+    </li>
   );
 }
 
@@ -46,13 +96,30 @@ export function LicensesDialog({ onClose }: { onClose: () => void }):
     JSX.Element {
   const [query, setQuery] = useState("");
   const [ecosystem, setEcosystem] = useState<Ecosystem>("npm");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const rows = ecosystem === "npm" ? manifest.npm : manifest.cargo;
-    return q === "" ? rows
-      : rows.filter((p) => p.name.toLowerCase().includes(q));
-  }, [query, ecosystem]);
+  const groups = useMemo(
+    () => groupRows(ecosystem === "npm" ? manifest.npm : manifest.cargo),
+    [ecosystem]);
+
+  const q = query.trim().toLowerCase();
+  const visible = q === "" ? groups
+    : groups
+        .map((g) => ({
+          ...g,
+          members: g.members.filter((m) => m.name.toLowerCase().includes(q)),
+        }))
+        .filter((g) =>
+          (g.root !== null && g.root.name.toLowerCase().includes(q)) ||
+          g.members.length > 0);
+
+  const toggle = (name: string): void => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
 
   return (
     <div className="modal-scrim" role="dialog" aria-modal="true"
@@ -69,7 +136,8 @@ export function LicensesDialog({ onClose }: { onClose: () => void }):
           </button>
         </div>
         <p className="muted small">
-          Third-party packages SCF Editor is built on. Generated{" "}
+          Third-party packages SCF Editor is built on, grouped by the
+          direct dependency that brought each one in. Generated{" "}
           {new Date(manifest.generatedAt).toLocaleDateString()} from
           package-lock.json and cargo metadata — run{" "}
           <code>tools/gen_licenses.mjs</code> after changing dependencies
@@ -95,7 +163,16 @@ export function LicensesDialog({ onClose }: { onClose: () => void }):
                  aria-label="Filter packages" />
         </div>
         <div className="licenses-content">
-          <PackageList rows={filtered} />
+          {visible.length === 0 && <p className="muted small">No packages match.</p>}
+          {visible.length > 0 && (
+            <ul className="licenses-groups">
+              {visible.map((g) => (
+                <GroupView key={g.name} group={g} forceOpen={q !== ""}
+                           expanded={expanded.has(g.name)}
+                           onToggle={() => toggle(g.name)} />
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
