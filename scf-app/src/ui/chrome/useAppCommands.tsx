@@ -32,13 +32,14 @@ export function useAppCommands(screen: {
   const [licensesOpen, setLicensesOpen] = useState(false);
   const developerMode = useSettings((s) => s.developerMode);
   const { assetRoot, assetRootStatus, hostStatus, newProject,
-          openFromPicker, saveProjectAs, closeProject, attachFolder } =
-    useStore();
+          openFromPicker, openOrFocus, saveProjectAs, closeProject,
+          attachFolder } = useStore();
 
   const ctx: CommandContext = {
     hasProject: screen.hasProject, hostReady: hostStatus === "ready",
     newProject: () => { void newProject(); },
     openProject: () => { void openFromPicker(); },
+    openRecentPath: (path) => { void openOrFocus(path); },
     saveProjectAs: () => { void saveProjectAs(); },
     closeProject: () => { void closeProject(); },
     attachFolder: () => { void attachFolder(); },

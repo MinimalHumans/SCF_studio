@@ -20,6 +20,9 @@ export interface CommandContext {
   hostReady: boolean;
   newProject(): void;
   openProject(): void;
+  /** Open Recent's own entry: focuses the tab if the path is already
+   *  open (live or backgrounded), otherwise opens it as a new tab. */
+  openRecentPath(path: string): void;
   saveProjectAs(): void;
   closeProject(): void;
   attachFolder(): void;

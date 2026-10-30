@@ -175,6 +175,12 @@ ul { list-style: none; margin: 0; padding: 0; }
 .app-menu-check { width: 14px; color: var(--amber); }
 .app-menu-label { flex: 1; }
 .app-menu-shortcut { font: 11px var(--mono); color: var(--paper-dim); }
+.app-menu-submenu-wrap { position: relative; }
+.app-menu-submenu { position: absolute; top: -4px; left: 100%; margin-left: 2px; }
+.app-menu-item.recent { align-items: flex-start; padding-top: 5px; padding-bottom: 5px; }
+.app-menu-item.recent .app-menu-check { margin-top: 2px; }
+.app-menu-recent-text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.app-menu-recent-dir { font: 11px var(--mono); white-space: nowrap; }
 
 .tab-list { display: flex; align-items: flex-end; align-self: stretch; min-width: 0; }
 .tab-scroll-area {

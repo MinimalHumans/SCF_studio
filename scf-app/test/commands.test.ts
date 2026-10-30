@@ -8,7 +8,8 @@ import {
 const ctx = (over: Partial<CommandContext> = {}): CommandContext => ({
   hasProject: true, hostReady: true, identityOpen: false,
   assetRoot: "ok", developerMode: true,
-  newProject: vi.fn(), openProject: vi.fn(), saveProjectAs: vi.fn(),
+  newProject: vi.fn(), openProject: vi.fn(), openRecentPath: vi.fn(),
+  saveProjectAs: vi.fn(),
   closeProject: vi.fn(), attachFolder: vi.fn(), toggleIdentity: vi.fn(),
   showAbout: vi.fn(), showSettings: vi.fn(), showLicenses: vi.fn(),
   exitApp: vi.fn(), openEventLog: vi.fn(), ...over,

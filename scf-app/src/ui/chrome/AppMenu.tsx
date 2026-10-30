@@ -1,9 +1,108 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useEffect, useRef, useState } from "react";
+import type { ProjectRow } from "@scf-host/appStore.ts";
+import { windowAppStore } from "../../host/windowAppStore.ts";
+import { nameOf } from "../../state/store.ts";
 import {
   menuModel, runCommand, topLevelItems, type CommandContext,
   type MenuItem,
 } from "../../commands/registry.ts";
+
+/** The directory a path sits in, no trailing separator ("" for a bare
+ *  file name with no directory at all). */
+function dirOf(path: string): string {
+  const idx = Math.max(path.lastIndexOf("\\"), path.lastIndexOf("/"));
+  return idx <= 0 ? "" : path.slice(0, idx);
+}
+
+/**
+ * A directory path elided in the MIDDLE rather than at an end, so the
+ * two parts likeliest to tell two same-named files apart — where the
+ * path starts, and the immediate parent folder — both stay visible:
+ * ".../Downloads" and ".../fixtures" read very differently even with
+ * everything between them cut, where trimming only the end would show
+ * the same drive and nothing else. `max` counts characters, not pixels.
+ */
+function middleEllipsisDir(dir: string, max: number): string {
+  if (dir.length <= max) return dir;
+  const sep = dir.includes("\\") ? "\\" : "/";
+  const lastSep = dir.lastIndexOf(sep);
+  const tail = lastSep === -1 ? "" : dir.slice(lastSep);
+  const headBudget = max - tail.length - 1;
+  return headBudget <= 0
+    ? "…" + tail.slice(Math.max(0, tail.length - (max - 1)))
+    : dir.slice(0, headBudget) + "…" + tail;
+}
+
+const RECENT_PATH_MAX = 30;
+
+/**
+ * File > Open Recent: the one dynamic, data-driven item in the menu, so
+ * it is hand-built here rather than forced into the static `COMMANDS`
+ * table. Opens on hover (and on click, for touch/keyboard); each entry
+ * either focuses that path's tab or opens it, same rule as clicking it
+ * in Recent Projects on the start screen (store.ts `openOrFocus`).
+ * Labelled the same way a tab is — the file name, not the film's own
+ * title — with the folder beneath it to tell apart two files that
+ * happen to share a name.
+ */
+function OpenRecentItem({ ctx, onRun }: {
+  ctx: CommandContext; onRun: () => void;
+}): JSX.Element {
+  const [open, setOpen] = useState(false);
+  const [entries, setEntries] = useState<ProjectRow[] | null>(null);
+  const disabled = !ctx.hostReady;
+
+  useEffect(() => {
+    if (!open || disabled) return;
+    let cancelled = false;
+    void (async () => {
+      const rows = await (await windowAppStore()).recentProjects(10);
+      if (!cancelled) setEntries(rows);
+    })();
+    return () => { cancelled = true; };
+  }, [open, disabled]);
+
+  return (
+    <div className="app-menu-submenu-wrap"
+         onMouseEnter={() => { if (!disabled) setOpen(true); }}
+         onMouseLeave={() => setOpen(false)}>
+      <button role="menuitem" className="app-menu-item" disabled={disabled}
+              aria-haspopup="menu" aria-expanded={open}
+              onClick={() => { if (!disabled) setOpen((v) => !v); }}>
+        <span className="app-menu-check" aria-hidden="true" />
+        <span className="app-menu-label">Open Recent</span>
+        <span className="app-menu-shortcut">▸</span>
+      </button>
+      {open && !disabled && (
+        <div className="app-menu-popup app-menu-submenu" role="menu">
+          {entries === null ? (
+            <div className="app-menu-item muted">Loading…</div>
+          ) : entries.length === 0 ? (
+            <div className="app-menu-item muted">No recent files</div>
+          ) : entries.map((e) => (
+            <button key={e.pathKey}
+                    role="menuitem" className="app-menu-item recent"
+                    title={e.scfPath}
+                    onClick={() => {
+                      setOpen(false);
+                      onRun();
+                      ctx.openRecentPath(e.scfPath);
+                    }}>
+              <span className="app-menu-check" aria-hidden="true" />
+              <span className="app-menu-recent-text">
+                <span className="app-menu-label">{nameOf(e.scfPath)}</span>
+                <span className="app-menu-recent-dir muted small">
+                  {middleEllipsisDir(dirOf(e.scfPath), RECENT_PATH_MAX)}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * The hamburger. A full menu bar will not fit beside the tabs in the
@@ -97,8 +196,14 @@ export function AppMenu({ ctx }: { ctx: CommandContext }): JSX.Element {
             <div key={g.name} role="group" aria-label={g.name}>
               <div className="app-menu-heading">{g.name}</div>
               {g.items.map((item) => (
-                <MenuItemButton key={item.id} item={item} ctx={ctx}
-                                onRun={() => setOpen(false)} />
+                <div key={item.id}>
+                  <MenuItemButton item={item} ctx={ctx}
+                                  onRun={() => setOpen(false)} />
+                  {item.id === "file.open" && (
+                    <OpenRecentItem ctx={ctx}
+                                    onRun={() => setOpen(false)} />
+                  )}
+                </div>
               ))}
             </div>
           ))}
